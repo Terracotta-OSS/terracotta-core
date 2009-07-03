@@ -28,12 +28,13 @@ import com.tcclient.cluster.DsoClusterInternal;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientHandshakeManagerImpl implements ClientHandshakeManager, ChannelEventListener {
-  private static final State                        PAUSED             = new State("PAUSED");
-  private static final State                        STARTING           = new State("STARTING");
-  private static final State                        RUNNING            = new State("RUNNING");
-  private static final TCLogger                     CONSOLE_LOGGER     = CustomerLogging.getConsoleLogger();
+  private static final State                        PAUSED               = new State("PAUSED");
+  private static final State                        STARTING             = new State("STARTING");
+  private static final State                        RUNNING              = new State("RUNNING");
+  private static final TCLogger                     CONSOLE_LOGGER       = CustomerLogging.getConsoleLogger();
 
   private final Collection<ClientHandshakeCallback> callBacks;
   private final ClientIDProvider                    cidp;
@@ -43,11 +44,12 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   private final SessionManager                      sessionManager;
   private final DsoClusterInternal                  dsoCluster;
   private final String                              clientVersion;
-  private final Map                                 groupStates        = new HashMap();
+  private final Map                                 groupStates          = new HashMap();
   private final GroupID[]                           groupIDs;
   private volatile int                              disconnected;
-  private volatile boolean                          serverIsPersistent = false;
-  private volatile boolean                          isShutdown         = false;
+  private volatile boolean                          serverIsPersistent   = false;
+  private volatile boolean                          isShutdown           = false;
+  private AtomicBoolean                             transitionInProgress = new AtomicBoolean(false);
 
   public ClientHandshakeManagerImpl(final TCLogger logger, final DSOClientMessageChannel channel,
                                     final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
@@ -67,11 +69,28 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     pauseCallbacks(GroupID.ALL_GROUPS, this.disconnected);
   }
 
+  private void waitForTransitionToComplete() {
+    while (transitionInProgress.get()) {
+      try {
+        transitionInProgress.wait();
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  private void notifyTransitionComplete() {
+    synchronized (transitionInProgress) {
+      transitionInProgress.set(false);
+      transitionInProgress.notifyAll();
+    }
+  }
+
   public void shutdown() {
     isShutdown = true;
     shutdownCallbacks();
   }
-  
+
   private boolean checkShutdown() {
     if (isShutdown) {
       this.logger.warn("Drop handshaking due to client shutting down...");
@@ -87,12 +106,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
   public void initiateHandshake(final NodeID remoteNode) {
     this.logger.debug("Initiating handshake...");
+    synchronized (transitionInProgress) {
+      waitForTransitionToComplete();
+      transitionInProgress.set(true);
+    }
     changeToStarting(remoteNode);
 
     ClientHandshakeMessage handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode);
     handshakeMessage.setClientVersion(this.clientVersion);
 
     notifyCallbackOnHandshake(remoteNode, handshakeMessage);
+    notifyTransitionComplete();
 
     this.logger.debug("Sending handshake message...");
     handshakeMessage.send();
@@ -116,7 +140,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   public void disconnected(final NodeID remoteNode) {
-    if(checkShutdown()) return;
+    if (checkShutdown()) return;
     State currentState = getState(remoteNode);
     if (currentState == PAUSED) {
       this.logger.warn("Pause called while already PAUSED for " + remoteNode);
@@ -124,13 +148,25 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       // can happen when we get server disconnects before ack for client handshake
       this.logger.info("Disconnected: Ignoring disconnect event from  RemoteNode : " + remoteNode
                        + " as the current state is " + currentState + ". Disconnect count: " + getDisconnectedCount());
+      // Atomize manager and callbacks state changes
+      synchronized (transitionInProgress) {
+        waitForTransitionToComplete();
+        transitionInProgress.set(true);
+      }
       changeToPaused(remoteNode);
       pauseCallbacks(remoteNode, getDisconnectedCount());
+      notifyTransitionComplete();
     } else {
       this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode
                        + ". Disconnect count: " + getDisconnectedCount());
+      // Atomize manager and callbacks state changes
+      synchronized (transitionInProgress) {
+        waitForTransitionToComplete();
+        transitionInProgress.set(true);
+      }
       changeToPaused(remoteNode);
       pauseCallbacks(remoteNode, getDisconnectedCount());
+      notifyTransitionComplete();
       // all the activities paused then can switch to new session
       this.sessionManager.newSession(remoteNode);
       this.logger.info("ClientHandshakeManager moves to " + this.sessionManager);
@@ -151,7 +187,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       return;
     }
     // drop handshaking if shutting down
-    if(checkShutdown()) return;
+    if (checkShutdown()) return;
     initiateHandshake(remoteNode);
   }
 
@@ -174,8 +210,13 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
     checkClientServerVersionMatch(serverVersion);
     this.serverIsPersistent = persistentServer;
+    synchronized (transitionInProgress) {
+      waitForTransitionToComplete();
+      transitionInProgress.set(true);
+    }
     changeToRunning(remoteID);
     unpauseCallbacks(remoteID, getDisconnectedCount());
+    notifyTransitionComplete();
 
     // only send out out these events when no groups are paused anymore
     if (areAllGroupsConnected()) {
@@ -199,7 +240,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   protected void mismatchExitWay(String msg) {
     System.exit(-1);
   }
-  
+
   private void shutdownCallbacks() {
     for (ClientHandshakeCallback c : this.callBacks) {
       c.shutdown();
