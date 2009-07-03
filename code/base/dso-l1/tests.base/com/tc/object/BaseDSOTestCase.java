@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * The base of all DSO tests that use config.
  */
-public class BaseDSOTestCase extends TCTestCase {
+public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelperFactory {
 
   static {
     // ensure that the databases that are created for the CVT are unique for
@@ -53,19 +53,19 @@ public class BaseDSOTestCase extends TCTestCase {
   private L1TVSConfigurationSetupManager          l1ConfigManager;
   private DSOClientConfigHelper                   configHelper;
 
-  protected final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper) throws Exception {
+  protected synchronized final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper) throws Exception {
     super.setUp();
     this.configFactory = factory;
     this.configHelper = helper;
   }
 
-  protected final synchronized TestTVSConfigurationSetupManagerFactory configFactory()
+  protected synchronized final TestTVSConfigurationSetupManagerFactory configFactory()
       throws ConfigurationSetupException {
     if (this.configFactory == null) this.configFactory = createDistributedConfigFactory();
     return this.configFactory;
   }
 
-  protected final TestTVSConfigurationSetupManagerFactory createDistributedConfigFactory()
+  protected synchronized final TestTVSConfigurationSetupManagerFactory createDistributedConfigFactory()
       throws ConfigurationSetupException {
     TestTVSConfigurationSetupManagerFactory out;
     out = new TestTVSConfigurationSetupManagerFactory(TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
@@ -75,7 +75,7 @@ public class BaseDSOTestCase extends TCTestCase {
     return out;
   }
 
-  private void prepareFactory(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
+  private synchronized void prepareFactory(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
     // We add a root to make sure there's at least *some* application config. Otherwise, the config system will wait for
     // it on system startup.
     /*
@@ -94,7 +94,7 @@ public class BaseDSOTestCase extends TCTestCase {
     out.activateConfigurationChange();
   }
 
-  protected void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
+  protected synchronized void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
     try {
       ((SettableConfigItem) out.l2CommonConfig().dataPath()).setValue(getTempFile("l2-data").toString());
       ((SettableConfigItem) out.l2CommonConfig().logsPath()).setValue(getTempFile("l2-logs").toString());
@@ -106,7 +106,7 @@ public class BaseDSOTestCase extends TCTestCase {
     }
   }
 
-  protected final TestTVSConfigurationSetupManagerFactory createCentralizedConfigFactory()
+  protected synchronized final TestTVSConfigurationSetupManagerFactory createCentralizedConfigFactory()
       throws ConfigurationSetupException {
     TestTVSConfigurationSetupManagerFactory out;
     out = new TestTVSConfigurationSetupManagerFactory(new TestFailingIllegalConfigChangeHandler());
@@ -115,26 +115,26 @@ public class BaseDSOTestCase extends TCTestCase {
     return out;
   }
 
-  protected final synchronized L1TVSConfigurationSetupManager l1Manager() throws ConfigurationSetupException {
+  protected synchronized final L1TVSConfigurationSetupManager l1Manager() throws ConfigurationSetupException {
     if (this.l1ConfigManager == null) this.l1ConfigManager = createL1ConfigManager();
     return this.l1ConfigManager;
   }
 
-  protected final L1TVSConfigurationSetupManager createL1ConfigManager() throws ConfigurationSetupException {
+  protected synchronized final L1TVSConfigurationSetupManager createL1ConfigManager() throws ConfigurationSetupException {
     return configFactory().createL1TVSConfigurationSetupManager();
   }
 
-  protected final synchronized DSOClientConfigHelper configHelper() throws ConfigurationSetupException {
+  protected synchronized final DSOClientConfigHelper configHelper() throws ConfigurationSetupException {
     if (this.configHelper == null) this.configHelper = createClientConfigHelper();
     return this.configHelper;
   }
 
-  protected final DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
+  public synchronized final DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
     return new StandardDSOClientConfigHelperImpl(true, createL1ConfigManager());
   }
 
   // TODO: fix this
-  protected final void makeClientUsePort(int whichPort) throws ConfigurationSetupException {
+  protected synchronized final void makeClientUsePort(int whichPort) throws ConfigurationSetupException {
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(whichPort);
   }
 
@@ -146,7 +146,7 @@ public class BaseDSOTestCase extends TCTestCase {
     super(arg0);
   }
 
-  protected void tearDown() throws Exception {
+  protected synchronized void tearDown() throws Exception {
     this.configFactory = null;
     this.configHelper = null;
     this.l1ConfigManager = null;

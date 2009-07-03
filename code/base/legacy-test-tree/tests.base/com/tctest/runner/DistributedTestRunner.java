@@ -11,9 +11,8 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.object.TestClientConfigHelperFactory;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.config.ConfigVisitor;
-import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.server.AbstractServerFactory;
 import com.tc.server.TCServer;
 import com.tc.simulator.app.ApplicationBuilder;
@@ -24,6 +23,7 @@ import com.tc.simulator.container.Container;
 import com.tc.simulator.container.ContainerConfig;
 import com.tc.simulator.container.ContainerResult;
 import com.tc.simulator.container.ContainerStateFactory;
+import com.tc.simulator.container.IsolationClassLoaderFactory;
 import com.tc.simulator.control.Control;
 import com.tc.simulator.listener.ResultsListener;
 import com.tc.test.MultipleServerManager;
@@ -48,11 +48,10 @@ public class DistributedTestRunner implements ResultsListener {
 
   private final Class                                   applicationClass;
   private final ApplicationConfig                       applicationConfig;
-  private final ConfigVisitor                           configVisitor;
   private final ContainerConfig                         containerConfig;
   private final Control                                 control;
   private final ResultsListener[]                       resultsListeners;
-  private final DSOClientConfigHelper                   configHelper;
+  private final TestClientConfigHelperFactory                 configHelperFactory;
   private final ContainerStateFactory                   containerStateFactory;
   private final TestGlobalIdGenerator                   globalIdGenerator;
   private final TCServer                                server;
@@ -93,7 +92,7 @@ public class DistributedTestRunner implements ResultsListener {
    */
   public DistributedTestRunner(DistributedTestRunnerConfig config,
                                TestTVSConfigurationSetupManagerFactory configFactory,
-                               DSOClientConfigHelper configHelper, Class applicationClass, Map optionalAttributes,
+                               TestClientConfigHelperFactory configHelperFactory, Class applicationClass, Map optionalAttributes,
                                ApplicationConfig applicationConfig, boolean startServer,
                                boolean isMutatorValidatorTest, boolean isMultipleServerTest,
                                MultipleServerManager serverManager, TransparentAppConfig transparentAppConfig)
@@ -104,7 +103,7 @@ public class DistributedTestRunner implements ResultsListener {
     this.startServer = startServer;
     this.config = config;
     this.configFactory = configFactory;
-    this.configHelper = configHelper;
+    this.configHelperFactory = configHelperFactory;
     this.isMutatorValidatorTest = isMutatorValidatorTest;
     this.validatorCount = transparentAppConfig.getValidatorCount();
     this.isMultipleServerTest = isMultipleServerTest;
@@ -112,7 +111,6 @@ public class DistributedTestRunner implements ResultsListener {
     this.globalIdGenerator = new TestGlobalIdGenerator();
     this.applicationClass = applicationClass;
     this.applicationConfig = applicationConfig;
-    this.configVisitor = new ConfigVisitor();
     this.containerConfig = newContainerConfig();
     this.statsOutputQueue = new LinkedQueue();
     this.statsOutputPrinter = new QueuePrinter(this.statsOutputQueue, System.out);
@@ -188,7 +186,6 @@ public class DistributedTestRunner implements ResultsListener {
   public void startServer() {
     try {
       startStatsOutputPrinterThread();
-      visitApplicationClassLoaderConfig();
       if (this.startServer) {
         this.server.start();
       }
@@ -331,14 +328,6 @@ public class DistributedTestRunner implements ResultsListener {
     return executionTimedOut;
   }
 
-  private void visitApplicationClassLoaderConfig() {
-    if (optionalAttributes.size() > 0) {
-      this.configVisitor.visit(this.configHelper, this.applicationClass, this.optionalAttributes);
-    } else {
-      this.configVisitor.visit(this.configHelper, this.applicationClass);
-    }
-  }
-
   private ContainerConfig newContainerConfig() {
     return new ContainerConfig() {
 
@@ -379,6 +368,7 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   private ApplicationBuilder[] newApplicationBuilders(int totalClientCount) throws Exception {
+    debugPrintln("***** Creating " + totalClientCount + " DSOApplicationBuilders");
     ApplicationBuilder[] rv = new ApplicationBuilder[totalClientCount];
 
     for (int i = 0; i < rv.length; i++) {
@@ -388,7 +378,8 @@ public class DistributedTestRunner implements ResultsListener {
       PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(l1ConfigManager);
       if (adapterMap != null
           && ((i < clientCount && i < adaptedMutatorCount) || (i >= clientCount && i < (adaptedValidatorCount + clientCount)))) {
-        rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components, adapterMap);
+        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory, applicationClass, optionalAttributes, components, adapterMap);
+        rv[i] = new DSOApplicationBuilder(configHelperFactoryData, this.applicationConfig);
 
         for (Iterator iter = adapterMap.keySet().iterator(); iter.hasNext();) {
           String adapteeName = (String) iter.next();
@@ -397,7 +388,8 @@ public class DistributedTestRunner implements ResultsListener {
                        + "] adapterClass=[" + adapterClass.getName() + "]");
         }
       } else {
-        rv[i] = new DSOApplicationBuilder(this.configHelper, this.applicationConfig, components);
+        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory, applicationClass, optionalAttributes, components, null);
+        rv[i] = new DSOApplicationBuilder(configHelperFactoryData, this.applicationConfig);
         debugPrintln("***** Creating normal DSOApplicationBuilder: i=[" + i + "]");
       }
     }

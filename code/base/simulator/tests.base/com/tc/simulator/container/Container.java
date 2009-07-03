@@ -73,8 +73,6 @@ public final class Container implements Runnable {
   public synchronized void run() {
     debugPrintln("isMutateValidateTest=[" + isMutateValidateTest + "]");
 
-    Thread.currentThread().setContextClassLoader(applicationBuilder.getContextClassLoader());
-
     SynchronizedBoolean isRunning = new SynchronizedBoolean(true);
     try {
       if (!validateConfig()) return;

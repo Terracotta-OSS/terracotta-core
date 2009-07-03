@@ -12,6 +12,7 @@ import com.tc.asm.ClassWriter;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
+import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
@@ -57,8 +58,9 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   public void init() {
+    DSOContext context = DSOContextImpl.createContext(config, manager);
     manager.initForTests();
-    ClassProcessorHelper.setContext(this, DSOContextImpl.createContext(config, manager));
+    ClassProcessorHelper.setContext(this, context);
   }
 
   private static URL[] getSystemURLS() {

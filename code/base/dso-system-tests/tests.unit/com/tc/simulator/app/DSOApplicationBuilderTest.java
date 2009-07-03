@@ -3,6 +3,7 @@
  */
 package com.tc.simulator.app;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -10,7 +11,9 @@ import com.tc.object.BaseDSOTestCase;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.server.TCServerImpl;
+import com.tc.simulator.container.IsolationClassLoaderFactory;
 import com.tc.simulator.listener.MockListenerProvider;
+import com.tcsimulator.SimpleApplication;
 import com.tcsimulator.SimpleApplicationConfig;
 
 public class DSOApplicationBuilderTest extends BaseDSOTestCase {
@@ -29,10 +32,6 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     server = new TCServerImpl(manager);
     server.start();
 
-    DSOClientConfigHelper configHelper = configHelper();
-
-    configHelper.addExcludePattern(SimpleApplicationConfig.class.getName());
-
     makeClientUsePort(server.getDSOListenPort());
 
     this.applicationConfig = new SimpleApplicationConfig();
@@ -40,7 +39,14 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     L1TVSConfigurationSetupManager configManager = factory.createL1TVSConfigurationSetupManager();
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(configManager);
 
-    this.builder = new DSOApplicationBuilder(configHelper, this.applicationConfig, components);
+    this.builder = new DSOApplicationBuilder(new IsolationClassLoaderFactory(this, SimpleApplication.class, null, components, null) {
+        @Override
+        protected DSOClientConfigHelper createClientConfigHelper() throws ConfigurationSetupException {
+          DSOClientConfigHelper result = super.createClientConfigHelper();
+          result.addExcludePattern(SimpleApplicationConfig.class.getName());
+          return result;
+        }
+      }, this.applicationConfig);
   }
 
   public void testNewApplication() throws Exception {

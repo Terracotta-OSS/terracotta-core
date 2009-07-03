@@ -182,8 +182,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public final static String DEFAULT_AGENT_DIFFERENTIATOR_PREFIX = "L1/";
 
-  protected static final TCLogger                    DSO_LOGGER                 = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                      CONSOLE_LOGGER             = CustomerLogging.getConsoleLogger();
+  protected static final TCLogger                    DSO_LOGGER                          = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger                      CONSOLE_LOGGER                      = CustomerLogging.getConsoleLogger();
 
   private final DSOClientBuilder                     dsoClientBuilder;
   private final DSOClientConfigHelper                config;
@@ -191,7 +191,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private final Manager                              manager;
   private final DsoClusterInternal                   dsoCluster;
   private final TCThreadGroup                        threadGroup;
-  private final StatisticsAgentSubSystem            statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystem             statisticsAgentSubSystem;
   private final RuntimeLogger                        runtimeLogger;
   private final ThreadIDMap                          threadIDMap;
 
@@ -209,7 +209,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private L1Management                               l1Management;
   private TCProperties                               l1Properties;
   private DmiManager                                 dmiManager;
-  private boolean                                    createDedicatedMBeanServer = false;
+  private boolean                                    createDedicatedMBeanServer          = false;
   private CounterManager                             counterManager;
   private ThreadIDManager                            threadIDManager;
 

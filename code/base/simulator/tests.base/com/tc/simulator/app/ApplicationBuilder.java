@@ -9,7 +9,5 @@ public interface ApplicationBuilder {
   public Application newApplication(String applicationId, ListenerProvider listenerProvider)
       throws ApplicationInstantiationException;
 
-  public ClassLoader getContextClassLoader();
-  
   void setAppConfigAttribute(String key, String value);
 }

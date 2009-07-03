@@ -495,7 +495,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   public void initializeTestRunner(boolean isMutateValidateTest, TransparentAppConfig transparentAppCfg,
                                    DistributedTestRunnerConfig runnerCfg) throws Exception {
-    runner = new DistributedTestRunner(runnerCfg, configFactory(), configHelper(), getApplicationClass(),
+    runner = new DistributedTestRunner(runnerCfg, configFactory(), this, getApplicationClass(),
                                        getOptionalAttributes(), getApplicationConfigBuilder().newApplicationConfig(),
                                        getStartServer(), isMutateValidateTest, isMultipleServerTest(), null,
                                        transparentAppCfg);

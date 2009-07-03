@@ -25,7 +25,7 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
       super.initializeTestRunner(isMutateValidateTest, transparentAppCfg, runnerCfg);
       return;
     }
-    runner = new DistributedTestRunner(runnerCfg, configFactory(), configHelper(), getApplicationClass(),
+    runner = new DistributedTestRunner(runnerCfg, configFactory(), this, getApplicationClass(),
                                        getOptionalAttributes(), getApplicationConfigBuilder().newApplicationConfig(),
                                        false, isMutateValidateTest, isMultipleServerTest(), multipleServerManager,
                                        transparentAppCfg);
