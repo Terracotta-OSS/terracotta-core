@@ -9,7 +9,6 @@ import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TraversedReferences;
-import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -22,7 +21,6 @@ import com.tc.util.FieldUtils;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -32,12 +30,10 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
   private static final String SEGMENT_MASK_FIELD_NAME  = "segmentMask";
   private static final String SEGMENT_SHIFT_FIELD_NAME = "segmentShift";
   private static final String SEGMENT_FIELD_NAME       = "segments";
-  private static final String TC_PUT_METHOD_NAME       = ByteCodeUtil.TC_METHOD_PREFIX + "put";
 
   private static final Field  SEGMENT_MASK_FIELD;
   private static final Field  SEGMENT_SHIFT_FIELD;
   private static final Field  SEGMENT_FIELD;
-  private static final Method TC_PUT_METHOD;
 
   static {
     try {
@@ -49,10 +45,6 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
 
       SEGMENT_FIELD = ConcurrentHashMap.class.getDeclaredField(SEGMENT_FIELD_NAME);
       SEGMENT_FIELD.setAccessible(true);
-
-      TC_PUT_METHOD = ConcurrentHashMap.class.getDeclaredMethod(TC_PUT_METHOD_NAME, new Class[] { Object.class,
-      Object.class });
-      TC_PUT_METHOD.setAccessible(true);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -74,8 +66,8 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
       filterPortableObject(SEGMENT_MASK_FIELD.get(pojo), addTo);
       filterPortableObject(SEGMENT_SHIFT_FIELD.get(pojo), addTo);
       Object[] segments = (Object[]) SEGMENT_FIELD.get(pojo);
-      for (int i = 0; i < segments.length; i++) {
-        filterPortableObject(segments[i], addTo);
+      for (Object segment : segments) {
+        filterPortableObject(segment, addTo);
       }
     } catch (IllegalAccessException e) {
       throw new TCRuntimeException(e);
