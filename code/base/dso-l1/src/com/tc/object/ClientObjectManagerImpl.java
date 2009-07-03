@@ -82,6 +82,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private static final long                    CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
   private static final State                   PAUSED                       = new State("PAUSED");
   private static final State                   RUNNING                      = new State("RUNNING");
+  private static final State                   STARTING                     = new State("STARTING");
 
   private static final TCLogger                staticLogger                 = TCLogging
                                                                                 .getLogger(ClientObjectManager.class);
@@ -192,7 +193,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
-    assertPaused("Attempt to unpause while not PAUSED");
+    assertNotRunning("Attempt to unpause while RUNNING");
     this.state = RUNNING;
     notifyAll();
   }
@@ -200,6 +201,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     assertPaused("Attempt to initiateHandshake while not PAUSED");
+    this.state = STARTING;
     addAllObjectIDs(handshakeMessage.getObjectIDs());
 
     // Ignore objects reaped before handshaking otherwise those won't be in the list sent to L2 at handshaking.
@@ -228,6 +230,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private void assertNotPaused(final Object message) {
     if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  }
+
+  private void assertNotRunning(final Object message) {
+    if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
+
   }
 
   protected synchronized boolean isPaused() {

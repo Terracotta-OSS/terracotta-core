@@ -57,6 +57,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
 
   private static final State                      RUNNING                     = new State("RUNNING");
   private static final State                      PAUSED                      = new State("PAUSED");
+  private static final State                      STARTING                    = new State("STARTING");
   private static final State                      STOP_INITIATED              = new State("STOP-INITIATED");
   private static final State                      STOPPED                     = new State("STOPPED");
 
@@ -122,7 +123,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
     if (isShutdown) return;
     synchronized (this.lock) {
       if (isStoppingOrStopped()) { return; }
-      if (this.status != PAUSED) { throw new AssertionError("Attempt to unpause while not in paused state."); }
+      if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
       resendOutstanding();
       this.status = RUNNING;
       this.lock.notifyAll();
@@ -136,6 +137,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager {
       if (this.status != PAUSED) { throw new AssertionError("At " + this.status + " from " + remoteNode + " to "
                                                             + thisNode + " . "
                                                             + "Attempting to handshake while not in paused state."); }
+      this.status = STARTING;
       handshakeMessage.addTransactionSequenceIDs(getTransactionSequenceIDs());
       handshakeMessage.addResentTransactionIDs(getResentTransactionIDs());
     }

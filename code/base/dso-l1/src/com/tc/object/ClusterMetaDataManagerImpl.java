@@ -38,8 +38,12 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   private static final long                                 RETRIEVE_WAIT_INTERVAL                   = 15000;
 
-  private static final State                                PAUSED                                   = new State("PAUSED");
-  private static final State                                RUNNING                                  = new State("RUNNING");
+  private static final State                                PAUSED                                   = new State(
+                                                                                                                 "PAUSED");
+  private static final State                                RUNNING                                  = new State(
+                                                                                                                 "RUNNING");
+  private static final State                                STARTING                                 = new State(
+                                                                                                                 "STARTING");
 
   private State                                             state                                    = RUNNING;
 
@@ -108,7 +112,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   public Set<?> getKeysForOrphanedValues(final TCMap tcMap) {
     waitUntilRunning();
 
-    final ObjectID mapObjectID = ((Manageable)tcMap).__tc_managed().getObjectID();
+    final ObjectID mapObjectID = ((Manageable) tcMap).__tc_managed().getObjectID();
 
     final KeysForOrphanedValuesMessage message = kfovFactory.newKeysForOrphanedValuesMessage(groupID);
     message.setMapObjectID(mapObjectID);
@@ -258,13 +262,17 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
-    // NOP
+    if (isShutdown) return;
+    synchronized (this) {
+      assertPaused("Attempt to initializeHandshake while not PAUSED");
+      this.state = STARTING;
+    }
   }
 
   public void unpause(final NodeID remote, final int disconnected) {
     if (isShutdown) return;
     synchronized (this) {
-      assertPaused("Attempt to unpause while not PAUSED");
+      assertNotRunning("Attempt to unpause while RUNNING");
       this.state = RUNNING;
       resendOutstanding();
       this.notifyAll();
@@ -291,6 +299,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   private void assertNotPaused(final Object message) {
     if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  }
+  
+  private void assertNotRunning(final Object message) {
+    if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
   }
 
   private class WaitForResponse {
