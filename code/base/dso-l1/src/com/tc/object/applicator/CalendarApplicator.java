@@ -9,28 +9,27 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.util.IdentityWeakHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * This applicator handles transients in java.util.Calendar and subclasses (eg. GregorianCalendar)
  */
 public class CalendarApplicator extends PhysicalApplicator {
 
-  private static final Class       OBJECT_CLASS   = Object.class;
-  private static final Object      NO_READ_OBJECT = new Object();
+  private static final Class  OBJECT_CLASS   = Object.class;
+  private static final Object NO_READ_OBJECT = new Object();
 
-  private final Map<Class, Object> readObjects    = new WeakHashMap();
+  private final Map           readObjects    = new IdentityWeakHashMap();
 
   public CalendarApplicator(TCClass clazz, DNAEncoding encoding) {
     super(clazz, encoding);
   }
 
-  @Override
   public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
       ClassNotFoundException {
     super.hydrate(objectManager, tcObject, dna, po);
@@ -87,7 +86,6 @@ public class CalendarApplicator extends PhysicalApplicator {
       super();
     }
 
-    @Override
     public void defaultReadObject() {
       //
     }

@@ -70,32 +70,32 @@ import javax.management.StandardMBean;
 
 public class ModulesLoader {
 
-  private static final Comparator SERVICE_COMPARATOR  = new Comparator() {
+  private static final Comparator SERVICE_COMPARATOR = new Comparator() {
 
-                                                        public int compare(final Object arg0, final Object arg1) {
-                                                          ServiceReference s1 = (ServiceReference) arg0;
-                                                          ServiceReference s2 = (ServiceReference) arg1;
+                                                       public int compare(final Object arg0, final Object arg1) {
+                                                         ServiceReference s1 = (ServiceReference) arg0;
+                                                         ServiceReference s2 = (ServiceReference) arg1;
 
-                                                          Integer r1 = (Integer) s1
-                                                              .getProperty(Constants.SERVICE_RANKING);
-                                                          Integer r2 = (Integer) s2
-                                                              .getProperty(Constants.SERVICE_RANKING);
+                                                         Integer r1 = (Integer) s1
+                                                             .getProperty(Constants.SERVICE_RANKING);
+                                                         Integer r2 = (Integer) s2
+                                                             .getProperty(Constants.SERVICE_RANKING);
 
-                                                          if (r1 == null) r1 = OsgiServiceSpec.NORMAL_RANK;
-                                                          if (r2 == null) r2 = OsgiServiceSpec.NORMAL_RANK;
+                                                         if (r1 == null) r1 = OsgiServiceSpec.NORMAL_RANK;
+                                                         if (r2 == null) r2 = OsgiServiceSpec.NORMAL_RANK;
 
-                                                          return r2.compareTo(r1);
-                                                        }
+                                                         return r2.compareTo(r1);
+                                                       }
 
-                                                      };
+                                                     };
 
-  private static final TCLogger   logger              = TCLogging.getLogger(ModulesLoader.class);
-  private static final TCLogger   consoleLogger       = CustomerLogging.getConsoleLogger();
+  private static final TCLogger   logger             = TCLogging.getLogger(ModulesLoader.class);
+  private static final TCLogger   consoleLogger      = CustomerLogging.getConsoleLogger();
 
-  private static final Object     lock                = new Object();
-  private static final String     NEWLINE             = System.getProperty("line.separator", "\n");
+  private static final Object     lock               = new Object();
+  private static final String     NEWLINE            = System.getProperty("line.separator", "\n");
 
-  public static final String      TC_BOOTJAR_CREATION = "tc.bootjar.creation";
+  public static final String TC_BOOTJAR_CREATION = "tc.bootjar.creation";
 
   private ModulesLoader() {
     // cannot be instantiated
@@ -223,8 +223,7 @@ public class ModulesLoader {
 
   protected static void printModuleBuildInfo(Bundle bundle) {
     Dictionary headers = bundle.getHeaders();
-    StringBuilder sb = new StringBuilder("BuildInfo for module: " + bundle.getSymbolicName()
-                                         + StringUtil.LINE_SEPARATOR);
+    StringBuilder sb = new StringBuilder("BuildInfo for module: " + bundle.getSymbolicName() + StringUtil.LINE_SEPARATOR);
     boolean found = false;
     for (Enumeration keys = headers.keys(); keys.hasMoreElements();) {
       String key = (String) keys.nextElement();
@@ -280,13 +279,12 @@ public class ModulesLoader {
 
   private static void registerClassLoader(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                           final Bundle bundle) throws BundleException {
-    if (config.hasBootJar()) {
-      NamedClassLoader ncl = getClassLoader(bundle);
-      String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
-      ncl.__tc_setClassLoaderName(loaderName);
-      String appGroup = config.getAppGroup(loaderName, null);
-      classProvider.registerNamedLoader(ncl, appGroup);
-    }
+    NamedClassLoader ncl = getClassLoader(bundle);
+
+    String loaderName = Namespace.createLoaderName(Namespace.MODULES_NAMESPACE, ncl.toString());
+    ncl.__tc_setClassLoaderName(loaderName);
+    String appGroup = config.getAppGroup(loaderName, null);
+    classProvider.registerNamedLoader(ncl, appGroup);
   }
 
   private static NamedClassLoader getClassLoader(final Bundle bundle) throws BundleException {

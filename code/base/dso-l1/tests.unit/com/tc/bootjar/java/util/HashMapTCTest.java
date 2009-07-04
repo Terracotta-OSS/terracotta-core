@@ -61,8 +61,6 @@ public class HashMapTCTest extends TCTestCase {
           return Boolean.TRUE;
         } else if ("isLogical".equals(name)) {
           return Boolean.TRUE;
-        } else if ("hasBootJar".equals(name)) {
-          return Boolean.TRUE;
         } else if ("getAppGroup".equals(name)) {
           return null;
         } else if ("getAspectModules".equals(name)) {

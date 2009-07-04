@@ -15,7 +15,6 @@ import com.tc.util.Assert;
 import com.tc.util.StringTCUtil;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 
 public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
@@ -24,16 +23,13 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   private static final TCLogger    logger = TCLogging.getLogger(ApplicatorDNAEncodingImpl.class);
 
   static {
-    Constructor cstr = null;
-
     try {
-      cstr = String.class
-          .getDeclaredConstructor(new Class[] { Boolean.TYPE, char[].class, Integer.TYPE, Integer.TYPE });
-    } catch (NoSuchMethodException e) {
-      logger.info("Compressed String constructor not present");
+      COMPRESSED_STRING_CONSTRUCTOR = String.class.getDeclaredConstructor(new Class[] { Boolean.TYPE, char[].class,
+      Integer.TYPE, Integer.TYPE });
+    } catch (Exception e) {
+      // should never happen if run with instrumented boot jar
+      throw Assert.failure(e.getMessage(), e);
     }
-
-    COMPRESSED_STRING_CONSTRUCTOR = cstr;
   }
 
   /**
@@ -43,22 +39,18 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
     super(classProvider);
   }
 
-  @Override
   protected boolean useStringEnumRead(byte type) {
     return true;
   }
 
-  @Override
   protected boolean useClassProvider(byte type, byte typeToCheck) {
     return true;
   }
 
-  @Override
   protected boolean useUTF8String(byte type) {
     return true;
   }
 
-  @Override
   protected Object readCompressedString(TCDataInput input) throws IOException {
     boolean isInterned = input.readBoolean();
 
@@ -88,17 +80,8 @@ public class ApplicatorDNAEncodingImpl extends BaseDNAEncodingImpl {
   }
 
   private String constructCompressedString(char[] compressedChars, int stringLength, int stringHash) {
-    if (COMPRESSED_STRING_CONSTRUCTOR == null) {
-      byte[] utf8bytes = StringCompressionUtil.unpackAndDecompress(compressedChars);
-      try {
-        return new String(utf8bytes, "UTF-8");
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError(e);
-      }
-    }
-
     try {
-      return (String) COMPRESSED_STRING_CONSTRUCTOR.newInstance(new Object[] { Boolean.TRUE, compressedChars,
+      return(String) COMPRESSED_STRING_CONSTRUCTOR.newInstance(new Object[] { Boolean.TRUE, compressedChars,
           new Integer(stringLength), new Integer(stringHash) });
     } catch (Exception e) {
       throw Assert.failure(e.getMessage(), e);

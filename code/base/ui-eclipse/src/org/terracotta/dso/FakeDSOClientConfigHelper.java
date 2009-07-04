@@ -493,8 +493,4 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public boolean hasOnLoadInjection(final ClassInfo classInfo) {
     return false;
   }
-
-  public boolean hasBootJar() {
-    return false;
-  }
 }

@@ -59,8 +59,8 @@ import java.util.Map;
 import javax.management.MBeanServer;
 
 public class ManagerImpl implements Manager {
-  private static final TCLogger                    logger        = TCLogging.getLogger(Manager.class);
-  private final SetOnceFlag                        clientStarted = new SetOnceFlag();
+  private static final TCLogger                    logger                       = TCLogging.getLogger(Manager.class);
+  private final SetOnceFlag                        clientStarted                = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -78,24 +78,23 @@ public class ManagerImpl implements Manager {
   private ClientTransactionManager                 txManager;
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
-  private final SerializationUtil                  serializer    = new SerializationUtil();
-  private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(serializer);
+  private final SerializationUtil                  serializer                   = new SerializationUtil();
+  private final MethodDisplayNames                 methodDisplay                = new MethodDisplayNames(serializer);
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
     this(true, null, null, config, connectionComponents, true);
   }
 
   // For tests
-  public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
-                     final ClientTransactionManager txManager, final DSOClientConfigHelper config,
-                     final PreparedComponentsFromL2Connection connectionComponents) {
+  public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager, final ClientTransactionManager txManager,
+                     final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
     this(startClient, objectManager, txManager, config, connectionComponents, true);
   }
 
   // For tests
-  public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
-                     final ClientTransactionManager txManager, final DSOClientConfigHelper config,
-                     final PreparedComponentsFromL2Connection connectionComponents, final boolean shutdownActionRequired) {
+  public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager, final ClientTransactionManager txManager,
+                     final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
+                     final boolean shutdownActionRequired) {
     this.objectManager = objectManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
@@ -114,9 +113,7 @@ public class ManagerImpl implements Manager {
     }
     this.runtimeLogger = new RuntimeLoggerImpl(config);
     this.classProvider = new StandardClassProvider(runtimeLogger);
-    if (config.hasBootJar()) {
-      registerStandardLoaders();
-    }
+    registerStandardLoaders();
   }
 
   private void registerStandardLoaders() {
@@ -188,7 +185,7 @@ public class ManagerImpl implements Manager {
     lookupExistingOrNull(o);
     monitorEnter(o, LOCK_TYPE_WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     monitorExit(o);
-    logicalInvoke(new FakeManageableObject(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
+    logicalInvoke(new HashMap(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
 
   private void startClient(final boolean forTests) {
@@ -269,8 +266,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
-                                           final Object[] params) {
+  public void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName, final Object[] params) {
     monitorEnter(lockObject, LockLevel.WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
     try {
       logicalInvoke(object, methodName, params);
@@ -291,15 +287,14 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  private void logicalAddAllInvoke(final int method, final String methodSignature, final Collection collection,
-                                   final TCObject tcobj) {
+  private void logicalAddAllInvoke(final int method, final String methodSignature, final Collection collection, final TCObject tcobj) {
     for (Iterator i = collection.iterator(); i.hasNext();) {
       tcobj.logicalInvoke(method, methodDisplay.getDisplayForSignature(methodSignature), new Object[] { i.next() });
     }
   }
 
-  private void logicalAddAllAtInvoke(final int method, final String methodSignature, int index,
-                                     final Collection collection, final TCObject tcobj) {
+  private void logicalAddAllAtInvoke(final int method, final String methodSignature, int index, final Collection collection,
+                                     final TCObject tcobj) {
 
     for (Iterator i = collection.iterator(); i.hasNext();) {
       tcobj.logicalInvoke(method, methodDisplay.getDisplayForSignature(methodSignature), new Object[] {
@@ -360,8 +355,7 @@ public class ManagerImpl implements Manager {
     begin(generateVolatileLockName(tcObject, fieldName), type, null, null, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
   }
 
-  private void begin(final String lockID, final int type, final Object instance, final TCObject tcobj,
-                     final String contextInfo) {
+  private void begin(final String lockID, final int type, final Object instance, final TCObject tcobj, final String contextInfo) {
     String lockObjectClass = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
 
     boolean locked = this.txManager.begin(lockID, type, lockObjectClass, contextInfo);
@@ -370,8 +364,8 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  private void beginInterruptibly(final String lockID, final int type, final Object instance, final TCObject tcobj,
-                                  final String contextInfo) throws InterruptedException {
+  private void beginInterruptibly(final String lockID, final int type, final Object instance, final TCObject tcobj, final String contextInfo)
+      throws InterruptedException {
     String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
 
     boolean locked = this.txManager.beginInterruptibly(lockID, type, lockObjectType, contextInfo);
@@ -380,8 +374,7 @@ public class ManagerImpl implements Manager {
     }
   }
 
-  private boolean tryBegin(final String lockID, final int type, final Object instance, final TimerSpec timeout,
-                           final TCObject tcobj) {
+  private boolean tryBegin(final String lockID, final int type, final Object instance, final TimerSpec timeout, final TCObject tcobj) {
     String lockObjectType = instance == null ? LockContextInfo.NULL_LOCK_OBJECT_TYPE : instance.getClass().getName();
 
     boolean locked = this.txManager.tryBegin(lockID, timeout, type, lockObjectType);
@@ -516,11 +509,8 @@ public class ManagerImpl implements Manager {
 
     if (!dsoMonitorEntered && isManaged(o)) {
       logger
-          .info("An unlock is being attempted on an Object of class "
-                + o.getClass().getName()
-                + " [Identity Hashcode : 0x"
-                + Integer.toHexString(System.identityHashCode(o))
-                + "] "
+          .info("An unlock is being attempted on an Object of class " + o.getClass().getName()
+                + " [Identity Hashcode : 0x" + Integer.toHexString(System.identityHashCode(o)) + "] "
                 + " which is a shared object, however there is no associated clustered lock held by the current thread. This usually means that the object became shared within a synchronized block/method.");
     }
 
@@ -749,8 +739,7 @@ public class ManagerImpl implements Manager {
     return this.objectManager.lookupObject(id, parentContext);
   }
 
-  public boolean distributedMethodCall(final Object receiver, final String method, final Object[] params,
-                                       final boolean runOnAllNodes) {
+  public boolean distributedMethodCall(final Object receiver, final String method, final Object[] params, final boolean runOnAllNodes) {
     TCObject tco = lookupExistingOrNull(receiver);
 
     try {
@@ -785,11 +774,15 @@ public class ManagerImpl implements Manager {
       // isLiteralInstance() returns false for array types, so we don't need recursion here.
       return LiteralValues.calculateDsoHashCode(obj);
     }
-    if (overridesHashCode(obj)) { return obj.hashCode(); }
+    if (overridesHashCode(obj)) {
+      return obj.hashCode();
+    }
     // obj does not have a stable hashCode(); share it and use hash code of its ObjectID
     TCObject tcobject = shareObjectIfNecessary(obj);
-    if (tcobject != null) { return tcobject.getObjectID().hashCode(); }
-    // A not-shareable, not-literal object? Hmm, seems we shouldn't get here.
+    if (tcobject != null) {
+      return tcobject.getObjectID().hashCode();
+    }
+    // A not-shareable, not-literal object?  Hmm, seems we shouldn't get here.
     throw Assert.failure("Cannot calculate stable DSO hash code for an object that is not literal and not shareable");
   }
 
@@ -999,20 +992,4 @@ public class ManagerImpl implements Manager {
 
     return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
   }
-
-  private static class FakeManageableObject implements Manageable {
-
-    public boolean __tc_isManaged() {
-      return false;
-    }
-
-    public void __tc_managed(TCObject t) {
-      //
-    }
-
-    public TCObject __tc_managed() {
-      return null;
-    }
-  }
-
 }

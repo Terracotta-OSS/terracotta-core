@@ -85,31 +85,7 @@ public class DSOContextImpl implements DSOContext {
     Manager manager = new ManagerImpl(configHelper, l2Connection);
     manager.init();
     return createContext(configHelper, manager);
-  }
 
-  public static DSOContext createStandaloneContext(String configSpec) throws ConfigurationSetupException {
-    // XXX: refactor this to not duplicate createContext() so much
-    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
-                                                                                                          (String[]) null,
-                                                                                                          false,
-                                                                                                          new FatalIllegalConfigurationChangeHandler(),
-                                                                                                          configSpec);
-
-    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
-    config.setupLogging();
-    PreparedComponentsFromL2Connection l2Connection;
-    try {
-      l2Connection = validateMakeL2Connection(config);
-    } catch (Exception e) {
-      throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
-    }
-
-    boolean HAS_BOOT_JAR = false;
-
-    DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config, HAS_BOOT_JAR);
-    Manager manager = new ManagerImpl(configHelper, l2Connection);
-    manager.init();
-    return createContext(configHelper, manager);
   }
 
   /**
@@ -124,14 +100,13 @@ public class DSOContextImpl implements DSOContext {
   }
 
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager) {
+    checkForProperlyInstrumentedBaseClasses();
     Assert.assertNotNull(configHelper);
 
     this.configHelper = configHelper;
     this.manager = manager;
     this.instrumentationLogger = manager.getInstrumentationLogger();
-    this.weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
-
-    checkForProperlyInstrumentedBaseClasses();
+    weavingStrategy = new DefaultWeavingStrategy(configHelper, instrumentationLogger);
 
     try {
       ModulesLoader.initModules(configHelper, classProvider, false);
@@ -145,8 +120,6 @@ public class DSOContextImpl implements DSOContext {
   }
 
   private void validateBootJar() throws BootJarException {
-    if (!configHelper.hasBootJar()) { return; }
-
     try {
       configHelper.verifyBootJarContents(null);
     } catch (final UnverifiedBootJarException e) {
@@ -167,8 +140,6 @@ public class DSOContextImpl implements DSOContext {
   }
 
   private void checkForProperlyInstrumentedBaseClasses() {
-    if (!configHelper.hasBootJar()) { return; }
-
     if (!Manageable.class.isAssignableFrom(HashMap.class)) {
       StringBuffer msg = new StringBuffer();
       msg.append("The DSO boot jar is not prepended to your bootclasspath! ");
