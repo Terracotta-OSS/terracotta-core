@@ -192,6 +192,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final InjectionInstrumentationRegistry             injectionRegistry                  = new InjectionInstrumentationRegistry();
 
+  private final boolean                                      hasBootJar;
+
   public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
@@ -207,7 +209,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager,
-                                           final boolean interrogateBootJar) throws ConfigurationSetupException {
+                                           final boolean hasBootJar) throws ConfigurationSetupException {
+    this.hasBootJar = hasBootJar;
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
     helperLogger = new DSOClientConfigHelperLogger(logger);
@@ -240,7 +243,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection().getBoolean();
     try {
       doPreInstrumentedAutoconfig();
-      doAutoconfig(interrogateBootJar);
+      doAutoconfig();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
@@ -545,7 +548,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     markAllSpecsPreInstrumented();
   }
 
-  private void doAutoconfig(final boolean interrogateBootJar) throws Exception {
+  private void doAutoconfig() throws Exception {
     TransparencyClassSpec spec;
 
     addJDK15InstrumentedSpec();
@@ -595,7 +598,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // hard code junk for Axis2 problem (CDV-525)
     addCustomAdapter("org.codehaus.jam.internal.reflect.ReflectClassBuilder", new ReflectClassBuilderAdapter());
 
-    if (interrogateBootJar) {
+    if (hasBootJar) {
       // pre-load specs from boot jar
       BootJar bootJar = null;
       try {
@@ -2059,6 +2062,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     // If this condition ever needs to be true for any other classes besides ConcurrentHashMap, this setting should be
     // move into the TransparencyClassSpec (as opposed to growing the list of classes here)
     return !clazz.getName().equals("java.util.concurrent.ConcurrentHashMap");
+  }
+
+  public boolean hasBootJar() {
+    return this.hasBootJar;
   }
 
   private static class Resource {

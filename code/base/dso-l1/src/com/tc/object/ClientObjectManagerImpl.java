@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.google.common.collect.MapMaker;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
@@ -38,7 +39,6 @@ import com.tc.object.msg.JMXMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.util.IdentityWeakHashMap;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
@@ -98,7 +98,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Object                         shutdownLock                 = new Object();
   private final Map                            roots                        = new HashMap();
   private final Map                            idToManaged                  = new HashMap();
-  private final Map                            pojoToManaged                = new IdentityWeakHashMap();
+  private final Map                            pojoToManaged                = new MapMaker().weakKeys().makeMap();
   private final ClassProvider                  classProvider;
   private final RemoteObjectManager            remoteObjectManager;
   private final EvictionPolicy                 cache;
@@ -904,9 +904,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     if (obj instanceof Manageable) {
       tcobj = ((Manageable) obj).__tc_managed();
     } else {
-      synchronized (this.pojoToManaged) {
-        tcobj = (TCObject) this.pojoToManaged.get(obj);
-      }
+      tcobj = (TCObject) this.pojoToManaged.get(obj);
     }
     return tcobj;
   }
@@ -926,18 +924,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           ManagerUtil.register(pojo, obj);
         }
 
-        synchronized (this.pojoToManaged) {
-          if (pojo instanceof Manageable) {
-            Manageable m = (Manageable) pojo;
-            if (m.__tc_managed() == null) {
-              m.__tc_managed(obj);
-            } else {
-              Assert.assertTrue(m.__tc_managed() == obj);
-            }
+        if (pojo instanceof Manageable) {
+          Manageable m = (Manageable) pojo;
+          if (m.__tc_managed() == null) {
+            m.__tc_managed(obj);
           } else {
-            if (!isLiteralPojo(pojo)) {
-              this.pojoToManaged.put(obj.getPeerObject(), obj);
-            }
+            Assert.assertTrue(m.__tc_managed() == obj);
+          }
+        } else {
+          if (!isLiteralPojo(pojo)) {
+            this.pojoToManaged.put(obj.getPeerObject(), obj);
           }
         }
       }

@@ -4,7 +4,7 @@
  */
 package com.tc.util;
 
-import com.tc.object.util.IdentityWeakHashMap;
+import com.google.common.collect.MapMaker;
 import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class ToggleableReferenceManager {
 
-  private final Map refs = new IdentityWeakHashMap();
+  private final Map<Object, ToggleableStrongReference> refs = new MapMaker().weakKeys().makeMap();
 
   public ToggleableReferenceManager() {
     //
@@ -34,10 +34,10 @@ public class ToggleableReferenceManager {
   public ToggleableStrongReference getOrCreateFor(Object peer) {
     if (peer == null) { throw new NullPointerException("null peer object"); }
 
-    SometimesStrongAlwaysWeakReference rv;
+    ToggleableStrongReference rv;
 
     synchronized (refs) {
-      rv = (SometimesStrongAlwaysWeakReference) refs.get(peer);
+      rv = refs.get(peer);
       if (rv == null) {
         rv = new SometimesStrongAlwaysWeakReference(peer);
         refs.put(peer, rv);
@@ -69,6 +69,7 @@ public class ToggleableReferenceManager {
       this.strongReference = null;
     }
 
+    @Override
     public String toString() {
       Object o = strongReference;
       return getClass().getName() + o == null ? "" : " (strongRef to " + o.getClass().getName() + ")";

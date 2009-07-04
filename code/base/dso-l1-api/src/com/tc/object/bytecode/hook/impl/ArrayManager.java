@@ -5,11 +5,11 @@
 package com.tc.object.bytecode.hook.impl;
 
 import com.tc.object.TCObject;
-import com.tc.object.util.IdentityWeakHashMap;
 import com.tc.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Global array manager. The basic purpose of this class to maintain the relationship to DSO managed arrays to their
@@ -30,7 +30,7 @@ public class ArrayManager {
 
   static {
     for (int i = 0; i < maps.length; i++) {
-      maps[i] = new IdentityWeakHashMap(INITIAL_CAPACITY, LOAD_FACTOR);
+      maps[i] = new WeakHashMap(INITIAL_CAPACITY, LOAD_FACTOR);
     }
   }
 
