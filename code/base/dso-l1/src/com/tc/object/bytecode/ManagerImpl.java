@@ -113,7 +113,7 @@ public class ManagerImpl implements Manager {
       shutdownAction = null;
     }
     this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
-    this.classProvider = classProvider == null ? new StandardClassProvider(runtimeLogger) : classProvider;
+    this.classProvider = classProvider == null ? new StandardClassProvider(this.runtimeLogger) : classProvider;
     if (config.hasBootJar()) {
       registerStandardLoaders();
     }
