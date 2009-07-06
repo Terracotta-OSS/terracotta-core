@@ -563,6 +563,21 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
          // do not delete this method, it is used by tests that override it
   }
   
+  private Thread executeDuringRunningCluster() {
+    Thread t = new Thread(new Runnable() {
+      public void run() {
+        try {
+          duringRunningCluster();
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+    t.setName(getClass().getName() + " duringRunningCluster");
+    t.start();
+    return t;
+  }
+  
   public void test() throws Exception {
     if (canRun()) {
       if (controlledCrashMode && serverControls != null) {
@@ -581,8 +596,9 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
           proxyMgr.startProxyTest();
         }
       }
+      final Thread duringRunningClusterThread = executeDuringRunningCluster();
       this.runner.run();
-      duringRunningCluster();
+      duringRunningClusterThread.join();
       if (this.runner.executionTimedOut() || this.runner.startTimedOut()) {
         try {
           if (isCrashy() && canRunCrash()) {
