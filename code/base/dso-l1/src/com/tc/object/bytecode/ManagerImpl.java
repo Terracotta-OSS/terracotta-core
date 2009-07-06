@@ -82,20 +82,20 @@ public class ManagerImpl implements Manager {
   private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(serializer);
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
-    this(true, null, null, config, connectionComponents, true);
+    this(true, null, null, config, connectionComponents, true, null, null);
   }
 
-  // For tests
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final DSOClientConfigHelper config,
                      final PreparedComponentsFromL2Connection connectionComponents) {
-    this(startClient, objectManager, txManager, config, connectionComponents, true);
+    this(startClient, objectManager, txManager, config, connectionComponents, true, null, null);
   }
 
-  // For tests
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final DSOClientConfigHelper config,
-                     final PreparedComponentsFromL2Connection connectionComponents, final boolean shutdownActionRequired) {
+                     final PreparedComponentsFromL2Connection connectionComponents,
+                     final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger,
+                     final ClassProvider classProvider) {
     this.objectManager = objectManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
@@ -112,8 +112,8 @@ public class ManagerImpl implements Manager {
     } else {
       shutdownAction = null;
     }
-    this.runtimeLogger = new RuntimeLoggerImpl(config);
-    this.classProvider = new StandardClassProvider(runtimeLogger);
+    this.runtimeLogger = runtimeLogger == null ? new RuntimeLoggerImpl(config) : runtimeLogger;
+    this.classProvider = classProvider == null ? new StandardClassProvider(runtimeLogger) : classProvider;
     if (config.hasBootJar()) {
       registerStandardLoaders();
     }

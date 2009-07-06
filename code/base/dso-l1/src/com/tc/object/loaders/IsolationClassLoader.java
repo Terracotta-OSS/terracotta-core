@@ -70,7 +70,8 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   private Manager createManager(boolean startClient, ClientObjectManager objectManager,
                                 ClientTransactionManager txManager, DSOClientConfigHelper theConfig,
                                 PreparedComponentsFromL2Connection connectionComponents) {
-    Manager rv = new ManagerImpl(startClient, objectManager, txManager, theConfig, connectionComponents, false);
+    Manager rv = new ManagerImpl(startClient, objectManager, txManager, theConfig, connectionComponents, false, null,
+                                 null);
     rv.registerNamedLoader(this, null);
     return rv;
   }
@@ -79,6 +80,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     this.manager.stop();
   }
 
+  @Override
   public Class loadClass(String name) throws ClassNotFoundException {
     throwIfNeeded(name);
 
@@ -163,6 +165,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     onLoadErrors.put(className, errorMessage);
   }
 
+  @Override
   protected Class findClass(String name) throws ClassNotFoundException {
     throwIfNeeded(name);
     return super.findClass(name);

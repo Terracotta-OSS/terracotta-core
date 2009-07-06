@@ -26,7 +26,9 @@ import com.tc.object.config.IncompleteBootJarException;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
+import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
+import com.tc.object.logging.RuntimeLoggerImpl;
 import com.tc.object.tools.BootJarException;
 import com.tc.plugins.ModulesLoader;
 import com.tc.util.Assert;
@@ -87,7 +89,8 @@ public class DSOContextImpl implements DSOContext {
     return createContext(configHelper, manager);
   }
 
-  public static DSOContext createStandaloneContext(String configSpec) throws ConfigurationSetupException {
+  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader)
+      throws ConfigurationSetupException {
     // XXX: refactor this to not duplicate createContext() so much
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
@@ -107,7 +110,11 @@ public class DSOContextImpl implements DSOContext {
     boolean HAS_BOOT_JAR = false;
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config, HAS_BOOT_JAR);
-    Manager manager = new ManagerImpl(configHelper, l2Connection);
+    RuntimeLoggerImpl runtimeLogger = new RuntimeLoggerImpl(configHelper);
+    // XXX: what should the appGroup and loaderDesc be? In theory we might want "regular" clients to access this shared
+    // state too
+    ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
+    Manager manager = new ManagerImpl(true, null, null, configHelper, l2Connection, true, runtimeLogger, classProvider);
     manager.init();
     return createContext(configHelper, manager);
   }
