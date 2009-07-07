@@ -2646,11 +2646,15 @@ public class BootJarTool {
                                            systemLoader, !verbose);
       if (mode.equals(MAKE_MODE)) {
         boolean validating = false;
-        if (targetFile.exists()) {
-          consoleLogger.info("Found boot JAR file at '" + targetFile.getCanonicalPath() + "'; validating...");
-          validating = true;
-        }
         boolean makeItAnyway = cmdLine.hasOption("w");
+        if (targetFile.exists()) {
+          if (makeItAnyway) {
+            consoleLogger.info("Overwrite mode specified, existing boot JAR file at '" + targetFile.getCanonicalPath() + "' will be overwritten.");
+          } else {
+            consoleLogger.info("Found boot JAR file at '" + targetFile.getCanonicalPath() + "'; validating...");
+            validating = true;
+          }
+        }
         if (makeItAnyway || !targetFile.exists() || (targetFile.exists() && !bjTool.isBootJarComplete(targetFile))) {
           // Don't reuse boot jar tool instance since its config might have been mutated by isBootJarComplete()
           bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile, systemLoader,
