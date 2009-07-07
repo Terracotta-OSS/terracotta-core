@@ -14,6 +14,8 @@ import com.tc.object.bytecode.MethodAdapter;
 import com.tc.object.bytecode.MethodCreator;
 import com.tc.object.logging.InstrumentationLogger;
 
+import java.util.List;
+
 /**
  * Configure and describe the custom adaption of a class
  */
@@ -622,18 +624,30 @@ public interface TransparencyClassSpec {
   public void setPostCreateMethod(String postCreateMethod);
 
   /**
-   * Set custom class adapter factory
+   * Add a custom class adapter factory
    * 
    * @param customClassAdapter Custom factory
+   * @deprecated see {@link #addCustomClassAdapter(ClassAdapterFactory)}
+   * @see #addCustomClassAdapter(ClassAdapterFactory)
    */
   public void setCustomClassAdapter(ClassAdapterFactory customClassAdapter);
 
   /**
-   * Get custom class adapter factory
+   * Add a custom class adapter factory. They will later be processed according to their order of registration and
+   * delegate control to the earlier ones through the standard ASM visitor pattern. This means that any instrumentation
+   * that's done in the first class adapter will be seen by the second class adapter, and so on.
    * 
-   * @return Adapter factory
+   * @param customClassAdapter Custom factory
    */
-  public ClassAdapterFactory getCustomClassAdapter();
+  public void addCustomClassAdapter(ClassAdapterFactory customClassAdapter);
+
+  /**
+   * Get the custom class adapter factories in the reverse order of addition. The first class adapter factory that was
+   * added will be the last one in the list.
+   * 
+   * @return Adapter factories
+   */
+  public List<ClassAdapterFactory> getCustomClassAdapters();
 
   /**
    * @return Get name of change applicator class

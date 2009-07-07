@@ -1424,12 +1424,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
 
     ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, lgr, caller, portability);
-    ClassAdapterFactory factory = spec.getCustomClassAdapter();
-    ClassVisitor cv;
-    if (factory == null) {
-      cv = dsoAdapter;
-    } else {
-      cv = factory.create(dsoAdapter, caller);
+    List<ClassAdapterFactory> factories = spec.getCustomClassAdapters();
+    ClassVisitor cv = dsoAdapter;
+    if (factories != null &&
+        !factories.isEmpty()) {
+      for (ClassAdapterFactory factory : factories) {
+        cv = factory.create(cv, caller);
+      }
     }
 
     return new SafeSerialVersionUIDAdder(new OverridesHashCodeAdapter(cv));

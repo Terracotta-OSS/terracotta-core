@@ -4,6 +4,10 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.asm.ClassAdapter;
+import com.tc.asm.ClassVisitor;
+import com.tc.asm.MethodVisitor;
+import com.tc.asm.Opcodes;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -1325,6 +1329,124 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertTrue(Modifier.isStatic(mods));
     assertTrue(Modifier.isFinal(mods));
     assertTrue(f.getType().equals(ObjectStreamField[].class));
+  }
+
+  public void testMultipleCustomClassAdapters() throws Exception {
+    TransparencyClassSpec spec = config.getOrCreateSpec(targetClassName);
+    spec.addCustomClassAdapter(CustomClassAdapter1.FACTORY);
+    spec.addCustomClassAdapter(CustomClassAdapter2.FACTORY);
+    spec.addCustomClassAdapter(CustomClassAdapter3.FACTORY);
+
+    Class clazz = this.classLoader.loadClass(targetClassName);
+    Object o = clazz.newInstance();
+    Method m = clazz.getDeclaredMethod("instanceMethodReturnsAValue", new Class[0]);
+    Object result = m.invoke(o, new Object[0]);
+    assertEquals("some return value & text added by first, second and third class adapter", result);
+  }
+  
+  static class CustomClassAdapter1 extends ClassAdapter {
+    public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
+      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
+        return new CustomClassAdapter1(classvisitor);
+      }
+    };
+
+    public CustomClassAdapter1(ClassVisitor visitor) {
+      super(visitor);
+    }
+
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if ("instanceMethodReturnsAValue".equals(name)) {
+        return new CustomMethodAdapter1(super.visitMethod(access, name, desc, signature, exceptions));
+      } else {
+        return super.visitMethod(access, name, desc, signature, exceptions);
+      }
+    }
+    
+    static class CustomMethodAdapter1 extends com.tc.asm.MethodAdapter implements Opcodes {
+      public CustomMethodAdapter1(MethodVisitor mv) {
+        super(mv);
+      }
+
+      @Override
+      public void visitLdcInsn(Object cst) {
+        if ("some return value".equals(cst)) {
+          cst = cst + " & text added by first class adapter";
+        }
+        super.visitLdcInsn(cst);
+      }
+    }
+  }
+  
+  static class CustomClassAdapter2 extends ClassAdapter {
+    public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
+      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
+        return new CustomClassAdapter2(classvisitor);
+      }
+    };
+
+    public CustomClassAdapter2(ClassVisitor visitor) {
+      super(visitor);
+    }
+
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if ("instanceMethodReturnsAValue".equals(name)) {
+        return new CustomMethodAdapter2(super.visitMethod(access, name, desc, signature, exceptions));
+      } else {
+        return super.visitMethod(access, name, desc, signature, exceptions);
+      }
+    }
+    
+    static class CustomMethodAdapter2 extends com.tc.asm.MethodAdapter implements Opcodes {
+      public CustomMethodAdapter2(MethodVisitor mv) {
+        super(mv);
+      }
+
+      @Override
+      public void visitLdcInsn(Object cst) {
+        if (String.valueOf(cst).endsWith("first class adapter")) {
+          cst = String.valueOf(cst).replaceAll("first class adapter", "first and second class adapter");
+        }
+        super.visitLdcInsn(cst);
+      }
+    }
+  }
+  
+  static class CustomClassAdapter3 extends ClassAdapter {
+    public static final ClassAdapterFactory FACTORY = new ClassAdapterFactory() {
+      public ClassAdapter create(ClassVisitor classvisitor, ClassLoader classloader) {
+        return new CustomClassAdapter3(classvisitor);
+      }
+    };
+
+    public CustomClassAdapter3(ClassVisitor visitor) {
+      super(visitor);
+    }
+
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if ("instanceMethodReturnsAValue".equals(name)) {
+        return new CustomMethodAdapter3(super.visitMethod(access, name, desc, signature, exceptions));
+      } else {
+        return super.visitMethod(access, name, desc, signature, exceptions);
+      }
+    }
+    
+    static class CustomMethodAdapter3 extends com.tc.asm.MethodAdapter implements Opcodes {
+      public CustomMethodAdapter3(MethodVisitor mv) {
+        super(mv);
+      }
+
+      @Override
+      public void visitLdcInsn(Object cst) {
+        if (String.valueOf(cst).contains("first and second")) {
+          cst = String.valueOf(cst).replaceAll("first and second", "first, second and third");
+        }
+        super.visitLdcInsn(cst);
+      }
+    }
   }
 
   private Object invokeWithDefaultArgs(String methodName) throws Exception {

@@ -20,6 +20,7 @@ import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.logging.InstrumentationLogger;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,34 +35,34 @@ import java.util.Set;
  */
 public class TransparencyClassSpecImpl implements TransparencyClassSpec {
 
-  private static final String         HONOR_TRANSIENT_KEY        = "honor-transient";
-  private static final String         HONOR_VOLATILE_KEY         = "honor-volatile";
+  private static final String                     HONOR_TRANSIENT_KEY        = "honor-transient";
+  private static final String                     HONOR_VOLATILE_KEY         = "honor-volatile";
 
-  private final DSOClientConfigHelper configuration;
-  private final String                className;
-  private final List                  supportMethodCreators      = new LinkedList();
-  private final Map                   methodAdapters             = new HashMap();
-  private final Map<String, Boolean>  flags                      = new HashMap();
-  private final Map                   codeSpecs                  = new HashMap();
-  private final Set                   nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet());
-  private String                      changeApplicatorClassName;
-  private ChangeApplicatorSpec        changeApplicatorSpec;
-  private boolean                     isLogical;
-  private boolean                     onLoadInjection;
-  private final IncludeOnLoad         onLoad                     = new IncludeOnLoad();
-  private boolean                     preInstrumented;
-  private boolean                     foreign;
+  private final DSOClientConfigHelper             configuration;
+  private final String                            className;
+  private final List<MethodCreator>               supportMethodCreators      = new LinkedList<MethodCreator>();
+  private final Map<String, MethodAdapter>        methodAdapters             = new HashMap<String, MethodAdapter>();
+  private final List<ClassAdapterFactory>         customClassAdapters        = new ArrayList<ClassAdapterFactory>();
+  private final Map<String, Boolean>              flags                      = new HashMap<String, Boolean>();
+  private final Map<String, TransparencyCodeSpec> codeSpecs                  = new HashMap<String, TransparencyCodeSpec>();
+  private final Set<String>                       nonInstrumentedMethods     = Collections.synchronizedSet(new HashSet<String>());
+  private String                                  changeApplicatorClassName;
+  private ChangeApplicatorSpec                    changeApplicatorSpec;
+  private boolean                                 isLogical;
+  private boolean                                 onLoadInjection;
+  private final IncludeOnLoad                     onLoad                     = new IncludeOnLoad();
+  private boolean                                 preInstrumented;
+  private boolean                                 foreign;
 
-  private boolean                     useNonDefaultConstructor   = false;
-  private boolean                     honorJDKSubVersionSpecific = false;
+  private boolean                                 useNonDefaultConstructor   = false;
+  private boolean                                 honorJDKSubVersionSpecific = false;
 
-  private byte                        instrumentationAction      = NOT_SET;
+  private byte                                    instrumentationAction      = NOT_SET;
 
-  private String                      postCreateMethod           = null;
-  private String                      preCreateMethod            = null;
-  private String                      logicalExtendingClassName  = null;
-  private ClassAdapterFactory         customClassAdapter         = null;
-  private TransparencyCodeSpec        defaultCodeSpec            = null;
+  private String                                  postCreateMethod           = null;
+  private String                                  preCreateMethod            = null;
+  private String                                  logicalExtendingClassName  = null;
+  private TransparencyCodeSpec                    defaultCodeSpec            = null;
 
   public TransparencyClassSpecImpl(final String className, final DSOClientConfigHelper configuration,
                                    final String changeApplicatorClassName) {
@@ -279,7 +280,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     if (memberInfo == null) { return null; }
     DistributedMethodSpec dms = configuration.getDmiSpec(memberInfo);
     if (dms != null) { return new DistributedMethodCallAdapter(dms.runOnAllNodes()); }
-    return (MethodAdapter) methodAdapters.get(memberInfo.getName() + memberInfo.getSignature());
+    return methodAdapters.get(memberInfo.getName() + memberInfo.getSignature());
   }
 
   public ChangeApplicatorSpec getChangeApplicatorSpec() {
@@ -442,7 +443,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public TransparencyCodeSpec getCodeSpec(final String methodName, final String description, final boolean isAutolock) {
-    TransparencyCodeSpec spec = (TransparencyCodeSpec) codeSpecs.get(methodName + description);
+    TransparencyCodeSpec spec = codeSpecs.get(methodName + description);
     if (spec != null) { return spec; }
     if (defaultCodeSpec != null) { return defaultCodeSpec; }
     return TransparencyCodeSpecImpl.getDefaultCodeSpec(className, isLogical, isAutolock);
@@ -505,11 +506,15 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
   }
 
   public void setCustomClassAdapter(final ClassAdapterFactory customClassAdapter) {
-    this.customClassAdapter = customClassAdapter;
+    addCustomClassAdapter(customClassAdapter);
   }
 
-  public ClassAdapterFactory getCustomClassAdapter() {
-    return customClassAdapter;
+  public void addCustomClassAdapter(final ClassAdapterFactory adapter) {
+    this.customClassAdapters.add(0, adapter);
+  }
+
+  public List<ClassAdapterFactory> getCustomClassAdapters() {
+    return customClassAdapters;
   }
 
   public String getChangeApplicatorClassName() {
