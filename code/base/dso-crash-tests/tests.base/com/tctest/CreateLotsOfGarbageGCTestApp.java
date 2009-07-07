@@ -6,6 +6,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 /**
@@ -13,13 +14,18 @@ import com.tctest.runner.AbstractTransparentApp;
  */
 public class CreateLotsOfGarbageGCTestApp extends AbstractTransparentApp {
 
-  private static final int SIZE       = 50;
-  private static final int LOOP_COUNT = 3000;
+  private static final int SIZE  = 50;
+  private static int       LOOP_COUNT;
 
-  private Object[]         array      = new Object[SIZE];
+  private final Object[]   array = new Object[SIZE];
 
   public CreateLotsOfGarbageGCTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+    if (Os.isSolaris()) {
+      LOOP_COUNT = 2000;
+    } else {
+      LOOP_COUNT = 3000;
+    }
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
