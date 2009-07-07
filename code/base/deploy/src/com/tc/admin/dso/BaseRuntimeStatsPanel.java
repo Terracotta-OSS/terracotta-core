@@ -287,8 +287,38 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     return chart;
   }
 
+  protected JFreeChart createXYBarChart(TimeSeries ts) {
+    return createXYBarChart(new TimeSeries[] { ts }, false);
+  }
+
   protected JFreeChart createXYBarChart(TimeSeries[] seriesArray, boolean createLegend) {
     JFreeChart chart = DemoChartFactory.getXYBarChart("", "", "", seriesArray, createLegend);
+    int sampleHistoryMinutes = getSampleHistoryMinutes();
+    int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    plot.getDomainAxis().setFixedAutoRange(sampleHistoryMillis);
+    ((NumberAxis) plot.getRangeAxis()).setAutoRangeIncludesZero(true);
+
+    int maxSampleCount = (sampleHistoryMinutes * 60) / getPollPeriodSeconds();
+    for (TimeSeries series : seriesArray) {
+      series.setMaximumItemCount(maxSampleCount);
+    }
+
+    allCharts.add(chart);
+    return chart;
+  }
+
+  protected JFreeChart createXYStepChart(TimeSeries ts) {
+    return createXYStepChart(new TimeSeries[] { ts }, false);
+  }
+
+  protected JFreeChart createXYStepChart(TimeSeries[] ts) {
+    return createXYStepChart(ts, true);
+  }
+
+  protected JFreeChart createXYStepChart(TimeSeries[] seriesArray, boolean createLegend) {
+    JFreeChart chart = DemoChartFactory.getXYStepChart("", "", "", seriesArray, createLegend);
     int sampleHistoryMinutes = getSampleHistoryMinutes();
     int sampleHistoryMillis = sampleHistoryMinutes * 60 * 1000;
 

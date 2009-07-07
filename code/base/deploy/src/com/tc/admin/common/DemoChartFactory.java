@@ -25,6 +25,7 @@ import org.jfree.chart.plot.dial.DialValueIndicator;
 import org.jfree.chart.plot.dial.StandardDialFrame;
 import org.jfree.chart.plot.dial.StandardDialRange;
 import org.jfree.chart.plot.dial.StandardDialScale;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.RangeType;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.ValueDataset;
@@ -71,7 +72,7 @@ public class DemoChartFactory {
     DefaultDrawingSupplier drawingSupplier = new DefaultDrawingSupplier(
                                                                         DefaultDrawingSupplier.DEFAULT_PAINT_SEQUENCE,
                                                                         DefaultDrawingSupplier.DEFAULT_FILL_PAINT_SEQUENCE,
-                                                                        new Stroke[] { new BasicStroke(2.0f) },
+                                                                        new Stroke[] { new BasicStroke(1.3f) },
                                                                         new Stroke[] { new BasicStroke(0.5f) },
                                                                         DefaultDrawingSupplier.DEFAULT_SHAPE_SEQUENCE);
     theme.setDrawingSupplier(drawingSupplier);
@@ -111,6 +112,7 @@ public class DemoChartFactory {
                                                      legend, true, false);
 
     XYPlot plot = (XYPlot) chart.getPlot();
+    ((XYBarRenderer) plot.getRenderer()).setDrawBarOutline(false);
 
     DateAxis axis = (DateAxis) plot.getDomainAxis();
     axis.setFixedAutoRange(30000.0);
@@ -121,7 +123,7 @@ public class DemoChartFactory {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
     numberAxis.setRangeType(RangeType.POSITIVE);
-    numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setAutoRangeMinimumSize(10.0);
     numberAxis.setTickLabelFont(regularFont);
     numberAxis.setLabelFont(regularFont);
 
@@ -156,21 +158,22 @@ public class DemoChartFactory {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
-    numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setAutoRangeMinimumSize(10.0);
     numberAxis.setTickLabelFont(regularFont);
     numberAxis.setLabelFont(regularFont);
 
     return chart;
   }
 
-  public static JFreeChart getXYStepChart(String header, String xLabel, String yLabel, TimeSeries ts) {
+  public static JFreeChart getXYStepChart(String header, String xLabel, String yLabel, TimeSeries ts, boolean legend) {
     XYDataset dataset = createTimeSeriesDataset(ts);
-    return createXYStepChart(header, xLabel, yLabel, dataset, false);
+    return createXYStepChart(header, xLabel, yLabel, dataset, legend);
   }
 
-  public static JFreeChart getXYStepChart(String header, String xLabel, String yLabel, TimeSeries[] timeseries) {
+  public static JFreeChart getXYStepChart(String header, String xLabel, String yLabel, TimeSeries[] timeseries,
+                                          boolean legend) {
     XYDataset dataset = createTimeSeriesDataset(timeseries);
-    return createXYStepChart(header, xLabel, yLabel, dataset, true);
+    return createXYStepChart(header, xLabel, yLabel, dataset, legend);
   }
 
   private static JFreeChart createXYStepChart(String header, String xLabel, String yLabel, XYDataset dataset,
@@ -191,7 +194,7 @@ public class DemoChartFactory {
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRangeType(RangeType.POSITIVE);
     numberAxis.setStandardTickUnits(DEFAULT_TICKS);
-    numberAxis.setAutoRangeMinimumSize(50.0);
+    numberAxis.setAutoRangeMinimumSize(10.0);
     numberAxis.setTickLabelFont(regularFont);
     numberAxis.setLabelFont(regularFont);
 

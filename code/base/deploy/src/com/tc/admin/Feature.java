@@ -167,9 +167,10 @@ public class Feature extends URLClassLoader {
       public void run() {
         try {
           addURL(moduleLocation = future.get());
-          loadingModule = false;
         } catch (Exception e) {
           e.printStackTrace();
+        } finally {
+          loadingModule = false;
         }
       }
     }.start();

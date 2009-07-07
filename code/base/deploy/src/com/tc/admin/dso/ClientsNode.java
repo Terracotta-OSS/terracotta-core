@@ -82,9 +82,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       activeCoord.removeClientConnectionListener(this);
       setLabel(appContext.getMessage("connected-clients"));
       clients = NULL_CLIENTS;
-      for (int i = getChildCount() - 1; i >= 0; i--) {
-        removeChild((XTreeNode) getChildAt(i));
-      }
+      tearDownChildren();
       if (clientsPanel != null) {
         clientsPanel.setClients(clients);
       }
@@ -116,6 +114,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
           appContext.log(e);
         }
       } else {
+        tearDownChildren();
         clients = getResult();
         for (int i = 0; i < clients.length; i++) {
           addClientNode(createClientNode(clients[i]));
