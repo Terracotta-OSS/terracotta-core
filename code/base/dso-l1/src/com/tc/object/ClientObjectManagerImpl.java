@@ -933,7 +933,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           }
         } else {
           if (!isLiteralPojo(pojo)) {
-            this.pojoToManaged.put(obj.getPeerObject(), obj);
+            this.pojoToManaged.put(pojo, obj);
           }
         }
       }
