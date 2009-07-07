@@ -7,6 +7,7 @@ package com.tc.properties;
 import com.tc.config.TcProperty;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.util.properties.TCPropertyStore;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,9 +52,9 @@ public class TCPropertiesImpl implements TCProperties {
 
   private static final TCPropertiesImpl INSTANCE;
 
-  private final Properties              props                      = new Properties();
+  private final TCPropertyStore         props                      = new TCPropertyStore();
 
-  private final Properties              localTcProperties          = new Properties();
+  private final TCPropertyStore         localTcProperties          = new TCPropertyStore();
 
   private volatile boolean              initialized                = false;
 
@@ -257,6 +258,7 @@ public class TCPropertiesImpl implements TCProperties {
     INSTANCE.props.setProperty(key, value);
   }
 
+  @Override
   public String toString() {
     return "TCProperties = { " + sortedPropertiesToString() + " }";
   }

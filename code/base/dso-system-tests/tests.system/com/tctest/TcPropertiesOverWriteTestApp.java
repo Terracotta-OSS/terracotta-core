@@ -27,14 +27,14 @@ import java.util.List;
 
 public class TcPropertiesOverWriteTestApp extends AbstractTransparentApp {
 
-  public static final String    CONFIG_FILE = "config-file";
-  public static final String    PORT_NUMBER = "port-number";
-  public static final String    HOST_NAME   = "host-name";
-  public static final String    JMX_PORT    = "jmx-port";
+  public static final String      CONFIG_FILE = "config-file";
+  public static final String      PORT_NUMBER = "port-number";
+  public static final String      HOST_NAME   = "host-name";
+  public static final String      JMX_PORT    = "jmx-port";
 
-  private ApplicationConfig     appConfig;
-  private ExtraL1ProcessControl client;
-  private static Object         obj         = new Object();
+  private final ApplicationConfig appConfig;
+  private ExtraL1ProcessControl   client;
+  private static Object           obj         = new Object();
 
   public TcPropertiesOverWriteTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -114,14 +114,14 @@ public class TcPropertiesOverWriteTestApp extends AbstractTransparentApp {
 
     private void execute() {
       TCProperties tcProps = ManagerUtil.getTCProperties();
-      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED)
+      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED.toUpperCase())
           .equals(TcPropertiesOverWriteTest.L1_CACHEMANAGER_ENABLED_VALUE));
       Assert.eval(tcProps.getProperty(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE)
           .equals(TcPropertiesOverWriteTest.L1_LOGGING_MAX_LOGFILE_SIZE_VALUE));
-      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES)
+      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES.replace("e", "E"))
           .equals(TcPropertiesOverWriteTest.L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES_VALUE));
-      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_CACHEMANAGER_LEASTCOUNT)
-                  .equals(TcPropertiesOverWriteTest.L1_CACHEMANAGER_LEASTCOUNT_VALUE));
+      Assert.eval(tcProps.getProperty(TCPropertiesConsts.L1_CACHEMANAGER_LEASTCOUNT.toLowerCase())
+          .equals(TcPropertiesOverWriteTest.L1_CACHEMANAGER_LEASTCOUNT_VALUE));
     }
   }
 }
