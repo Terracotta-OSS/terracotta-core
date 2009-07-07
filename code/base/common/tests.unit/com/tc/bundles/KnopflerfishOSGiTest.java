@@ -50,7 +50,7 @@ public class KnopflerfishOSGiTest extends TestCase {
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
 
       String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
-      Resolver resolver = new Resolver(repos);
+      Resolver resolver = new Resolver(repos, ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
       Module module = Module.Factory.newInstance();
       module.setName(name);
       module.setVersion(version);

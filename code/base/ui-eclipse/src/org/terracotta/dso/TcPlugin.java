@@ -107,6 +107,7 @@ import com.tc.object.util.JarResourceLoader;
 import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
@@ -671,7 +672,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
         String[] repositories = ResolverUtils.urlsToStrings(osgiRuntime.getRepositories());
-        final Resolver resolver = new Resolver(repositories);
+        final Resolver resolver = new Resolver(repositories, ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -695,7 +696,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
-      final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()));
+      final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()), ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
       Module[] allModules = modulesCopy.getModuleArray();
 
       resolver.resolve(allModules);

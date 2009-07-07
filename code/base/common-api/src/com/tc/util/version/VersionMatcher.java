@@ -1,7 +1,8 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package org.terracotta.modules.tool;
+package com.tc.util.version;
+
 
 /**
  * This class encapsulates knowledge about whether a particular module or modules

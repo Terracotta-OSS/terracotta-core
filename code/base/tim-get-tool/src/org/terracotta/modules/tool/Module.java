@@ -11,6 +11,7 @@ import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
 
 import com.google.inject.Inject;
+import com.tc.util.version.VersionMatcher;
 
 import java.io.File;
 import java.io.IOException;

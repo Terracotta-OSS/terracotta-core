@@ -5,6 +5,10 @@
 package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.AndFileFilter;
+import org.apache.commons.io.filefilter.PrefixFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.BundleSpecException;
@@ -17,6 +21,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.version.VersionMatcher;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -25,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -36,8 +42,8 @@ import java.util.jar.Manifest;
 
 public class Resolver {
 
-  private static final String   BUNDLE_VERSION        = "Bundle-Version";
-  private static final String   BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
+  static final String           BUNDLE_VERSION        = "Bundle-Version";
+  static final String           BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
 
   private static final String   TC_PROPERTIES_SECTION = "l1.modules";
 
@@ -49,11 +55,13 @@ public class Resolver {
   // List of Entry objects describing already resolved bundles
   private final List            registry              = new ArrayList();
 
-  public Resolver(final String[] repositoryStrings) throws MissingDefaultRepositoryException {
-    this(repositoryStrings, true);
+  private final VersionMatcher  versionMatcher;
+  
+  public Resolver(final String[] repositoryStrings, final String tcVersion, final String apiVersion) throws MissingDefaultRepositoryException {
+    this(repositoryStrings, true, tcVersion, apiVersion);
   }
 
-  public Resolver(final String[] repositoryStrings, final boolean injectDefault)
+  public Resolver(final String[] repositoryStrings, final boolean injectDefault, final String tcVersion, final String apiVersion)
       throws MissingDefaultRepositoryException {
     if (injectDefault) injectDefaultRepositories();
 
@@ -68,6 +76,8 @@ public class Resolver {
       final String msg = "No valid TIM repository locations defined.";
       throw new MissingDefaultRepositoryException(msg);
     }
+    
+    versionMatcher = new VersionMatcher(tcVersion, apiVersion);
   }
 
   private void injectDefaultRepositories() throws MissingDefaultRepositoryException {
@@ -148,14 +158,26 @@ public class Resolver {
 
   public final File resolve(Module module) throws BundleException {
     final String name = module.getName();
-    final String version = module.getVersion();
+    String version = module.getVersion();
     final String groupId = module.getGroupId();
 
+    // Resolve null versions by finding newest candidate in available repositories
+    if(version == null) {
+      version = findNewestVersion(groupId, name);
+      module.setVersion(version);
+      
+      if(version == null) {
+        String msg = "No version was specified for " + groupId + ":" + name + 
+          " in the Terracotta configuration file and no versions were found in the available repositories.";
+        throw new BundleException(msg);
+      }
+    }
+    
     // CDV-691: If you are defining a module in the tc-config.xml, the schema requires that you specify
     // a name and version, so this will never happen (although version could still be invalid).
     // But if you define programmatically in a TIM or in a test, it is possible to screw this up.
-    if (name == null || version == null) {
-      String msg = "Invalid module specification (name and version are required): name=" + name + ", version="
+    if (name == null) {
+      String msg = "Invalid module specification (name is required): name=null, version="
                    + version + ", groupId=" + groupId;
       throw new BundleException(msg);
     }
@@ -177,6 +199,91 @@ public class Resolver {
     dependencyStack.push(module.getGroupId(), module.getName(), module.getVersion());
     resolveDependencies(location, dependencyStack);
     return location;
+  }
+
+  private String findNewestVersion(String groupId, String name) {
+    TCLogger log = TCLogging.getLogger(Resolver.class);
+    log.info("findNewestVersion(" + groupId + ", " + name +")");
+    
+    final String symName = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
+    String newestVersion = null;
+    
+    log.info("looking for symName = " + symName);
+    
+    for(Iterator i = repositories.iterator(); i.hasNext();) {
+      String root = ResolverUtils.canonicalize((File) i.next());
+      
+      log.info("root = " + root);
+      File repoRoot = new File(root);
+      if(repoRoot.exists() && repoRoot.isDirectory()) {
+        log.info("looking for possible flat files");
+        // Flat repo - search for jars at root with name as prefix (name-<version>.jar) 
+        Collection<File> possibles = FileUtils.listFiles(repoRoot, new AndFileFilter(new PrefixFileFilter(name + "-"), new SuffixFileFilter(".jar")), null);
+        log.info("found flat file possibles = " + possibles.toString());
+        
+        // Hierarchical repo - search for jars at groupId/name subdir
+        File nameRoot = new File(OSGiToMaven.makeBundlePathnamePrefix(root, groupId, name));
+        log.info("checking hierarchical repo root: " + nameRoot.getAbsolutePath());
+        if(nameRoot.exists() && nameRoot.isDirectory()) {
+          possibles.addAll(FileUtils.listFiles(nameRoot, new SuffixFileFilter(".jar"), TrueFileFilter.INSTANCE));
+          log.info("found all possibles = " + possibles.toString());
+        }
+        
+        for(File file : possibles) {
+          Manifest manifest = getManifest(file);
+          if (manifest == null) {
+            warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { file.getName() });
+            continue;
+          }
+          
+          if(symName.equals(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+            String moduleTcVersion = manifest.getMainAttributes().getValue("tc-version");
+            if(moduleTcVersion == null) {
+              moduleTcVersion = VersionMatcher.ANY_VERSION;
+            }
+            String moduleApiVersion = manifest.getMainAttributes().getValue("api-version");
+            if(moduleApiVersion == null) {
+              moduleApiVersion = VersionMatcher.ANY_VERSION;
+            }
+            if(versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
+              log.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+              newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+              log.info("new version = " + newestVersion);
+            } else {
+              log.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion + " - not appropriate for current tc version");
+            }
+          }
+        } 
+      }
+    }
+    
+    if(newestVersion != null) {
+      return OSGiToMaven.bundleVersionToProjectVersion(newestVersion);
+    } else {
+      return null;
+    }
+  }
+  
+  static String newerVersion(String v1, String v2) {
+    // Deal with nulls
+    if(v1 == null) {
+      if(v2 == null) {
+        return null;
+      } else {
+        return v2;
+      }
+    } else if(v2 == null) {
+      return v1;
+    }
+    
+    org.osgi.framework.Version v1v = new org.osgi.framework.Version(v1);
+    org.osgi.framework.Version v2v = new org.osgi.framework.Version(v2);
+    
+    if(v1v.compareTo(v2v) > 0) {
+      return v1;
+    } else {
+      return v2;
+    }
   }
 
   public final File[] resolve(Module[] modules) throws BundleException {
@@ -380,7 +487,7 @@ public class Resolver {
     return location;
   }
 
-  private Manifest getManifest(final File file) {
+  static Manifest getManifest(final File file) {
     try {
       return getManifest(file.toURI().toURL());
     } catch (MalformedURLException e) {
@@ -388,7 +495,7 @@ public class Resolver {
     }
   }
 
-  private Manifest getManifest(final URL location) {
+  static Manifest getManifest(final URL location) {
     try {
       final JarFile bundle = new JarFile(FileUtils.toFile(location));
       return bundle.getManifest();

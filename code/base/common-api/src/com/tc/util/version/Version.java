@@ -1,7 +1,7 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package org.terracotta.modules.tool;
+package com.tc.util.version;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

@@ -38,6 +38,7 @@ import com.tc.object.util.JarResourceLoader;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
@@ -182,7 +183,8 @@ public class ModulesLoader {
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
 
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
-    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories));
+    final ProductInfo info = ProductInfo.getInstance();
+    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), info.mavenArtifactsVersion(), info.apiVersion());
     final File[] locations = resolver.resolve(allModules);
 
     final URL[] bundleURLs = new URL[locations.length];

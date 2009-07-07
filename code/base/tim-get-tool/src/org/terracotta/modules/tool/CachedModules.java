@@ -22,6 +22,7 @@ import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
+import com.tc.util.version.VersionMatcher;
 
 import java.io.File;
 import java.io.FileNotFoundException;

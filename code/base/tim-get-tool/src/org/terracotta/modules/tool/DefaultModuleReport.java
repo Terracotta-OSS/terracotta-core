@@ -10,6 +10,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 import com.tc.util.runtime.Os;
+import com.tc.util.version.VersionMatcher;
 
 import java.io.File;
 import java.io.IOException;

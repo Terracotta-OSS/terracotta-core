@@ -274,4 +274,12 @@ public class OSGiToMavenTest extends TestCase {
     makeFlatBundlePathname("/tmp", "org-foo-bar.b_az.q.f_o-obar-1", "5.2.3.4.ALPHA1.0-beta",
                            "/tmp/f_o-obar-1-5.2.3.4-ALPHA1.0-beta.jar");
   }
+
+  public void testMakeBundlePathnamePrefix() {
+    String expect = "/tmp/tc/modules/org/terracotta/modules/tim-yogurt/";
+    expect = expect.replace('/', File.separatorChar);
+
+    assertEquals(expect, OSGiToMaven
+        .makeBundlePathnamePrefix("/tmp/tc/modules", "org.terracotta.modules", "tim-yogurt"));
+  }
 }
