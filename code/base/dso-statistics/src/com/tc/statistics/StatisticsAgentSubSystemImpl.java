@@ -11,6 +11,7 @@ import com.tc.statistics.beans.impl.StatisticsManagerMBeanImpl;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
+import com.tc.statistics.buffer.memory.MemoryStatisticsBufferImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
@@ -83,79 +84,20 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
       statisticsLogger.registerAction(new SRAMemoryUsage());
       statisticsLogger.startup();
 
-      // create the statistics buffer
-      File stat_path = config.statisticsPath().getFile();
-      if (!TCFileUtils.ensureWritableDir(stat_path, new TCFileUtils.EnsureWritableDirReporter() {
-
-        public void reportFailedCreate(final File dir, final Exception e) {
-          // TODO: needs to be properly written and put in a properties file
-          String msg = "\n**************************************************************************************\n" +
-            "Unable to create the directory '" +
-            dir.getAbsolutePath() + "' for the statistics buffer.\n" +
-            "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
-            "client has read and write privileges to this directory and its parent directories.\n" +
-            "**************************************************************************************\n";
-          CONSOLE_LOGGER.warn(msg);
-          DSO_LOGGER.warn(msg, e);
-        }
-
-        public void reportReadOnly(final File dir, final Exception e) {
-          // TODO: needs to be properly written and put in a properties file
-          String msg = "\n**************************************************************************************\n" +
-            "Unable to write to the directory '" +
-            dir.getAbsolutePath() + "' for the statistics buffer.\n" +
-            "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
-            "client has write privileges in this directory.\n" +
-            "**************************************************************************************\n";
-          CONSOLE_LOGGER.warn(msg);
-          DSO_LOGGER.warn(msg, e);
-        }
-      })) {
+      switch (type) {
+        case CLIENT:
+          statisticsBuffer = createClientStatisticsBuffer(type, statistics_config);
+          break;
+        case SERVER:
+          statisticsBuffer = createServerStatisticsBuffer(type, statistics_config, config.statisticsPath().getFile());
+          break;
+        default:
+          throw new TCRuntimeException("Unsupported statistics system type : " + type);
+      }
+      
+      if (null == statisticsBuffer) {
         return false;
       }
-      try {
-        statisticsBuffer = new H2StatisticsBufferImpl(type, statistics_config, stat_path);
-        statisticsBuffer.open();
-      } catch (StatisticsDatabaseStructureMismatchError e) {
-        // TODO: needs to be properly written and put in a properties file
-        String msg = "\n**************************************************************************************\n" +
-          "The statistics buffer couldn't be opened at \n" + "'" +
-          stat_path.getAbsolutePath() + "'.\n" +
-          "The CVT system will not be active for this node because the statistics buffer database\n" +
-          "structure version doesn't correspond to the one expected by the system.\n" +
-          "\n" +
-          "A simple solution is to delete the directory in which the statistics are stored so\n" +
-          "that a new version of the database can be installed.\n" +
-          "**************************************************************************************\n";
-        CONSOLE_LOGGER.warn(msg);
-        DSO_LOGGER.warn(msg, e);
-        return false;
-      } catch (StatisticsBufferException e) {
-        // TODO: needs to be properly written and put in a properties file
-        String msg = "\n**************************************************************************************\n" +
-          "The statistics buffer couldn't be opened at \n" + "'" +
-          stat_path.getAbsolutePath() + "'.\n" +
-          "The CVT system will not be active for this node.\n" + "\n" +
-          "A common reason for this is that you're launching several Terracotta L1\n" +
-          "clients on the same machine. The default directory for the statistics buffer\n" +
-          "uses the IP address of the machine that it runs on as the identifier.\n" +
-          "When several clients are being executed on the same machine, a typical solution\n" +
-          "to properly separate these directories is by using a JVM property at startup\n" +
-          "that is unique for each client.\n" + "\n" +
-          "For example:\n" +
-          "  dso-java.sh -Dtc.node-name=node1 your.main.Class\n" +
-          "\n" +
-          "You can then adapt the tc-config.xml file so that this JVM property is picked\n" +
-          "up when the statistics directory is configured by using %(tc.node-name) in the\n" +
-          "statistics path.\n" +
-          "**************************************************************************************\n";
-        CONSOLE_LOGGER.warn(msg);
-        DSO_LOGGER.warn(msg, e);
-        return false;
-      }
-      String infoMsg = "Statistics buffer: '" +
-        stat_path.getAbsolutePath() + "'.";
-      DSO_LOGGER.info(infoMsg);
 
       // create the statistics emitter mbean
       try {
@@ -186,6 +128,100 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
       this.notifyAll();
     }
     return true;
+  }
+
+  private StatisticsBuffer createClientStatisticsBuffer(final StatisticsSystemType type, final StatisticsConfig config) {
+    final StatisticsBuffer buffer = new MemoryStatisticsBufferImpl(type, config);
+    try {
+      buffer.open();
+    } catch (StatisticsBufferException e) {
+      // TODO: needs to be properly written and put in a properties file
+      String msg = "\n**************************************************************************************\n" +
+        "The statistics buffer couldn't be opened.\n" +
+        "The CVT system will not be active for this node.\n" + "\n" +
+        "**************************************************************************************\n";
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
+      return null;
+    }
+    DSO_LOGGER.info("Statistics buffer opened");
+
+    return buffer;
+  }
+
+  private StatisticsBuffer createServerStatisticsBuffer(final StatisticsSystemType type, final StatisticsConfig config, final File statPath) {
+    if (!TCFileUtils.ensureWritableDir(statPath, new TCFileUtils.EnsureWritableDirReporter() {
+
+      public void reportFailedCreate(final File dir, final Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg = "\n**************************************************************************************\n" +
+          "Unable to create the directory '" +
+          dir.getAbsolutePath() + "' for the statistics buffer.\n" +
+          "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
+          "client has read and write privileges to this directory and its parent directories.\n" +
+          "**************************************************************************************\n";
+        CONSOLE_LOGGER.warn(msg);
+        DSO_LOGGER.warn(msg, e);
+      }
+
+      public void reportReadOnly(final File dir, final Exception e) {
+        // TODO: needs to be properly written and put in a properties file
+        String msg = "\n**************************************************************************************\n" +
+          "Unable to write to the directory '" +
+          dir.getAbsolutePath() + "' for the statistics buffer.\n" +
+          "The CVT system will not be active for this node. To fix this, ensure that the Terracotta\n" +
+          "client has write privileges in this directory.\n" +
+          "**************************************************************************************\n";
+        CONSOLE_LOGGER.warn(msg);
+        DSO_LOGGER.warn(msg, e);
+      }
+    })) {
+      return null;
+    }
+    
+    final StatisticsBuffer buffer = new H2StatisticsBufferImpl(type, config, statPath);
+    
+    try {
+      buffer.open();
+    } catch (StatisticsDatabaseStructureMismatchError e) {
+      String msg = "\n**************************************************************************************\n" +
+        "The statistics buffer couldn't be opened at \n" + "'" +
+        statPath.getAbsolutePath() + "'.\n" +
+        "The CVT system will not be active for this node because the statistics buffer database\n" +
+        "structure version doesn't correspond to the one expected by the system.\n" +
+        "\n" +
+        "A simple solution is to delete the directory in which the statistics are stored so\n" +
+        "that a new version of the database can be installed.\n" +
+        "**************************************************************************************\n";
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
+      return null;
+    } catch (StatisticsBufferException e) {
+      // TODO: needs to be properly written and put in a properties file
+      String msg = "\n**************************************************************************************\n" +
+        "The statistics buffer couldn't be opened at \n" + "'" +
+        statPath.getAbsolutePath() + "'.\n" +
+        "The CVT system will not be active for this node.\n" + "\n" +
+        "A common reason for this is that you're launching several Terracotta L1\n" +
+        "clients on the same machine. The default directory for the statistics buffer\n" +
+        "uses the IP address of the machine that it runs on as the identifier.\n" +
+        "When several clients are being executed on the same machine, a typical solution\n" +
+        "to properly separate these directories is by using a JVM property at startup\n" +
+        "that is unique for each client.\n" + "\n" +
+        "For example:\n" +
+        "  dso-java.sh -Dtc.node-name=node1 your.main.Class\n" +
+        "\n" +
+        "You can then adapt the tc-config.xml file so that this JVM property is picked\n" +
+        "up when the statistics directory is configured by using %(tc.node-name) in the\n" +
+        "statistics path.\n" +
+        "**************************************************************************************\n";
+      CONSOLE_LOGGER.warn(msg);
+      DSO_LOGGER.warn(msg, e);
+      return null;
+    }
+    
+    DSO_LOGGER.info("Statistics buffer: '" + statPath.getAbsolutePath() + "'.");
+    return buffer;
   }
 
   public void registerMBeans(final MBeanServer server) throws MBeanRegistrationException, NotCompliantMBeanException, InstanceAlreadyExistsException {

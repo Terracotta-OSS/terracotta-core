@@ -7,6 +7,8 @@ public interface StatisticsConfig {
   public final static String KEY_EMITTER_SCHEDULE_INTERVAL = "emitter.schedule.interval";
   public final static String KEY_EMITTER_BATCH_SIZE = "emitter.batch.size";
   public final static String KEY_RETRIEVER_SCHEDULE_INTERVAL = "retriever.schedule.interval";
+  public final static String KEY_MAX_MEMORY_BUFFER_SIZE = "max.memory.buffer.size";
+  public final static String KEY_MEMORY_BUFFER_PURGE_PERCENTAGE = "memory.buffer.purge.percentage";
 
   public StatisticsConfig getParent();
 

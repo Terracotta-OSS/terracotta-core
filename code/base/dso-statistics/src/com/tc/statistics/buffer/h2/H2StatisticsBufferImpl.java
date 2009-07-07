@@ -5,16 +5,13 @@ package com.tc.statistics.buffer.h2;
 
 import org.h2.constant.ErrorCode;
 
-import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
-
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsSystemType;
-import com.tc.statistics.buffer.StatisticsBuffer;
-import com.tc.statistics.buffer.StatisticsBufferListener;
+import com.tc.statistics.buffer.AbstractStatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsConsumer;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferCaptureSessionCreationErrorException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferDatabaseCloseErrorException;
@@ -45,19 +42,15 @@ import com.tc.util.concurrent.FileLockGuard;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 
-public class H2StatisticsBufferImpl implements StatisticsBuffer {
+public class H2StatisticsBufferImpl extends AbstractStatisticsBuffer {
   public final static int DATABASE_STRUCTURE_VERSION = 4;
   
   private final static long DATABASE_STRUCTURE_CHECKSUM = 293260301L;
@@ -89,14 +82,13 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
   private final StatisticsDatabase database;
 
   private volatile boolean open = false;
-  private volatile String defaultAgentIp;
-  private volatile String defaultAgentDifferentiator = null;
-
-  private final Set listeners = new CopyOnWriteArraySet();
 
   public H2StatisticsBufferImpl(final StatisticsSystemType type, final StatisticsConfig config, final File dbDir) {
+    super();
+    
     Assert.assertNotNull("type", type);
     Assert.assertNotNull("config", config);
+    
     final String suffix;
     if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, false)) {
       synchronized (rand) {
@@ -109,50 +101,6 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
     this.type = type;
     this.config = config;
     this.lockFile = new File(dbDir, suffix+"-tc.lck");
-    try {
-      this.defaultAgentIp = InetAddress.getLocalHost().getHostAddress();
-    } catch (UnknownHostException e) {
-     throw new RuntimeException("Unexpected error while getting localhost address:", e);
-    }
-  }
-
-  public void setDefaultAgentIp(String defaultAgentIp) {
-    this.defaultAgentIp = defaultAgentIp;
-  }
-
-  public void setDefaultAgentDifferentiator(String defaultAgentDifferentiator) {
-    this.defaultAgentDifferentiator = defaultAgentDifferentiator;
-  }
-
-  public String getDefaultAgentIp() {
-    return defaultAgentIp;
-  }
-
-  public String getDefaultAgentDifferentiator() {
-    return defaultAgentDifferentiator;
-  }
-
-  public String getDefaultNodeName() {
-    return defaultAgentIp + " (" + defaultAgentDifferentiator + ")";
-  }
-
-  private void checkDefaultAgentInfo() {
-    if (null == defaultAgentIp) {
-      LOGGER.warn("Running without a default agent IP in the statistics buffer, this is probably due to not calling setDefaultAgentIp after creating a new buffer instance.");
-    }
-    if (null == defaultAgentDifferentiator) {
-      LOGGER.warn("Running without a default agent differentiator in the statistics buffer, this is probably due to not calling getDefaultAgentDifferentiator after creating a new buffer instance.");
-    }
-  }
-
-  public void fillInDefaultValues(final StatisticData data) {
-    if (null == data.getAgentIp()) {
-      data.setAgentIp(defaultAgentIp);
-    }
-    
-    if (null == data.getAgentDifferentiator()) {
-      data.setAgentDifferentiator(defaultAgentDifferentiator);
-    }
   }
 
   public void open() throws StatisticsBufferException {
@@ -580,62 +528,6 @@ public class H2StatisticsBufferImpl implements StatisticsBuffer {
       throw e;
     } catch (Exception e) {
       throw new StatisticsBufferStatisticConsumptionErrorException(sessionId, e);
-    }
-  }
-
-  public void addListener(final StatisticsBufferListener listener) {
-    if (null == listener) {
-      return;
-    }
-
-    listeners.add(listener);
-  }
-
-  public void removeListener(final StatisticsBufferListener listener) {
-    if (null == listener) {
-      return;
-    }
-
-    listeners.remove(listener);
-  }
-
-  private void fireCapturingStarted(final String sessionId) {
-    if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsBufferListener)it.next()).capturingStarted(sessionId);
-      }
-    }
-  }
-
-  private void fireCapturingStopped(final String sessionId) {
-    if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsBufferListener)it.next()).capturingStopped(sessionId);
-      }
-    }
-  }
-
-  private void fireOpened() {
-    if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsBufferListener)it.next()).opened();
-      }
-    }
-  }
-
-  private void fireClosing() {
-    if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsBufferListener)it.next()).closing();
-      }
-    }
-  }
-
-  private void fireClosed() {
-    if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsBufferListener)it.next()).closed();
-      }
     }
   }
 }

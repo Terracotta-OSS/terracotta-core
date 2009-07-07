@@ -4,6 +4,7 @@
 package com.tc.statistics.config.impl;
 
 import com.tc.statistics.beans.StatisticsEmitterMBean;
+import com.tc.statistics.buffer.memory.MemoryStatisticsBufferImpl;
 import com.tc.statistics.config.StatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
@@ -25,6 +26,8 @@ public class StatisticsConfigImpl implements StatisticsConfig {
     defaultParamsMap.put(KEY_RETRIEVER_SCHEDULE_INTERVAL, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY);
     defaultParamsMap.put(KEY_EMITTER_SCHEDULE_INTERVAL, StatisticsEmitterMBean.DEFAULT_FREQUENCY);
     defaultParamsMap.put(KEY_EMITTER_BATCH_SIZE, StatisticsEmitterMBean.DEFAULT_BATCH_SIZE);
+    defaultParamsMap.put(KEY_MAX_MEMORY_BUFFER_SIZE, MemoryStatisticsBufferImpl.DEFAULT_MAX_SIZE);
+    defaultParamsMap.put(KEY_MEMORY_BUFFER_PURGE_PERCENTAGE, MemoryStatisticsBufferImpl.DEFAULT_PURGE_PERCENTAGE);
     defaultParams = Collections.unmodifiableMap(defaultParamsMap);
 
     parent = null;
