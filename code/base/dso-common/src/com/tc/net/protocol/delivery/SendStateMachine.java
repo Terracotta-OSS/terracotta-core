@@ -122,6 +122,9 @@ public class SendStateMachine extends AbstractStateMachine {
         // this shall not, old ack
         Assert.failure("Received bad ack: " + ackedSeq + " expected >= " + acked);
       } else {
+        logger.info("SENDER-" + debugId + "-" + delivery.getConnectionId() + "; AckSeq: " + ackedSeq + " Acked: "
+                    + acked);
+
         while (ackedSeq > acked) {
           ++acked;
           removeMessage();
@@ -153,7 +156,8 @@ public class SendStateMachine extends AbstractStateMachine {
       if (protocolMessage == null || protocolMessage.isSend()) return;
 
       long ackedSeq = protocolMessage.getAckSequence();
-      Assert.eval(ackedSeq >= acked);
+      Assert.eval("SENDER-" + debugId + "-" + delivery.getConnectionId() + ": AckSeq " + ackedSeq
+                  + " should be greater than " + acked, ackedSeq >= acked);
 
       while (ackedSeq > acked) {
         ++acked;
