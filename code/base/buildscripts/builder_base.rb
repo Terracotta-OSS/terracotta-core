@@ -253,7 +253,7 @@ class TerracottaBuilder
 
   # Executes the given subcommand of the tim-get tool with the given flags.
   # Some flags may be added to the command-line automatically based on flags
-  # passed to tcbuild itself.  For instance, if the final_kit=true flag is
+  # passed to tcbuild itself.  For instance, if the kit-type=final flag is
   # passed to tcbuild, then this method will automatically set the
   # includeSnapshots flag to false.
   #
@@ -290,7 +290,7 @@ class TerracottaBuilder
     end
 
     prefix = 'org.terracotta.modules.tool'
-    include_snapshots = @config_source['final_kit'] == 'true' ? false : true
+    include_snapshots = @config_source['kit-type'] == 'final' ? false : true
     java_opts = ["-D#{prefix}.includeSnapshots=#{include_snapshots}",
       "-D#{prefix}.cache=#{self.tim_get_index_cache}"]
     if index_url = @config_source['tim-get.index.url']

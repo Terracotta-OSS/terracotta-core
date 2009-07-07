@@ -110,6 +110,13 @@ postscripts:
   - make-build-data:
       args:
         - lib/resources
+  - modify-tim-get-properties:
+      args:
+        - location: lib/resources/tim-get.properties
+        - kit-type:
+            stable:
+              org.terracotta.modules.tool.dataFileUrl: http://stable-repo.terracotta.org.s3.amazonaws.com/maven2/tim-get/2/index.xml.gz
+              org.terracotta.modules.tool.relativeUrlBase: http://stable-repo.terracotta.org.s3.amazonaws.com/maven2        
   - install-forge-tims:
       args:
         - tim-apache-struts-1.1
