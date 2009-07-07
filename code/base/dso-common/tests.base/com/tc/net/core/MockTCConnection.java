@@ -122,4 +122,9 @@ public class MockTCConnection implements TCConnection {
     throw new ImplementMe();
   }
 
+  public void addWeight(int addWeightBy) {
+    throw new ImplementMe();
+    
+  }
+
 }

@@ -7,6 +7,9 @@ import com.tc.exception.TCInternalError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NIOWorkarounds;
+import com.tc.net.core.event.TCConnectionErrorEvent;
+import com.tc.net.core.event.TCConnectionEvent;
+import com.tc.net.core.event.TCConnectionEventListener;
 import com.tc.net.core.event.TCListenerEvent;
 import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.util.Assert;
@@ -27,22 +30,27 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-class CoreNIOServices extends Thread implements TCListenerEventListener {
-  private static final TCLogger     logger        = TCLogging.getLogger(CoreNIOServices.class);
+class CoreNIOServices extends Thread implements TCListenerEventListener, TCConnectionEventListener {
+  private static final TCLogger                logger        = TCLogging.getLogger(CoreNIOServices.class);
 
-  private final Selector            selector;
-  private final LinkedQueue         selectorTasks;
-  private final String              baseThreadName;
-  private final TCWorkerCommManager workerCommMgr;
-  private final List                listeners     = new ArrayList();
-  private final SocketParams        socketParams;
-  private final SynchronizedLong    bytesRead     = new SynchronizedLong(0);
-  private final SetOnceFlag         stopRequested = new SetOnceFlag();
+  private final Selector                       selector;
+  private final LinkedQueue                    selectorTasks;
+  private final String                         baseThreadName;
+  private final TCWorkerCommManager            workerCommMgr;
+  private final List                           listeners     = new ArrayList();
+  private final SocketParams                   socketParams;
+  private final SynchronizedLong               bytesRead     = new SynchronizedLong(0);
+  private final SetOnceFlag                    stopRequested = new SetOnceFlag();
+
+  // maintains weight of all L1 Connections which is handled by this WorkerComm
+  private final HashMap<TCConnection, Integer> managedConnectionsMap;
+  private int                                  clientWeights;
 
   public CoreNIOServices(String commThreadName, TCWorkerCommManager workerCommManager, SocketParams socketParams) {
     setDaemon(true);
@@ -54,6 +62,7 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
     this.socketParams = socketParams;
     this.baseThreadName = commThreadName;
     this.workerCommMgr = workerCommManager;
+    this.managedConnectionsMap = new HashMap<TCConnection, Integer>();
   }
 
   public void run() {
@@ -145,7 +154,6 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
   }
 
   void addSelectorTask(final Runnable task) {
-    Assert.eval(Thread.currentThread() != this);
     boolean isInterrupted = false;
 
     try {
@@ -426,26 +434,14 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
       sc = ssc.accept();
       sc.configureBlocking(false);
 
-      if (workerCommMgr == null) {
-        // Single threaded server model
-        final TCConnectionJDK14 conn = lsnr.createConnection(sc, this, socketParams);
-        sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, conn);
-
-        return;
-      }
-      
-      // Multi threaded server model
-      final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
-      final TCConnectionJDK14 conn = lsnr.createConnection(sc, workerCommThread, socketParams);
-      
-      workerCommThread.requestReadWriteInterest(conn, sc);
+      final TCConnectionJDK14 conn = lsnr.createConnection(sc, this, socketParams);
+      sc.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, conn);
     } catch (IOException ioe) {
       if (logger.isInfoEnabled()) {
         logger.info("IO Exception accepting new connection", ioe);
       }
 
       cleanupChannel(sc, null);
-      return;
     }
   }
 
@@ -477,6 +473,10 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
 
   public long getTotalBytesRead() {
     return this.bytesRead.get();
+  }
+
+  public synchronized int getWeight() {
+    return this.clientWeights;
   }
 
   private void handleRequest(final InterestRequest req) {
@@ -641,4 +641,76 @@ class CoreNIOServices extends Thread implements TCListenerEventListener {
     lsnr.addEventListener(this);
   }
 
+  private synchronized void addConnection(TCConnectionJDK14 connection, int initialWeight) {
+    Assert.eval(!managedConnectionsMap.containsKey(connection));
+    managedConnectionsMap.put(connection, initialWeight);
+    this.clientWeights += initialWeight;
+    connection.addListener(this);
+  }
+
+  /*
+   * Immediately after Client handshake, weight is added on that particular client connection. MainComm thread hands
+   * over this connection to a WorkerComm thread. Weights can be added to client connections whenever needed.
+   */
+  public synchronized void addWeight(final TCConnectionJDK14 connection, final int addWeightBy,
+                                     final SocketChannel channel) {
+
+    if (this.managedConnectionsMap.containsKey(connection)) {
+      // this connection is already handled by a WorkerComm
+      this.clientWeights += addWeightBy;
+      this.managedConnectionsMap.put(connection, this.clientWeights);
+    } else {
+      // MainComm Thread
+
+      if (workerCommMgr == null) {
+        // no worker comms.
+        return;
+      }
+
+      removeReadInterest(connection, channel);
+      removeWriteInterest(connection, channel);
+      unregister(channel);
+
+      Runnable task = new Runnable() {
+        public void run() {
+          final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
+          connection.setCommWorker(workerCommThread);
+          workerCommThread.addConnection(connection, addWeightBy);
+          workerCommThread.requestReadWriteInterest(connection, channel);
+        }
+      };
+
+      // we are at a message boundary. right time to set a new worker thread.
+
+      // adding task to its own queue. Ensuring this connection's protocol adaptor is in right state before giving it to
+      // other thread. This can also be done by making protocol adapters fire events on each message boundary (ie.,
+      // after addReadData detected full message) and then doing WorkerComm transfer in the event.
+      addSelectorTask(task);
+    }
+  }
+
+  public synchronized void closeEvent(TCConnectionEvent event) {
+    Assert.eval(managedConnectionsMap.containsKey(event.getSource()));
+    int closedCientWeight = managedConnectionsMap.get(event.getSource());
+    this.clientWeights -= closedCientWeight;
+    managedConnectionsMap.remove(event.getSource());
+    event.getSource().removeListener(this);
+  }
+
+  public void connectEvent(TCConnectionEvent event) {
+    //
+  }
+
+  public void endOfFileEvent(TCConnectionEvent event) {
+    //
+  }
+
+  public void errorEvent(TCConnectionErrorEvent errorEvent) {
+    //
+  }
+
+  @Override
+  public synchronized String toString() {
+    return "[" + this.getName() + ", wt:" + this.clientWeights + "]";
+  }
 }

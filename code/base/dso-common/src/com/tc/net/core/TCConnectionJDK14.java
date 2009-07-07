@@ -52,7 +52,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private static final long              WARN_THRESHOLD      = 0x400000L;                                       // 4MB
 
   private final LinkedList               writeContexts       = new LinkedList();
-  private final CoreNIOServices          commNIOServiceThread;
+  private CoreNIOServices                commNIOServiceThread;
 
   private final TCConnectionManagerJDK14 parent;
   private final TCConnectionEventCaller  eventCaller         = new TCConnectionEventCaller(logger);
@@ -97,6 +97,10 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     this.socketParams = socketParams;
     this.commNIOServiceThread = nioServiceThread;
+  }
+
+  public synchronized void setCommWorker(CoreNIOServices worker) {
+    this.commNIOServiceThread = worker;
   }
 
   private void closeImpl(Runnable callback) {
@@ -634,6 +638,10 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     void writeComplete() {
       this.message.wasSent();
     }
+  }
+
+  public void addWeight(int addWeightBy) {
+    this.commNIOServiceThread.addWeight(this, addWeightBy, channel);
   }
 
 }

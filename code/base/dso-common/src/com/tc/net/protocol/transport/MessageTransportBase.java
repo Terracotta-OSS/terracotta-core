@@ -250,12 +250,13 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
           // DEV-1689 : Don't bother for connections which actually didn't make up to Transport Establishment.
           this.transport.status.reset();
           this.transport.fireTransportDisconnectedEvent();
+          this.transport.getConnection().asynchClose();
         } else {
           logger.warn("Old connection " + oldConnection + "might not have been Transport Established ");
         }
       }
       // remove the transport as a listener for the old connection
-      if (oldConnection != null && oldConnection != transport.connection) {
+      if (oldConnection != null && oldConnection != transport.getConnection()) {
         oldConnection.removeListener(transport);
       }
       // set the new connection to the current connection.

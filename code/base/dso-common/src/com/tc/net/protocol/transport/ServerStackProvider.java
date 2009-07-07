@@ -300,6 +300,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     }
 
     private void sendSynAck(ConnectionID connectionId, TCConnection source) {
+      source.addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       sendSynAck(connectionId, null, source);
     }
 
