@@ -310,13 +310,20 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     }
 
     // case 5: closing all connections from server side
+    System.out.println("XXX closing all client connections");
     commsMgr.getConnectionManager().closeAllConnections(1000);
 
     // all clients should reconnect and should be distributed fairly among the worker comms.
     ThreadUtil.reallySleep(5000);
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(0));
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(1));
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(2));
+    
+    System.out.println("XXX waiting for all clients reconnect");
+    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(0) != 2)
+           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(1) != 2)
+           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(2) != 2)) {
+      System.out.print(".");
+      ThreadUtil.reallySleep(5000);
+    }
+
     listener.stop(5000);
   }
 
