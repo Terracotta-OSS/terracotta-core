@@ -77,8 +77,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public void addWeight(int addWeightBy) {
-    throw new ImplementMe();
-    
+    //
   }
 
 }
