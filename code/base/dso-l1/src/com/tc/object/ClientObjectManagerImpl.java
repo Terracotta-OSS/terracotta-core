@@ -900,13 +900,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private TCObject basicLookup(final Object obj) {
-    TCObject tcobj;
-    if (obj instanceof Manageable) {
-      tcobj = ((Manageable) obj).__tc_managed();
-    } else {
-      tcobj = (TCObject) this.pojoToManaged.get(obj);
-    }
-    return tcobj;
+    if (obj == null) return null;
+
+    if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
+
+    return (TCObject) this.pojoToManaged.get(obj);
   }
 
   private void basicAddLocal(final TCObject obj, final boolean fromLookup) {

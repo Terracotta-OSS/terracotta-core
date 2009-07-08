@@ -713,6 +713,8 @@ public class ManagerImpl implements Manager {
   }
 
   public TCObject lookupExistingOrNull(final Object pojo) {
+    if (pojo == null) return null;
+
     if (pojo instanceof Manageable) { return ((Manageable) pojo).__tc_managed(); }
 
     try {
