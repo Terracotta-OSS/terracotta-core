@@ -41,7 +41,8 @@ bundled_components:
   - common:
       module_packages:
         - terracotta-l1:
-            install_directory: lib
+            # install in 'api-jars' folder so it can be deleted later
+            install_directory: api-jars
             add_dependencies: true
             modules:
               - dso-l1
@@ -175,7 +176,7 @@ postscripts:
             - lib/resources/tim-get.properties
         - groupId: org.terracotta
           artifact: terracotta-l1
-          file: lib/terracotta-l1.jar
+          file: api-jars/terracotta-l1.jar
           pom: poms/terracotta-l1-pom.xml
           inject: 
             - lib/resources/build-data.txt           
