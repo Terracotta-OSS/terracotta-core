@@ -26,7 +26,6 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
        See the Terracotta DSO Guide for additional information. -->
   <clients>
     <logs>logs/client-logs/%(webserver.log.name)</logs>
-    <statistics>statistics/%(webserver.log.name)</statistics>
     <modules>
       <module name="tim-apache-struts-1.1" version="@tim.version@" />
       <module name="tim-jetty-6.1" version="@tim.version@" />
