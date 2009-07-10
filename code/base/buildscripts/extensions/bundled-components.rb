@@ -104,6 +104,16 @@ module BundledComponents
         module_package[name]['modules'].each do |module_name|
           a_module = @module_set[module_name]
           a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+
+          # also handling dependencies if set
+          if module_package[name]['add_dependencies']
+            puts "pacaking dependencies for #{a_module.name}"
+            a_module.dependent_modules.each do |dependent_module|
+              puts " .. #{dependent_module.name}"
+              dependent_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+            end
+          end
+          
           if javadoc
             puts "Generating javadoc for #{a_module.name}"
             javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "docs", "javadoc").ensure_directory
