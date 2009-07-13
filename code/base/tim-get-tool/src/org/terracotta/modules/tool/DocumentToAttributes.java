@@ -4,12 +4,14 @@
  */
 package org.terracotta.modules.tool;
 
-import org.jdom.Attribute;
-import org.jdom.Element;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,26 +33,35 @@ abstract class DocumentToAttributes {
 
   public static Map<String, Object> transform(Element module) {
     Map<String, Object> attributes = new HashMap<String, Object>();
+    NamedNodeMap attrMap = module.getAttributes();
 
-    for (Iterator i = module.getAttributes().iterator(); i.hasNext();) {
-      Attribute attr = (Attribute) i.next();
+    for (int i = 0; i < attrMap.getLength(); i++) {
+      Attr attr = (Attr) attrMap.item(i);
       attributes.put(attr.getName(), attr.getValue());
     }
 
-    for (Iterator i = module.getChildren().iterator(); i.hasNext();) {
-      Element child = (Element) i.next();
-      if ("dependencies".equals(child.getName())) {
-        List<Map<String, Object>> dependencies = new ArrayList<Map<String, Object>>();
-        for (Iterator j = child.getChildren().iterator(); j.hasNext();) {
-          Element element = (Element) j.next();
-          Map<String, Object> dependency = DocumentToAttributes.transform(element);
-          dependency.put("_dependencyType", DependencyType.computeType(element.getName()));
-          dependencies.add(dependency);
+    NodeList childList = module.getChildNodes();
+    for (int i = 0; i < childList.getLength(); i++) {
+      Node node = childList.item(i);
+      if (node.getNodeType() == Node.ELEMENT_NODE) {
+        Element child = (Element) node;
+        if ("dependencies".equals(child.getTagName())) {
+          List<Map<String, Object>> dependencies = new ArrayList<Map<String, Object>>();
+          NodeList dependencyList = child.getChildNodes();
+          for (int j = 0; j < dependencyList.getLength(); j++) {
+            node = dependencyList.item(j);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+              Element element = (Element) node;
+              Map<String, Object> dependency = DocumentToAttributes.transform(element);
+              dependency.put("_dependencyType", DependencyType.computeType(element.getTagName()));
+              dependencies.add(dependency);
+            }
+          }
+          attributes.put(child.getTagName(), dependencies);
+          continue;
         }
-        attributes.put(child.getName(), dependencies);
-        continue;
+        attributes.put(child.getTagName(), child.getTextContent());
       }
-      attributes.put(child.getName(), child.getText());
     }
 
     return attributes;

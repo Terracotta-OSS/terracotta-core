@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" 
 	targetNamespace="http://www.terracotta.org/group-config-for-l1"
-	xmlns="http://www.terracotta.org/group-config-for-l1">
+	xmlns="http://www.terracotta.org/group-config-for-l1" version="1">
 	<xs:element name="server-groups">
 		<xs:complexType>
 			<xs:sequence minOccurs="1" maxOccurs="unbounded">

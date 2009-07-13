@@ -6,9 +6,9 @@ package org.terracotta.modules.tool;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Element;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
+import org.w3c.dom.Element;
 
 import com.google.inject.Inject;
 import com.tc.util.version.VersionMatcher;

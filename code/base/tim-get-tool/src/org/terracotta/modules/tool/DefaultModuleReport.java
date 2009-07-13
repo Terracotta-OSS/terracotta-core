@@ -5,9 +5,8 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import com.tc.util.runtime.Os;
 import com.tc.util.version.VersionMatcher;
@@ -16,8 +15,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 public class DefaultModuleReport extends ModuleReport {
 
@@ -104,9 +113,9 @@ public class DefaultModuleReport extends ModuleReport {
     }
 
     String compatibility = "any Terracotta version.";
-    if(! module.tcVersion().equals(VersionMatcher.ANY_VERSION)) {
+    if (!module.tcVersion().equals(VersionMatcher.ANY_VERSION)) {
       compatibility = "TC " + module.tcVersion();
-    } else if(! module.apiVersion().equals(VersionMatcher.ANY_VERSION)) {
+    } else if (!module.apiVersion().equals(VersionMatcher.ANY_VERSION)) {
       compatibility = "API " + module.apiVersion();
     }
     out.println("Compatible with " + compatibility);
@@ -148,27 +157,45 @@ public class DefaultModuleReport extends ModuleReport {
     StringWriter writer = new StringWriter();
     PrintWriter out = new PrintWriter(writer);
 
-    Element parent = new Element("modules");
-    Element child = new Element("module");
-    parent.addContent(child);
+    Document document;
+
+    try {
+      document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+    } catch (ParserConfigurationException pce) {
+      throw new RuntimeException(pce);
+    }
+
+    Element parent = document.createElement("modules");
+    Element child = document.createElement("module");
+    parent.appendChild(child);
     child.setAttribute("name", module.artifactId());
     child.setAttribute("version", module.version());
     if (!isUsingDefaultGroupId(module)) child.setAttribute("group-id", module.groupId());
+    document.getDocumentElement().appendChild(parent);
 
     out.println("Configuration:\n ");
-    StringWriter sw = new StringWriter();
-    Format formatter = Format.getPrettyFormat();
-    formatter.setIndent(StringUtils.repeat(" ", INDENT_WIDTH));
-    XMLOutputter xmlout = new XMLOutputter(formatter);
     try {
-      xmlout.output(parent, new PrintWriter(sw));
-      out.println(indent(sw.toString()));
-    } catch (IOException e) {
+      serialize(document, out);
+      out.println(indent(out.toString()));
+    } catch (Exception e) {
       out.println(e.getMessage());
     }
 
     String text = writer.toString();
     return StringUtils.chomp(StringUtils.trim(text));
+  }
+
+  public void serialize(Document doc, Writer out) throws Exception {
+    TransformerFactory tfactory = TransformerFactory.newInstance();
+    Transformer serializer;
+    try {
+      serializer = tfactory.newTransformer();
+      serializer.setOutputProperty(OutputKeys.INDENT, "yes");
+      serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+      serializer.transform(new DOMSource(doc), new StreamResult(out));
+    } catch (TransformerException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private String installationInfo(Module module) {

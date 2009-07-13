@@ -5,7 +5,7 @@
 package org.terracotta.modules.tool;
 
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Element;
+import org.w3c.dom.Element;
 
 /**
  * Composite unique identifier for TIMs.
@@ -100,9 +100,9 @@ public class ModuleId implements Comparable {
   }
 
   public static ModuleId create(Element element) {
-    String groupId = element.getAttributeValue("groupId");
-    String artifactId = element.getAttributeValue("artifactId");
-    String version = element.getAttributeValue("version");
+    String groupId = element.getAttribute("groupId");
+    String artifactId = element.getAttribute("artifactId");
+    String version = element.getAttribute("version");
     return new ModuleId(groupId, artifactId, version);
   }
 

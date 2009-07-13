@@ -8,9 +8,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
@@ -22,6 +19,10 @@ import org.mortbay.thread.BoundedThreadPool;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.util.ChecksumUtil;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.tc.test.TCTestCase;
 
@@ -35,9 +36,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 public final class ModuleTest extends TCTestCase {
   protected Config testConfig;
 
+  @Override
   public void setUp() {
     testConfig = TestConfig.createTestConfig();
   }
@@ -307,12 +311,19 @@ public final class ModuleTest extends TCTestCase {
     InputStream data = null;
     try {
       data = getClass().getResourceAsStream("/testData01.xml");
-      Document document = new SAXBuilder().build(data);
-      List<Element> modules = document.getRootElement().getChildren();
-      assertEquals(2, modules.size());
+      Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(data);
+      NodeList childNodes = document.getDocumentElement().getChildNodes();
+      List<Element> elemList = new ArrayList<Element>();
+      for (int i = 0; i < childNodes.getLength(); i++) {
+        Node node = childNodes.item(i);
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+          elemList.add((Element) node);
+        }
+      }
+      assertEquals(2, elemList.size());
 
       // tim-ehache-1.3
-      Module module = new Module(null, modules.get(0), testConfig.getRelativeUrlBase());
+      Module module = new Module(null, elemList.get(0), testConfig.getRelativeUrlBase());
       assertEquals("tim-ehcache-1.3", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());
@@ -356,7 +367,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("org.terracotta.modules", reference.groupId());
 
       // tim-ehache-commons
-      module = new Module(null, modules.get(1), testConfig.getRelativeUrlBase());
+      module = new Module(null, elemList.get(1), testConfig.getRelativeUrlBase());
       assertEquals("tim-ehcache-commons", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());

@@ -2,6 +2,6 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="dso-l1-api"/>
   <dependencies>
-    <dependency name="trove" rev="1.1b5" org="terracotta"/>
+    <dependency name="trove" rev="1.1-beta-5" org="terracotta"/>
   </dependencies>
 </ivy-module>

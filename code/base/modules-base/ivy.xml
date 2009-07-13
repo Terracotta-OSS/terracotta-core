@@ -2,6 +2,6 @@
 <ivy-module version="2.0">
   <info organisation="ibiblio" module="modules-base"/>
   <dependencies>
-	<dependency name="knopflerfish" rev="2.0.1-tc-20080108" org="terracotta"/>
+    <dependency name="knopflerfish-tc" rev="2.0.1" org="terracotta"/>
   </dependencies>
 </ivy-module>

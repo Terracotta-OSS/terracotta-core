@@ -37,15 +37,11 @@
   <properties>
     <tcVersion>3.2.0-SNAPSHOT</tcVersion>
     <sigar.version>1.6.2</sigar.version>
+    <jetty.version>6.1.8</jetty.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>linked-child-process</artifactId>
-        <version>1.0.4</version>
-      </dependency>
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
@@ -69,7 +65,7 @@
       <dependency>
         <groupId>commons-cli</groupId>
         <artifactId>commons-cli</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
       </dependency>
       <dependency>
         <groupId>commons-io</groupId>
@@ -80,11 +76,6 @@
         <groupId>commons-httpclient</groupId>
         <artifactId>commons-httpclient</artifactId>
         <version>3.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.management</groupId>
-        <artifactId>jmxri</artifactId>
-        <version>1.2.1</version>
       </dependency>
       <dependency>
         <groupId>javax.management</groupId>
@@ -122,19 +113,19 @@
         <version>2.0.1</version>
       </dependency>
       <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>servlet-api</artifactId>
-        <version>2.4</version>
-      </dependency>
+        <groupId>org.mortbay.jetty</groupId>
+        <artifactId>servlet-api-2.5</artifactId>
+        <version>${jetty.version}</version>
+      </dependency> 
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-util</artifactId>
-        <version>6.1.8</version>
+        <version>${jetty.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty</artifactId>
-        <version>6.1.8</version>
+        <version>${jetty.version}</version>
       </dependency>
       <dependency>
         <groupId>concurrent</groupId>
@@ -184,24 +175,9 @@
         <version>2.5.1</version>
       </dependency>
       <dependency>
-        <groupId>tomcat</groupId>
-        <artifactId>catalina</artifactId>
-        <version>5.0.28</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tomcat</groupId>
-        <artifactId>juli</artifactId>
-        <version>6.0.9</version>
-      </dependency>
-      <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>1.0.67</version>
-      </dependency>
-      <dependency>
-        <groupId>dom4j</groupId>
-        <artifactId>dom4j</artifactId>
-        <version>1.6.1</version>
       </dependency>
       <dependency>
          <groupId>net.sourceforge</groupId>
@@ -213,6 +189,11 @@
         <artifactId>google-collections</artifactId>
         <version>1.0-rc2</version>
       </dependency> 
+      <dependency>
+        <groupId>com.google.code.guice</groupId>
+        <artifactId>guice</artifactId>
+        <version>1.0</version>
+      </dependency>
 
       <!-- dependencies for tests -->
       <dependency>
@@ -231,73 +212,10 @@
         <version>1.3</version>
       </dependency>
       <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>commons-pool</groupId>
-        <artifactId>commons-pool</artifactId>
-        <version>1.2</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>commons-dbcp</groupId>
-        <artifactId>commons-dbcp</artifactId>
-        <version>1.2.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring</artifactId>
-        <version>2.0.1</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-hibernate3</artifactId>
-        <version>2.0.1</version>
-      </dependency>
-      <dependency>
-        <!-- dso-container-tests -->
-        <groupId>antlr</groupId>
-        <artifactId>antlr</artifactId>
-        <version>2.7.7</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests, common -->
+        <!-- common -->
         <groupId>hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
         <version>1.7.2.2</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring -->
-        <groupId>jmock</groupId>
-        <artifactId>jmock</artifactId>
-        <version>1.0.1</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>ognl</groupId>
-        <artifactId>ognl</artifactId>
-        <version>2.7</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-binding</artifactId>
-        <version>1.0</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>javax.servlet</groupId>
-        <artifactId>jstl</artifactId>
-        <version>1.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.hibernate</groupId>
-        <artifactId>hibernate</artifactId>
-        <version>3.1.2</version>
-      </dependency>
-      <dependency>
-        <groupId>ehcache</groupId>
-        <artifactId>ehcache</artifactId>
-        <version>1.1</version>
       </dependency>
       <dependency>
         <!-- dso-container-tests -->
@@ -306,33 +224,9 @@
         <version>0.9.20090605</version>
       </dependency>
       <dependency>
-        <!-- dso-spring-tests -->
-        <groupId>taglibs</groupId>
-        <artifactId>standard</artifactId>
-        <version>1.0.6</version>
-      </dependency>
-      <dependency>
         <groupId>httpunit</groupId>
         <artifactId>httpunit</artifactId>
         <version>1.6</version>
-      </dependency>
-      <dependency>
-        <!-- dso-spring-aj/tests.system -->
-        <groupId>aspectj</groupId>
-        <artifactId>aspectjrt</artifactId>
-        <version>1.5.0</version>
-      </dependency>
-      <dependency>
-        <!-- aspectwerkz, dso-container-tests, dso-spring-tests, dso-l1-api -->
-        <groupId>dom4j</groupId>
-        <artifactId>dom4j</artifactId>
-        <version>1.6.1</version>
-      </dependency>
-      <dependency>
-        <!-- dso-l1, dso-container-tests, dso-spring-tests -->
-        <groupId>cglib</groupId>
-        <artifactId>cglib-nodep</artifactId>
-        <version>2.1_3</version>
       </dependency>
 
       <!-- Dependencies for core Terracotta artifacts (terracotta, terracotta-api) -->

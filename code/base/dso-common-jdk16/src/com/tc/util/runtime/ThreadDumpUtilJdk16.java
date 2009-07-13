@@ -32,7 +32,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
 
       for (Thread thread : threads) {
         long id = thread.getId();
-        ThreadInfo threadInfo = threadMXBean.getThreadInfo(new long[] {id}, true, true)[0];
+        ThreadInfo threadInfo = threadMXBean.getThreadInfo(new long[] { id }, true, true)[0];
         sb.append(threadHeader(thread, threadInfo));
         sb.append('\n');
 
@@ -43,7 +43,8 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
           sb.append(stea[j].toString());
           sb.append('\n');
           for (MonitorInfo monitorInfo : monitorInfos) {
-            if (monitorInfo.getLockedStackFrame().equals(stea[j])) {
+            StackTraceElement lockedFrame = monitorInfo.getLockedStackFrame();
+            if (lockedFrame != null && lockedFrame.equals(stea[j])) {
               sb.append("\t- locked <0x");
               sb.append(Integer.toHexString(monitorInfo.getIdentityHashCode()));
               sb.append("> (a ");
@@ -114,9 +115,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
 
   private static String threadLockedSynchronizers(ThreadInfo threadInfo) {
     final String NO_SYNCH_INFO = "no locked synchronizers information available\n";
-    if (null == threadInfo) {
-      return NO_SYNCH_INFO;
-    }
+    if (null == threadInfo) { return NO_SYNCH_INFO; }
     try {
       LockInfo[] lockInfos = threadInfo.getLockedSynchronizers();
       if (lockInfos.length > 0) {

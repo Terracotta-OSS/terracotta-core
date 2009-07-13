@@ -18,7 +18,7 @@
 	</condition>
 	
 	<property name="warfile"     value="Cart.war"/>
-	<property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.4.jar"/>
+	<property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
 	<property name="src.dir"     value="src"/>
 	<property name="web.dir"     value="web"/>
 	<property name="build.dir"   value="classes"/>

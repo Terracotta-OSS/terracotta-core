@@ -6,10 +6,6 @@ package org.terracotta.modules.tool;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.config.InvalidConfigurationException;
@@ -18,6 +14,11 @@ import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DownloadUtil;
 import org.terracotta.modules.tool.util.DownloadUtil.DownloadOption;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -38,6 +39,9 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 public class CachedModules implements Modules {
   static final String        FORMAT_VERSION = "2";
@@ -124,7 +128,8 @@ public class CachedModules implements Modules {
   /**
    * XXX: This constructor is used for tests only
    */
-  CachedModules(Config config, File repository, InputStream inputStream) throws JDOMException, IOException {
+  CachedModules(Config config, File repository, InputStream inputStream) throws ParserConfigurationException,
+      SAXException, IOException {
     this.config = config;
     this.tcVersion = config.getTcVersion();
     this.apiVersion = config.getApiVersion();
@@ -143,7 +148,7 @@ public class CachedModules implements Modules {
 
         try {
           loadData(dataStream);
-        } catch (JDOMException e) {
+        } catch (Exception e) {
           throw new RuntimeException("Error parsing index file: " + e.getMessage(), e);
         }
       } catch (FileNotFoundException e) {
@@ -158,17 +163,21 @@ public class CachedModules implements Modules {
     }
   }
 
-  private void loadData(InputStream inputStream) throws JDOMException, IOException {
+  private void loadData(InputStream inputStream) throws ParserConfigurationException, SAXException, IOException {
     if (modules != null) return;
 
-    Document document = new SAXBuilder().build(inputStream);
-    validateFormatVersion(document.getRootElement().getAttributeValue("format-version"));
-    timeStamp = document.getRootElement().getAttributeValue("timestamp");
+    Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+    validateFormatVersion(document.getDocumentElement().getAttribute("format-version"));
+    timeStamp = document.getDocumentElement().getAttribute("timestamp");
     modules = new ArrayList<Module>();
-    List<Element> children = document.getRootElement().getChildren();
-    for (Element child : children) {
-      Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
-      modules.add(module);
+    NodeList children = document.getDocumentElement().getChildNodes();
+    for (int i = 0; i < children.getLength(); i++) {
+      Node node = children.item(i);
+      if (node.getNodeType() == Node.ELEMENT_NODE) {
+        Element child = (Element) node;
+        Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
+        modules.add(module);
+      }
     }
   }
 
