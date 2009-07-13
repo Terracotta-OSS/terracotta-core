@@ -85,13 +85,13 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       stateMachine.connected();
     } catch (TCTimeoutException e) {
       stateMachine.connectTimeout();
-      stateMachine.loggerWarn("Node:" + node + " not up. Connect Timeout occured.");
+      stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (UnknownHostException e) {
       stateMachine.unknownHost();
       stateMachine.loggerWarn("Node:" + node + " not up. Unknown host.");
     } catch (MaxConnectionsExceededException e) {
       stateMachine.maxConnExceed();
-      stateMachine.loggerWarn("Node:" + node + " not up. Max connections exceeded.");
+      stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (IOException e) {
       stateMachine.connetIOException();
       stateMachine.loggerWarn("Node:" + node + " not up. IOException occured:" + e.getMessage());
