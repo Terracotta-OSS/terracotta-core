@@ -7,6 +7,7 @@ package com.tctest;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.injection.annotations.InjectedDsoInstance;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -188,7 +189,12 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     final DsoNode currentNode = cluster.getCurrentNode();
 
     if (1 == nodeId) {
-      final Set<DsoNode> nodes = cluster.getNodesWithObject(pojo.getYourMojo());
+      Object mojo = pojo.getYourMojo();
+      System.out.println(">>>>>> mojo : "+mojo);
+      if (mojo != null) {
+        System.out.println(">>>>>> mojo manageable : "+(mojo instanceof Manageable));
+      }
+      final Set<DsoNode> nodes = cluster.getNodesWithObject(mojo);
       System.out.println(">>>>>> nodes : "+nodes.size());
       for (DsoNode node : nodes) {
         System.out.println(">>>>>> node : "+node+", "+node.hashCode());

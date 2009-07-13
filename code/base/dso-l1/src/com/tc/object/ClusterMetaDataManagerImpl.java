@@ -4,6 +4,8 @@
  */
 package com.tc.object;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
@@ -36,14 +38,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
+  private static final TCLogger                             LOGGER                                   = TCLogging.getLogger(ClusterMetaDataManagerImpl.class);
+
   private static final long                                 RETRIEVE_WAIT_INTERVAL                   = 15000;
 
-  private static final State                                PAUSED                                   = new State(
-                                                                                                                 "PAUSED");
-  private static final State                                RUNNING                                  = new State(
-                                                                                                                 "RUNNING");
-  private static final State                                STARTING                                 = new State(
-                                                                                                                 "STARTING");
+  private static final State                                PAUSED                                   = new State("PAUSED");
+  private static final State                                RUNNING                                  = new State("RUNNING");
+  private static final State                                STARTING                                 = new State("STARTING");
 
   private State                                             state                                    = RUNNING;
 
@@ -88,7 +89,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     final Map<ObjectID, Set<NodeID>> response = sendNodesWithObjectsMessageAndWait(message);
 
     // no response arrived in time, returning an empty set
-    if (null == response) { return Collections.emptySet(); }
+    if (null == response) {
+      LOGGER.warn("No response arrived in time for getNodesWithObject for object '" + objectID + "', returning empty set");
+      return Collections.emptySet();
+    }
 
     return response.get(objectID);
   }
@@ -104,7 +108,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     final Map<ObjectID, Set<NodeID>> response = sendNodesWithObjectsMessageAndWait(message);
 
     // no response arrived in time, returning an empty map
-    if (null == response) { return Collections.emptyMap(); }
+    if (null == response) {
+      LOGGER.warn("No response arrived in time for getNodesWithObjects, returning empty map");
+      return Collections.emptyMap();
+    }
 
     return response;
   }
@@ -120,7 +127,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     final Set<?> response = sendKeysForOrphanedValuesMessageAndWait(message);
 
     // no response arrived in time, returning an empty set
-    if (null == response) { return Collections.emptySet(); }
+    if (null == response) {
+      LOGGER.warn("No response arrived in time for getKeysForOrphanedValues for map with object ID '" + mapObjectID + "', returning empty set");
+      return Collections.emptySet();
+    }
 
     return response;
   }
