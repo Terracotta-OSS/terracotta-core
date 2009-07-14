@@ -21,6 +21,10 @@
         dependencyManagement section of the parent POM.
     -->
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>linked-child-process</artifactId>
+    </dependency>
+    <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
     </dependency>
