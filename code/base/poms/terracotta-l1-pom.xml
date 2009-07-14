@@ -69,6 +69,12 @@
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
+      <exclusions>
+         <exclusion>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+         </exclusion>
+      </exclusions>      
     </dependency>
     <dependency>
       <groupId>javax.management</groupId>
