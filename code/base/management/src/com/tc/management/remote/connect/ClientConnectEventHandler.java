@@ -19,10 +19,9 @@ import com.tc.statistics.StatisticsGateway;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -60,27 +59,22 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private static final class ConnectorClosedListener implements NotificationListener {
-    private final MBeanServer beanServer;
+    private final ClientBeanBag bag;
 
-    ConnectorClosedListener(final MBeanServer mBeanServer) {
-      beanServer = mBeanServer;
+    ConnectorClosedListener(ClientBeanBag bag) {
+      this.bag = bag;
     }
 
     final public void handleNotification(final Notification notification, final Object context) {
-      unregisterBeans(beanServer, (List) context);
+      bag.unregisterBeans();
     }
   }
 
   private final class MBeanRegistrationListener implements NotificationListener {
-    private final MBeanServer    l2MBeanServer;
-    private final MessageChannel channel;
-    private final List           modifiedObjectNames;
+    private final ClientBeanBag bag;
 
-    MBeanRegistrationListener(final MBeanServer l2MBeanServer, final MessageChannel channel,
-                              final List modifiedObjectNames) {
-      this.l2MBeanServer = l2MBeanServer;
-      this.channel = channel;
-      this.modifiedObjectNames = modifiedObjectNames;
+    public MBeanRegistrationListener(ClientBeanBag bag) {
+      this.bag = bag;
     }
 
     final public void handleNotification(final Notification notification, final Object context) {
@@ -88,10 +82,9 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         String type = notification.getType();
         MBeanServerNotification mbsn = (MBeanServerNotification) notification;
         if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
-          MBeanServerConnection l1MBeanServerConnection = (MBeanServerConnection) context;
-          registerBean(l1MBeanServerConnection, l2MBeanServer, mbsn.getMBeanName(), channel, modifiedObjectNames);
+          bag.registerBean(mbsn.getMBeanName());
         } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-          unregisterBean(l2MBeanServer, mbsn.getMBeanName(), modifiedObjectNames);
+          bag.unregisterBean(mbsn.getMBeanName());
         }
       }
     }
@@ -144,37 +137,42 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
           statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
 
+          ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, l1MBeanServerConnection);
+
+          // register as a listener before query'ing beans to avoid missing any registrations
+          try {
+            ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
+            l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(bag), null, null);
+
+          } catch (Exception e) {
+            logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
+                         + " registered after connect-time will be tunneled into the L2");
+          }
+
+          // now that we're listening we can query and let the bean bag deal with the possible concurrency
           Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans());
-          List modifiedObjectNames = new ArrayList();
           for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
             ObjectName objName = (ObjectName) iter.next();
             try {
-              registerBean(l1MBeanServerConnection, l2MBeanServer, objName, channel, modifiedObjectNames);
+              bag.registerBean(objName);
             } catch (Exception e) {
               if (isConnectionException(e)) {
                 logger.warn("Client disconnected before all beans could be registered");
-                unregisterBeans(l2MBeanServer, modifiedObjectNames);
+                bag.unregisterBeans();
                 return;
               }
             }
           }
+
           try {
-            jmxConnector.addConnectionNotificationListener(new ConnectorClosedListener(l2MBeanServer),
-                                                           new ConnectorClosedFilter(), modifiedObjectNames);
+            jmxConnector.addConnectionNotificationListener(new ConnectorClosedListener(bag),
+                                                           new ConnectorClosedFilter(), null);
           } catch (Exception e) {
             logger.error("Unable to register a JMX connection listener for the DSO client["
                          + channel.getRemoteAddress()
                          + "], if the DSO client disconnects the then its (dead) beans will not be unregistered", e);
           }
-          try {
-            ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
-            l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(l2MBeanServer, channel,
-                                                                                              modifiedObjectNames),
-                                                            null, l1MBeanServerConnection);
-          } catch (Exception e) {
-            logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
-                         + " registered after connect-time will be tunneled into the L2");
-          }
+
         } catch (IOException ioe) {
           logger.error("Unable to create tunneled JMX connection to the DSO client on host["
                        + channel.getRemoteAddress() + "], this DSO client will not show up in monitoring tools!!", ioe);
@@ -185,37 +183,6 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         logger.warn("We are trying to create a new tunneled JMX connection but already have one for channel["
                     + channel.getRemoteAddress() + "], ignoring new connection message");
       }
-    }
-  }
-
-  private static void unregisterBeans(final MBeanServer beanServer, final List modifiedObjectNames) {
-    List copy = new ArrayList(modifiedObjectNames);
-    for (Iterator i = copy.iterator(); i.hasNext();) {
-      unregisterBean(beanServer, (ObjectName) i.next(), modifiedObjectNames);
-    }
-  }
-
-  private void registerBean(MBeanServerConnection l1MBeanServerConnection, MBeanServer l2MBeanServer,
-                            ObjectName objName, MessageChannel channel, List modifiedObjectNames) {
-    try {
-      if (TerracottaManagement.matchAllTerracottaMBeans().apply(objName)) {
-        ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
-        MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1MBeanServerConnection, objName);
-        l2MBeanServer.registerMBean(mirror, modifiedObjName);
-        modifiedObjectNames.add(modifiedObjName);
-        logger.info("Tunneled MBean '" + modifiedObjName + "'");
-      }
-    } catch (Exception e) {
-      logger.warn("Unable to register DSO client bean[" + objName + "]", e);
-    }
-  }
-
-  private static void unregisterBean(MBeanServer beanServer, ObjectName on, List modifiedObjectNames) {
-    try {
-      beanServer.unregisterMBean(on);
-      modifiedObjectNames.remove(on);
-    } catch (Exception e) {
-      logger.warn("Unable to unregister DSO client bean[" + on + "]", e);
     }
   }
 
@@ -268,6 +235,51 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     } catch (Throwable t) {
       logger.error("unhandled exception closing JMX connector for " + channel, t);
     }
+  }
+
+  private static class ClientBeanBag {
+    private final Set<ObjectName>       beanNames = new HashSet<ObjectName>();
+    private final MBeanServer           l2MBeanServer;
+    private final MBeanServerConnection l1Connection;
+    private final MessageChannel        channel;
+
+    public ClientBeanBag(MBeanServer l2MBeanServer, MessageChannel channel, MBeanServerConnection l1Connection) {
+      this.l2MBeanServer = l2MBeanServer;
+      this.channel = channel;
+      this.l1Connection = l1Connection;
+    }
+
+    synchronized void unregisterBeans() {
+      for (ObjectName name : beanNames) {
+        unregisterBean(name);
+      }
+      beanNames.clear();
+    }
+
+    synchronized void registerBean(ObjectName objName) {
+      try {
+        ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+
+        if (beanNames.add(modifiedObjName)) {
+          if (TerracottaManagement.matchAllTerracottaMBeans().apply(objName)) {
+            MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName);
+            l2MBeanServer.registerMBean(mirror, modifiedObjName);
+            logger.info("Tunneled MBean '" + modifiedObjName + "'");
+          }
+        }
+      } catch (Exception e) {
+        logger.warn("Unable to register DSO client bean[" + objName + "]", e);
+      }
+    }
+
+    private void unregisterBean(ObjectName name) {
+      try {
+        l2MBeanServer.unregisterMBean(name);
+      } catch (Exception e) {
+        logger.warn("Unable to unregister DSO client bean[" + name + "]", e);
+      }
+    }
+
   }
 
 }
