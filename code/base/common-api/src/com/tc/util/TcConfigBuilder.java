@@ -68,14 +68,8 @@ public class TcConfigBuilder {
     tcConfig = tcConfigDocument.getTcConfig();
   }
 
-  public void randomizePorts() {
-    PortChooser pc = new PortChooser();
-    Server[] servers = tcConfig.getServers().getServerArray();
-    for (Server server : servers) {
-      server.setDsoPort(pc.chooseRandomPort());
-      server.setJmxPort(pc.chooseRandomPort());
-      server.setL2GroupPort(pc.chooseRandomPort());
-    }
+  public Server[] getServers() {
+    return tcConfig.getServers().getServerArray();
   }
 
   public InputStream newInputStream() {

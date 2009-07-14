@@ -15,10 +15,13 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
+import com.tc.util.PortChooser;
+import com.tc.util.TcConfigBuilder;
 import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.Server;
 
 import java.io.IOException;
 
@@ -34,7 +37,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     tcProps.setProperty(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED, "true");
     tcProps.setProperty(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED, "true");
   }
-  
+
   private Exception failTestException;
 
   private class TestFailingIllegalConfigChangeHandler implements IllegalConfigurationChangeHandler {
@@ -44,6 +47,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     }
   }
 
+  @Override
   public void runBare() throws Throwable {
     super.runBare();
     if (this.failTestException != null) throw this.failTestException;
@@ -53,7 +57,8 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   private L1TVSConfigurationSetupManager          l1ConfigManager;
   private DSOClientConfigHelper                   configHelper;
 
-  protected synchronized final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper) throws Exception {
+  protected synchronized final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
+      throws Exception {
     super.setUp();
     this.configFactory = factory;
     this.configHelper = helper;
@@ -75,7 +80,8 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     return out;
   }
 
-  private synchronized void prepareFactory(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
+  private synchronized void prepareFactory(TestTVSConfigurationSetupManagerFactory out)
+      throws ConfigurationSetupException {
     // We add a root to make sure there's at least *some* application config. Otherwise, the config system will wait for
     // it on system startup.
     /*
@@ -94,7 +100,8 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     out.activateConfigurationChange();
   }
 
-  protected synchronized void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out) throws ConfigurationSetupException {
+  protected synchronized void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out)
+      throws ConfigurationSetupException {
     try {
       ((SettableConfigItem) out.l2CommonConfig().dataPath()).setValue(getTempFile("l2-data").toString());
       ((SettableConfigItem) out.l2CommonConfig().logsPath()).setValue(getTempFile("l2-logs").toString());
@@ -120,7 +127,8 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     return this.l1ConfigManager;
   }
 
-  protected synchronized final L1TVSConfigurationSetupManager createL1ConfigManager() throws ConfigurationSetupException {
+  protected synchronized final L1TVSConfigurationSetupManager createL1ConfigManager()
+      throws ConfigurationSetupException {
     return configFactory().createL1TVSConfigurationSetupManager();
   }
 
@@ -138,6 +146,16 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(whichPort);
   }
 
+  protected void randomizePorts(TcConfigBuilder configBuilder) {
+    PortChooser pc = new PortChooser();
+    Server[] servers = configBuilder.getServers();
+    for (Server server : servers) {
+      server.setDsoPort(pc.chooseRandomPort());
+      server.setJmxPort(pc.chooseRandomPort());
+      server.setL2GroupPort(pc.chooseRandomPort());
+    }
+  }
+
   public BaseDSOTestCase() {
     super();
   }
@@ -146,6 +164,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     super(arg0);
   }
 
+  @Override
   protected synchronized void tearDown() throws Exception {
     this.configFactory = null;
     this.configHelper = null;
