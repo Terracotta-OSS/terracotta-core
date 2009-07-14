@@ -115,8 +115,10 @@ public class DSOContextImpl implements DSOContext {
     // state too
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
     Manager manager = new ManagerImpl(true, null, null, configHelper, l2Connection, true, runtimeLogger, classProvider);
+
+    DSOContext context = createContext(configHelper, manager);
     manager.init();
-    return createContext(configHelper, manager);
+    return context;
   }
 
   /**
