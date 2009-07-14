@@ -19,7 +19,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionManagerImpl;
+import com.tc.object.session.SessionProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.State;
@@ -157,6 +157,11 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       changeToPaused(remoteNode);
       pauseCallbacks(remoteNode, getDisconnectedCount());
       notifyTransitionComplete();
+
+      this.sessionManager.newSession(remoteNode);
+      this.logger.info("ClientHandshakeManager moves to "
+                       + ((SessionProvider) this.sessionManager).getSessionID(remoteNode));
+
     } else {
       this.logger.info("Disconnected: Pausing from " + currentState + " RemoteNode : " + remoteNode
                        + ". Disconnect count: " + getDisconnectedCount());
@@ -170,7 +175,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
       notifyTransitionComplete();
       // all the activities paused then can switch to new session
       this.sessionManager.newSession(remoteNode);
-      this.logger.info("ClientHandshakeManager moves to " + ((SessionManagerImpl)this.sessionManager).getSessionID(remoteNode));
+      this.logger.info("ClientHandshakeManager moves to "
+                       + ((SessionProvider) this.sessionManager).getSessionID(remoteNode));
 
       // only send the operations disabled event when this was the first group to disconnect
       if (isOnlyOneGroupDisconnected()) {
