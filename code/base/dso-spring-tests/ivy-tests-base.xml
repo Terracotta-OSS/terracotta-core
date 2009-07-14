@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
-  <info organisation="ibiblio" module="dso-spring-tests-tests-base"/>
-  <dependencies>
-  	<dependency name="hsqldb" rev="1.7.2.2"/>
-  	<dependency name="jakarta-oro" rev="2.0.8" org="terracotta"/>
-  	<dependency name="jstl" rev="1.0"/>
-  	<dependency name="standard" rev="1.0.6" org="terracotta"/>
+  <info organisation="org.terracotta" module="dso-spring-tests-tests-base"/>
+  <dependencies defaultconf="default">
+  	<dependency name="hsqldb" rev="1.7.2.2" org="hsqldb"/>
+  	<dependency name="jstl" rev="1.1.2" org="jstl"/>
+  	<dependency name="standard" rev="1.0.6" org="taglibs"/>
   </dependencies>
 </ivy-module>

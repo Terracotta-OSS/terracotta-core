@@ -1,17 +1,29 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
-  <info organisation="ibiblio" module="deploy"/>
-  <dependencies>
-	<dependency name="jetty" rev="6.1.8" org="terracotta"/>
-	<dependency name="jetty-util" rev="6.1.8" org="terracotta"/>
-	<dependency name="servlet-api-2.5" rev="6.1.8" org="terracotta"/>
-	<dependency name="jfreechart" rev="1.0.11" org="terracotta"/>
-	<dependency name="jcommon" rev="1.0.14" org="terracotta"/>
-	<dependency name="jmxremote_optional" rev="1.0.1_04" org="terracotta"/>
-	<dependency name="jmxremote" rev="1.0.1_04" org="terracotta"/>
-	<dependency name="treemap" rev="2.5.1" org="terracotta"/>
-	<dependency name="jline" rev="0.9.9" org="terracotta"/>
-	<dependency name="commons-httpclient" rev="3.0.1"/>
-	<dependency name="commons-codec" rev="1.2"/>
+  <info organisation="org.terracotta" module="deploy"/>
+  
+  <dependencies defaultconf="default">
+    
+  	<dependency name="jetty" rev="6.1.8" org="org.mortbay.jetty"/>
+  	<dependency name="jetty-util" rev="6.1.8" org="org.mortbay.jetty"/>
+  	<dependency name="jfreechart" rev="1.0.11" org="jfree">
+      <exclude module="gnujaxp" org="gnujaxp"/>
+      <exclude module="junit" org="junit"/>
+    </dependency>
+  	<dependency name="jcommon" rev="1.0.14" org="jfree">
+      <exclude module="gnujaxp" org="gnujaxp"/>
+      <exclude module="junit" org="junit"/>
+    </dependency>    
+  	<dependency name="jmxremote_optional" rev="1.0.1_04" org="javax.management"/>
+  	<dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
+  	<dependency name="treemap" rev="2.5.1" org="treemap"/>
+  	<dependency name="jline" rev="0.9.9" org="jline">
+      <exclude module="junit" org="junit" conf="default"/>
+    </dependency>
+  	<dependency name="commons-httpclient" rev="3.0.1" org="commons-httpclient"/>
+    
+    <exclude module="junit" org="junit" conf="default"/>
+    
   </dependencies>
+
 </ivy-module>

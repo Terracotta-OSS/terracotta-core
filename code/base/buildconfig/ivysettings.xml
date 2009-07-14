@@ -1,32 +1,41 @@
 <ivysettings>
   <settings defaultResolver="ibiblio-chain"/>
+  
+  <property name="m2_pattern" value="[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
+
   <resolvers>
-    <url name="tc-repo">
-      <artifact pattern="http://download.terracotta.org/buildjars/lib/[artifact]-[revision].[ext]"/>
-    </url>
-    <url name="tc-repo-internal">
-      <artifact pattern="http://kong/ivy/[artifact]-[revision].[ext]"/>
-    </url>
+
     <url name="tc-repo-eclipse">
       <artifact pattern="http://download.terracotta.org/buildjars/eclipse-api/[artifact]-[revision].[ext]"/>
     </url>
-    <url name="terracotta-maven2" m2compatible="true">
-      <artifact pattern="http://repo.terracotta.org/maven2/[organisation]/[artifact]/[revision]/[artifact]-[revision].[ext]"/>
+    
+    <url name="tc-m2" m2compatible="true">
+      <artifact pattern="http://repo.terracotta.org/maven2/${m2_pattern}"/>
     </url>
+    
+    <url name="java.net" m2compatible="true">
+      <artifact pattern="http://download.java.net/maven/1/${m2_pattern}"/>
+    </url>
+    
+    <url name="repo2" m2compatible="true">
+      <artifact pattern="http://repo2.maven.org/maven2/${m2_pattern}"/>
+    </url>
+    
+    <!-- by default, this is the chain of repos that ivy will look for an artifact
+         All of these repos are Maven2 repo
+    -->
     <chain name="ibiblio-chain" returnFirst="true">
-      <ibiblio name="ibiblio" />
-      <url name="tc-repo">
-        <artifact pattern="http://download.terracotta.org/buildjars/lib/[artifact]-[revision].[ext]"/>
-      </url>
-      <url name="tc-repo-mirror">
-        <artifact pattern="http://download.terracotta.org/buildjars/mirror/[artifact]-[revision].[ext]"/>
-      </url>
+      <resolver ref="tc-m2" />
+      <ibiblio name="ibiblio" m2compatible="true" />
+      <resolver ref="repo2" />
+      <resolver ref="java.net" />
     </chain>
+    
   </resolvers>
+  
+  <!-- only eclipse jars are still on our TC ivy repo -->
   <modules>
-    <module organisation="org.terracotta.*" name=".*" resolver="terracotta-maven2"/>
-    <module organisation="terracotta" name=".*" resolver="tc-repo"/>
-    <module organisation="terracotta-internal" name=".*" resolver="tc-repo-internal"/>
     <module organisation="tc-eclipse" name=".*" resolver="tc-repo-eclipse"/>
   </modules>
+
 </ivysettings>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ivy-module version="2.0">
-  <info organisation="ibiblio" module="dso-system-tests-tests-base"/>
-  <dependencies>  
+  <info organisation="org.terracotta" module="dso-system-tests-tests-base"/>
+  <dependencies defaultconf="default">  
   </dependencies>
 </ivy-module>

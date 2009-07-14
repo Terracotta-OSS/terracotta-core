@@ -165,6 +165,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       :classname => "org.apache.ivy.ant.IvyResolve")
     @ant.taskdef(:name => 'ivy_retrieve',
       :classname => "org.apache.ivy.ant.IvyRetrieve")
+    @ant.taskdef(:name => 'makepom',
+      :classname => "org.apache.ivy.ant.IvyMakePom")
+    
     @ant.ivy_configure( :file => ivy_settings_path )
 
     bases = [@basedir.to_s]
@@ -173,19 +176,30 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
 
     dependencies_pattern = "#{@static_resources.lib_dependencies_directory.to_s}/[artifact]-[revision].[ext]"
-    
+
     bases.each do |base|
       loud_message("resolving base #{base}")
-      Dir.entries(base).each do |project|
+
+      projects = Dir.entries(base)
+      if @config_source['projects']
+        projects = @config_source['projects'].split(/,/)
+      end
+
+      projects.each do |project|
         project_path = File.join(base, project)
 
         next unless File.directory?(project_path)
         next if project =~ /buildconfig/
         
         Dir.glob("#{project_path}/ivy*.xml").each do |ivyfile|
+          next if ivyfile =~ /ivysettings.xml/
           puts "Resolving Ivy file: #{ivyfile}"
           @ant.ivy_resolve(:file => ivyfile)
           @ant.ivy_retrieve(:pattern => dependencies_pattern)
+          #puts "Converting to pom"
+          #@ant.makepom(:ivyfile => ivyfile, :pomfile => ivyfile + ".pom") do
+            #@ant.mapping(:conf => "default", :scope => "compile")
+          #end
         end
       end
     end
