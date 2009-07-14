@@ -192,11 +192,9 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       boolean interrupted = false;
       try {
         while (!statsTask.isShutdown()
-               || (System.currentTimeMillis() - before_shutdown_wait) > shutdown_wait_expiration) { // only wait for a
-          // limited amount of
-          // time
+               && (System.currentTimeMillis() - before_shutdown_wait) < shutdown_wait_expiration) { // only wait for a limited amount of time
           try {
-            this.wait(shutdown_wait_expiration); // wait for twice the retriever schedule interval
+            this.wait(shutdown_wait_expiration); // wait for the retriever schedule interval
           } catch (InterruptedException e) {
             interrupted = true;
           }
