@@ -154,10 +154,10 @@ public class ClientConnectionEstablisher {
 
           // DEV-1945
           if (i == 0) {
-            String previousConnectHostName = cmt.getRemoteAddress().getAddress().getHostName();
-            String connectingToHostName = "";
+            String previousConnectHost = cmt.getRemoteAddress().getAddress().getHostAddress();
+            String connectingToHost = "";
             try {
-              connectingToHostName = InetAddress.getByName(connInfo.getHostname()).getHostName();
+              connectingToHost = InetAddress.getByName(connInfo.getHostname()).getHostAddress();
             } catch (UnknownHostException e) {
               // these errors are caught even before
             }
@@ -165,7 +165,7 @@ public class ClientConnectionEstablisher {
             int previousConnectHostPort = cmt.getRemoteAddress().getPort();
             int connectingToHostPort = connInfo.getPort();
 
-            if ((addresses.hasNext()) && (previousConnectHostName.equals(connectingToHostName))
+            if ((addresses.hasNext()) && (previousConnectHost.equals(connectingToHost))
                 && (previousConnectHostPort == connectingToHostPort)) {
               continue;
             }
