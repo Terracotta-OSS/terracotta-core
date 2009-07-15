@@ -758,7 +758,7 @@ public interface TCPropertiesConsts {
    * license.url                                 - URL to license key
    * </code>
    ********************************************************************************************************************/
-  public static final String   LICENSE_RESOURCE_PATH                                         = "license.resource.path";
-  public static final String   LICENSE_URL                                                   = "license.url";
-  public static final String   LICENSE_PATH                                                  = "license.path";
+  public static final String   PRODUCTKEY_RESOURCE_PATH                                         = "productkey.resource.path";
+  public static final String   PRODUCTKEY_URL                                                   = "productkey.url";
+  public static final String   PRODUCTKEY_PATH                                                  = "productkey.path";
 }
