@@ -760,5 +760,5 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String   LICENSE_RESOURCE_PATH                                         = "license.resource.path";
   public static final String   LICENSE_URL                                                   = "license.url";
-
+  public static final String   LICENSE_PATH                                                  = "license.path";
 }
