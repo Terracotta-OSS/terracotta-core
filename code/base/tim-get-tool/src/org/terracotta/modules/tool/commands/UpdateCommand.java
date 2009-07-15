@@ -139,10 +139,10 @@ public class UpdateCommand extends OneOrAllCommand {
     Collection<File> jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
     for (File jarfile : jarfiles) {
       Attributes manifest = readAttributes(jarfile);
-      if ((manifest == null) || !"Terracotta Integration Module".equals(manifest.getValue("Bundle-Category"))) continue;
+      if ((manifest == null) || !ArtifactCategories.TIM.category().equals(manifest.getValue(ManifestAttributes.OSGI_CATEGORY.attribute()))) continue;
 
-      String symbolicName = manifest.getValue("Bundle-SymbolicName");
-      String version = manifest.getValue("Bundle-Version");
+      String symbolicName = manifest.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
+      String version = manifest.getValue(ManifestAttributes.OSGI_VERSION.attribute());
       String artifactId = OSGiToMaven.artifactIdFromSymbolicName(symbolicName);
       String groupId = OSGiToMaven.groupIdFromSymbolicName(symbolicName);
 

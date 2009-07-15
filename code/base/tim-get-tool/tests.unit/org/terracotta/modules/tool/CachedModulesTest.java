@@ -217,6 +217,33 @@ public final class CachedModulesTest extends TestCase {
     assertEquals(4, modules.list().size());  
   }
   
+  public void testSidewaysInstallPath() throws Exception {
+    Modules modules;
+    String testData = "/testData05.xml";
+
+    modules = load(testData, "0.0.0", "0.0.0");
+    assertTrue(modules.listLatest().isEmpty());
+
+
+    modules = load(testData, "3.0.0", "1.0.0");
+    List<Module> list = modules.listLatest();
+    assertFalse(list.isEmpty());
+    assertEquals(1, list.size());
+    Module module = list.get(0);
+    assertEquals("org.the.tc.library", module.symbolicName());
+    assertEquals("2.0.1", module.version());
+    assertTrue(module.installPath().getCanonicalPath().endsWith("test"));
+
+    modules = load(testData, "3.0.0", "1.1.0");
+    list = modules.listLatest();
+    assertFalse(list.isEmpty());
+    assertEquals(1, list.size());
+    module = list.get(0);
+    assertEquals("org.the.tc.library", module.symbolicName());
+    assertEquals("2.1.0", module.version());
+    assertTrue(module.installPath().getCanonicalPath().endsWith("test"));
+  }
+  
   private Modules load(String testData, String tcVersion) {
     return load(testData, tcVersion, "1.0.0");
   }

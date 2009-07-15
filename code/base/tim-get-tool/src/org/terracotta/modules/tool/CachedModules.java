@@ -6,6 +6,7 @@ package org.terracotta.modules.tool;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.commands.ManifestAttributes;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.config.InvalidConfigurationException;
@@ -106,11 +107,33 @@ public class CachedModules implements Modules {
   }
 
   private static boolean attributesVerified(File srcfile, AbstractModule module) throws IOException {
+    String moduleName = null;
+    String moduleVersion = null;
+    
     Manifest mf = (new JarFile(srcfile)).getManifest();
     Attributes attrs = mf.getMainAttributes();
-    String sym = attrs.getValue("Bundle-SymbolicName");
-    String ver = OSGiToMaven.bundleVersionToProjectVersion(attrs.getValue("Bundle-Version"));
-    return sym.equals(module.symbolicName()) && ver.equals(module.version());
+    moduleName = attrs.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
+    String osgiVersion = attrs.getValue(ManifestAttributes.OSGI_VERSION.attribute());
+    
+    if(moduleName == null || osgiVersion == null) {
+      // Try to use Terracotta-ArtifactCoordinates instead
+      String coords = attrs.getValue(ManifestAttributes.TERRACOTTA_COORDINATES.attribute());
+      if(coords == null || coords.length() == 0) {
+        return false;
+      } 
+      
+      String[] parts = coords.split(":");
+      if(parts.length != 3) {
+        return false;
+      }
+      moduleName = parts[0] + "." + parts[1];
+      moduleVersion = parts[2];
+    } else {
+      // Normal bundle
+      moduleVersion = OSGiToMaven.bundleVersionToProjectVersion(osgiVersion);
+    }
+    
+    return moduleName.equals(module.symbolicName()) && moduleVersion.equals(module.version());
   }
 
   private void download(URL url, File dest) throws IOException {
