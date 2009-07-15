@@ -135,16 +135,20 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
     if (StringUtils.equals("org.terracotta", on.getDomain()) && StringUtils.equals("Loader", on.getKeyProperty("type"))) {
       String symbolicName = on.getKeyProperty("feature");
       String name = on.getKeyProperty("name");
-      Feature feature = allFeaturesMap.get(symbolicName);
-      if (feature == null) {
-        allFeaturesMap.put(symbolicName, feature = new Feature(symbolicName, name));
+      Feature feature;
+      synchronized (allFeaturesMap) {
+        feature = allFeaturesMap.get(symbolicName);
+        if (feature == null) {
+          feature = new Feature(symbolicName, name);
+          allFeaturesMap.put(symbolicName, feature);
+        }
       }
       if (!activeFeatureMap.containsKey(symbolicName)) {
         activeFeatureMap.put(symbolicName, feature);
       }
       TIMByteProviderMBean byteProvider = clusterModel.getActiveCoordinator().getMBeanProxy(on,
                                                                                             TIMByteProviderMBean.class);
-      feature.addTIMByteProvider(on, byteProvider);
+      feature.getFeatureClassLoader().addTIMByteProvider(on, byteProvider);
       return true;
     }
     return false;
@@ -155,8 +159,8 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       String symbolicName = on.getKeyProperty("feature");
       Feature feature = activeFeatureMap.get(symbolicName);
       if (feature != null) {
-        feature.removeTIMByteProvider(on);
-        if (feature.getTIMByteProviderCount() == 0) {
+        feature.getFeatureClassLoader().removeTIMByteProvider(on);
+        if (feature.getFeatureClassLoader().getTIMByteProviderCount() == 0) {
           tearDownFeature(feature);
         }
         return true;
@@ -214,6 +218,13 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
 
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
+    
+    synchronized (allFeaturesMap) {
+      for (Feature feature : allFeaturesMap.values()) {
+        tearDownFeature(feature);
+      }
+      allFeaturesMap.clear();
+    }
 
     if (featuresPanel != null) {
       featuresPanel.tearDown();
