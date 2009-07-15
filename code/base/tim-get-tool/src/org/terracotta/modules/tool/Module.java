@@ -201,6 +201,15 @@ public class Module extends AbstractModule implements Installable {
     }
     return attributesHelper.getAttrValueAsUrl("website", alturl);
   }
+  
+  /**
+   * Currently we are determining this based on whether the tc-downloadPath exists.  This value
+   * is usually set to install a download outside the modules directory.
+   */
+  public boolean installsAsModule() {
+    String downloadPath = attributesHelper.getAttrValueAsString("tc-downloadPath", null);
+    return downloadPath == null || downloadPath.length() == 0;
+  }
 
   protected List<AbstractModule> manifest() {
     List<AbstractModule> manifest = new ArrayList<AbstractModule>();

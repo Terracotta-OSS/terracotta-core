@@ -256,8 +256,12 @@ public class DefaultModuleReport extends ModuleReport {
     out.println();
     out.println(indent(mavenCoordinates(module)));
     out.println();
-    out.println(indent(configInfo(module)));
-    out.println();
+    
+    if(module.installsAsModule()) {
+      out.println(indent(configInfo(module)));
+      out.println();
+    }
+    
     out.println(indent(installationInfo(module)));
 
     String text = writer.toString();
