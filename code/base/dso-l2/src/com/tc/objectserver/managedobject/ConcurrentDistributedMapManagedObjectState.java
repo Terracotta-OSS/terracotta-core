@@ -13,24 +13,24 @@ import java.util.Map;
 import java.util.Set;
 
 // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObjectState {
+public class ConcurrentDistributedMapManagedObjectState extends PartialMapManagedObjectState {
   public static final String DSO_LOCK_TYPE_FIELDNAME = "dsoLockType";
   public static final String LOCK_STRATEGY_FIELDNAME = "lockStrategy";
 
   private int                dsoLockType;
   private ObjectID           lockStrategy;
 
-  private ConcurrentStringMapManagedObjectState(ObjectInput in) throws IOException {
+  private ConcurrentDistributedMapManagedObjectState(ObjectInput in) throws IOException {
     super(in);
   }
 
-  protected ConcurrentStringMapManagedObjectState(long classId, Map map) {
+  protected ConcurrentDistributedMapManagedObjectState(long classId, Map map) {
     super(classId, map);
   }
 
   @Override
   public byte getType() {
-    return CONCURRENT_STRING_MAP_TYPE;
+    return CONCURRENT_DISTRIBUTED_MAP_TYPE;
   }
 
   @Override
@@ -81,9 +81,9 @@ public class ConcurrentStringMapManagedObjectState extends PartialMapManagedObje
   }
 
   static MapManagedObjectState readFrom(ObjectInput in) throws IOException {
-    ConcurrentStringMapManagedObjectState csmMos = new ConcurrentStringMapManagedObjectState(in);
-    csmMos.dsoLockType = in.readInt();
-    csmMos.lockStrategy = new ObjectID(in.readLong());
-    return csmMos;
+    ConcurrentDistributedMapManagedObjectState cdmMos = new ConcurrentDistributedMapManagedObjectState(in);
+    cdmMos.dsoLockType = in.readInt();
+    cdmMos.lockStrategy = new ObjectID(in.readLong());
+    return cdmMos;
   }
 }

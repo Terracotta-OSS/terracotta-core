@@ -75,7 +75,9 @@ public class ManagedObjectStateFactory {
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
     // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
     classNameToStateMap.put("org.terracotta.modules.concurrent.collections.ConcurrentStringMapDsoInstrumented",
-                            new Byte(ManagedObjectState.CONCURRENT_STRING_MAP_TYPE));
+                            new Byte(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
+    classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso",
+                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
     // XXX: hack to support Hibernate cache entry type
     classNameToStateMap.put(TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY));
@@ -176,8 +178,8 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
         // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-      case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
-        return new ConcurrentStringMapManagedObjectState(classID, this.persistentCollectionFactory
+      case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
+        return new ConcurrentDistributedMapManagedObjectState(classID, this.persistentCollectionFactory
             .createPersistentMap(oid));
       case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
         return new TcHibernateSerializedEntryManagedObjectState(classID);
@@ -272,8 +274,8 @@ public class ManagedObjectStateFactory {
         case ManagedObjectState.LINKED_HASHSET_TYPE:
           return LinkedHashSetManagedObjectState.readFrom(in);
           // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-        case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
-          return ConcurrentStringMapManagedObjectState.readFrom(in);
+        case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
+          return ConcurrentDistributedMapManagedObjectState.readFrom(in);
         case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
           return TcHibernateSerializedEntryManagedObjectState.readFrom(in);
         default:

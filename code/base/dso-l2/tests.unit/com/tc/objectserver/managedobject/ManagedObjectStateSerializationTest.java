@@ -76,8 +76,8 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
             testURL();
             break;
           // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-          case ManagedObjectState.CONCURRENT_STRING_MAP_TYPE:
-            testConcurrentStringMap();
+          case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
+            testConcurrentDistributedMap();
             break;
           case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
@@ -321,19 +321,19 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-  public void testConcurrentStringMap() throws Exception {
-    String className = "org.terracotta.modules.concurrent.collections.ConcurrentStringMapDsoInstrumented";
+  public void testConcurrentDistributedMap() throws Exception {
+    String className = "org.terracotta.collections.ConcurrentDistributedMapDso";
     TestDNACursor cursor = new TestDNACursor();
 
-    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
-    cursor.addPhysicalAction(ConcurrentStringMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(12), true);
+    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(42), false);
+    cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(12), true);
 
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2001), new ObjectID(2003) });
     cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { new ObjectID(2002), new ObjectID(2004) });
 
     ManagedObjectState state = applyValidation(className, cursor);
 
-    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_STRING_MAP_TYPE);
+    serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE);
   }
 
   public interface MyProxyInf1 {
