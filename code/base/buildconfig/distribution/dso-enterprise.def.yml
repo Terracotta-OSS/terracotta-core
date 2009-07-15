@@ -146,11 +146,15 @@ postscripts:
         - samples/sessions         
   - maven-deploy:
       args:
-        - artifact_count: 2
+        - artifact_count: 3
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml
           pom: pom.xml
+        - groupId: org.terracotta
+          artifact: terracotta-l1-parent
+          srcfile: poms/terracotta-l1-parent-pom.xml
+          pom: poms/terracotta-l1-parent-pom.xml            
         - groupId: org.terracotta
           artifact: terracotta-l1-ee
           file: api-jars/terracotta-l1.jar

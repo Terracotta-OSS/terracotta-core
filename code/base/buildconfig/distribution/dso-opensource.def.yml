@@ -163,11 +163,15 @@ postscripts:
         - samples/sessions
   - maven-deploy:
       args:
-        - artifact_count: 10
+        - artifact_count: 11
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml
           pom: pom.xml
+        - groupId: org.terracotta
+          artifact: terracotta-l1-parent
+          srcfile: poms/terracotta-l1-parent-pom.xml
+          pom: poms/terracotta-l1-parent-pom.xml        
         - groupId: org.terracotta
           artifact: terracotta
           file: lib/tc.jar
@@ -178,7 +182,7 @@ postscripts:
         - groupId: org.terracotta
           artifact: terracotta-l1
           file: api-jars/terracotta-l1.jar
-          pom: poms/terracotta-l1-pom.xml
+          pom: poms/terracotta-l1-os-pom.xml
           inject: 
             - lib/resources/build-data.txt           
         - groupId: org.terracotta

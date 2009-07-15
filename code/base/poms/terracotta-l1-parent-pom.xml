@@ -13,8 +13,8 @@
 
   <!-- artifact that contains classes for L1 -->
   <groupId>org.terracotta</groupId>
-  <artifactId>terracotta-l1</artifactId>
-  <packaging>jar</packaging>
+  <artifactId>terracotta-l1-parent</artifactId>
+  <packaging>pom</packaging>
 
   <dependencies>
     <!--
