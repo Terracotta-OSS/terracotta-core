@@ -29,6 +29,7 @@ public class TCPropertiesContsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_URL);
+    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
   }
 
   private void loadDefaults(String propFile) {
