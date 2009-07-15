@@ -63,8 +63,8 @@ class StaticResources
     FilePath.new(build_config_directory, 'global-filters.def.yml')
   end
 
-  def distribution_config_directory(flavor)
-    FilePath.new(source_root(flavor), 'buildconfig', 'distribution')
+  def distribution_config_directory
+    FilePath.new(@root_directory, 'buildconfig', 'distribution')
   end
 
   def izpack_directory

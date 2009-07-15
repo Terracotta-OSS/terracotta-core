@@ -40,6 +40,14 @@ bundled_components:
           - tc-config-reference
   - common:
       module_packages:
+        - terracotta-l1:
+            # install in 'api-jars' folder so it can be deleted later
+            install_directory: api-jars
+            add_dependencies: true
+            modules:
+              - dso-l1
+              - ent-common
+              - ent-dso-l1              
         - terracotta-jmx-api:
             install_directory: lib
             modules:
@@ -136,5 +144,19 @@ postscripts:
       args:
         - samples/pojo
         - samples/sessions         
+  - maven-deploy:
+      args:
+        - artifact_count: 2
+        - groupId: org.terracotta
+          artifact: parent
+          srcfile: pom.xml
+          pom: pom.xml
+        - groupId: org.terracotta
+          artifact: terracotta-l1-ee
+          file: api-jars/terracotta-l1.jar
+          pom: poms/terracotta-l1-ee-pom.xml
+          inject: 
+            - lib/resources/build-data.txt
   - make-enterprise
   - delete-api-jars
+          

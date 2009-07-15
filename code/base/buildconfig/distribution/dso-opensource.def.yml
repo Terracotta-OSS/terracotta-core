@@ -163,6 +163,7 @@ postscripts:
         - samples/sessions
   - maven-deploy:
       args:
+        - artifact_count: 10
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml

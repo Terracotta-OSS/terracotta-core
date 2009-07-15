@@ -21,7 +21,7 @@ module DistributionUtils
     # until DEV-1253 is resolved, all distribution files should be in one place
     # so changes can be applied to them at one time. 
     # We decided to have all these files in OSS branch
-    config_directory = @static_resources.distribution_config_directory('OPENSOURCE')
+    config_directory = @static_resources.distribution_config_directory
     
     filename = FilePath.new(config_directory,
       "#{product_code}-#{flavor}.def.yml").canonicalize.to_s
@@ -33,7 +33,7 @@ module DistributionUtils
   end
 
   def product_definition_files(flavor)
-    srcdir = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
+    srcdir = @static_resources.distribution_config_directory.canonicalize.to_s
     Dir.entries(srcdir).delete_if { |entry|
       (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry)
     }
@@ -41,6 +41,7 @@ module DistributionUtils
 
   def product_code(product_definition_filename)
     if product_definition_filename =~ /^(\w+?)\-.+\.def\.yml$/
+      puts "product code: #{$1}"
       $1
     else
       raise("Invalid product definition file: #{product_definition_filename}")

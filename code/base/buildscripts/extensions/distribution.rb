@@ -102,9 +102,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_maven(flavor = 'OPENSOURCE')
-    # we never publish Enterprise artifacts to maven repo
-    fail("Can't publish Enterprise artifacts") unless flavor == 'OPENSOURCE'
-
     unless config_source[MAVEN_REPO_CONFIG_KEY]
       @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
     end
@@ -115,9 +112,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       product_definition_files(flavor).each do |def_file|
         puts "Processing def file #{def_file}"
         product_code = product_code(def_file)
-        config = product_config(product_code)
+        config = product_config(product_code, flavor)
         if postscripts = config['postscripts']
-          if mvn = postscripts.find { |entry| entry.is_a?(Hash) && entry['maven-deploy'] }
+          if postscripts.find { |entry| entry.is_a?(Hash) && entry['maven-deploy'] }
             @product_code = product_code
             @flavor = flavor.downcase
             depends :init, :compile
@@ -130,6 +127,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
   end
 
+  def dist_maven_ee
+    dist_maven('ENTERPRISE')
+  end
+  
   # call dist_maven to deploy maven artifacts
   # and deploy api javadoc to the api_dir
   # this target is intended to be used by artifact monkey only (su10mo4)
