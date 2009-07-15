@@ -149,11 +149,7 @@
     <dependency>
       <groupId>httpunit</groupId>
       <artifactId>httpunit</artifactId>
-    </dependency>
-      <dependency>
-        <groupId>cglib</groupId>
-        <artifactId>cglib-nodep</artifactId>
-      </dependency>      
+    </dependency>    
   </dependencies>
 
   <repositories>
