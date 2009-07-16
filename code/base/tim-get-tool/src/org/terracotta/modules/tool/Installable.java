@@ -30,5 +30,12 @@ interface Installable {
    * @param repository The path to the local repository.
    */
   boolean isInstalled(File repository);
+  
+  /**
+   * Compute install location relative to a repository root directory
+   * @param repository The path to the local repository.
+   * @return File location, should not be null, but file may or may not exist 
+   */
+  File installLocationInRepository(File repository);
 
 }

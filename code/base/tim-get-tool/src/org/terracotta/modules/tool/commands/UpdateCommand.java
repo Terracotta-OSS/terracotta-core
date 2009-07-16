@@ -20,10 +20,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -64,7 +65,7 @@ public class UpdateCommand extends OneOrAllCommand {
 
     // construct list of updateable TIMs
     List<Module> manifest = new ArrayList<Module>();
-    List<Reference> localModules = localModules();
+    Collection<Reference> localModules = localModules();
 
     if (localModules.isEmpty()) {
       out.println("It appears to me that there are no integration modules installed - no updates can be performed.");
@@ -130,31 +131,72 @@ public class UpdateCommand extends OneOrAllCommand {
     }
   }
 
-  private List<Reference> localModules() {
-    List<Reference> list = new ArrayList<Reference>();
+  private Collection<Reference> localModules() {
+    Set<Reference> modulesToUpdate = new TreeSet<Reference>();
 
     File repository = modules.repository();
-    if (!repository.exists()) return list;
+    if (!repository.exists()) return modulesToUpdate;
 
+    // Examine all modules in the repository
     Collection<File> jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
     for (File jarfile : jarfiles) {
-      Attributes manifest = readAttributes(jarfile);
-      if ((manifest == null) || !ArtifactCategories.TIM.category().equals(manifest.getValue(ManifestAttributes.OSGI_CATEGORY.attribute()))) continue;
-
-      String symbolicName = manifest.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
-      String version = manifest.getValue(ManifestAttributes.OSGI_VERSION.attribute());
-      String artifactId = OSGiToMaven.artifactIdFromSymbolicName(symbolicName);
-      String groupId = OSGiToMaven.groupIdFromSymbolicName(symbolicName);
-
-      Map<String, Object> attributes = new HashMap<String, Object>();
-      attributes.put("groupId", groupId);
-      attributes.put("artifactId", artifactId);
-      attributes.put("version", version);
-      list.add(new Reference(null, attributes));
+      Map<String, Object> attributes = getModuleAttributes(jarfile);
+      if(attributes != null) {
+        modulesToUpdate.add(new Reference(null, attributes));
+      }
+    }
+    
+    // Examine all modules that may have been deposited *outside* the repository
+    List<Module> availableModules = modules.list();
+    for(Module availableModule : availableModules) {
+      File installLocation = availableModule.installLocationInRepository(repository);
+      if(installLocation.exists()) {
+        Map<String, Object> attributes = getModuleAttributes(installLocation);
+        if(attributes != null) {
+          modulesToUpdate.add(new Reference(null, attributes));
+        }        
+      }
     }
 
-    Collections.sort(list);
-    return list;
+    return modulesToUpdate;
+  }
+  
+  /**
+   * Returns null if jarFile is not a module.
+   * @param jarFile The jar file 
+   * @return A map containing groupId, artifactId, and version attributes OR null
+   */
+  private Map<String,Object> getModuleAttributes(File jarFile) {
+    Attributes manifest = readAttributes(jarFile);
+    
+    if (manifest == null) return null;
+
+    String groupId = null;
+    String artifactId = null;
+    String version = null;
+    
+    String symbolicName = manifest.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
+    if(symbolicName != null) {
+      version = manifest.getValue(ManifestAttributes.OSGI_VERSION.attribute());
+      artifactId = OSGiToMaven.artifactIdFromSymbolicName(symbolicName);
+      groupId = OSGiToMaven.groupIdFromSymbolicName(symbolicName);
+    } else {
+      String coordinates = manifest.getValue(ManifestAttributes.TERRACOTTA_COORDINATES.attribute());
+      if(coordinates == null) return null;
+      
+      String[] parts = coordinates.split(":");
+      if(parts.length != 3) return null;
+      groupId = parts[0];
+      artifactId = parts[1];
+      version = parts[2];
+    }
+    
+    Map<String, Object> attributes = new HashMap<String, Object>();
+    attributes.put("groupId", groupId);
+    attributes.put("artifactId", artifactId);
+    attributes.put("version", version);
+    
+    return attributes;
   }
 
   private void printEpilogue() {

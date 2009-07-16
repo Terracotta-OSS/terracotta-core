@@ -338,6 +338,7 @@ public final class ModuleTest extends TCTestCase {
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
           .installPath().toString());
+      assertEquals(FilenameUtils.separatorsToSystem("/dummy/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar"), module.installLocationInRepository(new File("/dummy")).toString());
       assertEquals("tim-ehcache-1.3-1.0.2.jar", module.filename());
 
       assertFalse(module.docUrl().toURI().equals(module.website().toURI()));

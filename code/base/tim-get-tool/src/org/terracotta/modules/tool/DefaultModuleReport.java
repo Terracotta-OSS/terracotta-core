@@ -106,7 +106,7 @@ public class DefaultModuleReport extends ModuleReport {
     out.println("Download : " + module.repoUrl());
     out.println("Status   : " + module.tcProjectStatus());
     out.println("Internal : " + module.tcInternalTIM() + "\n");
-
+    
     if (!StringUtils.isEmpty(module.description())) {
       out.println(module.description().replaceAll("\n[ ]+", "\n"));
       out.println();
@@ -179,6 +179,8 @@ public class DefaultModuleReport extends ModuleReport {
     } catch (Exception e) {
       out.println(e.getMessage());
     }
+    
+    out.println("Note: If you are installing the newest or only version, the version may be omitted.");
 
     String text = writer.toString();
     return StringUtils.chomp(StringUtils.trim(text));
@@ -206,8 +208,7 @@ public class DefaultModuleReport extends ModuleReport {
 
       // XXX compute actual location if installed - remember that
       // a TIM may also be installed at the root of the repository
-      File location = new File(owner.repository(), module.installPath().toString());
-      location = new File(location, module.filename());
+      File location = module.installLocationInRepository(owner.repository());
       File actualLocation = location.exists() ? location.getParentFile() : owner.repository();
       out.println("Installed at " + canonicalize(actualLocation));
 

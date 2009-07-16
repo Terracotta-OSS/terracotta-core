@@ -96,6 +96,11 @@ class AttributesHelper implements Installable {
   public URL repoUrl() {
     return getAttrValueAsUrl("repoURL", null);
   }
+  
+  public File installLocationInRepository(File repositoryRoot) {
+    File directory = new File(repositoryRoot, installPath().toString());
+    return new File(directory, filename());
+  }
 
   public boolean isInstalled(File repository) {
     File p0 = new File(repository, installPath().toString());

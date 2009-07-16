@@ -4,47 +4,20 @@
  */
 package org.terracotta.modules.tool;
 
-import org.apache.commons.lang.StringUtils;
-
-import java.io.File;
 import java.net.URI;
-import java.net.URL;
 import java.util.Map;
 
-public class BasicModule extends AbstractModule implements Installable {
+public class BasicModule extends AttributesModule implements Installable {
 
-  private final Module              owner;
-  private final Map<String, Object> attributes;
-  private final AttributesHelper    attributesHelper;
+  private final Module owner;
 
   public BasicModule(Module owner, Map<String, Object> attributes, URI relativeUrlBase) {
+    super(attributes, relativeUrlBase);
     this.owner = owner;
-    this.attributes = attributes;
-    this.attributesHelper = new AttributesHelper(this.attributes, relativeUrlBase);
-
-    groupId = attributesHelper.getAttrValueAsString("groupId", StringUtils.EMPTY);
-    artifactId = attributesHelper.getAttrValueAsString("artifactId", StringUtils.EMPTY);
-    version = attributesHelper.getAttrValueAsString("version", StringUtils.EMPTY);
   }
 
   public Module owner() {
     return owner;
-  }
-
-  public String filename() {
-    return attributesHelper.filename();
-  }
-
-  public File installPath() {
-    return attributesHelper.installPath();
-  }
-
-  public URL repoUrl() {
-    return attributesHelper.repoUrl();
-  }
-
-  public boolean isInstalled(File repository) {
-    return attributesHelper.isInstalled(repository);
   }
 
 }

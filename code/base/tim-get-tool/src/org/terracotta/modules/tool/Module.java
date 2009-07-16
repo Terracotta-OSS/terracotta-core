@@ -25,12 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class Module extends AbstractModule implements Installable {
+public class Module extends AttributesModule implements Installable {
 
   private final Modules             modules;
-  private final Map<String, Object> attributes;
-  private final AttributesHelper    attributesHelper;
-  private final URI                 relativeUrlBase;
 
   public Module(Modules modules, Element module, URI relativeUrlBase) {
     this(modules, DocumentToAttributes.transform(module), relativeUrlBase);
@@ -38,52 +35,35 @@ public class Module extends AbstractModule implements Installable {
 
   @Inject
   Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase) {
+    super(attributes, relativeUrlBase);
     this.modules = modules;
-    this.attributes = attributes;
-    this.relativeUrlBase = relativeUrlBase;
-    this.attributesHelper = new AttributesHelper(this.attributes, this.relativeUrlBase);
-
-    groupId = attributesHelper.getAttrValueAsString("groupId", StringUtils.EMPTY);
-    artifactId = attributesHelper.getAttrValueAsString("artifactId", StringUtils.EMPTY);
-    version = attributesHelper.getAttrValueAsString("version", StringUtils.EMPTY);
   }
 
   protected Modules owner() {
     return modules;
   }
 
-  public String filename() {
-    return attributesHelper.filename();
-  }
-
-  public File installPath() {
-    return attributesHelper.installPath();
-  }
-
-  public URL repoUrl() {
-    return attributesHelper.repoUrl();
-  }
 
   public String category() {
-    return attributesHelper.getAttrValueAsString("category", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("category", StringUtils.EMPTY);
   }
 
   public String contactAddress() {
-    return attributesHelper.getAttrValueAsString("contactAddress", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("contactAddress", StringUtils.EMPTY);
   }
 
   public String copyright() {
-    return attributesHelper.getAttrValueAsString("copyright", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("copyright", StringUtils.EMPTY);
   }
 
   public List<AbstractModule> dependencies() {
     List<AbstractModule> list = new ArrayList<AbstractModule>();
-    if (attributes.containsKey("dependencies")) {
-      List<Map<String, Object>> dependencies = (List<Map<String, Object>>) attributes.get("dependencies");
+    if (getAttributes().containsKey("dependencies")) {
+      List<Map<String, Object>> dependencies = (List<Map<String, Object>>) getAttributes().get("dependencies");
       for (Map<String, Object> dependencyAttributes : dependencies) {
         DependencyType type = (DependencyType) dependencyAttributes.get("_dependencyType");
         if (DependencyType.INSTANCE.equals(type)) {
-          list.add(new BasicModule(this, dependencyAttributes, this.relativeUrlBase));
+          list.add(new BasicModule(this, dependencyAttributes, getRelativeURlBase()));
           continue;
         } else if (DependencyType.REFERENCE.equals(type)) {
           list.add(new Reference(this, dependencyAttributes));
@@ -105,7 +85,7 @@ public class Module extends AbstractModule implements Installable {
    * @return A String
    */
   public String description() {
-    return attributesHelper.getAttrValueAsString("description", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("description", StringUtils.EMPTY);
   }
 
   /**
@@ -114,15 +94,11 @@ public class Module extends AbstractModule implements Installable {
    * @return An URL. Will return this module's website URL if none was defined.
    */
   public URL docUrl() {
-    return attributesHelper.getAttrValueAsUrl("docURL", website());
+    return getAttributesHelper().getAttrValueAsUrl("docURL", website());
   }
 
   public boolean isInstalled() {
     return isInstalled(modules.repository());
-  }
-
-  public boolean isInstalled(File repository) {
-    return attributesHelper.isInstalled(repository);
   }
 
   /**
@@ -152,27 +128,27 @@ public class Module extends AbstractModule implements Installable {
   }
 
   public String tcProjectStatus() {
-    return attributesHelper.getAttrValueAsString("tc-projectStatus", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("tc-projectStatus", StringUtils.EMPTY);
   }
 
   public String tcVersion() {
-    return attributesHelper.getAttrValueAsString("tc-version", null);
+    return getAttributesHelper().getAttrValueAsString("tc-version", null);
   }
 
   public String apiVersion() {
-    if (attributes.containsKey("api-version")) {
-      return attributesHelper.getAttrValueAsString("api-version", null);
+    if (getAttributes().containsKey("api-version")) {
+      return getAttributesHelper().getAttrValueAsString("api-version", null);
     } else {
       return VersionMatcher.ANY_VERSION;
     }
   }
 
   public String vendor() {
-    return attributesHelper.getAttrValueAsString("vendor", StringUtils.EMPTY);
+    return getAttributesHelper().getAttrValueAsString("vendor", StringUtils.EMPTY);
   }
 
   public boolean tcInternalTIM() {
-    return Boolean.valueOf(attributesHelper.getAttrValueAsString("tc-internalTIM", "false"));
+    return Boolean.valueOf(getAttributesHelper().getAttrValueAsString("tc-internalTIM", "false"));
   }
 
   /**
@@ -199,7 +175,7 @@ public class Module extends AbstractModule implements Installable {
     } catch (MalformedURLException e) {
       //
     }
-    return attributesHelper.getAttrValueAsUrl("website", alturl);
+    return getAttributesHelper().getAttrValueAsUrl("website", alturl);
   }
   
   /**
@@ -207,7 +183,7 @@ public class Module extends AbstractModule implements Installable {
    * is usually set to install a download outside the modules directory.
    */
   public boolean installsAsModule() {
-    String downloadPath = attributesHelper.getAttrValueAsString("tc-downloadPath", null);
+    String downloadPath = getAttributesHelper().getAttrValueAsString("tc-downloadPath", null);
     return downloadPath == null || downloadPath.length() == 0;
   }
 
@@ -259,8 +235,7 @@ public class Module extends AbstractModule implements Installable {
 
     for (AbstractModule entry : manifest) {
       Installable module = (Installable) entry;
-      File destdir = new File(modules.repository(), module.installPath().toString());
-      File destfile = new File(destdir, module.filename());
+      File destFile = module.installLocationInRepository(modules.repository());
       if (module.isInstalled(modules.repository()) && !installOptions.overwrite()) {
         notifyListener(listener, entry, InstallNotification.SKIPPED, "Already installed");
         continue;
@@ -278,10 +253,10 @@ public class Module extends AbstractModule implements Installable {
         }
 
         try {
-          FileUtils.forceMkdir(destdir);
-          FileUtils.copyFile(srcfile, destfile);
+          FileUtils.forceMkdir(destFile.getParentFile());
+          FileUtils.copyFile(srcfile, destFile);
         } catch (IOException e) {
-          String message = destfile + " (" + e.getMessage() + ")";
+          String message = destFile + " (" + e.getMessage() + ")";
           handleInstallFailure(e, installOptions, listener, entry, InstallNotification.INSTALL_FAILED, message);
           continue;
         }
