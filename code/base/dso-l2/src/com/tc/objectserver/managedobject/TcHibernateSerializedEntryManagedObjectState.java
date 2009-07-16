@@ -27,7 +27,7 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   private static final TCLogger logger                 = TCLogging
                                                            .getLogger(TcHibernateSerializedEntryManagedObjectState.class);
 
-  public static final String    SERIALIZED_ENTRY       = "org.terracotta.modules.hibernatecache.SerializedEntry";
+  public static final String    SERIALIZED_ENTRY       = "org.terracotta.modules.hibernatecache.clustered.SerializedEntry";
 
   public static final String    CREATE_TIME_FIELD      = SERIALIZED_ENTRY + ".createTime";
   public static final String    LAST_ACCESS_TIME_FIELD = SERIALIZED_ENTRY + ".lastAccessedTime";
