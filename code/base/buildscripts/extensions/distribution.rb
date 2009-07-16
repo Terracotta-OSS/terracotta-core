@@ -128,6 +128,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_maven_ee
+    fail("Can only run this target under an EE checkout") unless @build_environment.is_ee_branch?
     dist_maven('ENTERPRISE')
   end
   
