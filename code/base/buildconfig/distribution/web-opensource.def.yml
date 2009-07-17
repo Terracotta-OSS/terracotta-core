@@ -71,8 +71,8 @@ postscripts:
         - location: lib/resources/tim-get.properties
         - kit-type:
             stable:
-              org.terracotta.modules.tool.dataFileUrl: http://stable-repo.terracotta.org/version/tim-get/2/index.xml.gz
-              org.terracotta.modules.tool.relativeUrlBase: http://stable-repo.terracotta.org/version     
+              org.terracotta.modules.tool.dataFileUrl: http://www.terracotta.org/download/reflector/version/tim-get/2/index.xml.gz
+              org.terracotta.modules.tool.relativeUrlBase: http://www.terracotta.org/download/reflector/version     
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema
