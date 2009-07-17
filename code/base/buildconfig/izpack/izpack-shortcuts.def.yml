@@ -2,25 +2,6 @@ programGroup:
   defaultName: Terracotta-<%= @build_environment.version %>
   location: applications
 shortcuts:
-- name: Terracotta Welcome
-  description: Start the Terracotta Welcome application
-  programGroup: "yes"
-  desktop: "yes"
-  startup: "no"
-  windows:
-    target: $INSTALL_PATH\welcome.bat
-    applications: "no"
-    startMenu: "no"
-    initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
-    iconIndex: "0"
-  unix:
-    target: $INSTALL_PATH/welcome.sh
-    initialState: normal
-    type: Application
-    categories: "Terracotta;Development;"
-    encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
 - name: Terracotta Developer Console
   description: Start the Terracotta Developer Console
   programGroup: "yes"
