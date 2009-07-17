@@ -29,7 +29,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       
       if entry.size == 2
         key = entry[0].strip
-        updated_line = key + " = " + new_props[key] if new_props[key]
+        updated_line = key + " = " + interpolate(new_props[key]) if new_props[key]
       end
       tim_get_updated_content << updated_line
     end
