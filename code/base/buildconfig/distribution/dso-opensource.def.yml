@@ -140,8 +140,8 @@ postscripts:
         - location: lib/resources/tim-get.properties
         - kit-type:
             stable:
-              org.terracotta.modules.tool.dataFileUrl: http://www.terracotta.org/download/reflector/version/tim-get/2/index.xml.gz
-              org.terracotta.modules.tool.relativeUrlBase: http://www.terracotta.org/download/reflector/version
+              org.terracotta.modules.tool.dataFileUrl: http://www.terracotta.org/download/reflector/stable/version/tim-get/2/index.xml.gz
+              org.terracotta.modules.tool.relativeUrlBase: http://www.terracotta.org/download/reflector/stable/version
   - install-forge-tims:
       args:
         - tim-apache-struts-1.1
