@@ -18,24 +18,24 @@ import com.tc.util.sequence.BatchSequenceReceiver;
  */
 public class RemoteObjectIDBatchSequenceProvider extends AbstractEventHandler implements BatchSequenceProvider {
   private final ObjectIDBatchRequestMessageFactory mf;
-  private BatchSequenceReceiver                    receiver;
+  private volatile BatchSequenceReceiver           receiver;
 
   public RemoteObjectIDBatchSequenceProvider(ObjectIDBatchRequestMessageFactory mf) {
     this.mf = mf;
   }
 
-  public synchronized void setBatchSequenceReceiver(BatchSequenceReceiver receiver) {
+  public void setBatchSequenceReceiver(BatchSequenceReceiver receiver) {
     this.receiver = receiver;
   }
 
-  public synchronized void requestBatch(BatchSequenceReceiver r, int size) {
+  public void requestBatch(BatchSequenceReceiver r, int size) {
     Assert.assertTrue(receiver == r);
     ObjectIDBatchRequestMessage m = mf.newObjectIDBatchRequestMessage();
     m.initialize(size);
     m.send();
   }
 
-  public synchronized void handleEvent(EventContext context) {
+  public void handleEvent(EventContext context) {
     ObjectIDBatchRequestResponseMessage m = (ObjectIDBatchRequestResponseMessage) context;
     receiver.setNextBatch(m.getBatchStart(), m.getBatchEnd());
   }
