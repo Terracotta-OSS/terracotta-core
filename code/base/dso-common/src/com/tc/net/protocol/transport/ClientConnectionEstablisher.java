@@ -33,8 +33,18 @@ import java.net.UnknownHostException;
 public class ClientConnectionEstablisher {
 
   private static final long               CONNECT_RETRY_INTERVAL;
+  private static final long               MIN_RETRY_INTERVAL    = 10;
+  public static final String              RECONNECT_THREAD_NAME = "ConnectionEstablisher";
 
-  private static final long               MIN_RETRY_INTERVAL = 10;
+  private final String                    desc;
+  private final int                       maxReconnectTries;
+  private final int                       timeout;
+  private final ConnectionAddressProvider connAddressProvider;
+  private final TCConnectionManager       connManager;
+  private final SynchronizedBoolean       asyncReconnecting     = new SynchronizedBoolean(false);
+
+  private Thread                          connectionEstablisher;
+  private NoExceptionLinkedQueue          reconnectRequest      = new NoExceptionLinkedQueue();  // <ConnectionRequest>
 
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
@@ -47,18 +57,6 @@ public class ClientConnectionEstablisher {
 
     CONNECT_RETRY_INTERVAL = value;
   }
-
-  private final String                    desc;
-  private final int                       maxReconnectTries;
-  private final int                       timeout;
-  private final ConnectionAddressProvider connAddressProvider;
-  private final TCConnectionManager       connManager;
-
-  private final SynchronizedBoolean       asyncReconnecting  = new SynchronizedBoolean(false);
-
-  private Thread                          connectionEstablisher;
-
-  private NoExceptionLinkedQueue          reconnectRequest   = new NoExceptionLinkedQueue();  // <ConnectionRequest>
 
   public ClientConnectionEstablisher(TCConnectionManager connManager, ConnectionAddressProvider connAddressProvider,
                                      int maxReconnectTries, int timeout) {
@@ -266,12 +264,16 @@ public class ClientConnectionEstablisher {
   }
 
   private void putReconnectRequest(ConnectionRequest request) {
+
+    // avoid AsyncReconnect thread and adding reconnect/restore requests if reconnects are not needed
+    if (this.maxReconnectTries == 0) { return; }
+
     if (connectionEstablisher == null) {
       // First time
       // Allow the async thread reconnects/restores only when cmt was connected atleast once
       if ((request.getClientMessageTransport() == null) || (!request.getClientMessageTransport().wasOpened())) return;
 
-      connectionEstablisher = new Thread(new AsyncReconnect(this), "ConnectionEstablisher");
+      connectionEstablisher = new Thread(new AsyncReconnect(this), RECONNECT_THREAD_NAME);
       connectionEstablisher.setDaemon(true);
       connectionEstablisher.start();
 

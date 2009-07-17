@@ -1,0 +1,149 @@
+/*
+ * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
+ */
+package com.tc.net.core;
+
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
+import com.tc.async.api.Stage;
+import com.tc.async.impl.StageManagerImpl;
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
+import com.tc.logging.TCLogging;
+import com.tc.net.ServerID;
+import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
+import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OOOEventHandler;
+import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
+import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.NetworkListener;
+import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.transport.ClientConnectionEstablisher;
+import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.proxy.TCPProxy;
+import com.tc.object.session.NullSessionManager;
+import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
+import com.tc.util.PortChooser;
+import com.tc.util.concurrent.QueueFactory;
+import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.ThreadDumpUtil;
+
+import java.net.InetAddress;
+import java.util.Collections;
+
+public class NoReconnectThreadTest extends TCTestCase {
+  private int L1_RECONNECT_TIMEOUT = 15000;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
+
+  private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
+    NetworkStackHarnessFactory networkStackHarnessFactory;
+    if (enableReconnect) {
+      StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
+      final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+      final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
+      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
+                                                                     new L1ReconnectConfigImpl(true,
+                                                                                               L1_RECONNECT_TIMEOUT,
+                                                                                               5000, 16, 32));
+    } else {
+      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
+    }
+    return networkStackHarnessFactory;
+  }
+
+  private ClientMessageChannel createClientMsgCh(int port) {
+    return createClientMsgCh(port, false);
+  }
+
+  private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
+
+    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                                                      getNetworkStackHarnessFactory(ooo),
+                                                                      new NullConnectionPolicy());
+    ClientMessageChannel clientMsgCh = clientComms
+        .createClientChannel(
+                             new NullSessionManager(),
+                             0,
+                             "localhost",
+                             port,
+                             1000,
+                             new ConnectionAddressProvider(
+                                                           new ConnectionInfo[] { new ConnectionInfo("localhost", port) }));
+    return clientMsgCh;
+  }
+
+  public void testWorkerCommDistributionAfterReconnect() throws Exception {
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+                                                                         getNetworkStackHarnessFactory(false),
+                                                                         new NullConnectionPolicy(), 3,
+                                                                         new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getPropertiesFor("l2.healthcheck.l2"),
+                                                                                                     "Test Server"),
+                                                                         new ServerID());
+    NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
+                                                             new DefaultConnectionIdFactory());
+    listener.start(Collections.EMPTY_SET);
+    int serverPort = listener.getBindPort();
+
+    int proxyPort = new PortChooser().chooseRandomPort();
+    TCPProxy proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), serverPort, 0, false, null);
+    proxy.start();
+
+    ClientMessageChannel client1 = createClientMsgCh(proxyPort);
+    ClientMessageChannel client2 = createClientMsgCh(proxyPort);
+    ClientMessageChannel client3 = createClientMsgCh(proxyPort);
+
+    client1.open();
+    client2.open();
+    client3.open();
+
+    ThreadUtil.reallySleep(2000);
+    assertTrue(client1.isConnected());
+    assertTrue(client2.isConnected());
+    assertTrue(client3.isConnected());
+
+    // closing all connections from server side
+    System.out.println("XXX closing all client connections");
+    serverCommsMgr.getConnectionManager().closeAllConnections(1000);
+
+    ThreadUtil.reallySleep(5000);
+
+    // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client CommsManager
+    // is created with reconnect 0
+    ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
+
+    listener.stop(5000);
+
+  }
+
+  private void ensureThreadAbsent(String absentThreadName) {
+    Thread[] allThreads = ThreadDumpUtil.getAllThreads();
+    for (Thread t : allThreads) {
+      System.out.println("XXX " + t);
+      Assert.assertFalse(t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME));
+    }
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
+}
