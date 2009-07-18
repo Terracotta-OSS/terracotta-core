@@ -129,7 +129,7 @@ postscripts:
       args:
         - tim-apache-struts-1.1
         - tim-jetty-6.1
-        - terracotta-hibernate-cache
+        - terracotta-hibernate-cache-ee
   - inject-forge-tims:
       args:
         - tims: 
