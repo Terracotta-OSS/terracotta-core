@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
+import org.terracotta.modules.tool.commands.KitTypes;
 import org.w3c.dom.Element;
 
 import com.google.inject.Inject;
@@ -88,6 +89,14 @@ public class Module extends AttributesModule implements Installable {
     return getAttributesHelper().getAttrValueAsString("description", StringUtils.EMPTY);
   }
 
+  /**
+   * Check what kits this module is applicable for 
+   * @see org.terracotta.modules.tool.commands.KitTypes
+   */
+  public String kit() {
+    return getAttributesHelper().getAttrValueAsString("tc-kit", KitTypes.ALL.type());
+  }
+  
   /**
    * The URL pointing to the documentation for this module
    * 

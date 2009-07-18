@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  private static final String ENTERPRISE = "Enterprise";
-  private static final String OPENSOURCE = "Opensource";
+  public static final String ENTERPRISE = "Enterprise";
+  public static final String OPENSOURCE = "Opensource";
 
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 

@@ -7,6 +7,8 @@ package org.terracotta.modules.tool.config;
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.util.PropertiesInterpolator;
 
+import com.tc.util.ProductInfo;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -157,5 +159,17 @@ public class Config {
 
   public boolean getIncludeSnapshots() {
     return includeSnapshots;
+  }
+  
+  public boolean isEnterpriseKit() {
+    return isEdition(ProductInfo.ENTERPRISE);
+  }
+  
+  public boolean isOpenSourceKit() {
+    return isEdition(ProductInfo.OPENSOURCE);
+  }
+  
+  private boolean isEdition(String edition) {
+    return ProductInfo.getInstance().edition().equals(edition);
   }
 }

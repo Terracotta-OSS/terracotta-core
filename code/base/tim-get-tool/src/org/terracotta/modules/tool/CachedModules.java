@@ -6,6 +6,7 @@ package org.terracotta.modules.tool;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.terracotta.modules.tool.commands.KitTypes;
 import org.terracotta.modules.tool.commands.ManifestAttributes;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
@@ -277,7 +278,19 @@ public class CachedModules implements Modules {
   }
 
   boolean qualify(Module module) {
-    return new VersionMatcher(tcVersion, apiVersion).matches(module.tcVersion(), module.apiVersion());
+    return isKitEditionMatch(module) && new VersionMatcher(tcVersion, apiVersion).matches(module.tcVersion(), module.apiVersion());
+  }
+  
+  boolean isKitEditionMatch(Module module) {
+    if(module.kit().equals(KitTypes.ALL.type())) {
+      return true;
+    } else if(module.kit().equals(KitTypes.ENTERPRISE.type())) {
+      return config.isEnterpriseKit();
+    } else if(module.kit().equals(KitTypes.OPEN_SOURCE.type())) {
+      return config.isOpenSourceKit();
+    } else {
+      throw new IllegalArgumentException("Unknown <tc-kit> value for module " + module.groupId + ":" + module.artifactId + ":" + module.version() + ": " + module.kit());
+    }
   }
 
   public List<Module> list() {
