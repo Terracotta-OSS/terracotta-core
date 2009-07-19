@@ -5,13 +5,17 @@ package com.tc.admin;
 
 import org.apache.commons.lang.StringUtils;
 
+import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.XScrollPane;
+import com.tc.admin.common.XTextPane;
 import com.tc.admin.dso.ClientsNode;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.management.beans.TIMByteProviderMBean;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,12 +27,17 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.Element;
+import javax.swing.text.html.HTML;
 
-public class FeaturesNode extends ComponentNode implements NotificationListener {
+public class FeaturesNode extends ComponentNode implements NotificationListener, HyperlinkListener {
   protected IAdminClientContext               adminClientContext;
   protected IClusterModel                     clusterModel;
   protected ClusterListener                   clusterListener;
-  protected FeaturesPanel                     featuresPanel;
+  protected XScrollPane                       myApplicationPanel;
   protected ClientsNode                       clientsNode;
   protected Map<String, Feature>              activeFeatureMap;
   protected Map<Feature, FeatureNode>         nodeMap;
@@ -116,9 +125,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       if (!nodeMap.containsKey(feature)) {
         FeatureNode featureNode = newFeatureNode(feature);
         add(featureNode);
-        if (featuresPanel != null) {
-          featuresPanel.add(feature);
-        }
         nodeStructureChanged();
         adminClientContext.getAdminClientController().expand(featureNode);
       }
@@ -170,9 +176,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
   }
 
   private void tearDownFeature(Feature feature) {
-    if (featuresPanel != null) {
-      featuresPanel.remove(feature);
-    }
     activeFeatureMap.remove(feature.getSymbolicName());
     FeatureNode node = nodeMap.remove(feature);
     if (node != null) {
@@ -205,11 +208,32 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
 
   @Override
   public Component getComponent() {
-    if (featuresPanel == null) {
-      featuresPanel = new FeaturesPanel(adminClientContext, clusterModel);
-      featuresPanel.init(activeFeatureMap);
+    if (myApplicationPanel == null) {
+      XTextPane textPane = new XTextPane();
+      myApplicationPanel = new XScrollPane(textPane);
+      try {
+        textPane.setPage(getClass().getResource("MyApplication.html"));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      textPane.setEditable(false);
+      textPane.addHyperlinkListener(this);
     }
-    return featuresPanel;
+    return myApplicationPanel;
+  }
+
+  public void hyperlinkUpdate(HyperlinkEvent e) {
+    XTextPane textPane = (XTextPane) e.getSource();
+    HyperlinkEvent.EventType type = e.getEventType();
+    Element elem = e.getSourceElement();
+
+    if (elem == null || type == HyperlinkEvent.EventType.ENTERED || type == HyperlinkEvent.EventType.EXITED) { return; }
+
+    if (textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
+      AttributeSet anchor = (AttributeSet) elem.getAttributes().getAttribute(HTML.Tag.A);
+      String url = (String) anchor.getAttribute(HTML.Attribute.HREF);
+      BrowserLauncher.openURL(url);
+    }
   }
 
   @Override
@@ -218,16 +242,12 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
 
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
-    
+
     synchronized (allFeaturesMap) {
       for (Feature feature : allFeaturesMap.values()) {
         tearDownFeature(feature);
       }
       allFeaturesMap.clear();
-    }
-
-    if (featuresPanel != null) {
-      featuresPanel.tearDown();
     }
 
     synchronized (this) {
@@ -238,7 +258,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener 
       activeFeatureMap = null;
       nodeMap.clear();
       nodeMap = null;
-      featuresPanel = null;
+      myApplicationPanel = null;
     }
 
     super.tearDown();
