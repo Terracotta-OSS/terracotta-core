@@ -147,7 +147,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   ClientMessageChannel createClientMsgCh(CommunicationsManager clientComm) {
     ClientMessageChannel clientMsgCh = clientComm
-        .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
+        .createClientChannel(new NullSessionManager(), -1, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
                              1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }));
 
