@@ -22,7 +22,6 @@ import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.IncompleteBootJarException;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
@@ -46,8 +45,8 @@ import java.util.HashMap;
 
 public class DSOContextImpl implements DSOContext {
 
-  private static final TCLogger                     logger        = TCLogging.getLogger(DSOContextImpl.class);
-  private static final TCLogger                     consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                     logger                 = TCLogging.getLogger(DSOContextImpl.class);
+  private static final TCLogger                     consoleLogger          = CustomerLogging.getConsoleLogger();
 
   private static DSOClientConfigHelper              staticConfigHelper;
   private static PreparedComponentsFromL2Connection preparedComponentsFromL2Connection;
@@ -56,6 +55,20 @@ public class DSOContextImpl implements DSOContext {
   private final Manager                             manager;
   private final InstrumentationLogger               instrumentationLogger;
   private final WeavingStrategy                     weavingStrategy;
+
+  private final static String                       UNVERIFIED_BOOTJAR_MSG = "\n********************************************************************************\n"
+                                                                             + "There is a mismatch between the expected Terracotta boot JAR file and the\n"
+                                                                             + "existing Terracotta boot JAR file. Recreate the boot JAR file using the\n"
+                                                                             + "following command from the Terracotta home directory:\n"
+                                                                             + "\n"
+                                                                             + "bin/make-boot-jar.sh -f <path/to/Terracotta/configuration/file>\n"
+                                                                             + "\n"
+                                                                             + "or\n"
+                                                                             + "\n"
+                                                                             + "bin\\make-boot-jar.bat -f <path\\to\\Terracotta\\configuration\\file>\n"
+                                                                             + "\n"
+                                                                             + "Enter the make-boot-jar command with the -h switch for help.\n"
+                                                                             + "********************************************************************************\n";
 
   /**
    * Creates a "global" DSO Context. This context is appropriate only when there is only one DSO Context that applies to
@@ -159,18 +172,10 @@ public class DSOContextImpl implements DSOContext {
     try {
       configHelper.verifyBootJarContents(null);
     } catch (final UnverifiedBootJarException e) {
-      StringBuffer msg = new StringBuffer(e.getMessage() + " ");
+      StringBuilder msg = new StringBuilder(UNVERIFIED_BOOTJAR_MSG);
+      msg.append(e.getMessage() + " ");
       msg.append("Unable to verify the contents of the boot jar; ");
       msg.append("Please check the client logs for more information.");
-      throw new BootJarException(msg.toString(), e);
-    } catch (final IncompleteBootJarException e) {
-      StringBuffer msg = new StringBuffer(e.getMessage() + " ");
-      msg.append("The DSO boot jar appears to be incomplete --- some pre-instrumented classes ");
-      msg.append("listed in your tc-config is not included in the boot jar file. This could ");
-      msg.append("happen if you've modified your DSO clients' tc-config file to specify additional ");
-      msg.append("classes for inclusion in the boot jar, but forgot to rebuild the boot jar. Or, you ");
-      msg.append("could be a using an older boot jar against a newer Terracotta client installation. ");
-      msg.append("Please check the client logs for the list of classes that were not found in your boot jar.");
       throw new BootJarException(msg.toString(), e);
     }
   }
