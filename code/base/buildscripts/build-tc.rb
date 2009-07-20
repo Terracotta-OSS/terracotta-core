@@ -144,6 +144,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Used by every other target, basically.
   def init
+    # set flavor property passed in by users
+    @internal_config_source['flavor'] = @flavor
     write_build_info_file if monkey?
   end
 
