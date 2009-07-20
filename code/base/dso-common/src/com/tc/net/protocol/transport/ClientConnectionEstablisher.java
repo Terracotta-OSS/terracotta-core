@@ -265,8 +265,8 @@ public class ClientConnectionEstablisher {
 
   private void putReconnectRequest(ConnectionRequest request) {
 
-    // avoid AsyncReconnect thread and adding reconnect/restore requests if reconnects are not needed
-    if (this.maxReconnectTries == 0) { return; }
+    // avoid AsyncReconnect thread and adding reconnect requests if reconnects are not needed
+    if ((request.isReconnect()) && (this.maxReconnectTries == 0)) { return; }
 
     if (connectionEstablisher == null) {
       // First time
