@@ -441,12 +441,18 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         If you choose to use a module, define it here.  Distributed modules have the
         file name "name-version.jar" where "name" and "version" are the <module>
         element attributes.  You may define 0 or more modules to be used, they are
-        loaded in the order defined here.
+        loaded in the order defined here. 
+
+        The attribute "group-id" is optional and defaults to "org.terracotta.modules",
+        which is the group-id for most Terracotta-provided modules.  The attribute 
+        "name" is required.  The attribute "version" is optional.  If used, it specifies
+        an exact module version.  If omitted, the latest version available in the 
+        repository is included.
 
         The <module> element(s) is optional.
       -->
-      <module name="clustered-apache-struts-1.1" version="2.5.0"/>
-      <module name="clustered-commons-collections-3.1" version="2.5.0"/>
+      <module name="clustered-apache-struts-1.1"/>
+      <module name="clustered-commons-collections-3.1"/>
 
     </modules>
 

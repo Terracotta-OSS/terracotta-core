@@ -35,9 +35,8 @@ For more information, please see the product documentation.
       the correct version, use the tim-get tool in the bin directory to download the 
       latest appropriate version with a command like:
          bin/tim-get.sh install tim-tomcat-6.0
-      The tim-get tool will report the version that was installed which you can put 
-      in the version attribute here. -->
-      <module name="tim-tomcat-6.0" version="1.0.0"/>
+      -->
+      <module name="tim-tomcat-6.0"/>
     </modules>
   </clients>
 
