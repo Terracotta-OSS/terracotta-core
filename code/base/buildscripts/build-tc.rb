@@ -620,7 +620,7 @@ END
   def check_nogroup
     depends :init, :compile
     groupless = @module_set.find_all { |mod| mod.groups.empty? }.map { |mod| mod.name }
-    run_tests(FixedModuleTypeTestSet.new(groupless, %w(all)))
+    run_tests(FixedModuleTypeTestSet.new(groupless, %w(unit system)))
   end
   
   def check_maven_version
