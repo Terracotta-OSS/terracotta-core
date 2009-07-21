@@ -94,7 +94,7 @@ public class UpdateCommand extends OneOrAllCommand {
     for (Module module : manifest) {
       module.install(listener, installOptions);
     }
-    printEpilogue();
+    printEpilogue(true);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class UpdateCommand extends OneOrAllCommand {
     // update found, install it
     InstallListener listener = new DefaultInstallListener(report, out);
     module.install(listener, installOptions);
-    printEpilogue();
+    printEpilogue(module.installsAsModule());
   }
 
   public void execute(CommandLine cli) {
@@ -199,8 +199,11 @@ public class UpdateCommand extends OneOrAllCommand {
     return attributes;
   }
 
-  private void printEpilogue() {
-    out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
+  private void printEpilogue(boolean updateConfig) {
+    if(updateConfig) {
+      out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
+    } else {
+      out.println("\nDone.");
+    }
   }
-
 }

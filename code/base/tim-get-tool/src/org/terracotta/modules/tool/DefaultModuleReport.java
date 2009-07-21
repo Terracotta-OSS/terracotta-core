@@ -114,9 +114,9 @@ public class DefaultModuleReport extends ModuleReport {
 
     String compatibility = "any Terracotta version.";
     if (!module.tcVersion().equals(VersionMatcher.ANY_VERSION)) {
-      compatibility = "TC " + module.tcVersion();
+      compatibility = "Terracotta " + module.tcVersion();
     } else if (!module.apiVersion().equals(VersionMatcher.ANY_VERSION)) {
-      compatibility = "API " + module.apiVersion();
+      compatibility = "Terracotta API " + module.apiVersion();
     }
     out.println("Compatible with " + compatibility);
 

@@ -52,14 +52,14 @@ public class InstallCommand extends OneOrAllCommand {
     for (Module module : latest) {
       module.install(listener, installOptions);
     }
-    printEpilogue();
+    printEpilogue(true);
   }
 
   @Override
   protected void handleOne(Module module) {
     InstallListener listener = new DefaultInstallListener(report, out);
     module.install(listener, installOptions);
-    printEpilogue();
+    printEpilogue(module.installsAsModule());
   }
 
   public void execute(CommandLine cli) {
@@ -70,8 +70,12 @@ public class InstallCommand extends OneOrAllCommand {
     process(cli, modules);
   }
 
-  private void printEpilogue() {
-    out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
+  private void printEpilogue(boolean updateConfig) {
+    if(updateConfig) {
+      out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
+    } else {
+      out.println("\nDone.");
+    }
   }
 
 }
