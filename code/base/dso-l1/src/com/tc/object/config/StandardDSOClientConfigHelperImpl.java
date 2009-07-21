@@ -796,7 +796,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     synchronized (customAdapters) {
       Collection<ClassAdapterFactory> adapters = customAdapters.get(name);
       if (null == adapters) {
-        adapters = new HashSet<ClassAdapterFactory>();
+        adapters = new ArrayList<ClassAdapterFactory>();
         customAdapters.put(name, adapters);
       }
       adapters.add(factory);
@@ -815,12 +815,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
+  public void addClassReplacement(String originalClassName, String replacementClassName, URL replacementResource,
+                                  ClassReplacementTest test) {
+    this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource, test);
+  }
+
   public void addClassReplacement(final String originalClassName, final String replacementClassName,
                                   final URL replacementResource) {
-    synchronized (classReplacements) {
-      String prev = this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource);
-      Assert.assertNull(prev);
-    }
+    addClassReplacement(originalClassName, replacementClassName, replacementResource, null);
   }
 
   public ClassReplacementMapping getClassReplacementMapping() {
@@ -1426,8 +1428,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ClassAdapter dsoAdapter = new TransparencyClassAdapter(classInfo, spec, writer, lgr, caller, portability);
     List<ClassAdapterFactory> factories = spec.getCustomClassAdapters();
     ClassVisitor cv = dsoAdapter;
-    if (factories != null &&
-        !factories.isEmpty()) {
+    if (factories != null && !factories.isEmpty()) {
       for (ClassAdapterFactory factory : factories) {
         cv = factory.create(cv, caller);
       }

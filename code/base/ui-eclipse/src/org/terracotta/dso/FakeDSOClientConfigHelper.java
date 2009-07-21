@@ -17,6 +17,7 @@ import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.ClassReplacementMapping;
+import com.tc.object.config.ClassReplacementTest;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOSpringConfigHelper;
@@ -66,6 +67,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
 
   public void addClassReplacement(final String originalClassName, final String replacementClassName,
                                   final URL replacementResource) {
+    /**/
+  }
+
+  public void addClassReplacement(String originalClassName, String replacementClassName, URL url,
+                                  ClassReplacementTest test) {
     /**/
   }
 
@@ -497,4 +503,5 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public boolean hasBootJar() {
     return false;
   }
+
 }

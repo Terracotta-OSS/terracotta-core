@@ -49,6 +49,8 @@ public interface StandardDSOClientConfigHelper {
   void addClassReplacement(final String originalClassName, final String replacementClassName,
                            final URL replacementResource);
 
+  void addClassReplacement(String originalClassName, String replacementClassName, URL url, ClassReplacementTest test);
+
   void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly);
 
   void addIncludePattern(String expression, boolean honorTransient, boolean oldStyleCallConstructorOnLoad,

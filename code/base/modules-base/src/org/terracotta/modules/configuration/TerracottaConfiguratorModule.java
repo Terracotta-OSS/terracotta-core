@@ -12,6 +12,7 @@ import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.BundleSpec;
 import com.tc.object.bytecode.ByteCodeUtil;
+import com.tc.object.config.ClassReplacementTest;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
@@ -77,9 +78,14 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
   protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
                                            final String replacementClassName) {
+    addClassReplacement(bundle, originalClassName, replacementClassName, null);
+  }
+
+  protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
+                                           final String replacementClassName, ClassReplacementTest test) {
     String url = getBundleJarUrl(bundle) + ByteCodeUtil.classNameToFileName(replacementClassName);
     try {
-      configHelper.addClassReplacement(originalClassName, replacementClassName, new URL(url));
+      configHelper.addClassReplacement(originalClassName, replacementClassName, new URL(url), test);
     } catch (MalformedURLException e) {
       throw new RuntimeException("Unexpected error while constructing the URL '" + url + "'", e);
     }
@@ -92,7 +98,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * java.lang.ClassLoader.loadClassInternal(). Specifically if the loadClass() method is directly being invoked from
    * code someplace, the class export will not function. Code that does a "new <exported class name>", or that uses
    * java.lang.Class.forName(..) will work though
-   *
+   * 
    * @param classname the bundle class name to export
    * @param targetSystemLoaderOnly True if only the systen classloader should have visibility to this exported class
    */
@@ -116,7 +122,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * The export will only work for class loads that pass through java.lang.ClassLoader.loadClassInternal(). Specifically
    * if the loadClass() method is directly being invoked from code someplace, the class export will not function. Code
    * that does a "new <exported class name>", or that uses java.lang.Class.forName(..) will work though
-   *
+   * 
    * @param classname the tc.jar class name to export
    */
   protected final void addExportedTcJarClass(final String classname) {
