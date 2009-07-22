@@ -30,6 +30,8 @@ bundled_components:
           - thirdpartylicenses
           - disclaimer
           - license
+          - INSTALL
+          - WELCOME
   - shared-base:
       documentations:
         install_directory: docs
