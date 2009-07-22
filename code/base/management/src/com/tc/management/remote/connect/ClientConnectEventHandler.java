@@ -84,7 +84,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
           bag.registerBean(mbsn.getMBeanName());
         } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
-          bag.unregisterBean(mbsn.getMBeanName());
+          bag.unregisterBean(mbsn.getMBeanName(), true);
         }
       }
     }
@@ -251,7 +251,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
     synchronized void unregisterBeans() {
       for (ObjectName name : beanNames) {
-        unregisterBean(name);
+        unregisterBean(name, false);
       }
       beanNames.clear();
     }
@@ -260,8 +260,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       try {
         ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
 
-        if (beanNames.add(modifiedObjName)) {
-          if (TerracottaManagement.matchAllTerracottaMBeans().apply(objName)) {
+        if (TerracottaManagement.matchAllTerracottaMBeans().apply(objName)) {
+          if (beanNames.add(modifiedObjName)) {
             MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName);
             l2MBeanServer.registerMBean(mirror, modifiedObjName);
             logger.info("Tunneled MBean '" + modifiedObjName + "'");
@@ -272,14 +272,19 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       }
     }
 
-    private void unregisterBean(ObjectName name) {
-      try {
-        l2MBeanServer.unregisterMBean(name);
-      } catch (Exception e) {
-        logger.warn("Unable to unregister DSO client bean[" + name + "]", e);
+    synchronized void unregisterBean(ObjectName name, boolean remove) {
+      if (beanNames.contains(name)) {
+        try {
+          l2MBeanServer.unregisterMBean(name);
+        } catch (Exception e) {
+          logger.warn("Unable to unregister DSO client bean[" + name + "]", e);
+        } finally {
+          if (remove) {
+            beanNames.remove(name);
+          }
+        }
       }
     }
-
   }
 
 }
