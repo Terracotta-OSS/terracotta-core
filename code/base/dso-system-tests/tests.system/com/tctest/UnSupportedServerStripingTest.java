@@ -21,7 +21,7 @@ public class UnSupportedServerStripingTest extends BaseDSOTestCase {
     workDir.mkdirs();
 
     TcConfigBuilder configBuilder = new TcConfigBuilder("/com/tctest/tc-2-server-groups-config.xml");
-    randomizePorts(configBuilder);
+    configBuilder.randomizePorts();
 
     ExternalDsoServer server = new ExternalDsoServer(workDir, configBuilder.newInputStream(), "server1");
 
