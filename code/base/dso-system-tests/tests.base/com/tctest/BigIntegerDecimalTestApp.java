@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -19,15 +20,15 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
 
 /*
- * Test cases for testing method invocations for BigInteger and BigDecimal classes.
- * Testcases for testing the sharing of BigInteger and BigDecimal objects are handled by
- * TransparentTestApp.
+ * Test cases for testing method invocations for BigInteger and BigDecimal classes. Testcases for testing the sharing of
+ * BigInteger and BigDecimal objects are handled by TransparentTestApp.
  */
 public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
-  private final static BigInteger refInt = new BigInteger("100");
+  private final static BigInteger refInt     = new BigInteger("100");
   private final static BigDecimal refDecimal = new BigDecimal("100.0");
 
   public BigIntegerDecimalTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -79,10 +80,10 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
             && !methods[i].getName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)
             && !methods[i].getName().endsWith("class$")) {
           System.out.println("Executing method: " + methods[i].getName());
-          
+
           methodArguments = bigIntegerClass ? getBigIntegerMethodArguments(methods[i])
               : getBigDecimalMethodArguments(methods[i]);
-          
+
           if (bigIntegerClass) {
             object = new BigInteger("101");
           } else {
@@ -91,20 +92,17 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
 
           invokeMethod(object, methods[i], methodArguments, lock);
         }
-      } catch (IllegalArgumentException e) {
-        throw new TCRuntimeException(e);
-      } catch (IllegalAccessException e) {
-        throw new TCRuntimeException(e);
-      } catch (InvocationTargetException e) {
-        throw new TCRuntimeException(e);
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to invoke method " + methods[i].getName() + " with arguments: "
+                                   + Arrays.asList(methodArguments), e);
       }
     }
   }
 
-  private void invokeMethod(Object object, Method method, Object[] methodArguments, boolean lock) throws IllegalArgumentException,
-      IllegalAccessException, InvocationTargetException {
+  private void invokeMethod(Object object, Method method, Object[] methodArguments, boolean lock)
+      throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
     if (lock) {
-      synchronized(object) {
+      synchronized (object) {
         method.invoke(object, methodArguments);
       }
     } else {
@@ -154,14 +152,14 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
           arguments[2] = new Integer(BigDecimal.ROUND_UP);
         }
       }
-    } else if ("divideAndRemainder".equals(methodName) || "divideToIntegralValue".equals(methodName) ||
-        "remainder".equals(methodName)) {
+    } else if ("divideAndRemainder".equals(methodName) || "divideToIntegralValue".equals(methodName)
+               || "remainder".equals(methodName)) {
       arguments[0] = refDecimal;
       if (arguments.length == 2 && parameterTypes[1].equals(mathContextClazz)) {
         arguments[1] = decimal32MathContext;
       }
-    } else if ("movePointLeft".equals(methodName) || "movePointRight".equals(methodName) ||
-        "scaleByPowerOfTen".equals(methodName)) {
+    } else if ("movePointLeft".equals(methodName) || "movePointRight".equals(methodName)
+               || "scaleByPowerOfTen".equals(methodName)) {
       arguments[0] = new Integer(1);
     } else if ("pow".equals(methodName)) {
       arguments[0] = new Integer(1);
@@ -382,8 +380,8 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
   }
 
   /*
-   * We need to use reflection to obtain class for RoundingMode and MathContext because 
-   * these two classes do not exist in jdk1.4.
+   * We need to use reflection to obtain class for RoundingMode and MathContext because these two classes do not exist
+   * in jdk1.4.
    */
   private Class getClazz(String className) {
     Class mathContextClazz = null;
@@ -406,8 +404,8 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
   }
 
   /*
-   * We need to use reflection to obtain the UP and DECIMAL32 fields of class RoundingMode
-   * and MathContext because these two classes do not exist in jdk1.4.
+   * We need to use reflection to obtain the UP and DECIMAL32 fields of class RoundingMode and MathContext because these
+   * two classes do not exist in jdk1.4.
    */
   private Object getField(Class mathContextClazz, String fieldName) {
     if (mathContextClazz == null) return null;
@@ -426,7 +424,7 @@ public class BigIntegerDecimalTestApp extends AbstractTransparentApp {
     }
     return decimal32MathContext;
   }
-  
+
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = BigIntegerDecimalTestApp.class.getName();
     config.getOrCreateSpec(testClass);
