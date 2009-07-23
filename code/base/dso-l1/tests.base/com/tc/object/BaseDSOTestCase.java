@@ -18,10 +18,7 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.tc.util.PortChooser;
-import com.tc.util.TcConfigBuilder;
 import com.terracottatech.config.AdditionalBootJarClasses;
-import com.terracottatech.config.Server;
 
 import java.io.IOException;
 
@@ -144,16 +141,6 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
   // TODO: fix this
   protected synchronized final void makeClientUsePort(int whichPort) throws ConfigurationSetupException {
     ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(whichPort);
-  }
-
-  protected void randomizePorts(TcConfigBuilder configBuilder) {
-    PortChooser pc = new PortChooser();
-    Server[] servers = configBuilder.getServers();
-    for (Server server : servers) {
-      server.setDsoPort(pc.chooseRandomPort());
-      server.setJmxPort(pc.chooseRandomPort());
-      server.setL2GroupPort(pc.chooseRandomPort());
-    }
   }
 
   public BaseDSOTestCase() {
