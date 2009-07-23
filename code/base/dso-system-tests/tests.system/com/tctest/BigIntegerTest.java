@@ -11,10 +11,6 @@ public class BigIntegerTest extends TransparentTestBase {
   private final static int NODE_COUNT = 1;
   private final static int LOOP_COUNT = 1;
 
-  public BigIntegerTest() {
-    disableAllUntil("2009-11-30");
-  }
-  
   public void setUp() throws Exception {
     super.setUp();
     

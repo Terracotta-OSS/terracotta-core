@@ -35,13 +35,10 @@ public class BigIntegerTestApp extends AbstractTransparentApp {
     for (int i=0; i<methods.length; i++) {
       try {
         System.out.println("Method name: " + methods[i].getName());
-        if (!Modifier.isPrivate(methods[i].getModifiers()) &&
+        if (Modifier.isPublic(methods[i].getModifiers()) &&
             !methods[i].getName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX) &&
             !methods[i].getName().endsWith("class$")) {
           System.out.println("Executing method: " + methods[i].getName());
-          if (!Modifier.isPublic(methods[i].getModifiers())) {
-            methods[i].setAccessible(true);
-          }
           invokeMethod(methods[i]);
         }
       } catch (IllegalArgumentException e) {
