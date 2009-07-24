@@ -69,12 +69,12 @@ AspectWerkz binary of course never affects the license of your
 application or distribution. If you modify AspectWerkz and redistribute
 your modifications, the LGPL applies.
 
-(4)        Terracotta incorporates nine components into its software
+(4)        Terracotta incorporates eleven components into its software
 (Apache Commons CLI; Apache Commons Collections; Apache Commons IO,
 Apache Commons Lang; Apache Commons Logging; Apache Jakarta Regexp;
-Apache Log4j; Apache Xalan-Java; Apache XMLBeans 2.0.0; and Jetty) that
-are licensed under the Apache License 2.0, which sets forth the
-following requirements:
+Apache Log4j; Apache Xalan-Java; Apache XMLBeans 2.0.0; TrueZIP; 
+Google Collections; and Jetty) that are licensed under the Apache
+License 2.0, which sets forth the following requirements:
 
 Copyright 2005 Terracotta, Inc.
 
