@@ -29,10 +29,12 @@ public class KnopflerfishOSGiTest extends TestCase {
   private static final String PRODUCT_VERSION_DOT_QUALIFIER  = PRODUCT_VERSION_DASH_QUALIFIER.replace('-', '.');
   private KnopflerfishOSGi    osgiRuntime                    = null;
 
+  @Override
   public void setUp() throws Exception {
     osgiRuntime = new KnopflerfishOSGi(new URL[0]);
   }
 
+  @Override
   public void tearDown() {
     osgiRuntime = null;
   }
@@ -50,12 +52,13 @@ public class KnopflerfishOSGiTest extends TestCase {
       String name = jar.getName().replaceAll("-" + version + ".jar", "");
 
       String[] repos = { System.getProperty("com.tc.l1.modules.repositories") };
-      Resolver resolver = new Resolver(repos, ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
+      Resolver resolver = new Resolver(repos, ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo
+          .getInstance().apiVersion());
       Module module = Module.Factory.newInstance();
       module.setName(name);
       module.setVersion(version);
       module.setGroupId("org.terracotta.modules");
-      File file = resolver.resolve(module);
+      File file = FileUtils.toFile(resolver.resolve(module));
       assertEquals(file.getAbsolutePath().endsWith(name + "-" + version + ".jar"), true);
 
       final JarFile bundle = new JarFile(file);
@@ -107,23 +110,23 @@ public class KnopflerfishOSGiTest extends TestCase {
   private Collection jarFiles() throws IOException {
     String repo = System.getProperty("com.tc.l1.modules.repositories");
     File file = null;
-    if(repo.startsWith("file:")) {
+    if (repo.startsWith("file:")) {
       file = FileUtils.toFile(new URL(repo));
     } else {
       file = new File(repo);
     }
-    
+
     Collection files = FileUtils.listFiles(file, new String[] { "jar" }, true);
-    
+
     // Filter modules-base as it will have a different version number that matches the api
     Iterator iter = files.iterator();
-    while(iter.hasNext()) {
+    while (iter.hasNext()) {
       File module = (File) iter.next();
-      if(module.getName().contains("modules-base")) {
+      if (module.getName().contains("modules-base")) {
         iter.remove();
       }
     }
-    
+
     return files;
   }
 

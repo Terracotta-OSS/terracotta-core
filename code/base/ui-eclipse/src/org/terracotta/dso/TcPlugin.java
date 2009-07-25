@@ -476,10 +476,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       Servers servers = config.getServers();
 
       if (servers != null) {
-        Server[] serverArr = servers.getServerArray();
-
-        for (int i = 0; i < serverArr.length; i++) {
-          Server server = serverArr[i];
+        for (Server server : servers.getServerArray()) {
           String serverName = ParameterSubstituter.substitute(server.getName());
           if (serverName != null && name.equals(name)) { return server; }
         }
@@ -529,10 +526,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       if (servers != null) {
         Server launchServer = createLaunchServer(launch);
-        Server[] serverArray = servers.getServerArray();
 
-        for (int i = 0; i < serverArray.length; i++) {
-          Server server = serverArray[i];
+        for (Server server : servers.getServerArray()) {
           Server serverCopy = (Server) server.copy();
           replacePatterns(serverCopy);
           if (areEquivalentServers(launchServer, serverCopy)) { return server; }
@@ -672,7 +667,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
         String[] repositories = ResolverUtils.urlsToStrings(osgiRuntime.getRepositories());
-        final Resolver resolver = new Resolver(repositories, ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
+        final Resolver resolver = new Resolver(repositories, ProductInfo.getInstance().mavenArtifactsVersion(),
+                                               ProductInfo.getInstance().apiVersion());
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -683,9 +679,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
           ModuleInfo moduleInfo = modulesConfig.getOrAdd(module);
           try {
             moduleInfo.setLocation(resolver.resolve(module));
-            final File[] locations = resolver.getResolvedFiles();
-            for (File location : locations) {
-              osgiRuntime.installBundle(location.toURL());
+            for (URL location : resolver.getResolvedURLs()) {
+              osgiRuntime.installBundle(location);
             }
           } catch (BundleException be) {
             moduleInfo.setError(be);
@@ -696,15 +691,15 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       }
 
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
-      final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()), ProductInfo.getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
+      final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()), ProductInfo
+          .getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
       Module[] allModules = modulesCopy.getModuleArray();
 
       resolver.resolve(allModules);
 
-      final File[] locations = resolver.getResolvedFiles();
-      for (File location : locations) {
+      for (URL location : resolver.getResolvedURLs()) {
         try {
-          osgiRuntime.installBundle(location.toURL());
+          osgiRuntime.installBundle(location);
         } catch (BundleException be) {
           /**/
         }
@@ -713,11 +708,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       osgiRuntime.registerService("com.tc.object.config.StandardDSOClientConfigHelper",
                                   new FakeDSOClientConfigHelper(), new Properties());
 
-      URL[] urls = new URL[locations.length];
-      for (int i = 0; i < locations.length; i++) {
-        urls[i] = locations[i].toURL();
-      }
-      osgiRuntime.startBundles(urls, new EmbeddedOSGiEventHandler() {
+      osgiRuntime.startBundles(resolver.getResolvedURLs(), new EmbeddedOSGiEventHandler() {
         public void callback(final Object payload) throws BundleException {
           Assert.assertTrue(payload instanceof Bundle);
           Bundle bundle = (Bundle) payload;
@@ -741,8 +732,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     if (moduleInfo == null) return;
 
     final String[] paths = ModulesLoader.getConfigPath(bundle);
-    for (int i = 0; i < paths.length; i++) {
-      final String configPath = paths[i];
+    for (final String configPath : paths) {
       InputStream is = null;
 
       try {
@@ -1103,14 +1093,14 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     ArrayList<ConfigurationEditor> list = new ArrayList<ConfigurationEditor>();
     IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
 
-    for (int i = 0; i < windows.length; i++) {
-      IWorkbenchPage[] pages = windows[i].getPages();
+    for (IWorkbenchWindow window : windows) {
+      IWorkbenchPage[] pages = window.getPages();
 
-      for (int j = 0; j < pages.length; j++) {
-        IEditorReference[] editorRefs = pages[j].getEditorReferences();
+      for (IWorkbenchPage page : pages) {
+        IEditorReference[] editorRefs = page.getEditorReferences();
 
-        for (int k = 0; k < editorRefs.length; k++) {
-          IEditorPart editorPart = editorRefs[k].getEditor(false);
+        for (IEditorReference editorRef : editorRefs) {
+          IEditorPart editorPart = editorRef.getEditor(false);
 
           if (editorPart != null) {
             if (editorPart instanceof ConfigurationEditor) {
@@ -1137,10 +1127,10 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     }
 
     ConfigurationEditor[] configEditors = getConfigurationEditors(project);
-    for (int i = 0; i < configEditors.length; i++) {
-      IFileEditorInput fileEditorInput = (IFileEditorInput) configEditors[i].getEditorInput();
+    for (ConfigurationEditor configEditor : configEditors) {
+      IFileEditorInput fileEditorInput = (IFileEditorInput) configEditor.getEditorInput();
       IFile file = fileEditorInput.getFile();
-      configEditors[i].newInputFile(file);
+      configEditor.newInputFile(file);
     }
   }
 
@@ -1295,11 +1285,11 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     ConfigurationEditor[] configEditors = getConfigurationEditors(project);
     IFile configFile = getConfigurationFile(project);
 
-    for (int i = 0; i < configEditors.length; i++) {
-      IFileEditorInput fileEditorInput = (IFileEditorInput) configEditors[i].getEditorInput();
+    for (ConfigurationEditor configEditor : configEditors) {
+      IFileEditorInput fileEditorInput = (IFileEditorInput) configEditor.getEditorInput();
       IFile file = fileEditorInput.getFile();
 
-      if (file.equals(configFile)) { return configEditors[i]; }
+      if (file.equals(configFile)) { return configEditor; }
     }
 
     return null;
@@ -1521,8 +1511,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     }
 
     public void run() {
-      for (int i = 0; i < m_decorators.length; i++) {
-        m_decoratorManager.update(m_decorators[i]);
+      for (String decorator : m_decorators) {
+        m_decoratorManager.update(decorator);
       }
     }
   }

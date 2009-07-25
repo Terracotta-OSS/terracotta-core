@@ -48,7 +48,6 @@ import com.terracottatech.config.Modules;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
@@ -185,19 +184,10 @@ public class ModulesLoader {
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
     final ProductInfo info = ProductInfo.getInstance();
     final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), info.mavenArtifactsVersion(), info.apiVersion());
-    final File[] locations = resolver.resolve(allModules);
+    final URL[] locations = resolver.resolve(allModules);
 
-    final URL[] bundleURLs = new URL[locations.length];
-    for (int i = 0; i < locations.length; i++) {
-      try {
-        bundleURLs[i] = locations[i].toURL();
-      } catch (MalformedURLException e) {
-        throw new BundleException("Malformed file URL for bundle: " + locations[i].getAbsolutePath(), e);
-      }
-    }
-
-    osgiRuntime.installBundles(bundleURLs);
-    osgiRuntime.startBundles(bundleURLs, handler);
+    osgiRuntime.installBundles(locations);
+    osgiRuntime.startBundles(locations, handler);
   }
 
   private static void installTIMByteProvider(final Bundle bundle) {

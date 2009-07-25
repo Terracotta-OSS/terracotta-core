@@ -19,8 +19,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
-import java.io.File;
-import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
@@ -58,14 +56,14 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
   }
 
   public void installBundles(final URL[] locations) throws BundleException {
-    for (int i = 0; i < locations.length; i++) {
-      installBundle(locations[i]);
+    for (URL location : locations) {
+      installBundle(location);
     }
   }
 
   public void startBundles(final URL[] locations, final EmbeddedOSGiEventHandler handler) throws BundleException {
-    for (int i = 0; i < locations.length; i++) {
-      final long id = framework.getBundleId(locations[i].toString());
+    for (URL location : locations) {
+      final long id = framework.getBundleId(location.toString());
       startBundle(id, handler);
     }
   }
@@ -189,8 +187,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
       if (symname == null) {
         framework.uninstallBundle(id);
-        final File bundleFile = new File(new URI(location.toString()));
-        warn(Message.WARN_SKIPPED_FILE_INSTALLATION, new Object[] { bundleFile.getName() });
+        warn(Message.WARN_SKIPPED_FILE_INSTALLATION, new Object[] { location });
       } else if (logger.isDebugEnabled()) {
         info(Message.BUNDLE_INSTALLED, new Object[] { symname });
       }

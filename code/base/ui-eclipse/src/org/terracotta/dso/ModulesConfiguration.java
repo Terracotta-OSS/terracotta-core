@@ -4,6 +4,7 @@
  */
 package org.terracotta.dso;
 
+import org.apache.commons.io.FileUtils;
 import org.osgi.framework.Bundle;
 
 import com.terracottatech.config.AdditionalBootJarClasses;
@@ -29,8 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ModulesConfiguration {
-  private List<ModuleInfo> fModuleInfoList;
-  private DsoApplication   fApplication;
+  private final List<ModuleInfo> fModuleInfoList;
+  private final DsoApplication   fApplication;
 
   public ModulesConfiguration() {
     fModuleInfoList = new ArrayList();
@@ -65,7 +66,7 @@ public class ModulesConfiguration {
 
   public ModuleInfo associateBundle(Bundle bundle) {
     for (ModuleInfo moduleInfo : fModuleInfoList) {
-      File location = moduleInfo.getLocation();
+      File location = FileUtils.toFile(moduleInfo.getLocation());
       String bundleLocation = bundle.getLocation();
 
       if (location != null) {

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.bundles;
 
@@ -9,17 +10,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public final class ResolverUtils {
 
-  public static List searchPathnames(List repositories, String groupId, String name, String version) {
-    List paths = new ArrayList();
-    for (Iterator i = repositories.iterator(); i.hasNext();) {
-      String root = canonicalize((File) i.next());
-      paths.add(OSGiToMaven.makeBundlePathname(root, groupId, name, version));
-      paths.add(OSGiToMaven.makeFlatBundlePathname(root, name, version, false));
+  public static List<URL> searchRepos(List<Repository> repositories, String groupId, String name, String version) {
+    List<URL> paths = new ArrayList<URL>();
+    for (Repository repo : repositories) {
+      paths.addAll(repo.search(groupId, name, version));
+
     }
     return paths;
   }
@@ -50,7 +49,7 @@ public final class ResolverUtils {
       return path.toString();
     }
   }
-  
+
   public static String canonicalize(String path) {
     return canonicalize(new File(path));
   }

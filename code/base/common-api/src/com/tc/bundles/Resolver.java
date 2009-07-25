@@ -5,10 +5,6 @@
 package com.tc.bundles;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.AndFileFilter;
-import org.apache.commons.io.filefilter.PrefixFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.BundleSpecException;
@@ -24,6 +20,7 @@ import com.tc.util.Assert;
 import com.tc.util.version.VersionMatcher;
 import com.terracottatech.config.Module;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -31,52 +28,51 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.Stack;
-import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
 public class Resolver {
 
-  static final String           BUNDLE_VERSION        = "Bundle-Version";
-  static final String           BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
+  static final String            BUNDLE_VERSION        = "Bundle-Version";
+  static final String            BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
 
-  private static final String   TC_PROPERTIES_SECTION = "l1.modules";
+  private static final String    TC_PROPERTIES_SECTION = "l1.modules";
 
-  private static final TCLogger logger                = TCLogging.getLogger(Resolver.class);
+  private static final TCLogger  logger                = TCLogging.getLogger(Resolver.class);
 
-  // List of File where each is a repository root
-  private final List            repositories          = new ArrayList();
+  // List of repositories
+  private final List<Repository> repositories          = new ArrayList<Repository>();
 
   // List of Entry objects describing already resolved bundles
-  private final List            registry              = new ArrayList();
+  private final List<Entry>      registry              = new ArrayList<Entry>();
 
-  private final VersionMatcher  versionMatcher;
-  
-  public Resolver(final String[] repositoryStrings, final String tcVersion, final String apiVersion) throws MissingDefaultRepositoryException {
+  private final VersionMatcher   versionMatcher;
+
+  public Resolver(final String[] repositoryStrings, final String tcVersion, final String apiVersion)
+      throws MissingDefaultRepositoryException {
     this(repositoryStrings, true, tcVersion, apiVersion);
   }
 
-  public Resolver(final String[] repositoryStrings, final boolean injectDefault, final String tcVersion, final String apiVersion)
-      throws MissingDefaultRepositoryException {
+  public Resolver(final String[] repositoryStrings, final boolean injectDefault, final String tcVersion,
+                  final String apiVersion) throws MissingDefaultRepositoryException {
     if (injectDefault) injectDefaultRepositories();
 
-    for (int i = 0; i < repositoryStrings.length; i++) {
-      String repository = repositoryStrings[i].trim();
+    for (String repositoryString : repositoryStrings) {
+      String repository = repositoryString.trim();
       if (repository.length() == 0) continue;
       File repoFile = resolveRepositoryLocation(repository);
-      if (repoFile != null) repositories.add(repoFile);
+      if (repoFile != null) repositories.add(new FSRepository(repoFile, logger));
     }
 
     if (repositories.isEmpty()) {
       final String msg = "No valid TIM repository locations defined.";
       throw new MissingDefaultRepositoryException(msg);
     }
-    
+
     versionMatcher = new VersionMatcher(tcVersion, apiVersion);
   }
 
@@ -89,7 +85,7 @@ public class Resolver {
         throw new MissingDefaultRepositoryException(msg, defaultRepository);
       }
       consoleLogger.debug("Appending default TIM repository: '" + defaultRepository + "'");
-      repositories.add(defaultRepository);
+      repositories.add(new FSRepository(defaultRepository, logger));
     }
 
     final TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(TC_PROPERTIES_SECTION);
@@ -97,16 +93,16 @@ public class Resolver {
     if (reposProp == null) return;
 
     final String[] entries = reposProp.split(",");
-    for (int i = 0; i < entries.length; i++) {
-      final String entry = entries[i].trim();
-      if (entry.length() == 0) continue;
-      final File repoFile = resolveRepositoryLocation(entry);
+    for (String entry : entries) {
+      final String trimmed = entry.trim();
+      if (trimmed.length() == 0) continue;
+      final File repoFile = resolveRepositoryLocation(trimmed);
       if (repoFile == null) {
-        consoleLogger.warn("Ignored non-existent TIM repository: '" + ResolverUtils.canonicalize(entry) + "'");
+        consoleLogger.warn("Ignored non-existent TIM repository: '" + ResolverUtils.canonicalize(trimmed) + "'");
         continue;
       }
       consoleLogger.debug("Prepending default TIM repository: '" + ResolverUtils.canonicalize(repoFile) + "'");
-      repositories.add(repoFile);
+      repositories.add(new FSRepository(repoFile, logger));
     }
   }
 
@@ -156,36 +152,39 @@ public class Resolver {
     return file;
   }
 
-  public final File resolve(Module module) throws BundleException {
+  public final URL resolve(Module module) throws BundleException {
     final String name = module.getName();
     String version = module.getVersion();
     final String groupId = module.getGroupId();
 
     // Resolve null versions by finding newest candidate in available repositories
-    if(version == null) {
+    if (version == null) {
       version = findNewestVersion(groupId, name);
       module.setVersion(version);
-      
-      if(version == null) {
-        String msg = "No version was specified for " + groupId + ":" + name + 
-          " in the Terracotta configuration file and no versions were found in the available repositories.";
+
+      if (version == null) {
+        String msg = "No version was specified for "
+                     + groupId
+                     + ":"
+                     + name
+                     + " in the Terracotta configuration file and no versions were found in the available repositories.";
         throw new BundleException(msg);
       }
     }
-    
+
     // CDV-691: If you are defining a module in the tc-config.xml, the schema requires that you specify
     // a name and version, so this will never happen (although version could still be invalid).
     // But if you define programmatically in a TIM or in a test, it is possible to screw this up.
     if (name == null) {
-      String msg = "Invalid module specification (name is required): name=null, version="
-                   + version + ", groupId=" + groupId;
+      String msg = "Invalid module specification (name is required): name=null, version=" + version + ", groupId="
+                   + groupId;
       throw new BundleException(msg);
     }
 
-    final File location;
+    final URL location;
     try {
       location = resolveLocation(name, version, groupId);
-    } catch(Exception e) {
+    } catch (Exception e) {
       String msg = "Invalid module specification: name=" + name + ", version=" + version + ", groupId=" + groupId;
       throw new BundleException(msg, e);
     }
@@ -202,172 +201,148 @@ public class Resolver {
   }
 
   private String findNewestVersion(String groupId, String name) {
-    TCLogger log = TCLogging.getLogger(Resolver.class);
-    log.info("findNewestVersion(" + groupId + ", " + name +")");
-    
+    logger.info("findNewestVersion(" + groupId + ", " + name + ")");
+
     final String symName = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
     String newestVersion = null;
-    
-    log.info("looking for symName = " + symName);
-    
-    for(Iterator i = repositories.iterator(); i.hasNext();) {
-      String root = ResolverUtils.canonicalize((File) i.next());
-      
-      log.info("root = " + root);
-      File repoRoot = new File(root);
-      if(repoRoot.exists() && repoRoot.isDirectory()) {
-        log.info("looking for possible flat files");
-        // Flat repo - search for jars at root with name as prefix (name-<version>.jar) 
-        Collection<File> possibles = FileUtils.listFiles(repoRoot, new AndFileFilter(new PrefixFileFilter(name + "-"), new SuffixFileFilter(".jar")), null);
-        log.info("found flat file possibles = " + possibles.toString());
-        
-        // Hierarchical repo - search for jars at groupId/name subdir
-        File nameRoot = new File(OSGiToMaven.makeBundlePathnamePrefix(root, groupId, name));
-        log.info("checking hierarchical repo root: " + nameRoot.getAbsolutePath());
-        if(nameRoot.exists() && nameRoot.isDirectory()) {
-          possibles.addAll(FileUtils.listFiles(nameRoot, new SuffixFileFilter(".jar"), TrueFileFilter.INSTANCE));
-          log.info("found all possibles = " + possibles.toString());
+
+    logger.info("looking for symName = " + symName);
+
+    for (Repository repo : repositories) {
+      Collection<URL> possibles = repo.search(groupId, name);
+
+      for (URL possible : possibles) {
+        Manifest manifest = getManifest(possible);
+        if (manifest == null) {
+          warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { possible });
+          continue;
         }
-        
-        for(File file : possibles) {
-          Manifest manifest = getManifest(file);
-          if (manifest == null) {
-            warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { file.getName() });
-            continue;
+
+        if (symName.equals(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
+          String moduleTcVersion = manifest.getMainAttributes().getValue("tc-version");
+          if (moduleTcVersion == null) {
+            moduleTcVersion = VersionMatcher.ANY_VERSION;
           }
-          
-          if(symName.equals(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
-            String moduleTcVersion = manifest.getMainAttributes().getValue("tc-version");
-            if(moduleTcVersion == null) {
-              moduleTcVersion = VersionMatcher.ANY_VERSION;
-            }
-            String moduleApiVersion = manifest.getMainAttributes().getValue("api-version");
-            if(moduleApiVersion == null) {
-              moduleApiVersion = VersionMatcher.ANY_VERSION;
-            }
-            if(versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
-              log.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
-              newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
-              log.info("new version = " + newestVersion);
-            } else {
-              log.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion + " - not appropriate for current tc version");
-            }
+          String moduleApiVersion = manifest.getMainAttributes().getValue("api-version");
+          if (moduleApiVersion == null) {
+            moduleApiVersion = VersionMatcher.ANY_VERSION;
           }
-        } 
+          if (versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
+            logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+            newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+            logger.info("new version = " + newestVersion);
+          } else {
+            logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
+                        + " - not appropriate for current tc version");
+          }
+        }
       }
     }
-    
-    if(newestVersion != null) {
+
+    if (newestVersion != null) {
       return OSGiToMaven.bundleVersionToProjectVersion(newestVersion);
     } else {
       return null;
     }
   }
-  
+
   static String newerVersion(String v1, String v2) {
     // Deal with nulls
-    if(v1 == null) {
-      if(v2 == null) {
+    if (v1 == null) {
+      if (v2 == null) {
         return null;
       } else {
         return v2;
       }
-    } else if(v2 == null) {
-      return v1;
-    }
-    
+    } else if (v2 == null) { return v1; }
+
     org.osgi.framework.Version v1v = new org.osgi.framework.Version(v1);
     org.osgi.framework.Version v2v = new org.osgi.framework.Version(v2);
-    
-    if(v1v.compareTo(v2v) > 0) {
+
+    if (v1v.compareTo(v2v) > 0) {
       return v1;
     } else {
       return v2;
     }
   }
 
-  public final File[] resolve(Module[] modules) throws BundleException {
+  public final URL[] resolve(Module[] modules) throws BundleException {
     resolveDefaultModules();
     resolveAdditionalModules();
     for (int i = 0; (modules != null) && (i < modules.length); i++)
       resolve(modules[i]);
-    return getResolvedFiles();
+    return getResolvedURLs();
   }
 
-  public final File[] getResolvedFiles() {
-    int j = 0;
-    final File[] files = new File[registry.size()];
-    for (Iterator i = registry.iterator(); i.hasNext();) {
-      final Entry entry = (Entry) i.next();
-      files[j++] = entry.getLocation();
+  public final URL[] getResolvedURLs() {
+    int i = 0;
+    final URL[] files = new URL[registry.size()];
+    for (Entry entry : registry) {
+      files[i++] = entry.getLocation();
     }
     return files;
   }
 
-  private File findJar(String groupId, String name, String version, Locator locator) {
+  private URL findJar(String groupId, String name, String version, Check check) {
     if (logger.isDebugEnabled()) logger.debug("Resolving location of " + groupId + ":" + name + ":" + version);
-    
-    File bestFile = null;
+
+    URL best = null;
     org.osgi.framework.Version bestVersion = null;
-    
-    final List paths = ResolverUtils.searchPathnames(repositories, groupId, name, version);
-    for (Iterator i = paths.iterator(); i.hasNext();) {
 
-      final File bundle = new File((String) i.next());
-      if (!bundle.exists() || !bundle.isFile()) continue;
-
-      final Manifest manifest = getManifest(bundle);
+    final List<URL> urls = ResolverUtils.searchRepos(repositories, groupId, name, version);
+    for (URL url : urls) {
+      final Manifest manifest = getManifest(url);
       if (manifest == null) {
-        warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { bundle.getName() });
+        warn(Message.WARN_FILE_IGNORED_MISSING_MANIFEST, new Object[] { url });
         continue;
       }
-      if (locator.check(bundle, manifest)) {
+      if (check.check(url, manifest)) {
         String currentVersionStr = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
-        if(bestFile == null) {
-          bestFile = bundle;
+        if (best == null) {
+          best = url;
           bestVersion = new org.osgi.framework.Version(currentVersionStr);
         } else {
           org.osgi.framework.Version currentVersion = new org.osgi.framework.Version(currentVersionStr);
-          if(currentVersion.compareTo(bestVersion) > 0) {
-            bestFile = bundle;
+          if (currentVersion.compareTo(bestVersion) > 0) {
+            best = url;
             bestVersion = currentVersion;
           }
         }
       }
     }
-    
-    return bestFile;
+
+    return best;
   }
 
-  protected File resolveBundle(final BundleSpec spec) {
+  protected URL resolveBundle(final BundleSpec spec) {
     final String groupId = spec.getGroupId();
     final String name = spec.getName();
     final String version = spec.getVersion();
-    Locator locator = new Locator() {
-      public boolean check(File bundle, Manifest manifest) {
+    Check check = new Check() {
+      public boolean check(URL bundle, Manifest manifest) {
         final String n = manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
         final String v = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
         return spec.isCompatible(n, v);
       }
     };
-    return findJar(groupId, name, version, locator);
+    return findJar(groupId, name, version, check);
   }
 
-  protected File resolveLocation(final String name, final String version, final String groupId) {
+  protected URL resolveLocation(final String name, final String version, final String groupId) {
     final String symname = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
     final Version osgiVersion = Version.parse(MavenToOSGi.projectVersionToBundleVersion(version));
-    Locator locator = new Locator() {
-      public boolean check(File bundle, Manifest manifest) {
+    Check check = new Check() {
+      public boolean check(URL bundle, Manifest manifest) {
         if (!isBundleMatch(bundle, manifest, symname, osgiVersion)) return false;
         return true;
       }
     };
-    File jarFile = findJar(groupId, name, version, locator);
-    if (jarFile != null) addToRegistry(jarFile, getManifest(jarFile));
-    return jarFile;
+    URL jar = findJar(groupId, name, version, check);
+    if (jar != null) addToRegistry(jar, getManifest(jar));
+    return jar;
   }
 
-  private boolean isBundleMatch(File bundle, Manifest manifest, String symname, Version version) {
+  private boolean isBundleMatch(URL bundle, Manifest manifest, String symname, Version version) {
     Assert.assertNotNull(manifest);
     if (logger.isDebugEnabled()) logger.debug("Checking " + bundle + " for " + symname + ":" + version);
 
@@ -393,8 +368,8 @@ public class Resolver {
 
     final String[] defaultModulesSpec = BundleSpec.getRequirements(defaultModulesProp);
     if (defaultModulesSpec.length > 0) {
-      for (int i = 0; i < defaultModulesSpec.length; i++) {
-        BundleSpec spec = BundleSpec.newInstance(defaultModulesSpec[i]);
+      for (String defaultSpec : defaultModulesSpec) {
+        BundleSpec spec = BundleSpec.newInstance(defaultSpec);
         DependencyStack dependencyStack = new DependencyStack();
         dependencyStack.push(spec.getSymbolicName(), spec.getVersion());
         ensureBundle(spec, dependencyStack);
@@ -409,8 +384,8 @@ public class Resolver {
     final String additionalModulesProp = props != null ? props.getProperty("additional") : null;
     if (additionalModulesProp == null) return;
     String[] additionalModulesSpec = BundleSpec.getRequirements(additionalModulesProp);
-    for (int i = 0; i < additionalModulesSpec.length; i++) {
-      BundleSpec spec = BundleSpec.newInstance(additionalModulesSpec[i]);
+    for (String addlSpec : additionalModulesSpec) {
+      BundleSpec spec = BundleSpec.newInstance(addlSpec);
       DependencyStack dependencyStack = new DependencyStack();
       dependencyStack.push(spec.getSymbolicName(), spec.getVersion());
       ensureBundle(spec, dependencyStack);
@@ -420,29 +395,27 @@ public class Resolver {
   private BundleSpec[] getRequirements(Manifest manifest) {
     List requirementList = new ArrayList();
     String[] manifestRequirements = BundleSpec.getRequirements(manifest);
-    for (int i = 0; i < manifestRequirements.length; i++) {
-      requirementList.add(BundleSpec.newInstance(manifestRequirements[i]));
+    for (String manifestRequirement : manifestRequirements) {
+      requirementList.add(BundleSpec.newInstance(manifestRequirement));
     }
     return (BundleSpec[]) requirementList.toArray(new BundleSpec[0]);
   }
 
-  private void resolveDependencies(final File location, Stack dependencyStack) throws BundleException {
+  private void resolveDependencies(final URL location, DependencyStack dependencyStack) throws BundleException {
     final Manifest manifest = getManifest(location);
     if (manifest == null) {
-      String msg = formatMessage(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { location.getName(),
-          ResolverUtils.canonicalize(location.getParentFile()) });
+      String msg = formatMessage(Message.ERROR_BUNDLE_UNREADABLE, new Object[] { ResolverUtils.canonicalize(location) });
       throw new UnreadableBundleException(msg, location);
     }
     final BundleSpec[] requirements = getRequirements(manifest);
-    DependencyStack stack = (DependencyStack) dependencyStack.push(new DependencyStack());
-    for (int i = 0; i < requirements.length; i++) {
-      final BundleSpec spec = requirements[i];
+    DependencyStack stack = dependencyStack.push(new DependencyStack());
+    for (final BundleSpec spec : requirements) {
       stack.push(spec.getSymbolicName(), spec.getVersion());
       try {
         ensureBundle(spec, stack);
       } catch (MissingBundleException e) {
         throw new MissingBundleException(e.getMessage(), spec.getGroupId(), spec.getName(), spec.getVersion(),
-        repositories, dependencyStack);
+                                         repositories, dependencyStack);
       }
     }
     addToRegistry(location, manifest);
@@ -450,35 +423,33 @@ public class Resolver {
 
   static void validateBundleSpec(final BundleSpec spec) throws BundleException {
     if (!spec.isVersionSpecified()) throw BundleSpecException.unspecifiedVersion(spec);
-//    if (!spec.isVersionSpecifiedAbsolute()) throw BundleSpecException.absoluteVersionRequired(spec);
+    // if (!spec.isVersionSpecifiedAbsolute()) throw BundleSpecException.absoluteVersionRequired(spec);
   }
 
-  private void ensureBundle(final BundleSpec spec, Stack dependencyStack) throws BundleException {
+  private void ensureBundle(final BundleSpec spec, DependencyStack stack) throws BundleException {
     validateBundleSpec(spec);
-    File required = findInRegistry(spec);
+    URL required = findInRegistry(spec);
     if (required == null) {
       required = resolveBundle(spec);
       if (required == null) {
         String msg = formatMessage(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
             spec.getVersion(), spec.getGroupId() });
-        throw new MissingBundleException(msg, spec.getGroupId(), spec.getName(), spec.getVersion(), repositories,
-                                         dependencyStack);
+        throw new MissingBundleException(msg, spec.getGroupId(), spec.getName(), spec.getVersion(), repositories, stack);
       }
       addToRegistry(required, getManifest(required));
-      resolveDependencies(required, dependencyStack);
+      resolveDependencies(required, stack);
     }
   }
 
-  private File addToRegistry(final File location, final Manifest manifest) {
+  private URL addToRegistry(final URL location, final Manifest manifest) {
     final Entry entry = new Entry(location, manifest);
     if (!registry.contains(entry)) registry.add(entry);
     return entry.getLocation();
   }
 
-  private File findInRegistry(BundleSpec spec) {
-    File location = null;
-    for (Iterator i = registry.iterator(); i.hasNext();) {
-      final Entry entry = (Entry) i.next();
+  private URL findInRegistry(BundleSpec spec) {
+    URL location = null;
+    for (Entry entry : registry) {
       if (spec.isCompatible(entry.getSymbolicName(), entry.getVersion())) {
         location = entry.getLocation();
         break;
@@ -487,20 +458,22 @@ public class Resolver {
     return location;
   }
 
-  static Manifest getManifest(final File file) {
-    try {
-      return getManifest(file.toURI().toURL());
-    } catch (MalformedURLException e) {
-      return null;
-    }
-  }
-
   static Manifest getManifest(final URL location) {
+    JarInputStream in = null;
     try {
-      final JarFile bundle = new JarFile(FileUtils.toFile(location));
-      return bundle.getManifest();
+      in = new JarInputStream(new BufferedInputStream(location.openStream()));
+      return in.getManifest();
     } catch (IOException e) {
+      logger.warn("Exception reading " + location, e);
       return null;
+    } finally {
+      if (in != null) {
+        try {
+          in.close();
+        } catch (IOException ioe) {
+          // ignore
+        }
+      }
     }
   }
 
@@ -514,15 +487,15 @@ public class Resolver {
     return MessageFormat.format(resourceBundle.getString(message.key()), arguments);
   }
 
-  private interface Locator {
-    boolean check(File bundle, Manifest manifest);
+  private interface Check {
+    boolean check(URL bundle, Manifest manifest);
   }
 
-  private final class Entry {
-    private File     location;
-    private Manifest manifest;
+  private static class Entry {
+    private final URL      location;
+    private final Manifest manifest;
 
-    public Entry(final File location, final Manifest manifest) {
+    public Entry(final URL location, final Manifest manifest) {
       this.location = location;
       this.manifest = manifest;
     }
@@ -535,10 +508,11 @@ public class Resolver {
       return manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
     }
 
-    public File getLocation() {
+    public URL getLocation() {
       return location;
     }
 
+    @Override
     public boolean equals(Object object) {
       if (this == object) return true;
       if (!(object instanceof Entry)) return false;
@@ -550,6 +524,7 @@ public class Resolver {
     private static final int SEED1 = 18181;
     private static final int SEED2 = 181081;
 
+    @Override
     public int hashCode() {
       int result = SEED1;
       result = hash(result, this.location);
@@ -557,11 +532,11 @@ public class Resolver {
       return result;
     }
 
-    private int hash(int seed, int value) {
+    private static int hash(int seed, int value) {
       return SEED2 * seed + value;
     }
 
-    private int hash(int seed, Object object) {
+    private static int hash(int seed, Object object) {
       int result = seed;
       if (object == null) {
         result = hash(result, 0);
@@ -569,23 +544,6 @@ public class Resolver {
         result = hash(result, object);
       }
       return result;
-    }
-  }
-
-  private final class DependencyStack extends Stack {
-
-    public void push(String groupId, String artifactId, String version) {
-      StringBuffer buf = new StringBuffer(artifactId);
-      buf.append(" version ");
-      buf.append(OSGiToMaven.bundleVersionToProjectVersion(version)).append(" (");
-      if (groupId.length() > 0) buf.append("group-id: ").append(groupId).append(", ");
-      buf.append("file: ").append(OSGiToMaven.makeBundleFilename(artifactId, version, false)).append(")");
-      push(buf.toString());
-    }
-
-    public void push(String symbolicName, String version) {
-      push(OSGiToMaven.groupIdFromSymbolicName(symbolicName), OSGiToMaven.artifactIdFromSymbolicName(symbolicName),
-           version);
     }
   }
 

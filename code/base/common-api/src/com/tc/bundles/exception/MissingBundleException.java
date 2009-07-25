@@ -7,8 +7,10 @@ package com.tc.bundles.exception;
 import org.apache.commons.lang.StringUtils;
 import org.osgi.framework.BundleException;
 
+import com.tc.bundles.DependencyStack;
 import com.tc.bundles.MavenToOSGi;
 import com.tc.bundles.OSGiToMaven;
+import com.tc.bundles.Repository;
 import com.tc.bundles.ResolverUtils;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
@@ -17,24 +19,19 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Iterator;
+import java.net.URL;
 import java.util.List;
-import java.util.Stack;
 
 public class MissingBundleException extends BundleException implements BundleExceptionSummary {
 
-  private String groupId;
-  private String name;
-  private String version;
-  private List   repositories;
-  private Stack  dependencyStack;
-
-  MissingBundleException(final String msg) {
-    super(msg);
-  }
+  private final String           groupId;
+  private final String           name;
+  private final String           version;
+  private final List<Repository> repositories;
+  private final DependencyStack  dependencyStack;
 
   public MissingBundleException(final String msg, final String groupId, final String name, final String version,
-                                final List repositories, final Stack dependencyStack) {
+                                final List<Repository> repositories, final DependencyStack dependencyStack) {
     super(msg);
     Assert.assertNotNull(groupId);
     Assert.assertNotNull(name);
@@ -49,15 +46,15 @@ public class MissingBundleException extends BundleException implements BundleExc
   }
 
   public MissingBundleException(final String msg, final String groupId, final String name, final String version,
-                                final List repositories) {
-    this(msg, groupId, name, version, repositories, new Stack());
+                                final List<Repository> repositories) {
+    this(msg, groupId, name, version, repositories, new DependencyStack());
   }
 
   private String expectedPaths() {
     final StringBuffer repos = new StringBuffer();
-    final List paths = ResolverUtils.searchPathnames(repositories, groupId, name, version);
-    for (Iterator i = paths.iterator(); i.hasNext();) {
-      repos.append("+ ").append((String) i.next()).append("\n").append(INDENT + INDENT);
+    final List<URL> urls = ResolverUtils.searchRepos(repositories, groupId, name, version);
+    for (URL url : urls) {
+      repos.append("+ ").append(url).append("\n").append(INDENT + INDENT);
     }
     return repos.toString();
   }
@@ -102,7 +99,7 @@ public class MissingBundleException extends BundleException implements BundleExc
     if (dependencyStack.size() > 0) {
       buf.append("The following shows the dependencies path the resolver took and why it ");
       buf.append("needed to locate the missing TIM:\n\n");
-      buf.append(dependencyStackAsString(dependencyStack)).append("\n").append(INDENT);
+      buf.append(dependencyStackAsString()).append("\n").append(INDENT);
     }
 
     buf.append("If the jar file exists and is in one of the paths listed ");
@@ -135,19 +132,18 @@ public class MissingBundleException extends BundleException implements BundleExc
     return StringUtils.replace(buf.toString(), "\n", System.getProperty("line.separator"));
   }
 
-  private String dependencyStackAsString(Stack dependencies) {
+  private String dependencyStackAsString() {
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     BufferedOutputStream buf = new BufferedOutputStream(bas);
-    printDependencyStack(dependencies, 0, 4, buf);
+    printDependencyStack(dependencyStack, 0, 4, buf);
     return bas.toString();
   }
 
-  private void printDependencyStack(Stack dependencies, int depth, int indent, OutputStream out) {
+  private static void printDependencyStack(DependencyStack dependencies, int depth, int indent, OutputStream out) {
     try {
-      for (Iterator i = dependencies.iterator(); i.hasNext();) {
-        Object entry = i.next();
-        if (entry instanceof Stack) {
-          printDependencyStack((Stack) entry, depth + 1, indent, out);
+      for (Object entry : dependencies) {
+        if (entry instanceof DependencyStack) {
+          printDependencyStack((DependencyStack) entry, depth + 1, indent, out);
           continue;
         }
         if (depth == 0) {
