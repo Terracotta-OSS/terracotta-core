@@ -72,7 +72,7 @@ public class MissingBundleException extends BundleException implements BundleExc
   private String searchedRepositories() {
     final StringBuffer repos = new StringBuffer();
     for (int j = 0; j < repositories.size(); j++) {
-      String root = ResolverUtils.canonicalize(repositories.get(j).toString());
+      String root = ResolverUtils.canonicalize(repositories.get(j).describe());
       repos.append("+ ").append(root).append("\n").append(INDENT + INDENT);
     }
     return repos.toString();

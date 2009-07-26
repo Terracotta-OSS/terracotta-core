@@ -28,6 +28,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -59,6 +60,12 @@ public class Resolver {
 
   public Resolver(final String[] repositoryStrings, final boolean injectDefault, final String tcVersion,
                   final String apiVersion) throws MissingDefaultRepositoryException {
+    this(repositoryStrings, injectDefault, tcVersion, apiVersion, Collections.EMPTY_LIST);
+  }
+
+  public Resolver(final String[] repositoryStrings, final boolean injectDefault, final String tcVersion,
+                  final String apiVersion, Collection<Repository> addlRepos) throws MissingDefaultRepositoryException {
+    repositories.addAll(addlRepos);
     if (injectDefault) injectDefaultRepositories();
 
     for (String repositoryString : repositoryStrings) {

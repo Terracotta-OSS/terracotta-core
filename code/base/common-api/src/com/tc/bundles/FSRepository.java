@@ -86,4 +86,8 @@ public class FSRepository implements Repository {
 
     return rv;
   }
+
+  public String describe() {
+    return repoFile.getAbsolutePath();
+  }
 }

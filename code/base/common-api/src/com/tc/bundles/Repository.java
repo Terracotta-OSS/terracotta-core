@@ -14,4 +14,6 @@ public interface Repository {
   // return all without respect to version
   Collection<URL> search(String groupId, String symName);
 
+  String describe();
+
 }

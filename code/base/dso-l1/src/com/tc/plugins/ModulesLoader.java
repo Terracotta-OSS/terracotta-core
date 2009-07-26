@@ -16,6 +16,7 @@ import org.osgi.framework.ServiceReference;
 
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
+import com.tc.bundles.Repository;
 import com.tc.bundles.Resolver;
 import com.tc.bundles.ResolverUtils;
 import com.tc.bundles.exception.BundleExceptionSummary;
@@ -56,6 +57,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Dictionary;
 import java.util.Enumeration;
@@ -103,6 +106,11 @@ public class ModulesLoader {
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) throws Exception {
+    initModules(configHelper, classProvider, forBootJar, Collections.EMPTY_LIST);
+  }
+
+  public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
+                                 final boolean forBootJar, Collection<Repository> addlRepos) throws Exception {
     if (forBootJar) {
       System.setProperty(TC_BOOTJAR_CREATION, Boolean.TRUE.toString());
     }
@@ -116,7 +124,7 @@ public class ModulesLoader {
 
       try {
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar);
+        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar, addlRepos);
         if (!forBootJar) {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           getModulesMBeanSpecs(osgiRuntime, configHelper);
@@ -146,6 +154,12 @@ public class ModulesLoader {
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                           final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
       throws BundleException {
+    initModules(osgiRuntime, configHelper, classProvider, modules, forBootJar, Collections.EMPTY_LIST);
+  }
+
+  static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
+                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar,
+                          Collection<Repository> addlRepos) throws BundleException {
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
@@ -183,7 +197,8 @@ public class ModulesLoader {
 
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
     final ProductInfo info = ProductInfo.getInstance();
-    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), info.mavenArtifactsVersion(), info.apiVersion());
+    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), true, info
+        .mavenArtifactsVersion(), info.apiVersion(), addlRepos);
     final URL[] locations = resolver.resolve(allModules);
 
     osgiRuntime.installBundles(locations);

@@ -8,6 +8,8 @@ import org.apache.commons.io.CopyUtils;
 
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
+import com.tc.bundles.Repository;
+import com.tc.bundles.VirtualTimRepository;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
@@ -41,7 +43,11 @@ import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DSOContextImpl implements DSOContext {
 
@@ -77,7 +83,7 @@ public class DSOContextImpl implements DSOContext {
   public static DSOContext createGlobalContext() throws ConfigurationSetupException {
     DSOClientConfigHelper configHelper = getGlobalConfigHelper();
     Manager manager = new ManagerImpl(configHelper, preparedComponentsFromL2Connection);
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, Collections.EMPTY_LIST);
   }
 
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
@@ -102,8 +108,8 @@ public class DSOContextImpl implements DSOContext {
     return createContext(configHelper, manager);
   }
 
-  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader)
-      throws ConfigurationSetupException {
+  public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
+                                                   Map<String, URL> virtualTimJars) throws ConfigurationSetupException {
     // XXX: refactor this to not duplicate createContext() so much
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
@@ -129,7 +135,9 @@ public class DSOContextImpl implements DSOContext {
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
     Manager manager = new ManagerImpl(true, null, null, configHelper, l2Connection, true, runtimeLogger, classProvider);
 
-    DSOContext context = createContext(configHelper, manager);
+    Collection<Repository> repos = new ArrayList<Repository>();
+    repos.add(new VirtualTimRepository(virtualTimJars));
+    DSOContext context = createContext(configHelper, manager, repos);
     manager.init();
     return context;
   }
@@ -137,15 +145,22 @@ public class DSOContextImpl implements DSOContext {
   /**
    * For tests
    */
+
   public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager) {
-    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager);
+    return createContext(configHelper, manager, Collections.EMPTY_LIST);
+  }
+
+  public static DSOContext createContext(DSOClientConfigHelper configHelper, Manager manager,
+                                         Collection<Repository> repos) {
+    return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos);
   }
 
   public static boolean isDSOSessions(String appName) throws ConfigurationSetupException {
     return getGlobalConfigHelper().isDSOSessions(appName);
   }
 
-  private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager) {
+  private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
+                         Collection<Repository> repos) {
     Assert.assertNotNull(configHelper);
 
     this.configHelper = configHelper;
@@ -156,7 +171,7 @@ public class DSOContextImpl implements DSOContext {
     checkForProperlyInstrumentedBaseClasses();
 
     try {
-      ModulesLoader.initModules(configHelper, classProvider, false);
+      ModulesLoader.initModules(configHelper, classProvider, false, repos);
       configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {

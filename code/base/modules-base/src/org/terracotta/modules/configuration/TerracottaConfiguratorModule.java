@@ -73,7 +73,9 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
   }
 
   protected final String getBundleJarUrl(final Bundle bundle) {
-    return "jar:" + bundle.getLocation() + "!/";
+    String location = bundle.getLocation();
+    boolean isJar = location.startsWith("file:") && location.endsWith(".jar");
+    return (isJar ? "jar:" : "") + location + "!/";
   }
 
   protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
