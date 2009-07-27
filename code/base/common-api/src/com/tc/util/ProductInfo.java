@@ -25,8 +25,8 @@ import java.util.regex.Pattern;
  * Utility class to retrieve the build information for the product.
  */
 public final class ProductInfo {
-  public static final String ENTERPRISE = "Enterprise";
-  public static final String OPENSOURCE = "Opensource";
+  public static final String                ENTERPRISE                   = "Enterprise";
+  public static final String                OPENSOURCE                   = "Opensource";
 
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
@@ -54,8 +54,6 @@ public final class ProductInfo {
   private static ProductInfo                INSTANCE                     = null;
 
   private final String                      moniker;
-  private final String                      maven_version;
-  private final String                      api_version;
   private final Date                        timestamp;
   private final String                      host;
   private final String                      user;
@@ -73,7 +71,9 @@ public final class ProductInfo {
   private final String                      patchEERevision;
   private final String                      patchBranch;
 
-  private String                            version;
+  private final String                      mavenVersion;
+  private final String                      apiVersion;
+  private String                            buildVersion;
   private String                            buildID;
   private String                            copyright;
   private String                            license                      = DEFAULT_LICENSE;
@@ -102,9 +102,9 @@ public final class ProductInfo {
     if (patchData != null) properties.load(patchData);
 
     // Get all release build properties
-    this.version = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
-    this.maven_version = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
-    this.api_version = getBuildProperty(properties, BUILD_DATA_API_VERSION_KEY, UNKNOWN_VALUE);
+    this.buildVersion = getBuildProperty(properties, BUILD_DATA_VERSION_KEY, UNKNOWN_VALUE);
+    this.mavenVersion = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
+    this.apiVersion = getBuildProperty(properties, BUILD_DATA_API_VERSION_KEY, UNKNOWN_VALUE);
     this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, OPENSOURCE);
 
     this.timestamp = parseTimestamp(getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
@@ -123,7 +123,7 @@ public final class ProductInfo {
     this.patchEERevision = getPatchProperty(properties, BUILD_DATA_EE_REVISION_KEY, UNKNOWN_VALUE);
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
 
-    Matcher matcher = KITIDPATTERN.matcher(maven_version);
+    Matcher matcher = KITIDPATTERN.matcher(mavenVersion);
     kitID = matcher.matches() ? matcher.group(1) : UNKNOWN_VALUE;
   }
 
@@ -183,7 +183,7 @@ public final class ProductInfo {
   }
 
   public boolean isDevMode() {
-    return this.version.endsWith(UNKNOWN_VALUE);
+    return this.buildVersion.endsWith(UNKNOWN_VALUE);
   }
 
   public String moniker() {
@@ -194,16 +194,32 @@ public final class ProductInfo {
     return edition;
   }
 
+  /**
+   * Use mavenVersion here because it's consistent between TC maven artifact and kit
+   * http://jira.terracotta.org/jira/browse/DEV-3130
+   */
   public String version() {
-    return version;
+    return mavenVersion;
   }
 
+  /**
+   * Remains for backward compatible reason.
+   * It returns the maven artifact version we use for TC artifacts
+   */
   public String mavenArtifactsVersion() {
-    return maven_version;
+    return mavenVersion;
   }
   
+  /**
+   * Version used during kit build for marketing purpose: 3.1.0-FC, 3.1.0-stable1, 3.1.0-nightly
+   * It should not be used to compare version between TC products. Use version() call for that purpose
+   */
+  public String buildVersion() {
+    return buildVersion;
+  }
+
   public String apiVersion() {
-    return api_version;
+    return apiVersion;
   }
 
   public String kitID() {
@@ -276,7 +292,7 @@ public final class ProductInfo {
   public String patchRevision() {
     return patchRevision;
   }
-  
+
   public String patchEERevision() {
     return patchEERevision;
   }
@@ -286,7 +302,7 @@ public final class ProductInfo {
   }
 
   public String toShortString() {
-    return moniker + " " + (OPENSOURCE.equals(edition) ? "" : (edition + " ")) + version;
+    return moniker + " " + (OPENSOURCE.equals(edition) ? "" : (edition + " ")) + buildVersion;
   }
 
   public String toLongString() {
