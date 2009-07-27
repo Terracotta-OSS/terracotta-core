@@ -81,6 +81,12 @@ check_one <test_name>
 
     Example: tcbuild check_one AssertTest --no-ivy compile_only=common
 
+pound_this <test_name>
+    Runs the test up to 1000 times. It will stop at the first failure and email
+    out the result if you pass in 'email=myemail@terracottatech.com'. Email option
+    only works if you have 'mail' command in the PATH
+
+
 check_<module-group>
 check_<test-type>
 check_<module-group>_<test-type>
