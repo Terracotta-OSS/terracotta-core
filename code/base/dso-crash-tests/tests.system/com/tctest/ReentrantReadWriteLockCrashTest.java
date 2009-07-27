@@ -14,6 +14,7 @@ public class ReentrantReadWriteLockCrashTest extends ActivePassiveTransparentTes
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     TransparentAppConfig appConfig = t.getTransparentAppConfig();
     appConfig.setClientCount(NODE_COUNT);
@@ -21,18 +22,21 @@ public class ReentrantReadWriteLockCrashTest extends ActivePassiveTransparentTes
     appConfig.setAttribute(ReentrantReadWriteLockTestApp.CRASH_TEST, "true");
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ReentrantReadWriteLockTestApp.class;
   }
 
+  @Override
   protected boolean canRunCrash() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(30);
+    setupManager.setServerCrashWaitTimeInSec(60);
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
