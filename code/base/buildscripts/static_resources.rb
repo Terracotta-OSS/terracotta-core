@@ -160,10 +160,6 @@ class StaticResources
     ['common', build_environment.os_family.downcase, build_environment.os_type(:nice).downcase]
   end
 
-  def config_schema_source_directory(module_set)
-    FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema")
-  end
-
   # 2006-07-19 andrew -- HACK HACK HACK. This is ONLY in support of 'tc.install_dir' in
   # BuildSubtree.create_build_configuration_file. Once that's gone, we should remove it
   # here, too.
