@@ -100,76 +100,6 @@ class StaticResources
     FilePath.new(@root_directory, ".tc.dev.log4j.properties")
   end
 
-  # Where does the compiled version of the configuration schema live (a JAR, that is)?
-  def compiled_config_schema_jar(module_set)
-    out = nil
-
-    module_set['common-api'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
-      test = FilePath.new(root, "tcconfig-xmlbeans-generated.jar")
-      out = test if FileTest.file?(test.to_s)
-    end
-
-    assert { not out.nil? }
-
-    out
-  end
-
-  # Where do the .xsd files for configuration live?
-  def config_schema_source_directory(module_set)
-    FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema")
-  end
-
-  # Where do the .xsdconfig files for configuration live?
-  def config_schema_config_directory(module_set)
-    FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
-  end
-    
-  # Where does the compiled version of the l1 properties from l2 live (a JAR, that is)?
-  def compiled_l1_reconnect_properties_jar(module_set)
-    out = nil
-    module_set['dso-common'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
-      test = FilePath.new(root, "tc-l1-reconnect-properties.jar")
-      out = test if FileTest.file?(test.to_s)
-    end
-
-    assert { not out.nil? }
-
-    out
-  end
-
-  # Where do the .xsd files for l1 properties from l2 live?
-  def l1_reconnect_properties_schema_source_directory(module_set)
-    FilePath.new(module_set['dso-common'].subtree('src').resource_root, "com", "tc", "config", "schema")
-  end
-
-  # Where do the .xsdconfig files for l1 properties from l2 live?
-  def l1_reconnect_properteis_schema_config_directory(module_set)
-    FilePath.new(module_set['dso-common'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
-  end
-
-  def compiled_stats_config_schema_jar(module_set)
-    out = nil
-
-    module_set['dso-statistics'].subtree('src').subtree_only_library_roots(:runtime).each do |root|
-      test = FilePath.new(root, "tcstats-xmlbeans-generated.jar")
-      out = test if FileTest.file?(test.to_s)
-    end
-    
-    assert { not out.nil? }
-
-    out
-  end
-
-  # Where do the .xsd files for configuration live?
-  def stats_config_schema_source_directory(module_set)
-    FilePath.new(module_set['dso-statistics'].subtree('src').resource_root, "com", "tc", "config", "schema")
-  end
-
-  # Where do the .xsdconfig files for configuration live?
-  def stats_config_schema_config_directory(module_set)
-    FilePath.new(module_set['dso-statistics'].subtree('src').resource_root, "com", "tc", "config", "schema-config")
-  end
-
   def demos_directory
     FilePath.new(@root_directory, '..', 'demos')
   end
@@ -215,6 +145,11 @@ class StaticResources
   def ant_script
     fail("ANT_HOME is not defined. Please set env variable ANT_HOME to Apache Ant 1.6.5 or later.") if ENV['ANT_HOME'].nil?
     ant_script = FilePath.new(ENV['ANT_HOME'], 'bin', 'ant').canonicalize.to_s
+    if ENV['OS'] =~ /Windows/i
+      ant_script += ".bat"
+      ant_script.gsub!(/\\/, "/")
+    end
+    ant_script
   end
 
   def supported_documentation_formats

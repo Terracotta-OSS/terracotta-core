@@ -47,10 +47,6 @@ module BundledDemos
               File.delete('DO-NOT-PRE-COMPILE')
             else
               ant_script = @static_resources.ant_script
-              if ENV['OS'] =~ /Windows/i
-                ant_script += ".bat"
-                ant_script.gsub!(/\\/, "/")
-              end
               result = %x[#{ant_script}]
               puts "#{result}"
               fail("Error running ant in #{Dir.getwd}") unless $? == 0
