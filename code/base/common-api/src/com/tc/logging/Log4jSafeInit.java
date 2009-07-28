@@ -4,6 +4,7 @@
 package com.tc.logging;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.varia.NullAppender;
 
 public class Log4jSafeInit {
 
@@ -32,7 +33,12 @@ public class Log4jSafeInit {
 
     try {
       oldDefaultInitOverrideValue = System.setProperty("log4j.defaultInitOverride", "true");
-      Logger.getRootLogger();
+      Logger.getRootLogger(); // inits log4j
+
+      // Hack since Sigar insists on initlializing log4j itself based whether the root logger has any appenders
+      // The setup provoked there might pick up log4j.properties from system classpath, etc
+      Logger.getRootLogger().addAppender(new NullAppender());
+
     } finally {
       if (oldDefaultInitOverrideValue == null) {
         System.getProperties().remove("log4j.defaultInitOverride");
