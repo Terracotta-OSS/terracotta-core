@@ -19,16 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Each TCGroupMember sits on top of a channel.
  */
 public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
-  private static final TCLogger logger             = TCLogging.getLogger(TCGroupMemberImpl.class);
+  private static final TCLogger logger       = TCLogging.getLogger(TCGroupMemberImpl.class);
   private TCGroupManagerImpl    manager;
   private final MessageChannel  channel;
   private final ServerID        localNodeID;
   private final ServerID        peerNodeID;
   // set member ready only when both ends are in group
-  private final AtomicBoolean   ready              = new AtomicBoolean(false);
-  private final AtomicBoolean   joined             = new AtomicBoolean(false);
-  private volatile boolean      closeEventNotified = false;
-  private volatile boolean      memberAdding       = false;
+  private final AtomicBoolean   ready        = new AtomicBoolean(false);
+  private final AtomicBoolean   joined       = new AtomicBoolean(false);
+  private volatile boolean      memberAdding = false;
 
   public TCGroupMemberImpl(ServerID localNodeID, ServerID peerNodeID, MessageChannel channel) {
     this.channel = channel;
@@ -74,7 +73,6 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
       } else if ((event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT)
                  || (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT)) {
         ready.set(false);
-        closeEventNotified = true;
       }
     }
   }
@@ -114,7 +112,7 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
 
   public void close() {
     ready.set(false);
-    if (!closeEventNotified) getChannel().close();
+    getChannel().close();
   }
 
   public boolean isHighPriorityNode() {

@@ -143,11 +143,15 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         return;
       }
       if (disconnect) {
-        if (!this.status.isEnd()) this.status.disconnect();
+        synchronized (status) {
+          if (!this.status.isEnd()) this.status.disconnect();
+        }
         // Dont fire any events here. Anyway asynchClose is triggered below and we are expected to receive a closeEvent
         // and upon which we open up the OOO Reconnect window
       } else {
-        if (!this.status.isEnd()) this.status.closed();
+        synchronized (status) {
+          if (!this.status.isEnd()) this.status.closed();
+        }
         isOpen.set(false);
         fireTransportClosedEvent();
       }

@@ -42,13 +42,13 @@ public class ClientConnectionEstablisher {
   private final ConnectionAddressProvider connAddressProvider;
   private final TCConnectionManager       connManager;
   private final SynchronizedBoolean       asyncReconnecting     = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean       allowReconnects                = new SynchronizedBoolean(true);
 
   private Thread                          connectionEstablisher;
   private NoExceptionLinkedQueue          reconnectRequest      = new NoExceptionLinkedQueue();  // <ConnectionRequest>
 
   static {
     TCLogger logger = TCLogging.getLogger(ClientConnectionEstablisher.class);
-
     long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
     if (value < MIN_RETRY_INTERVAL) {
       logger.warn("Forcing reconnect wait interval to " + MIN_RETRY_INTERVAL + " (configured value was " + value + ")");
@@ -82,7 +82,9 @@ public class ClientConnectionEstablisher {
   public TCConnection open(ClientMessageTransport cmt) throws TCTimeoutException, IOException {
     synchronized (asyncReconnecting) {
       Assert.eval("Can't call open() while asynch reconnect occurring", !asyncReconnecting.get());
-      return connectTryAllOnce(cmt);
+      TCConnection rv = connectTryAllOnce(cmt);
+      allowReconnects.set(true);
+      return rv;
     }
   }
 
@@ -112,7 +114,7 @@ public class ClientConnectionEstablisher {
    * @throws IOException
    * @throws MaxConnectionsExceededException
    */
-  TCConnection connect(TCSocketAddress sa, ClientMessageTransport cmt) throws TCTimeoutException, IOException {
+  private TCConnection connect(TCSocketAddress sa, ClientMessageTransport cmt) throws TCTimeoutException, IOException {
 
     TCConnection connection = this.connManager.createConnection(cmt.getProtocolAdapter());
     cmt.fireTransportConnectAttemptEvent();
@@ -265,10 +267,9 @@ public class ClientConnectionEstablisher {
 
   private void putReconnectRequest(ConnectionRequest request) {
 
-    // avoid AsyncReconnect thread and adding reconnect requests if reconnects are not needed
-    if ((request.isReconnect()) && (this.maxReconnectTries == 0)) { return; }
+    if (!allowReconnects.get()) { return; }
 
-    if (connectionEstablisher == null) {
+    if ((connectionEstablisher == null) && (!request.isQuit())) {
       // First time
       // Allow the async thread reconnects/restores only when cmt was connected atleast once
       if ((request.getClientMessageTransport() == null) || (!request.getClientMessageTransport().wasOpened())) return;
@@ -276,7 +277,6 @@ public class ClientConnectionEstablisher {
       connectionEstablisher = new Thread(new AsyncReconnect(this), RECONNECT_THREAD_NAME);
       connectionEstablisher.setDaemon(true);
       connectionEstablisher.start();
-
     }
 
     // DEV-1140 : avoiding the race condition
@@ -286,6 +286,7 @@ public class ClientConnectionEstablisher {
 
   public void quitReconnectAttempts() {
     putReconnectRequest(new ConnectionRequest(ConnectionRequest.QUIT, null));
+    allowReconnects.set(false);
   }
 
   static class AsyncReconnect implements Runnable {

@@ -321,7 +321,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private boolean tryAddMember(TCGroupMember member) {
-    if (isStopped.get()) { return false; }
+    if (isStopped.get()) {
+      closeMember(member, false);
+      return false;
+    }
 
     synchronized (members) {
       if (null != members.get(member.getPeerNodeID())) {
@@ -349,9 +352,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return (getNodeID());
   }
 
-  public void memberDisappeared(TCGroupMember member, boolean byDisconnectEvent) {
+  public void memberDisappeared(TCGroupMember member) {
     Assert.assertNotNull(member);
-    if (isStopped.get()) return;
+    if (isStopped.get()) {
+      closeMember(member, false);
+      return;
+    }
     member.setTCGroupManager(null);
     TCGroupMember m = members.get(member.getPeerNodeID());
     if ((m != null) && (m.getChannel() == member.getChannel())) {
@@ -360,15 +366,15 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       member.setJoinedEventFired(false);
       notifyAnyPendingRequests(member);
     }
-    closeMember(member, false, byDisconnectEvent);
+    closeMember(member, false);
     logger.debug(getNodeID() + " removed " + member);
   }
 
-  private void closeMember(TCGroupMember member, boolean isAdded, boolean byDisconnectEvent) {
+  private void closeMember(TCGroupMember member, boolean isAdded) {
     member.setReady(false);
     channelToNodeID.remove(member.getChannel());
     if (isAdded) membersRemove(member);
-    if (!byDisconnectEvent) member.close();
+    member.close();
   }
 
   private void notifyAnyPendingRequests(TCGroupMember member) {
@@ -546,7 +552,10 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   public void messageReceived(GroupMessage message, MessageChannel channel) {
 
-    if (isStopped.get()) return;
+    if (isStopped.get()) {
+      channel.close();
+      return;
+    }
 
     if (logger.isDebugEnabled()) logger.debug(getNodeID() + " recd msg " + message.getMessageID() + " From " + channel
                                               + " Msg : " + message);
@@ -810,14 +819,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     private ServerID                 peerNodeID;
     private TimerTask                timerTask;
     private TCGroupMember            member;
-    private boolean                  disconnectEventNotified;
     private boolean                  stateTransitionInProgress;
 
     public TCGroupHandshakeStateMachine(TCGroupManagerImpl manager, MessageChannel channel, ServerID localNodeID) {
       this.manager = manager;
       this.channel = channel;
       this.localNodeID = localNodeID;
-      this.disconnectEventNotified = false;
       this.stateTransitionInProgress = false;
     }
 
@@ -910,7 +917,6 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     synchronized void disconnected() {
       if (logger.isDebugEnabled()) logger.warn("Group member handshake disconnected. " + stateInfo(current));
-      disconnectEventNotified = true;
       switchToState(STATE_FAILURE);
     }
 
@@ -1073,7 +1079,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         cancelTimerTask();
         if (member != null) {
           member.abortMemberAdding();
-          manager.memberDisappeared(member, disconnectEventNotified);
+          manager.memberDisappeared(member);
         } else {
           channel.close();
         }
