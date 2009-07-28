@@ -227,6 +227,7 @@ modules:
         - management-api
         - thirdparty
         - thirdparty-api
+        - sigarstats
   - dso-memory-datastore:
       options:
         jdk: J2SE-1.5
