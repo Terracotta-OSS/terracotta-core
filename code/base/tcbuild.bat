@@ -35,7 +35,7 @@ if not exist "%JRUBY_HOME%" (
 )
 
 set TC_CP=%extra_jruby_cp%
-
+echo %TC_CP%
 echo.
 echo --------------------------------------------------------------------------------
 echo RUNNING TCBUILD.BAT

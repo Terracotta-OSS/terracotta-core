@@ -14,8 +14,8 @@ jruby_version=jruby-1.1.6a
 build_system_dir=`dirname $0`/../../buildsystems
 cache_dir=$HOME/.tc
 extra_jruby_cp=
-for j in $build_system_dir/jruby-lib/*; do
-  extra_jruby_cp=${j}:${extra_jruby_cp}
+for j in $build_system_dir/jruby-lib/*.jar; do
+  extra_jruby_cp=${extra_jruby_cp}:${j}
 done
 
 if [ `uname | grep CYGWIN` ]; then
