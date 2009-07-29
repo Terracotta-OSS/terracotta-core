@@ -46,7 +46,6 @@ public class GCRunner {
     comandLineBuilder.addOption("h", "help", String.class, false);
 
     comandLineBuilder.parse();
-    comandLineBuilder.printArguments();
 
     String[] arguments = comandLineBuilder.getArguments();
     if (arguments.length > 2) {
@@ -62,26 +61,19 @@ public class GCRunner {
       userName = comandLineBuilder.getOptionValue('u');
     }
 
-    String host = null;
-    int port = -1;
+    String host = comandLineBuilder.getOptionValue('n');
+    String portString = comandLineBuilder.getOptionValue('p');
+    int port = portString != null ? parsePort(comandLineBuilder.getOptionValue('p')) : DEFAULT_PORT;
 
-    if (arguments.length == 0) {
+    if (arguments.length == 1) {
       host = DEFAULT_HOST;
-      port = DEFAULT_PORT;
-      System.err.println("No host or port provided. Invoking DGC on Terracotta server instance at '" + host
-                         + "', port " + port + " by default.");
-    } else if (arguments.length == 1) {
-      host = DEFAULT_HOST;
-      try {
-        port = Integer.parseInt(arguments[0]);
-      } catch (NumberFormatException e) {
-        port = DEFAULT_PORT;
-        System.err.println("Invalid port number specified. Using default port '" + port + "'");
-      }
-    } else {
+      port = parsePort(arguments[0]);
+    } else if (arguments.length == 2) {
       host = arguments[0];
-      port = Integer.parseInt(arguments[1]);
+      port = parsePort(arguments[1]);
     }
+
+    host = host == null ? DEFAULT_HOST : host;
 
     try {
       new GCRunner(host, port, userName).runGC();
@@ -92,6 +84,17 @@ public class GCRunner {
       System.err.println(se.getMessage());
       comandLineBuilder.usageAndDie();
     }
+  }
+
+  private static int parsePort(String portString) {
+    int port = -1;
+    try {
+      port = Integer.parseInt(portString);
+    } catch (NumberFormatException e) {
+      port = DEFAULT_PORT;
+      System.err.println("Invalid port number specified. Using default port '" + port + "'");
+    }
+    return port;
   }
 
   public GCRunner(String host, int port) {
