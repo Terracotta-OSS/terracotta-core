@@ -49,6 +49,12 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private ConnectionHealthCheckerContext           healthCheckerContext   = null;
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
+  /**
+   * This is same as status.DISCONNECTED, except this flag is not reset before firing the disconnected event. Needed by
+   * OOO ConnectionWatcher. XXX: status can be sent in the event or set in the MessageTransport. needs cleanup.
+   */
+  private final SynchronizedBoolean                forcedDisconnect       = new SynchronizedBoolean(false);
+
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
                                  TransportHandshakeMessageFactory messageFactory, boolean isOpen, TCLogger logger) {
@@ -132,6 +138,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   public void disconnect() {
+    forcedDisconnect.set(true);
     terminate(true);
   }
 
@@ -218,6 +225,10 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
+  public final boolean wasForcedDisconnect() {
+    return forcedDisconnect.get();
+  }
+
   public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
     synchronized (attachingNewConnection) {
       if ((this.connection != null) && !allowConnectionReplace) { throw new IllegalReconnectException(); }
@@ -298,6 +309,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
         }
       }
       fireTransportDisconnectedEvent();
+      forcedDisconnect.set(false);
     }
   }
 

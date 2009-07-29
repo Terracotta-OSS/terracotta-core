@@ -26,10 +26,15 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
   }
 
   public void notifyTransportDisconnected(MessageTransport transport) {
-    log(transport, "Transport Disconnected, calling asyncRestoreConnection for " + timeoutMillis);
     oooLayer.startRestoringConnection();
     oooLayer.notifyTransportDisconnected(transport);
-    cce.asyncRestoreConnection(cmt, transport.getRemoteAddress(), this, timeoutMillis);
+    if (!cmt.wasForcedDisconnect()) {
+      log(transport, "Transport Disconnected, calling asyncRestoreConnection for " + timeoutMillis);
+      cce.asyncRestoreConnection(cmt, transport.getRemoteAddress(), this, timeoutMillis);
+    } else {
+      log(transport, "Transport FORCE Disconnect. Skipping asyncRestoreConnection.");
+      restoreConnectionFailed(transport);
+    }
   }
 
   public void notifyTransportConnected(MessageTransport transport) {
