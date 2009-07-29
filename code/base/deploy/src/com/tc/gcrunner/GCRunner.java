@@ -76,6 +76,7 @@ public class GCRunner {
     host = host == null ? DEFAULT_HOST : host;
 
     try {
+      System.err.println("Invoking DGC on " + host + ":" + port);
       new GCRunner(host, port, userName).runGC();
     } catch (IOException ioe) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
