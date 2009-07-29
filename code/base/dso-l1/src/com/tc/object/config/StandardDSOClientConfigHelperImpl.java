@@ -2087,6 +2087,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     boolean isTargetSystemLoaderOnly() {
       return targetSystemLoaderOnly;
     }
+
+    @Override
+    public String toString() {
+      return resource.toExternalForm();
+    }
   }
 
 }
