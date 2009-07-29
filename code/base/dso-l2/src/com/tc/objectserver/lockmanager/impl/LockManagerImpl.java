@@ -314,7 +314,7 @@ public class LockManagerImpl implements LockManager, LockManagerMBean, TimerCall
                                               lockResponseSink, this.waitTimer, this);
       }
 
-      ServerThreadContext threadContext = this.threadContextFactory.getOrCreate(cid, ThreadID.VM_ID);
+      ServerThreadContext threadContext = this.threadContextFactory.vmGetOrCreate(cid, ThreadID.VM_ID);
       if (lock.recallCommit(threadContext)) {
         this.locks.remove(lid);
       }
