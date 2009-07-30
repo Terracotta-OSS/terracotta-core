@@ -49,7 +49,8 @@ bundled_components:
             modules:
               - dso-l1
               - ent-common
-              - ent-dso-l1              
+              - ent-dso-l1
+              - ent-deploy              
         - terracotta-jmx-api:
             install_directory: lib
             modules:
