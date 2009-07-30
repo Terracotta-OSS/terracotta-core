@@ -50,7 +50,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   private final int           numOfGetters;
   private final boolean       isCrashTest;
 
-  public ReentrantReadWriteLockTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
+  public ReentrantReadWriteLockTestApp(final String appId, final ApplicationConfig cfg,
+                                       final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
     barrier2 = new CyclicBarrier(getParticipantCount());
@@ -144,11 +145,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     if (index == 0) {
       writeLock.lock();
       barrier2.await();
-      try {
-        Thread.sleep(10000);
-      } finally {
-        writeLock.unlock();
-      }
+      barrier2.await();
+      writeLock.unlock();
       barrier2.await();
     } else {
       barrier2.await();
@@ -160,6 +158,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
           }
         }
       }
+      barrier2.await();
       Assert.assertEquals(10, count);
       barrier2.await();
       count = 0;
@@ -785,8 +784,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void basicConditionVariableWaitTesting(final int index, final ReentrantReadWriteLock lock, final Condition condition)
-      throws Exception {
+  private void basicConditionVariableWaitTesting(final int index, final ReentrantReadWriteLock lock,
+                                                 final Condition condition) throws Exception {
     printTimeStamp(index, "basicConditionVariableWaitTesting");
 
     WriteLock writeLock = lock.writeLock();
@@ -862,7 +861,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void basicConditionVariableTesting(final int index, final WriteLock lock, final Condition condition) throws Exception {
+  private void basicConditionVariableTesting(final int index, final WriteLock lock, final Condition condition)
+      throws Exception {
     printTimeStamp(index, "basicConditionVariableTesting");
 
     final long id = new Long(getApplicationId()).longValue();
@@ -876,7 +876,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void doPutter(final long id, final WriteLock lock, final Condition condition, final List Q, final int getters) throws Exception {
+  private void doPutter(final long id, final WriteLock lock, final Condition condition, final List Q, final int getters)
+      throws Exception {
     Thread.currentThread().setName("PUTTER-" + id);
 
     for (int i = 0; i < putsCount; i++) {
@@ -1192,7 +1193,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void basicSingleNodeReadThenWriteLockingTest(final int index, final ReentrantReadWriteLock lock) throws Exception {
+  private void basicSingleNodeReadThenWriteLockingTest(final int index, final ReentrantReadWriteLock lock)
+      throws Exception {
     printTimeStamp(index, "basicSingleNodeReadThenWriteLockingTest");
 
     final ReadLock readLock = lock.readLock();
@@ -1294,7 +1296,8 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
-  private void basicMultiNodesReadThenWriteLockingTest(final int index, final ReentrantReadWriteLock lock) throws Exception {
+  private void basicMultiNodesReadThenWriteLockingTest(final int index, final ReentrantReadWriteLock lock)
+      throws Exception {
     printTimeStamp(index, "basicMultiNodesReadThenWriteLockingTest");
 
     ReadLock readLock = lock.readLock();
@@ -1392,7 +1395,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
   }
 
   private static class DataRoot {
-    private final Map                    store = new HashMap();
+    private final Map              store = new HashMap();
     private ReentrantReadWriteLock lock;
 
     public void putData(final Object key, final Object value) {
