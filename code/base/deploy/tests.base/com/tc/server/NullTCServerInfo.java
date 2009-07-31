@@ -211,4 +211,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public ServerGroupInfo[] getServerGroupInfo() {
     return null;
   }
+
+  public String getMavenArtifactsVersion() {
+    return null;
+  }
 }

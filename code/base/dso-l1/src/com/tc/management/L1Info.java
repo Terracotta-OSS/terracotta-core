@@ -79,6 +79,10 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     return productInfo.toShortString();
   }
 
+  public String getMavenArtifactsVersion() {
+    return productInfo.mavenArtifactsVersion();
+  }
+
   public String getBuildID() {
     return buildID;
   }
@@ -198,7 +202,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   public long getUsedMemory() {
     return manager.getMemoryUsage().getUsedMemory();
   }
-  
+
   public long getMaxMemory() {
     return manager.getMemoryUsage().getMaxMemory();
   }

@@ -16,12 +16,12 @@ Terracotta
    Unix/Linux:
       - Unzip/untar the Terracotta software.
       - cd into the top-level directory.
-      - Launch the Welcome tool by entering the command:
-           ./welcome.sh
+      - Launch the Sample Application Launcher by entering the command:
+           ./tools/pojo/samples.sh
    Windows:
       - Run the Terracotta installer.
-      - After a successful installation, launch the Welcome tool from the start menu:
-           Programs --> Terracotta --> Terracotta Pojos Welcome
+      - Launch the Sample Application Launcher by entering the command:
+           tools\pojo\samples.bat
            
 Terracotta DSO Eclipse Plug-in
    Follow the installation directions at:
@@ -43,42 +43,57 @@ With a Terracotta account, you can:
 Configuration File Samples
 --------------------------
 
-The tc-config-reference.xml file can be found in docs directory.
-This sample Terracotta configuration file with example settings appropriate 
-for a typical deployment. The directory also contains a reference configuration 
-file for a complete explanation of the options available.
+The tc-config-reference.xml file can be found in "docs" directory.
 
+This "config-examples" directory contains sample Terracotta configuration files
+appropriate for a typical deployment.
+
+The XML schema describing the configuration file format is documented in the
+"schema" directory; see schema/index.html.
 
 Sample Applications
 -------------------
 
 Terracotta ships with sample applications to show by example how to use
 Terracotta to cluster the JVM.  The sample applications for Terracotta Sessions
-are available from links in Configurator.  For Terracotta for Spring, the sample
-applications are in the "samples/spring" directory. For Terracotta Pojos, the
-sample applications are in the "samples/pojo" directory.
+are available from links in the Session Configurator tool:
+
+Unix/Linux:
+   ./tools/sessions/sessions-configurator.sh
+Windows:
+   tools\sessions\sessions-configurator.bat
+
+For Terracotta Pojos, the sample applications are in the "samples/pojo" directory.
+You can exercise the samples and read the source code and config files via the Sample
+Application Launcher:
+
+Unix/Linux:
+   ./tools/sessions/samples.sh
+Windows:
+   tools\sessions\samples.bat
 
 
-Administration Tools
+
+Tools
 --------------------
 
-The "bin" directory contains a script to start the Terracotta Developer Console 
-Console.  Launch the Console tool with the following command.
+The "bin" directory contains a script to start the Terracotta Developer Console.
+Launch the Console with the following command:
 
-Unix/Linx:
+Unix/Linux:
    ./dev-console.sh
 
 Windows:
    dev-console.bat
 
-The Console tool provides a view inside the Terracotta Server, letting you see
+The Console provides a view inside the Terracotta Server, letting you see
 activity inside Terracotta at run-time.
 
 
 Terracotta Forge
 --------------------
 Terracotta has integration modules (TIMs) that enable integration with many common frameworks,
-such as EHCache and Quartz. For the latest information please visit:
+such as Hibernate, EHCache and Quartz. For the latest information please visit:
 
     - http://www.terracotta.org/web/display/orgsite/Integration+Guides
 

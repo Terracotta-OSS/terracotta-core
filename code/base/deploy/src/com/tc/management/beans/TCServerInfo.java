@@ -188,6 +188,10 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return productInfo.toShortString();
   }
 
+  public String getMavenArtifactsVersion() {
+    return productInfo.mavenArtifactsVersion();
+  }
+
   public String getBuildID() {
     return buildID;
   }

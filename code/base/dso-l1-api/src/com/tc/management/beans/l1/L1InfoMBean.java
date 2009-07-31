@@ -16,6 +16,8 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
 
   String getVersion();
 
+  String getMavenArtifactsVersion();
+
   String getBuildID();
 
   boolean isPatched();

@@ -629,15 +629,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     String consoleVersion = consoleInfo.version();
     IProductVersion serverInfo = clusterNode.getProductInfo();
     if (serverInfo == null) return true; // something went wrong, move on
-    String serverVersion = serverInfo.version();
-    int spaceIndex = serverVersion.lastIndexOf(" ");
-
-    // The version string that comes from the server is of the form "Terracotta 2.4", while
-    // the default ProductInfo.getVersion is just the raw version number string: "2.4"
-
-    if (spaceIndex != -1) {
-      serverVersion = serverVersion.substring(spaceIndex + 1);
-    }
+    String serverVersion = serverInfo.mavenArtifactsVersion();
 
     if (!versionsMatch(consoleVersion, serverVersion)) {
       int answer = showVersionMismatchDialog(clusterNode, consoleVersion, serverVersion);

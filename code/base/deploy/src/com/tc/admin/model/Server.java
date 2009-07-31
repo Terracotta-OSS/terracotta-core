@@ -656,13 +656,14 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public synchronized IProductVersion getProductInfo() {
     if (productInfo == null) {
       Map<ObjectName, Set<String>> requestMap = new HashMap<ObjectName, Set<String>>();
-      String[] attributes = { "Version", "Patched", "PatchLevel", "PatchVersion", "BuildID",
+      String[] attributes = { "Version", "MavenArtifactsVersion", "Patched", "PatchLevel", "PatchVersion", "BuildID",
           "DescriptionOfCapabilities", "Copyright" };
       requestMap.put(L2MBeanNames.TC_SERVER_INFO, new HashSet(Arrays.asList(attributes)));
       Map<ObjectName, Map<String, Object>> resultMap = getDSOBean().getAttributeMap(requestMap, Integer.MAX_VALUE,
                                                                                     TimeUnit.SECONDS);
       Map<String, Object> results = resultMap.get(L2MBeanNames.TC_SERVER_INFO);
       String version = ProductInfo.UNKNOWN_VALUE;
+      String mavenArtifactsVersion = ProductInfo.UNKNOWN_VALUE;
       String patchLevel = ProductInfo.UNKNOWN_VALUE;
       String patchVersion = ProductInfo.UNKNOWN_VALUE;
       String buildID = ProductInfo.UNKNOWN_VALUE;
@@ -671,6 +672,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       Object value;
       if ((value = results.get("Version")) != null) {
         version = (String) value;
+      }
+      if ((value = results.get("MavenArtifactsVersion")) != null) {
+        mavenArtifactsVersion = (String) value;
       }
       boolean isPatched = false;
       if ((value = results.get("Patched")) != null) {
@@ -691,7 +695,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       if ((value = results.get("Copyright")) != null) {
         copyright = (String) value;
       }
-      productInfo = new ProductVersion(version, patchLevel, patchVersion, buildID, capabilities, copyright);
+      productInfo = new ProductVersion(version, mavenArtifactsVersion, patchLevel, patchVersion, buildID, capabilities,
+                                       copyright);
     }
     return productInfo;
   }

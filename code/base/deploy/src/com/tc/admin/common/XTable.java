@@ -10,7 +10,6 @@ import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.Format;
-import java.text.NumberFormat;
 import java.util.Date;
 import java.util.prefs.Preferences;
 
@@ -154,7 +153,8 @@ public class XTable extends JTable {
 
   public static class PercentRenderer extends BaseRenderer {
     public PercentRenderer() {
-      super(NumberFormat.getPercentInstance());
+      super("##%");
+      label.setHorizontalAlignment(SwingConstants.RIGHT);
     }
   }
 
