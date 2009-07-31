@@ -65,4 +65,10 @@ public class Directories {
       return rootPath;
     }
   }
+
+  public static boolean tcInstallRootDefined() {
+    String path = System.getProperty(TC_INSTALL_ROOT_PROPERTY_NAME);
+    return !StringUtils.isBlank(path);
+  }
+
 }
