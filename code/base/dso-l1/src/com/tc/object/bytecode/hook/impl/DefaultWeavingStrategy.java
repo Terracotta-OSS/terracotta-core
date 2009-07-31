@@ -38,6 +38,7 @@ import com.tc.backport175.bytecode.spi.BytecodeProvider;
 import com.tc.exception.TCLogicalSubclassNotPortableException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.RenameClassesAdapter;
@@ -84,6 +85,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   }
 
   private static final TCLogger                   consoleLogger = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                   logger        = TCLogging.getLogger(DefaultWeavingStrategy.class);
 
   private static final AnnotationByteCodeProvider BYTECODE_PROVIDER;
 
@@ -138,6 +140,18 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       final ClassLoader loader = context.getLoader();
 
+      // attempt to create the ClassInfo based on the initial bytecode
+      // if this fails for some reason, log something but do not treat this as a fatal error (DEV-3168)
+      ClassInfo classInfo;
+      try {
+        classInfo = AsmClassInfo.getClassInfo(className, context.getCurrentBytecode(), loader);
+      } catch (Exception e) {
+        context.setCurrentBytecode(context.getInitialBytecode());
+        logger.warn("Exception parsing intial bytes for class " + className + ". " + e.getClass().getName() + "("
+                    + e.getMessage() + ")");
+        return;
+      }
+
       Map aspectModules = m_configHelper.getAspectModules();
       for (Iterator it = aspectModules.entrySet().iterator(); it.hasNext();) {
         Map.Entry e = (Map.Entry) it.next();
@@ -148,8 +162,6 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
           }
         }
       }
-
-      ClassInfo classInfo = AsmClassInfo.getClassInfo(className, context.getCurrentBytecode(), loader);
 
       // skip Java reflect proxies for which we cannot get the resource as a stream
       // which leads to warnings when using annotation matching
