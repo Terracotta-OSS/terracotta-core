@@ -22,6 +22,16 @@
 #  TC_JAVA_OPTS: Java options needed to activate DSO
 #
 
+cygwin=false
+case "`uname`" in
+CYGWIN*) cygwin=true;;
+esac
+
+PATH_SEPARATOR=":"
+if $cygwin; then
+  PATH_SEPARATOR=";"
+fi
+
 CWD=`dirname "$0"`
 TC_INSTALL_DIR=${CWD}/../../..
 ARGS=$*
@@ -30,9 +40,9 @@ set -- -q
 . "${TC_INSTALL_DIR}/bin/dso-env.sh"
 
 CLASSPATH="${CWD}/classes"
-CLASSPATH="${CLASSPATH}:${CWD}/lib/jetty-6.1.1.jar"
-CLASSPATH="${CLASSPATH}:${CWD}/lib/jetty-util-6.1.1.jar"
-CLASSPATH="${CLASSPATH}:${CWD}/lib/servlet-api-2.5-6.1.1.jar"
+CLASSPATH="${CLASSPATH}${PATH_SEPARATOR}${CWD}/lib/jetty-6.1.1.jar"
+CLASSPATH="${CLASSPATH}${PATH_SEPARATOR}${CWD}/lib/jetty-util-6.1.1.jar"
+CLASSPATH="${CLASSPATH}${PATH_SEPARATOR}${CWD}/lib/servlet-api-2.5-6.1.1.jar"
 
 exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} \
   -Dcom.sun.management.jmxremote \

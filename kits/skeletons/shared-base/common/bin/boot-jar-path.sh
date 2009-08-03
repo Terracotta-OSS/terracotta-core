@@ -50,11 +50,6 @@ if test -z "$DSO_BOOT_JAR"; then
   DSO_BOOT_JAR="${TC_INSTALL_DIR}/lib/dso-boot/${DSO_BOOT_JAR_NAME}"
 fi
 
-# For Cygwin, ensure paths are in UNIX format before anything is touched
-if $cygwin; then
-  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath --windows "$DSO_BOOT_JAR"`
-fi
-
 echo "Starting BootJarTool..."
 if test -n "${TC_CONFIG_PATH}"; then
   "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"

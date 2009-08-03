@@ -24,10 +24,8 @@ fi
 
 TC_INSTALL_DIR=`dirname "$0"`/..
 
-# For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
-  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --windows "$JAVA_HOME"`
-  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --windows "$TC_INSTALL_DIR"`
+  TC_INSTALL_DIR=`cygpath -w "$TC_INSTALL_DIR"`
 fi
 
 exec "${JAVA_HOME}/bin/java" \
@@ -35,5 +33,4 @@ exec "${JAVA_HOME}/bin/java" \
   ${JAVA_OPTS} \
   -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
   com.tc.object.tools.BootJarTool make "$@"
-exit $?
 
