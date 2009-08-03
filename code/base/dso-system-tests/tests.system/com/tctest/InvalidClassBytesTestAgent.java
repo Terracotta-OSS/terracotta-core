@@ -38,6 +38,9 @@ public class InvalidClassBytesTestAgent implements ClassFileTransformer {
 
   public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                           ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+    // an attempt to fix a deadlock seen in the monkey (MNK-1259)
+    if (loader == null) return null;
+
     if (Arrays.equals(MAGIC, classfileBuffer)) {
       System.err.println("\nMagic found!\n");
       return REAL;
