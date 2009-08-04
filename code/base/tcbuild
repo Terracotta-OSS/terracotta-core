@@ -20,6 +20,7 @@ done
 
 if [ `uname | grep CYGWIN` ]; then
   cache_dir=c:/temp/tc
+  cache_dir=`cygpath -u $cache_dir`
 fi
 
 if [ ! -d "$cache_dir" ]; then
