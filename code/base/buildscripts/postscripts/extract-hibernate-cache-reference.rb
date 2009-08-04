@@ -10,7 +10,7 @@ require 'fileutils'
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
 
-  # - Install TIMs from the Forge into the kit using the tim-get tool.
+  # - extract hibernate referecne config from standalone agent jar
   def postscript(ant, build_environment, product_directory, *args)
     return if @no_demo
 
@@ -18,8 +18,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     arg = args[0]
 
     dest = File.join(product_directory.to_s, arg['dest'])
-    agent_pattern = arg['agent_pattern']
-    provider_pattern = arg['provider_pattern']
+    agent_pattern = arg['agent-pattern']
+    provider_pattern = arg['provider-pattern']
     reference_file = arg['reference-file']
     work_dir = File.join(Dir.tmpdir, "tcbuild-extract")
 
@@ -51,8 +51,11 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       ant.patternset(:includes => reference_file)
     end
 
+    ref_path = File.join(work_dir, reference_file)
+    fail("Reference config is not found #{ref_path}") unless File.exists?(ref_path)
+    
     # copy it over to dest
-    FileUtils.cp File.join(work_dir, reference_file), dest
+    FileUtils.cp ref_path, dest
 
     # clean up
     FileUtils.rm_rf(work_dir)
