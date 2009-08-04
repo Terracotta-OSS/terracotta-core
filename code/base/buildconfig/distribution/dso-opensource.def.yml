@@ -149,6 +149,12 @@ postscripts:
         - tim-apache-struts-1.1
         - tim-jetty-6.1
         - terracotta-hibernate-cache
+  - extract-hibernate-cache-reference:
+      args:
+        - dest: hibernate
+          agent-pattern: terracotta-hibernate-agent
+          provider-pattern: tim-hibernate-cache-provider
+          reference-file: org/terracotta/hibernate/reference-config.xml
   - inject-forge-tims:
       args:
         - tims: 
