@@ -36,6 +36,7 @@ import javax.swing.text.html.HTML;
 public class FeaturesNode extends ComponentNode implements NotificationListener, HyperlinkListener {
   protected IAdminClientContext               adminClientContext;
   protected IClusterModel                     clusterModel;
+  protected ClusterNode                       clusterNode;
   protected ClusterListener                   clusterListener;
   protected XScrollPane                       myApplicationPanel;
   protected ClientsNode                       clientsNode;
@@ -44,10 +45,11 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
   protected static final Map<String, Feature> allFeaturesMap = new LinkedHashMap<String, Feature>();
 
-  public FeaturesNode(IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+  public FeaturesNode(ClusterNode clusterNode, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("cluster.features"));
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
+    this.clusterNode = clusterNode;
     this.clusterListener = new ClusterListener(clusterModel);
     activeFeatureMap = new LinkedHashMap<String, Feature>();
     nodeMap = new LinkedHashMap<Feature, FeatureNode>();
@@ -124,6 +126,9 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       Feature feature = entry.getValue();
       if (!nodeMap.containsKey(feature)) {
         FeatureNode featureNode = newFeatureNode(feature);
+        if (getParent() == null) {
+          clusterNode.insertChild(this, 0);
+        }
         add(featureNode);
         nodeStructureChanged();
         adminClientContext.getAdminClientController().expand(featureNode);
@@ -182,9 +187,17 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       removeChild(node);
       node.tearDown();
     }
+    if (getParent() != null && getChildCount() == 0) {
+      noTearDown = true;
+      clusterNode.removeChild(this);
+      noTearDown = false;
+    }
   }
 
   public void handleNotification(Notification notification, Object handback) {
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
     String type = notification.getType();
     if (notification instanceof MBeanServerNotification) {
       final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
@@ -236,8 +249,16 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     }
   }
 
+  /**
+   * Generally a node being removed is to be torn down but this node needs to come and go dependent on whether or not it
+   * has any children.
+   */
+  private boolean noTearDown = false;
+
   @Override
   public void tearDown() {
+    if (noTearDown) { return; }
+
     removeMBeanServerDelegateListener();
 
     clusterModel.removePropertyChangeListener(clusterListener);
