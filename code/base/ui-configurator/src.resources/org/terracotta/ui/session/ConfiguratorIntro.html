@@ -25,16 +25,16 @@
 
 Use Configurator to setup Terracotta Sessions to cluster your existing
 session-based web application.&nbsp;  Configurator provides a testing
-environment complete with an installation of Apache Tomcat for clustering two
+environment complete with an installation of Jetty for clustering two
 instances of a web application.<br><br>
 
 The basic process is:<ol>
 
 <li>Validate Unclustered WebApp</li>
 Import your web application into Configurator and verify that it runs
-correctly on Tomcat or other web containers you have specified.&nbsp;
-In case you do not have access to a webapp of your own,
-Terracotta provides a couple of sample webapps.<br><br>
+correctly without Terracotta Session Clustering enabled. In case you do not
+have access to a webapp of your own, Terracotta provides a couple of sample
+webapps.<br><br>
 
 <li>Iterate through the Configuration Process</li>
 Run your webapp on Terracotta Sessions and identify session data that should
@@ -44,7 +44,7 @@ configured to run clustered.<br><br>
 
 <li>Check Clustering and Fail-Over</li>
 Use Configurator's real-time monitor to verify clustering of session data and
-then shut down one of the Tomcat servers to verify session data is properly
+then shut down one of the web servers to verify session data is properly
 maintained.<br>
 
 </ol>

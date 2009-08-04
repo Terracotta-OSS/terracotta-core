@@ -2493,7 +2493,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
       cmdarray = new String[] { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
           "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "conf.xml" };
     }
-    return Runtime.getRuntime().exec(cmdarray, env, wd);
+    return exec(cmdarray, env, wd);
   }
 
   private Process stopJetty(int port) throws Exception {
@@ -2504,7 +2504,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
     int stopPort = port + STOP_PORT_OFFSET;
     String[] cmdarray = { getJavaCmd().getAbsolutePath(), "-Djetty.home=" + jettyHome.getAbsolutePath(),
         "-DSTOP.PORT=" + stopPort, "-DSTOP.KEY=secret", "-jar", startJar.getAbsolutePath(), "--stop" };
-    return Runtime.getRuntime().exec(cmdarray, env, wd);
+    return exec(cmdarray, env, wd);
   }
 
   File m_installRoot;
@@ -2669,7 +2669,7 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   }
 
   class WebServerShutdownMonitor extends Thread {
-    private Process                process;
+    private final Process          process;
     private final int              port;
     private final ShutdownListener shutdownListener;
     private boolean                stop;
@@ -2707,10 +2707,14 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
                   shutdownListener.processFailed(errorBuf);
                 }
               });
-              return;
             } else {
-              process = null;
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  shutdownListener.processStopped();
+                }
+              });
             }
+            return;
           } catch (IllegalThreadStateException itse) {/**/
           }
         }
@@ -2788,7 +2792,12 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
     final String[] fullCmd = append(cmd, buildScriptArgs(args));
     trace("Invoking script " + Arrays.asList(fullCmd) + " with working dir " + wd.getAbsolutePath());
-    return Runtime.getRuntime().exec(fullCmd, env, wd);
+    return exec(fullCmd, env, wd);
+  }
+
+  private Process exec(String[] cmdarray, String[] envp, File dir) throws IOException {
+    trace("cmdarray: " + Arrays.asList(cmdarray) + " envp: " + Arrays.asList(envp) + " dir: " + dir);
+    return Runtime.getRuntime().exec(cmdarray, envp, dir);
   }
 
   private void stopSystem() {
