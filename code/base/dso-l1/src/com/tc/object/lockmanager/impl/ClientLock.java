@@ -1091,6 +1091,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       ThreadID id = (ThreadID) e.getKey();
       LockHold holder = (LockHold) e.getValue();
       if (!holder.isHolding()) continue;
+      if (LockLevel.isConcurrent(holder.getLevel())) continue;
       if ((greediness.getRecalledLevel() == LockLevel.READ) && LockLevel.isRead(holder.getLevel())) {
         // (3)
         continue;
