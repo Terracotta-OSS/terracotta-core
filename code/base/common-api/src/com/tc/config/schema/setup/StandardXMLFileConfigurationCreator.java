@@ -304,6 +304,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       ByteArrayOutputStream dataCopy = new ByteArrayOutputStream();
       IOUtils.copy(in, dataCopy);
+      in.close();
 
       logCopyOfConfig(new ByteArrayInputStream(dataCopy.toByteArray()), descrip);
 
