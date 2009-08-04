@@ -423,12 +423,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
 
     spec = getOrCreateSpec("java.util.Collections");
-    spec = getOrCreateSpec("java.util.Collections$EmptyList", "com.tc.object.applicator.ListApplicator");
-    spec = getOrCreateSpec("java.util.Collections$EmptyMap", "com.tc.object.applicator.HashMapApplicator");
-    spec = getOrCreateSpec("java.util.Collections$EmptySet", "com.tc.object.applicator.HashSetApplicator");
+    spec = getOrCreateSpec("java.util.Collections$EmptyList");
+    spec = getOrCreateSpec("java.util.Collections$EmptyMap");
+    spec = getOrCreateSpec("java.util.Collections$EmptySet");
 
     spec = getOrCreateSpec("java.util.Collections$UnmodifiableCollection");
     spec.setHonorTransient(true);
+    spec = getOrCreateSpec("java.util.Collections$UnmodifiableCollection$1");
     spec = getOrCreateSpec("java.util.Collections$1");
     spec.setHonorJDKSubVersionSpecific(true);
     spec = getOrCreateSpec("java.util.Collections$2");
@@ -439,6 +440,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     spec.setHonorTransient(true);
     spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap");
     spec.setHonorTransient(true);
+    spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet");
+    spec = getOrCreateSpec("java.util.Collections$UnmodifiableMap$UnmodifiableEntrySet$1");
     spec = getOrCreateSpec("java.util.Collections$UnmodifiableRandomAccessList");
     spec.setHonorTransient(true);
     spec = getOrCreateSpec("java.util.Collections$UnmodifiableSet");

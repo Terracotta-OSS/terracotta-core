@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -36,12 +37,14 @@ public class CollectionsWrappersTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return CollectionsWrappersTestApp.class;
   }
@@ -49,15 +52,15 @@ public class CollectionsWrappersTest extends TransparentTestBase {
   @SuppressWarnings("unchecked")
   public static class CollectionsWrappersTestApp extends AbstractErrorCatchingTransparentApp {
 
-    private static final Map    root = new HashMap();
-    private final CyclicBarrier barrier;
+    private static final Map<String, Object> root = new HashMap<String, Object>();
+    private final CyclicBarrier              barrier;
 
-    private final LinkedList    c    = new LinkedList(Arrays.asList(new Object[] { "item" }));
-    private final ArrayList     l    = new ArrayList(Arrays.asList(new Object[] { "timmy" }));
-    private final HashMap       m    = new HashMap();
-    private final HashSet       s    = new HashSet();
-    private final TreeMap       sm   = new TreeMap();
-    private final TreeSet       ss   = new TreeSet();
+    private final LinkedList                 c    = new LinkedList(Arrays.asList(new Object[] { "item" }));
+    private final ArrayList                  l    = new ArrayList(Arrays.asList(new Object[] { "timmy" }));
+    private final HashMap                    m    = new HashMap();
+    private final HashSet                    s    = new HashSet();
+    private final TreeMap                    sm   = new TreeMap();
+    private final TreeSet                    ss   = new TreeSet();
     {
       m.put("yer", "mom");
       s.add("it");
@@ -70,6 +73,7 @@ public class CollectionsWrappersTest extends TransparentTestBase {
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
       int n = barrier.barrier();
 
@@ -104,8 +108,8 @@ public class CollectionsWrappersTest extends TransparentTestBase {
 
         // XXX: This test should really excercise all methods to test autolocking, not just
         // add(Object) and put(Object,Object)
-        for (Iterator i = root.keySet().iterator(); i.hasNext();) {
-          String key = (String) i.next();
+        for (Map.Entry<String, Object> entry : root.entrySet()) {
+          String key = entry.getKey();
           if (key.startsWith("synch ")) {
             Object o = root.get(key);
             if (o instanceof Collection) {
@@ -127,9 +131,28 @@ public class CollectionsWrappersTest extends TransparentTestBase {
       verify();
     }
 
+    private static void testIterators(Object o) {
+      if (o instanceof Collection) {
+        testIterator(((Collection) o).iterator());
+      } else if (o instanceof Map) {
+        Map m1 = (Map) o;
+        testIterator(m1.keySet().iterator());
+        testIterator(m1.entrySet().iterator());
+        testIterator(m1.values().iterator());
+      }
+    }
+
+    private static void testIterator(Iterator iter) {
+      while (iter.hasNext()) {
+        if (iter.next() == null) { throw new AssertionError(iter.getClass()); }
+      }
+    }
+
     private void verify() {
-      for (Iterator i = root.keySet().iterator(); i.hasNext();) {
-        String key = (String) i.next();
+      for (Map.Entry<String, Object> entry : root.entrySet()) {
+        testIterators(entry.getValue());
+
+        String key = entry.getKey();
         if (key.startsWith("synch ")) {
           Object o = root.get(key);
           if (o instanceof Collection) {
@@ -163,8 +186,8 @@ public class CollectionsWrappersTest extends TransparentTestBase {
       assertEquals(Collections.unmodifiableSortedMap(sm), root.get("unmod sorted map"));
       assertEquals(Collections.unmodifiableSortedSet(ss), root.get("unmod sorted set"));
 
-      for (Iterator i = root.values().iterator(); i.hasNext();) {
-        exercise(i.next());
+      for (Object element : root.values()) {
+        exercise(element);
       }
     }
 
