@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.terracotta.ui.util.SWTUtil;
+import org.terracotta.ui.util.SWTUtil.TableWeightedResizeHandler;
 
 import com.tc.bundles.BundleSpec;
 import com.tc.bundles.OSGiToMaven;
@@ -49,22 +50,28 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 public class NewAddModuleDialog extends MessageDialog {
-  private Modules                  fModules;
-  private Combo                    fGroupIdCombo;
-  private static ArrayList<String> fCachedGroupIds = new ArrayList<String>();
-  private Table                    fTable;
-  private SelectionListener        fColumnSelectionListener;
-  private CLabel                   fPathLabel;
-  private Button                   fAddRepoButton;
+  private final Modules              fModules;
+  private Combo                      fGroupIdCombo;
+  private static ArrayList<String>   fCachedGroupIds     = new ArrayList<String>();
+  private Composite                  fTableHolder;
+  private Table                      fTable;
+  private TableWeightedResizeHandler resizeHandler;
+  private final SelectionListener    fColumnSelectionListener;
+  private CLabel                     fPathLabel;
+  private Button                     fAddRepoButton;
+  private Button                     fShowVersionsButton;
+  private TableColumn                fVersionColumn;
+  private ValueListener              m_valueListener;
 
-  private ValueListener            m_valueListener;
+  private static final String        GROUP_ID            = "Group Identifier:";
+  private static final String        REPO                = "Repository";
+  private static final String        NAME                = "Name";
+  private static final String        VERSION             = "Version";
 
-  private static final String      GROUP_ID        = "Group Identifier:";
-  private static final String      REPO            = "Repository";
-  private static final String      NAME            = "Name";
-  private static final String      VERSION         = "Version";
+  private static final String        VERSION_PATTERN     = "^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$";
 
-  private static final String      VERSION_PATTERN = "^[0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?$";
+  private static final int[]         VERSION_WEIGHTS     = { 2, 2, 1 };
+  private static final int[]         VERSIONLESS_WEIGHTS = { 3, 3 };
 
   public NewAddModuleDialog(Shell parentShell, String title, String message, Modules modules) {
     super(parentShell, "Select modules", null, "Select modules to add to your configuration", MessageDialog.NONE,
@@ -74,6 +81,7 @@ public class NewAddModuleDialog extends MessageDialog {
     fColumnSelectionListener = new ColumnSelectionListener();
   }
 
+  @Override
   protected Control createCustomArea(Composite parent) {
     Composite comp = new Composite(parent, SWT.NONE);
     comp.setLayout(new GridLayout());
@@ -94,11 +102,13 @@ public class NewAddModuleDialog extends MessageDialog {
     }
     fGroupIdCombo.select(0);
     fGroupIdCombo.addSelectionListener(new SelectionAdapter() {
+      @Override
       public void widgetSelected(SelectionEvent e) {
         populateTable();
       }
     });
     fGroupIdCombo.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusLost(FocusEvent e) {
         Shell shell = getShell();
         if (shell == null || shell.isDisposed()) return;
@@ -111,10 +121,84 @@ public class NewAddModuleDialog extends MessageDialog {
       }
     });
 
-    fTable = new Table(comp, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
+    fTableHolder = new Composite(comp, SWT.NONE);
+    fTableHolder.setLayout(new GridLayout());
+    fTableHolder.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+    createTable(fTableHolder);
+
+    fPathLabel = new CLabel(comp, SWT.NONE);
+    fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+    Composite controlsGroup = new Composite(comp, SWT.NONE);
+    controlsGroup.setLayout(new GridLayout(2, false));
+    controlsGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+    fAddRepoButton = new Button(controlsGroup, SWT.PUSH);
+    fAddRepoButton.setText("Add repository...");
+    fAddRepoButton.setLayoutData(new GridData());
+    fAddRepoButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
+        directoryDialog.setText("Terracotta Module Repository Chooser");
+        directoryDialog.setMessage("Select a module repository directory");
+        String path = directoryDialog.open();
+        if (path != null) {
+          File dir = new File(path);
+          fModules.addRepository(dir.toString());
+          populateTable();
+        }
+      }
+    });
+
+    fShowVersionsButton = new Button(controlsGroup, SWT.CHECK);
+    fShowVersionsButton.setText("Show Versions");
+    fShowVersionsButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        addRemoveVersionColumn();
+      }
+    });
+    fShowVersionsButton.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, false));
+
+    return comp;
+  }
+
+  private void addRemoveVersionColumn() {
+    boolean showVersions = showVersions();
+    int topIndex = fTable.getTopIndex();
+    int selectionIndex = fTable.getSelectionIndex();
+
+    if (showVersions) {
+      fVersionColumn = new TableColumn(fTable, SWT.NONE);
+      fVersionColumn.setResizable(true);
+      fVersionColumn.setText(VERSION);
+      fVersionColumn.addSelectionListener(fColumnSelectionListener);
+    } else {
+      fVersionColumn.dispose();
+      fVersionColumn = null;
+    }
+
+    packTable();
+    populateTable();
+
+    fTable.setTopIndex(topIndex);
+    if (selectionIndex != -1) {
+      fTable.setSelection(selectionIndex);
+    }
+    fTable.setFocus();
+  }
+
+  private boolean showVersions() {
+    return fShowVersionsButton != null && fShowVersionsButton.getSelection();
+  }
+
+  private void createTable(Composite parent) {
+    boolean showVersions = showVersions();
+    fTable = new Table(parent, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION | SWT.V_SCROLL);
     fTable.setHeaderVisible(true);
     fTable.setLinesVisible(true);
-    SWTUtil.makeTableColumnsResizeWeightedWidth(comp, fTable, new int[] { 2, 2, 1 });
     GridData gridData = new GridData(GridData.FILL_BOTH);
     gridData.heightHint = SWTUtil.tableRowsToPixels(fTable, 10);
     gridData.widthHint = SWTUtil.textColumnsToPixels(fTable, 100);
@@ -123,22 +207,30 @@ public class NewAddModuleDialog extends MessageDialog {
     TableColumn column0 = new TableColumn(fTable, SWT.NONE);
     column0.setResizable(true);
     column0.setText(REPO);
-    column0.pack();
     column0.addSelectionListener(fColumnSelectionListener);
 
     TableColumn column1 = new TableColumn(fTable, SWT.NONE);
     column1.setResizable(true);
     column1.setText(NAME);
-    column1.pack();
     column1.addSelectionListener(fColumnSelectionListener);
 
-    TableColumn column2 = new TableColumn(fTable, SWT.NONE);
-    column2.setResizable(true);
-    column2.setText(VERSION);
-    column2.pack();
-    column2.addSelectionListener(fColumnSelectionListener);
+    TableColumn column2 = null;
+    if (showVersions) {
+      column2 = new TableColumn(fTable, SWT.NONE);
+      column2.setResizable(true);
+      column2.setText(VERSION);
+      column2.addSelectionListener(fColumnSelectionListener);
+    }
 
     populateTable();
+    packTable();
+
+    column0.pack();
+    column1.pack();
+    if (column2 != null) {
+      column2.pack();
+    }
+
     fTable.setFocus();
 
     fTable.addMouseMoveListener(new MouseMoveListener() {
@@ -153,33 +245,19 @@ public class NewAddModuleDialog extends MessageDialog {
       }
     });
     fTable.addMouseTrackListener(new MouseTrackAdapter() {
+      @Override
       public void mouseExit(MouseEvent e) {
         fPathLabel.setText("");
       }
     });
-    
+  }
 
-    fPathLabel = new CLabel(comp, SWT.NONE);
-    fPathLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-    fAddRepoButton = new Button(comp, SWT.PUSH);
-    fAddRepoButton.setText("Add repository...");
-    fAddRepoButton.setLayoutData(new GridData());
-    fAddRepoButton.addSelectionListener(new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e) {
-        DirectoryDialog directoryDialog = new DirectoryDialog(getShell());
-        directoryDialog.setText("Terracotta Module Repository Chooser");
-        directoryDialog.setMessage("Select a module repository directory");
-        String path = directoryDialog.open();
-        if (path != null) {
-          File dir = new File(path);
-          fModules.addRepository(dir.toString());
-          populateTable();
-        }
-      }
-    });
-
-    return comp;
+  private void packTable() {
+    if (resizeHandler != null) {
+      resizeHandler.dispose();
+    }
+    int[] colWeights = showVersions() ? VERSION_WEIGHTS : VERSIONLESS_WEIGHTS;
+    resizeHandler = SWTUtil.makeTableColumnsResizeWeightedWidth(fTableHolder, fTable, colWeights);
   }
 
   private void populateTable() {
@@ -210,6 +288,7 @@ public class NewAddModuleDialog extends MessageDialog {
     String targetGroupId = fGroupIdCombo.getText();
     File groupDir = new File(repoDir, targetGroupId.replace('.', File.separatorChar));
     File[] names = groupDir.listFiles();
+    boolean showVersions = showVersions();
 
     if (names == null) return;
 
@@ -225,10 +304,13 @@ public class NewAddModuleDialog extends MessageDialog {
         String repo = nickname != null ? nickname : repoDir.getAbsolutePath();
         String name = nameFile.getName();
         String version = versionFile.getName();
-        String[] strings = new String[] { repo, name, version };
+        String[] strings = showVersions ? new String[] { repo, name, version } : new String[] { repo, name };
         item.setText(strings);
         File archiveFile = new File(versionFile, name + "-" + version + ".jar");
         item.setData(new ItemData(strings, repoDir, archiveFile));
+        if (!showVersions) {
+          break;
+        }
       }
     }
 
@@ -248,7 +330,7 @@ public class NewAddModuleDialog extends MessageDialog {
         if (symbolicName != null && version != null) {
           String bundleGroupId = OSGiToMaven.groupIdFromSymbolicName(symbolicName);
           if (!targetGroupId.equals(bundleGroupId)) {
-            if(fGroupIdCombo.indexOf(bundleGroupId) == -1) {
+            if (fGroupIdCombo.indexOf(bundleGroupId) == -1) {
               fGroupIdCombo.add(bundleGroupId);
             }
             return;
@@ -256,8 +338,13 @@ public class NewAddModuleDialog extends MessageDialog {
 
           TableItem item = new TableItem(fTable, SWT.NONE);
           String repo = nickname != null ? nickname : repoDir.getAbsolutePath();
-          String[] strings = new String[] { repo, OSGiToMaven.artifactIdFromSymbolicName(symbolicName),
-              OSGiToMaven.bundleVersionToProjectVersion(version) };
+          String[] strings;
+          if (showVersions) {
+            strings = new String[] { repo, OSGiToMaven.artifactIdFromSymbolicName(symbolicName),
+                OSGiToMaven.bundleVersionToProjectVersion(version) };
+          } else {
+            strings = new String[] { repo, OSGiToMaven.artifactIdFromSymbolicName(symbolicName) };
+          }
           item.setText(strings);
           item.setData(new ItemData(strings, repoDir, jarFile));
         }
@@ -283,6 +370,7 @@ public class NewAddModuleDialog extends MessageDialog {
   }
 
   class ColumnSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       TableColumn col = (TableColumn) e.widget;
       switch (fTable.getSortDirection()) {
@@ -340,8 +428,10 @@ public class NewAddModuleDialog extends MessageDialog {
     }
   }
 
+  @Override
   protected void buttonPressed(int buttonId) {
     if (buttonId == IDialogConstants.OK_ID) {
+      boolean showVersions = showVersions();
       TableItem[] items = fTable.getSelection();
       String groupId = fGroupIdCombo.getText();
 
@@ -349,9 +439,13 @@ public class NewAddModuleDialog extends MessageDialog {
         Module module = fModules.addNewModule();
         module.setGroupId(groupId);
         module.setName(item.getText(1));
-        module.setVersion(item.getText(2));
+        if (showVersions) {
+          module.setVersion(item.getText(2));
+        }
       }
-      if (m_valueListener != null) m_valueListener.setValue(fModules);
+      if (m_valueListener != null) {
+        m_valueListener.setValue(fModules);
+      }
     }
     super.buttonPressed(buttonId);
   }

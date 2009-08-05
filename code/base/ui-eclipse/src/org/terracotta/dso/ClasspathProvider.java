@@ -85,7 +85,7 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
     String[] dirs = { "deploy", "deploy-api", "common", "common-api", "management", "management-api", "aspectwerkz",
         "sigarstats", "thirdparty", "thirdparty-api", "dso-common", "dso-common-jdk16", "dso-cluster-api", "dso-l1",
-        "dso-l1-api", "dso-l2", "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool", "dso-spring",
+        "dso-l1-api", "dso-l2", "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool",
         "license-common" };
 
     for (int i = 0; i < dirs.length; i++) {

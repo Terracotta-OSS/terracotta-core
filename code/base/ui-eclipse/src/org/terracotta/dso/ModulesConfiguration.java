@@ -5,6 +5,7 @@
 package org.terracotta.dso;
 
 import org.apache.commons.io.FileUtils;
+import org.h2.util.StringUtils;
 import org.osgi.framework.Bundle;
 
 import com.terracottatech.config.AdditionalBootJarClasses;
@@ -54,7 +55,7 @@ public class ModulesConfiguration {
 
   public static boolean sameModule(Module m1, Module m2) {
     return m1 != null && m2 != null && m1.getName().equals(m2.getName()) && m1.getGroupId().equals(m2.getGroupId())
-           && m1.getVersion().equals(m2.getVersion());
+           && StringUtils.equals(m1.getVersion(), m2.getVersion());
   }
 
   public ModuleInfo getModuleInfo(Module module) {

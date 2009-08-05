@@ -124,6 +124,7 @@ public final class SWTUtil {
   public static void makeTableColumnsResizeEqualWidth(final Composite tablePanel, final Table table) {
     final Control control = table;
     control.addControlListener(new ControlAdapter() {
+      @Override
       public void controlResized(ControlEvent e) {
         if (e.widget.getDisplay() == null) {
           ((Control) e.widget).removeControlListener(this);
@@ -147,33 +148,57 @@ public final class SWTUtil {
     });
   }
 
-  public static void makeTableColumnsResizeWeightedWidth(final Composite tablePanel, final Table table,
-                                                         final int[] columnWeights) {
-    int weight = 0;
-    for (int i = 0; i < columnWeights.length; i++) {
-      weight += columnWeights[i];
+  public static TableWeightedResizeHandler makeTableColumnsResizeWeightedWidth(Composite tablePanel, Table table,
+                                                                               int[] columnWeights) {
+    TableWeightedResizeHandler result = new TableWeightedResizeHandler(tablePanel, table, columnWeights);
+    table.addControlListener(result);
+    return result;
+  }
+
+  public static class TableWeightedResizeHandler extends ControlAdapter {
+    Composite tablePanel;
+    Table     table;
+    int[]     columnWeights;
+    int       totalWeight;
+
+    public TableWeightedResizeHandler(Composite tablePanel, Table table, int[] columnWeights) {
+      this.tablePanel = tablePanel;
+      this.table = table;
+      setColumnWeights(columnWeights);
     }
-    final int totalWeight = weight;
-    tablePanel.addControlListener(new ControlAdapter() {
-      public void controlResized(ControlEvent e) {
-        if (e.widget.getDisplay() == null) {
-          ((Control) e.widget).removeControlListener(this);
-          return;
-        }
-        Rectangle area = tablePanel.getClientArea();
-        Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        int width = area.width - 2 * table.getBorderWidth();
-        if ((preferredSize.y + table.getHeaderHeight()) > area.height) {
-          Point vBarSize = table.getVerticalBar().getSize();
-          width -= vBarSize.x + 1; // don't know why +1 is needed, but it is
-        }
-        TableColumn[] columns = table.getColumns();
-        int widthUnit = width / totalWeight;
-        for (int i = 0; i < columns.length; i++) {
-          columns[i].setWidth(widthUnit * columnWeights[i]);
-        }
+
+    public void setColumnWeights(int[] columnWeights) {
+      this.columnWeights = columnWeights;
+      for (int i = 0; i < columnWeights.length; i++) {
+        totalWeight += columnWeights[i];
       }
-    });
+    }
+
+    @Override
+    public void controlResized(ControlEvent e) {
+      if (table.isDisposed() || table.getDisplay() == null) {
+        ((Control) e.widget).removeControlListener(this);
+        return;
+      }
+      Rectangle area = tablePanel.getClientArea();
+      Point preferredSize = table.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+      int width = area.width - 2 * table.getBorderWidth();
+      if ((preferredSize.y + table.getHeaderHeight()) > area.height) {
+        Point vBarSize = table.getVerticalBar().getSize();
+        width -= vBarSize.x + 1; // don't know why +1 is needed, but it is
+      }
+      TableColumn[] columns = table.getColumns();
+      int widthUnit = width / totalWeight;
+      for (int i = 0; i < columns.length; i++) {
+        columns[i].setWidth(widthUnit * columnWeights[i]);
+      }
+    }
+
+    public void dispose() {
+      table.removeControlListener(this);
+      table = null;
+      tablePanel = null;
+    }
   }
 
   public static void makeTableColumnsEditable(final Table table, final int[] indices) {
@@ -322,6 +347,7 @@ public final class SWTUtil {
               }
             });
             combo.addSelectionListener(new SelectionAdapter() {
+              @Override
               public void widgetSelected(SelectionEvent e) {
                 Event updateEvent = new Event();
                 item.setText(column, combo.getText());
@@ -347,6 +373,7 @@ public final class SWTUtil {
   }
 
   private static class FolderSelectionContentProvider extends WorkbenchContentProvider {
+    @Override
     public boolean hasChildren(Object element) {
       Object[] children = getChildren(element);
       for (int i = 0; i < children.length; i++)
@@ -362,6 +389,7 @@ public final class SWTUtil {
 
     dialog.setInput(project.getWorkspace());
     dialog.addFilter(new ViewerFilter() {
+      @Override
       public boolean select(Viewer viewer, Object parentElement, Object element) {
         if (element instanceof IProject) return ((IProject) element).equals(project);
         return element instanceof IFolder;

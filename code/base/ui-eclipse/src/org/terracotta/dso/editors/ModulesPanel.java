@@ -157,14 +157,6 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     return m_modules != null && (m_modules.sizeOfRepositoryArray() > 0 || m_modules.sizeOfModuleArray() > 0);
   }
 
-  // private void internalAddModule(String groupId, String name, String version) {
-  // Module module = ensureModules().addNewModule();
-  // module.setName(name);
-  // module.setGroupId(groupId);
-  // module.setVersion(version);
-  // createModuleTableItem(module);
-  // }
-
   private void createModuleTableItem(Module module) {
     TableItem item = new TableItem(m_layout.m_moduleTable, SWT.NONE);
     String groupId = module.isSetGroupId() ? module.getGroupId() : "org.terracotta.modules";
