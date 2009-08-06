@@ -11,6 +11,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.util.UUID;
 
 import junit.framework.TestCase;
 
@@ -20,7 +21,7 @@ import junit.framework.TestCase;
 public class SendStateMachineTest extends TestCase {
   public void tests() throws Exception {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedQueue());
-    final short sessionId = 134;
+    final UUID sessionId = UUID.getUUID();
     final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl();
     SendStateMachine ssm = new SendStateMachine(delivery, reconnectConfig, true);
     ssm.start();

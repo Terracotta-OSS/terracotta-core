@@ -12,7 +12,6 @@ public class UUIDTest extends TCTestCase {
     // This test is located in one of the JDK1.5 specific source trees on purpose. If it is moved someplace where a 1.4
     // runtime will execute it, it will fail.
 
-    assertTrue(UUID.usesJDKImpl());
     String s = UUID.getUUID().toString();
     assertEquals(32, s.length());
     System.out.println(s);

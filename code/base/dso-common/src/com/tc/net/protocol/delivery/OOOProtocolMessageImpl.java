@@ -7,6 +7,7 @@ package com.tc.net.protocol.delivery;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.util.UUID;
 
 class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProtocolMessage {
 
@@ -43,7 +44,7 @@ class OOOProtocolMessageImpl extends AbstractTCNetworkMessage implements OOOProt
     return getOOOPHeader().getSequence();
   }
 
-  public short getSessionId() {
+  public UUID getSessionId() {
     OOOProtocolMessageHeader header = (OOOProtocolMessageHeader) getHeader();
     return (header.getSession());
   }

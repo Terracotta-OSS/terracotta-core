@@ -7,6 +7,7 @@ package com.tc.net.protocol.delivery;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
+import com.tc.util.UUID;
 
 /**
  * 
@@ -103,7 +104,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
 
   private boolean sendAck(long seq) {
     OOOProtocolMessage opm = delivery.createAckMessage(seq);
-    Assert.inv(opm.getSessionId() > -1);
+    Assert.inv(!opm.getSessionId().equals(UUID.NULL_ID));
     return (delivery.sendMessage(opm));
   }
 

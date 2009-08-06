@@ -27,10 +27,10 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 import com.tc.util.TCTimeoutException;
+import com.tc.util.UUID;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Random;
 
 /**
  * NetworkLayer implementation for once and only once message delivery protocol.
@@ -51,7 +51,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private boolean                         isClosed         = false;
   private final boolean                   isClient;
   private final String                    debugId;
-  private short                           sessionId        = -1;
+  private UUID                            sessionId        = UUID.NULL_ID;
   private static final boolean            debug            = false;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
@@ -64,7 +64,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.delivery = new GuaranteedDeliveryProtocol(this, sendSink, receiveSink, reconnectConfig, isClient);
     this.delivery.start();
     this.delivery.pause();
-    this.sessionId = (this.isClient) ? -1 : newRandomSessionId();
+    this.sessionId = (this.isClient) ? UUID.NULL_ID : UUID.getUUID();
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
 
@@ -107,12 +107,12 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionId());
         return;
       }
-      if (sessionId != msg.getSessionId()) return; // drop bad message
+      if (!sessionId.equals(msg.getSessionId())) return; // drop bad message
       delivery.receive(msg);
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
       debugLog("Got Handshake message...");
-      if (msg.getSessionId() == -1) {
+      if (msg.getSessionId().equals(UUID.NULL_ID)) {
         debugLog("A brand new client is trying to connect - reply OK");
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
@@ -124,7 +124,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
           receiveLayer.notifyTransportConnected(this);
         }
         reconnectMode.set(false);
-      } else if (msg.getSessionId() == getSessionId()) {
+      } else if (msg.getSessionId().equals(getSessionId())) {
         debugLog("A same-session client is trying to connect - reply OK");
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
@@ -303,7 +303,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     return rv;
   }
 
-  private short getSessionId() {
+  private UUID getSessionId() {
     return sessionId;
   }
 
@@ -395,7 +395,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     reconnectMode.set(false);
     delivery.pause();
     delivery.reset();
-    sessionId = newRandomSessionId();
+    sessionId = UUID.getUUID();
   }
 
   private void resetStack() {
@@ -409,12 +409,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     return isClosed;
   }
 
-  private short newRandomSessionId() {
-    // generate a random session id
-    Random r = new Random();
-    r.setSeed(System.currentTimeMillis());
-    return ((short) r.nextInt(Short.MAX_VALUE));
-  }
 
   /**
    * this function gets the stackLayerFlag, added to build the communication stack information

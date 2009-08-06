@@ -12,6 +12,7 @@ import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.objectserver.api.TestSink;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.util.UUID;
 
 import junit.framework.TestCase;
 
@@ -38,7 +39,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
   }
 
   public void tests() throws Exception {
-    final short sessionId = 124;
+    final UUID sessionId = UUID.getUUID();
 
     // hand shake state
     // send AckRequest to receiver
@@ -91,7 +92,7 @@ public class GuaranteedDeliveryProtocolTest extends TestCase {
   }
 
   public void testTransportDisconnect() {
-    final short sessionId = 125;
+    final UUID sessionId = UUID.getUUID();
     SendStateMachine sender = gdp.getSender();
     ReceiveStateMachine receiver = gdp.getReceiver();
     

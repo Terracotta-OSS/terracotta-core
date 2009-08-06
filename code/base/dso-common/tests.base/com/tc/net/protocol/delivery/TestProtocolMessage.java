@@ -8,7 +8,7 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
-import com.tc.net.protocol.delivery.OOOProtocolMessage;
+import com.tc.util.UUID;
 
 /**
  * 
@@ -22,7 +22,7 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   public boolean          isSend             = false;
   public boolean          isAck              = false;
   private boolean         isGoodbye          = false;
-  public short            sessionId          = 0;
+  public UUID             sessionId          = UUID.getUUID();
 
   public TestProtocolMessage(TCNetworkMessage msg, long sent, long ack) {
     this.msg = msg;
@@ -62,11 +62,11 @@ public class TestProtocolMessage implements OOOProtocolMessage {
     return isAck;
   }
 
-  public short getSessionId() {
+  public UUID getSessionId() {
     return (sessionId);
   }
 
-  public void setSessionId(short id) {
+  public void setSessionId(UUID id) {
     sessionId = id;
   }
 

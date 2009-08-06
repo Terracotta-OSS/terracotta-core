@@ -7,6 +7,9 @@ package com.tc.net.protocol.delivery;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.TCProtocolException;
+import com.tc.util.UUID;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * Header for once and only once protocol messages.
@@ -20,8 +23,8 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   public static final short    TYPE_SEND                 = 5;
   public static final short    TYPE_GOODBYE              = 6;
 
-  public static final String[] typeNames                 = new String[] { "N/A", "TYPE_HANDSHAKE", "TYPE_HANDSHAKE_REPLY_OK",
-      "TYPE_HANDSHAKE_REPLY_FAIL", "TYPE_ACK", "TYPE_SEND", "TYPE_GOODBYE", };
+  public static final String[] typeNames                 = new String[] { "N/A", "TYPE_HANDSHAKE",
+      "TYPE_HANDSHAKE_REPLY_OK", "TYPE_HANDSHAKE_REPLY_FAIL", "TYPE_ACK", "TYPE_SEND", "TYPE_GOODBYE", };
 
   public static final short    VERSION                   = 1;
 
@@ -39,7 +42,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
   private static final int     SEQUENCE_LENGTH           = 8;
 
   private static final int     SESSION_OFFSET            = SEQUENCE_OFFSET + SEQUENCE_LENGTH;
-  private static final int     SESSION_LENGTH            = 2;
+  private static final int     SESSION_LENGTH            = UUID.SIZE;
 
   static final int             HEADER_LENGTH;
 
@@ -49,7 +52,7 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     HEADER_LENGTH = (tmp + 3) / 4 * 4;
   }
 
-  OOOProtocolMessageHeader(short version, short type, long sequence, short sessionId) {
+  OOOProtocolMessageHeader(short version, short type, long sequence, UUID sessionId) {
     super(HEADER_LENGTH, HEADER_LENGTH);
     putValues(version, type, sequence, sessionId);
     try {
@@ -67,12 +70,16 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     return HEADER_LENGTH;
   }
 
-  private void putValues(short version, short type, long sequence, short sessionId) {
+  private void putValues(short version, short type, long sequence, UUID sessionId) {
     data.putInt(MAGIC_NUM_OFFSET, MAGIC_NUM);
     data.putUbyte(VERSION_OFFSET, version);
     data.putUbyte(TYPE_OFFSET, type);
     data.putLong(SEQUENCE_OFFSET, sequence);
-    data.putShort(SESSION_OFFSET, sessionId);
+    try {
+      data.put(SESSION_OFFSET, sessionId.toString().getBytes("UTF-8"), 0, SESSION_LENGTH);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("OOO SessionID encoding error : " + e);
+    }
   }
 
   protected void setHeaderLength(short headerLength) {
@@ -126,8 +133,14 @@ class OOOProtocolMessageHeader extends AbstractTCNetworkHeader {
     return data.getLong(SEQUENCE_OFFSET);
   }
 
-  short getSession() {
-    return data.getShort(SESSION_OFFSET);
+  UUID getSession() {
+    byte[] session = new byte[SESSION_LENGTH];
+    data.get(SESSION_OFFSET, session, 0, SESSION_LENGTH);
+    try {
+      return new UUID(new String(session, "UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("OOO SessionID encoding error : " + e);
+    }
   }
 
   boolean isHandshake() {
