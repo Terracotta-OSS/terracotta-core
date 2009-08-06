@@ -336,6 +336,15 @@ public interface Manager {
   public boolean isDsoMonitorEntered(Object obj);
 
   /**
+   * Retrieve the customer change applicator that was registered for a particular class.
+   * 
+   * @param clazz The class for which the custom change application has to be returned
+   * @return the instance of the custom change applicator; or {@code null} if no custom applicator was registered for
+   *         this class
+   */
+  public Object getChangeApplicator(Class clazz);
+
+  /**
    * Check whether object is logically instrumented
    *
    * @param object Instance

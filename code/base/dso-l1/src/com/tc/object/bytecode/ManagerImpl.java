@@ -844,6 +844,10 @@ public class ManagerImpl implements Manager {
     Assert.assertNotNull(obj);
     return ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(obj).name(), obj);
   }
+  
+  public Object getChangeApplicator(final Class clazz) {
+    return this.config.getChangeApplicator(clazz);
+  }
 
   public boolean isLogical(final Object object) {
     return this.config.isLogical(object.getClass().getName());
@@ -1008,7 +1012,7 @@ public class ManagerImpl implements Manager {
       return false;
     }
 
-    public void __tc_managed(TCObject t) {
+    public void __tc_managed(final TCObject t) {
       //
     }
 

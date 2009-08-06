@@ -301,4 +301,8 @@ public final class NullManager implements Manager {
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(final String name) {
     return null;
   }
+
+  public Object getChangeApplicator(final Class clazz) {
+    return null;
+  }
 }
