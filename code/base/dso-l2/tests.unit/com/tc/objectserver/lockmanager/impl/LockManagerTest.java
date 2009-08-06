@@ -99,6 +99,7 @@ public class LockManagerTest extends TestCase {
     LockID lid2 = new LockID("2");
     LockID lid3 = new LockID("3");
     ThreadID tid1 = new ThreadID(1);
+    ThreadID tid2 = new ThreadID(2);
     TimerSpec wait = new TimerSpec(Integer.MAX_VALUE);
 
     L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
@@ -115,10 +116,10 @@ public class LockManagerTest extends TestCase {
     lockStatsManager.start(new NullChannelManager(), null);
 
     lockManager.requestLock(lid1, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // hold
-    lockManager.requestLock(lid1, cid2, tid1, LockLevel.WRITE, String.class.getName(), sink); // pending
+    lockManager.requestLock(lid1, cid2, tid2, LockLevel.WRITE, String.class.getName(), sink); // pending
 
     lockManager.requestLock(lid2, cid1, tid1, LockLevel.READ, String.class.getName(), sink); // hold
-    lockManager.requestLock(lid2, cid2, tid1, LockLevel.READ, String.class.getName(), sink); // hold
+    lockManager.requestLock(lid2, cid2, tid2, LockLevel.READ, String.class.getName(), sink); // hold
     try {
       lockManager.requestLock(lid2, cid1, tid1, LockLevel.WRITE, String.class.getName(), sink); // try upgrade and fail
       throw new AssertionError("Should have thrown an TCLockUpgradeNotSupportedError.");
@@ -165,6 +166,8 @@ public class LockManagerTest extends TestCase {
 
   private void validateBean2(LockMBean bean2, long time) {
     LockHolder[] holders = bean2.getHolders();
+    // holders returned from HashMap, no order guaranteed
+    sorHolderssByThreadID(holders);
     ServerLockRequest[] reqs = bean2.getPendingRequests();
     Waiter[] waiters = bean2.getWaiters();
     assertEquals(2, holders.length);
@@ -181,7 +184,7 @@ public class LockManagerTest extends TestCase {
     assertEquals(LockLevel.toString(LockLevel.READ), holder.getLockLevel());
     assertTrue(holder.getTimeAcquired() >= time);
     assertEquals("no longer connected", holder.getChannelAddr());
-    assertEquals(new ThreadID(1), holder.getThreadID());
+    assertEquals(new ThreadID(2), holder.getThreadID());
 
     // ServerLockRequest up = upgrades[0];
     // assertEquals(LockLevel.toString(LockLevel.WRITE), up.getLockLevel());
@@ -193,6 +196,8 @@ public class LockManagerTest extends TestCase {
 
   private void validateBean1(LockMBean bean1, long time) {
     LockHolder[] holders = bean1.getHolders();
+    // holders returned from HashMap, no order guaranteed
+    sorHolderssByThreadID(holders);
     ServerLockRequest[] reqs = bean1.getPendingRequests();
     Waiter[] waiters = bean1.getWaiters();
     assertEquals(1, holders.length);
@@ -209,7 +214,7 @@ public class LockManagerTest extends TestCase {
     assertEquals(LockLevel.toString(LockLevel.WRITE), req.getLockLevel());
     assertTrue(req.getRequestTime() >= time);
     assertEquals("no longer connected", req.getChannelAddr());
-    assertEquals(new ThreadID(1), req.getThreadID());
+    assertEquals(new ThreadID(2), req.getThreadID());
   }
 
   private void testSerialize(Object o) throws IOException {
@@ -231,6 +236,21 @@ public class LockManagerTest extends TestCase {
       }
     });
   }
+  
+  private void sorHolderssByThreadID(LockHolder[] holders) {
+    Arrays.sort(holders, new Comparator() {
+      public int compare(Object o1, Object o2) {
+        LockHolder l1 = (LockHolder) o1;
+        LockHolder l2 = (LockHolder) o2;
+
+        String id1 = l1.toString();
+        String id2 = l2.toString();
+
+        return id1.compareTo(id2);
+      }
+    });
+  }
+
 
   public void testReestablishWait() throws Exception {
     LockID lockID1 = new LockID("my lock");

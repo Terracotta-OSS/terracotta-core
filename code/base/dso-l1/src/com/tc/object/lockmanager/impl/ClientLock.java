@@ -28,6 +28,7 @@ import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
 import com.tc.util.Util;
+import com.tc.util.LazyMap.LazyHashMap;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockState;
 
@@ -55,7 +56,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private static final State              RUNNING                  = new State("RUNNING");
   private static final State              PAUSED                   = new State("PAUSED");
 
-  private final Map<ThreadID, LockHold>   holders                  = Collections.synchronizedMap(new HashMap(COLLECTIONS_INTIAL_SIZE));
+  private final Map<ThreadID, LockHold>   holders                  = Collections.synchronizedMap(new LazyHashMap());
   private Set<ThreadID>                   rejectedLockRequesterIDs = EMPTY_SET;
   private final Object                    rejectedLockRequesterGuard = new Object();
   private final LockID                    lockID;

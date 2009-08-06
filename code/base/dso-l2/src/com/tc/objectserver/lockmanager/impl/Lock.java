@@ -31,6 +31,7 @@ import com.tc.objectserver.lockmanager.api.Waiter;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.LazyMap.LazyHashMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,10 +68,11 @@ public class Lock {
   private static final int                          MAP_SIZE            = 1;
   private static final float                        LOAD_FACTOR         = 1F;
 
-  private final Map<NodeID, Holder>                 greedyHolders       = new HashMap(MAP_SIZE, LOAD_FACTOR);
-  private final Map<ServerThreadContext, Holder>    holders             = new HashMap(MAP_SIZE, LOAD_FACTOR);
+  private final Map<NodeID, Holder>                 greedyHolders        = new LazyHashMap<NodeID, Holder>();
+  private final Map<ServerThreadContext, Holder>    holders              = new LazyHashMap<ServerThreadContext, Holder>();
   private final LockID                              lockID;
-  private final ServerThreadContextFactory          threadContextFactory;
+  private static final ServerThreadContextFactory   threadContextFactory = ServerThreadContextFactory.DEFAULT_FACTORY;
+
   private final L2LockStatsManager                  lockStatsManager;
   private final String                              lockType;
 
@@ -107,7 +109,6 @@ public class Lock {
     this.lockID = lockID;
     this.lockType = lockType;
     this.lockPolicy = lockPolicy;
-    this.threadContextFactory = threadContextFactory;
     this.lockStatsManager = lockStatsManager;
   }
 
