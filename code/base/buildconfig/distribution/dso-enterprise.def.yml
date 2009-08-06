@@ -37,6 +37,7 @@ bundled_components:
         guides:
           - TerracottaDSOGuide
           - TerracottaSessionsQuickStart
+          - TerracottaHibernateQuickStartGuide
         references:
           - tc-config-reference
   - common:
