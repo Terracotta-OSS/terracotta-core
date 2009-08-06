@@ -25,13 +25,12 @@ bundled_components:
   - base:
       documentations:
         notices:
-          - readme
+          - README
           - releasenotes
           - thirdpartylicenses
           - disclaimer
           - license
           - INSTALL
-          - WELCOME
   - shared-base:
       documentations:
         install_directory: docs
