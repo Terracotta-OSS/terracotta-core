@@ -17,7 +17,10 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.properties.TCProperties;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.Date;
 
 /**
  * A bunch of static methods that make calling Manager method much easier from instrumented classes
@@ -31,22 +34,55 @@ public class ManagerUtil {
 
   private static final Manager    NULL_MANAGER = NullManager.getInstance();
 
-  private static volatile boolean enabled      = false;
+  private static volatile boolean ENABLED      = false;
+
+  private static String           SINGLETON_INIT_INFO;
+  private static volatile Manager SINGLETON    = null;
 
   /**
    * Called when initialization has proceeded enough that the Manager can be used.
    */
   public static void enable() {
-    enabled = true;
+    ENABLED = true;
+  }
+
+  public static void enableSingleton(Manager singleton) {
+    if (ClassProcessorHelper.USE_GLOBAL_CONTEXT) { throw new AssertionError("global mode"); }
+    if (singleton == null) { throw new NullPointerException("null singleton"); }
+
+    synchronized (ManagerUtil.class) {
+      if (SINGLETON != null) {
+        //
+        throw new IllegalStateException(SINGLETON_INIT_INFO);
+      }
+
+      SINGLETON = singleton;
+      SINGLETON_INIT_INFO = captureInitInfo();
+    }
+
+    enable();
+  }
+
+  private static String captureInitInfo() {
+    StringWriter sw = new StringWriter();
+    sw.append("The singleton instance was initialized at " + new Date() + " by thread ["
+              + Thread.currentThread().getName() + "] with stack:\n");
+    PrintWriter pw = new PrintWriter(sw);
+    new Throwable().printStackTrace(pw);
+    pw.close();
+    return sw.toString();
   }
 
   public static Manager getManager() {
-    if (!enabled) { return NULL_MANAGER; }
+    if (!ENABLED) { return NULL_MANAGER; }
     if (ClassProcessorHelper.USE_GLOBAL_CONTEXT) {
       return GlobalManagerHolder.instance;
     } else {
+      Manager rv = SINGLETON;
+      if (rv != null) return rv;
+
       ClassLoader loader = Thread.currentThread().getContextClassLoader();
-      Manager rv = ClassProcessorHelper.getManager(loader);
+      rv = ClassProcessorHelper.getManager(loader);
       if (rv == null) { return NULL_MANAGER; }
       return rv;
     }
