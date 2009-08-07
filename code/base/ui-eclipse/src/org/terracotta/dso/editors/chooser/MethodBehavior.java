@@ -27,7 +27,7 @@ import java.util.List;
 
 public final class MethodBehavior extends AbstractNavigatorBehavior {
 
-  public static final String  ADD_MSG       = "Enter AspectWerks Method Expression";
+  public static final String  ADD_MSG       = "Enter Method Expression";
   private static final String SELECT_METHOD = "Select Method";
   private final List          m_selectedValues;
 
@@ -35,16 +35,20 @@ public final class MethodBehavior extends AbstractNavigatorBehavior {
     this.m_selectedValues = new ArrayList();
   }
 
+  @Override
   public int style() {
     return SWT.MULTI;
   }
 
+  @Override
   public String getTitle() {
     return SELECT_METHOD;
   }
 
+  @Override
   public ViewerFilter getFilter(final IJavaProject javaProject) {
     return new ViewerFilter() {
+      @Override
       public boolean select(Viewer viewer, Object parentElement, Object element) {
         if (element instanceof IJavaProject) return true;
         if (parentElement instanceof IJavaProject) {
@@ -70,6 +74,7 @@ public final class MethodBehavior extends AbstractNavigatorBehavior {
     };
   }
 
+  @Override
   public ISelectionStatusValidator getValidator() {
     return new ISelectionStatusValidator() {
       public IStatus validate(Object[] selection) {
@@ -87,10 +92,12 @@ public final class MethodBehavior extends AbstractNavigatorBehavior {
     };
   }
 
+  @Override
   public Object getValues() {
     return m_selectedValues.toArray(new String[0]);
   }
 
+  @Override
   public String getMessage() {
     return ADD_MSG;
   }

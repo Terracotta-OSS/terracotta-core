@@ -85,11 +85,11 @@ import java.util.HashMap;
  */
 
 public class ConfigurationHelper {
-  private TcPlugin               m_plugin;
-  private IProject               m_project;
-  private IJavaProject           m_javaProject;
-  private PatternHelper          m_patternHelper;
-  private NonInstrumentedClasses m_nonInstrumentedClasses;
+  private final TcPlugin               m_plugin;
+  private final IProject               m_project;
+  private final IJavaProject           m_javaProject;
+  private final PatternHelper          m_patternHelper;
+  private final NonInstrumentedClasses m_nonInstrumentedClasses;
 
   public ConfigurationHelper(IProject project) {
     m_plugin = TcPlugin.getDefault();
@@ -3608,7 +3608,7 @@ public class ConfigurationHelper {
         msg = jme.getMessage();
       }
     } else {
-      msg = "Empty AspectWerks class expression";
+      msg = "Empty type expression";
     }
 
     if (msg != null) {

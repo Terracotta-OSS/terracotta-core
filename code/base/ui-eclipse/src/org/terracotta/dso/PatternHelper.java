@@ -32,15 +32,15 @@ import java.util.HashMap;
 
 /**
  * Utility singleton for bridging the gap between Eclipse internal Java parser constructs (MethodDeclaration) and
- * Aspectwerks expressions.
+ * Aspectwerkx expressions.
  */
 
 public class PatternHelper {
-  private static PatternHelper m_helper = new PatternHelper();
-  private ExpressionHelper     m_expressionHelper;
-  private ClassInfoFactory     m_classInfoFactory;
-  private HashMap              m_expressionContextCache;
-  private HashMap              m_executionExpressionContextCache;
+  private static PatternHelper   m_helper = new PatternHelper();
+  private final ExpressionHelper m_expressionHelper;
+  private final ClassInfoFactory m_classInfoFactory;
+  private final HashMap          m_expressionContextCache;
+  private final HashMap          m_executionExpressionContextCache;
 
   public static final PatternHelper getHelper() {
     return m_helper;
@@ -134,7 +134,7 @@ public class PatternHelper {
   }
 
   // the following two methods are non-sensical
-  
+
   public ExpressionContext createWithinExpressionContext(final IPackageDeclaration packageDecl) {
     return createWithinExpressionContext(packageDecl.getElementName());
   }
@@ -185,11 +185,11 @@ public class PatternHelper {
   }
 
   public boolean matchesPackageFragment(final String expr, final IPackageFragment fragment) {
-    return expr.equals(fragment.getElementName()+"..*") || expr.equals(fragment.getElementName()+".*");
+    return expr.equals(fragment.getElementName() + "..*") || expr.equals(fragment.getElementName() + ".*");
   }
 
   public boolean matchesPackageDeclaration(final String expr, final IPackageDeclaration packageDecl) {
-    return expr.equals(packageDecl.getElementName()+"..*") || expr.equals(packageDecl.getElementName()+".*");
+    return expr.equals(packageDecl.getElementName() + "..*") || expr.equals(packageDecl.getElementName() + ".*");
   }
 
   public static String getSignature(IMethod method) throws JavaModelException {
