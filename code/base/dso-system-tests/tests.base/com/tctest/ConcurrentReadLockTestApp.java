@@ -254,21 +254,14 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
     spec.addRoot("sharedObjRoot", "sharedObjRoot");
   }
 
+  @SuppressWarnings("unused")
   private static class SharedObject {
+
     private SharedObject obj;
-    private String str;
+    private String       str;
 
     public SharedObject() {
       super();
-    }
-
-
-    public synchronized SharedObject getObj() {
-      return obj;
-    }
-
-    public synchronized String getStr() {
-      return str;
     }
 
     public synchronized void makeShared(SharedObject object) {
@@ -314,17 +307,6 @@ public class ConcurrentReadLockTestApp extends AbstractTransparentApp {
           barrier.barrier();
 
           return 4;
-        }
-      }
-    }
-
-    public int testConcurrentReadBlockOnSharedAndUnsharedObj(Object unsharedObj, Object sharedObj, CyclicBarrier barrier)
-        throws Exception {
-      synchronized (sharedObj) {
-        barrier.barrier();
-
-        synchronized (unsharedObj) {
-          return 5;
         }
       }
     }

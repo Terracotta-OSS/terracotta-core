@@ -6,17 +6,13 @@ package com.tc.objectserver.dgc.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.text.PrettyPrinter;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
-import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -105,20 +101,8 @@ public class GarbageCollectorThreadTest extends TestCase {
       //
     }
 
-    public void addNewReferencesTo(Set rescueIds) {
-      //
-    }
-
     public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
       //
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds) {
-      return null;
-    }
-
-    public ObjectIDSet collect(Filter traverser, Collection roots, ObjectIDSet managedObjectIds, LifeCycleState state) {
-      return null;
     }
 
     public boolean deleteGarbage(GCResultContext resultContext) {

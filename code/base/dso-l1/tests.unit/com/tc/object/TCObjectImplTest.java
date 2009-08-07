@@ -61,8 +61,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     public String     test1;
     public TestObject test2;
 
-    public TCObject   managed;
-
     public TestObject(final String test1, final TestObject test2) {
       this.test1 = test1;
       this.test2 = test2;
@@ -80,14 +78,6 @@ public class TCObjectImplTest extends BaseDSOTestCase {
       if (fieldName.equals(TestObject.class.getName() + ".test2")) {
         test2 = (TestObject) value;
       }
-    }
-
-    public void __tc_managed(final TCObject b) {
-      this.managed = b;
-    }
-
-    public TCObject __tc_managed() {
-      return managed;
     }
 
     public Object __tc_getmanagedfield(final String name) {

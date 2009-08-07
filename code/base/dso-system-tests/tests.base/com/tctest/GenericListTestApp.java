@@ -34,6 +34,7 @@ public class GenericListTestApp extends GenericTransparentApp {
     super(appId, cfg, listenerProvider, List.class, 2);
   }
 
+  @Override
   protected Object getTestObject(String testName) {
     List lists = (List) sharedMap.get("lists");
     return lists.iterator();
@@ -57,6 +58,7 @@ public class GenericListTestApp extends GenericTransparentApp {
     // unreachable
   }
 
+  @Override
   protected void setupTestObject(String testName) {
     List lists = new ArrayList();
     lists.add(new LinkedList());
@@ -1340,27 +1342,28 @@ public class GenericListTestApp extends GenericTransparentApp {
   }
 
   private static class MyArrayList2 extends ArrayList {
+    // This variable is relevant to the test, it affects how this type is instrumented
+    @SuppressWarnings("unused")
     private Vector vector;
 
+    @Override
     protected void removeRange(int fromIndex, int toIndex) {
       super.removeRange(fromIndex, toIndex);
     }
 
-    public Vector getVector() {
-      return vector;
-    }
   }
 
   private static class MyArrayList3 extends ArrayList {
+    // This variable is relevant to the test, it affects how this type is instrumented
+    @SuppressWarnings("unused")
     private Vector vector;
 
+    // This method (the mere precense of it) is relevant to the test, it affects how the type is instrumented
+    @SuppressWarnings("unused")
     public void removeRangeLocal(int fromIndex, int toIndex) {
       super.removeRange(fromIndex, toIndex);
     }
 
-    public Vector getVector() {
-      return vector;
-    }
   }
 
   private static class MyArrayList4 extends ArrayList {
@@ -1373,6 +1376,8 @@ public class GenericListTestApp extends GenericTransparentApp {
 
   private static class MyArrayList6 extends ArrayList {
 
+    // This variable is relevant to the test, it affects how this type is instrumented
+    @SuppressWarnings("unused")
     int i = 3;
 
     MyArrayList6() {
@@ -1382,6 +1387,8 @@ public class GenericListTestApp extends GenericTransparentApp {
       if (size() != 0) { throw new AssertionError(); }
     }
 
+    // This constructor might be relevant to the test case, leave it here
+    @SuppressWarnings("unused")
     MyArrayList6(Set s1) {
       super(s1);
       Set s = new HashSet();
@@ -1413,24 +1420,29 @@ public class GenericListTestApp extends GenericTransparentApp {
     // This is in here to make sure that a subclass of AbstractList is sharable in DSO, not that this is a good/proper
     // List implementation ;-)
 
-    private ArrayList data = new ArrayList();
+    private final ArrayList data = new ArrayList();
 
+    @Override
     public void add(int index, Object element) {
       data.add(index, element);
     }
 
+    @Override
     public Object set(int index, Object element) {
       return data.set(index, element);
     }
 
+    @Override
     public Object get(int index) {
       return data.get(index);
     }
 
+    @Override
     public int size() {
       return data.size();
     }
 
+    @Override
     public Object remove(int index) {
       return data.remove(index);
     }
@@ -1444,10 +1456,12 @@ public class GenericListTestApp extends GenericTransparentApp {
       this.value = value;
     }
 
+    @Override
     public int hashCode() {
       return value.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj instanceof Foo) { return value.equals(((Foo) obj).value); }
       return false;

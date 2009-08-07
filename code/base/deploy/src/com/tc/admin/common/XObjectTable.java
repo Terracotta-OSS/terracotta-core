@@ -8,7 +8,6 @@ import com.tc.util.runtime.Os;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -383,9 +382,8 @@ public class XObjectTable extends XTable {
   }
 
   private static class InvokerButton extends XButton {
-    private int     row;
-    private int     col;
-    private boolean ignoreNextMouseEvent;
+    private int row;
+    private int col;
 
     public InvokerButton() {
       super();
@@ -415,33 +413,15 @@ public class XObjectTable extends XTable {
       return col;
     }
 
-    void setIgnoreNextEvent(boolean b) {
-      ignoreNextMouseEvent = b;
-    }
+    // public Dimension _getPreferredSize() {
+    // Dimension d = super.getPreferredSize();
+    //
+    // if (true || System.getProperty("os.name").equals("Mac OS X")) {
+    // d.height = 20;
+    // }
+    //
+    // return d;
+    // }
 
-    boolean getIgnoreNextEvent() {
-      return ignoreNextMouseEvent;
-    }
-
-    public Dimension _getPreferredSize() {
-      Dimension d = super.getPreferredSize();
-
-      if (true || System.getProperty("os.name").equals("Mac OS X")) {
-        d.height = 20;
-      }
-
-      return d;
-    }
-
-    @Override
-    protected void processMouseEvent(MouseEvent e) {
-      if (!ignoreNextMouseEvent) {
-        super.processMouseEvent(e);
-      } else {
-        requestFocus();
-      }
-
-      ignoreNextMouseEvent = false;
-    }
   }
 }

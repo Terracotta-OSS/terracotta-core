@@ -278,6 +278,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
       stoppedFlag.setStopped(true);
     }
 
+    @Override
     public void run() {
       int currentwait = maxSleep;
       int maxProcessLimit = checkpointMaxLimit;
@@ -318,18 +319,13 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
    */
   private class OidObjectIdReader implements Runnable {
     private long                  startTime;
-    private int                   counter     = 0;
+    private int                   counter = 0;
     private final Database        oidDB;
-    private final StoppedFlag     stoppedFlag = new StoppedFlag();
     private final SyncObjectIdSet syncObjectIDSet;
 
     public OidObjectIdReader(Database oidDB, SyncObjectIdSet syncObjectIDSet) {
       this.oidDB = oidDB;
       this.syncObjectIDSet = syncObjectIDSet;
-    }
-
-    public void stop() {
-      stoppedFlag.setStopped(true);
     }
 
     public void run() {

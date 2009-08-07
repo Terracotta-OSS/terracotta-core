@@ -74,6 +74,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   }
 
+  @Override
   public void runTest() {
     log("App Id = " + getApplicationId() + " participation count = " + getParticipantCount() + " intensity = "
         + getIntensity());
@@ -129,11 +130,11 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class PopulateThread extends Thread {
 
-    private Set  root;
+    private final Set  root;
 
-    private Set  exceptions = new HashSet();
+    private final Set  exceptions = new HashSet();
 
-    private long duration;
+    private final long duration;
 
     public PopulateThread(Set root, long duration) {
       this.root = root;
@@ -144,6 +145,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
       return exceptions;
     }
 
+    @Override
     public void run() {
       try {
         long objectCount = 0;
@@ -180,11 +182,11 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class RemoveThread extends Thread {
 
-    private Set  root;
+    private final Set  root;
 
-    private Set  exceptions = new HashSet();
+    private final Set  exceptions = new HashSet();
 
-    private long duration;
+    private final long duration;
 
     public RemoveThread(Set root, long duration) {
       this.root = root;
@@ -195,6 +197,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
       return exceptions;
     }
 
+    @Override
     public void run() {
       try {
         int removeCount = 0;
@@ -225,13 +228,13 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class DisplaceThread extends Thread {
 
-    private Set  root;
+    private final Set  root;
 
-    private Set  exceptions   = new HashSet();
+    private final Set  exceptions   = new HashSet();
 
-    private Set  referenceSet = new HashSet();
+    private final Set  referenceSet = new HashSet();
 
-    private long duration;
+    private final long duration;
 
     public DisplaceThread(Set root, long duration) {
       this.root = root;
@@ -242,6 +245,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
       return exceptions;
     }
 
+    @Override
     public void run() {
       try {
         int displacedCount = 0;
@@ -284,9 +288,9 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
   private static final class LocalGCThread extends Thread {
 
-    private Set  exceptions = new HashSet();
+    private final Set  exceptions = new HashSet();
 
-    private long duration;
+    private final long duration;
 
     public LocalGCThread(long duration) {
       this.duration = duration;
@@ -296,6 +300,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
       return exceptions;
     }
 
+    @Override
     public void run() {
       try {
 
@@ -314,6 +319,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
     }
   }
 
+  @SuppressWarnings("unused")
   private static final class Node {
     final long id;
     // the same id.

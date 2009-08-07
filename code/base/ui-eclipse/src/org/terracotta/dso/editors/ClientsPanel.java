@@ -26,14 +26,14 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class ClientsPanel extends ConfigurationEditorPanel implements ConfigurationEditorRoot,
     XmlObjectStructureListener {
-  private IProject                         m_project;
-  private TcConfig                         m_config;
-  private Client                           m_client;
+  private IProject                               m_project;
+  private TcConfig                               m_config;
+  private Client                                 m_client;
 
-  private Layout                           m_layout;
+  private final Layout                           m_layout;
 
-  private LogsBrowseSelectionHandler       m_logsBrowseSelectionHandler;
-  private StatisticsBrowseSelectionHandler m_statisticsBrowseSelectionHandler;
+  private final LogsBrowseSelectionHandler       m_logsBrowseSelectionHandler;
+  private final StatisticsBrowseSelectionHandler m_statisticsBrowseSelectionHandler;
 
   public ClientsPanel(Composite parent, int style) {
     super(parent, style);
@@ -48,6 +48,7 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
            || m_layout.m_modulesPanel.hasAnySet();
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -118,6 +119,7 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
     addListeners();
   }
 
+  @Override
   public IProject getProject() {
     return m_project;
   }
@@ -129,32 +131,24 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
   }
 
   private class Layout {
-    private static final String LOGS       = "Logs";
-    private static final String STATISTICS = "Statistics";
-    private static final String BROWSE     = "Browse...";
+    private static final String      LOGS       = "Logs";
+    private static final String      STATISTICS = "Statistics";
+    private static final String      BROWSE     = "Browse...";
 
-    private Button              m_logsBrowse;
-    private Text                m_logsLocation;
+    private final Button             m_logsBrowse;
+    private final Text               m_logsLocation;
 
-    private Button              m_statisticsBrowse;
-    private Text                m_statisticsLocation;
+    private final Button             m_statisticsBrowse;
+    private final Text               m_statisticsLocation;
 
-    private DsoClientDataPanel  m_dsoClientDataPanel;
-    private ModulesPanel        m_modulesPanel;
+    private final DsoClientDataPanel m_dsoClientDataPanel;
+    private final ModulesPanel       m_modulesPanel;
 
     void setup(Client client) {
       ((XmlStringField) m_logsLocation.getData()).setup(client);
       ((XmlStringField) m_statisticsLocation.getData()).setup(client);
       m_dsoClientDataPanel.setup(client);
       m_modulesPanel.setup(client);
-    }
-
-    public void reset() {
-      m_logsLocation.setText("");
-      m_logsLocation.setEnabled(false);
-
-      m_statisticsLocation.setText("");
-      m_statisticsLocation.setEnabled(false);
     }
 
     void tearDown() {
@@ -212,21 +206,25 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
   }
 
   private class LogsBrowseSelectionHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
-      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select logs folder", "Choose a folder for the log area");
-      if(folder != null) {
+      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select logs folder",
+                                                      "Choose a folder for the log area");
+      if (folder != null) {
         setStringField(m_layout.m_logsLocation, folder.getProjectRelativePath().toString());
       }
     }
   }
 
   private class StatisticsBrowseSelectionHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
-      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select statistics folder", "Choose a folder for the statistics database area");
-      if(folder != null) {
+      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select statistics folder",
+                                                      "Choose a folder for the statistics database area");
+      if (folder != null) {
         setStringField(m_layout.m_statisticsLocation, folder.getProjectRelativePath().toString());
       }
     }
   }
-  
+
 }

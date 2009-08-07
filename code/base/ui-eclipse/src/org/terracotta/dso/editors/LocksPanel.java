@@ -32,16 +32,16 @@ import com.terracottatech.config.Locks;
 import com.terracottatech.config.NamedLock;
 
 public class LocksPanel extends ConfigurationEditorPanel {
-  private IProject               m_project;
-  private DsoApplication         m_dsoApp;
-  private Locks                  m_locks;
+  private IProject                     m_project;
+  private DsoApplication               m_dsoApp;
+  private Locks                        m_locks;
 
-  private Layout                 m_layout;
+  private final Layout                 m_layout;
 
-  private TableSelectionListener m_tableSelectionListener;
-  private TableDataListener      m_tableDataListener;
-  private AddLockHandler         m_addLockHandler;
-  private RemoveLockHandler      m_removeLockHandler;
+  private final TableSelectionListener m_tableSelectionListener;
+  private final TableDataListener      m_tableDataListener;
+  private final AddLockHandler         m_addLockHandler;
+  private final RemoveLockHandler      m_removeLockHandler;
 
   public LocksPanel(Composite parent, int style) {
     super(parent, style);
@@ -63,6 +63,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
     return m_locks;
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -156,7 +157,8 @@ public class LocksPanel extends ConfigurationEditorPanel {
     if (m_locks == null) return;
     String[] autolockLevels = getListDefaults(Autolock.class, "lock-level");
     SWTUtil.makeTableComboItem(m_layout.m_autoLocksTable, Layout.AUTO_LOCK_COLUMN, autolockLevels);
-    SWTUtil.makeTableComboItem(m_layout.m_autoLocksTable, Layout.AUTO_SYNCHRONIZED_COLUMN, new String[] {"true", "false"});
+    SWTUtil.makeTableComboItem(m_layout.m_autoLocksTable, Layout.AUTO_SYNCHRONIZED_COLUMN, new String[] { "true",
+        "false" });
     Autolock[] autolocks = m_locks.getAutolockArray();
     for (int i = 0; i < autolocks.length; i++) {
       createAutolockTableItem(autolocks[i]);
@@ -274,13 +276,6 @@ public class LocksPanel extends ConfigurationEditorPanel {
     private Table               m_namedLocksTable;
     private Button              m_addNamedLockButton;
     private Button              m_removeNamedLockButton;
-
-    public void reset() {
-      m_removeAutoLockButton.setEnabled(false);
-      m_autoLocksTable.removeAll();
-      m_removeNamedLockButton.setEnabled(false);
-      m_namedLocksTable.removeAll();
-    }
 
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
@@ -416,12 +411,13 @@ public class LocksPanel extends ConfigurationEditorPanel {
   }
 
   class AddLockHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       if (e.widget == m_layout.m_addAutoLockButton) {
         m_layout.m_autoLocksTable.forceFocus();
         NavigatorBehavior behavior = new MethodBehavior();
         ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), MethodBehavior.ADD_MSG,
-            m_project, behavior);
+                                                          m_project, behavior);
         chooser.addValueListener(new UpdateEventListener() {
           public void handleUpdate(UpdateEvent updateEvent) {
             String[] items = (String[]) updateEvent.data;
@@ -436,7 +432,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
         m_layout.m_namedLocksTable.forceFocus();
         NavigatorBehavior behavior = new MethodBehavior();
         ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), MethodBehavior.ADD_MSG,
-            m_project, behavior);
+                                                          m_project, behavior);
         chooser.addValueListener(new UpdateEventListener() {
           public void handleUpdate(UpdateEvent updateEvent) {
             String[] items = (String[]) updateEvent.data;
@@ -452,6 +448,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
   }
 
   class RemoveLockHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       if (e.widget == m_layout.m_removeAutoLockButton) {
         m_layout.m_autoLocksTable.forceFocus();
@@ -477,6 +474,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
   }
 
   class TableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       if (e.widget == m_layout.m_autoLocksTable) {
         m_layout.m_removeAutoLockButton.setEnabled(true);
@@ -497,7 +495,7 @@ public class LocksPanel extends ConfigurationEditorPanel {
 
         if (e.index == Layout.AUTO_SYNCHRONIZED_COLUMN) {
           boolean autoSync = Boolean.parseBoolean(text);
-          if(autoSync) lock.setAutoSynchronized(true);
+          if (autoSync) lock.setAutoSynchronized(true);
           else lock.unsetAutoSynchronized();
         } else if (e.index == Layout.AUTO_METHOD_COLUMN) {
           if (text.length() == 0) {
@@ -560,12 +558,14 @@ public class LocksPanel extends ConfigurationEditorPanel {
     });
   }
 
+  @Override
   public void namedLockChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       updateNamedLockTableItem(index);
     }
   }
 
+  @Override
   public void autolockChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       updateAutolockTableItem(index);

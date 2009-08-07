@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -35,15 +36,15 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
   private final int           nonSharedPrimitiveInt     = 45;
   private final int           sharedPrimitiveInt        = 50;
 
-  private Integer             nonSharedIntegerObject    = new Integer(45);
-  private Integer             sharedIntegerObject       = new Integer(50);
+  private final Integer       nonSharedIntegerObject    = new Integer(45);
+  private final Integer       sharedIntegerObject       = new Integer(50);
 
   private SyncRoot            replaceableSyncRoot       = new SyncRoot(5);
   private SyncRoot            nonReplaceableSyncRoot    = new SyncRoot(15);
 
   private final SyncRoot      nonSharedSyncRoot         = new SyncRoot(45);
   private final SyncRoot      sharedSyncRoot            = new SyncRoot(50);
-  
+
   private Class               classRoot;
 
   private final CyclicBarrier barrier;
@@ -58,7 +59,7 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
       testBooleanChange();
 
       // testRootCreateOrReplace has been moved to the DsoFinalMethodTest.
-      
+
       testStaticRootSetting();
       testMultipleClientRootSetting();
       testPrimitiveRootSetting();
@@ -67,13 +68,13 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
       testObjectRootSetting(); // after this test, nonSharedSyncRoot will become shared.
       testRootSettingThroughReflection();
       testNonReplaceableSetting();
-      
+
       testPrimitiveIntIncrement();
     } catch (Throwable t) {
       notifyError(t);
     }
   }
-  
+
   private void testClassRootSetting() throws Exception {
     clear();
 
@@ -84,32 +85,32 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     }
 
     barrier.barrier();
-    
+
     if (index == 0) {
       classRoot = SyncRoot.class;
     }
-    
+
     barrier.barrier();
-    
+
     Object o = classRoot.newInstance();
-    
+
     Assert.eval(o instanceof SyncRoot);
-    
+
     barrier.barrier();
-    
+
     if (index == 1) {
       classRoot = HashMap.class;
     }
-    
+
     barrier.barrier();
-    
+
     o = classRoot.newInstance();
-    
+
     Assert.eval(o instanceof HashMap);
-    
+
     barrier.barrier();
   }
-  
+
   private void testPrimitiveIntIncrement() throws Exception {
     clear();
 
@@ -120,18 +121,18 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     }
 
     barrier.barrier();
-    
+
     if (index == 0) {
       int NUM_OF_COUNT = 5000;
       long startTime = System.currentTimeMillis();
-      int i=0;
+      int i = 0;
       while (i < NUM_OF_COUNT) {
         i++;
       }
       long endTime = System.currentTimeMillis();
-      
-      System.err.println("Elapsed time for non-shared primitive int: " + (endTime-startTime) + "ms");
-      
+
+      System.err.println("Elapsed time for non-shared primitive int: " + (endTime - startTime) + "ms");
+
       startTime = System.currentTimeMillis();
       primitiveIntRoot = 0;
       i = 0;
@@ -141,11 +142,11 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
         i++;
       }
       endTime = System.currentTimeMillis();
-      
-      System.err.println("Elapsed time for replaceable int root: " + (endTime-startTime) + "ms");
+
+      System.err.println("Elapsed time for replaceable int root: " + (endTime - startTime) + "ms");
     }
   }
-  
+
   private void testBooleanChange() throws Exception {
     clear();
 
@@ -637,7 +638,7 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
     spec.addRoot("replaceableSyncRoot", "replaceableSyncRoot", false);
     spec.addRoot("nonReplaceableSyncRoot", "nonReplaceableSyncRoot");
     spec.addRoot("sharedSyncRoot", "sharedSyncRoot");
-    
+
     spec.addRoot("classRoot", "classRoot", false);
 
     spec.addRoot("staticIntegerRoot", "staticIntegerRoot", false);
@@ -650,9 +651,8 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
   }
 
   private static class SyncRoot {
-    private int    index = 0;
-    private int    value = 0;
-    private Object obj;
+    private int index = 0;
+    private int value = 0;
 
     public SyncRoot() {
       super();
@@ -660,10 +660,6 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
 
     public SyncRoot(int value) {
       this.value = value;
-    }
-
-    public SyncRoot(Object o) {
-      this.obj = o;
     }
 
     public int getIndex() {
@@ -682,22 +678,9 @@ public class RootReplacementTestApp extends AbstractTransparentApp {
       this.value = value;
     }
 
-    public synchronized Object getObj() {
-      return obj;
-    }
-
-    public synchronized void setObj(Object obj) {
-      this.obj = obj;
-    }
-
-    public boolean isSameReferencedObject(Object o) {
-      return this.obj == o;
-    }
-
     public void clear() {
       this.index = 0;
       this.value = 0;
-      this.obj = null;
     }
   }
 

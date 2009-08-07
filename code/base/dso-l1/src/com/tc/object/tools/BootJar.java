@@ -195,7 +195,7 @@ public class BootJar {
     }
     attributes.put(new Attributes.Name(PREINSTRUMENTED_NAME), Boolean.toString(isPreinstrumented));
     attributes.put(new Attributes.Name(FOREIGN_NAME), Boolean.toString(isForeign));
-    entries.put(new JarEntryWrapper(je, Boolean.valueOf(isPreinstrumented), Boolean.valueOf(isForeign)), classBytes);
+    entries.put(new JarEntryWrapper(je), classBytes);
   }
 
   private Attributes makeAttributesFor(String resource) {
@@ -439,26 +439,15 @@ public class BootJar {
 
   private static class JarEntryWrapper {
     private final JarEntry jarEntry;
-    private final Boolean  isPreinstrumented;
-    private final Boolean  isForeign;
 
-    private JarEntryWrapper(JarEntry jarEntry, Boolean isPreinstrumented, Boolean isForeign) {
+    private JarEntryWrapper(JarEntry jarEntry) {
       this.jarEntry = jarEntry;
-      this.isPreinstrumented = isPreinstrumented;
-      this.isForeign = isForeign;
     }
 
     public JarEntry getJarEntry() {
       return jarEntry;
     }
 
-    public Boolean isPreinstrumented() {
-      return isPreinstrumented;
-    }
-
-    public Boolean isForeign() {
-      return isForeign;
-    }
   }
 
   private static class State {
@@ -468,6 +457,7 @@ public class BootJar {
       this.name = name;
     }
 
+    @Override
     public String toString() {
       return this.name;
     }

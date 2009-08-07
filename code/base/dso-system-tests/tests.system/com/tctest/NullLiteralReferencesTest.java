@@ -26,12 +26,14 @@ public class NullLiteralReferencesTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return NullLiteralReferencesTestApp.class;
   }
@@ -46,6 +48,7 @@ public class NullLiteralReferencesTest extends TransparentTestBase {
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
       int index = barrier.barrier();
 
@@ -101,6 +104,7 @@ public class NullLiteralReferencesTest extends TransparentTestBase {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class Holder {
     Holder(boolean setNull) {
       if (setNull) {
@@ -163,14 +167,17 @@ public class NullLiteralReferencesTest extends TransparentTestBase {
     }
 
     // this method sync'd to have a common shared memory barrier with the mutate methods
+    @Override
     public synchronized boolean equals(Object o) {
       return EqualsBuilder.reflectionEquals(this, o);
     }
 
+    @Override
     public synchronized String toString() {
       return ToStringBuilder.reflectionToString(this);
     }
 
+    @Override
     public synchronized int hashCode() {
       return HashCodeBuilder.reflectionHashCode(this);
     }

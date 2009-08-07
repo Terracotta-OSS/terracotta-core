@@ -140,7 +140,7 @@ public class AtomicBooleanTestApp extends AbstractTransparentApp {
   }
 
   private static class DataRoot {
-    private AtomicBoolean boolValue = new AtomicBoolean();
+    private final AtomicBoolean boolValue = new AtomicBoolean();
 
     public DataRoot() {
       super();
@@ -148,10 +148,6 @@ public class AtomicBooleanTestApp extends AbstractTransparentApp {
 
     public AtomicBoolean getBoolValue() {
       return boolValue;
-    }
-
-    public void setBoolValue(AtomicBoolean boolValue) {
-      this.boolValue = boolValue;
     }
 
     public void clear() {

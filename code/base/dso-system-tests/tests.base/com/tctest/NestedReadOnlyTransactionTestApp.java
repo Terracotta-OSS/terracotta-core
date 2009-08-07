@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -109,16 +110,16 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
 
   private static class DataRoot {
     private final Object readLockObject = new Object();
-    private boolean commit;
-    private long    longValue;
+    private boolean      commit;
+    private long         longValue;
 
     public DataRoot() {
       super();
     }
 
     public long getSynchronizedLongValue() {
-      synchronized(readLockObject) {
-      return longValue;
+      synchronized (readLockObject) {
+        return longValue;
       }
     }
 
@@ -134,21 +135,17 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
       this.commit = commit;
     }
 
-    public boolean isCommitted() {
-      return this.commit;
-    }
-
     public void assertLongValue(int index, int newValue) {
-      synchronized(readLockObject) {
-      if (index == 0) {
-        Assert.assertEquals(newValue, longValue);
-      } else {
-        if (commit) {
+      synchronized (readLockObject) {
+        if (index == 0) {
           Assert.assertEquals(newValue, longValue);
         } else {
-          Assert.assertEquals(0, longValue);
+          if (commit) {
+            Assert.assertEquals(newValue, longValue);
+          } else {
+            Assert.assertEquals(0, longValue);
+          }
         }
-      }
       }
     }
 

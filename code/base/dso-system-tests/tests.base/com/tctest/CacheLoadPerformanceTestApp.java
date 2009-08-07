@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.Random;
 
 public class CacheLoadPerformanceTestApp extends AbstractTransparentApp {
-  private Map              cache       = new HashMap();
+  private final Map        cache       = new HashMap();
   private final static int CACHE_COUNT = 8;
   private final static int ENTRIES     = 500;
   private final static int BATCH_SIZE  = 100;
@@ -46,11 +47,13 @@ public class CacheLoadPerformanceTestApp extends AbstractTransparentApp {
     System.out.println("Total time:" + (System.currentTimeMillis() - start));
   }
 
+  @SuppressWarnings("unused")
   private class TestKey {
     public Object o = new Object();
     public String s = "Steve " + System.currentTimeMillis();
   }
 
+  @SuppressWarnings("unused")
   private class TestValue {
     public Object o = new Object();
     public String s = "Steve " + System.currentTimeMillis();

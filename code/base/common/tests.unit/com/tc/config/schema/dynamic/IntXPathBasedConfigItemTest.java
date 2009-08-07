@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -10,12 +11,14 @@ import java.math.BigInteger;
 
 public class IntXPathBasedConfigItemTest extends XPathBasedConfigItemTestBase {
 
+  @SuppressWarnings("unused")
   private class SubBean extends MockXmlObject {
     public BigInteger getBigIntegerValue() {
       return currentValue;
     }
   }
 
+  @SuppressWarnings("unused")
   private static class DefaultBean extends MockXmlObject {
     private final BigInteger value;
 
@@ -30,10 +33,12 @@ public class IntXPathBasedConfigItemTest extends XPathBasedConfigItemTestBase {
 
   private BigInteger currentValue;
 
+  @Override
   protected MockXmlObject createSubBean() throws Exception {
     return new SubBean();
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 

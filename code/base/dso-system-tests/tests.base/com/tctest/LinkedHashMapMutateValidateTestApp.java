@@ -18,15 +18,16 @@ import java.util.Set;
 
 public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTransparentApp {
 
-  private int             upbound    = 1000;
+  private final int       upbound    = 1000;
   private final MapRoot   map1       = new MapRoot(upbound);
   private final MapRoot   map2       = new MapRoot(upbound + 100);
-  private final EventNode eventIndex = new EventNode(0, "test");
+  private final EventNode eventIndex = new EventNode(0);
 
   public LinkedHashMapMutateValidateTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
+  @Override
   protected void mutate() throws Throwable {
     EventNode event = null;
     Random r = new Random();
@@ -69,6 +70,7 @@ public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTr
     Thread.sleep(100); // wait for others to complete
   }
 
+  @Override
   protected void validate() throws Throwable {
     Random r = new Random();
     int id = 0;
@@ -128,33 +130,28 @@ public class LinkedHashMapMutateValidateTestApp extends AbstractMutateValidateTr
       return (map);
     }
 
-    public void clear() {
-      map.clear();
-    }
   }
 
   private static class EventNode {
-    String name;
-    int    id;
+    private int id;
 
     public EventNode produce() {
       EventNode node;
-      node = new EventNode(getId(), "Event" + getId());
+      node = new EventNode(getId());
       setId(getId() + 1);
       // System.out.println("*** Produce id=" + node.getId());
       return (node);
     }
 
-    public EventNode(int id, String name) {
+    public EventNode(int id) {
       this.id = id;
-      this.name = name;
     }
 
     public int getId() {
       return (id);
     }
 
-    public void setId(int id) {
+    private void setId(int id) {
       this.id = id;
     }
   }

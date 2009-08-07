@@ -59,14 +59,14 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
     thread.start();
 
     Stopwatch stopwatch = new Stopwatch().start();
-   
+
     while (stopwatch.getElapsedTime() < (1000 * 60 * MINUTES_TEST_RUN)) {
 
       SynchronizedInt counter = new SynchronizedInt(0);
       synchronized (lockList) {
         lockList.add(counter);
       }
-      
+
       counter.increment();
 
       synchronized (lockList) {
@@ -103,6 +103,7 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
 
   private class RunForeverThread extends Thread {
 
+    @Override
     public void run() {
       holdLock();
     }
@@ -110,19 +111,13 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
   }
 
   private static class Stopwatch {
-    private long    startTime = -1;
-    private long    stopTime  = -1;
-    private boolean running   = false;
+    private long       startTime = -1;
+    private final long stopTime  = -1;
+    private boolean    running   = false;
 
     public Stopwatch start() {
       startTime = System.currentTimeMillis();
       running = true;
-      return this;
-    }
-
-    public Stopwatch stop() {
-      stopTime = System.currentTimeMillis();
-      running = false;
       return this;
     }
 
@@ -133,13 +128,6 @@ public class ClientGCLockHeldApp extends AbstractTransparentApp {
       } else {
         return stopTime - startTime;
       }
-    }
-
-    public Stopwatch reset() {
-      startTime = -1;
-      stopTime = -1;
-      running = false;
-      return this;
     }
 
   }

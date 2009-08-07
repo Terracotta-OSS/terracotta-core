@@ -146,6 +146,7 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       this.exception = re;
     }
 
+    @SuppressWarnings("unused")
     void postCreate() {
       App.postCreateCalls.incrementAndGet();
       if (exception != null) throw exception;
@@ -161,12 +162,14 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
   }
 
   private static class SubclassWithPostCreate extends PostCreate {
+    @SuppressWarnings("unused")
     void subclassPostCreate() {
       App.postCreateCalls.incrementAndGet();
     }
   }
 
   private static class SubclassWithPreCreate extends PreCreate {
+    @SuppressWarnings("unused")
     void subclassPreCreate() {
       App.preCreateCalls.incrementAndGet();
     }
@@ -183,6 +186,7 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       this(null);
     }
 
+    @SuppressWarnings("unused")
     void preCreate() {
       App.preCreateCalls.incrementAndGet();
       if (re != null) { throw re; }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -13,6 +14,7 @@ import com.tc.util.TCAssertionError;
  */
 public class StringArrayXPathBasedConfigItemTest extends XPathBasedConfigItemTestBase {
 
+  @SuppressWarnings("unused")
   private class NoGetMethod extends MockXmlObject {
     public String[] getFoo() {
       return new String[] { "foo", "bar" };
@@ -27,6 +29,7 @@ public class StringArrayXPathBasedConfigItemTest extends XPathBasedConfigItemTes
     }
   }
 
+  @SuppressWarnings("unused")
   private class OneGetMethod extends MockXmlObject {
     public String[] getFoo() {
       return new String[] { "foo", "bar" };
@@ -45,6 +48,7 @@ public class StringArrayXPathBasedConfigItemTest extends XPathBasedConfigItemTes
     }
   }
 
+  @SuppressWarnings("unused")
   private class TwoGetMethods extends MockXmlObject {
     public String[] getFoo() {
       return new String[] { "foo", "bar" };
@@ -69,12 +73,14 @@ public class StringArrayXPathBasedConfigItemTest extends XPathBasedConfigItemTes
 
   private String[] currentValue;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 
     this.currentValue = new String[] { "real", "data" };
   }
 
+  @Override
   protected MockXmlObject createSubBean() throws Exception {
     return new OneGetMethod();
   }

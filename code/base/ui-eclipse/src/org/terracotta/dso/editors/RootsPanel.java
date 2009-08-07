@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors;
 
@@ -30,19 +31,19 @@ import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
 
 public class RootsPanel extends ConfigurationEditorPanel {
-  private IProject               m_project;
-  private DsoApplication         m_dsoApp;
-  private Roots                  m_roots;
+  private IProject                     m_project;
+  private DsoApplication               m_dsoApp;
+  private Roots                        m_roots;
 
-  private Layout                 m_layout;
+  private final Layout                 m_layout;
 
-  private AddRootHandler         m_addRootHandler;
-  private RemoveRootHandler      m_removeRootHandler;
-  private TableSelectionListener m_tableSelectionListener;
-  private TableDataListener      m_tableDataListener;
+  private final AddRootHandler         m_addRootHandler;
+  private final RemoveRootHandler      m_removeRootHandler;
+  private final TableSelectionListener m_tableSelectionListener;
+  private final TableDataListener      m_tableDataListener;
 
-  private static final int       FIELD_COLUMN = 0;
-  private static final int       NAME_COLUMN  = 1;
+  private static final int             FIELD_COLUMN = 0;
+  private static final int             NAME_COLUMN  = 1;
 
   public RootsPanel(Composite parent, int style) {
     super(parent, style);
@@ -64,6 +65,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
     return m_roots;
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -86,9 +88,9 @@ public class RootsPanel extends ConfigurationEditorPanel {
   }
 
   private void testDisableRemoveButton() {
-    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount() > 0);
   }
-  
+
   private void addListeners() {
     m_layout.m_addButton.addSelectionListener(m_addRootHandler);
     m_layout.m_removeButton.addSelectionListener(m_removeRootHandler);
@@ -155,10 +157,10 @@ public class RootsPanel extends ConfigurationEditorPanel {
 
   private void initTableItem(TableItem item, Root root) {
     String fieldNameOrExpression;
-    if(root.isSetFieldName()) {
+    if (root.isSetFieldName()) {
       fieldNameOrExpression = root.getFieldName();
     } else {
-      fieldNameOrExpression = root.getFieldExpression();      
+      fieldNameOrExpression = root.getFieldExpression();
     }
     item.setText(new String[] { fieldNameOrExpression, root.getRootName() });
   }
@@ -177,19 +179,19 @@ public class RootsPanel extends ConfigurationEditorPanel {
   private void internalSetRoot(Root root, String fieldNameOrExpression) {
     fieldNameOrExpression = fieldNameOrExpression.trim();
     String sansWhitespace = StringUtils.deleteWhitespace(fieldNameOrExpression);
-    if(fieldNameOrExpression.length() != sansWhitespace.length()) {
+    if (fieldNameOrExpression.length() != sansWhitespace.length()) {
       root.setFieldExpression(fieldNameOrExpression);
-      if(root.isSetFieldName()) {
+      if (root.isSetFieldName()) {
         root.unsetFieldName();
       }
     } else {
       root.setFieldName(fieldNameOrExpression);
-      if(root.isSetFieldExpression()) {
+      if (root.isSetFieldExpression()) {
         root.unsetFieldExpression();
       }
     }
   }
-  
+
   private void internalAddRoot(String fieldNameOrExpression) {
     Root root = ensureRoots().addNewRoot();
     internalSetRoot(root, fieldNameOrExpression);
@@ -206,14 +208,9 @@ public class RootsPanel extends ConfigurationEditorPanel {
     private static final String ADD    = "Add...";
     private static final String REMOVE = "Remove";
 
-    private Table               m_table;
-    private Button              m_addButton;
-    private Button              m_removeButton;
-
-    public void reset() {
-      m_removeButton.setEnabled(false);
-      m_table.removeAll();
-    }
+    private final Table         m_table;
+    private final Button        m_addButton;
+    private final Button        m_removeButton;
 
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
@@ -272,11 +269,12 @@ public class RootsPanel extends ConfigurationEditorPanel {
   }
 
   class AddRootHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       NavigatorBehavior behavior = new FieldBehavior();
       ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), FieldBehavior.ADD_MSG,
-          m_project, behavior);
+                                                        m_project, behavior);
       chooser.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent updateEvent) {
           String[] items = (String[]) updateEvent.data;
@@ -291,6 +289,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
   }
 
   class RemoveRootHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       int[] selection = m_layout.m_table.getSelectionIndices();
@@ -303,6 +302,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
   }
 
   class TableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_removeButton.setEnabled(true);
     }
@@ -315,7 +315,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
       Root root = (Root) item.getData();
 
       if (e.index == FIELD_COLUMN) {
-        if(fieldNameOrExpression.length() == 0) {
+        if (fieldNameOrExpression.length() == 0) {
           int index = m_layout.m_table.indexOf(item);
           ensureRoots().removeRoot(index);
           m_layout.m_table.remove(index);
@@ -331,6 +331,7 @@ public class RootsPanel extends ConfigurationEditorPanel {
     }
   }
 
+  @Override
   public void rootChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       updateTableItem(index);

@@ -27,20 +27,22 @@ public class NonPortableGraphTest extends TransparentTestBase {
     //
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return NonPortableGraphTestApp.class;
   }
 
   public static class NonPortableGraphTestApp extends AbstractErrorCatchingTransparentApp {
-    private Map         map = new HashMap();
-    private Portable    portable;
-    private NonPortable non_portable;
-    private LogAppender dsoLogs;
+    private final Map         map = new HashMap();
+    private Portable          portable;
+    private NonPortable       non_portable;
+    private final LogAppender dsoLogs;
 
     public NonPortableGraphTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
@@ -65,6 +67,7 @@ public class NonPortableGraphTest extends TransparentTestBase {
       spec.addRoot("non_portable", "non_portable");
     }
 
+    @Override
     protected void runTest() throws Throwable {
       testNonportableObjectGraph();
     }
@@ -117,6 +120,7 @@ public class NonPortableGraphTest extends TransparentTestBase {
     }
 
     private static class Portable {
+      @SuppressWarnings("unused")
       Object obj;
 
       public Portable(Object obj) {

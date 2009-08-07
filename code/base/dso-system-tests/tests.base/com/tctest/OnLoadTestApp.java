@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -30,6 +31,7 @@ public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
     this.barrier = new CyclicBarrier(getParticipantCount());
   }
 
+  @Override
   protected void runTest() throws Throwable {
     // force the outcome of the race to create (as opposed to faulting) the roots
     boolean creator = (barrier.barrier() == 0);
@@ -109,8 +111,8 @@ public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private static class MyObject {
-    private transient List            list = new ArrayList();
-    private MyObject1                 mine = new MyObject1(null);
+    private transient final List      list = new ArrayList();
+    private final MyObject1           mine = new MyObject1(null);
     public volatile transient boolean ok   = true;
 
     public MyObject(Object o) {
@@ -141,7 +143,7 @@ public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private static class MyObject2 {
-    private transient List list = new ArrayList();
+    private transient final List list = new ArrayList();
 
     public MyObject2(Object o) {
       //
@@ -156,8 +158,7 @@ public class OnLoadTestApp extends AbstractErrorCatchingTransparentApp {
    * This class is used for testing onLoad script with parsing error.
    */
   private static class MyObject3 {
-    private transient List            list = new ArrayList();
-    public volatile transient boolean ok   = true;
+    private transient final List list = new ArrayList();
 
     public MyObject3() {
       super();

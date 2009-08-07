@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.diff;
 
@@ -217,6 +218,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       }
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!(that instanceof TestObject)) return false;
 
@@ -314,6 +316,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       return (o instanceof OtherDifferenceable) && (this.a.equals(((OtherDifferenceable) o).a));
     }
@@ -327,6 +330,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       this.b = b;
     }
 
+    @Override
     public void addDifferences(DifferenceContext context, Object that) {
       super.addDifferences(context, that);
       if (USE_REFLECTION) {
@@ -336,6 +340,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       }
     }
 
+    @Override
     public boolean equals(Object that) {
       if (!super.equals(that)) return false;
       if (!(that instanceof FieldAdded)) return false;
@@ -344,6 +349,7 @@ public class DifferenceBuilderTest extends TCTestCase {
   }
 
   private static class FieldIgnored extends OtherDifferenceable {
+    // This field is presumably relevant to the test logic (don't remove it)
     private final Object b;
 
     public FieldIgnored(Object a, Object b) {
@@ -351,6 +357,7 @@ public class DifferenceBuilderTest extends TCTestCase {
       this.b = b;
     }
 
+    @SuppressWarnings("unused")
     Object getB() {
       return this.b;
     }

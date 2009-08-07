@@ -250,7 +250,7 @@ public class Main {
 
     // jars
     if (isUiEclipse) {
-      ps.println("\t<classpathentry kind=\"con\" path=\"org.eclipse.pde.core.requiredPlugins\"/>");
+      ps.println("\t<classpathentry exported=\"true\" kind=\"con\" path=\"org.eclipse.pde.core.requiredPlugins\"/>");
     } else {
       for (String jar : jars) {
         ps.println("\t<classpathentry exported=\"true\" kind=\"lib\" path=\"/dependencies/lib/" + jar + "\"/>");

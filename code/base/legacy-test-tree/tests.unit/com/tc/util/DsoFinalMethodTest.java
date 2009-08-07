@@ -41,6 +41,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private Object                      rootObject;
   private MockClientObjectManagerImpl objectManager;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -60,6 +61,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     objectManager.setTransactionManager(new MockTransactionManagerImpl());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     this.objectManager = null;
@@ -96,6 +98,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
             classFactory, objectFactory, new TestPortability(), null, null);
     }
 
+    @Override
     public Object lookupObject(ObjectID objectID) {
       return null;
     }
@@ -103,30 +106,30 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
 
   private static class MockRemoteObjectManagerImpl extends TestRemoteObjectManager {
 
+    @Override
     public ObjectID retrieveRootID(String name) {
       throw new AssertionError("retrieveRootID should not be called.");
     }
   }
 
   private static class MockTransactionManagerImpl extends MockTransactionManager {
+    @Override
     public void createRoot(String name, ObjectID id) {
       return;
     }
 
+    @Override
     public void createObject(TCObject source) {
       return;
     }
 
+    @Override
     public ClientTransaction getCurrentTransaction() {
       return null;
     }
   }
 
   private static class TestPortability implements Portability {
-
-    public boolean allowSubclassOf(Class clazz) {
-      return true;
-    }
 
     public NonPortableReason getNonPortableReason(Class topLevelClass) {
       throw new ImplementMe();

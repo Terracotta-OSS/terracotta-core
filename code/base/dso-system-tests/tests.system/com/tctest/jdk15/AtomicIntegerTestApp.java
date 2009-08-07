@@ -300,7 +300,7 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
   }
 
   private static class DataRoot {
-    private AtomicInteger intValue = new AtomicInteger(0);
+    private final AtomicInteger intValue = new AtomicInteger(0);
 
     public DataRoot() {
       super();
@@ -310,24 +310,21 @@ public class AtomicIntegerTestApp extends AbstractTransparentApp {
       return intValue;
     }
 
-    public void setIntValue(AtomicInteger intValue) {
-      this.intValue = intValue;
-    }
-
     public void clear() {
       intValue.set(0);
     }
   }
 
   private static class Loader extends Thread {
-    private AtomicInteger sum;
-    private List          errors;
+    private final AtomicInteger sum;
+    private final List          errors;
 
     public Loader(AtomicInteger sum, List errors) {
       this.sum = sum;
       this.errors = errors;
     }
 
+    @Override
     public void run() {
       try {
         for (int i = 0; i < 100; i++) {

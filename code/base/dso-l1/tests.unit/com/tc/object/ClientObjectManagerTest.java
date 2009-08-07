@@ -53,6 +53,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   private MockTCObject            tcObject;
   private CyclicBarrier           mutualRefBarrier;
 
+  @Override
   public void setUp() throws Exception {
     remoteObjectManager = new TestRemoteObjectManager();
     classProvider = new MockClassProvider();
@@ -113,6 +114,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
     remoteObjectManager = new TestRemoteObjectManager() {
 
+      @Override
       public DNA retrieve(ObjectID id) {
         try {
 
@@ -315,7 +317,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
   private TestDNA newEmptyDNA() {
     TestDNA dna = new TestDNA();
-    dna.type = Object.class;
     dna.objectID = objectID;
     dna.arraySize = 0;
     return dna;
@@ -359,6 +360,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o instanceof LookupRootAgent) {
         LookupRootAgent cmp = (LookupRootAgent) o;
@@ -367,6 +369,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       } else return false;
     }
 
+    @Override
     public int hashCode() {
       throw new RuntimeException("Don't ask me that.");
     }
@@ -375,7 +378,6 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
   private static class TestDNA implements DNA {
 
-    public Class    type;
     public ObjectID objectID;
     public ObjectID parentObjectID = ObjectID.NULL_ID;
     public int      arraySize;
@@ -431,6 +433,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     private ClientObjectManager clientObjectManager;
     private final ThreadLocal   localDepthCounter = new ThreadLocal() {
 
+                                                    @Override
                                                     protected synchronized Object initialValue() {
                                                       return new Counter();
                                                     }

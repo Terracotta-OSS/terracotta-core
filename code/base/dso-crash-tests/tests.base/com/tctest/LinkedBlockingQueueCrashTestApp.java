@@ -173,9 +173,8 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
   }
 
   private static class EventNode {
-    EventNode next;
-    String    name;
-    int       id;
+    String name;
+    int    id;
 
     public EventNode produce() {
       EventNode node;
@@ -190,14 +189,6 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
       this.name = name;
     }
 
-    public EventNode getNextNode() {
-      return (next);
-    }
-
-    public void setNextNode(EventNode next) {
-      this.next = next;
-    }
-
     public int getId() {
       return (id);
     }
@@ -206,14 +197,16 @@ public class LinkedBlockingQueueCrashTestApp extends AbstractTransparentApp {
       this.id = id;
     }
 
+    @Override
     public String toString() {
       return name;
     }
   }
 
   public static class GetController {
-    private int     participants, getters;
-    private boolean ending = false;
+    private final int participants;
+    private int       getters;
+    private boolean   ending = false;
 
     public GetController(int participant) {
       this.participants = participant;

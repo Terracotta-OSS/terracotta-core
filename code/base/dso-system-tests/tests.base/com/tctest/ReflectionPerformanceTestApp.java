@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -363,6 +364,7 @@ public class ReflectionPerformanceTestApp extends AbstractTransparentApp {
     config.addIncludePattern(DataRoot.class.getName());
   }
 
+  @SuppressWarnings("unused")
   private static class DataRoot {
     private long[]   longArray   = new long[2];
     private Object[] objectArray = new Object[2];

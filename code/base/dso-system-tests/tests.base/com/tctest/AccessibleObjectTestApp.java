@@ -20,8 +20,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class AccessibleObjectTestApp extends AbstractTransparentApp {
-  private CyclicBarrier  barrier;
-  private final DataRoot root = new DataRoot();
+  private final CyclicBarrier barrier;
+  private final DataRoot      root = new DataRoot();
 
   public AccessibleObjectTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -535,6 +535,8 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
       super();
     }
 
+    // this cstr is accessed reflectively
+    @SuppressWarnings("unused")
     public Superclass(int i, long l, String superString) {
       this.i = i;
       this.l = l;
@@ -561,6 +563,8 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
       return subString;
     }
 
+    // method is accessed reflectively
+    @SuppressWarnings("unused")
     public synchronized void setSubString(String subString) {
       this.subString = subString;
     }
@@ -569,6 +573,8 @@ public class AccessibleObjectTestApp extends AbstractTransparentApp {
       return l;
     }
 
+    // method is accessed reflectively
+    @SuppressWarnings("unused")
     protected void setL(long l) {
       this.l = l;
     }

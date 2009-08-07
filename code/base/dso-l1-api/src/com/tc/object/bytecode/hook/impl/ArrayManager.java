@@ -150,14 +150,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void objectArrayChanged(Object[] array, int index, Object value) {
-    Object existingObj = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingObj != existingObj) Assert.fail(); // silence compiler warning
+    readObjectArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.objectFieldChanged(array.getClass().getName(), null, value, index);
     }
     array[index] = value;
+  }
+
+  private static Object readObjectArray(Object[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -168,14 +171,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void shortArrayChanged(short[] array, int index, short value) {
-    short existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readShortArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.shortFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static short readShortArray(short[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -186,14 +192,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void longArrayChanged(long[] array, int index, long value) {
-    long existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readLongArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.longFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static long readLongArray(long[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -204,14 +213,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void intArrayChanged(int[] array, int index, int value) {
-    int existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readIntArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.intFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static int readIntArray(int[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -222,14 +234,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void floatArrayChanged(float[] array, int index, float value) {
-    float existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readFloatArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.floatFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static float readFloatArray(float[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -240,14 +255,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void doubleArrayChanged(double[] array, int index, double value) {
-    double existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readDoubleArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.doubleFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static double readDoubleArray(double[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -258,14 +276,17 @@ public class ArrayManager {
    * @param value The new value
    */
   public static void charArrayChanged(char[] array, int index, char value) {
-    char existingVal = array[index]; // do array operation first (fail fast, NPE and array index out of bounds)
-    if (false && existingVal != existingVal) Assert.fail(); // silence compiler warning
+    readCharArray(array, index); // do array operation first (fail fast, NPE and array index out of bounds)
 
     TCObject tco = getObject(array);
     if (tco != null) {
       tco.charFieldChanged(null, null, value, index);
     }
     array[index] = value;
+  }
+
+  private static char readCharArray(char[] array, int index) {
+    return array[index];
   }
 
   /**
@@ -284,8 +305,7 @@ public class ArrayManager {
       boolean[] booleanArray = (boolean[]) array;
 
       // do array operation first (fail fast, NPE and array index out of bounds)
-      boolean existingBooleanVal = booleanArray[index];
-      if (false && existingBooleanVal != existingBooleanVal) Assert.fail(); // silence compiler warning
+      readBooleanArray(index, booleanArray);
 
       boolean booleanValue = value == 1;
 
@@ -298,8 +318,7 @@ public class ArrayManager {
       byte[] byteArray = (byte[]) array;
 
       // do array operation first (fail fast, NPE and array index out of bounds)
-      byte existingByteVal = byteArray[index];
-      if (false && existingByteVal != existingByteVal) Assert.fail(); // silence compiler warning
+      readByteArray(index, byteArray);
 
       TCObject tco = getObject(array);
       if (tco != null) {
@@ -307,6 +326,14 @@ public class ArrayManager {
       }
       byteArray[index] = value;
     }
+  }
+
+  private static byte readByteArray(int index, byte[] byteArray) {
+    return byteArray[index];
+  }
+
+  private static boolean readBooleanArray(int index, boolean[] booleanArray) {
+    return booleanArray[index];
   }
 
   /**

@@ -76,6 +76,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
     }
   }
 
+  @Override
   public void runTest() {
     log("App Id = " + getApplicationId() + " participation count = " + getParticipantCount() + " intensity = "
         + getIntensity());
@@ -187,6 +188,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
     final long id;                                                  // Not necessarily unique as each node might create
     // with
     // the same id.
+    @SuppressWarnings("unused")
     long       lastAccess;
     long       level;
 
@@ -228,6 +230,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
       }
     }
 
+    @Override
     public String toString() {
       return "Node(" + id + ") : level = " + level + " : odd = " + (odd == null) + " : even = " + (even == null);
     }

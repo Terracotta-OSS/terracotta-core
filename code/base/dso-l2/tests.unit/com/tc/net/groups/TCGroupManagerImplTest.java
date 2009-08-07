@@ -168,7 +168,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     long minTimeToSayDead = TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.idletime")
                             + (TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval") * TCPropertiesImpl
                                 .getProperties().getLong("l2.healthcheck.l1.ping.probes"));
-    //giving more buffer time, to catch problem if any
+    // giving more buffer time, to catch problem if any
     minTimeToSayDead += (3 * TCPropertiesImpl.getProperties().getLong("l2.healthcheck.l1.ping.interval"));
 
     // HC will not say the other end is DEAD as the callback port from the client TCGroupMgr is available
@@ -559,10 +559,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private static final class SenderThread extends Thread {
-    private TCGroupManagerImpl mgr;
-    private Integer            upbound;
-    private Integer            index = new Integer(0);
-    private NodeID             toNode;
+    private final TCGroupManagerImpl mgr;
+    private final Integer            upbound;
+    private Integer                  index = new Integer(0);
+    private final NodeID             toNode;
 
     public SenderThread(ThreadGroup group, String name, TCGroupManagerImpl mgr, Integer upbound) {
       this(group, name, mgr, upbound, ServerID.NULL_ID);
@@ -575,6 +575,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.toNode = toNode;
     }
 
+    @Override
     public void run() {
       while (index <= upbound) {
         TestMessage msg = new TestMessage(index.toString());
@@ -596,10 +597,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private static final class ReceiverThread extends Thread {
-    private TestGroupMessageListener l;
-    private Integer                  upbound;
-    private Integer                  index = new Integer(0);
-    private NodeID                   fromNode;
+    private final TestGroupMessageListener l;
+    private final Integer                  upbound;
+    private Integer                        index = new Integer(0);
+    private final NodeID                   fromNode;
 
     public ReceiverThread(ThreadGroup group, String name, TestGroupMessageListener l, Integer upbound, NodeID fromNode) {
       super(group, name);
@@ -608,6 +609,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.fromNode = fromNode;
     }
 
+    @Override
     public void run() {
       while (index <= upbound) {
         TestMessage msg;
@@ -671,8 +673,8 @@ public class TCGroupManagerImplTest extends TCTestCase {
   }
 
   private class TestGroupMessageListener implements GroupMessageListener {
-    private long                                timeout;
-    private LinkedBlockingQueue<MessagePackage> queue = new LinkedBlockingQueue(100);
+    private final long                                timeout;
+    private final LinkedBlockingQueue<MessagePackage> queue = new LinkedBlockingQueue(100);
 
     TestGroupMessageListener(long timeout) {
       this.timeout = timeout;
@@ -702,6 +704,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.manager = manager;
     }
 
+    @Override
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       super.messageReceived(fromNode, msg);
       L2StateMessage message = (L2StateMessage) msg;
@@ -735,29 +738,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
   private static final class MyGroupEventListener implements GroupEventsListener {
 
-    private NodeID lastNodeJoined;
-    private NodeID lastNodeLeft;
-
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### nodeJoined -> " + nodeID);
-      lastNodeJoined = nodeID;
     }
 
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### nodeLeft -> " + nodeID);
-      lastNodeLeft = nodeID;
-    }
-
-    public NodeID getLastNodeJoined() {
-      return lastNodeJoined;
-    }
-
-    public NodeID getLastNodeLeft() {
-      return lastNodeLeft;
-    }
-
-    public void reset() {
-      lastNodeJoined = lastNodeLeft = null;
     }
   }
 
@@ -773,20 +759,24 @@ public class TCGroupManagerImplTest extends TCTestCase {
       this.msg = message;
     }
 
+    @Override
     protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
       msg = in.readString();
     }
 
+    @Override
     protected void basicSerializeTo(TCByteBufferOutput out) {
       out.writeString(msg);
     }
 
     String msg;
 
+    @Override
     public int hashCode() {
       return msg.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o instanceof TestMessage) {
         TestMessage other = (TestMessage) o;
@@ -795,13 +785,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
       return false;
     }
 
+    @Override
     public String toString() {
       return "TestMessage [ " + msg + "]";
     }
   }
 
   private static class TestGroupEventListener implements GroupEventsListener {
-    private TCGroupManagerImpl manager;
+    private final TCGroupManagerImpl manager;
 
     TestGroupEventListener(TCGroupManagerImpl manager) {
       this.manager = manager;

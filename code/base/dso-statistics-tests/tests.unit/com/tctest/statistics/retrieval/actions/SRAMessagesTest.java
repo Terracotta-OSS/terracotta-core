@@ -5,7 +5,6 @@
 package com.tctest.statistics.retrieval.actions;
 
 import com.tc.exception.ImplementMe;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -28,10 +27,12 @@ public class SRAMessagesTest extends TCTestCase {
 
   private MessageMonitor messageMonitor;
 
+  @Override
   protected void setUp() throws Exception {
     messageMonitor = new MessageMonitorImpl();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     messageMonitor = null;
   }
@@ -129,14 +130,6 @@ public class SRAMessagesTest extends TCTestCase {
       return length;
     }
 
-    public int getCorrelationId(boolean initialize) {
-      return 0;
-    }
-
-    public void setCorrelationId(int id) {
-      return;
-    }
-
     public void hydrate() {
       return;
     }
@@ -151,15 +144,6 @@ public class SRAMessagesTest extends TCTestCase {
 
     public MessageChannel getChannel() {
       return null;
-    }
-
-    public ClientID getClientID() {
-      return null;
-    }
-
-    public boolean resend() {
-      throw new ImplementMe();
-
     }
 
     public SessionID getLocalSessionID() {

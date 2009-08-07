@@ -23,24 +23,32 @@ import java.util.Map;
 
 public class ReflectionFieldTestApp extends GenericTransparentApp {
   // This field is used by reflection.
-  private DataRoot                  reflectionRoot        = null;
-  private Integer                   literalRoot;                                            // used by reflection.
-  private int                       primitiveRoot;                                          // used by reflection.
+  private final DataRoot                  reflectionRoot        = null;
 
-  private DataRoot                  nonShared             = new DataRoot();
-  private NonInstrumentedTestObject nonInstrumentedObject = new NonInstrumentedTestObject();
+  // used by reflection
+  @SuppressWarnings("unused")
+  private Integer                         literalRoot;
 
-  private NonInstrumented           nonInstrumented       = new NonInstrumented();
+  // used by reflection
+  @SuppressWarnings("unused")
+  private int                             primitiveRoot;
+
+  private final DataRoot                  nonShared             = new DataRoot();
+  private final NonInstrumentedTestObject nonInstrumentedObject = new NonInstrumentedTestObject();
+
+  private final NonInstrumented           nonInstrumented       = new NonInstrumented();
 
   public ReflectionFieldTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, DataRoot.class);
   }
 
+  @Override
   protected Object getTestObject(String testName) {
     DataRoot root = (DataRoot) sharedMap.get("root");
     return root;
   }
 
+  @Override
   protected void setupTestObject(String testName) {
     sharedMap.put("root", new DataRoot(Long.MIN_VALUE));
   }
@@ -605,13 +613,7 @@ public class ReflectionFieldTestApp extends GenericTransparentApp {
                    false);
   }
 
-  protected void silenceCompilerWarnings() {
-    if (false && literalRoot != literalRoot && primitiveRoot != primitiveRoot) {
-      // silence eclipse warnings about not directly reading the root fields
-      throw new AssertionError("Don't call this method");
-    }
-  }
-
+  @SuppressWarnings("unused")
   private static class NonInstrumented extends NonInstrumentedTestObject {
     private static DataRoot nonInstrumentedStaticRoot;
 
@@ -639,7 +641,7 @@ public class ReflectionFieldTestApp extends GenericTransparentApp {
   }
 
   private static class SubMap extends HashMap {
-    private int i = 3;
+    private final int i = 3;
 
     public SubMap() {
       put("key", "value");
@@ -649,6 +651,7 @@ public class ReflectionFieldTestApp extends GenericTransparentApp {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class DataRoot {
     private static Long staticLong;
 

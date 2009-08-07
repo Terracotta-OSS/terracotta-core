@@ -31,25 +31,27 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("unchecked")
 public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
-  private final DataKey[]   keyRoots   = new DataKey[] { new DataKey(1), new DataKey(2), new DataKey(3), new DataKey(4) };
-  private final DataValue[] valueRoots = new DataValue[] { new DataValue(10), new DataValue(20), new DataValue(30), new DataValue(40) };
+  private final DataKey[]   keyRoots        = new DataKey[] { new DataKey(1), new DataKey(2), new DataKey(3),
+      new DataKey(4)                       };
+  private final DataValue[] valueRoots      = new DataValue[] { new DataValue(10), new DataValue(20),
+      new DataValue(30), new DataValue(40) };
 
   private final DataKey[]   keyRootsLarge   = new DataKey[256];
   private final DataValue[] valueRootsLarge = new DataValue[256];
 
-  private final HashKey[]   hashKeys   = new HashKey[] { new HashKey(1), new HashKey(2), new HashKey(3), new HashKey(4) };
-  private final HashValue[] hashValues = new HashValue[] { new HashValue(10), new HashValue(20), new HashValue(30), new HashValue(40) };
+  private final HashKey[]   hashKeys        = new HashKey[] { new HashKey(1), new HashKey(2), new HashKey(3),
+      new HashKey(4)                       };
+  private final HashValue[] hashValues      = new HashValue[] { new HashValue(10), new HashValue(20),
+      new HashValue(30), new HashValue(40) };
 
   public ConcurrentHashMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider, ConcurrentHashMap.class);
-    
+
   }
 
   @Override
   protected Object getTestObject(String test) {
-    if ("RemoveLogical".equals(test)) {
-      return sharedMap.get("mapSingleSegment");
-    }
+    if ("RemoveLogical".equals(test)) { return sharedMap.get("mapSingleSegment"); }
     return sharedMap.get("map");
   }
 
@@ -57,7 +59,7 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
   protected void setupTestObject(String test) {
     for (int i = 0; i < keyRootsLarge.length; i++) {
       keyRootsLarge[i] = new DataKey(i);
-      valueRootsLarge[i] = new DataValue(i*10);
+      valueRootsLarge[i] = new DataValue(i * 10);
     }
 
     List listOfMaps = new ArrayList();
@@ -1571,11 +1573,6 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
       this.value = value;
     }
 
-    public SimpleEntry(Map.Entry e) {
-      this.key = e.getKey();
-      this.value = e.getValue();
-    }
-
     public Object getKey() {
       return key;
     }
@@ -1669,10 +1666,6 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
     public HashValue(int i) {
       super();
       this.i = i;
-    }
-
-    public int getInt() {
-      return this.i;
     }
 
     @Override

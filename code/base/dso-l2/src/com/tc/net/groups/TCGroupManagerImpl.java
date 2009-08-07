@@ -697,9 +697,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       }
     }
 
-    public synchronized void sendAll(GroupMessage msg) {
-      sendAll(msg, manager.members.keySet());
-    }
+    // public synchronized void sendAll(GroupMessage msg) {
+    // sendAll(msg, manager.members.keySet());
+    // }
 
     public synchronized void sendAll(GroupMessage msg, Set nodeIDs) {
       for (TCGroupMember m : manager.getMembers()) {

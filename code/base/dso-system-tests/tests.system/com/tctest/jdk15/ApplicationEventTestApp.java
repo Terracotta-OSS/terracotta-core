@@ -33,7 +33,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 
 public class ApplicationEventTestApp extends AbstractTransparentApp {
-  private int                   jmxPort;
+  private final int             jmxPort;
   private MBeanServerConnection mbsc;
   private Stage                 stage   = Stage.UNDEFINED;
   private Object                nonPortableRoot;
@@ -257,6 +257,7 @@ public class ApplicationEventTestApp extends AbstractTransparentApp {
   }
 
   private static class Struct {
+    @SuppressWarnings("unused")
     Object field;
   }
 

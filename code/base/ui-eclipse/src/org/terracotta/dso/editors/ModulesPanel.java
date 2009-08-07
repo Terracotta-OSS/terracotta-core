@@ -220,13 +220,6 @@ public class ModulesPanel extends ConfigurationEditorPanel implements XmlObjectS
     private Button              m_addModule;
     private Button              m_removeModule;
 
-    public void reset() {
-      m_moduleRepoTable.removeAll();
-      m_removeModuleRepo.setEnabled(false);
-      m_moduleTable.removeAll();
-      m_removeModule.setEnabled(false);
-    }
-
     private Layout(Composite parent) {
       parent.setLayout(new GridLayout());
       createModuleRepositoriesPanel(parent);

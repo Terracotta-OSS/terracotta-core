@@ -4,13 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.field.TCFieldFactory;
-import com.tc.object.loaders.ClassProvider;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -69,14 +62,9 @@ public class TraverserTest extends BaseDSOTestCase {
   }
 
   private class TestPortableObjectProvider implements PortableObjectProvider {
-    TCClassFactory cf;
 
-    public TestPortableObjectProvider() throws ConfigurationSetupException {
-      DSOClientConfigHelper config = configHelper();
-      ClassProvider classProvider = new MockClassProvider();
-      DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-      cf = new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, encoding);
-
+    public TestPortableObjectProvider() {
+      //
     }
 
     public TraversedReferences getPortableObjects(Class clazz, Object start, TraversedReferences addTo) {
@@ -116,20 +104,12 @@ public class TraverserTest extends BaseDSOTestCase {
         this.aString.equals(null);
       }
     }
-
-    public void setTA(TestA ta) {
-      this.ta = ta;
-    }
-
-    public void setTB(TestB tb) {
-      this.tb = tb;
-    }
   }
 
   private static class TestB extends TestA implements Serializable {
-    private TestA        tc;
+    private final TestA  tc;
 
-    private TestB        td;
+    private final TestB  td;
 
     private final String bstring = "bstring";
 
@@ -144,12 +124,5 @@ public class TraverserTest extends BaseDSOTestCase {
       }
     }
 
-    public void setTC(TestA tc) {
-      this.tc = tc;
-    }
-
-    public void setTD(TestB td) {
-      this.td = td;
-    }
   }
 }

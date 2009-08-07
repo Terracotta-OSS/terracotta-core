@@ -22,7 +22,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       scheduleTimeoutTask();
     }
   }
-  
+
   public void setServer0(WebApplicationServer server0) {
     this.server0 = server0;
   }
@@ -31,10 +31,11 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     this.server1 = server1;
   }
 
+  @Override
   protected boolean shouldKillAppServersEachRun() {
     return false;
   }
-  
+
   private static abstract class TwoServerTestSetupBase extends ServerTestSetup {
     private final Log              logger = LogFactory.getLog(getClass());
 
@@ -42,8 +43,6 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     private final String           context0;
     private final String           context1;
     private final TcConfigBuilder  tcConfigBuilder;
-
-    private boolean                start  = true;
 
     protected WebApplicationServer server0;
     protected WebApplicationServer server1;
@@ -56,10 +55,7 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       this.tcConfigBuilder = configBuilder;
     }
 
-    protected void setStart(boolean start) {
-      this.start = start;
-    }
-
+    @Override
     protected void setUp() throws Exception {
       if (shouldDisable()) return;
       super.setUp();
@@ -108,16 +104,14 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
       WebApplicationServer server = getServerManager().makeWebApplicationServer(tcConfigBuilder);
       configureServerParamers(server.getServerParameters());
       server.addWarDeployment(deployment, context);
-      if (start) {
-        server.start();
-      }
+      server.start();
+
       return server;
     }
 
     private Deployment makeWAR(int server) throws Exception {
       String context = (server == 0) ? context0 : context1;
-      DeploymentBuilder builder = makeDeploymentBuilder(
-          context + ".war");
+      DeploymentBuilder builder = makeDeploymentBuilder(context + ".war");
       builder.addDirectoryOrJARContainingClass(testClass);
       configureWar(server, builder);
       return builder.makeDeployment();
@@ -152,19 +146,18 @@ public abstract class AbstractTwoServerDeploymentTest extends AbstractDeployment
     protected TwoServerTestSetup(Class testClass, TcConfigBuilder configBuilder, String context) {
       super(testClass, configBuilder, context, null);
     }
-    
+
+    @Override
     final protected void configureWar(int server, DeploymentBuilder builder) {
       configureWar(builder);
     }
-    
+
     protected abstract void configureWar(DeploymentBuilder builder);
   }
-  
+
   /**
-   * Use this setup for two servers, each with its own context.
-   * The test class and config will still be shared by both.  To add
-   * additional classes to just one of the contexts, override
-   * {@link #configureWar(int, DeploymentBuilder)}.
+   * Use this setup for two servers, each with its own context. The test class and config will still be shared by both.
+   * To add additional classes to just one of the contexts, override {@link #configureWar(int, DeploymentBuilder)}.
    */
   public static abstract class TwoContextTestSetup extends TwoServerTestSetupBase {
     protected TwoContextTestSetup(Class testClass, String tcConfigFile, String context0, String context1) {

@@ -130,7 +130,7 @@ public class DNAWriterImpl implements DNAWriter {
 
   /**
    * NOTE::README:XXX: This method is called from instrumented code in the L2.
-   *
+   * 
    * @see PhysicalStateClassLoader.createBasicDehydrateMethod()
    */
   public void addPhysicalAction(String fieldName, Object value, boolean canBeReferenced) {
@@ -259,14 +259,6 @@ public class DNAWriterImpl implements DNAWriter {
 
     public void addSubArrayAction(int start, Object array, int length) {
       parent.addSubArrayAction(start, array, length);
-    }
-
-    public void finalizeDNA(boolean isDeltaDNA, int actionCount, int totalLength) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void finalizeDNA(boolean isDeltaDNA) {
-      throw new UnsupportedOperationException();
     }
 
     public int getActionCount() {

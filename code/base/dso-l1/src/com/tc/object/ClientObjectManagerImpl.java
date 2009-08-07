@@ -1340,10 +1340,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       this.object = obj;
     }
 
-    public ObjectID getObjectID() {
-      return this.objectID;
-    }
-
     public ResetableLatch getLatch() {
       return this.latch;
     }

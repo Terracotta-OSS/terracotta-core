@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package org.terracotta.dso.editors;
 
@@ -31,16 +32,16 @@ import com.terracottatech.config.QualifiedFieldName;
 import com.terracottatech.config.TransientFields;
 
 public class TransientFieldsPanel extends ConfigurationEditorPanel {
-  private IProject               m_project;
-  private DsoApplication         m_dsoApp;
-  private TransientFields        m_transientFields;
+  private IProject                     m_project;
+  private DsoApplication               m_dsoApp;
+  private TransientFields              m_transientFields;
 
-  private final Layout           m_layout;
+  private final Layout                 m_layout;
 
-  private AddHandler             m_addHandler;
-  private RemoveHandler          m_removeHandler;
-  private TableSelectionListener m_tableSelectionListener;
-  private TableDataListener      m_tableDataListener;
+  private final AddHandler             m_addHandler;
+  private final RemoveHandler          m_removeHandler;
+  private final TableSelectionListener m_tableSelectionListener;
+  private final TableDataListener      m_tableDataListener;
 
   public TransientFieldsPanel(Composite parent, int style) {
     super(parent, style);
@@ -62,6 +63,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
     return m_transientFields;
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -178,11 +180,6 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
     private final Button        m_removeButton;
     private final Table         m_table;
 
-    public void reset() {
-      m_removeButton.setEnabled(false);
-      m_table.removeAll();
-    }
-
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
       GridLayout gridLayout = new GridLayout(2, false);
@@ -240,13 +237,14 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
   private void handleTableSelection() {
     m_layout.m_removeButton.setEnabled(true);
   }
-  
+
   class AddHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       NavigatorBehavior behavior = new FieldBehavior();
       ExpressionChooser chooser = new ExpressionChooser(getShell(), behavior.getTitle(), FieldBehavior.ADD_MSG,
-          m_project, behavior);
+                                                        m_project, behavior);
       chooser.addValueListener(new UpdateEventListener() {
         public void handleUpdate(UpdateEvent updateEvent) {
           String[] items = (String[]) updateEvent.data;
@@ -261,12 +259,13 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
   }
 
   class RemoveHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.setRedraw(false);
       try {
         m_layout.m_table.forceFocus();
         int[] selection = m_layout.m_table.getSelectionIndices();
-  
+
         for (int i = selection.length - 1; i >= 0; i--) {
           ensureTransientFields().removeFieldName(selection[i]);
         }
@@ -280,6 +279,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
   }
 
   class TableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       handleTableSelection();
     }
@@ -295,6 +295,7 @@ public class TransientFieldsPanel extends ConfigurationEditorPanel {
     }
   }
 
+  @Override
   public void transientFieldChanged(IProject project, int index) {
     if (project.equals(getProject())) {
       int selIndex = m_layout.m_table.getSelectionIndex();

@@ -35,11 +35,13 @@ public class NonPortableInstancesTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
@@ -68,6 +70,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
       return nonPortableRoot;
     }
 
+    @Override
     protected void runTest() throws Throwable {
 
       // array elements are checked for portability before traversing
@@ -182,6 +185,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
 
   }
 
+  @SuppressWarnings("unused")
   private static class Ref {
     private Object ref;
 
@@ -195,6 +199,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
 
   }
 
+  @SuppressWarnings("unused")
   private static class Portable {
     Ref               ref              = new Ref();
 
@@ -214,6 +219,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class NotPortable {
     final Map m = makeGraphWithNonPortableNodes(this);
 
@@ -286,6 +292,7 @@ public class NonPortableInstancesTest extends TransparentTestBase {
       return throwable;
     }
 
+    @Override
     public String toString() {
       return "[" + level + "] " + message + ((throwable == null) ? "" : throwable.getMessage());
     }

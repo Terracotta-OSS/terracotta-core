@@ -69,7 +69,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   private int                        activeIndex         = NULL_VAL;
   private int                        lastCrashedIndex    = NULL_VAL;
   private ActivePassiveServerCrasher serverCrasher;
-  private int                        maxCrashCount;
+  private final int                  maxCrashCount;
   private final TestState            testState;
   private Random                     random;
   private long                       seed;
@@ -204,6 +204,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return this.serverConfigCreator;
   }
 
+  @Override
   public ProxyConnectManager[] getL2ProxyManagers() {
     return proxyL2Managers;
   }
@@ -223,21 +224,18 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       jmxPorts[0] = 8520;
       l2GroupPorts[0] = 8530;
       serverNames[0] = SERVER_NAME + (serverNameStartIndex + 0);
-      servers[0] = new ServerInfo(HOST, serverNames[0], dsoPorts[0], jmxPorts[0], l2GroupPorts[0],
-                                  getServerControl(dsoPorts[0], jmxPorts[0], serverNames[0]));
+      servers[0] = new ServerInfo(dsoPorts[0], getServerControl(dsoPorts[0], jmxPorts[0], serverNames[0]));
       dsoPorts[1] = 7510;
       jmxPorts[1] = 7520;
       l2GroupPorts[1] = 7530;
       serverNames[1] = SERVER_NAME + (serverNameStartIndex + 1);
-      servers[1] = new ServerInfo(HOST, serverNames[1], dsoPorts[1], jmxPorts[1], l2GroupPorts[1],
-                                  getServerControl(dsoPorts[1], jmxPorts[1], serverNames[1]));
+      servers[1] = new ServerInfo(dsoPorts[1], getServerControl(dsoPorts[1], jmxPorts[1], serverNames[1]));
       if (dsoPorts.length > 2) {
         dsoPorts[2] = 6510;
         jmxPorts[2] = 6520;
         l2GroupPorts[2] = 6530;
         serverNames[2] = SERVER_NAME + (serverNameStartIndex + 2);
-        servers[2] = new ServerInfo(HOST, serverNames[2], dsoPorts[2], jmxPorts[2], l2GroupPorts[2],
-                                    getServerControl(dsoPorts[2], jmxPorts[2], serverNames[2]));
+        servers[2] = new ServerInfo(dsoPorts[2], getServerControl(dsoPorts[2], jmxPorts[2], serverNames[2]));
       }
 
       startIndex = 3;
@@ -257,8 +255,8 @@ public class ActivePassiveServerManager extends MultipleServerManager {
         perServerJvmArgs = jvmArgs;
       }
 
-      servers[i] = new ServerInfo(HOST, serverNames[i], dsoPorts[i], jmxPorts[i], l2GroupPorts[i],
-                                  getServerControl(dsoPorts[i], jmxPorts[i], serverNames[i], perServerJvmArgs));
+      servers[i] = new ServerInfo(dsoPorts[i], getServerControl(dsoPorts[i], jmxPorts[i], serverNames[i],
+                                                                perServerJvmArgs));
     }
   }
 
@@ -393,6 +391,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     }
   }
 
+  @Override
   public List getErrors() {
     synchronized (errors) {
       List l = new ArrayList();
@@ -553,6 +552,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     System.out.println("*** Server stopped [" + servers[index].getDsoPort() + "]");
   }
 
+  @Override
   public void stopAllServers() throws Exception {
     synchronized (testState) {
       debugPrintln("***** setting TestState to STOPPING");
@@ -566,6 +566,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     }
   }
 
+  @Override
   public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
     pid = currentPid;
     for (int i = 0; i < serverCount; i++) {
@@ -620,6 +621,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     }
   }
 
+  @Override
   public int getPid() {
     return pid;
   }
@@ -839,6 +841,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     debugPrintln("\n ##### dataFile=[" + directory + "] still exists? [" + (new File(directory).exists()) + "]");
   }
 
+  @Override
   public final String getConfigFileLocation() {
     return configFileLocation;
   }
@@ -847,65 +850,25 @@ public class ActivePassiveServerManager extends MultipleServerManager {
    * Server inner class
    */
   private static class ServerInfo {
-    private final String        server_host;
-    private final String        server_name;
+
     private final int           server_dsoPort;
-    private final int           server_jmxPort;
-    private final int           server_l2GroupPort;
     private final ServerControl serverControl;
-    private String              dataLocation;
-    private String              logLocation;
 
-    ServerInfo(String host, String name, int dsoPort, int jmxPort, int l2GroupPort, ServerControl serverControl) {
-      server_host = host;
-      server_name = name;
-      server_dsoPort = dsoPort;
-      server_jmxPort = jmxPort;
-      server_l2GroupPort = l2GroupPort;
+    ServerInfo(int dsoPort, ServerControl serverControl) {
+      this.server_dsoPort = dsoPort;
       this.serverControl = serverControl;
-    }
-
-    public String getHost() {
-      return server_host;
-    }
-
-    public String getName() {
-      return server_name;
     }
 
     public int getDsoPort() {
       return server_dsoPort;
     }
 
-    public int getJmxPort() {
-      return server_jmxPort;
-    }
-
-    public int getL2GroupPort() {
-      return server_l2GroupPort;
-    }
-
     public ServerControl getServerControl() {
       return serverControl;
     }
-
-    public void setDataLocation(String location) {
-      dataLocation = location;
-    }
-
-    public String getDataLocation() {
-      return dataLocation;
-    }
-
-    public void setLogLocation(String location) {
-      logLocation = location;
-    }
-
-    public String getLogLocation() {
-      return logLocation;
-    }
   }
 
+  @Override
   public void crashActiveServers() throws Exception {
     crashActive();
   }

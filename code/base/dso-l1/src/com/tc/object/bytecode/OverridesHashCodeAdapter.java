@@ -40,9 +40,9 @@ public class OverridesHashCodeAdapter extends ClassAdapter {
 
   public void visitEnd() {
     if (overridesHashCode && !EXCLUDED.contains(originalVisitCall.name)) {
-      super.visit(originalVisitCall.version, originalVisitCall.access, originalVisitCall.name,
-                  originalVisitCall.signature, originalVisitCall.superName, ByteCodeUtil
-                      .addInterfaces(originalVisitCall.interfaces, new String[] { OverridesHashCode.class.getName()
+      super.visit(originalVisitCall.getVersion(), originalVisitCall.getAccess(), originalVisitCall.getName(),
+                  originalVisitCall.getSignature(), originalVisitCall.getSuperName(), ByteCodeUtil
+                      .addInterfaces(originalVisitCall.getInterfaces(), new String[] { OverridesHashCode.class.getName()
                           .replace('.', '/') }));
     }
     super.visitEnd();

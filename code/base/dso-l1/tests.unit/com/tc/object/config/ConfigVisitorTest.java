@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config;
 
@@ -18,7 +19,7 @@ public class ConfigVisitorTest extends TestCase {
     assertNotNull(args);
     assertSame(visitor, args[0]);
     assertSame(cfg, args[1]);
-    
+
     visitor.visitDSOApplicationConfig(cfg, Target.class);
     assertNull(Target.visitCalls.poll(0));
   }
@@ -39,7 +40,7 @@ public class ConfigVisitorTest extends TestCase {
     public void addWriteAutolock(String methodPattern) {
       return;
     }
-    
+
     public void addReadAutolock(String methodPattern) {
       return;
     }
@@ -48,12 +49,13 @@ public class ConfigVisitorTest extends TestCase {
       return;
     }
   }
-  
-  private static final class Target {
+
+  public static final class Target {
     public static NoExceptionLinkedQueue visitCalls = new NoExceptionLinkedQueue();
+
     public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig config) {
-      visitCalls.put(new Object[] {visitor, config});
+      visitCalls.put(new Object[] { visitor, config });
     }
   }
-  
+
 }

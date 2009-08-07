@@ -384,10 +384,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return null;
     }
 
-    public boolean isValidID(final ChannelID channelID) {
-      return false;
-    }
-
     public String getChannelAddress(final NodeID nid) {
       return null;
     }

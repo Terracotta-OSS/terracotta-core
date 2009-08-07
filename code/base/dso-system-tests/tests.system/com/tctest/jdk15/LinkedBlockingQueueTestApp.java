@@ -16,24 +16,24 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
-  public static final String  GC_TEST_KEY         = "gc-test";
+  public static final String        GC_TEST_KEY         = "gc-test";
 
-  private static final int    DEFAULT_NUM_OF_PUT  = 1000;
-  private static final int    DEFAULT_NUM_OF_LOOP = 5;
+  private static final int          DEFAULT_NUM_OF_PUT  = 1000;
+  private static final int          DEFAULT_NUM_OF_LOOP = 5;
 
-  private static final int    GC_NUM_OF_PUT       = 1000;
-  private static final int    GC_NUM_OF_LOOP      = 5;
-  private static final int    GC_CREATE_NUM       = 5;
-  
-  private static final int    CAPACITY            = 100;
+  private static final int          GC_NUM_OF_PUT       = 1000;
+  private static final int          GC_NUM_OF_LOOP      = 5;
+  private static final int          GC_CREATE_NUM       = 5;
 
-  private LinkedBlockingQueue queue               = new LinkedBlockingQueue(CAPACITY);
-  private final CyclicBarrier barrier;
+  private static final int          CAPACITY            = 100;
 
-  private boolean             isGcTest            = false;
-  private final int           gcCreateNum;
-  private final int           numOfPut;
-  private final int           numOfLoop;
+  private final LinkedBlockingQueue queue               = new LinkedBlockingQueue(CAPACITY);
+  private final CyclicBarrier       barrier;
+
+  private boolean                   isGcTest            = false;
+  private final int                 gcCreateNum;
+  private final int                 numOfPut;
+  private final int                 numOfLoop;
 
   public LinkedBlockingQueueTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -88,7 +88,7 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
 
   private void doPut() throws Exception {
     for (int i = 0; i < numOfPut; i++) {
-      //System.out.println("Putting " + i);
+      // System.out.println("Putting " + i);
       queue.put(new WorkItem(i));
       Assert.assertTrue(queue.size() <= CAPACITY);
     }
@@ -118,6 +118,7 @@ public class LinkedBlockingQueueTestApp extends AbstractTransparentApp {
       this.i = i;
     }
 
+    @SuppressWarnings("unused")
     public int getI() {
       return this.i;
     }

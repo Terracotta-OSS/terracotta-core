@@ -127,10 +127,6 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
       this.i = i;
     }
 
-    public int getInt() {
-      return this.i;
-    }
-
     @Override
     public int hashCode() {
       return i;
@@ -150,10 +146,6 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
     public HashValue(int i) {
       super();
       this.i = i;
-    }
-
-    public int getInt() {
-      return this.i;
     }
 
     @Override

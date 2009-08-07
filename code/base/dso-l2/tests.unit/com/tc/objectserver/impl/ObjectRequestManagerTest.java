@@ -13,7 +13,6 @@ import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.NetworkStackID;
@@ -734,10 +733,6 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
-    public void makeChannelActive(ClientID clientID, boolean persistent, ServerID serverNodeID) {
-      throw new NotImplementedException(TestDSOChannelManager.class);
-    }
-
   }
 
   private static class TestClientStateManager implements ClientStateManager {
@@ -960,8 +955,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
   private static class TestMessageChannel implements MessageChannel {
 
-    public List                   createMessageContexts = new ArrayList();
-    public NoExceptionLinkedQueue sendQueue             = new NoExceptionLinkedQueue();
+    public NoExceptionLinkedQueue sendQueue = new NoExceptionLinkedQueue();
     private final ChannelID       channelID;
 
     public TestMessageChannel(ChannelID channelID) {
@@ -1042,10 +1036,6 @@ public class ObjectRequestManagerTest extends TestCase {
       //      
     }
 
-    public void setRemoteNodeID(NodeID destination) {
-      //      
-    }
-
   }
 
   private static class TestRequestManagedObjectResponseMessage implements RequestManagedObjectResponseMessage,
@@ -1088,10 +1078,6 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public MessageChannel getChannel() {
-      return null;
-    }
-
-    public ClientID getClientID() {
       return null;
     }
 
@@ -1166,10 +1152,6 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public MessageChannel getChannel() {
-      return null;
-    }
-
-    public ClientID getClientID() {
       return null;
     }
 

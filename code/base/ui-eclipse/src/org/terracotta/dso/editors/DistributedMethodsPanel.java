@@ -32,16 +32,16 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 public class DistributedMethodsPanel extends ConfigurationEditorPanel {
-  private IProject               m_project;
-  private DsoApplication         m_dsoApp;
-  private DistributedMethods     m_distributedMethods;
+  private IProject                     m_project;
+  private DsoApplication               m_dsoApp;
+  private DistributedMethods           m_distributedMethods;
 
-  private Layout                 m_layout;
+  private final Layout                 m_layout;
 
-  private AddHandler             m_addHandler;
-  private RemoveHandler          m_removeHandler;
-  private TableSelectionListener m_tableSelectionListener;
-  private TableDataListener      m_tableDataListener;
+  private final AddHandler             m_addHandler;
+  private final RemoveHandler          m_removeHandler;
+  private final TableSelectionListener m_tableSelectionListener;
+  private final TableDataListener      m_tableDataListener;
 
   public DistributedMethodsPanel(Composite parent, int style) {
     super(parent, style);
@@ -63,6 +63,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     return m_distributedMethods;
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -170,14 +171,9 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
     private static final String ADD                 = "Add...";
     private static final String REMOVE              = "Remove";
 
-    private Button              m_addButton;
-    private Button              m_removeButton;
-    private Table               m_table;
-
-    public void reset() {
-      m_removeButton.setEnabled(false);
-      m_table.removeAll();
-    }
+    private final Button        m_addButton;
+    private final Button        m_removeButton;
+    private final Table         m_table;
 
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
@@ -230,6 +226,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
   }
 
   private class AddHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       NavigatorBehavior behavior = new MethodBehavior();
@@ -249,6 +246,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
   }
 
   private class RemoveHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       int[] selection = m_layout.m_table.getSelectionIndices();
@@ -262,6 +260,7 @@ public class DistributedMethodsPanel extends ConfigurationEditorPanel {
   }
 
   private class TableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_removeButton.setEnabled(true);
     }

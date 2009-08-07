@@ -291,7 +291,7 @@ public class AtomicLongTestApp extends AbstractTransparentApp {
   }
 
   private static class DataRoot {
-    private AtomicLong longValue = new AtomicLong(0);
+    private final AtomicLong longValue = new AtomicLong(0);
 
     public DataRoot() {
       super();
@@ -299,10 +299,6 @@ public class AtomicLongTestApp extends AbstractTransparentApp {
 
     public AtomicLong getLongValue() {
       return longValue;
-    }
-
-    public void setLongValue(AtomicLong longValue) {
-      this.longValue = longValue;
     }
 
     public void clear() {

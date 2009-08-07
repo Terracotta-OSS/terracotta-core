@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -72,14 +73,14 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     } catch (NoSuchFieldException e) {
       throw new AssertionError("TestParentClass.class does not contain field " + ClassAdapterBase.MANAGED_FIELD_NAME);
     }
-    
+
     try {
       f = TestSubClass.class.getDeclaredField(ClassAdapterBase.MANAGED_FIELD_NAME);
       throw new AssertionError("Should have thrown an NoSuchFieldException.");
     } catch (NoSuchFieldException e) {
       // ignore Exception
     }
-    
+
     try {
       f = TestSubSubClass.class.getDeclaredField(ClassAdapterBase.MANAGED_FIELD_NAME);
       throw new AssertionError("Should have thrown an NoSuchFieldException.");
@@ -87,23 +88,23 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       // ignore Exception
     }
   }
-  
+
   private void validateGeneratedTCObjectMethod() {
     try {
-      TestParentClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[]{TCObject.class});
+      TestParentClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[] { TCObject.class });
     } catch (NoSuchMethodException e) {
       throw new AssertionError("TestParentClass.class does not contain method " + ClassAdapterBase.MANAGED_METHOD);
     }
-    
+
     try {
-      TestSubClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[]{TCObject.class});
+      TestSubClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[] { TCObject.class });
       throw new AssertionError("Should have thrown a NoSuchMethodException.");
     } catch (NoSuchMethodException e) {
       // ignore
     }
-    
+
     try {
-      TestSubSubClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[]{TCObject.class});
+      TestSubSubClass.class.getDeclaredMethod(ClassAdapterBase.MANAGED_METHOD, new Class[] { TCObject.class });
       throw new AssertionError("Should have thrown a NoSuchMethodException.");
     } catch (NoSuchMethodException e) {
       // ignore
@@ -697,6 +698,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     spec.addRoot("barrier", "barrier");
   }
 
+  @SuppressWarnings("unused")
   private static class TestParentClass {
     private int   parentIntField;
     private Map   parentMapField;
@@ -737,6 +739,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class TestSubClass extends TestParentClass {
     private int    childIntField;
     private Set    childSetField;
@@ -749,6 +752,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       this.childSetField = new HashSet();
     }
 
+    @Override
     public void clear() {
       this.index = 0;
       this.childIntField = 0;
@@ -789,21 +793,17 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     }
   }
 
+  @SuppressWarnings("unused")
   private class TestSubSubClass extends TestSubClass {
-    private int                  grandChildIntField;
-    private Object               grandChildObjectField;
-    private TestSubSubInnerClass t;
+    private int                        grandChildIntField;
+    private Object                     grandChildObjectField;
+    private final TestSubSubInnerClass t;
 
     public TestSubSubClass() {
       super();
       this.grandChildIntField = 0;
       this.grandChildObjectField = new Object();
       this.t = new TestSubSubInnerClass(10);
-    }
-
-    public Object getT() {
-      // this method here to remove eclipse warning
-      return this.t;
     }
 
     public int getGrandChildIntField() {
@@ -822,6 +822,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
       this.grandChildObjectField = grandChildObjectField;
     }
 
+    @Override
     public void clear() {
       this.grandChildIntField = 0;
       this.grandChildObjectField = new Object();
@@ -829,7 +830,7 @@ public class PhysicalInstrumentedMethodsTestApp extends AbstractTransparentApp {
     }
 
     private class TestSubSubInnerClass {
-      private long l;
+      private final long l;
 
       public TestSubSubInnerClass(long l) {
         this.l = l;

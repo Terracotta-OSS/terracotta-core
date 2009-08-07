@@ -8,7 +8,6 @@ import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackID;
@@ -173,11 +172,6 @@ public class HydrateHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void setRemoteNodeID(NodeID destination) {
-      throw new ImplementMe();
-
-    }
-
   }
 
   private static class Message implements TCMessage {
@@ -195,10 +189,6 @@ public class HydrateHandlerTest extends TCTestCase {
 
     public MessageChannel getChannel() {
       return channel;
-    }
-
-    public ClientID getClientID() {
-      return new ClientID(channel.getChannelID().toLong());
     }
 
     public SessionID getLocalSessionID() {

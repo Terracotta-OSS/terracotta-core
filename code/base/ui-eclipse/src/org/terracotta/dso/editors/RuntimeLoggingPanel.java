@@ -21,7 +21,7 @@ import com.terracottatech.config.RuntimeLogging;
 public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private DsoClientDebugging m_dsoClientDebugging;
   private RuntimeLogging     m_runtimeLogging;
-  private Layout             m_layout;
+  private final Layout       m_layout;
 
   public RuntimeLoggingPanel(Composite parent, int style) {
     super(parent, style);
@@ -29,6 +29,7 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
     SWTUtil.setBGColorRecurse(this.getDisplay().getSystemColor(SWT.COLOR_WHITE), this);
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -125,30 +126,13 @@ public class RuntimeLoggingPanel extends ConfigurationEditorPanel implements Xml
     private static final String NEW_OBJECT_DEBUG         = "New Object Debug";
     private static final String NAMED_LOADER_DEBUG       = "Named Loader Debug";
 
-    private Button              m_lockDebugCheck;
-    private Button              m_distributedMethodDebugCheck;
-    private Button              m_fieldChangeDebugCheck;
-    private Button              m_nonPortableDumpCheck;
-    private Button              m_waitNotifyDebugCheck;
-    private Button              m_newObjectDebugCheck;
-    private Button              m_namedLoaderDebugCheck;
-
-    public void reset() {
-      m_lockDebugCheck.setSelection(false);
-      m_lockDebugCheck.setEnabled(false);
-      m_distributedMethodDebugCheck.setSelection(false);
-      m_distributedMethodDebugCheck.setEnabled(false);
-      m_fieldChangeDebugCheck.setSelection(false);
-      m_fieldChangeDebugCheck.setEnabled(false);
-      m_nonPortableDumpCheck.setSelection(false);
-      m_nonPortableDumpCheck.setEnabled(false);
-      m_waitNotifyDebugCheck.setSelection(false);
-      m_waitNotifyDebugCheck.setEnabled(false);
-      m_newObjectDebugCheck.setSelection(false);
-      m_newObjectDebugCheck.setEnabled(false);
-      m_namedLoaderDebugCheck.setSelection(false);
-      m_namedLoaderDebugCheck.setEnabled(false);
-    }
+    private final Button        m_lockDebugCheck;
+    private final Button        m_distributedMethodDebugCheck;
+    private final Button        m_fieldChangeDebugCheck;
+    private final Button        m_nonPortableDumpCheck;
+    private final Button        m_waitNotifyDebugCheck;
+    private final Button        m_newObjectDebugCheck;
+    private final Button        m_namedLoaderDebugCheck;
 
     void setRuntimeLogging(RuntimeLogging runtimeLogging) {
       ((XmlBooleanToggle) m_lockDebugCheck.getData()).setup(runtimeLogging);

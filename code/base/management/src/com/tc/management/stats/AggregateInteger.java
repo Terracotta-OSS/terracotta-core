@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.stats;
 
@@ -20,11 +21,9 @@ public final class AggregateInteger implements Serializable {
 
   private static final class Sample {
 
-    final int  sample;
     final long timestamp;
 
-    Sample(final int sample) {
-      this.sample = sample;
+    Sample() {
       timestamp = System.currentTimeMillis();
     }
 
@@ -75,7 +74,7 @@ public final class AggregateInteger implements Serializable {
     // If we are keeping track of history, add our sample to the tail of the list and trim the front so it's within our
     // timing boundary
     if (sampleHistory != null) {
-      sampleHistory[nextHistoryPosition++] = new Sample(sample);
+      sampleHistory[nextHistoryPosition++] = new Sample();
       nextHistoryPosition %= sampleHistory.length;
     }
   }
@@ -135,10 +134,10 @@ public final class AggregateInteger implements Serializable {
   }
 
   /**
-   * Returns an average rate at which samples were added, if you want this rate per second then pass in <strong>1000</strong>,
-   * if you want it per minute then pass in <strong>1000 * 60</strong>, etc. This rate is extrapolated from the entire
-   * available history as defined in the constructor. For finer and more accurate rates, the history length should be
-   * lengthened.
+   * Returns an average rate at which samples were added, if you want this rate per second then pass in
+   * <strong>1000</strong>, if you want it per minute then pass in <strong>1000 * 60</strong>, etc. This rate is
+   * extrapolated from the entire available history as defined in the constructor. For finer and more accurate rates,
+   * the history length should be lengthened.
    * 
    * @return the rate at which samples were added per {@link periodInMillis}, averaged over the (rolling) history
    *         length, or -1 if history is not being kept
@@ -191,6 +190,7 @@ public final class AggregateInteger implements Serializable {
     return sampleRate;
   }
 
+  @Override
   public String toString() {
     return MessageFormat.format(TO_STRING_FORMAT, new Object[] { name, new Integer(n), new Integer(sum),
         new Integer(minimum), new Integer(maximum), new Integer(sum / n) });

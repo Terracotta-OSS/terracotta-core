@@ -147,9 +147,9 @@ public class ManagedObjectReport extends BaseUtility {
 
   private static class NullObjectData {
 
-    private ManagedObject parent;
+    private final ManagedObject parent;
 
-    private ObjectID      objectID;
+    private final ObjectID      objectID;
 
     public NullObjectData(ObjectID objectID) {
       this(null, objectID);
@@ -160,14 +160,7 @@ public class ManagedObjectReport extends BaseUtility {
       this.objectID = objectID;
     }
 
-    public ManagedObject getParent() {
-      return parent;
-    }
-
-    public ObjectID getObjectID() {
-      return objectID;
-    }
-
+    @Override
     public String toString() {
       StringWriter writer = new StringWriter();
       PrintWriter pWriter = new PrintWriter(writer);

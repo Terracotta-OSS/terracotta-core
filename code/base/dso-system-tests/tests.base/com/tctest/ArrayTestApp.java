@@ -16,9 +16,11 @@ import java.util.Random;
 
 public class ArrayTestApp extends AbstractTransparentApp {
 
-  private String[] myArrayTestRoot;
-  final private String[] stringAry = { "hee", "hoo", "haa", "terracotta", "google", "yahoo", "apple" };
-  final private static long runtime = 1000 * 200;   // 200 seconds
+  private String[]          myArrayTestRoot;
+  final private String[]    stringAry = { "hee", "hoo", "haa", "terracotta", "google", "yahoo", "apple" };
+  final private static long runtime   = 1000 * 200;                                                       // 200
+
+  // seconds
 
   public ArrayTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -35,7 +37,7 @@ public class ArrayTestApp extends AbstractTransparentApp {
           // System.out.println(myArrayTestRoot[rand.nextInt(myArrayTestRoot.length)]);
           Assert.assertTrue(myArrayTestRoot[idx].equals(stringAry[idx]));
         }
-        Thread.sleep((int)(Math.random() * 10));
+        Thread.sleep((int) (Math.random() * 10));
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -55,7 +57,7 @@ public class ArrayTestApp extends AbstractTransparentApp {
       // expected
     }
   }
-  
+
   // This method is there to suppress Eclipse warning
   private Object[] returnNull() {
     return null;
@@ -77,12 +79,15 @@ public class ArrayTestApp extends AbstractTransparentApp {
     }
 
     try {
-      Object o = myArrayTestRoot[-1];
-      if (true || o == o) { throw new AssertionError(); }
+      readArray(myArrayTestRoot, -1);
     } catch (ArrayIndexOutOfBoundsException aioobe) {
       //
     }
 
+  }
+
+  private static String readArray(String[] array, int i) {
+    return array[i];
   }
 
   public void setArray(String[] blah) {

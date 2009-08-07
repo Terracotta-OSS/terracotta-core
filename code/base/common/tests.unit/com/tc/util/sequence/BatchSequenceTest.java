@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util.sequence;
 
@@ -13,13 +14,14 @@ public class BatchSequenceTest extends TestCase {
     TestRemoteBatchIDProvider remote = new TestRemoteBatchIDProvider();
     final BatchSequence sequence = new BatchSequence(remote, 5);
     final LinkedQueue longs = new LinkedQueue();
-    
+
     final FutureResult barrier = new FutureResult();
 
     Thread t = new Thread("BatchIDProviderTestThread") {
+      @Override
       public void run() {
         barrier.set(new Object());
-         try {
+        try {
           longs.put(new Long(sequence.next()));
         } catch (InterruptedException e) {
           e.printStackTrace();
@@ -40,7 +42,7 @@ public class BatchSequenceTest extends TestCase {
     remote.clear();
     sequence.setNextBatch(5, 10);
 
-    assertTrue(((Long)longs.take()).longValue() == 0);
+    assertTrue(((Long) longs.take()).longValue() == 0);
     assertTrue(sequence.next() == 1);
     assertTrue(sequence.next() == 2);
     assertTrue(sequence.next() == 3);
@@ -54,8 +56,8 @@ public class BatchSequenceTest extends TestCase {
   }
 
   private static class TestRemoteBatchIDProvider implements BatchSequenceProvider {
-    public volatile int                   size = -1;
-    public final LinkedQueue           queue = new LinkedQueue();
+    public volatile int      size  = -1;
+    public final LinkedQueue queue = new LinkedQueue();
 
     public void requestBatch(BatchSequenceReceiver theProvider, int theSize) {
       this.size = theSize;
@@ -70,17 +72,13 @@ public class BatchSequenceTest extends TestCase {
       return queue.isEmpty();
     }
 
-    public Object poll(long l) throws InterruptedException {
-      return queue.poll(l);
-    }
-
     public Object take() throws InterruptedException {
       return queue.take();
     }
 
     public void clear() throws InterruptedException {
       this.size = -1;
-      while(!queue.isEmpty()) {
+      while (!queue.isEmpty()) {
         queue.take();
       }
     }

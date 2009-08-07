@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -22,8 +23,8 @@ import java.util.Random;
 
 public class SimplePrimitiveArrayTestApp extends AbstractTransparentApp {
 
-  private ArrayRoot     root;
-  private CyclicBarrier barrier;
+  private ArrayRoot           root;
+  private final CyclicBarrier barrier;
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = SimplePrimitiveArrayTestApp.class.getName();
@@ -90,10 +91,6 @@ public class SimplePrimitiveArrayTestApp extends AbstractTransparentApp {
           sub[j] = new Double(1);
         }
       }
-    }
-
-    public int size() {
-      return arrays.size();
     }
 
     public synchronized Double[] get() {

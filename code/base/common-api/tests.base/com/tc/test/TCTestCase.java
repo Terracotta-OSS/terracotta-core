@@ -133,6 +133,7 @@ public class TCTestCase extends TestCase {
     if (false) throw new AssertionError(); // silence compiler warning
   }
 
+  @Override
   public void runBare() throws Throwable {
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
@@ -219,6 +220,7 @@ public class TCTestCase extends TestCase {
     System.err.println("Timeout task is scheduled to run in " + millisToMinutes(delay) + " minutes");
 
     timeoutTimer.schedule(new TimerTask() {
+      @Override
       public void run() {
         timeoutCallback(delay);
       }

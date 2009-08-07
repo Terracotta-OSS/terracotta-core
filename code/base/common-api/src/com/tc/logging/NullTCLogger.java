@@ -4,7 +4,6 @@
  */
 package com.tc.logging;
 
-import com.tc.exception.ImplementMe;
 
 /**
  * @author steve
@@ -64,8 +63,7 @@ public class NullTCLogger implements TCLogger {
   }
 
   public LogLevel getLevel() {
-    if (true) throw new ImplementMe();
-    return null;
+    throw new AssertionError();
   }
 
   public String getName() {

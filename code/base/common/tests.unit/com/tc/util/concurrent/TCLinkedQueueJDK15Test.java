@@ -218,13 +218,14 @@ public class TCLinkedQueueJDK15Test extends TestCase {
   }
 
   private static class Producer extends Thread {
-    private TCQueue queue;
+    private final TCQueue queue;
 
     public Producer(String name, TCQueue queue) {
       this.setName(name);
       this.queue = queue;
     }
 
+    @Override
     public void run() {
       System.out.println(this.getName());
       while (true) {
@@ -242,13 +243,14 @@ public class TCLinkedQueueJDK15Test extends TestCase {
   }
 
   private static class Consumer extends Thread {
-    private TCQueue queue;
+    private final TCQueue queue;
 
     public Consumer(String name, TCQueue queue) {
       this.setName(name);
       this.queue = queue;
     }
 
+    @Override
     public void run() {
       System.out.println(this.getName());
       while (true) {
@@ -271,11 +273,7 @@ public class TCLinkedQueueJDK15Test extends TestCase {
   }
 
   private static class MyNode {
-    private int id;
-
-    public MyNode() {
-      this(-1);
-    }
+    private final int id;
 
     public MyNode(int id) {
       this.id = id;

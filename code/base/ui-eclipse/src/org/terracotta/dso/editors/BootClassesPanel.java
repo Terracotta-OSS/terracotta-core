@@ -37,19 +37,19 @@ import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.QualifiedClassName;
 
 public class BootClassesPanel extends ConfigurationEditorPanel {
-  private IProject                 m_project;
-  private DsoApplication           m_dsoApp;
-  private AdditionalBootJarClasses m_bootClasses;
+  private IProject                     m_project;
+  private DsoApplication               m_dsoApp;
+  private AdditionalBootJarClasses     m_bootClasses;
 
-  private final Layout             m_layout;
+  private final Layout                 m_layout;
 
-  private AddHandler               m_addHandler;
-  private RemoveHandler            m_removeHandler;
-  private TableSelectionListener   m_tableSelectionListener;
-  private TableDataListener        m_tableDataListener;
+  private final AddHandler             m_addHandler;
+  private final RemoveHandler          m_removeHandler;
+  private final TableSelectionListener m_tableSelectionListener;
+  private final TableDataListener      m_tableDataListener;
 
-  private static final String      CLASS_SELECT_TITLE   = "DSO Application Configuration";
-  private static final String      CLASS_SELECT_MESSAGE = "Select system classes to add to DSO Boot Jar";
+  private static final String          CLASS_SELECT_TITLE   = "DSO Application Configuration";
+  private static final String          CLASS_SELECT_MESSAGE = "Select system classes to add to DSO Boot Jar";
 
   public BootClassesPanel(Composite parent, int style) {
     super(parent, style);
@@ -71,6 +71,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
     return m_bootClasses;
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
@@ -93,7 +94,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
   }
 
   private void testDisableRemoveButton() {
-    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount()>0);
+    m_layout.m_removeButton.setEnabled(m_layout.m_table.getSelectionCount() > 0);
   }
 
   private void addListeners() {
@@ -184,14 +185,9 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
     private static final String ADD          = "Add...";
     private static final String REMOVE       = "Remove";
 
-    private Button              m_addButton;
-    private Button              m_removeButton;
-    private Table               m_table;
-
-    public void reset() {
-      m_removeButton.setEnabled(false);
-      m_table.removeAll();
-    }
+    private final Button        m_addButton;
+    private final Button        m_removeButton;
+    private final Table         m_table;
 
     private Layout(Composite parent) {
       Composite comp = new Composite(parent, SWT.NONE);
@@ -244,6 +240,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
   }
 
   class AddHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       IJavaProject javaProject = JavaCore.create(m_project);
@@ -272,6 +269,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
   }
 
   class RemoveHandler extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_table.forceFocus();
       int[] selection = m_layout.m_table.getSelectionIndices();
@@ -285,6 +283,7 @@ public class BootClassesPanel extends ConfigurationEditorPanel {
   }
 
   class TableSelectionListener extends SelectionAdapter {
+    @Override
     public void widgetSelected(SelectionEvent e) {
       m_layout.m_removeButton.setEnabled(true);
     }

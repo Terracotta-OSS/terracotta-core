@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -51,16 +52,13 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     spec.addRoot("root", "shadowTestRoot");
   }
 
+  @SuppressWarnings("unused")
   private static class ShadowBase {
     // NOTE: It is very important that the shadow fields be of the exact same type
     // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
-    private Integer     myNumber = null;
-    protected final int finalInt = 1;
-    public int publicInt = 10;
-
-    public int getFinalInt() {
-      return finalInt;
-    }
+    private Integer     myNumber  = null;
+    protected final int finalInt  = 1;
+    public int          publicInt = 10;
 
     public void setBaseMyNumber(Integer value) {
       this.myNumber = value;
@@ -70,12 +68,9 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
       return this.myNumber;
     }
 
-    public int getPublicInt() {
-      return publicInt;
-    }
-
   }
 
+  @SuppressWarnings("unused")
   private static class ShadowSub extends ShadowBase {
     // NOTE: It is very important that the shadow fields be of the exact same type
     // STOP: These fields are "shadowed" on purpose -- do not rename to fix eclipse warnings
@@ -83,11 +78,7 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
     @SuppressWarnings("hiding")
     protected final int finalInt = 2;
     @SuppressWarnings("hiding")
-    public int publicInt;
-
-    public int getFinalInt() {
-      return finalInt;
-    }
+    public int          publicInt;
 
     public void setSubMyNumber(Integer value) {
       this.myNumber = value;
@@ -101,10 +92,6 @@ public class ShadowVariableTestApp extends AbstractTransparentApp {
       return publicInt;
     }
 
-    public void setPublicInt(int i) {
-      publicInt = i;
-      super.publicInt = i;
-    }
   }
 
 }

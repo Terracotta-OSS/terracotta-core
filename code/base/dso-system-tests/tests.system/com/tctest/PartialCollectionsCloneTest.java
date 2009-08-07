@@ -27,11 +27,13 @@ public class PartialCollectionsCloneTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return PartialCollectionsCloneTestApp.class;
   }
@@ -47,6 +49,7 @@ public class PartialCollectionsCloneTest extends TransparentTestBase {
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
       boolean rootCreator = barrier.barrier() == 0;
 
@@ -112,6 +115,7 @@ public class PartialCollectionsCloneTest extends TransparentTestBase {
     }
 
     private static class NonLiteralObject {
+      @SuppressWarnings("unused")
       final NonLiteralObject next;
 
       public NonLiteralObject() {

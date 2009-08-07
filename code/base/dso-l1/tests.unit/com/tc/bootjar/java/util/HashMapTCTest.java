@@ -617,11 +617,6 @@ public class HashMapTCTest extends TCTestCase {
       this.value = value;
     }
 
-    public SimpleEntry(Map.Entry e) {
-      this.key = e.getKey();
-      this.value = e.getValue();
-    }
-
     public Object getKey() {
       return key;
     }
@@ -666,10 +661,6 @@ public class HashMapTCTest extends TCTestCase {
       this.i = i;
     }
 
-    public int getInt() {
-      return this.i;
-    }
-
     @Override
     public int hashCode() {
       return i;
@@ -689,10 +680,6 @@ public class HashMapTCTest extends TCTestCase {
     public HashValue(int i) {
       super();
       this.i = i;
-    }
-
-    public int getInt() {
-      return this.i;
     }
 
     @Override

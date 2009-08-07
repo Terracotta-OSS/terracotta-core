@@ -19,12 +19,10 @@ import org.terracotta.ui.util.SWTUtil;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
 
-public class DsoClientDataPanel extends ConfigurationEditorPanel
-  implements XmlObjectStructureListener
-{
+public class DsoClientDataPanel extends ConfigurationEditorPanel implements XmlObjectStructureListener {
   private Client        m_client;
   private DsoClientData m_dsoClientData;
-  private Layout        m_layout;
+  private final Layout  m_layout;
 
   public DsoClientDataPanel(Composite parent, int style) {
     super(parent, style);
@@ -32,93 +30,89 @@ public class DsoClientDataPanel extends ConfigurationEditorPanel
     SWTUtil.setBGColorRecurse(this.getDisplay().getSystemColor(SWT.COLOR_WHITE), this);
   }
 
+  @Override
   public void ensureXmlObject() {
     super.ensureXmlObject();
 
-    if(m_dsoClientData == null) {
+    if (m_dsoClientData == null) {
       removeListeners();
       m_dsoClientData = m_client.addNewDso();
       updateChildren();
       addListeners();
     }
   }
-  
+
   public boolean hasAnySet() {
-    return m_dsoClientData != null && m_dsoClientData.isSetDebugging() ||
-      ((XmlIntegerSpinner)m_layout.m_faultCountSpinner.getData()).isSet();
+    return m_dsoClientData != null && m_dsoClientData.isSetDebugging()
+           || ((XmlIntegerSpinner) m_layout.m_faultCountSpinner.getData()).isSet();
   }
-  
+
   public void structureChanged(XmlObjectStructureChangeEvent e) {
     testUnsetDsoClientData();
   }
 
   private void testUnsetDsoClientData() {
-    if(!hasAnySet() && m_client.getDso() != null) {
+    if (!hasAnySet() && m_client.getDso() != null) {
       m_client.unsetDso();
       m_dsoClientData = null;
       fireXmlObjectStructureChanged();
       updateChildren();
-    }
-    else {
+    } else {
       fireClientChanged();
     }
   }
-  
+
   private void fireXmlObjectStructureChanged() {
     fireXmlObjectStructureChanged(m_client);
   }
-  
+
   private void addListeners() {
     m_layout.m_dsoClientDebugging.addXmlObjectStructureListener(this);
-    ((XmlIntegerSpinner)m_layout.m_faultCountSpinner.getData()).addXmlObjectStructureListener(this);
+    ((XmlIntegerSpinner) m_layout.m_faultCountSpinner.getData()).addXmlObjectStructureListener(this);
   }
-  
+
   private void removeListeners() {
     m_layout.m_dsoClientDebugging.removeXmlObjectStructureListener(this);
-    ((XmlIntegerSpinner)m_layout.m_faultCountSpinner.getData()).removeXmlObjectStructureListener(this);
+    ((XmlIntegerSpinner) m_layout.m_faultCountSpinner.getData()).removeXmlObjectStructureListener(this);
   }
-  
+
   private void updateChildren() {
-   m_layout.setDsoClientData(m_dsoClientData);
+    m_layout.setDsoClientData(m_dsoClientData);
   }
-  
+
   public void setup(Client client) {
     removeListeners();
     setEnabled(true);
-    
-    m_client        = client;
+
+    m_client = client;
     m_dsoClientData = m_client != null ? m_client.getDso() : null;
-    
+
     updateChildren();
     addListeners();
   }
-  
+
   public void tearDown() {
     removeListeners();
     m_layout.m_dsoClientDebugging.tearDown();
-    ((XmlIntegerSpinner)m_layout.m_faultCountSpinner.getData()).tearDown();
+    ((XmlIntegerSpinner) m_layout.m_faultCountSpinner.getData()).tearDown();
     setEnabled(false);
   }
-  
-  private class Layout {
-    private static final String     DSO_CLIENT_DATA = "Dso Client Data";
-    private static final String     FAULT_COUNT     = "Fault Count";
 
-    private DsoClientDebuggingPanel m_dsoClientDebugging;
-    private Spinner                 m_faultCountSpinner;
+  private class Layout {
+    private static final String           DSO_CLIENT_DATA = "Dso Client Data";
+    private static final String           FAULT_COUNT     = "Fault Count";
+
+    private final DsoClientDebuggingPanel m_dsoClientDebugging;
+    private Spinner                       m_faultCountSpinner;
 
     void setDsoClientData(DsoClientData dsoClientData) {
       m_dsoClientDebugging.setup(dsoClientData);
-      ((XmlIntegerSpinner)m_faultCountSpinner.getData()).setup(dsoClientData);
-    }
-    
-    public void reset() {
-      m_faultCountSpinner.setSelection(0);
+      ((XmlIntegerSpinner) m_faultCountSpinner.getData()).setup(dsoClientData);
     }
 
     private Layout(Composite parent) {
       parent.setLayout(new GridLayout());
-      
+
       Group panel = new Group(parent, SWT.SHADOW_NONE);
       panel.setText(DSO_CLIENT_DATA);
       GridLayout gridLayout = new GridLayout();

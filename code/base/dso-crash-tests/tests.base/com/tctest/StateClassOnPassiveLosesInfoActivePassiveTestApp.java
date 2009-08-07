@@ -150,6 +150,9 @@ public class StateClassOnPassiveLosesInfoActivePassiveTestApp extends AbstractTr
   private static final class StateObject {
 
     Object ref;
+
+    // XXX: Not sure if this variable is actually needed?
+    @SuppressWarnings("unused")
     int    i;
 
   }

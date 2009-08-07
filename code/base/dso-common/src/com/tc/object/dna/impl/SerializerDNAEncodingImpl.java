@@ -16,26 +16,29 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
   public SerializerDNAEncodingImpl() {
     super(LOCAL_PROVIDER);
   }
-  
+
+  @Override
   protected boolean useStringEnumRead(byte type) {
     return (type == TYPE_ID_ENUM);
   }
-  
+
+  @Override
   protected boolean useClassProvider(byte type, byte typeToCheck) {
     return (type == typeToCheck);
   }
 
+  @Override
   protected boolean useUTF8String(byte type) {
     return (type == TYPE_ID_STRING);
   }
-  
+
   private static class LocalClassProvider implements ClassProvider {
 
-    private static final String LOADER_ID = LocalClassProvider.class.getName() + "::CLASSPROVIDER";
+    private static final String            LOADER_ID   = LocalClassProvider.class.getName() + "::CLASSPROVIDER";
     private static final LoaderDescription LOADER_DESC = new LoaderDescription(null, LOADER_ID);
 
     // This method assumes the Class is visible in this VM and can be loaded by the same class loader as this
-    // object. 
+    // object.
     public Class getClassFor(String className, LoaderDescription desc) {
       Assert.assertEquals(LOADER_DESC, desc);
       try {
@@ -56,10 +59,6 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
 
     public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
       return LOADER_DESC;
-    }
-
-    public void registerNamedLoader(NamedClassLoader loader) {
-      // do nothing
     }
 
     public void registerNamedLoader(NamedClassLoader loader, String appGroup) {

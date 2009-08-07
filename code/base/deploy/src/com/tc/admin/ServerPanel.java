@@ -204,27 +204,17 @@ public class ServerPanel extends XContainer {
   }
 
   private static class ServerState {
-    private final Date    fStartDate;
-    private final Date    fActivateDate;
-    private final String  fVersion;
-    private final String  fPatchLevel;
-    private final String  fCopyright;
-    private final String  fPersistenceMode;
-    private final String  fEnvironment;
-    private final String  fConfig;
-    private final Integer fDSOListenPort;
+    private final Date   fStartDate;
+    private final Date   fActivateDate;
+    private final String fEnvironment;
+    private final String fConfig;
 
-    ServerState(Date startDate, Date activateDate, String version, String patchLevel, String copyright,
-                String persistenceMode, String environment, String config, Integer dsoListenPort) {
+    ServerState(Date startDate, Date activateDate, String environment, String config) {
       fStartDate = startDate;
       fActivateDate = activateDate;
-      fVersion = version;
-      fPatchLevel = patchLevel;
-      fCopyright = copyright;
-      fPersistenceMode = persistenceMode;
       fEnvironment = environment;
       fConfig = config;
-      fDSOListenPort = dsoListenPort;
+
     }
 
     Date getStartDate() {
@@ -235,22 +225,6 @@ public class ServerPanel extends XContainer {
       return fActivateDate;
     }
 
-    String getVersion() {
-      return fVersion;
-    }
-
-    String getPatchLevel() {
-      return fPatchLevel;
-    }
-
-    String getCopyright() {
-      return fCopyright;
-    }
-
-    String getPersistenceMode() {
-      return fPersistenceMode;
-    }
-
     String getEnvironment() {
       return fEnvironment;
     }
@@ -259,9 +233,6 @@ public class ServerPanel extends XContainer {
       return fConfig;
     }
 
-    Integer getDSOListenPort() {
-      return fDSOListenPort;
-    }
   }
 
   /**
@@ -275,16 +246,10 @@ public class ServerPanel extends XContainer {
           if (theServer == null) throw new IllegalStateException("not connected");
           Date startDate = new Date(theServer.getStartTime());
           Date activateDate = new Date(theServer.getActivateTime());
-          String version = theServer.getProductVersion();
-          String patchLevel = theServer.getProductPatchLevel();
-          String copyright = theServer.getProductCopyright();
-          String persistenceMode = theServer.getPersistenceMode();
           String environment = theServer.getEnvironment();
           String config = theServer.getConfig();
-          Integer dsoListenPort = theServer.getDSOListenPort();
 
-          return new ServerState(startDate, activateDate, version, patchLevel, copyright, persistenceMode, environment,
-                                 config, dsoListenPort);
+          return new ServerState(startDate, activateDate, environment, config);
         }
       });
     }

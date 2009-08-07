@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.transparency;
 
@@ -39,7 +40,8 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
 
     config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.InnerInnerClass.class.getName());
-    config.addIncludePattern(InnerInnerExtendsNonInstrumentedClass.InnerInnerClass.InnerInnerInnerClass.class.getName());
+    config
+        .addIncludePattern(InnerInnerExtendsNonInstrumentedClass.InnerInnerClass.InnerInnerInnerClass.class.getName());
 
     config.addIncludePattern(InnerInnerStaticExtendsInstrumentedClass.class.getName());
     config.addIncludePattern(InnerInnerStaticExtendsInstrumentedClass.InnerInnerClass.class.getName());
@@ -61,22 +63,22 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
       try {
         root.put(NOT_INSTRUMENTED_KEY, new MyNonInstrumentedInnerClass());
         throw new AssertionError("This should have thrown an exception!");
-      } catch ( TCNonPortableObjectError t) {
-          // expected.
+      } catch (TCNonPortableObjectError t) {
+        // expected.
       }
       root.put(INSTRUMENTED_KEY, new InnerInnerExtendsInstrumentedClass());
       try {
         root.put(NOT_INSTRUMENTED_KEY, new MyNonInstrumentedInnerSubclass());
         throw new AssertionError("This should have thrown an exception!");
-      } catch ( TCNonPortableObjectError t) {
-          // expected.
+      } catch (TCNonPortableObjectError t) {
+        // expected.
       }
 
       try {
         root.put(NOT_INSTRUMENTED_KEY, new InnerInnerExtendsNonInstrumentedClass());
         throw new AssertionError("This should have thrown an exception!");
-      } catch ( TCNonPortableObjectError t) {
-          // expected.
+      } catch (TCNonPortableObjectError t) {
+        // expected.
       }
 
       root.put(INSTRUMENTED_KEY, new InnerInnerStaticExtendsInstrumentedClass());
@@ -84,8 +86,8 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
       try {
         root.put(NOT_INSTRUMENTED_KEY, new InnerInnerStaticExtendsNonInstrumentedClass());
         throw new AssertionError("This should have thrown an exception!");
-      } catch ( TCNonPortableObjectError t) {
-          // expected.
+      } catch (TCNonPortableObjectError t) {
+        // expected.
       }
 
       root.put(INSTRUMENTED_KEY, new AnonymousInstrumentedInnerInnerClass());
@@ -93,8 +95,8 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
       try {
         root.put(NOT_INSTRUMENTED_KEY, new AnonymousNonInstrumentedInnerInnerClass());
         throw new AssertionError("This should have thrown an exception!");
-      } catch ( TCNonPortableObjectError t) {
-          // expected.
+      } catch (TCNonPortableObjectError t) {
+        // expected.
       }
     }
   }
@@ -107,21 +109,12 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     //
   }
 
+  @SuppressWarnings("unused")
   private static final class InnerInnerExtendsInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
 
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
-
     private class InnerInnerClass extends MyInstrumentedInnerClass {
       private final InnerInnerInnerClass innerInner = new InnerInnerInnerClass();
-
-      // This method is to remove eclipse warning.
-      public Object getInnerInner() {
-        return innerInner;
-      }
 
       private class InnerInnerInnerClass extends MyInstrumentedInnerClass {
         //
@@ -129,13 +122,9 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     }
   }
 
+  @SuppressWarnings("unused")
   private static final class InnerInnerStaticExtendsInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
-
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
 
     private static class InnerInnerClass extends MyInstrumentedInnerClass {
       //
@@ -146,22 +135,12 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     //
   }
 
+  @SuppressWarnings("unused")
   private static final class InnerInnerExtendsNonInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
 
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
-
-
     private class InnerInnerClass extends MyInstrumentedInnerClass {
       private final InnerInnerInnerClass innerInner = new InnerInnerInnerClass();
-
-      // This method is to remove eclipse warning.
-      public Object getInnerInner() {
-        return innerInner;
-      }
 
       private class InnerInnerInnerClass extends MyNonInstrumentedInnerClass {
         //
@@ -169,13 +148,9 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     }
   }
 
+  @SuppressWarnings("unused")
   private static final class InnerInnerStaticExtendsNonInstrumentedClass {
     private final InnerInnerClass inner = new InnerInnerClass();
-
-    // This method is to remove eclipse warning.
-    public Object getInner() {
-      return inner;
-    }
 
     private static class InnerInnerClass extends MyNonInstrumentedInnerClass {
       //
@@ -186,17 +161,19 @@ public class InnerClassInstrumentationTestApp extends AbstractTransparentApp {
     public String getInnerInnerClassName() {
       return innerInner.getClass().getName();
     }
+
     public final MyInstrumentedInnerClass innerInner = new MyInstrumentedInnerClass() {
-      //
-    };
+                                                       //
+                                                     };
   }
 
   private static final class AnonymousNonInstrumentedInnerInnerClass extends MyInstrumentedInnerClass {
     public String getInnerInnerClassName() {
       return innerInner.getClass().getName();
     }
+
     public final MyNonInstrumentedInnerClass innerInner = new MyNonInstrumentedInnerClass() {
-      //
-    };
+                                                          //
+                                                        };
   }
 }

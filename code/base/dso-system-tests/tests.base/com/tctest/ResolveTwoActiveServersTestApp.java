@@ -51,6 +51,7 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
     jmxConnectors = new JMXConnector[2];
   }
 
+  @Override
   public void runTest() throws Exception {
     final boolean isMasterNode = barrier.barrier() == 0;
 
@@ -213,12 +214,15 @@ public class ResolveTwoActiveServersTestApp extends AbstractErrorCatchingTranspa
     }
 
     try {
-      Object o = myArrayTestRoot[-1];
-      if (true || o == o) { throw new AssertionError(); }
+      readArray(myArrayTestRoot, -1);
     } catch (ArrayIndexOutOfBoundsException aioobe) {
       //
     }
 
+  }
+
+  private String readArray(String[] array, int i) {
+    return array[i];
   }
 
   public void setArray(String[] blah) {

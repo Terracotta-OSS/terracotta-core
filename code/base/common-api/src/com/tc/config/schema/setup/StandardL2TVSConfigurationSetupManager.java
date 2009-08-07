@@ -299,10 +299,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           .directoryConfigurationLoadedFrom()));
     }
 
-    public String name() {
-      return this.name;
-    }
-
     public NewCommonL2Config commonL2Config() {
       return this.commonL2Config;
     }

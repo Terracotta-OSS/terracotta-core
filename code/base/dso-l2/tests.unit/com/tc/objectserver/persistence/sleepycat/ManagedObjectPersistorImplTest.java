@@ -54,6 +54,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     //
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     // test only with Oid fastLoad enabled
@@ -78,12 +79,14 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     oidManager = (FastObjectIDManagerImpl) managedObjectPersistor.getOibjectIDManager();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     oidManager.stopCheckpointRunner();
     env.close();
     super.tearDown();
   }
 
+  @Override
   protected boolean cleanTempDir() {
     return false;
   }
@@ -351,6 +354,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       super(logger, mapsDatabase, sleepycatCollectionFactory);
     }
 
+    @Override
     public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) {
       ++counter;
       return true;
@@ -367,22 +371,21 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
   private class TestPersistentStateManagedObject extends TestManagedObject {
 
-    private ManagedObjectState state;
+    private final ManagedObjectState state;
 
-    public TestPersistentStateManagedObject(ObjectID id, ArrayList<ObjectID> references) {
-      this(id, references, false);
-    }
-
-    public TestPersistentStateManagedObject(ObjectID id, ArrayList<ObjectID> references, boolean isPersistentCollectionMap) {
+    public TestPersistentStateManagedObject(ObjectID id, ArrayList<ObjectID> references,
+                                            boolean isPersistentCollectionMap) {
       super(id, references);
       byte type = (isPersistentCollectionMap) ? ManagedObjectState.MAP_TYPE : ManagedObjectState.PHYSICAL_TYPE;
       state = new TestManagedObjectState(type);
     }
 
+    @Override
     public boolean isNew() {
       return true;
     }
 
+    @Override
     public ManagedObjectState getManagedObjectState() {
       return state;
     }
@@ -395,6 +398,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       this.type = type;
     }
 
+    @Override
     protected boolean basicEquals(AbstractManagedObjectState o) {
       return false;
     }

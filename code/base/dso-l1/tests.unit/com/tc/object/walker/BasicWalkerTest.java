@@ -157,6 +157,7 @@ public class BasicWalkerTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class Root {
     int        i          = 12;
     Map        m          = new LinkedHashMap();
@@ -186,24 +187,21 @@ public class BasicWalkerTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class B extends A {
     // STOP: this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
-    private int i = 1;
+    private final int i = 1;
 
-    public int getI() {
-      return i;
-    }
   }
 
+  @SuppressWarnings("unused")
   private static class A {
     // STOP: this variable is "shadowed" on purpose, please do not rename them to remove the eclipse warning
-    private int i = 0;
+    private final int i = 0;
 
-    public int getI() {
-      return i;
-    }
   }
 
+  @SuppressWarnings("unused")
   private static class Foo {
     private final int i = next();
 
@@ -217,14 +215,6 @@ public class BasicWalkerTest extends TestCase {
       this.next = foo;
     }
 
-    public int getI() {
-      return i;
-    }
-
-    public Foo getNext() {
-      return next;
-    }
-
     private static int num = 0;
 
     private synchronized static int next() {
@@ -232,25 +222,10 @@ public class BasicWalkerTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("unused")
   private static class ArrayListSubclass extends ArrayList {
-    private int    iVal;
-    private String sVal;
-
-    public int getIVal() {
-      return iVal;
-    }
-
-    public void setIVal(int val) {
-      iVal = val;
-    }
-
-    public String getSVal() {
-      return sVal;
-    }
-
-    public void setSVal(String val) {
-      sVal = val;
-    }
+    private final int    iVal;
+    private final String sVal;
 
     ArrayListSubclass() {
       super();
@@ -261,60 +236,32 @@ public class BasicWalkerTest extends TestCase {
 
   }
 
+  @SuppressWarnings("unused")
   private static class AbstractListSubclass extends AbstractList {
-    private int    iVal;
-    private String sVal;
+    private final int    iVal;
+    private final String sVal;
 
     AbstractListSubclass() {
       iVal = 42;
       sVal = "timmy";
     }
 
+    @Override
     public Object get(int index) {
       return null;
     }
 
+    @Override
     public int size() {
       return 0;
     }
 
-    public int getIVal() {
-      return iVal;
-    }
-
-    public void setIVal(int val) {
-      iVal = val;
-    }
-
-    public String getSVal() {
-      return sVal;
-    }
-
-    public void setSVal(String val) {
-      sVal = val;
-    }
-
   }
 
+  @SuppressWarnings("unused")
   private static class HashMapSubclass extends LinkedHashMap {
-    private int    iVal;
-    private String sVal;
-
-    public int getIVal() {
-      return iVal;
-    }
-
-    public void setIVal(int val) {
-      iVal = val;
-    }
-
-    public String getSVal() {
-      return sVal;
-    }
-
-    public void setSVal(String val) {
-      sVal = val;
-    }
+    private final int    iVal;
+    private final String sVal;
 
     HashMapSubclass() {
       super();
@@ -326,31 +273,17 @@ public class BasicWalkerTest extends TestCase {
 
   }
 
+  @SuppressWarnings("unused")
   private static class AbstractMapSubclass extends AbstractMap {
-    private int    iVal;
-    private String sVal;
+    private final int    iVal;
+    private final String sVal;
 
     AbstractMapSubclass() {
       iVal = 42;
       sVal = "timmy";
     }
 
-    public int getIVal() {
-      return iVal;
-    }
-
-    public void setIVal(int val) {
-      iVal = val;
-    }
-
-    public String getSVal() {
-      return sVal;
-    }
-
-    public void setSVal(String val) {
-      sVal = val;
-    }
-
+    @Override
     public Set entrySet() {
       return new HashSet();
     }

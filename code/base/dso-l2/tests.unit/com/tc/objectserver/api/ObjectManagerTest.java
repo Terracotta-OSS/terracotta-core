@@ -1248,8 +1248,8 @@ public class ObjectManagerTest extends TCTestCase {
    * stats1.getCandidateGarbageCount()); assertEquals(0, stats1.getActualGarbageCount()); listener.gcEvents.clear();
    * objectManager.getGarbageCollector().gc(); assertEquals(2, objectManager.getGarbageCollectorStats().length);
    * assertEquals(3, listener.gcEvents.size()); assertEquals(firstIterationNumber + 1,
-   * objectManager.getGarbageCollectorStats()[0].getIteration()); listener.gcEvents.clear(); Set<ObjectID> removed =
-   * new HashSet<ObjectID>(); removed.add(mo3.getID()); clientStateManager.removeReferences(cid1, removed);
+   * objectManager.getGarbageCollectorStats()[0].getIteration()); listener.gcEvents.clear(); Set<ObjectID> removed = new
+   * HashSet<ObjectID>(); removed.add(mo3.getID()); clientStateManager.removeReferences(cid1, removed);
    * mo2.setReferences(new ObjectID[] {}); objectManager.getGarbageCollector().gc(); assertEquals(3,
    * objectManager.getGarbageCollectorStats().length); assertEquals(3, listener.gcEvents.size()); GCStats stats3 =
    * listener.gcEvents.get(0); assertEquals(4, stats3.getBeginObjectCount()); assertEquals(1,
@@ -2041,18 +2041,6 @@ public class ObjectManagerTest extends TCTestCase {
       return new ObjectID(25);
     }
 
-    public void setHeaderInformation(ObjectID id, ObjectID parentID, String typeName, int length, long version) {
-      //
-    }
-
-    public void addLogicalAction(int method, Object[] parameters) {
-      //
-    }
-
-    public void addPhysicalAction(String field, Object value) throws DNAException {
-      //
-    }
-
     public DNACursor getCursor() {
       return new DNACursor() {
 
@@ -2151,18 +2139,6 @@ public class ObjectManagerTest extends TCTestCase {
 
     public ObjectID getParentObjectID() throws DNAException {
       return new ObjectID(25);
-    }
-
-    public void setHeaderInformation(ObjectID id, ObjectID parentID, String typeName, int length, long version) {
-      //
-    }
-
-    public void addLogicalAction(int method, Object[] parameters) {
-      //
-    }
-
-    public void addPhysicalAction(String field, Object value) throws DNAException {
-      //
     }
 
     public DNACursor getCursor() {

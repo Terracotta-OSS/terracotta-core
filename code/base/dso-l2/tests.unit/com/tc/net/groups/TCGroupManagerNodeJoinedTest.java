@@ -46,6 +46,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     // disableAllUntil("2009-03-15");
   }
 
+  @Override
   public void setUp() {
     threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "TCGroupManagerNodeJoinedTest");
   }
@@ -337,11 +338,6 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       ++count;
     }
 
-    public GroupMessage take() {
-      --count;
-      return (GroupMessage) queue.take();
-    }
-
     public int size() {
       return count;
     }
@@ -360,20 +356,24 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       this.msg = message;
     }
 
+    @Override
     protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
       msg = in.readString();
     }
 
+    @Override
     protected void basicSerializeTo(TCByteBufferOutput out) {
       out.writeString(msg);
     }
 
     String msg;
 
+    @Override
     public int hashCode() {
       return msg.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o instanceof TestMessage) {
         TestMessage other = (TestMessage) o;
@@ -382,6 +382,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       return false;
     }
 
+    @Override
     public String toString() {
       return "TestMessage [ " + msg + "]";
     }

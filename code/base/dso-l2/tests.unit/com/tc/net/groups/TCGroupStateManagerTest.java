@@ -49,6 +49,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     // disableAllUntil("2008-03-15");
   }
 
+  @Override
   public void setUp() {
     threadGroup = new TCThreadGroup(new ThrowableHandler(logger), "StateManagerTestGroup");
   }
@@ -313,6 +314,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     // move following join nodes to passive-standby
     groupMgr[0].registerForGroupEvents(new MyGroupEventListener(groupMgr[0].getLocalNodeID()) {
+      @Override
       public void nodeJoined(NodeID nodeID) {
         // save nodeID for moving to passive
         joinedNodes.add(nodeID);
@@ -419,6 +421,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     public L2StateMessageStage(StateManager mgr) {
       this.mgr = mgr;
       this.sink = new MockSink() {
+        @Override
         public void add(EventContext ec) {
           processQ.put(ec);
         }
@@ -439,6 +442,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       return sink;
     }
 
+    @Override
     public void run() {
       while (!isStopped()) {
         L2StateMessage m = (L2StateMessage) processQ.poll(3000);
@@ -460,6 +464,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       this.mgr = mgr;
     }
 
+    @Override
     public void run() {
       mgr.startElection();
     }
@@ -474,27 +479,29 @@ public class TCGroupStateManagerTest extends TCTestCase {
   }
 
   private static class ElectionIfNecessaryThread extends Thread {
-    private StateManager mgr;
-    private NodeID       disconnectedNode;
+    private final StateManager mgr;
+    private final NodeID       disconnectedNode;
 
     public ElectionIfNecessaryThread(StateManager mgr, NodeID disconnectedNode) {
       this.mgr = mgr;
       this.disconnectedNode = disconnectedNode;
     }
 
+    @Override
     public void run() {
       mgr.startElectionIfNecessary(disconnectedNode);
     }
   }
 
   private static class ChangeSink extends MockSink {
-    private int               serverIndex;
+    private final int         serverIndex;
     private StateChangedEvent event = null;
 
     public ChangeSink(int index) {
       serverIndex = index;
     }
 
+    @Override
     public void add(EventContext context) {
       event = (StateChangedEvent) context;
       System.out.println("*** Server[" + serverIndex + "]: " + event);
@@ -505,6 +512,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       return event.getCurrentState();
     }
 
+    @Override
     public String toString() {
       State st = getState();
       return ((st != null) ? st.toString() : "<state unknown>");
@@ -514,9 +522,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
   private static class MyGroupEventListener implements GroupEventsListener {
 
-    private NodeID lastNodeJoined;
-    private NodeID lastNodeLeft;
-    private NodeID gmNodeID;
+    private final NodeID gmNodeID;
 
     public MyGroupEventListener(NodeID nodeID) {
       this.gmNodeID = nodeID;
@@ -524,25 +530,12 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     public void nodeJoined(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeJoined -> " + nodeID);
-      lastNodeJoined = nodeID;
     }
 
     public void nodeLeft(NodeID nodeID) {
       System.err.println("\n### " + gmNodeID + ": nodeLeft -> " + nodeID);
-      lastNodeLeft = nodeID;
     }
 
-    public NodeID getLastNodeJoined() {
-      return lastNodeJoined;
-    }
-
-    public NodeID getLastNodeLeft() {
-      return lastNodeLeft;
-    }
-
-    public void reset() {
-      lastNodeJoined = lastNodeLeft = null;
-    }
   }
 
   private static final class MyListener implements GroupMessageListener {
@@ -551,10 +544,6 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     public void messageReceived(NodeID fromNode, GroupMessage msg) {
       queue.put(msg);
-    }
-
-    public GroupMessage take() {
-      return (GroupMessage) queue.take();
     }
 
   }
@@ -570,22 +559,25 @@ public class TCGroupStateManagerTest extends TCTestCase {
       super(0);
       this.msg = message;
     }
-    
+
+    @Override
     protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
       msg = in.readString();
     }
 
+    @Override
     protected void basicSerializeTo(TCByteBufferOutput out) {
       out.writeString(msg);
     }
 
-
     String msg;
 
+    @Override
     public int hashCode() {
       return msg.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o instanceof TestMessage) {
         TestMessage other = (TestMessage) o;
@@ -594,6 +586,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
       return false;
     }
 
+    @Override
     public String toString() {
       return "TestMessage [ " + msg + "]";
     }

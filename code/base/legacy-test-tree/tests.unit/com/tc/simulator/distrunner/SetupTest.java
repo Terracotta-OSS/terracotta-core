@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.simulator.distrunner;
 
@@ -77,7 +78,7 @@ public class SetupTest extends TCTestCase {
     }
   }
 
-  private static final class TestApp {
+  public static final class TestApp {
     public static final NoExceptionLinkedQueue visitCalls = new NoExceptionLinkedQueue();
 
     public static void visitDSOApplicationConfig(ConfigVisitor visitor, DSOApplicationConfig cfg) {

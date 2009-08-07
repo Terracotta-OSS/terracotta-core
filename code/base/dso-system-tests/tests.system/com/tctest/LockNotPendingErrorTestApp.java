@@ -42,6 +42,7 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
     System.out.println("###### " + System.currentTimeMillis() + " " + Thread.currentThread().getName() + ": " + msg);
   }
 
+  @Override
   protected void runTest() throws Throwable {
     nodeBarrier = new CyclicBarrier(getParticipantCount());
     appThreadBarrier = new CyclicBarrier(2);
@@ -175,10 +176,6 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
       ManagerUtil.commitLock(lockId);
     }
 
-    public void getWriteLock() {
-      ManagerUtil.beginLock(lockId, lockType);
-    }
-
     public boolean tryWriteLock() {
       return ManagerUtil.tryBeginLock(lockId, lockType);
     }
@@ -187,8 +184,5 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
       ManagerUtil.beginLock(lockId, Manager.LOCK_TYPE_READ);
     }
 
-    public String getLockId() {
-      return lockId;
-    }
   }
 }

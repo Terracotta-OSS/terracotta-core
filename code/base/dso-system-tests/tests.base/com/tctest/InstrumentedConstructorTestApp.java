@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -29,10 +30,10 @@ public class InstrumentedConstructorTestApp extends AbstractTransparentApp {
   public void run() {
     try {
       int index = barrier.barrier();
-      
+
       TestConstructorClass c = new TestConstructorClass();
       testShared(index, c);
-      
+
       c = new TestConstructorClass(10L);
       testShared(index, c);
 
@@ -40,21 +41,21 @@ public class InstrumentedConstructorTestApp extends AbstractTransparentApp {
       notifyError(t);
     }
   }
-  
+
   private void testShared(int index, TestConstructorClass c) throws Exception {
     if (index == 0) {
-      synchronized(dataRoot) {
+      synchronized (dataRoot) {
         dataRoot.setC1(c);
       }
     }
-    
+
     barrier.barrier();
-    
+
     Assert.assertNotNull(dataRoot.getC1());
-    
+
     barrier.barrier();
   }
-  
+
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
@@ -67,17 +68,17 @@ public class InstrumentedConstructorTestApp extends AbstractTransparentApp {
     LockDefinition definition = new LockDefinitionImpl("nameLock", ConfigLockLevel.WRITE);
     definition.commit();
     config.addLock(methodExpression, definition);
-    
+
     methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
 
     spec.addRoot("barrier", "barrier");
     spec.addRoot("dataRoot", "dataRoot");
   }
-  
+
   private static class DataRoot {
     private TestConstructorClass c1;
-    
+
     public DataRoot() {
       super();
     }
@@ -90,32 +91,30 @@ public class InstrumentedConstructorTestApp extends AbstractTransparentApp {
       return c1;
     }
   }
-  
+
   private static class TestConstructorSuperClass {
+    @SuppressWarnings("unused")
     private String s;
-    
+
     public TestConstructorSuperClass() {
       //
     }
-    
+
     public TestConstructorSuperClass(String s) {
       this.s = s;
     }
 
-    public String getS() {
-      return s;
-    }
   }
-  
+
   private static class TestConstructorClass extends TestConstructorSuperClass {
     public TestConstructorClass() {
       super(new StringBuffer("testString").toString());
     }
-    
+
     public TestConstructorClass(TestConstructorClass c) {
       //
     }
-    
+
     public TestConstructorClass(long k) {
       this(new TestConstructorClass());
     }

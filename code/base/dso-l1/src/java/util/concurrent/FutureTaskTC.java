@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package java.util.concurrent;
 
@@ -76,14 +77,15 @@ public class FutureTaskTC implements Future, Runnable {
 
     Sync(Callable callable) {
       this.callable = callable;
-      lock      = new ReentrantLock();
-      ran       = lock.newCondition();
+      lock = new ReentrantLock();
+      ran = lock.newCondition();
     }
 
+    @SuppressWarnings("unused")
     Sync() {
       callable = null;
-      lock      = null;
-      ran       = null;
+      lock = null;
+      ran = null;
     }
 
     private boolean ranOrCancelled(int stateArg) {

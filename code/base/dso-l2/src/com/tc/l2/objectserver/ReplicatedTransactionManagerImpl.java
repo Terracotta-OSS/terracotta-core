@@ -25,7 +25,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.MessageRecycler;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -192,7 +191,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
 
   private final class PassiveUninitializedTransactionManager implements PassiveTransactionManager {
 
-    ObjectIDSet          existingOIDs = new ObjectIDSet();
+    ObjectIDSet           existingOIDs = new ObjectIDSet();
     PendingChangesAccount pca          = new PendingChangesAccount();
 
     // NOTE::XXX:: MEssages are not REcylced in Passive Uninitialized state because of complicated pruning
@@ -333,7 +332,7 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     TreeMap gid2Changes = new TreeMap();
 
     public void addToPending(ServerTransaction st, DNA dna) {
-      PendingRecord pr = new PendingRecord(dna, st.getServerTransactionID(), st.getGlobalTransactionID());
+      PendingRecord pr = new PendingRecord(dna, st.getGlobalTransactionID());
       ObjectID oid = dna.getObjectID();
       TLinkedList pendingChangesForOid = getOrCreatePendingChangesListFor(oid);
       pendingChangesForOid.addLast(pr);
@@ -411,21 +410,15 @@ public class ReplicatedTransactionManagerImpl implements ReplicatedTransactionMa
     private TLinkable                 next;
 
     private final DNA                 dna;
-    private final ServerTransactionID sid;
     private final GlobalTransactionID gid;
 
-    public PendingRecord(DNA dna, ServerTransactionID sid, GlobalTransactionID gid) {
+    public PendingRecord(DNA dna, GlobalTransactionID gid) {
       this.dna = dna;
-      this.sid = sid;
       this.gid = gid;
     }
 
     public DNA getChange() {
       return this.dna;
-    }
-
-    public ServerTransactionID getServerTransactionID() {
-      return this.sid;
     }
 
     public GlobalTransactionID getGlobalTransactionID() {

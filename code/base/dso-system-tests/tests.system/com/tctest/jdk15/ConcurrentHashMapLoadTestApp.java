@@ -415,24 +415,21 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
   }
 
   private static class DataKey {
-    private int i;
+    private final int i;
 
     public DataKey(int i) {
       super();
       this.i = i;
     }
 
-    public int getInt() {
-      return this.i;
-    }
-
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }
   }
 
   private static class DataValue {
-    private int i;
+    private final int i;
 
     public DataValue(int i) {
       super();
@@ -443,60 +440,59 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       return this.i;
     }
 
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }
   }
 
   private static class HashKey {
-    private int i;
+    private final int i;
 
     public HashKey(int i) {
       super();
       this.i = i;
     }
 
-    public int getInt() {
-      return this.i;
-    }
-
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashKey)) return false;
       return ((HashKey) obj).i == i;
     }
 
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }
   }
 
   private static class HashValue {
-    private int i;
+    private final int i;
 
     public HashValue(int i) {
       super();
       this.i = i;
     }
 
-    public int getInt() {
-      return this.i;
-    }
-
+    @Override
     public int hashCode() {
       return i;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj == null) return false;
       if (!(obj instanceof HashValue)) return false;
       return ((HashValue) obj).i == i;
     }
 
+    @Override
     public String toString() {
       return super.toString() + ", i: " + i;
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
@@ -91,22 +92,6 @@ public class ContainerBuilder implements Runnable, ResultsListener {
       synchronized (testSpec) {
         return testSpec.getAppExecutionTimeout();
       }
-    }
-
-    public boolean dumpErrors() {
-      return true;
-    }
-
-    public boolean dumpOutput() {
-      return true;
-    }
-
-    public boolean aggregate() {
-      return false;
-    }
-
-    public boolean stream() {
-      return false;
     }
 
     public boolean isMaster() {

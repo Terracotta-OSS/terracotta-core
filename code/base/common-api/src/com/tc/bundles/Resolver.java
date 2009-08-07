@@ -557,7 +557,7 @@ public class Resolver {
   private static final class Message {
 
     static final Message WARN_FILE_IGNORED_MISSING_MANIFEST   = new Message("warn.file.ignored.missing-manifest");
-    static final Message WARN_REPOSITORY_PROTOCOL_UNSUPPORTED = new Message("warn.repository.protocol.unsupported");
+    // static final Message WARN_REPOSITORY_PROTOCOL_UNSUPPORTED = new Message("warn.repository.protocol.unsupported");
     static final Message ERROR_BUNDLE_UNREADABLE              = new Message("error.bundle.unreadable");
     static final Message ERROR_BUNDLE_UNRESOLVED              = new Message("error.bundle.unresolved");
     static final Message ERROR_BUNDLE_DEPENDENCY_UNRESOLVED   = new Message("error.bundle-dependency.unresolved");

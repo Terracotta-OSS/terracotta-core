@@ -75,7 +75,7 @@ public class L2Management extends TerracottaManagement {
   private final TCDumper                       tcDumper;
   private final ObjectManagementMonitor        objectManagementBean;
   private final LockStatisticsMonitorMBean     lockStatistics;
-  private final StatisticsAgentSubSystem   statisticsAgentSubSystem;
+  private final StatisticsAgentSubSystem       statisticsAgentSubSystem;
   private final StatisticsGatewayMBeanImpl     statisticsGateway;
   private static final Map                     rmiRegistryMap = new HashMap();
   private final int                            jmxPort;
@@ -84,8 +84,7 @@ public class L2Management extends TerracottaManagement {
   private final Sink                           remoteEventsSink;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
-                      StatisticsAgentSubSystem statisticsAgentSubSystem,
-                      StatisticsGatewayMBeanImpl statisticsGateway,
+                      StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
                       L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
                       InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,
       NotCompliantMBeanException, InstanceAlreadyExistsException {
@@ -147,10 +146,6 @@ public class L2Management extends TerracottaManagement {
   // DEV-1060
   private static class BindAddrSocketFactory extends RMISocketFactory implements Serializable {
     private final InetAddress bindAddr;
-
-    public BindAddrSocketFactory() {
-      this(null);
-    }
 
     public BindAddrSocketFactory(InetAddress bindAddress) {
       this.bindAddr = bindAddress;

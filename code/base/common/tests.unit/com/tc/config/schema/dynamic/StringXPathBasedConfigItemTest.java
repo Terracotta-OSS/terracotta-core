@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -7,12 +8,14 @@ import com.tc.config.schema.MockXmlObject;
 
 public class StringXPathBasedConfigItemTest extends XPathBasedConfigItemTestBase {
 
+  @SuppressWarnings("unused")
   private class SubBean extends MockXmlObject {
     public String getStringValue() {
       return currentValue;
     }
   }
 
+  @SuppressWarnings("unused")
   private class DefaultBean extends MockXmlObject {
     private final String value;
 
@@ -27,10 +30,12 @@ public class StringXPathBasedConfigItemTest extends XPathBasedConfigItemTestBase
 
   private String currentValue;
 
+  @Override
   protected MockXmlObject createSubBean() throws Exception {
     return new SubBean();
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
 

@@ -4,8 +4,6 @@
  */
 package com.tctest;
 
-import org.apache.commons.collections.FastHashMap;
-
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.ManagerUtil;
@@ -102,13 +100,10 @@ public class GenericMapTestApp extends GenericTransparentApp {
      * sharedMap.put("maps", maps); sharedMap.put("arrayforHashMap", new Object[4]); sharedMap.put("arrayforHashtable",
      * new Object[4]); sharedMap.put("arrayforTreeMap", new Object[4]); sharedMap.put("arrayforTreeMap2", new
      * Object[4]); sharedMap.put("arrayforTHashMap", new Object[4]); sharedMap.put("arrayforLinkedHashMap", new
-     * Object[4]); sharedMap.put("arrayforFastHashMap", new Object[4]); sharedMap.put("arrayforProperties", new
-     * Object[4]); sharedMap.put("arrayforFastHashMapWithFast", new Object[4]); sharedMap.put("arrayforMyHashMap", new
      * Object[4]); sharedMap.put("arrayforMyHashMap2", new Object[4]); sharedMap.put("arrayforMyHashMap3", new
      * Object[4]); sharedMap.put("arrayforMyTreeMap", new Object[4]); sharedMap.put("arrayforMyHashtable", new
      * Object[4]); sharedMap.put("arrayforMyHashtable2", new Object[4]); sharedMap.put("arrayforMyLinkedHashMap", new
      * Object[4]); sharedMap.put("arrayforMyLinkedHashMap2", new Object[4]); sharedMap.put("arrayforMyTHashMap", new
-     * Object[4]); sharedMap.put("arrayforMyFastHashMap", new Object[4]); sharedMap.put("arrayforMyProperties", new
      * Object[4]); sharedMap.put("arrayforMyProperties2", new Object[4]);
      */
 
@@ -119,9 +114,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
     sharedMap.put("arrayforTreeMap2", new Object[4]);
     sharedMap.put("arrayforTHashMap", new Object[4]);
     nonSharedArrayMap.put("arrayforLinkedHashMap", new Object[4]);
-    nonSharedArrayMap.put("arrayforFastHashMap", new Object[4]);
     nonSharedArrayMap.put("arrayforProperties", new Object[4]);
-    nonSharedArrayMap.put("arrayforFastHashMapWithFast", new Object[4]);
     nonSharedArrayMap.put("arrayforMyHashMap", new Object[4]);
     nonSharedArrayMap.put("arrayforMyHashMap2", new Object[4]);
     sharedMap.put("arrayforMyTreeMap", new Object[4]);
@@ -131,7 +124,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     nonSharedArrayMap.put("arrayforMyLinkedHashMap2", new Object[4]);
     nonSharedArrayMap.put("arrayforMyLinkedHashMap3", new Object[4]);
     sharedMap.put("arrayforMyTHashMap", new Object[4]);
-    nonSharedArrayMap.put("arrayforMyFastHashMap", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties2", new Object[4]);
     nonSharedArrayMap.put("arrayforMyProperties3", new Object[4]);
@@ -172,7 +164,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
 
   void testBasicUnSynchronizedPut(Map map, boolean validate, int v) {
     // if (map instanceof Hashtable) { return; }
-    if (map instanceof FastHashMap) { return; }
+
     if (isCHM(map)) { return; }
 
     if (validate) {
@@ -1166,19 +1158,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     }
   }
 
-  void testFastHashMapSetFast(Map map, boolean validate, int v) {
-    if (!(map instanceof FastHashMap)) { return; }
-
-    FastHashMap fastHashMap = (FastHashMap) map;
-    if (validate) {
-      Assert.assertTrue(fastHashMap.getFast());
-    } else {
-      synchronized (fastHashMap) {
-        fastHashMap.setFast(true);
-      }
-    }
-  }
-
   // ReadOnly testing methods.
   void testReadOnlyPut(Map map, boolean validate, int v) {
     if (!canTestReadOnly(map)) { return; }
@@ -1953,7 +1932,7 @@ public class GenericMapTestApp extends GenericTransparentApp {
   }
 
   private boolean canTestReadOnly(Map map) {
-    return (!(map instanceof Hashtable) && !(map instanceof FastHashMap) && !(isCHM(map)));
+    return (!(map instanceof Hashtable) && !(isCHM(map)));
   }
 
   /**
@@ -1972,7 +1951,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     if (map instanceof MyHashtable2) { return nonSharedArrayMap.get("arrayforMyHashtable2"); }
     if (map instanceof MyHashtable) { return nonSharedArrayMap.get("arrayforMyHashtable"); }
     if (map instanceof MyTHashMap) { return sharedMap.get("arrayforMyTHashMap"); }
-    if (map instanceof MyFastHashMap) { return nonSharedArrayMap.get("arrayforMyFastHashMap"); }
     if (map instanceof MyProperties2) { return nonSharedArrayMap.get("arrayforMyProperties2"); }
     if (map instanceof MyProperties3) { return nonSharedArrayMap.get("arrayforMyProperties3"); }
     if (map instanceof MyProperties) { return nonSharedArrayMap.get("arrayforMyProperties"); }
@@ -1988,13 +1966,8 @@ public class GenericMapTestApp extends GenericTransparentApp {
     if (o != null) { return (Object[]) o; }
 
     if (map instanceof Properties) { return (Object[]) nonSharedArrayMap.get("arrayforProperties"); }
-    if (map instanceof FastHashMap) {
-      if (((FastHashMap) map).getFast()) {
-        return (Object[]) nonSharedArrayMap.get("arrayforFastHashMapWithFast");
-      } else {
-        return (Object[]) nonSharedArrayMap.get("arrayforFastHashMap");
-      }
-    } else if (map instanceof LinkedHashMap) {
+
+    if (map instanceof LinkedHashMap) {
       return (Object[]) nonSharedArrayMap.get("arrayforLinkedHashMap");
     } else if (map instanceof HashMap) {
       return (Object[]) nonSharedArrayMap.get("arrayforHashMap");
@@ -2212,11 +2185,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
       this.value = value;
     }
 
-    public SimpleEntry(Map.Entry e) {
-      this.key = e.getKey();
-      this.value = e.getValue();
-    }
-
     public Object getKey() {
       return key;
     }
@@ -2284,6 +2252,8 @@ public class GenericMapTestApp extends GenericTransparentApp {
       return super.get(arg);
     }
 
+    // This method (with protected access) is presumably important to the test case
+    @SuppressWarnings("unused")
     protected void testProtected() {
       // do nothing
     }
@@ -2304,6 +2274,8 @@ public class GenericMapTestApp extends GenericTransparentApp {
   }
 
   private static class MyTreeMap extends TreeMap {
+    // This constructor influences how this subclass is instrumented -- Do not remove
+    @SuppressWarnings("unused")
     public MyTreeMap() {
       super();
     }
@@ -2314,6 +2286,8 @@ public class GenericMapTestApp extends GenericTransparentApp {
   }
 
   private static class MyHashMap3 extends HashMap {
+    // This field influences how this subclass is instrumented -- Do not remove
+    @SuppressWarnings("unused")
     private final int i;
 
     public MyHashMap3(int i) {
@@ -2321,10 +2295,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
       this.i = i;
     }
 
-    public int getI() {
-      // this method here to silence compiler warning, no other reason
-      return i;
-    }
   }
 
   private static class MyTreeMap2 extends MyTreeMap {
@@ -2406,12 +2376,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
     }
   }
 
-  private static class MyFastHashMap extends FastHashMap {
-    public MyFastHashMap() {
-      super();
-    }
-  }
-
   private static class MyProperties extends Properties {
     private Object key;
     private Object value;
@@ -2437,6 +2401,8 @@ public class GenericMapTestApp extends GenericTransparentApp {
   }
 
   private static class MyProperties2 extends MyProperties {
+    // This field is relevant to the test case -- Do not remove
+    @SuppressWarnings("unused")
     private Object lastGetKey;
 
     public MyProperties2() {
@@ -2449,9 +2415,6 @@ public class GenericMapTestApp extends GenericTransparentApp {
       return super.get(key);
     }
 
-    public Object getLastGetKey() {
-      return lastGetKey;
-    }
   }
 
   private static class MyProperties3 extends Properties {
@@ -2459,7 +2422,9 @@ public class GenericMapTestApp extends GenericTransparentApp {
       super();
     }
 
+    @SuppressWarnings("unused")
     public void setDefault(Properties newDefaults) {
+      // This access to a super class field is relevant -- Do not remove
       defaults = newDefaults;
     }
 

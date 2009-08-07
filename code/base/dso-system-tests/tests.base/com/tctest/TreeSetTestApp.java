@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -289,12 +290,12 @@ public class TreeSetTestApp extends AbstractTransparentApp {
         subSetSharedRoot.getSet().add(new Integer(1));
       }
     }
-    
+
     barrier.barrier();
-    
+
     Assert.assertEquals(getParticipantCount() + 1, set.size());
     Assert.assertTrue(set.contains(new Integer(1)));
-    
+
     barrier.barrier();
 
     key = getKey();
@@ -341,7 +342,7 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
     Assert.assertTrue(set.contains(new Integer(1)));
-    
+
     barrier.barrier();
 
     key = getKey();
@@ -390,7 +391,7 @@ public class TreeSetTestApp extends AbstractTransparentApp {
 
     Assert.assertEquals(getParticipantCount() + 1, set.size());
     Assert.assertTrue(set.contains(new Integer(1)));
-    
+
     barrier.barrier();
 
     key = getKey();
@@ -480,10 +481,6 @@ public class TreeSetTestApp extends AbstractTransparentApp {
   // The main purpose of this class is that it does NOT implement Comparable
   private static class WrappedString {
     private final String string;
-
-    WrappedString(String string) {
-      this.string = string;
-    }
 
     WrappedString(int i) {
       this.string = String.valueOf(i);

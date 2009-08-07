@@ -525,11 +525,6 @@ public class AutoLockMapTestApp extends GenericTransparentApp {
       this.value = value;
     }
 
-    public SimpleEntry(Map.Entry e) {
-      this.key = e.getKey();
-      this.value = e.getValue();
-    }
-
     public Object getKey() {
       return key;
     }

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -29,11 +30,11 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
 
   private Class               classRoot                  = null;
 
-  private Integer             nonSharedIntegerObject     = new Integer(10);
+  private final Integer       nonSharedIntegerObject     = new Integer(10);
 
   private int                 nonDefaultPrimitiveIntRoot = 5;
   private Integer             nonDefaultIntegerRoot      = new Integer(5);
-  private Integer             sharedIntegerObject        = new Integer(50);
+  private final Integer       sharedIntegerObject        = new Integer(50);
 
   private int                 readBeforeSetTestIntRoot;
   private Integer             readBeforeSetTestIntegerRoot;
@@ -693,39 +694,14 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
 
   // TODO: Needs to make this reference equality work
   /*
-  private void testReferenceEquality() throws Exception {
-    clear();
-    int index = -1;
-    synchronized (syncRoot) {
-      index = syncRoot.getIndex();
-      if (index == 0) {
-        syncRoot.setIndex(1);
-      }
-    }
-    barrier.barrier();
-    synchronized (syncRoot) {
-      if (index == 0) {
-        integerRoot = new Integer(20);
-      }
-    }
-    barrier.barrier();
-    if (index != 0) {
-      Assert.assertEquals(new Integer(20), integerRoot);
-    }
-    barrier.barrier();
-    synchronized (syncRoot) {
-      if (index == 0) {
-        referenceRoot.setObj(integerRoot);
-      }
-    }
-    barrier.barrier();
-    if (index != 0) {
-      Assert.assertEquals(integerRoot, referenceRoot.getObj());
-      Assert.assertTrue(referenceRoot.isSameReferencedObject(integerRoot));
-    }
-    barrier.barrier();
-  }
-  */
+   * private void testReferenceEquality() throws Exception { clear(); int index = -1; synchronized (syncRoot) { index =
+   * syncRoot.getIndex(); if (index == 0) { syncRoot.setIndex(1); } } barrier.barrier(); synchronized (syncRoot) { if
+   * (index == 0) { integerRoot = new Integer(20); } } barrier.barrier(); if (index != 0) { Assert.assertEquals(new
+   * Integer(20), integerRoot); } barrier.barrier(); synchronized (syncRoot) { if (index == 0) {
+   * referenceRoot.setObj(integerRoot); } } barrier.barrier(); if (index != 0) { Assert.assertEquals(integerRoot,
+   * referenceRoot.getObj()); Assert.assertTrue(referenceRoot.isSameReferencedObject(integerRoot)); } barrier.barrier();
+   * }
+   */
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
@@ -767,10 +743,6 @@ public class LiteralValueRootTestApp extends AbstractTransparentApp {
 
     public SyncRoot() {
       super();
-    }
-
-    public SyncRoot(Object o) {
-      this.obj = o;
     }
 
     public int getIndex() {

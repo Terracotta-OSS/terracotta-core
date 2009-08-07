@@ -587,8 +587,8 @@ public class SerializationTest extends BaseDSOTestCase {
   }
 
   private static class MyObjectInputStream extends ObjectInputStream {
-    private static final Set useCustomLoaderClasses = new HashSet();
-    private ClassLoader      loader;
+    private static final Set  useCustomLoaderClasses = new HashSet();
+    private final ClassLoader loader;
 
     static {
       useCustomLoaderClasses.add(MyHashMap.class.getName());
@@ -597,16 +597,12 @@ public class SerializationTest extends BaseDSOTestCase {
       useCustomLoaderClasses.add(MyHashSet.class.getName());
     }
 
-    public MyObjectInputStream(ClassLoader loader) throws IOException {
-      super();
-      this.loader = loader;
-    }
-
     public MyObjectInputStream(InputStream inputStream, ClassLoader loader) throws IOException {
       super(inputStream);
       this.loader = loader;
     }
 
+    @Override
     protected Class resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
       if (useCustomLoaderClasses.contains(desc.getName())) {
         return loader.loadClass(desc.getName());

@@ -18,6 +18,7 @@ public class SleepycatPersistableSetTest extends TCTestCase {
 
   private SleepycatPersistableSet set = null;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     set = new SleepycatPersistableSet(new ObjectID(12));
@@ -60,7 +61,7 @@ public class SleepycatPersistableSetTest extends TCTestCase {
       assertTrue(s.contains(new Node(i)));
   }
 
-  private void assertContainsAllAndEquals(Set s,int start, int length) {
+  private void assertContainsAllAndEquals(Set s, int start, int length) {
     HashSet tempSet = new HashSet();
     for (int i = start; i < start + length; i++)
       tempSet.add(new Node(i));
@@ -149,14 +150,10 @@ public class SleepycatPersistableSetTest extends TCTestCase {
   }
 
   private class Node {
-    private int i;
+    private final int i;
 
     public Node(int i) {
       this.i = i;
-    }
-
-    public int getNumber() {
-      return i;
     }
 
     @Override

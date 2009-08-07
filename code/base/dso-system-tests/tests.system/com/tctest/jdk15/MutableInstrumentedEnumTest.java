@@ -16,30 +16,34 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MutableInstrumentedEnumTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return MutableInstrumentedEnumTestApp.class;
   }
 
   public static class MutableInstrumentedEnumTestApp extends AbstractErrorCatchingTransparentApp {
 
-    private final Map<String, Ref> mapRoot = new HashMap<String, Ref>();
-    private final CyclicBarrier    barrier;
+    private final Map<String, AtomicReference<MutableEnum>> mapRoot = new HashMap<String, AtomicReference<MutableEnum>>();
+    private final CyclicBarrier                             barrier;
 
     public MutableInstrumentedEnumTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
       super(appId, cfg, listenerProvider);
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
 
       int index = barrier.await();
@@ -48,7 +52,7 @@ public class MutableInstrumentedEnumTest extends TransparentTestBase {
 
       if (index == 0) {
         synchronized (mapRoot) {
-          mapRoot.put("e", new Ref(e));
+          mapRoot.put("e", new AtomicReference(e));
         }
       }
 
@@ -79,7 +83,6 @@ public class MutableInstrumentedEnumTest extends TransparentTestBase {
       TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
       config.getOrCreateSpec(MutableEnum.class.getName());
-      config.getOrCreateSpec(Ref.class.getName());
 
       String methodExpression = "* " + testClass + "*.*(..)";
       config.addWriteAutolock(methodExpression);
@@ -98,20 +101,6 @@ public class MutableInstrumentedEnumTest extends TransparentTestBase {
     int mutate() {
       return ++mutableState;
     }
-  }
-
-  private static class Ref {
-
-    private final Object o;
-
-    Ref(Object o) {
-      this.o = o;
-    }
-
-    Object getO() {
-      return o;
-    }
-
   }
 
 }

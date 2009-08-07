@@ -46,8 +46,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
   private final Object        testLockObject     = new Object();
 
-  private int                 numOfPutters       = 1;
-  private int                 numOfGetters;
+  private final int           numOfPutters       = 1;
+  private final int           numOfGetters;
   private final boolean       isCrashTest;
 
   public ReentrantLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -95,9 +95,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       tryLockTest(root.getUnfairLock());
 
-      if (!lockInterruptiblyTest(root.getUnfairLock()))
-        return;
-      
+      if (!lockInterruptiblyTest(root.getUnfairLock())) return;
+
       System.err.println("Testing fair lock ...");
 
       basicSignalTesting(root.getFairLock(), root.getFairCondition());
@@ -117,9 +116,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       tryLockTest(root.getFairLock());
 
-      if (!lockInterruptiblyTest(root.getFairLock()))
-        return;
-      
+      if (!lockInterruptiblyTest(root.getFairLock())) return;
+
       barrier.await();
     } catch (Throwable t) {
       notifyError(t);
@@ -182,7 +180,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       int countTryLockFailed = 0;
       int countLocked = 0;
       int countUnLocked = 0;
-      for (int i=0; i<100; i++) {
+      for (int i = 0; i < 100; i++) {
         if (!lock.tryLock()) {
           countTryLockFailed++;
           if (lock.isLocked()) {
@@ -194,10 +192,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
           countTryLockSucceeded++;
         }
       }
-      System.out.println("tryLock succeeded: "+countTryLockSucceeded);
-      System.out.println("tryLock failed: "+countTryLockFailed);
-      System.out.println("unlocked: "+countUnLocked);
-      System.out.println("locked: "+countLocked);
+      System.out.println("tryLock succeeded: " + countTryLockSucceeded);
+      System.out.println("tryLock failed: " + countTryLockFailed);
+      System.out.println("unlocked: " + countUnLocked);
+      System.out.println("locked: " + countLocked);
       Assert.assertEquals(100, countLocked);
       barrier2.await();
 
@@ -208,7 +206,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
       System.err.println("Testing try lock successes in client 2");
       int count = 0;
-      for (int i=0; i<100; i++) {
+      for (int i = 0; i < 100; i++) {
         if (!lock.tryLock()) {
           count++;
         }
@@ -457,7 +455,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     if (barrier.await() == 0) {
       final ReentrantLock lock = new ReentrantLock();
       final Condition condition = lock.newCondition();
-      
+
       Thread[] threads = new Thread[10];
       for (int i = 0; i < threads.length; i++) {
         threads[i] = new Thread(new Runnable() {
@@ -472,15 +470,15 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
           }
         });
       }
-      
+
       for (Thread t : threads) {
         t.start();
       }
-      
+
       while (lock.getWaitQueueLength(condition) < threads.length) {
         Thread.sleep(100);
       }
-      
+
       int signalCount = 0;
       while (lock.hasWaiters(condition)) {
         lock.lock();
@@ -493,7 +491,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         signalCount++;
         Thread.sleep(100);
       }
-        
+
       int expected = threads.length;
       Assert.assertEquals("Signal calls needed to wake " + expected + " threads", expected, signalCount);
 
@@ -503,7 +501,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       }
     }
   }
-  
+
   private void basicSignalTesting(final ReentrantLock lock, final Condition condition) throws Exception {
     int index = barrier.await();
 
@@ -523,20 +521,20 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         }
       });
     }
-    
+
     for (Thread t : threads) {
       t.start();
     }
-    
+
     barrier.await();
 
     // lock.getWaitQueueLength(condition) is busted for greedy locks - I don't trust it.
     while (count.get() < threads.length) {
       Thread.sleep(100);
     }
-    
+
     barrier.await();
-    
+
     if (index == 0) {
       int signalCount = 0;
       while (lock.hasWaiters(condition)) {
@@ -550,13 +548,13 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         signalCount++;
         Thread.sleep(100);
       }
-      
+
       int expected = getParticipantCount() * threads.length;
-      Assert.assertEquals("Signal calls needed to wake " + expected + " threads", expected, signalCount);      
+      Assert.assertEquals("Signal calls needed to wake " + expected + " threads", expected, signalCount);
     }
 
     barrier.await();
-    
+
     for (Thread t : threads) {
       t.join(1000);
       Assert.assertFalse(t.isAlive());
@@ -742,17 +740,18 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private boolean lockInterruptiblyTest(final ReentrantLock lock) throws Exception {
-    //Cleanup the test lock
+    // Cleanup the test lock
     while (lock.isHeldByCurrentThread()) {
       lock.unlock();
     }
 
     if (barrier.await() == 0) {
       System.out.println("Testing ReentrantLock.lockInterruptibly()...");
-      System.out.println("InterruptedExceptions may be logged.  Without an associated AssertionError they are harmless.");
-      
+      System.out
+          .println("InterruptedExceptions may be logged.  Without an associated AssertionError they are harmless.");
+
     }
-    
+
     for (int i = 0; i < 10; i++) {
       doLockInterruptiblyTestCycle(lock, i);
       if (exit.shouldExit()) return false;
@@ -780,6 +779,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
         for (int i = 0; i < 10; i++) {
           final int sleep = 1 << i;
           Thread t = new Thread() {
+            @Override
             public void run() {
               try {
                 System.out.print(":LK" + ManagerUtil.getClientID());
@@ -790,7 +790,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             }
           };
           t.start();
-          
+
           try {
             Thread.sleep(sleep);
           } catch (InterruptedException e) {
@@ -798,14 +798,16 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
           }
           t.interrupt();
           System.out.print(":INT" + ManagerUtil.getClientID());
-          /* In crash tests if the L2 crashes at the wrong moment then this thread join
-           * will fail unless we factor in the time for L2 restart in the timeout.
+          /*
+           * In crash tests if the L2 crashes at the wrong moment then this thread join will fail unless we factor in
+           * the time for L2 restart in the timeout.
            */
           t.join(5 * 60 * 1000);
 
           if (t.isAlive()) {
             synchronized (System.err) {
-              System.err.println("Stack Trace Of Interruptibly Locking Thread [Client " + ManagerUtil.getClientID() + "]");
+              System.err.println("Stack Trace Of Interruptibly Locking Thread [Client " + ManagerUtil.getClientID()
+                                 + "]");
               for (StackTraceElement e : t.getStackTrace()) {
                 System.err.println("\tat " + e);
               }
@@ -1003,7 +1005,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             barrier3.await();
             boolean isLocked = lock.tryLock(70, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { lock.unlock(); }
+            if (isLocked) {
+              lock.unlock();
+            }
           } catch (Exception e) {
             throw new AssertionError(e);
           }
@@ -1065,7 +1069,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             boolean isLocked = lock.tryLock(9000, TimeUnit.MILLISECONDS);
             // boolean isLocked = lock.tryLock(9000, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { lock.unlock(); }
+            if (isLocked) {
+              lock.unlock();
+            }
           } catch (InterruptedException e) {
             throw new AssertionError(e);
           }
@@ -1085,7 +1091,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       barrier2.await();
       boolean isLocked = lock.tryLock(4001, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) { lock.unlock(); }
+      if (isLocked) {
+        lock.unlock();
+      }
 
       barrier.await();
     } else {
@@ -1103,7 +1111,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     } else if (index == 1) {
       boolean isLocked = lock.tryLock(4000, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) { lock.unlock(); }
+      if (isLocked) {
+        lock.unlock();
+      }
 
       barrier.await();
     } else {
@@ -1135,7 +1145,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             boolean isLocked = lock.tryLock(9001, TimeUnit.MILLISECONDS);
             // boolean isLocked = lock.tryLock(60, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { lock.unlock(); }
+            if (isLocked) {
+              lock.unlock();
+            }
           } catch (InterruptedException e) {
             throw new AssertionError(e);
           }
@@ -1154,7 +1166,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     } else if (index == 1) {
       boolean isLocked = lock.tryLock(4001, TimeUnit.MILLISECONDS);
       assertTryLockResult(isLocked);
-      if (isLocked) { lock.unlock(); }
+      if (isLocked) {
+        lock.unlock();
+      }
 
       barrier.await();
     } else {
@@ -1191,7 +1205,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             boolean isLocked = lock.tryLock(4002, TimeUnit.MILLISECONDS);
             // boolean isLocked = lock.tryLock(60, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { lock.unlock(); }
+            if (isLocked) {
+              lock.unlock();
+            }
           } catch (InterruptedException e) {
             throw new AssertionError(e);
           }
@@ -1236,7 +1252,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
           try {
             boolean isLocked = nonSharedLock.tryLock(5, TimeUnit.SECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { nonSharedLock.unlock(); }
+            if (isLocked) {
+              nonSharedLock.unlock();
+            }
           } catch (InterruptedException e) {
             throw new AssertionError(e);
           }
@@ -1282,7 +1300,9 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
             boolean isLocked = nonSharedLock.tryLock(TimeUnit.MICROSECONDS.convert(6, TimeUnit.SECONDS),
                                                      TimeUnit.MICROSECONDS);
             assertTryLockResult(isLocked);
-            if (isLocked) { nonSharedLock.unlock(); }
+            if (isLocked) {
+              nonSharedLock.unlock();
+            }
           } catch (InterruptedException e) {
             throw new AssertionError(e);
           }
@@ -1452,8 +1472,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private static class TestRunnable1 implements Runnable {
-    private ReentrantLock lock;
-    private Condition     conditionObject;
+    private final ReentrantLock lock;
+    private final Condition     conditionObject;
 
     public TestRunnable1(ReentrantLock lock, Condition conditionObject) {
       this.lock = lock;
@@ -1473,7 +1493,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private class InterruptedRunnable implements Runnable {
-    private ReentrantLock lock;
+    private final ReentrantLock lock;
 
     public InterruptedRunnable(ReentrantLock lock) {
       this.lock = lock;
@@ -1504,8 +1524,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
   }
 
   private static class TestTryLockFailRunnable implements Runnable {
-    private String        lockId;
-    private CyclicBarrier barrier;
+    private final String        lockId;
+    private final CyclicBarrier barrier;
 
     public TestTryLockFailRunnable(String lockId, CyclicBarrier barrier) {
       this.lockId = lockId;
@@ -1532,15 +1552,16 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
    */
 
   private static class DataRoot {
-    private ReentrantLock unfairLock      = new ReentrantLock();
+    private final ReentrantLock unfairLock      = new ReentrantLock();
 
     // When an reentrant lock is shared,
     // the fairness is current not supported.
-    private ReentrantLock fairLock        = new ReentrantLock(true);
-    private Condition     unfairCondition = unfairLock.newCondition();
-    private Condition     fairCondition   = fairLock.newCondition();
-    private ReentrantLock lazyLock;
-    private int           data;
+    private final ReentrantLock fairLock        = new ReentrantLock(true);
+    private final Condition     unfairCondition = unfairLock.newCondition();
+    private final Condition     fairCondition   = fairLock.newCondition();
+    @SuppressWarnings("unused")
+    private ReentrantLock       lazyLock;
+    private int                 data;
 
     public DataRoot() {
       super();
@@ -1550,16 +1571,8 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       return fairLock;
     }
 
-    public void setFairLock(ReentrantLock fairLock) {
-      this.fairLock = fairLock;
-    }
-
     public ReentrantLock getUnfairLock() {
       return unfairLock;
-    }
-
-    public void setUnfairLock(ReentrantLock unfairLock) {
-      this.unfairLock = unfairLock;
     }
 
     public int getData() {
@@ -1570,10 +1583,6 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       this.data = data;
     }
 
-    public ReentrantLock getLazyLock() {
-      return lazyLock;
-    }
-
     public void setLazyLock(ReentrantLock lazyLock) {
       this.lazyLock = lazyLock;
     }
@@ -1582,21 +1591,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       return unfairCondition;
     }
 
-    public void setUnfairCondition(Condition unfairCondition) {
-      this.unfairCondition = unfairCondition;
-    }
-
     public Condition getFairCondition() {
       return fairCondition;
     }
 
-    public void setFairCondition(Condition fairCondition) {
-      this.fairCondition = fairCondition;
-    }
-
-    public void clear() {
-      this.data = 0;
-    }
   }
 
   private static class WorkItem {
@@ -1612,11 +1610,12 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       return STOP.name.equals(name);
     }
 
+    @Override
     public String toString() {
       return this.name;
     }
   }
-  
+
   private static class Exit {
     private boolean exit = false;
 
@@ -1627,5 +1626,5 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
     synchronized void toggle() {
       exit = true;
     }
-  }  
+  }
 }
