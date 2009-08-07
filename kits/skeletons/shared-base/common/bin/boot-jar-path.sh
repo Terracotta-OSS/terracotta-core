@@ -52,7 +52,17 @@ fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
-  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+  if [ -n "$DSO_BOOT_JAR" ]; then
+    # cygpath -d only works if the file exists so we need 
+    # to make sure the designated bootjar file existed first
+    if [ -f "$DSO_BOOT_JAR" ]; then
+      DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+    else
+      touch "$DSO_BOOT_JAR"
+      DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+      rm "$DSO_BOOT_JAR"
+    fi
+  fi
   [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d --windows "$TC_CONFIG_PATH"`
 fi
 
