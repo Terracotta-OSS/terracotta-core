@@ -16,6 +16,7 @@ import com.tc.admin.model.IClusterModelElement;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
@@ -276,14 +277,12 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
   }
 
   private class SelectionRenderer extends JComponent {
-    CellRendererPane cellRendererPane = new CellRendererPane();
-
     @Override
     protected void paintComponent(Graphics g) {
       if (selectionPath != null) {
         Component c = tree.getRendererComponent(selectionPath);
         if (c != null) {
-          cellRendererPane.paintComponent(g, c, this, 0, 0, getWidth(), getHeight(), true);
+          getCellRendererPane(c, this).paintComponent(g, c, this, 0, 0, getWidth(), getHeight(), true);
         }
       }
     }
@@ -292,6 +291,20 @@ public abstract class ClusterElementChooser extends XContainer implements TreeWi
     public boolean isShowing() {
       return true;
     }
+  }
+
+  private static CellRendererPane getCellRendererPane(Component c, Container p) {
+    Container shell = c.getParent();
+    if (shell instanceof CellRendererPane) {
+      if (shell.getParent() != p) {
+        p.add(shell);
+      }
+    } else {
+      shell = new CellRendererPane();
+      shell.add(c);
+      p.add(shell);
+    }
+    return (CellRendererPane) shell;
   }
 
   private Point getPopupLocation() {
