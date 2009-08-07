@@ -17,6 +17,7 @@ import org.mortbay.jetty.handler.ResourceHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.thread.BoundedThreadPool;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
+import org.terracotta.modules.tool.commands.ActionLog;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.w3c.dom.Document;
@@ -47,6 +48,8 @@ public final class ModuleTest extends TCTestCase {
   }
 
   public void testInstall() throws Exception {
+    ActionLog actionLog = new ActionLog();
+
     File basedir = new File(this.getTempDirectory(), "repo");
     int port = 8888;
 
@@ -61,7 +64,7 @@ public final class ModuleTest extends TCTestCase {
     Module module = modules.get("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
+    module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
     assertTrue(module.isInstalled());
 
     assertEquals(1, installedList.size());
@@ -70,7 +73,7 @@ public final class ModuleTest extends TCTestCase {
     module = modules.get("foo.bar", "baz", "0.0.1");
     assertNotNull(module);
     installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
+    module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT);
     assertTrue(module.isInstalled());
     assertEquals(4, installedList.size());
     assertTrue(installedList.contains(createModule("foo.bar", "baz", "0.0.1").toString()));
@@ -81,7 +84,7 @@ public final class ModuleTest extends TCTestCase {
     module = modules.get("foo.bar", "quux", "0.0.0");
     assertNotNull(module);
     installedList = new ArrayList<String>();
-    module.install(new Listener(installedList));
+    module.install(new Listener(installedList), actionLog);
     assertTrue(module.isInstalled());
     assertEquals(3, installedList.size());
     assertTrue(installedList.contains(createModule("foo.bar", "quux", "0.0.0").toString()));
@@ -95,7 +98,7 @@ public final class ModuleTest extends TCTestCase {
     module = modules.get("foo.bar", "baz", "0.0.2");
     assertNotNull(module);
     installedList = new ArrayList<String>();
-    module.install(new Listener(installedList), InstallOption.SKIP_INSPECT);
+    module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT);
     assertTrue(module.isInstalled());
     assertEquals(1, installedList.size());
     assertTrue(installedList.contains(createModule("foo.bar", "baz", "0.0.2").toString()));

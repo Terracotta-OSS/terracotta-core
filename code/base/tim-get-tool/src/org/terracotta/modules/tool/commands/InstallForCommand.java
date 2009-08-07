@@ -93,7 +93,7 @@ public class InstallForCommand extends ModuleOperatorCommand {
 
     InstallListener listener = new DefaultInstallListener(report, out);
     for (Module module : neededToInstalledModules) {
-      module.install(listener, installOptions);
+      module.install(listener, actionLog(), installOptions);
     }
 
   }
@@ -107,10 +107,12 @@ public class InstallForCommand extends ModuleOperatorCommand {
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
       List<Module> found = modules.find(Arrays.asList(new String[] { xmlModule.getName(), xmlModule.getVersion(),
           xmlModule.getGroupId() }));
-      out.println("Parsing module: " + xmlModule.getName() + "-" + xmlModule.getVersion());
+      
+      String versionStr = (xmlModule.getVersion() == null) ? "latest" : xmlModule.getVersion();
+      out.println("Parsing module: " + xmlModule.getName() + ":" + versionStr);
       out.flush();
       if (found.isEmpty()) {
-        err.println("No module found matching: " + xmlModule.getName() + "-" + xmlModule.getVersion() + " groupId="
+        err.println("No module found matching: " + xmlModule.getName() + ":" + versionStr + " groupId="
                     + xmlModule.getGroupId());
         err.flush();
       }

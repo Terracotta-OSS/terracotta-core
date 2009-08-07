@@ -92,7 +92,7 @@ public class UpdateCommand extends OneOrAllCommand {
 
     InstallListener listener = new DefaultInstallListener(report, out);
     for (Module module : manifest) {
-      module.install(listener, installOptions);
+      module.install(listener, actionLog(), installOptions);
     }
     printEpilogue(true);
   }
@@ -106,7 +106,7 @@ public class UpdateCommand extends OneOrAllCommand {
 
     // update found, install it
     InstallListener listener = new DefaultInstallListener(report, out);
-    module.install(listener, installOptions);
+    module.install(listener, actionLog(), installOptions);
     printEpilogue(module.installsAsModule());
   }
 

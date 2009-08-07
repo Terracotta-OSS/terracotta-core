@@ -97,7 +97,10 @@ public class UpgradeCommand extends ModuleOperatorCommand {
     com.terracottatech.config.Module[] xmlModules = tcConfig.getClients().getModules().getModuleArray();
     
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
-      out.print("* Parsing module: " + xmlModule.getName() + "-" + xmlModule.getVersion());
+      String version = xmlModule.getVersion();
+      String versionStr = (version == null) ? "latest" : version;
+
+      out.print("* Parsing module: " + xmlModule.getName() + ":" + versionStr);
       Module latest = modules.findLatest(xmlModule.getName(), xmlModule.getGroupId());
       boolean neededToInstall = false;
       
@@ -107,7 +110,9 @@ public class UpgradeCommand extends ModuleOperatorCommand {
         if (!latest.isInstalled()) {
           neededToInstall = true;
         } else {
-          if (latest.version().compareTo(xmlModule.getVersion()) > 0) {
+          if (version != null && latest.version().compareTo(version) > 0) {
+            // if version is null, then tc-config did not specify a version and no need to update tc-config
+            // if versions is specified, but older than latest, also need to update
             neededToInstall = true;
           } else {
             out.println(": up to date");
@@ -117,10 +122,16 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       
       if (neededToInstall) {
         out.println(": latest version " + latest.version());
-        xmlModule.setVersion(latest.version());
-        latest.install(listener, installOptions);
+        latest.install(listener, actionLog(), installOptions);
         out.println();
-        updateConfig = true;
+        
+        // Don't update config if module version is not specified - it will automatically pick up the latest
+        if(version != null) {
+          actionLog.addModifiedModuleAction(xmlModule.getGroupId(), xmlModule.getName(), xmlModule.getVersion(), latest.version());
+
+          xmlModule.setVersion(latest.version());
+          updateConfig = true;
+        }
       }
     }
 

@@ -427,7 +427,7 @@ public class ServerManager {
         System.setProperty(Config.KEYSPACE + Config.DATA_FILE_URL, urls.getUrl());
         System.setProperty(Config.KEYSPACE + Config.RELATIVE_URL_BASE, urls.getRelativeUrlBase());
 
-        TIMGetTool.mainWithExceptions(new String[] { "install", name });
+        new TIMGetTool(new String[] { "install", name });
 
         // This is a bit of hack, but without some mods to tim-get I'm not sure how to determine the version
         File src = new File(getTimGetModulesDir() + "/org/terracotta/modules/" + name);

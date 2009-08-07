@@ -50,7 +50,7 @@ public class InstallCommand extends OneOrAllCommand {
     List<Module> latest = modules.listLatest();
     InstallListener listener = new DefaultInstallListener(report, out);
     for (Module module : latest) {
-      module.install(listener, installOptions);
+      module.install(listener, actionLog(), installOptions);
     }
     printEpilogue(true);
   }
@@ -58,7 +58,7 @@ public class InstallCommand extends OneOrAllCommand {
   @Override
   protected void handleOne(Module module) {
     InstallListener listener = new DefaultInstallListener(report, out);
-    module.install(listener, installOptions);
+    module.install(listener, actionLog(), installOptions);
     printEpilogue(module.installsAsModule());
   }
 

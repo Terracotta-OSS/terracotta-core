@@ -8,6 +8,7 @@ import org.terracotta.modules.tool.CachedModules;
 import org.terracotta.modules.tool.DefaultModuleReport;
 import org.terracotta.modules.tool.ModuleReport;
 import org.terracotta.modules.tool.Modules;
+import org.terracotta.modules.tool.commands.ActionLog;
 import org.terracotta.modules.tool.commands.CommandRegistry;
 import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
@@ -30,9 +31,11 @@ import java.net.Proxy.Type;
  */
 class AppContext implements Module, ConfigAnnotation {
   private final Config config;
+  private final ActionLog actionLog;
 
-  public AppContext(Config config) {
+  public AppContext(Config config, ActionLog actionLog) {
     this.config = config;
+    this.actionLog = actionLog;
   }
 
   public void configure(Binder binder) {
@@ -63,6 +66,10 @@ class AppContext implements Module, ConfigAnnotation {
     binder.bind(Config.class).annotatedWith(Names.named(CONFIG_INSTANCE)).toInstance(config);
     binder.bind(DownloadUtil.class).annotatedWith(Names.named(DOWNLOADUTIL_INSTANCE)).to(DownloadUtil.class);
 
+    // Make action log object available
+    binder.bind(ActionLog.class).in(Scopes.SINGLETON);
+    binder.bind(ActionLog.class).annotatedWith(Names.named(ACTION_LOG_INSTANCE)).toInstance(actionLog);
+    
     binder.bind(ModuleReport.class).to(DefaultModuleReport.class);
     binder.bind(ModuleReport.class).annotatedWith(Names.named(MODULEREPORT_INSTANCE)).to(DefaultModuleReport.class)
         .in(Scopes.SINGLETON);

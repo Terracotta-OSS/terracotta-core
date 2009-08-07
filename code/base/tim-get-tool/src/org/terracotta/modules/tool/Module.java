@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
+import org.terracotta.modules.tool.commands.ActionLog;
 import org.terracotta.modules.tool.commands.KitTypes;
 import org.w3c.dom.Element;
 
@@ -225,11 +226,11 @@ public class Module extends AttributesModule implements Installable {
   /**
    * Install this module.
    */
-  public void install(InstallListener listener, InstallOption... options) {
-    install(listener, Arrays.asList(options));
+  public void install(InstallListener listener, ActionLog actionLog, InstallOption... options) {
+    install(listener, actionLog, Arrays.asList(options));
   }
 
-  public void install(InstallListener listener, Collection<InstallOption> options) {
+  public void install(InstallListener listener, ActionLog actionLog, Collection<InstallOption> options) {
     InstallOptionsHelper installOptions = new InstallOptionsHelper(options);
     List<AbstractModule> manifest = null;
 
@@ -271,6 +272,7 @@ public class Module extends AttributesModule implements Installable {
         }
       }
 
+      actionLog.addInstallAction(groupId, artifactId, version, destFile.getAbsolutePath());
       notifyListener(listener, entry, InstallNotification.INSTALLED, "Ok");
     }
   }

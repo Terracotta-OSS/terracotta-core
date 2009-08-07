@@ -21,16 +21,17 @@ import java.util.Properties;
  */
 public class Config {
 
-  public static final String KEYSPACE          = "org.terracotta.modules.tool.";
+  public static final String KEYSPACE              = "org.terracotta.modules.tool.";
 
-  public static final String TC_VERSION        = "tcVersion";
-  public static final String API_VERSION       = "apiVersion";
-  public static final String RELATIVE_URL_BASE = "relativeUrlBase";
-  public static final String INCLUDE_SNAPSHOTS = "includeSnapshots";
-  public static final String PROXY_URL         = "proxyUrl";
-  public static final String MODULES_DIR       = "modulesDir";
-  public static final String DATA_FILE_URL     = "dataFileUrl";
-  public static final String CACHE             = "cache";
+  public static final String TC_VERSION            = "tcVersion";
+  public static final String API_VERSION           = "apiVersion";
+  public static final String RELATIVE_URL_BASE     = "relativeUrlBase";
+  public static final String INCLUDE_SNAPSHOTS     = "includeSnapshots";
+  public static final String PROXY_URL             = "proxyUrl";
+  public static final String MODULES_DIR           = "modulesDir";
+  public static final String DATA_FILE_URL         = "dataFileUrl";
+  public static final String CACHE                 = "cache";
+  public static final String DATA_CACHE_EXPIRATION = "dataCacheExpirationInSeconds";
 
   private String             tcVersion;
   private String             apiVersion;
@@ -62,7 +63,7 @@ public class Config {
     String dataUrl = getProperty(properties, DATA_FILE_URL);
     this.setDataFileUrl(createUrl(dataUrl, "dataFileUrl is not a valid URL"));
     this.setModulesDirectory(new File(getProperty(properties, MODULES_DIR)));
-    this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, "dataCacheExpirationInSeconds")));
+    this.setDataCacheExpirationInSeconds(Long.parseLong(getProperty(properties, DATA_CACHE_EXPIRATION)));
 
     String cachePath = getProperty(properties, CACHE);
     if (StringUtils.isEmpty(cachePath)) cachePath = System.getProperty("java.io.tmpdir");

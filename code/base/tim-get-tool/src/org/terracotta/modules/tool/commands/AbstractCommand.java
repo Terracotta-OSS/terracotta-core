@@ -43,6 +43,10 @@ public abstract class AbstractCommand implements Command {
   @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
   protected Config              config;
+  
+  @Inject
+  @Named(ConfigAnnotation.ACTION_LOG_INSTANCE)
+  protected ActionLog           actionLog;
 
   protected final Options createOptions() {
     Options opts = new Options();
@@ -114,6 +118,10 @@ public abstract class AbstractCommand implements Command {
 
   public Options options() {
     return options;
+  }
+  
+  public ActionLog actionLog() {
+    return actionLog;
   }
 
   static Option buildOption(String optname, String description) {

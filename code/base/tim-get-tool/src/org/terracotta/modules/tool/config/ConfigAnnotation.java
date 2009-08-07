@@ -16,5 +16,6 @@ public interface ConfigAnnotation {
   public static String MODULES_INSTANCE                 = "ModulesInstance";
   public static String MODULEREPORT_INSTANCE            = "ModuleReportInstance";
   public static String DOWNLOADUTIL_INSTANCE            = "DownloadUtilInstance";
+  public static String ACTION_LOG_INSTANCE              = "ActionLogInstance";
 
 }
