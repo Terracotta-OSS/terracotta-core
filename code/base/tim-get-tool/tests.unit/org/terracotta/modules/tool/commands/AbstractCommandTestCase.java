@@ -123,7 +123,7 @@ public abstract class AbstractCommandTestCase extends TCTestCase {
   }
   
   protected String getModulePath(String groupId, String artifactId, String version) {
-    return groupId.replaceAll("\\.", File.separator) + File.separatorChar + artifactId + File.separatorChar + version;
+    return groupId.replace(".", File.separator) + File.separatorChar + artifactId + File.separatorChar + version;
   }
   
   protected String getArtifactName(String artifactId, String version) {
