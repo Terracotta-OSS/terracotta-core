@@ -11,8 +11,6 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.StageManagerImpl;
-import com.tc.io.TCByteBufferInput;
-import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
@@ -33,7 +31,6 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -398,8 +395,6 @@ public class TCGroupStateManagerTest extends TCTestCase {
 
     groupMgr[localIndex] = gm;
     MyGroupEventListener gel = new MyGroupEventListener(gm.getLocalNodeID());
-    MyListener l = new MyListener();
-    gm.registerForMessages(TestMessage.class, l);
     gm.registerForGroupEvents(gel);
     sinks[localIndex] = new ChangeSink(localIndex);
     MyStateManagerConfig config = new MyStateManagerConfig();
@@ -536,60 +531,6 @@ public class TCGroupStateManagerTest extends TCTestCase {
       System.err.println("\n### " + gmNodeID + ": nodeLeft -> " + nodeID);
     }
 
-  }
-
-  private static final class MyListener implements GroupMessageListener {
-
-    NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
-
-    public void messageReceived(NodeID fromNode, GroupMessage msg) {
-      queue.put(msg);
-    }
-
-  }
-
-  private static final class TestMessage extends AbstractGroupMessage {
-
-    // to make serialization sane
-    public TestMessage() {
-      super(0);
-    }
-
-    public TestMessage(String message) {
-      super(0);
-      this.msg = message;
-    }
-
-    @Override
-    protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-      msg = in.readString();
-    }
-
-    @Override
-    protected void basicSerializeTo(TCByteBufferOutput out) {
-      out.writeString(msg);
-    }
-
-    String msg;
-
-    @Override
-    public int hashCode() {
-      return msg.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o instanceof TestMessage) {
-        TestMessage other = (TestMessage) o;
-        return this.msg.equals(other.msg);
-      }
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      return "TestMessage [ " + msg + "]";
-    }
   }
 
 }
