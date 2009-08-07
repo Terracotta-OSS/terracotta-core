@@ -45,6 +45,12 @@ fi
 
 . "${TC_INSTALL_DIR}/bin/boot-jar-path.sh"
 
+if $cygwin; then
+  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d --windows "$TC_INSTALL_DIR"`
+  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d --windows "$TC_CONFIG_PATH"`
+fi
+
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} -Dtc.install-root=${TC_INSTALL_DIR}"
  
 test "${TC_CONFIG_PATH}" && TC_JAVA_OPTS="${TC_JAVA_OPTS} -Dtc.config=${TC_CONFIG_PATH}" 
