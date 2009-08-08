@@ -8,10 +8,9 @@ import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.lockmanager.api.LockLevel;
-
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
-
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.concurrent.CyclicBarrier;
@@ -20,7 +19,7 @@ public class RecallUnderConcurrentLockTestApp extends AbstractTransparentApp {
 
   private static final String LOCK_STRING = "lock";
 
-  private CyclicBarrier       barrier = new CyclicBarrier(getParticipantCount());
+  private final CyclicBarrier barrier     = new CyclicBarrier(getParticipantCount());
 
   public RecallUnderConcurrentLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -34,32 +33,34 @@ public class RecallUnderConcurrentLockTestApp extends AbstractTransparentApp {
 
   public void run() {
     try {
-      int nodeId = barrier.await();
+      int nodeId = this.barrier.await();
 
       if (nodeId == 0) {
-        //Grab the greedy lock
+        // Grab the greedy lock
         ManagerUtil.beginLock(LOCK_STRING, LockLevel.WRITE);
         ManagerUtil.commitLock(LOCK_STRING);
 
         ManagerUtil.beginLock(LOCK_STRING, LockLevel.CONCURRENT);
         try {
-          barrier.await();
-          //other node tries to take the lock here
-          barrier.await();
+          this.barrier.await();
+          // other node tries to take the lock here
+          ThreadUtil.reallySleep(5000);
         } finally {
+          // Unlock before awaiting
           ManagerUtil.commitLock(LOCK_STRING);
         }
+        this.barrier.await();
       } else {
-        barrier.await();
+        this.barrier.await();
         ManagerUtil.beginLock(LOCK_STRING, LockLevel.READ);
         try {
-          barrier.await();
+          this.barrier.await();
         } finally {
           ManagerUtil.commitLock(LOCK_STRING);
         }
       }
-      
-      barrier.await();
+
+      this.barrier.await();
     } catch (Exception e) {
       throw new AssertionError(e);
     }
