@@ -94,10 +94,18 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     fireTunneledBeansRegistered();
   }
 
+  private synchronized boolean isListeningForTunneledBeans() {
+    return isListeningForTunneledBeans;
+  }
+
+  private synchronized void setListeningForTunneledBeans(boolean listening) {
+    isListeningForTunneledBeans = listening;
+  }
+
   private void startListeningForTunneledBeans() {
-    if (isListeningForTunneledBeans) return;
+    if (isListeningForTunneledBeans()) return;
     addMBeanNotificationListener(beanName, this, "DSOClientMBean");
-    isListeningForTunneledBeans = true;
+    setListeningForTunneledBeans(true);
   }
 
   private void addMBeanNotificationListener(ObjectName objectName, NotificationListener listener, String beanType) {
@@ -109,21 +117,21 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   private void stopListeningForTunneledBeans() {
-    if (!isListeningForTunneledBeans) return;
+    if (!isListeningForTunneledBeans()) return;
+    setListeningForTunneledBeans(false);
     try {
       cc.removeNotificationListener(beanName, this);
     } catch (Exception e) {
       throw new RuntimeException("Removing listener from DSOClientMBean", e);
     }
-    isListeningForTunneledBeans = false;
   }
 
   public void handleNotification(Notification notification, Object handback) {
     String type = notification.getType();
 
-    if (DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type)) {
-      setupTunneledBeans();
+    if (DSOClientMBean.TUNNELED_BEANS_REGISTERED.equals(type) && isListeningForTunneledBeans()) {
       stopListeningForTunneledBeans();
+      setupTunneledBeans();
     } else if (type.startsWith("tc.logging.")) {
       Boolean newValue = Boolean.valueOf(notification.getMessage());
       Boolean oldValue = Boolean.valueOf(!newValue.booleanValue());

@@ -912,9 +912,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         boolean wasAdded = false;
         synchronized (Server.this) {
           if (client.isReady() && !clients.contains(client)) {
+            client.removePropertyChangeListener(this);
             clients.add(client);
             wasAdded = true;
-            client.removePropertyChangeListener(this);
           }
         }
         if (wasAdded) {
@@ -942,6 +942,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private synchronized DSOClient removeClient(ObjectName clientBeanName) {
     DSOClient client = clientMap.remove(clientBeanName);
     if (client != null) {
+      System.err.println("Removed clientBeanName from clientMap: " + clientBeanName);
       clients.remove(client);
       return client;
     }
@@ -963,7 +964,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         fireClientConnected(client);
       }
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
-      DSOClient client = removeClient((ObjectName) notification.getSource());
+      ObjectName clientObjectName = (ObjectName) notification.getSource();
+      DSOClient client = null;
+      synchronized (Server.this) {
+        if (isActiveCoordinator() && haveClient(clientObjectName)) {
+          client = removeClient(clientObjectName);
+        }
+      }
       if (client != null) {
         fireClientDisconnected(client);
       }
