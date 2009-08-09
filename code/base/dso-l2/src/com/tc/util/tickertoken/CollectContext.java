@@ -5,6 +5,7 @@
 package com.tc.util.tickertoken;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class CollectContext {
@@ -20,4 +21,16 @@ public class CollectContext {
   public Object getValue(String key) {
     return context.get(key);
   }
+
+  @Override
+  public String toString() {
+    StringBuffer sb = new StringBuffer();
+    for(Iterator iter = context.entrySet().iterator(); iter.hasNext();) {
+      Map.Entry entry = (Map.Entry)iter.next();
+      sb.append(" key : " + entry.getKey() + " value: " + entry.getValue() + " ");
+    }
+    return sb.toString();
+  }
+  
+  
 }

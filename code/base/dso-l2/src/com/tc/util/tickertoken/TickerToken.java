@@ -21,6 +21,8 @@ public interface TickerToken extends TCSerializable {
   public void collectToken(int aId, CollectContext context);
   
   public boolean evaluateComplete();
+  
+  public boolean evaluateEqual(TickerToken token);
 
  
 }

@@ -15,6 +15,8 @@ public interface TickerTokenHandle {
   public TickerTokenKey getKey();
 
   public String getIdentifier();
+  
+  public void enableTriggerToken();
 
   public void waitTillComplete();
 }

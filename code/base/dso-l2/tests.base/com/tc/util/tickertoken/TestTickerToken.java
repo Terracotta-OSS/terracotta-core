@@ -9,12 +9,11 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class TestTickerToken extends TickerTokenImpl implements TickerToken {
-  
-  public static final String    DIRTY_STATE       = "dirty_state";
- 
-  public Map<Integer, Boolean> tokenStateMap     = new HashMap<Integer, Boolean>();
- 
-  
+
+  public static final String   DIRTY_STATE   = "dirty_state";
+
+  public Map<Integer, Boolean> tokenStateMap = new HashMap<Integer, Boolean>();
+
   public TestTickerToken(int primaryID, int startTick, int totalTickers) {
     super(primaryID, startTick, totalTickers);
   }
@@ -22,7 +21,7 @@ public class TestTickerToken extends TickerTokenImpl implements TickerToken {
   @Override
   public void collectToken(int id, CollectContext context) {
     this.tokenStateMap.put(id, (Boolean) context.getValue(DIRTY_STATE));
-    
+
   }
 
   public Map<Integer, Boolean> getTokenStateMap() {
@@ -32,18 +31,24 @@ public class TestTickerToken extends TickerTokenImpl implements TickerToken {
   @Override
   public boolean evaluateComplete() {
     boolean complete = true;
-    if(tokenStateMap.size() < totalTickers) {
-      return false;
-    }
-    
-    for(Iterator<Boolean> iter = tokenStateMap.values().iterator(); iter.hasNext();) {
+    if (tokenStateMap.size() < totalTickers) { return false; }
+
+    for (Iterator<Boolean> iter = tokenStateMap.values().iterator(); iter.hasNext();) {
       boolean state = iter.next();
-      if(state) {
+      if (state) {
         complete = false;
       }
     }
-    
+
     return complete;
+  }
+
+
+  public boolean evaluateEqual(TickerToken token) {
+    TestTickerToken compareTo = (TestTickerToken)token;
+    
+    return tokenStateMap.equals(compareTo.tokenStateMap);
+  
   }
 
 }

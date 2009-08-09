@@ -4,14 +4,18 @@
  */
 package com.tc.util.tickertoken;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class TickerTokenHandleImpl implements TickerTokenHandle {
 
   private final TickerTokenKey key;
   private final String         identifier;
+  private final AtomicBoolean  triggerToken;
   private boolean              complete = false;
 
-  public TickerTokenHandleImpl(String identifier, TickerTokenKey key) {
+  public TickerTokenHandleImpl(String identifier, TickerTokenKey key, AtomicBoolean triggerToken) {
     this.identifier = identifier;
+    this.triggerToken = triggerToken;
     this.key = key;
   }
 
@@ -19,7 +23,14 @@ public class TickerTokenHandleImpl implements TickerTokenHandle {
     return this.identifier;
   }
 
+  public void enableTriggerToken() {
+    synchronized (triggerToken) {
+      triggerToken.set(true);
+    }
+  }
+
   public synchronized void waitTillComplete() {
+    enableTriggerToken();
     while (!this.complete) {
       try {
         wait();
