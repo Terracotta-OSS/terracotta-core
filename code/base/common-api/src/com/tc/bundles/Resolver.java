@@ -208,12 +208,12 @@ public class Resolver {
   }
 
   private String findNewestVersion(String groupId, String name) {
-    logger.info("findNewestVersion(" + groupId + ", " + name + ")");
+    //logger.info("findNewestVersion(" + groupId + ", " + name + ")");
 
     final String symName = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
     String newestVersion = null;
 
-    logger.info("looking for symName = " + symName);
+    //logger.info("  looking for symName = " + symName);
 
     for (Repository repo : repositories) {
       Collection<URL> possibles = repo.search(groupId, name);
@@ -233,24 +233,37 @@ public class Resolver {
           String moduleApiVersion = manifest.getMainAttributes().getValue("api-version");
           if (moduleApiVersion == null) {
             moduleApiVersion = VersionMatcher.ANY_VERSION;
+
+            // See if any of the required dependencies is modules-base - the version is the api version
+            String requiredBundles = manifest.getMainAttributes().getValue(BundleSpec.REQUIRE_BUNDLE);
+            if(requiredBundles != null) {
+              //logger.info("  checking for api in required bundles");
+              String[] specs = requiredBundles.split(",");
+              for(String spec : specs) {
+                BundleSpec bundleSpec = new BundleSpecImpl(spec);
+                //logger.info("    found " + bundleSpec.getSymbolicName() + ":" + bundleSpec.getVersion());
+                if(bundleSpec.getSymbolicName().equals("org.terracotta.modules.modules-base")) {
+                  moduleApiVersion = OSGiToMaven.bundleVersionToProjectVersion(bundleSpec.getVersion());
+                  //logger.info("    found modules-base api version: " + moduleApiVersion);
+                  break;
+                }
+              }
+            }
           }
+          
           if (versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
-            logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+            //logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             logger.info("new version = " + newestVersion);
-          } else {
-            logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
-                        + " - not appropriate for current tc version");
+          // } else {
+          //   logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
+          //               + " - not appropriate for current tc version");
           }
         }
       }
     }
 
-    if (newestVersion != null) {
-      return OSGiToMaven.bundleVersionToProjectVersion(newestVersion);
-    } else {
-      return null;
-    }
+    return newestVersion;
   }
 
   static String newerVersion(String v1, String v2) {

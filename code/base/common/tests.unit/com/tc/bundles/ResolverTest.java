@@ -9,6 +9,7 @@ import org.osgi.framework.BundleException;
 
 import com.tc.bundles.exception.MissingDefaultRepositoryException;
 import com.tc.test.TestConfigObject;
+import com.tc.util.ProductInfo;
 import com.terracottatech.config.Module;
 
 import java.io.File;
@@ -34,13 +35,9 @@ public class ResolverTest extends TestCase {
   private final String         tcVersion;
 
   public ResolverTest() {
-    // ProductInfo info = ProductInfo.getInstance();
-    // apiVersion = info.apiVersion();
-    // tcVersion = info.mavenArtifactsVersion();
-
-    /* hack */
-    apiVersion = "1.2.0-SNAPSHOT";
-    tcVersion = "3.2.0-SNAPSHOT";
+     ProductInfo info = ProductInfo.getInstance();
+     apiVersion = info.apiVersion();
+     tcVersion = info.mavenArtifactsVersion();
   }
 
   public void testResolveBundle() throws IOException {

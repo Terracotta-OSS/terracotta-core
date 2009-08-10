@@ -18,7 +18,7 @@ import java.text.MessageFormat;
  */
 public abstract class BundleSpec {
 
-  private static final String   REQUIRE_BUNDLE              = "Require-Bundle";
+  public static final String   REQUIRE_BUNDLE              = "Require-Bundle";
   protected static final String PROP_KEY_RESOLUTION         = "resolution";
   protected static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
