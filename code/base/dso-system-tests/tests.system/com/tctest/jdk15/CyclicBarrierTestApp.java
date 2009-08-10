@@ -35,6 +35,7 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
       basicBarrierActionTest();
       basicBarrierAPITest();
       interruptedBarrierTest();
+      thrashingBarrierTest();
     } catch (Throwable t) {
       notifyError(t);
     }
@@ -136,6 +137,12 @@ public class CyclicBarrierTestApp extends AbstractTransparentApp {
     barrier.await();
   }
 
+  private void thrashingBarrierTest() throws Exception {    
+    for (int i = 0; i < 1000; i++) {
+      barrier.await();
+    }
+  }
+  
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = CyclicBarrierTestApp.class.getName();
     TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
