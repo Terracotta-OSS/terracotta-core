@@ -1,0 +1,85 @@
+Terracotta for Hibernate
+========================
+
+This README shows you how to install Terracotta second-level cache for Hibernate
+using the JAR files found under the ${TERRACOTTA_HOME}/hibernate directory. 
+Complete installation and configuration instructions are available in the 
+Terracotta for Hibernate Quick Start Guide 
+(http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate).
+
+This "standalone" version of the Terracotta second-level cache for Hibernate 
+delivers the following advantages:
+
+* Designed for quick implementation to minimize setup and configuration time.
+* Improves the performance of applications that use Hibernate as an ORM.
+* Distributes in-memory data using the fastest and most efficient 
+  clustered-cache solution.
+
+The following sections present, in order, the steps you should take to set up 
+and run your Hibernate application with the Terracotta second-level cache.
+
+Installing and Updating
+-----------------------
+
+The ${TERRACOTTA_HOME}/hibernate directory should contain the following JAR 
+files:
+
+* terracotta-hibernate-cache-<version>.jar
+* terracotta-hibernate-agent-<version>.jar
+
+where <version> is the version of the JAR file.
+
+NOTE: terracotta-hibernate-cache-<version>.jar must be in the classpath of your 
+application, or in WEB-INF/lib if using a WAR file.
+
+You can update these JAR files to the latest version suitable for your 
+installation using the following command:
+
+   ${TERRACOTTA_HOME}/bin/tim-get.sh update terracotta-hibernate-cache
+
+In Microsoft Windows, use this command:
+
+   ${TERRACOTTA_HOME}\bin\tim-get.bat update terracotta-hibernate-cache
+
+Do not add the <version> or the .jar file extension. Note that 
+terracotta-hibernate-agent-<version>.jar is a dependency of 
+terracotta-hibernate-cache-<version>.jar and is updated automatically when you 
+update terracotta-hibernate-cache-<version>.jar.
+
+
+Configuring Hibernate
+---------------------
+Add the following to your hibernate.cfg.xml file:
+
+   <property name="hibernate.cache.use_second_level_cache">true</property>
+   <property name="hibernate.cache.provider_class">org.terracotta.hibernate.
+      TerracottaHibernateCacheProvider</property>
+
+
+Starting Your Application with the Cache
+----------------------------------------
+You must start both your application and a Terracotta server.
+
+Start the Terracotta server with the following command:
+
+   ${TERRACOTTA_HOME}/bin/start-tc-server.sh &
+
+In Microsoft Windows use the following command:
+
+   ${TERRACOTTA_HOME}\bin\start-tc-server.bat
+
+Start your application (com.example.MyApp) with the following command:
+
+   java -javaagent:/path/to/terracotta-hibernate-agent-<version>.jar \
+   > com.example.MyApp
+   
+In Microsoft Windows use same command but add the appropriate path.
+
+You can start each application server running com.example.MyApp (or other 
+applications) in the same way.
+
+Your application should now be running with the Terracotta second-level cache. 
+
+----
+Copyright (c) Terracotta, Inc.
+http://www.terracotta.org
