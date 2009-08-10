@@ -1,104 +1,88 @@
-Terracotta
-==========
+Getting Started with Terracotta - Simple Scale for Enterprise Java
+========================================================================
 
-Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
-Forums:        http://forums.terracotta.org
-Mailing Lists: http://lists.terracotta.org
-Services:      http://www.terracotta.org/web/display/enterprise/Support
+Terracotta offers powerful solutions for scaling Java applications and 
+accelerating their performance.
 
-
-Getting Started
----------------
-
-Below are abbreviated install steps for Terracotta.
-
-Terracotta
-   Unix/Linux:
-      - Unzip/untar the Terracotta software.
-      - cd into the top-level directory.
-      - Launch the Sample Application Launcher by entering the command:
-           ./tools/pojo/samples.sh
-   Windows:
-      - Run the Terracotta installer.
-      - Launch the Sample Application Launcher by entering the command:
-           tools\pojo\samples.bat
-           
-Terracotta DSO Eclipse Plug-in
-   Follow the installation directions at:
-      - http://www.terracotta.org/web/display/docs/Eclipse+Plugin+Guide
+This document helps you find the information needed to implement these 
+solutions for your use case.
 
 
-Sign Up
---------------
-To get the most out of your Terracotta experience, please sign up for a Terracotta account:
-    - http://www.terracotta.org/web/display/orgsite/Sign-up
+Terracotta for Hibernate
+------------------------
+Terracotta for Hibernate provides a superior performance-caching solution for 
+Hibernate without requiring that you integrate your Hibernate application with 
+Terracotta.
 
-With a Terracotta account, you can:
-    - Access all services with a site-wide ID
-    - Post questions to the Forums
-    - Submit JIRA reports
-    - Vote on bugs to be fixed, or features for the next release 
-    
-    
-Configuration File Samples
---------------------------
+Terracotta for Hibernate installation instructions are in 
+INSTALL_HIBERNATE_ONLY.TXT in the Terracotta home directory. 
 
-The tc-config-reference.xml file can be found in "docs" directory.
-
-This "config-examples" directory contains sample Terracotta configuration files
-appropriate for a typical deployment.
-
-The XML schema describing the configuration file format is documented in the
-"schema" directory; see schema/index.html.
-
-Sample Applications
--------------------
-
-Terracotta ships with sample applications to show by example how to use
-Terracotta to cluster the JVM.  The sample applications for Terracotta Sessions
-are available from links in the Session Configurator tool:
-
-Unix/Linux:
-   ./tools/sessions/sessions-configurator.sh
-Windows:
-   tools\sessions\sessions-configurator.bat
-
-For Terracotta Pojos, the sample applications are in the "samples/pojo" directory.
-You can exercise the samples and read the source code and config files via the Sample
-Application Launcher:
-
-Unix/Linux:
-   ./tools/sessions/samples.sh
-Windows:
-   tools\sessions\samples.bat
+Terracotta for Hibernate documentation is at 
+http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate
 
 
+Terracotta for Hibernate (Standard Clustering)
+----------------------------------------------
+If you require a standard Terracotta clustering solution with Hibernate, see
+http://www.terracotta.org/web/display/orgsite/Configuring+
+   Terracotta+Second-Level+Cache+for+Hibernate.
 
-Tools
---------------------
-
-The "bin" directory contains a script to start the Terracotta Developer Console.
-Launch the Console with the following command:
-
-Unix/Linux:
-   ./dev-console.sh
-
-Windows:
-   dev-console.bat
-
-The Console provides a view inside the Terracotta Server, letting you see
-activity inside Terracotta at run-time.
+The standard Terracotta clustering solution for Hibernate offers mainstream
+Terracotta features, such as session clustering, for Hibernate applications.
+This solution requires standard Terracotta configuration for locks, class 
+instrumentation, and root declaration.
 
 
-Terracotta Forge
---------------------
-Terracotta has integration modules (TIMs) that enable integration with many common frameworks,
-such as Hibernate, EHCache and Quartz. For the latest information please visit:
+Distributed Cache
+-----------------
+The Terracotta Distributed Cache is an interface providing a simple, efficient, 
+coherent, and fail-safe distributed eviction solution for map elements.
 
-    - http://www.terracotta.org/web/display/orgsite/Integration+Guides
+For more information on how to use the Terracotta Distributed Cache, see
+http://http://www.terracotta.org/web/display/docs/Terracotta+Distributed+Cache.
+  
 
-Projects for the Forge can be found at:
-    - http://forge.terracotta.org 
+Join the Terracotta Community
+-----------------------------
+Enjoy the following benefits by signing up for a Terracotta account:
+
+   -> Access all services with a site-wide ID
+   -> Post questions to the Forums
+   -> Submit JIRA reports
+   -> Vote on bugs to be fixed, or features for the next release 
+
+Sign up at http://www.terracotta.org/web/display/orgsite/Sign-up.
+
+
+Resources
+---------
+Release notes for this release are in releasenotes.txt in the Terracotta home
+directory. The latest release notes are also available on the web at 
+http://www.terracotta.org/web/display/docs/Release+Notes.
+
+The following directories under the Terracotta home directory contain useful 
+examples and information:
+
+ - docs: tc-config-reference.xml, an annotated Terracotta configuration file;
+   HTML files that link to online documentation; Javadoc.
+ - config-examples: Example use-case-specific Terracotta configuration files.
+ - tools: Scripts for running the sample POJO and sessions applications
+   are in the samples directory.
+ - samples: Sample applications, including configuration files and source code.
+ - bin: Scripts for administering, monitoring, and maintaining a Terracotta
+   cluster, including the Terracotta Developer Console (dev-console.sh or 
+   dev-console.bat), which provides deep visibility and diagnostics. Scripts are 
+   documented at http://www.terracotta.org/web/display/docs/Tools+Overview.
+ 
+Help and additional information is available on the web at the following URLs:
+
+ - Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
+ - Forums:        http://forums.terracotta.org
+ - Mailing Lists: http://lists.terracotta.org
+ - Services:      http://www.terracotta.org/web/display/enterprise/Support
+
+Installation instructions for Terracotta DSO Eclipse Plug-in are at
+http://www.terracotta.org/web/display/docs/Eclipse+Plugin+Guide.
 
      
 Java Virtual Machine
@@ -110,5 +94,5 @@ match the one used by the Terracotta Server. Control the JVM that the Terracotta
 uses by setting the JAVA_HOME environment variable.
 
 ----
-Copyright (c) 2009, Terracotta, Inc.
+Copyright (c) Terracotta, Inc.
 http://www.terracotta.org
