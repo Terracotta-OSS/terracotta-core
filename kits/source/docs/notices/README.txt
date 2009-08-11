@@ -15,7 +15,7 @@ Hibernate without requiring that you integrate your Hibernate application with
 Terracotta.
 
 Terracotta for Hibernate installation instructions are in 
-INSTALL_HIBERNATE_ONLY.TXT in the Terracotta home directory. 
+INSTALL_HIBERNATE_ONLY.txt in the Terracotta home directory. 
 
 Terracotta for Hibernate documentation is at 
 http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate
