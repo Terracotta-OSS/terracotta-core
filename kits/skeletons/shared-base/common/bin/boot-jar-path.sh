@@ -46,8 +46,12 @@ if test -z "$DSO_BOOT_JAR"; then
 
     exit 13
   fi
-
-  DSO_BOOT_JAR="${TC_INSTALL_DIR}/lib/dso-boot/${DSO_BOOT_JAR_NAME}"
+ 
+  BOOT_JAR_DIR="${TC_INSTALL_DIR}/lib/dso-boot"
+  if [ ! -d "${BOOT_JAR_DIR}" ]; then
+    mkdir -p "${BOOT_JAR_DIR}"
+  fi 
+  DSO_BOOT_JAR="${BOOT_JAR_DIR}/${DSO_BOOT_JAR_NAME}"
 fi
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
