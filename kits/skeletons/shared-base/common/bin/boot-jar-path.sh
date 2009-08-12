@@ -21,8 +21,7 @@ esac
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
-  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
-  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --unix "$TC_INSTALL_DIR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
 fi
 
 JAVACMD=${JAVA_HOME}/bin/java
@@ -30,7 +29,7 @@ TC_JAR=${TC_INSTALL_DIR}/lib/tc.jar
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
-  [ -n "$TC_JAR" ] && TC_JAR=`cygpath --windows "$TC_JAR"`
+  [ -n "$TC_JAR" ] && TC_JAR=`cygpath -d "$TC_JAR"`
 fi
 
 if test -z "$DSO_BOOT_JAR"; then
@@ -60,14 +59,14 @@ if $cygwin; then
     # cygpath -d only works if the file exists so we need 
     # to make sure the designated bootjar file existed first
     if [ -f "$DSO_BOOT_JAR" ]; then
-      DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+      DSO_BOOT_JAR=`cygpath -d "$DSO_BOOT_JAR"`
     else
       touch "$DSO_BOOT_JAR"
-      DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
+      DSO_BOOT_JAR=`cygpath -d "$DSO_BOOT_JAR"`
       rm "$DSO_BOOT_JAR"
     fi
   fi
-  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d --windows "$TC_CONFIG_PATH"`
+  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d "$TC_CONFIG_PATH"`
 fi
 
 echo "Starting BootJarTool..."

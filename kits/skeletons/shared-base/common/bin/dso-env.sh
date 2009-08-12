@@ -2,8 +2,6 @@
 
 #
 # All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
-
-
 #
 
 # OS specific support.  $var _must_ be set to either true or false.
@@ -14,7 +12,6 @@ esac
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin; then
-  [ -n "$JAVA_HOME" ] && JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath --unix "$TC_INSTALL_DIR"`
 fi
 
@@ -46,9 +43,9 @@ fi
 . "${TC_INSTALL_DIR}/bin/boot-jar-path.sh"
 
 if $cygwin; then
-  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath -d --windows "$DSO_BOOT_JAR"`
-  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d --windows "$TC_INSTALL_DIR"`
-  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d --windows "$TC_CONFIG_PATH"`
+  [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath -d "$DSO_BOOT_JAR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
+  [ -n "$TC_CONFIG_PATH" ] && TC_CONFIG_PATH=`cygpath -d "$TC_CONFIG_PATH"`
 fi
 
 TC_JAVA_OPTS="-Xbootclasspath/p:${DSO_BOOT_JAR} -Dtc.install-root=${TC_INSTALL_DIR}"
