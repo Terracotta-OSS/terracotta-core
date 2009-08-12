@@ -18,7 +18,6 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
        information. -->
   <clients>
     <logs>terracotta/client-logs/pojo/jtable/%D</logs>
-    <statistics>terracotta/client-statistics/pojo/jtable/%D</statistics>
   </clients>
 
   <application>

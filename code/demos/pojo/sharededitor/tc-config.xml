@@ -20,7 +20,6 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
        information.-->
   <clients>
     <logs>terracotta/client-logs/pojo/sharededitor/%D</logs>
-    <statistics>terracotta/client-statistics/pojo/sharededitor/%D</statistics>
   </clients>
   <application>
     <dso>
