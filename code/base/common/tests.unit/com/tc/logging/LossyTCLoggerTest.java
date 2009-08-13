@@ -131,4 +131,23 @@ public class LossyTCLoggerTest extends TCTestCase {
     lossyLogger.info("LogMessage-3");
     Assert.assertEquals(7, lossyLogger.getLogCount());
   }
+
+  public void testIsEnabledLogging() {
+    LossyTCLogger lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 1000, LossyTCLogger.TIME_BASED, false);
+    Assert.assertTrue(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    ThreadUtil.reallySleep(1500);
+    Assert.assertTrue(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+
+    lossyLogger = new LossyTCLogger(TCLogging.getConsoleLogger(), 5, LossyTCLogger.COUNT_BASED, false);
+    Assert.assertTrue(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    Assert.assertTrue(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+    Assert.assertFalse(lossyLogger.isLoggingEnabledNow());
+  }
 }

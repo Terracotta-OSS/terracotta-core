@@ -130,8 +130,14 @@ public class LossyTCLogger implements TCLogger {
     return logger.getName();
   }
 
+  public boolean isLoggingEnabledNow() {
+    return decider.isLoggingEnabledNow();
+  }
+
   interface LogOrNot {
     boolean canLog(final Object message);
+
+    boolean isLoggingEnabledNow();
   }
 
   private class TimeBasedDecider implements LogOrNot {
@@ -155,7 +161,6 @@ public class LossyTCLogger implements TCLogger {
           updateLogCount();
           return true;
         }
-        Assert.assertEquals(message, prevMessage);
       }
 
       prevMessage = message;
@@ -165,6 +170,10 @@ public class LossyTCLogger implements TCLogger {
         return true;
       }
       return false;
+    }
+
+    public boolean isLoggingEnabledNow() {
+      return canLog("");
     }
   }
 
@@ -188,7 +197,6 @@ public class LossyTCLogger implements TCLogger {
           updateLogCount();
           return true;
         }
-        Assert.assertEquals(message, prevMessage);
       }
 
       prevMessage = message;
@@ -198,6 +206,10 @@ public class LossyTCLogger implements TCLogger {
         return true;
       }
       return false;
+    }
+
+    public boolean isLoggingEnabledNow() {
+      return canLog("");
     }
   }
 
