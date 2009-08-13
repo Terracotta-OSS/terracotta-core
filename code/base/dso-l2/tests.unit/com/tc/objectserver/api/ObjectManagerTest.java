@@ -1866,7 +1866,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   }
 
-  private static class TestDateDNA implements DNA {
+  public static class TestDateDNA implements DNA {
 
     final ObjectID setID;
     final String   className;
