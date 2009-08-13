@@ -75,6 +75,9 @@ public final class EnumMapTestApp extends AbstractErrorCatchingTransparentApp {
     addFruitToBasket(getNextPieceOfFruit());
     waitForBasketToFill();
     verifyBasketOperations();
+    
+//    barrier.await();
+//    verifyNullValueBehavior();
   }
 
   private Fruit getNextPieceOfFruit() {
@@ -135,4 +138,28 @@ public final class EnumMapTestApp extends AbstractErrorCatchingTransparentApp {
     }
   }
 
+//  private void verifyNullValueBehavior() throws InterruptedException, BrokenBarrierException {
+//    int nodeId = barrier.await();
+//    
+//    if (nodeId == 0) {
+//      synchronized (clusteredFruitBasket) {
+//        clusteredFruitBasket.clear();
+//        for (Fruit f : Fruit.values()) {
+//          clusteredFruitBasket.put(f, null);
+//        }
+//      }
+//    }
+//    
+//    barrier.await();
+//
+//    try {
+//      synchronized (clusteredFruitBasket) {
+//        for (Fruit f : Fruit.values()) {
+//          Assert.assertNull("Null value mapped to " + f, clusteredFruitBasket.get(f));
+//        }
+//      }
+//    } finally {
+//      barrier.await();
+//    }
+//  }
 }
