@@ -39,7 +39,7 @@ public class InstallOptionsHelper {
   }
 
   public boolean pretend() {
-    return isOptionSet(InstallOption.PRETEND);
+    return isOptionSet(InstallOption.DRYRUN);
   }
 
   public boolean failFast() {

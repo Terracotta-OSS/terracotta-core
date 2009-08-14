@@ -113,7 +113,7 @@ public class UpdateCommand extends OneOrAllCommand {
   public void execute(CommandLine cli) {
     if (cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.FORCE);
     if (cli.hasOption(LONGOPT_OVERWRITE) || cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.OVERWRITE);
-    if (cli.hasOption(LONGOPT_PRETEND)) installOptions.add(InstallOption.PRETEND);
+    if (cli.hasOption(LONGOPT_PRETEND)) installOptions.add(InstallOption.DRYRUN);
     if (cli.hasOption(LONGOPT_NOVERIFY)) installOptions.add(InstallOption.SKIP_VERIFY);
     process(cli, modules);
   }

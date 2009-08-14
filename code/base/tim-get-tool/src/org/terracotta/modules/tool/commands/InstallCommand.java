@@ -17,7 +17,7 @@ public class InstallCommand extends OneOrAllCommand {
 
   private static final String             LONGOPT_OVERWRITE = "overwrite";
   private static final String             LONGOPT_FORCE     = "force";
-  private static final String             LONGOPT_PRETEND   = "pretend";
+  private static final String             LONGOPT_DRYRUN   = "dry-run";
   private static final String             LONGOPT_NOVERIFY  = "no-verify";
 
   private final Collection<InstallOption> installOptions;
@@ -26,7 +26,7 @@ public class InstallCommand extends OneOrAllCommand {
     options.addOption(buildOption(LONGOPT_ALL, "Install all compatible TIMs,  all other arguments are ignored"));
     options.addOption(buildOption(LONGOPT_OVERWRITE, "Install anyway, even if already installed"));
     options.addOption(buildOption(LONGOPT_FORCE, "Synonym to overwrite"));
-    options.addOption(buildOption(LONGOPT_PRETEND, "Do not perform actual installation"));
+    options.addOption(buildOption(LONGOPT_DRYRUN, "Do not perform actual installation"));
     options.addOption(buildOption(LONGOPT_NOVERIFY, "Skip checksum verification"));
     arguments.put("name", "The name of the integration module");
     arguments.put("version", "(OPTIONAL) The version used to qualify the name");
@@ -65,7 +65,7 @@ public class InstallCommand extends OneOrAllCommand {
   public void execute(CommandLine cli) {
     if (cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.FORCE);
     if (cli.hasOption(LONGOPT_OVERWRITE) || cli.hasOption(LONGOPT_FORCE)) installOptions.add(InstallOption.OVERWRITE);
-    if (cli.hasOption(LONGOPT_PRETEND)) installOptions.add(InstallOption.PRETEND);
+    if (cli.hasOption(LONGOPT_DRYRUN)) installOptions.add(InstallOption.DRYRUN);
     if (cli.hasOption(LONGOPT_NOVERIFY)) installOptions.add(InstallOption.SKIP_VERIFY);
     process(cli, modules);
   }
