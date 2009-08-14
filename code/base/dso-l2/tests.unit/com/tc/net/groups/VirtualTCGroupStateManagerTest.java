@@ -247,6 +247,8 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
   private void shutdown(TCGroupManagerImpl[] groupMgr) {
     // shut them down
     shutdown(groupMgr, 0, groupMgr.length);
+    // sleep for old stuffs to go away
+    ThreadUtil.reallySleep(5000);
   }
 
   private void shutdown(TCGroupManagerImpl[] groupMgr, int start, int end) {
