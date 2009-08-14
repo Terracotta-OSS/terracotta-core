@@ -14,9 +14,20 @@ delivers the following advantages:
 * Improves the performance of applications that use Hibernate as an ORM.
 * Distributes in-memory data using the fastest and most efficient 
   clustered-cache solution.
+  
+Terracotta for Hibernate is designed to provide a performance boost through a
+second-level cache implementation. It does not include standard clustering 
+features, such as sessions clustering. For standard clustering features, use 
+Terracotta for Hibernate (http://www.terracotta.org/web/display/orgsite/
+Configuring+Terracotta+With+Hibernate+Full+Integration).
 
 The following sections present, in order, the steps you should take to set up 
 and run your Hibernate application with the Terracotta second-level cache.
+
+NOTE: Do not consult the standard installation and configuration documentation
+for Terracotta, for Terracotta for Hibernate (Full Terracotta Integration),
+or for integrating web containers with Terracotta. Use only this README or
+the Quick Start Guide noted above.
 
 Installing and Updating
 -----------------------
@@ -41,8 +52,9 @@ In Microsoft Windows, use this command:
 
    ${TERRACOTTA_HOME}\bin\tim-get.bat update terracotta-hibernate-cache
 
-Do not add the <version> or the .jar file extension. Note that 
-terracotta-hibernate-agent-<version>.jar is a dependency of 
+Do not add the <version> or the .jar file extension. 
+
+NOTE: terracotta-hibernate-agent-<version>.jar is a dependency of 
 terracotta-hibernate-cache-<version>.jar and is updated automatically when you 
 update terracotta-hibernate-cache-<version>.jar.
 
@@ -75,11 +87,16 @@ Start your application (com.example.MyApp) with the following command:
    
 In Microsoft Windows use same command but add the appropriate path.
 
+NOTE: If you are using a web container, add the agent JAR to the web
+container's environment instead of including it on the command line. 
+For example, for Tomcat add the javaagent JAR to Tomcat's environment using the
+{{setenv.sh}} or {{setenv.bat}} script.
+
 You can start each application server running com.example.MyApp (or other 
 applications) in the same way.
 
 Your application should now be running with the Terracotta second-level cache. 
 
 ----
-Copyright (c) Terracotta, Inc.
+Copyright (c) 2009, Terracotta, Inc.
 http://www.terracotta.org

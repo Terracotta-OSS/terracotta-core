@@ -7,30 +7,29 @@ accelerating their performance.
 This document helps you find the information needed to implement these 
 solutions for your use case.
 
+For a general installation of Terracotta, see the 
 
-Terracotta for Hibernate
-------------------------
-Terracotta for Hibernate provides a superior performance-caching solution for 
-Hibernate without requiring that you integrate your Hibernate application with 
-Terracotta.
+Installation
+------------
+General installation instructions are in INSTALL.TXT in the Terracotta home 
+directory. 
 
-Terracotta for Hibernate installation instructions are in 
-INSTALL_HIBERNATE_ONLY.txt in the Terracotta home directory. 
+*Terracotta for Hibernate*
+Terracotta for Hibernate is an easy-to-install performance boost for Hibernate
+applications.
 
-Terracotta for Hibernate documentation is at 
-http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate
+If you are installing Terracotta for Hibernate, see INSTALL_HIBERNATE_ONLY.TXT
+in the Terracotta home directory. More Terracotta for Hibernate documentation 
+is at http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate.
 
+*Terracotta for Hibernate (Full Terracotta Integration)*
+Terracotta for Hibernate (Full Terracotta Integration) offers a performance 
+boost along with mainstream Terracotta features, such as session clustering, 
+for Hibernate applications.
 
-Terracotta for Hibernate (Standard Clustering)
-----------------------------------------------
-If you require a standard Terracotta clustering solution with Hibernate, see
-http://www.terracotta.org/web/display/orgsite/Configuring+
-   Terracotta+Second-Level+Cache+for+Hibernate.
-
-The standard Terracotta clustering solution for Hibernate offers mainstream
-Terracotta features, such as session clustering, for Hibernate applications.
-This solution requires standard Terracotta configuration for locks, class 
-instrumentation, and root declaration.
+If you are installing Terracotta for Hibernate (Full Terracotta Integration), 
+see http://www.terracotta.org/web/display/orgsite/
+Configuring+Terracotta+With+Hibernate+Full+Integration.
 
 
 Distributed Cache
@@ -39,7 +38,7 @@ The Terracotta Distributed Cache is an interface providing a simple, efficient,
 coherent, and fail-safe distributed eviction solution for map elements.
 
 For more information on how to use the Terracotta Distributed Cache, see
-http://http://www.terracotta.org/web/display/docs/Terracotta+Distributed+Cache.
+http://www.terracotta.org/web/display/docs/Terracotta+Distributed+Cache.
   
 
 Join the Terracotta Community

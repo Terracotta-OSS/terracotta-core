@@ -9,6 +9,12 @@ page (http://www.terracotta.org/web/display/docs/Platform Support).
 Use this installation document to ensure that your environment is ready to run 
 a cluster with Terracotta.
 
+NOTE: If you are installing Terracotta for Hibernate, see 
+INSTALL_HIBERNATE_ONLY.TXT in the Terracotta home directory. If you are
+installing Terracotta for Hibernate (Full Terracotta Integration), see
+http://www.terracotta.org/web/display/orgsite/
+Configuring+Terracotta+With+Hibernate+Full+Integration.
+
 
 General Considerations
 ----------------------
@@ -27,6 +33,7 @@ The following is a checklist of general preparedness issues:
   machines is clean. Terracotta clients are the application servers in a 
   cluster. A clean path has low latency (end-to-end Gigabit connections are 
   recommended), and no packet loss.
+* None of the network paths between cluster nodes are blocked by a firewall.
 * If Terracotta servers are configured to generate logs, be sure 
   there is enough space where the logs are stored. You can set the path for
   log files in the Terracotta configuration file (tc-config.xml by default) 
