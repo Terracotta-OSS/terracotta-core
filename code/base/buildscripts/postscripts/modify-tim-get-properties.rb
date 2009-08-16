@@ -15,7 +15,13 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     
     tim_get_properties_file = File.join(product_directory.to_s, args[0]['location'])
     types = args[1]['kit-type']
+
     new_props = types[kit_type]
+
+    if new_props.nil?
+      puts "XXX: kit-type #{kit_type} doen't overwrite any tim-get properties"
+      return
+    end
 
     tim_get_original_content = []
     File.open(tim_get_properties_file) do |f|
