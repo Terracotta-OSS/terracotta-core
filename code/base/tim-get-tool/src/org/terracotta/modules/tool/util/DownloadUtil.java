@@ -4,9 +4,9 @@
  */
 package org.terracotta.modules.tool.util;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 
+import com.tc.license.util.Base64;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -155,7 +155,7 @@ public class DownloadUtil {
 
       URLConnection connection = remoteFile.openConnection(proxy);
       if (proxyAuth != null) {
-        connection.setRequestProperty("Proxy-Authorization", "Basic " + Base64.encodeBase64(proxyAuth.getBytes()));
+        connection.setRequestProperty("Proxy-Authorization", "Basic " + Base64.encodeBytes(proxyAuth.getBytes()));
       }
       if (destinationFile.exists() && downloadOptions.ifModified()) {
         if (connection.getLastModified() < destinationFile.lastModified()) {
