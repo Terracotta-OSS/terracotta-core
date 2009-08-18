@@ -3,5 +3,6 @@
   <info organisation="org.terracotta" module="tim-get-tool"/>
   <dependencies defaultconf="default">
     <dependency name="guice" rev="1.0" org="com.google.code.guice"/>
+    <dependency name="commons-codec" rev="1.2" org="commons-codec"/>
   </dependencies>
 </ivy-module>

@@ -4,7 +4,9 @@
  */
 package org.terracotta.modules.tool.util;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
+
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -79,6 +81,7 @@ public class DownloadUtil {
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
   private Proxy            proxy;
+  private String           proxyAuth;
   private int              bufferSize          = DEFAULT_BUFFER_SIZE;
 
   public DownloadUtil() {
@@ -95,6 +98,10 @@ public class DownloadUtil {
 
   public void setProxy(Proxy proxy) {
     this.proxy = proxy;
+  }
+
+  public void setProxyAuth(String auth) {
+    this.proxyAuth = auth;
   }
 
   public int getBufferSize() {
@@ -147,6 +154,9 @@ public class DownloadUtil {
       }
 
       URLConnection connection = remoteFile.openConnection(proxy);
+      if (proxyAuth != null) {
+        connection.setRequestProperty("Proxy-Authorization", "Basic " + Base64.encodeBase64(proxyAuth.getBytes()));
+      }
       if (destinationFile.exists() && downloadOptions.ifModified()) {
         if (connection.getLastModified() < destinationFile.lastModified()) {
           // TODO: log the fact that download was skipped

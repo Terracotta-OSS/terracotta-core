@@ -88,6 +88,7 @@ class AppContext implements Module, ConfigAnnotation {
           SocketAddress proxyAddress = new InetSocketAddress(proxyUrl.getHost(), proxyUrl.getPort());
           Proxy proxy = new Proxy(Type.HTTP, proxyAddress);
           downloadUtil.setProxy(proxy);
+          downloadUtil.setProxyAuth(config.getProxyAuth());
         }
         return downloadUtil;
       }

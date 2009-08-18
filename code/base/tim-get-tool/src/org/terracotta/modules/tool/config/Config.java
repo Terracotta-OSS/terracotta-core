@@ -28,16 +28,19 @@ public class Config {
   public static final String RELATIVE_URL_BASE     = "relativeUrlBase";
   public static final String INCLUDE_SNAPSHOTS     = "includeSnapshots";
   public static final String PROXY_URL             = "proxyUrl";
+  public static final String PROXY_AUTH            = "proxyAuth";
   public static final String MODULES_DIR           = "modulesDir";
   public static final String DATA_FILE_URL         = "dataFileUrl";
   public static final String CACHE                 = "cache";
   public static final String DATA_CACHE_EXPIRATION = "dataCacheExpirationInSeconds";
+  public static final String ENV_TIMGET_PROXY_AUTH = "TIMGET_PROXY_AUTH";
 
   private String             tcVersion;
   private String             apiVersion;
   private URI                relativeUrlBase;
   private boolean            includeSnapshots;
   private URL                proxyUrl;
+  private String             proxyAuth;
   private File               modulesDirectory;
   private URL                dataFileUrl;
   private File               indexFile;
@@ -71,7 +74,12 @@ public class Config {
     this.setIndexFile(new File(cachePath, new File(dataUrl).getName()));
 
     String proxy = getProperty(properties, PROXY_URL);
-    if (proxy != null) this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
+    if (proxy != null) {
+      this.setProxyUrl(createUrl(proxy, "Proxy URL is not a valid URL"));
+      // proxy authentication can be obtained from tim-get.properties or environment variable
+      this.proxyAuth = getProperty(properties, PROXY_AUTH, System.getenv(ENV_TIMGET_PROXY_AUTH));
+    }
+
   }
 
   private static URL createUrl(String urlString, String errorMessage) {
@@ -98,6 +106,14 @@ public class Config {
     this.proxyUrl = proxyUrl;
   }
 
+  public void setProxyAuth(String auth) {
+    this.proxyAuth = auth;
+  }
+
+  public String getProxyAuth() {
+    return proxyAuth;
+  }
+
   public String getTcVersion() {
     return tcVersion;
   }
@@ -105,11 +121,11 @@ public class Config {
   public void setTcVersion(String tcVersion) {
     this.tcVersion = tcVersion;
   }
-  
+
   public String getApiVersion() {
     return apiVersion;
   }
-  
+
   public void setApiVersion(String apiVersion) {
     this.apiVersion = apiVersion;
   }
@@ -161,15 +177,15 @@ public class Config {
   public boolean getIncludeSnapshots() {
     return includeSnapshots;
   }
-  
+
   public boolean isEnterpriseKit() {
     return isEdition(ProductInfo.ENTERPRISE);
   }
-  
+
   public boolean isOpenSourceKit() {
     return isEdition(ProductInfo.OPENSOURCE);
   }
-  
+
   private boolean isEdition(String edition) {
     return ProductInfo.getInstance().edition().equals(edition);
   }
