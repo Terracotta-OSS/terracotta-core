@@ -82,8 +82,10 @@ In Microsoft Windows use the following command:
 
 Start your application (com.example.MyApp) with the following command:
 
-   java -javaagent:/path/to/terracotta-hibernate-agent-<version>.jar \
-   > com.example.MyApp
+   java \
+     -javaagent:/path/to/terracotta-hibernate-agent-<version>.jar \
+     -cp /path/to/terracotta-hibernate-cache-<version>.jar \
+     com.example.MyApp
    
 In Microsoft Windows use same command but add the appropriate path.
 
