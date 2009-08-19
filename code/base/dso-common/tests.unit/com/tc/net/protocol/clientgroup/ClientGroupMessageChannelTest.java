@@ -311,11 +311,8 @@ public class ClientGroupMessageChannelTest extends TCTestCase {
     assertEquals(L2_COUNT, groupChannel.getConnectCount());
     assertEquals(L2_COUNT, groupChannel.getConnectAttemptCount());
 
-    for (int i = 0; i < L2_COUNT; ++i) {
-      lsnr[i].stop(WAIT);
-      assertEquals(0, serverComms[i].getAllListeners().length);
-    }
-
+    // keep L2 sockets alive to prevent ports used by L1 due to all in localhost
+    
     clientComms.getConnectionManager().closeAllConnections(5000);
     int count = groupChannel.getConnectAttemptCount();
     ThreadUtil.reallySleep(WAIT * 4);
