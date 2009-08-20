@@ -132,8 +132,8 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
 
       if (!status.isEstablished()) {
-        logger.info(message.toString());
-        logger.warn("Ignoring the message received for an Un-Established Connection");
+        logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
+                    + message);
         message.recycle();
         return;
       }
@@ -274,7 +274,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {
-    return "Your product key only allows maximum " + maxConnections  + " clients to connect.";
+    return "Your product key only allows maximum " + maxConnections + " clients to connect.";
   }
 
   TCProtocolAdaptor getProtocolAdapter() {

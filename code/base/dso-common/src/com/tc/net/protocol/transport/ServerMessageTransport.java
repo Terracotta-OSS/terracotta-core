@@ -51,6 +51,18 @@ public class ServerMessageTransport extends MessageTransportBase {
         message.recycle();
         return;
       }
+
+      /*
+       * Server Tx can move from START to CLOSED state on client connection restore failure (Client ACK would have
+       * reached the server, but worker thread might not have processed it yet and the OOOReconnectTimeout thread pushed
+       * the Server Tx to closed state).
+       */
+      if (!status.isEstablished()) {
+        logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
+                    + message);
+        message.recycle();
+        return;
+      }
     }
     // ReceiveToReceiveLayer(message) takes care of verifying the handshake message
     super.receiveToReceiveLayer(message);
@@ -58,7 +70,7 @@ public class ServerMessageTransport extends MessageTransportBase {
 
   private void verifyAndHandleAck(WireProtocolMessage message) {
     if (!verifyAck(message)) {
-      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message, 
+      handleHandshakeError(new TransportHandshakeErrorContext("Expected an ACK message but received: " + message,
                                                               TransportHandshakeError.ERROR_HANDSHAKE));
     } else {
       handleAck((TransportHandshakeMessage) message);

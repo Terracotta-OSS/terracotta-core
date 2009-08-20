@@ -99,7 +99,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       if (message.getSource() == this.connection) {
         receiveTransportMessageImpl(message);
       } else {
-        logger.warn("Received message from an old connection: " + message);
+        logger.warn("Received message from an old connection: " + message.getSource() + "; " + message);
       }
     }
   }
