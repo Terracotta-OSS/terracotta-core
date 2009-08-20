@@ -18,6 +18,7 @@ import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /*
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
@@ -34,14 +35,14 @@ public class TCPProxy {
   private long                      delay;
   private final int                 listenPort;
   private final InetSocketAddress[] endpoints;
-  private int                       roundRobinSequence;
+  private AtomicInteger             roundRobinSequence = new AtomicInteger(0);
   private ServerSocket              serverSocket;
   private Thread                    acceptThread;
   private volatile boolean          stop;
-  private final Set                 connections  = new HashSet();
+  private final Set                 connections        = new HashSet();
   private final File                logDir;
   private final boolean             logData;
-  private boolean                   reuseAddress = false;
+  private boolean                   reuseAddress       = false;
 
   public TCPProxy(int listenPort, InetAddress destHost, int destPort, long delay, boolean logData, File logDir) {
     this(listenPort, new InetSocketAddress[] { new InetSocketAddress(destHost, destPort) }, delay, logData, logDir);
@@ -51,7 +52,6 @@ public class TCPProxy {
    * If multiple endpoints are used, then the proxy will round robin between them.
    */
   public TCPProxy(int listenPort, InetSocketAddress[] endpoints, long delay, boolean logData, File logDir) {
-    this.roundRobinSequence = 0;
     this.debug = false;
     this.stop = false;
     this.listenPort = listenPort;
@@ -83,7 +83,7 @@ public class TCPProxy {
   public boolean probeBackendConnection() {
     Socket connectedSocket = null;
     for (int pos = 0; pos < endpoints.length; ++pos) {
-      final int roundRobinOffset = (pos + roundRobinSequence) % endpoints.length;
+      final int roundRobinOffset = (pos + roundRobinSequence.get()) % endpoints.length;
       try {
         connectedSocket = new Socket(endpoints[roundRobinOffset].getAddress(), endpoints[roundRobinOffset].getPort());
         break;
@@ -303,8 +303,8 @@ public class TCPProxy {
     }
   }
 
-  private synchronized int getAndIncrementRoundRobinSequence() {
-    return roundRobinSequence++;
+  private int getAndIncrementRoundRobinSequence() {
+    return roundRobinSequence.incrementAndGet();
   }
 
   void deregister(Connection connection) {
