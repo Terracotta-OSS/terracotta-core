@@ -108,6 +108,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     original_no_demo = @no_demo
     @no_demo = true
+    @no_schema = true
     begin
       product_definition_files(flavor).each do |def_file|
         puts "Processing def file #{def_file}"
