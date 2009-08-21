@@ -15,25 +15,28 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.util.Assert;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+import javax.management.remote.JMXConnector;
 import javax.management.remote.message.Message;
 
 public class ClientTunnelingEventHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
 
   public static final class L1ConnectionMessage implements EventContext {
 
-    private final MBeanServer    mbs;
-    private final MessageChannel channel;
-    private final Map            channelIdToJmxConnector;
-    private final Map            channelIdToMsgConnection;
-    private final boolean        isConnectingMsg;
+    private final MBeanServer                                          mbs;
+    private final MessageChannel                                       channel;
+    private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
+    private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
+    private final boolean                                              isConnectingMsg;
 
-    public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, Map channelIdToJmxConnector,
-                               Map channelIdToMsgConnection, boolean isConnectingMsg) {
+    public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel,
+                               ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
+                               ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection,
+                               boolean isConnectingMsg) {
       this.mbs = mbs;
       this.channel = channel;
       this.channelIdToJmxConnector = channelIdToJmxConnector;
@@ -55,11 +58,11 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
       return channel;
     }
 
-    public Map getChannelIdToJmxConnector() {
+    public ConcurrentMap<ChannelID, JMXConnector> getChannelIdToJmxConnector() {
       return channelIdToJmxConnector;
     }
 
-    public Map getChannelIdToMsgConnector() {
+    public ConcurrentMap<ChannelID, TunnelingMessageConnection> getChannelIdToMsgConnector() {
       return channelIdToMsgConnection;
     }
 
@@ -68,22 +71,24 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     }
   }
 
-  private static final TCLogger logger = TCLogging.getLogger(ClientTunnelingEventHandler.class);
+  private static final TCLogger                                      logger = TCLogging
+                                                                                .getLogger(ClientTunnelingEventHandler.class);
 
-  private final Map             channelIdToJmxConnector;
-  private final Map             channelIdToMsgConnection;
-  private final MBeanServer     l2MBeanServer;
-  private final Object          sinkLock;
-  private Sink                  connectStageSink;
-  private Sink                  disconnectStageSink;
+  private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
+  private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
+  private final MBeanServer                                          l2MBeanServer;
+  private final Object                                               sinkLock;
+  private Sink                                                       connectStageSink;
+  private Sink                                                       disconnectStageSink;
 
   public ClientTunnelingEventHandler() {
     l2MBeanServer = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
-    channelIdToJmxConnector = new HashMap();
-    channelIdToMsgConnection = new HashMap();
+    channelIdToJmxConnector = new ConcurrentHashMap<ChannelID, JMXConnector>();
+    channelIdToMsgConnection = new ConcurrentHashMap<ChannelID, TunnelingMessageConnection>();
     sinkLock = new Object();
   }
 
+  @Override
   public void handleEvent(final EventContext context) {
     if (context instanceof L1JmxReady) {
       final L1JmxReady readyMessage = (L1JmxReady) context;
@@ -116,9 +121,9 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     final MessageChannel channel = messageEnvelope.getChannel();
     final ChannelID channelID = channel.getChannelID();
     final TunnelingMessageConnection tmc;
-    synchronized (channelIdToMsgConnection) {
-      tmc = (TunnelingMessageConnection) channelIdToMsgConnection.get(channelID);
-    }
+
+    tmc = channelIdToMsgConnection.get(channelID);
+
     if (tmc != null) {
       tmc.incomingNetworkMessage(message);
     } else {

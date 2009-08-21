@@ -1,7 +1,10 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
+
+import com.tc.net.protocol.tcm.MessageChannel;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -12,8 +15,6 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorProvider;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.generic.GenericConnector;
-
-import com.tc.net.protocol.tcm.MessageChannel;
 
 public class ClientProvider implements JMXConnectorProvider {
 
@@ -31,9 +32,13 @@ public class ClientProvider implements JMXConnectorProvider {
     final MessageChannel channel = (MessageChannel) terracottaEnvironment.remove(JMX_MESSAGE_CHANNEL);
     final TunnelingMessageConnection tmc = new TunnelingMessageConnection(channel, false);
     final Map channelIdToMsgConnection = (Map) terracottaEnvironment.remove(CONNECTION_LIST);
-    synchronized (channelIdToMsgConnection) {
-      channelIdToMsgConnection.put(channel.getChannelID(), tmc);
+
+    TunnelingMessageConnection prev = (TunnelingMessageConnection) channelIdToMsgConnection.put(channel.getChannelID(),
+                                                                                                tmc);
+    if (prev != null) {
+      prev.close();
     }
+
     terracottaEnvironment.put(GenericConnector.MESSAGE_CONNECTION, tmc);
     return new GenericConnector(terracottaEnvironment);
   }

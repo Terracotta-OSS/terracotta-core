@@ -14,6 +14,7 @@ import com.tc.management.remote.protocol.terracotta.ClientProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingMessageConnection;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler.L1ConnectionMessage;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.statistics.StatisticsGateway;
 
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
@@ -108,8 +110,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     if (remoteAddress == null) { return; }
 
     final MBeanServer l2MBeanServer = msg.getMBeanServer();
-    final Map channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
-    final Map channelIdToMsgConnection = msg.getChannelIdToMsgConnector();
+    final ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
+    final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnector = msg.getChannelIdToMsgConnector();
     synchronized (channelIdToJmxConnector) {
       if (!channelIdToJmxConnector.containsKey(channel.getChannelID())) {
         JMXServiceURL serviceURL;
@@ -124,7 +126,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         Map environment = new HashMap();
         ProtocolProvider.addTerracottaJmxProvider(environment);
         environment.put(ClientProvider.JMX_MESSAGE_CHANNEL, channel);
-        environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnection);
+        environment.put(ClientProvider.CONNECTION_LIST, channelIdToMsgConnector);
         environment.put("jmx.remote.x.request.timeout", new Long(Long.MAX_VALUE));
         environment.put("jmx.remote.x.client.connection.check.period", new Long(0));
         environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
@@ -200,37 +202,30 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
   private void removeJmxConnection(final L1ConnectionMessage msg) {
     final MessageChannel channel = msg.getChannel();
-    final Map channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
-    final Map channelIdToMsgConnection = msg.getChannelIdToMsgConnector();
+    ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector = msg.getChannelIdToJmxConnector();
+    ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnector = msg.getChannelIdToMsgConnector();
 
     try {
-      synchronized (channelIdToMsgConnection) {
-        final TunnelingMessageConnection tmc = (TunnelingMessageConnection) channelIdToMsgConnection.remove(channel
-            .getChannelID());
-        if (tmc != null) {
-          tmc.close();
-        }
+      final TunnelingMessageConnection tmc = channelIdToMsgConnector.remove(channel.getChannelID());
+      if (tmc != null) {
+        tmc.close();
       }
     } catch (Throwable t) {
       logger.error("unhandled exception closing TunnelingMessageConnection for " + channel, t);
     }
 
     try {
-      synchronized (channelIdToJmxConnector) {
-        if (channelIdToJmxConnector.containsKey(channel.getChannelID())) {
-          final JMXConnector jmxConnector = (JMXConnector) channelIdToJmxConnector.remove(channel.getChannelID());
-          if (jmxConnector != null) {
-            statisticsGateway.removeStatisticsAgent(channel.getChannelID());
+      final JMXConnector jmxConnector = channelIdToJmxConnector.remove(channel.getChannelID());
+      if (jmxConnector != null) {
+        statisticsGateway.removeStatisticsAgent(channel.getChannelID());
 
-            try {
-              jmxConnector.close();
-            } catch (IOException ioe) {
-              logger.debug("Unable to close JMX connector to DSO client[" + channel + "]", ioe);
-            }
-          }
-        } else {
-          logger.debug("DSO client channel closed without a corresponding tunneled JMX connection");
+        try {
+          jmxConnector.close();
+        } catch (IOException ioe) {
+          logger.debug("Unable to close JMX connector to DSO client[" + channel + "]", ioe);
         }
+      } else {
+        logger.debug("DSO client channel closed without a corresponding tunneled JMX connection");
       }
     } catch (Throwable t) {
       logger.error("unhandled exception closing JMX connector for " + channel, t);
