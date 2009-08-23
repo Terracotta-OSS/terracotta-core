@@ -248,70 +248,80 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
     private void handleSyn(SynMessage syn) throws StackNotFoundException {
       ConnectionID connectionId = syn.getConnectionId();
+      boolean isMaxConnectionReached = false;
 
       if (connectionId == null) {
+        this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
+                                                                    createHandshakeErrorHandler(),
+                                                                    handshakeMessageFactory, transportListeners);
         sendSynAck(connectionId,
                    new TransportHandshakeErrorContext("Invalid connection id: " + connectionId,
                                                       TransportHandshakeError.ERROR_INVALID_CONNECTION_ID), syn
-                       .getSource());
+                       .getSource(), isMaxConnectionReached);
         this.isHandshakeError = true;
         return;
       }
 
-      try {
-        this.transport = attachNewConnection(connectionId, syn.getSource());
-      } catch (IllegalReconnectException e) {
-        logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
-        return;
+      /*
+       * Clients after max License Count are not given any valid clientID. clients anyway close after seeing max
+       * connection error message from server.
+       */
+      synchronized (connectionPolicy) {
+        if (connectionPolicy.isMaxConnectionsReached()) {
+          isMaxConnectionReached = true;
+          this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
+                                                                      createHandshakeErrorHandler(),
+                                                                      handshakeMessageFactory, transportListeners);
+        } else {
+          isMaxConnectionReached = false;
+          try {
+            this.transport = attachNewConnection(connectionId, syn.getSource());
+          } catch (IllegalReconnectException e) {
+            logger.warn("Client attempting an illegal reconnect for id " + connectionId + ", " + syn.getSource());
+            return;
+          }
+          connectionId = this.transport.getConnectionId();
+          boolean clientAdded = connectionPolicy.connectClient(connectionId);
+          Assert.assertTrue(clientAdded);
+        }
       }
 
       this.transport.setRemoteCallbackPort(syn.getCallbackPort());
-
       // now check that the client side stack and server side stack are both in sync
-
-      // get the client side stack layer
       short clientStackLayerFlags = syn.getStackLayerFlags();
-      // get the server side stack layer
       short serverStackLayerFlags = this.transport.getCommunicationStackFlags(this.transport);
 
       // compare the two and send an error if there is a mismatch
       // send the layers present at the server side in the error message
-      if (clientStackLayerFlags != serverStackLayerFlags) {
+      if ((!isMaxConnectionReached) && (clientStackLayerFlags != serverStackLayerFlags)) {
         String layersPresentInServer = "Layers Present in Server side communication stack: ";
-        // get the names of stack layers present
         layersPresentInServer += this.transport.getCommunicationStackNames(this.transport);
-        // send the SynAck with the error
         sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
                                                                     TransportHandshakeError.ERROR_STACK_MISMATCH), syn
-            .getSource());
-
+            .getSource(), false);
         if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger
             .error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
         else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
         this.isHandshakeError = true;
         return;
       }
-      connectionId = this.transport.getConnectionId();
-      sendSynAck(connectionId, syn.getSource());
+      sendSynAck(connectionId, syn.getSource(), isMaxConnectionReached);
     }
 
     private boolean verifySyn(WireProtocolMessage message) {
       return message instanceof TransportHandshakeMessage && (((TransportHandshakeMessage) message).isSyn());
     }
 
-    private void sendSynAck(ConnectionID connectionId, TCConnection source) {
+    private void sendSynAck(ConnectionID connectionId, TCConnection source, boolean isMaxConnectionReached) {
       source.addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
-      sendSynAck(connectionId, null, source);
+      sendSynAck(connectionId, null, source, isMaxConnectionReached);
     }
 
-    private void sendSynAck(ConnectionID connectionId, TransportHandshakeErrorContext errorContext, TCConnection source) {
+    private void sendSynAck(ConnectionID connectionId, TransportHandshakeErrorContext errorContext,
+                            TCConnection source, boolean isMaxConnectionsReached) {
       TransportHandshakeMessage synAck;
       boolean isError = (errorContext != null);
       int maxConnections = connectionPolicy.getMaxConnections();
-      boolean isMaxConnectionsReached = false;
-      // clients after max connections are not added. clients anyway close after seeing max connection reached
-      // message. Server on getting the close event from these clients, removes the stack harness.
-      isMaxConnectionsReached = connectionPolicy.connectClient(connectionId) ? false : true;
       if (isError) {
         synAck = handshakeMessageFactory.createSynAck(connectionId, errorContext, source, isMaxConnectionsReached,
                                                       maxConnections);
