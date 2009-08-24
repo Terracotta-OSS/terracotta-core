@@ -118,7 +118,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get resource URL
-   *
+   * 
    * @param name Resource name
    * @param cl Loading classloader
    * @return URL to load resource from
@@ -130,23 +130,12 @@ public class ClassProcessorHelper {
     }
 
     URL resource = getClassResource(className, cl, false);
-
-    if (null == resource) {
-      if (!isAWRuntimeDependency(className)) { return null; }
-
-      try {
-        resource = tcLoader.findResource(name); // getResource() would cause an endless loop
-      } catch (Exception e) {
-        resource = null;
-      }
-    }
-
     return resource;
   }
 
   /**
    * Get the exported class if defined. This method is called from java.lang.ClassLoader.loadClassInternal()
-   *
+   * 
    * @param name Class name
    * @param cl Classloader
    * @return Class bytes
@@ -154,12 +143,6 @@ public class ClassProcessorHelper {
    */
   public static byte[] loadClassInternalHook(String name, ClassLoader cl) throws ClassNotFoundException {
     URL resource = getClassResource(name, cl, true);
-
-    if (null == resource) {
-      if (!isAWRuntimeDependency(name)) { return null; }
-
-      resource = tcLoader.findResource(name.replace('.', '/') + ".class"); // getResource() would cause an endless loop
-    }
 
     if (null == resource) { return null; }
 
@@ -209,14 +192,6 @@ public class ClassProcessorHelper {
     }
 
     return null;
-  }
-
-  private static boolean isAWRuntimeDependency(String name) {
-    if (null == name) { return false; }
-    return name.startsWith("com.tcspring.");
-    // || name.startsWith("com.tc.aspectwerkz.definition.deployer.AspectModule")
-    // || name.equals("com.tc.aspectwerkz.aspect.AspectContainer")
-    // || name.equals("com.tc.aspectwerkz.aspect.AbstractAspectContainer");
   }
 
   private static void handleError(Throwable t) {
@@ -383,7 +358,7 @@ public class ClassProcessorHelper {
       }
     }
   }
-  
+
   private static void initTCLogging() throws Exception {
     Class loggerClass = tcLoader.loadClass("com.tc.logging.Log4jSafeInit");
     Method theMethod = loggerClass.getMethod("init", new Class[0]);
@@ -391,9 +366,8 @@ public class ClassProcessorHelper {
   }
 
   /**
-   * @deprecated here so that old code is not broken. New classloader adapters should be
-   * registered with {@link #registerGlobalLoader(NamedClassLoader, String)} to support
-   * classloader app-group substitution.
+   * @deprecated here so that old code is not broken. New classloader adapters should be registered with
+   *             {@link #registerGlobalLoader(NamedClassLoader, String)} to support classloader app-group substitution.
    */
   @Deprecated
   public static void registerGlobalLoader(NamedClassLoader loader) {
@@ -402,8 +376,9 @@ public class ClassProcessorHelper {
 
   /**
    * Register a named classloader.
-   * @param webAppName the name of a web application that this is the loader for; or null if this is not
-   * a web application classloader.
+   * 
+   * @param webAppName the name of a web application that this is the loader for; or null if this is not a web
+   *        application classloader.
    */
   public static void registerGlobalLoader(NamedClassLoader loader, String webAppName) {
     if (!USE_GLOBAL_CONTEXT) { throw new IllegalStateException("Not global DSO mode"); }
@@ -427,7 +402,7 @@ public class ClassProcessorHelper {
 
   /**
    * Given a context path, trim and condition it to be usable by methods such as {@link #isDSOSessions(String)}
-   *
+   * 
    * @param context a servlet context path, as from HttpServletContext#getPath(); null, "", "/", or "//" will be
    *        interpreted as ROOT context.
    * @return a non-null, non-empty string
@@ -435,9 +410,7 @@ public class ClassProcessorHelper {
   public static String computeAppName(String context) {
     // compute app name
     // deal with possible app strings: null, "", "/", "/xyz", "xyz/", "/xyz/"
-    if (context == null) {
-      return ROOT_WEB_APP_NAME;
-    }
+    if (context == null) { return ROOT_WEB_APP_NAME; }
     context = context.trim();
     if (context.startsWith("/")) {
       context = context.substring(1);
@@ -445,15 +418,13 @@ public class ClassProcessorHelper {
     if (context.endsWith("/")) {
       context = context.substring(0, context.length() - 2);
     }
-    if (context.length() == 0) {
-      return ROOT_WEB_APP_NAME;
-    }
+    if (context.length() == 0) { return ROOT_WEB_APP_NAME; }
     return context;
   }
 
   /**
    * Check whether this web app is using DSO sessions
-   *
+   * 
    * @param appName Web app name
    * @return True if DSO sessions enabled
    */
@@ -472,7 +443,7 @@ public class ClassProcessorHelper {
 
   /**
    * WARNING: Used by test framework only
-   *
+   * 
    * @param loader Loader
    * @param context DSOContext
    */
@@ -505,7 +476,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get the DSOContext for this classloader
-   *
+   * 
    * @param cl Loader
    * @return Context
    */
@@ -535,7 +506,7 @@ public class ClassProcessorHelper {
    * XXX::NOTE:: Do NOT optimize to return same input byte array if the class was instrumented (I can't imagine why we
    * would). Our instrumentation in java.lang.ClassLoader checks the returned byte array to see if the class is
    * instrumented or not to maintain the array offset.
-   *
+   * 
    * @param caller Loader defining class
    * @param name Class name
    * @param b Data
@@ -577,7 +548,7 @@ public class ClassProcessorHelper {
 
   /**
    * Post process class during definition
-   *
+   * 
    * @param clazz Class being defined
    * @param caller Classloader doing definition
    */
@@ -616,7 +587,7 @@ public class ClassProcessorHelper {
 
   /**
    * Check whether this is an AspectWerkz dependency
-   *
+   * 
    * @param className Class name
    * @return True if AspectWerkz dependency
    */
@@ -632,7 +603,7 @@ public class ClassProcessorHelper {
 
   /**
    * Get type of lock used by sessions
-   *
+   * 
    * @param appName Web app context
    * @return Lock type
    */
