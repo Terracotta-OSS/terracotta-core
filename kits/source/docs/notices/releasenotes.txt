@@ -1,12 +1,12 @@
 
-Nightly Build from Trunk
-
+3.1.0 
 
 Documentation: http://www.terracotta.org/web/display/docs/Home
 Forums:        http://forums.terracotta.org/forums/forums/list.page
 Mailing Lists: http://lists.terracotta.org
 Support:       http://www.terracotta.org/web/display/enterprise/Support
+Release Notes:  http://www.terracotta.org/web/display/docs/Release+Notes
 
-
+----------------------------------------
 Copyright Terracotta, Inc. All rights reserved. 
 http://www.terracotta.org

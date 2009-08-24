@@ -3,8 +3,9 @@ Preparing to Run a Terracotta Cluster
 
 This document is part of the Terracotta download for supported UNIX/Linux 
 platforms and Microsoft Windows. For the latest supported platforms, 
-including JVMs and application servers, see the Terracotta Platform Support 
-page (http://www.terracotta.org/web/display/docs/Platform Support).
+including JVMs and application servers, see the list of certified Terracotta 
+platforms at http://www.terracotta.org/kit/reflector?kitID=3.1&
+pageID=PlatformSupport.
 
 Use this installation document to ensure that your environment is ready to run 
 a cluster with Terracotta.
@@ -12,8 +13,8 @@ a cluster with Terracotta.
 NOTE: If you are installing Terracotta for Hibernate, see 
 INSTALL_HIBERNATE_ONLY.TXT in the Terracotta home directory. If you are
 installing Terracotta for Hibernate (Full Terracotta Integration), see
-http://www.terracotta.org/web/display/orgsite/
-Configuring+Terracotta+With+Hibernate+Full+Integration.
+http://www.terracotta.org/kit/reflector?kitID=3.1&
+pageID=HibernateFullIntegration.
 
 
 General Considerations
@@ -50,7 +51,7 @@ Run this script from the Terracotta bin directory on each Terracotta client.
 There are other methods to create the Terracotta boot JAR, such as using the
 Terracotta dso-java.sh (or dso-java.bat) script. You can find out more about
 boot-JAR related scripts by searching the Terracotta Tools Catalog
-(http://www.terracotta.org/web/display/docs/Tools+Overview).
+(http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=ToolsOverview).
 
 Configuring Terracotta
 ----------------------
@@ -84,8 +85,8 @@ Then start all clients with the following flag:
 Clients started this way obtain their configuration from the specified server 
 (see Starting Terracotta, below).
 
-See Working with Terracotta Configuration Files (http://www.terracotta.org/web/
-display/docs/About+Terracotta+Configuration+Files) for more information on how 
+See http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=
+AboutConfigurationFiles for more information on how 
 Terracotta configuration is propagated.
 
 

@@ -20,7 +20,8 @@ applications.
 
 If you are installing Terracotta for Hibernate, see INSTALL_HIBERNATE_ONLY.TXT
 in the Terracotta home directory. More Terracotta for Hibernate documentation 
-is at http://www.terracotta.org/web/display/orgsite/Terracotta+for+Hibernate.
+is at http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=
+HibernateForYourApp.
 
 *Terracotta for Hibernate (Full Terracotta Integration)*
 Terracotta for Hibernate (Full Terracotta Integration) offers a performance 
@@ -28,8 +29,8 @@ boost along with mainstream Terracotta features, such as session clustering,
 for Hibernate applications.
 
 If you are installing Terracotta for Hibernate (Full Terracotta Integration), 
-see http://www.terracotta.org/web/display/orgsite/
-Configuring+Terracotta+With+Hibernate+Full+Integration.
+see http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=
+HibernateFullIntegration.
 
 
 Distributed Cache
@@ -38,7 +39,7 @@ The Terracotta Distributed Cache is an interface providing a simple, efficient,
 coherent, and fail-safe distributed eviction solution for map elements.
 
 For more information on how to use the Terracotta Distributed Cache, see
-http://www.terracotta.org/web/display/docs/Terracotta+Distributed+Cache.
+http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=DistributedCache.
   
 
 Join the Terracotta Community
@@ -71,7 +72,8 @@ examples and information:
  - bin: Scripts for administering, monitoring, and maintaining a Terracotta
    cluster, including the Terracotta Developer Console (dev-console.sh or 
    dev-console.bat), which provides deep visibility and diagnostics. Scripts are 
-   documented at http://www.terracotta.org/web/display/docs/Tools+Overview.
+   documented at http://www.terracotta.org/kit/reflector?kitID=3.1&
+   pageID=ToolsOverview.
  
 Help and additional information is available on the web at the following URLs:
 
