@@ -121,7 +121,7 @@ public class ServerStackProviderTest extends TCTestCase {
     assertEquals(new Boolean(connectionPolicy.maxConnectionsExceeded), args.getIsMaxConnectionsExceeded());
     assertEquals(new Integer(connectionPolicy.maxConnections), args.getMaxConnections());
 
-    provider.notifyTransportClosed(transport);
+    // At the server side, for Tx un-ESTABLISHED clients we don't fire any disconnect/closed events.
     assertEquals(0, connectionPolicy.clientConnected);
 
   }
