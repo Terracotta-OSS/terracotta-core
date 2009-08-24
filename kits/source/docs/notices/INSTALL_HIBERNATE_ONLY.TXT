@@ -5,7 +5,7 @@ This README shows you how to install Terracotta second-level cache for Hibernate
 using the JAR files found under the ${TERRACOTTA_HOME}/hibernate directory. 
 Complete installation and configuration instructions are available in the 
 Terracotta for Hibernate documentation at
-http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=HibernateForYourApp.
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=HibernateForYourApp.
 
 This "standalone" version of the Terracotta second-level cache for Hibernate 
 delivers the following advantages:
@@ -18,7 +18,7 @@ delivers the following advantages:
 Terracotta for Hibernate is designed to provide a performance boost through a
 second-level cache implementation. It does not include standard clustering 
 features, such as sessions clustering. For standard clustering features, see 
-http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=
 HibernateFullIntegration.
 
 The following sections present, in order, the steps you should take to set up 
