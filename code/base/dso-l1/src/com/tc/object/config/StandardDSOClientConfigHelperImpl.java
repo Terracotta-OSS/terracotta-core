@@ -4,6 +4,7 @@
  */
 package com.tc.object.config;
 
+import org.knopflerfish.framework.BundleClassLoader;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
 import org.terracotta.groupConfigForL1.ServerInfo;
@@ -843,6 +844,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public URL getClassResource(final String className, final ClassLoader loader,
                               final boolean hideSystemLoaderOnlyResources) {
+    // don't allow export to a TIM loader. Use Import-Package instead
+    if (loader instanceof BundleClassLoader) return null;
+
     Resource res = this.classResources.get(className);
     if (res == null) return null;
 
