@@ -27,7 +27,7 @@ public class OnLoadReadLockTestApp extends AbstractErrorCatchingTransparentApp {
 
   private MyObject            root;
 
-  private LogAppender         appender;
+  private final LogAppender   appender;
 
   public OnLoadReadLockTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -105,6 +105,11 @@ public class OnLoadReadLockTestApp extends AbstractErrorCatchingTransparentApp {
       synchronized (this) {
         list = new ArrayList();
       }
+    }
+
+    public List getList() {
+      // remove eclipse warning. Change to SuppressWarning in eclipse 3.5
+      return list;
     }
   }
 }
