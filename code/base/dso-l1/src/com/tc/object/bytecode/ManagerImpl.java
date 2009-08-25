@@ -510,6 +510,8 @@ public class ManagerImpl implements Manager {
   }
 
   public boolean isDsoMonitorEntered(final Object o) {
+    if (this.objectManager.isCreationInProgress()) { return false; }
+
     String lockName = getLockName(o);
     if (lockName == null) { return false; }
     boolean dsoMonitorEntered = txManager.isLockOnTopStack(lockName);
@@ -844,7 +846,7 @@ public class ManagerImpl implements Manager {
     Assert.assertNotNull(obj);
     return ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(obj).name(), obj);
   }
-  
+
   public Object getChangeApplicator(final Class clazz) {
     return this.config.getChangeApplicator(clazz);
   }

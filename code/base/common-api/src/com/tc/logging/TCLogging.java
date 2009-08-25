@@ -430,8 +430,14 @@ public class TCLogging {
   }
 
   // for test use only!
-  public static void addAppender(String loggerName, TCAppender appender) {
-    new TCLoggerImpl(loggerName).getLogger().addAppender(new Log4JAappenderToTCAppender(appender));
+  public static Log4JAppenderToTCAppender addAppender(String loggerName, TCAppender appender) {
+    Log4JAppenderToTCAppender wrappedAppender = new Log4JAppenderToTCAppender(appender);
+    new TCLoggerImpl(loggerName).getLogger().addAppender(wrappedAppender);
+    return wrappedAppender;
+  }
+
+  public static void removeAppender(String loggerName, Log4JAppenderToTCAppender appender) {
+    new TCLoggerImpl(loggerName).getLogger().removeAppender(appender);
   }
 
   private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
