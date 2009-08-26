@@ -298,7 +298,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         layersPresentInServer += this.transport.getCommunicationStackNames(this.transport);
         sendSynAck(connectionId, new TransportHandshakeErrorContext(layersPresentInServer,
                                                                     TransportHandshakeError.ERROR_STACK_MISMATCH), syn
-            .getSource(), false);
+            .getSource(), isMaxConnectionReached);
         if ((serverStackLayerFlags & NetworkLayer.TYPE_OOO_LAYER) != 0) logger
             .error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
         else logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
