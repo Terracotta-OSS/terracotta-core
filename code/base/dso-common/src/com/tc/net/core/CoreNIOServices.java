@@ -511,6 +511,11 @@ class CoreNIOServices extends Thread implements TCListenerEventListener, TCConne
 
       SelectionKey key = request.channel.keyFor(localSelector);
       if (key != null) {
+        if (!key.isValid()) {
+          logger.warn("Skipping modifyInterest - " + Constants.interestOpsToString(request.interestOps) + " on "
+                      + request.attachment);
+          return;
+        }
         existingOps = key.interestOps();
       } else {
         existingOps = 0;
@@ -531,7 +536,6 @@ class CoreNIOServices extends Thread implements TCListenerEventListener, TCConne
       }
     } catch (ClosedChannelException cce) {
       logger.warn("Exception trying to process interest request: " + cce);
-
     } catch (CancelledKeyException cke) {
       logger.warn("Exception trying to process interest request: " + cke);
     }
