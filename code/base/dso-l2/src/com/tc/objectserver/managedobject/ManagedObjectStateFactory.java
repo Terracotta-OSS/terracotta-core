@@ -74,8 +74,8 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
     // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-    classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso",
-                            Byte.valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
+    classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso", Byte
+        .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
     // XXX: hack to support Hibernate cache entry type
     classNameToStateMap.put(TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY));
@@ -143,8 +143,8 @@ public class ManagedObjectStateFactory {
 
     final long classID = getClassID(className, loaderDesc);
 
-    if (type == ManagedObjectState.PHYSICAL_TYPE) { return this.physicalMOFactory.create(classID, parentID, className,
-                                                                                         loaderDesc, cursor); }
+    if (type == ManagedObjectState.PHYSICAL_TYPE) { return this.physicalMOFactory.create(classID, oid, parentID,
+                                                                                         className, loaderDesc, cursor); }
     switch (type) {
       case ManagedObjectState.ARRAY_TYPE:
         return new ArrayManagedObjectState(classID);

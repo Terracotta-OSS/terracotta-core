@@ -14,6 +14,7 @@ import com.tc.objectserver.managedobject.HasParentIdStorage;
 import com.tc.util.AdaptedClassDumper;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     super();
   }
 
-  public byte[] createClassBytes(ClassSpec cs, List fields) {
+  public byte[] createClassBytes(ClassSpec cs, Collection<FieldType> fields) {
     byte data[] = basicCreateClassBytes(cs, fields);
     AdaptedClassDumper.INSTANCE.write(cs.getGeneratedClassName(), data);
     return data;
@@ -43,7 +44,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     return clazz;
   }
 
-  private byte[] basicCreateClassBytes(ClassSpec cs, List fields) {
+  private byte[] basicCreateClassBytes(ClassSpec cs, Collection<FieldType> fields) {
     String classNameSlash = cs.getGeneratedClassName().replace('.', '/');
     String superClassNameSlash = cs.getSuperClassName().replace('.', '/');
     ClassWriter cw = new ClassWriter(0); // don't compute maxs
@@ -144,7 +145,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createWriteObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
-                                       List fields) {
+                                       Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "writeObject", "(Ljava/io/ObjectOutput;)V", null,
                                       new String[] { "java/io/IOException" });
     mv.visitCode();
@@ -155,8 +156,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitMethodInsn(INVOKESPECIAL, superClassNameSlash, "writeObject", "(Ljava/io/ObjectOutput;)V");
     }
 
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitVarInsn(ALOAD, 0);
       mv.visitFieldInsn(GETFIELD, classNameSlash, f.getLocalFieldName(), f.getType().getTypeDesc());
@@ -183,7 +183,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createReadObjectMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
-                                      List fields) {
+                                      Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "readObject", "(Ljava/io/ObjectInput;)V", null, new String[] {
         "java/io/IOException", "java/lang/ClassNotFoundException" });
     mv.visitCode();
@@ -194,8 +194,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitMethodInsn(INVOKESPECIAL, superClassNameSlash, "readObject", "(Ljava/io/ObjectInput;)V");
     }
 
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       mv.visitVarInsn(ALOAD, 0);
       mv.visitVarInsn(ALOAD, 1);
       LiteralValues fType = f.getType();
@@ -220,7 +219,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createAddValuesMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
-                                     List fields) {
+                                     Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "addValues", "(Ljava/util/Map;)Ljava/util/Map;", null, null);
     mv.visitCode();
 
@@ -231,8 +230,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitInsn(POP);
     }
 
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitLdcInsn(f.getQualifiedName());
       getObjectFor(mv, classNameSlash, f);
@@ -259,7 +257,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createBasicDehydrateMethod(ClassWriter cw, String classNameSlash, ClassSpec cs,
-                                          String superClassNameSlash, List fields) {
+                                          String superClassNameSlash, Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PROTECTED, "basicDehydrate", "(Lcom/tc/object/dna/api/DNAWriter;)V", null,
                                       null);
     mv.visitCode();
@@ -270,8 +268,7 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
       mv.visitMethodInsn(INVOKESPECIAL, superClassNameSlash, "basicDehydrate", "(Lcom/tc/object/dna/api/DNAWriter;)V");
     }
 
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       mv.visitVarInsn(ALOAD, 1);
       mv.visitLdcInsn(f.getQualifiedName());
       getObjectFor(mv, classNameSlash, f);
@@ -310,13 +307,12 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createBasicSetMethod(ClassWriter cw, String classNameSlash, ClassSpec cs, String superClassNameSlash,
-                                    List fields) {
+                                    Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PROTECTED, "basicSet",
                                       "(Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;", null, null);
     mv.visitCode();
 
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       mv.visitLdcInsn(f.getQualifiedName());
       mv.visitVarInsn(ALOAD, 1);
       mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z");
@@ -415,10 +411,9 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   // }
   // *************************************************************************************
   private void createGetObjectReferencesMethod(ClassWriter cw, String classNameSlash, ClassSpec cs,
-                                               String superClassNameSlash, List fields) {
+                                               String superClassNameSlash, Collection<FieldType> fields) {
     List referenceFields = new ArrayList(fields.size());
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+    for (FieldType f : fields) {
       if (f.getType() == LiteralValues.OBJECT_ID) {
         referenceFields.add(f);
       }
@@ -494,9 +489,8 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
     mv.visitEnd();
   }
 
-  private void createFields(ClassWriter cw, List fields) {
-    for (Iterator i = fields.iterator(); i.hasNext();) {
-      FieldType f = (FieldType) i.next();
+  private void createFields(ClassWriter cw, Collection<FieldType> fields) {
+    for (FieldType f : fields) {
       FieldVisitor fv = cw.visitField(ACC_PRIVATE, f.getLocalFieldName(), f.getType().getTypeDesc(), null, null);
       fv.visitEnd();
     }

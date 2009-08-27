@@ -7,6 +7,8 @@ package com.tc.objectserver.managedobject;
 import com.tc.exception.TCRuntimeException;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.PhysicalAction;
@@ -20,6 +22,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,16 +34,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class PhysicalManagedObjectStateFactory {
 
+  private static final TCLogger          logger                   = TCLogging
+                                                                      .getLogger(PhysicalManagedObjectStateFactory.class);
   private static final Class[]           CONSTRUCTOR_PARAMS_CLASS = new Class[0];
   private static final Object[]          CONSTRUCTOR_PARAMS       = new Object[0];
   private final PhysicalStateClassLoader loader;
-  private final Map<Object,String>       knownClasses;
+  private final Map<Object, String>      knownClasses;
   private final ClassPersistor           persistor;
   private int                            sequenceId               = 0;
 
   public PhysicalManagedObjectStateFactory(ClassPersistor persistor) {
     this.loader = new PhysicalStateClassLoader();
-    this.knownClasses = new ConcurrentHashMap<Object,String>();
+    this.knownClasses = new ConcurrentHashMap<Object, String>();
     this.persistor = persistor;
     loadAllClassesFromDB();
   }
@@ -102,8 +107,8 @@ public class PhysicalManagedObjectStateFactory {
     }
   }
 
-  public PhysicalManagedObjectState create(long strIdx, ObjectID parentID, String className, String loaderDesc,
-                                           DNACursor cursor) {
+  public PhysicalManagedObjectState create(long strIdx, ObjectID oid, ObjectID parentID, String className,
+                                           String loaderDesc, DNACursor cursor) {
     ClassSpec cs = new ClassSpec(className, loaderDesc, strIdx);
     cs.setGenerateParentIdStorage(!parentID.isNull());
 
@@ -115,7 +120,7 @@ public class PhysicalManagedObjectStateFactory {
         // Check again ! Double check locking is OK here as loader.load() is synchronized internally anyway
         generatedClassName = knownClasses.get(classIdentifier);
         if (generatedClassName == null) {
-          PhysicalManagedObjectState po = createNewClassAndInitializeObject(parentID, cs, cursor);
+          PhysicalManagedObjectState po = createNewClassAndInitializeObject(oid, parentID, cs, cursor);
           return po;
         }
       }
@@ -207,16 +212,24 @@ public class PhysicalManagedObjectStateFactory {
 
   /**
    * The object returned by this method has the parent Id set
+   * 
+   * @param parentID2
    */
-  private PhysicalManagedObjectState createNewClassAndInitializeObject(ObjectID parentID, ClassSpec cs, DNACursor cursor) {
+  private PhysicalManagedObjectState createNewClassAndInitializeObject(ObjectID oid, ObjectID parentID, ClassSpec cs,
+                                                                       DNACursor cursor) {
     try {
-      List fields = new ArrayList(cursor.getActionCount());
+      Map<String, FieldType> fields = new HashMap<String, FieldType>();
       cursor.reset();
       while (cursor.next()) {
         PhysicalAction action = cursor.getPhysicalAction();
-        fields.add(createFieldType(action, fields.size()));
+        String fName = action.getFieldName();
+        if (!fields.containsKey(fName)) {
+          fields.put(fName, createFieldType(action, fields.size()));
+        } else {
+          logger.info("repeated field (" + fName + ") present in DNA for " + oid + ", type=" + cs.getClassName());
+        }
       }
-      return createNewClassAndInitializeObject(parentID, cs, fields);
+      return createNewClassAndInitializeObject(parentID, cs, fields.values());
     } catch (Exception ex) {
       throw new TCRuntimeException(ex);
     } finally {
@@ -224,7 +237,8 @@ public class PhysicalManagedObjectStateFactory {
     }
   }
 
-  private PhysicalManagedObjectState createNewClassAndInitializeObject(ObjectID parentID, ClassSpec cs, List fields) {
+  private PhysicalManagedObjectState createNewClassAndInitializeObject(ObjectID parentID, ClassSpec cs,
+                                                                       Collection<FieldType> fields) {
     try {
       int clazzId = getNextSequenceID();
       cs.setGeneratedClassID(clazzId);
