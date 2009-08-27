@@ -180,10 +180,12 @@ import java.util.List;
  */
 public class DistributedObjectClient extends SEDA implements TCClient {
 
-  public final static String DEFAULT_AGENT_DIFFERENTIATOR_PREFIX = "L1/";
+  public final static String                         DEFAULT_AGENT_DIFFERENTIATOR_PREFIX = "L1/";
 
-  protected static final TCLogger                    DSO_LOGGER                          = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                      CONSOLE_LOGGER                      = CustomerLogging.getConsoleLogger();
+  protected static final TCLogger                    DSO_LOGGER                          = CustomerLogging
+                                                                                             .getDSOGenericLogger();
+  private static final TCLogger                      CONSOLE_LOGGER                      = CustomerLogging
+                                                                                             .getConsoleLogger();
 
   private final DSOClientBuilder                     dsoClientBuilder;
   private final DSOClientConfigHelper                config;
@@ -384,12 +386,12 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     int serverPort = connectionInfo[0].getPort();
 
     int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
-    int maxReconnectTries = tcProperties.getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
+    int maxConnectRetries = tcProperties.getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
     this.channel = this.dsoClientBuilder.createDSOClientMessageChannel(this.communicationsManager,
                                                                        this.connectionComponents, sessionProvider,
-                                                                       maxReconnectTries, socketConnectTimeout);
+                                                                       maxConnectRetries, socketConnectTimeout);
     ClientIDLoggerProvider cidLoggerProvider = new ClientIDLoggerProvider(this.channel.getClientIDProvider());
     stageManager.setLoggerProvider(cidLoggerProvider);
 
@@ -422,10 +424,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     RemoteLockManager remoteLockManager = this.dsoClientBuilder.createRemoteLockManager(this.channel, this.channel
         .getLockRequestMessageFactory(), gtxManager);
-    this.lockManager = this.dsoClientBuilder
-        .createLockManager(this.channel, new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(ClientLockManager.class)), remoteLockManager, sessionManager, lockStatManager,
-                           new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")));
+    this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
+        .getClientIDProvider(), TCLogging.getLogger(ClientLockManager.class)), remoteLockManager, sessionManager,
+                                                               lockStatManager,
+                                                               new ClientLockManagerConfigImpl(this.l1Properties
+                                                                   .getPropertiesFor("lockmanager")));
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
 
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(this.channel
@@ -594,7 +597,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE,
+                                 LockStatisticsResponseMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     this.channel.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
@@ -656,7 +660,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.routeMessageType(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
                                   hydrateSink);
 
-    final int maxConnectRetries = this.l1Properties.getInt("max.connect.retries");
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
