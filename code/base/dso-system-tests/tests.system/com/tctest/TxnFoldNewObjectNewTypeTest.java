@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
+/**
+ * See DEV-2912, CDV-1374
+ */
 public class TxnFoldNewObjectNewTypeTest extends TransparentTestBase {
 
   public TxnFoldNewObjectNewTypeTest() {
