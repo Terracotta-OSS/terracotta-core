@@ -48,32 +48,32 @@ import java.util.TimerTask;
 import java.util.Map.Entry;
 
 class ClientLock implements TimerCallback, LockFlushCallback {
-  private static final int                COLLECTIONS_INTIAL_SIZE  = 4;
-  private static final TCLogger           logger                   = TCLogging.getLogger(ClientLock.class);
-  private static final Map                EMPTY_MAP                = Collections.emptyMap();
-  private static final Set                EMPTY_SET                = Collections.emptySet();
+  private static final int                COLLECTIONS_INTIAL_SIZE    = 4;
+  private static final TCLogger           logger                     = TCLogging.getLogger(ClientLock.class);
+  private static final Map                EMPTY_MAP                  = Collections.emptyMap();
+  private static final Set                EMPTY_SET                  = Collections.emptySet();
 
-  private static final State              RUNNING                  = new State("RUNNING");
-  private static final State              PAUSED                   = new State("PAUSED");
+  private static final State              RUNNING                    = new State("RUNNING");
+  private static final State              PAUSED                     = new State("PAUSED");
 
-  private final Map<ThreadID, LockHold>   holders                  = Collections.synchronizedMap(new LazyHashMap());
-  private Set<ThreadID>                   rejectedLockRequesterIDs = EMPTY_SET;
+  private final Map<ThreadID, LockHold>   holders                    = Collections.synchronizedMap(new LazyHashMap());
+  private Set<ThreadID>                   rejectedLockRequesterIDs   = EMPTY_SET;
   private final Object                    rejectedLockRequesterGuard = new Object();
   private final LockID                    lockID;
-  private Map<ThreadID, Object>           waitLocksByRequesterID   = EMPTY_MAP;
-  private Map<ThreadID, LockRequest>      pendingLockRequests      = EMPTY_MAP;
-  private Map<WaitLockRequest, TimerTask> waitTimers               = EMPTY_MAP;
+  private Map<ThreadID, Object>           waitLocksByRequesterID     = EMPTY_MAP;
+  private Map<ThreadID, LockRequest>      pendingLockRequests        = EMPTY_MAP;
+  private Map<WaitLockRequest, TimerTask> waitTimers                 = EMPTY_MAP;
   private final RemoteLockManager         remoteLockManager;
   private final TCLockTimer               lockTimer;
 
-  private final Greediness                greediness               = new Greediness();
-  private volatile int                    useCount                 = 0;
-  private volatile State                  state                    = RUNNING;
-  private long                            timeUsed                 = System.currentTimeMillis();
+  private final Greediness                greediness                 = new Greediness();
+  private volatile int                    useCount                   = 0;
+  private volatile State                  state                      = RUNNING;
+  private long                            timeUsed                   = System.currentTimeMillis();
   private final ClientLockStatManager     lockStatManager;
   private final String                    lockObjectType;
   private TimerTask                       recallTimerTask;
-  private boolean                         pinned                   = false;
+  private boolean                         pinned                     = false;
 
   ClientLock(LockID lockID, String lockObjectType, RemoteLockManager remoteLockManager, TCLockTimer waitTimer,
              ClientLockStatManager lockStatManager) {
@@ -117,7 +117,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   public void lockInterruptibly(ThreadID threadID, int lockType, String contextInfo) throws InterruptedException {
     lock(threadID, lockType, null, false, true, contextInfo);
   }
-  
+
   public void lock(ThreadID threadID, int lockType, String contextInfo) {
     try {
       lock(threadID, lockType, null, false, false, contextInfo);
@@ -126,7 +126,8 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
   }
 
-  private void lock(ThreadID threadID, final int lockType, TimerSpec timeout, boolean noBlock, boolean interruptible, String contextInfo) throws InterruptedException {
+  private void lock(ThreadID threadID, final int lockType, TimerSpec timeout, boolean noBlock, boolean interruptible,
+                    String contextInfo) throws InterruptedException {
     int effectiveType = lockType;
     if (LockLevel.isSynchronous(lockType)) {
       if (!LockLevel.isSynchronousWrite(lockType)) { throw new AssertionError(
@@ -139,7 +140,8 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     }
   }
 
-  private void basicLock(ThreadID requesterID, int lockType, TimerSpec timeout, boolean noBlock, boolean interruptible, String contextInfo) throws InterruptedException {
+  private void basicLock(ThreadID requesterID, int lockType, TimerSpec timeout, boolean noBlock, boolean interruptible,
+                         String contextInfo) throws InterruptedException {
     final Object waitLock;
     final Action action = new Action();
 
@@ -226,11 +228,10 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       } catch (InterruptedException e) {
         synchronized (this) {
           // The following is *NOT* meant to be short-circuit logic, do not change '|' for '||'
-          if ((waitLocksByRequesterID.remove(requesterID) == null)
-             | (pendingLockRequests.remove(requesterID) == null)) {
-            /* The lock was awarded by the server without us noticing. Swallow
-             * the exception and return normally.  We also self interrupt 
-             * so that that later code correctly `sees' the exception.
+          if ((waitLocksByRequesterID.remove(requesterID) == null) | (pendingLockRequests.remove(requesterID) == null)) {
+            /*
+             * The lock was awarded by the server without us noticing. Swallow the exception and return normally. We
+             * also self interrupt so that that later code correctly `sees' the exception.
              */
             Thread.currentThread().interrupt();
             return;
@@ -652,7 +653,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       }
     }
   }
-  
+
   private void scheduleWaitForTryLock(ThreadID threadID, int lockLevel, TimerSpec timeout) {
     TryLockRequest tryLockWaitRequest = (TryLockRequest) pendingLockRequests.get(threadID);
     scheduleWaitTimeout(tryLockWaitRequest);
@@ -819,7 +820,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       pinned = true;
     }
   }
-  
+
   public synchronized boolean unpin() {
     if (pinned) {
       pinned = false;
@@ -828,11 +829,11 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return false;
     }
   }
-  
+
   public synchronized boolean pinned() {
     return pinned;
   }
-  
+
   private void flush() {
     remoteLockManager.flush(lockID);
   }
@@ -854,9 +855,9 @@ class ClientLock implements TimerCallback, LockFlushCallback {
    */
   public synchronized void addAllLocksTo(LockInfoByThreadID lockInfo) {
     if (greediness.isGreedy()) {
-     lockInfo.addLock(LockState.HOLDING, ThreadID.VM_ID, this.lockID.toString());
+      lockInfo.addLock(LockState.HOLDING, ThreadID.VM_ID, this.lockID.toString());
     }
-    
+
     for (Iterator i = holders.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Map.Entry) i.next();
       LockHold hold = (LockHold) e.getValue();
@@ -904,9 +905,9 @@ class ClientLock implements TimerCallback, LockFlushCallback {
 
   public synchronized Collection<TryLockRequest> addAllPendingTryLockRequestsTo(Collection<TryLockRequest> c) {
     if (greediness.isNotGreedy()) {
-      for (LockRequest request : pendingLockRequests.values()) {        
+      for (LockRequest request : pendingLockRequests.values()) {
         if (request instanceof TryLockRequest) {
-          c.add((TryLockRequest)request);
+          c.add((TryLockRequest) request);
         }
       }
     }
@@ -1068,7 +1069,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     if (holder != null && holder.isHolding()) { return holder.isLastLockSynchronouslyHeld(); }
     return false;
   }
-  
+
   private boolean isWriteHeld() {
     synchronized (holders) {
       for (Iterator it = holders.values().iterator(); it.hasNext();) {
@@ -1148,8 +1149,8 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   public boolean timedout(long timeoutInterval) {
     if (useCount != 0) { return false; }
     synchronized (this) {
-      return ((!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty() && (useCount == 0)
-          && ((System.currentTimeMillis() - timeUsed) > timeoutInterval));
+      return ((!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty()
+              && (useCount == 0) && ((System.currentTimeMillis() - timeUsed) > timeoutInterval));
     }
   }
 
@@ -1158,7 +1159,8 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return false;
     } else {
       synchronized (this) {
-        return (!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty() && (useCount == 0);
+        return (!pinned()) && holders.isEmpty() && greediness.isGreedy() && pendingLockRequests.isEmpty()
+               && (useCount == 0);
       }
     }
   }
@@ -1249,6 +1251,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
     return lockID;
   }
 
+  @Override
   public String toString() {
     return "Lock@" + System.identityHashCode(this) + " [ " + lockID + " ] : Holders = " + holders
            + " : PendingLockRequest : " + pendingLockRequests + " : Use count : " + useCount + " : state : " + state
@@ -1342,14 +1345,6 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return (state == WAITING);
     }
 
-    boolean isPending() {
-      return (state == PENDING);
-    }
-
-    int heldCount() {
-      return levels.size();
-    }
-
     int heldCount(int lockLevel) {
       return this.counts.get(lockLevel);
     }
@@ -1426,7 +1421,6 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       /*
        * server_level is not changed to NIL_LOCK_LEVEL even though the server will release the lock as we need to know
        * what state we were holding before wait on certain scenarios like server crash etc.
-       * 
        * @see ClientLockManager.notified
        */
       return this.server_level;
@@ -1454,6 +1448,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       this.state = HOLDING;
     }
 
+    @Override
     public String toString() {
       return "LockHold[" + state + "," + LockLevel.toString(level) + "]";
     }
@@ -1462,7 +1457,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
   private static class LevelCounter {
     // This class assumes there are only 3 lock levels, READ, WRITE, and CONCURRENT, and its value being 1, 2, and 4. If
     // one change the value in the LockLevel class, this may need to be reviewed.
-    private int[] levelCounter = new int[3];
+    private final int[] levelCounter = new int[3];
 
     private static int getIndex(int level) {
       switch (level) {
@@ -1569,10 +1564,6 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return LockLevel.isWrite(level);
     }
 
-    boolean isUpgrade() {
-      return isRead() && isWrite();
-    }
-
     boolean isGreedy() {
       return (state == GREEDY) || (state == ON_GREEDY_LEASE);
     }
@@ -1586,6 +1577,7 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return (state == NOT_GREEDY);
     }
 
+    @Override
     public String toString() {
       return "Greedy Token [ Lock Level = " + LockLevel.toString(level) + ", Recall Level = "
              + LockLevel.toString(recallLevel) + ", " + state + "]";
@@ -1656,15 +1648,18 @@ class ClientLock implements TimerCallback, LockFlushCallback {
       return ((action & SYNCHRONOUS_COMMIT) == SYNCHRONOUS_COMMIT);
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Action)) return false;
       return (((Action) o).action == action);
     }
 
+    @Override
     public int hashCode() {
       return action;
     }
 
+    @Override
     public String toString() {
       return "Action:[" + getDescription() + "]";
     }

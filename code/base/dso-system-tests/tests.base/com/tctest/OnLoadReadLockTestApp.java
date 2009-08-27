@@ -95,6 +95,7 @@ public class OnLoadReadLockTestApp extends AbstractErrorCatchingTransparentApp {
   }
 
   private static class MyObject1 {
+    @SuppressWarnings("unused")
     private List list;
 
     public MyObject1() {
@@ -107,9 +108,5 @@ public class OnLoadReadLockTestApp extends AbstractErrorCatchingTransparentApp {
       }
     }
 
-    public List getList() {
-      // remove eclipse warning. Change to SuppressWarning in eclipse 3.5
-      return list;
-    }
   }
 }

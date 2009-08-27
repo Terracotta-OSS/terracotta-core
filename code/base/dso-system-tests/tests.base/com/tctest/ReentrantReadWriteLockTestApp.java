@@ -1410,6 +1410,7 @@ public class ReentrantReadWriteLockTestApp extends AbstractTransparentApp {
       this.lock = lock;
     }
 
+    @SuppressWarnings("unused")
     public synchronized ReentrantReadWriteLock getLock() {
       return lock;
     }
