@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -218,7 +219,9 @@ public class PhysicalManagedObjectStateFactory {
   private PhysicalManagedObjectState createNewClassAndInitializeObject(ObjectID oid, ObjectID parentID, ClassSpec cs,
                                                                        DNACursor cursor) {
     try {
-      Map<String, FieldType> fields = new HashMap<String, FieldType>();
+      // Some client side applicators expect the order of fields in output DNA to be consistent
+      // with the input DNA so use a LinkedHashMap here
+      Map<String, FieldType> fields = new LinkedHashMap<String, FieldType>();
       cursor.reset();
       while (cursor.next()) {
         PhysicalAction action = cursor.getPhysicalAction();
