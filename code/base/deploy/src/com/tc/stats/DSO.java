@@ -54,7 +54,7 @@ import javax.management.ObjectName;
 
 /**
  * This is the top-level MBean for the DSO subsystem, off which to hang JSR-77 Stats and Config MBeans.
- * 
+ *
  * @see DSOMBean
  * @see DSOStatsImpl
  */
@@ -202,8 +202,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
   private void setupClients() {
     MessageChannel[] channels = channelMgr.getActiveChannels();
-    for (int i = 0; i < channels.length; i++) {
-      addClientMBean(channels[i]);
+    for (MessageChannel channel : channels) {
+      addClientMBean(channel);
     }
   }
 
@@ -516,10 +516,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
         if (future.isDone() && !future.isCancelled()) {
           try {
             SourcedAttributeList sal = future.get();
-            Iterator<Attribute> attrIter = sal.attributeList.iterator();
+            Iterator<Object> attrIter = sal.attributeList.iterator();
             Map<String, Object> onMap = new HashMap<String, Object>();
             while (attrIter.hasNext()) {
-              Attribute attr = attrIter.next();
+              Attribute attr = (Attribute)attrIter.next();
               onMap.put(attr.getName(), attr.getValue());
             }
             result.put(sal.objectName, onMap);
