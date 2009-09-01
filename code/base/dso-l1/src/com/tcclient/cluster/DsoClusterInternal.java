@@ -5,8 +5,12 @@ package com.tcclient.cluster;
 
 import com.tc.cluster.DsoCluster;
 import com.tc.net.NodeID;
+import com.tc.object.ClientObjectManager;
+import com.tc.object.ClusterMetaDataManager;
 
 public interface DsoClusterInternal extends DsoCluster {
+
+  public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager);
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node);
 

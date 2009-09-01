@@ -49,6 +49,7 @@ import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
+import com.tcclient.cluster.DsoClusterInternal;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class ManagerImpl implements Manager {
   private final Thread                             shutdownAction;
   private final Portability                        portability;
   private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
-  private final DsoClusterImpl                     dsoCluster;
+  private final DsoClusterInternal                 dsoCluster;
   private final RuntimeLogger                      runtimeLogger;
 
   private final InstrumentationLogger              instrumentationLogger;
@@ -208,7 +209,6 @@ public class ManagerImpl implements Manager {
         objectManager = dso.getObjectManager();
         txManager = dso.getTransactionManager();
         methodCallManager = dso.getDmiManager();
-        dsoCluster.init(dso.getClusterMetaDataManager(), objectManager);
 
         shutdownManager = new ClientShutdownManager(objectManager, dso.getRemoteTransactionManager(), dso
             .getStageManager(), dso.getCommunicationsManager(), dso.getChannel(), dso.getClientHandshakeManager(), dso

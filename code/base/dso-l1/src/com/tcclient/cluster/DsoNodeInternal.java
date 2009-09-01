@@ -8,6 +8,8 @@ public interface DsoNodeInternal extends DsoNode {
 
   public long getChannelId();
 
+  public DsoNodeMetaData getOrRetrieveMetaData(DsoClusterInternal cluster);
+
   public void setMetaData(DsoNodeMetaData metaData);
 
 }

@@ -8,6 +8,7 @@ import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
 import com.tc.injection.annotations.InjectedDsoInstance;
 import com.tc.util.Assert;
+import com.tcclient.cluster.DsoNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,22 +16,28 @@ import java.util.List;
 public class ClusterEventsTestListener implements DsoClusterListener {
 
   @InjectedDsoInstance
-  private DsoCluster  cluster;
+  private DsoCluster    cluster;
 
-  public List<String> events = new ArrayList<String>();
+  private List<String>  eventDescriptions = new ArrayList<String>();
+  private List<DsoNode> eventNodes = new ArrayList<DsoNode>();
 
   public ClusterEventsTestListener() {
     System.out.println(">>>>>> ClusterEventsTestListener.cluster : "+cluster);
   }
 
   public List<String> getOccurredEvents() {
-    return events;
+    return eventDescriptions;
+  }
+
+  public List<DsoNode> getEventNodes() {
+    return eventNodes;
   }
 
   public synchronized void nodeJoined(final DsoClusterEvent event) {
     try {
       System.out.println(">>>>>> " + cluster.getCurrentNode() + " - nodeJoined : " + event.getNode().getId());
-      events.add(event.getNode().getId() + " JOINED");
+      eventDescriptions.add(event.getNode().getId() + " JOINED");
+      eventNodes.add(event.getNode());
       if (cluster.getCurrentNode().equals(event.getNode())) {
         Assert.assertTrue(cluster.isNodeJoined());
       }
@@ -42,7 +49,8 @@ public class ClusterEventsTestListener implements DsoClusterListener {
 
   public synchronized void nodeLeft(final DsoClusterEvent event) {
     System.out.println(">>>>>> " + cluster.getCurrentNode() + " - nodeLeft : " + event.getNode().getId());
-    events.add(event.getNode().getId() + " LEFT");
+    eventDescriptions.add(event.getNode().getId() + " LEFT");
+    eventNodes.add(event.getNode());
     if (cluster.getCurrentNode().equals(event.getNode())) {
       Assert.assertFalse(cluster.isNodeJoined());
     }
@@ -50,13 +58,15 @@ public class ClusterEventsTestListener implements DsoClusterListener {
 
   public synchronized void operationsEnabled(final DsoClusterEvent event) {
     System.out.println(">>>>>> " + cluster.getCurrentNode() + " - operationsEnabled : " + event.getNode().getId());
-    events.add(event.getNode().getId() + " ENABLED");
+    eventDescriptions.add(event.getNode().getId() + " ENABLED");
+    eventNodes.add(event.getNode());
     Assert.assertTrue(cluster.areOperationsEnabled());
   }
 
   public synchronized void operationsDisabled(final DsoClusterEvent event) {
     System.out.println(">>>>>> " + cluster.getCurrentNode() + " - operationsDisabled : " + event.getNode().getId());
-    events.add(event.getNode().getId() + " DISABLED");
+    eventDescriptions.add(event.getNode().getId() + " DISABLED");
+    eventNodes.add(event.getNode());
     Assert.assertFalse(cluster.areOperationsEnabled());
   }
 }
