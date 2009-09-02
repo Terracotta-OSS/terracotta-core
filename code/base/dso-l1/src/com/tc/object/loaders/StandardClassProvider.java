@@ -7,6 +7,7 @@ package com.tc.object.loaders;
 import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -21,67 +22,68 @@ import java.util.Map.Entry;
  */
 public class StandardClassProvider implements ClassProvider {
 
-  private static final String BOOT      = Namespace.getStandardBootstrapLoaderName();
-  // private static final String EXT       = Namespace.getStandardExtensionsLoaderName();
-  private static final String SYSTEM    = Namespace.getStandardSystemLoaderName();
-  private static final String ISOLATION = Namespace.getIsolationLoaderName();
-  
-  private static final LoaderDescription BOOT_DESC = new LoaderDescription(null, BOOT);
+  private static final String                                BOOT               = Namespace
+                                                                                    .getStandardBootstrapLoaderName();
+  // private static final String EXT = Namespace.getStandardExtensionsLoaderName();
+  private static final String                                SYSTEM             = Namespace
+                                                                                    .getStandardSystemLoaderName();
+  private static final String                                ISOLATION          = Namespace.getIsolationLoaderName();
 
-  // Modifications to the following fields must be done atomically.  We achieve this
+  private static final LoaderDescription                     BOOT_DESC          = new LoaderDescription(null, BOOT);
+
+  // Modifications to the following fields must be done atomically. We achieve this
   // by synchronizing on 'this' all methods that access them.
-  
+
   /** Maps loader name -> loader */
-  private final Map<String, WeakReference<NamedClassLoader>> loaders = 
-    new HashMap<String, WeakReference<NamedClassLoader>>();
-  
+  private final Map<String, WeakReference<NamedClassLoader>> loaders            = new HashMap<String, WeakReference<NamedClassLoader>>();
+
   /** Maps loader name -> LoaderDescription */
-  private final Map<String, LoaderDescription> loaderDescriptions =
-    new HashMap<String, LoaderDescription>();
-  
-  /** Maps loader name -> set of child loader names.  */
-  private final Map<String, Set<String>> loaderChildren = new HashMap<String, Set<String>>();
-  
+  private final Map<String, LoaderDescription>               loaderDescriptions = new HashMap<String, LoaderDescription>();
+
+  /** Maps loader name -> set of child loader names. */
+  private final Map<String, Set<String>>                     loaderChildren     = new HashMap<String, Set<String>>();
+
   /** Maps appGroup -> set of loader names */
-  private final Map<String, Set<String>> appGroups = new HashMap<String, Set<String>>();
-  
+  private final Map<String, Set<String>>                     appGroups          = new HashMap<String, Set<String>>();
+
   /**
-   * If an IsolationClassLoader has been registered, without an explicit app-group, save
-   * it here so it can be substituted for the system classloader.
+   * If an IsolationClassLoader has been registered, without an explicit app-group, save it here so it can be
+   * substituted for the system classloader.
    */
-  private NamedClassLoader isolationClassLoader;
-  
+  private NamedClassLoader                                   isolationClassLoader;
+
   // END fields requiring atomicity
-  
-  private final RuntimeLogger runtimeLogger;
+
+  private final RuntimeLogger                                runtimeLogger;
 
   public StandardClassProvider(RuntimeLogger runtimeLogger) {
     this.runtimeLogger = runtimeLogger;
   }
-  
+
   public ClassLoader getClassLoader(LoaderDescription desc) {
     final ClassLoader rv = lookupLoader(desc);
-    if (rv == null) { 
-      throw new IllegalArgumentException("No registered loader for description: " + desc); 
-    }
+    if (rv == null) { throw new IllegalArgumentException("No registered loader for description: " + desc); }
     return rv;
   }
 
   public Class getClassFor(final String className, LoaderDescription desc) throws ClassNotFoundException {
     final ClassLoader loader = lookupLoader(desc);
-    
-    if (loader == null) { 
-      throw new ClassNotFoundException("No registered loader for description: " + desc
-                                       + ", trying to load " + className); 
-    }
+
+    if (loader == null) { throw new ClassNotFoundException(
+                                                           "Detected different clustered applications trying to share the same Terracotta root. "
+                                                               + "See the \"/app-groups\" section in the Terracotta Configuration Guide and Reference "
+                                                               + "(http://www.terracotta.org/kit/reflector?kitID="
+                                                               + ProductInfo.getInstance().kitID()
+                                                               + "&pageID=ConfigGuideAndRef) for more "
+                                                               + "information on how to configure application groups."); }
 
     // debugging
-//    StringBuilder sb = new StringBuilder();
-//    sb.append("APPGROUPS: SCP.getClassFor([").append(className);
-//    sb.append("], [").append(desc.toString()).append("]) -> loader [");
-//    sb.append(((NamedClassLoader)loader).__tc_getClassLoaderName()).append("]");
-//    System.out.println(sb.toString());
-    
+    // StringBuilder sb = new StringBuilder();
+    // sb.append("APPGROUPS: SCP.getClassFor([").append(className);
+    // sb.append("], [").append(desc.toString()).append("]) -> loader [");
+    // sb.append(((NamedClassLoader)loader).__tc_getClassLoaderName()).append("]");
+    // System.out.println(sb.toString());
+
     try {
       return Class.forName(className, false, loader);
     } catch (ClassNotFoundException e) {
@@ -93,21 +95,19 @@ public class StandardClassProvider implements ClassProvider {
       throw e;
     }
   }
-  
+
   /**
    * @param loader must implement both ClassLoader and NamedClassLoader
-   * @param appGroup an appGroup to support sharing roots between apps, or null if
-   * no sharing is desired. The empty string will be replaced with null.
+   * @param appGroup an appGroup to support sharing roots between apps, or null if no sharing is desired. The empty
+   *        string will be replaced with null.
    */
   public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
     final String name = getName(loader);
-    
+
     final WeakReference<NamedClassLoader> prevRef;
-    
+
     // Ensure postcondition that we never have an empty string in appGroup or name
-    if (null == name || "".equals(name)) {
-      throw new IllegalArgumentException("Loader name must be non-empty");
-    }
+    if (null == name || "".equals(name)) { throw new IllegalArgumentException("Loader name must be non-empty"); }
     if ("".equals(appGroup)) {
       appGroup = null;
     }
@@ -115,7 +115,7 @@ public class StandardClassProvider implements ClassProvider {
     synchronized (this) {
       prevRef = loaders.put(name, new WeakReference<NamedClassLoader>(loader));
       loaderDescriptions.put(name, new LoaderDescription(appGroup, name));
-      
+
       if (appGroup != null) {
         Set<String> descs = appGroups.get(appGroup);
         if (descs == null) {
@@ -123,17 +123,17 @@ public class StandardClassProvider implements ClassProvider {
           appGroups.put(appGroup, descs);
         }
         descs.add(name);
-        
+
         // Adding a loader to an app group could change any child relationships in the group
         updateAllChildRelationships(appGroup);
       } else {
         loaderChildren.put(name, Collections.EMPTY_SET);
-        
+
         if (ISOLATION.equals(name)) {
           isolationClassLoader = loader;
         }
       }
-      
+
     }
 
     NamedClassLoader prev = prevRef == null ? null : (NamedClassLoader) prevRef.get();
@@ -142,7 +142,7 @@ public class StandardClassProvider implements ClassProvider {
       runtimeLogger.namedLoaderRegistered(loader, name, appGroup, prev);
     }
   }
-  
+
   public LoaderDescription getLoaderDescriptionFor(Class clazz) {
     return getLoaderDescriptionFor(clazz.getClassLoader());
   }
@@ -162,7 +162,7 @@ public class StandardClassProvider implements ClassProvider {
                                                                        + loader); }
     return name;
   }
-  
+
   private RuntimeException handleMissingLoader(ClassLoader loader) {
     if ("org.apache.jasper.servlet.JasperLoader".equals(loader.getClass().getName())) {
       // try to give a better error message if you're trying to share a JSP
@@ -186,8 +186,7 @@ public class StandardClassProvider implements ClassProvider {
   }
 
   /**
-   * Look up a loader by name, falling back to other loaders in the same
-   * app-group if necessary.
+   * Look up a loader by name, falling back to other loaders in the same app-group if necessary.
    * <p>
    * This method must be externally synchronized on 'this'.
    */
@@ -195,22 +194,17 @@ public class StandardClassProvider implements ClassProvider {
     // Testing support: allow substitution of IsolationClassLoader for system classloader,
     // unless they were explicitly registered within app-groups.
     if (SYSTEM.equals(desc.name()) && null == desc.appGroup()) {
-      if (null != isolationClassLoader) {
-        return (ClassLoader)isolationClassLoader;
-      }
-    } else if (ISOLATION.equals(desc.name()) && null == desc.appGroup() &&
-        null == loaderDescriptions.get(desc.name())) {
-      return SystemLoaderHolder.loader;
-    }
-    
+      if (null != isolationClassLoader) { return (ClassLoader) isolationClassLoader; }
+    } else if (ISOLATION.equals(desc.name()) && null == desc.appGroup() && null == loaderDescriptions.get(desc.name())) { return SystemLoaderHolder.loader; }
+
     while (true) {
       ClassLoader loader;
-      
-      // if (the DNA specifies an app-group, 
-      //     and there is a loader that exactly matches both the app-group and the name, 
-      //     and there is exactly one loader registered in that app-group that is a *child* of the exact match) { 
-      //   use the child; 
-      // } 
+
+      // if (the DNA specifies an app-group,
+      // and there is a loader that exactly matches both the app-group and the name,
+      // and there is exactly one loader registered in that app-group that is a *child* of the exact match) {
+      // use the child;
+      // }
       Set<String> appGroupLoaders = null;
       if (desc.appGroup() != null) {
         appGroupLoaders = appGroups.get(desc.appGroup());
@@ -234,64 +228,60 @@ public class StandardClassProvider implements ClassProvider {
               }
             }
           }
-          if (exactlyOne) {
-            return firstChild;
-          }
+          if (exactlyOne) { return firstChild; }
         }
       }
-      
-      // else if (there is a loader that matches the registered name) { 
-      //   use it; 
-      // } 
+
+      // else if (there is a loader that matches the registered name) {
+      // use it;
+      // }
       loader = lookupLoaderByName(desc.name());
       if (loader == REMOVED) {
         continue;
       }
-      if (loader != null) {
-        return loader;
-      }
-      
-      // else if (the DNA specifies an app-group 
-      //     and there is exactly one loader that matches the app-group) { 
-      //   use it; 
-      // } 
+      if (loader != null) { return loader; }
+
+      // else if (the DNA specifies an app-group
+      // and there is exactly one loader that matches the app-group) {
+      // use it;
+      // }
       if (appGroupLoaders != null && appGroupLoaders.size() == 1) {
         loader = lookupLoaderByName(appGroupLoaders.iterator().next());
         if (loader == REMOVED) {
           continue;
         }
       }
-      
+
       return loader;
     }
-    
+
   }
 
   /**
-   * A new loader has been added to the app group, so update the loaderChildren
-   * map for every loader in the app group. For each loader, if it has exactly one
-   * loader also in the app group that is its child, enter that in the map; otherwise
-   * enter a null.
+   * A new loader has been added to the app group, so update the loaderChildren map for every loader in the app group.
+   * For each loader, if it has exactly one loader also in the app group that is its child, enter that in the map;
+   * otherwise enter a null.
    * <p>
    * This method must be externally synchronized on 'this'.
+   * 
    * @param appGroup must be non-null and non-empty
    */
   private void updateAllChildRelationships(String appGroup) {
     Set<String> descs = appGroups.get(appGroup);
     Map<NamedClassLoader, Set<NamedClassLoader>> loaderToChildren = new HashMap<NamedClassLoader, Set<NamedClassLoader>>();
-    
+
     // For each loader in the appgroup, add an empty set to loaderToChildren.
     // This way childToParents.keys() identifies all the loaders in the app group.
     for (String desc : descs) {
       ClassLoader loader = lookupLoaderByName(desc);
       if (loader != null) {
-        loaderToChildren.put((NamedClassLoader)loader, new HashSet<NamedClassLoader>());
+        loaderToChildren.put((NamedClassLoader) loader, new HashSet<NamedClassLoader>());
       }
     }
-    
-    // For each loader in the appgroup, find any parents also in the group, and add it as a child 
+
+    // For each loader in the appgroup, find any parents also in the group, and add it as a child
     for (NamedClassLoader loader : loaderToChildren.keySet()) {
-      ClassLoader parent = ((ClassLoader)loader).getParent();
+      ClassLoader parent = ((ClassLoader) loader).getParent();
       while (parent != null) {
         Set<NamedClassLoader> children = loaderToChildren.get(parent);
         if (children != null) {
@@ -300,7 +290,7 @@ public class StandardClassProvider implements ClassProvider {
         parent = parent.getParent();
       }
     }
-    
+
     // Update the loaderChildren map
     for (Map.Entry<NamedClassLoader, Set<NamedClassLoader>> entry : loaderToChildren.entrySet()) {
       String desc = getName(entry.getKey());
@@ -312,9 +302,10 @@ public class StandardClassProvider implements ClassProvider {
       loaderChildren.put(desc, childrenNames);
     }
   }
-  
-  private static class RemovedClassLoader extends ClassLoader { /* */ }
-  
+
+  private static class RemovedClassLoader extends ClassLoader { /* */
+  }
+
   /** sentinel to indicate that a GC'ed classloader has been removed from maps */
   private static final RemovedClassLoader REMOVED = new RemovedClassLoader();
 
@@ -322,8 +313,9 @@ public class StandardClassProvider implements ClassProvider {
    * Look up a loader by name alone, ignoring app-group.
    * <p>
    * This method must be externally synchronized on 'this'.
-   * @return null if the requested loader has not been registered, or
-   * {@link #REMOVED} if the requested loader was registered but has been GC'ed.
+   * 
+   * @return null if the requested loader has not been registered, or {@link #REMOVED} if the requested loader was
+   *         registered but has been GC'ed.
    */
   private ClassLoader lookupLoaderByName(String name) {
     final ClassLoader rv;
@@ -339,10 +331,10 @@ public class StandardClassProvider implements ClassProvider {
     }
     return rv;
   }
-  
+
   /**
-   * A previously registered loader has been released (a WeakReference to
-   * it has been found to contain null); so remove all other traces to it.
+   * A previously registered loader has been released (a WeakReference to it has been found to contain null); so remove
+   * all other traces to it.
    * <p>
    * This method must be externally synchronized on 'this'.
    */
@@ -359,63 +351,56 @@ public class StandardClassProvider implements ClassProvider {
       }
     }
   }
-  
+
   public static class SystemLoaderHolder {
     final static ClassLoader loader = ClassLoader.getSystemClassLoader();
   }
-  
+
   /**
    * Verify integrity of data structures (should be used only by test code)
+   * 
    * @return null if all is well, or a descriptive string if there is a problem
    */
   synchronized String checkIntegrity() {
     // loaderDescriptions, loaderChildren, and loaders should each have exactly one entry per loader
-    if (loaderDescriptions.size() != loaders.size()) {
-      return "Map sizes differ: loaderDescriptions.size() = " + loaderDescriptions.size() +
-        ", loaders.size() = " + loaders.size();
-    }
-    if (loaderChildren.size() != loaders.size()) {
-      return "Map sizes differ: loaderChildren.size() = " + loaderChildren.size() +
-        ", loaders.size() = " + loaders.size();
-    }
-    
+    if (loaderDescriptions.size() != loaders.size()) { return "Map sizes differ: loaderDescriptions.size() = "
+                                                              + loaderDescriptions.size() + ", loaders.size() = "
+                                                              + loaders.size(); }
+    if (loaderChildren.size() != loaders.size()) { return "Map sizes differ: loaderChildren.size() = "
+                                                          + loaderChildren.size() + ", loaders.size() = "
+                                                          + loaders.size(); }
+
     // Every entry in every value of loaderChildren should be the name of another loader
     for (Entry<String, Set<String>> entry : loaderChildren.entrySet()) {
       Set<String> children = entry.getValue();
       for (String child : children) {
-        if (!loaders.containsKey(child)) {
-          return "loaderChildren[" + entry.getKey() + "] contains unrecognized child [" + child + "]";
-        }
+        if (!loaders.containsKey(child)) { return "loaderChildren[" + entry.getKey()
+                                                  + "] contains unrecognized child [" + child + "]"; }
       }
     }
-    
+
     // Every value of appGroups should be a Set<String>, and every value in the set should
     // be the name of another loader
     for (Entry<String, Set<String>> entry : appGroups.entrySet()) {
       Set<String> loadersInGroup = entry.getValue();
-      if (loadersInGroup == null) {
-        return "appGroups[" + entry.getKey() + "] contained a null value";
-      }
+      if (loadersInGroup == null) { return "appGroups[" + entry.getKey() + "] contained a null value"; }
       for (String name : loadersInGroup) {
-        if (!loaders.containsKey(name)) {
-          return "appGroups[" + entry.getKey() + "] pointed to unrecognized name [" + name + "]";
-        }
+        if (!loaders.containsKey(name)) { return "appGroups[" + entry.getKey() + "] pointed to unrecognized name ["
+                                                 + name + "]"; }
       }
     }
-    
+
     return null;
   }
-  
+
   /**
-   * Check to see whether there are any dangling weak references in the loaders map.
-   * Used only by test code.
+   * Check to see whether there are any dangling weak references in the loaders map. Used only by test code.
+   * 
    * @return true if dangling weak references are found
    */
   synchronized boolean checkWeakReferences() {
     for (WeakReference<NamedClassLoader> ref : loaders.values()) {
-      if (null == ref.get()) {
-        return true;
-      }
+      if (null == ref.get()) { return true; }
     }
     return false;
   }
