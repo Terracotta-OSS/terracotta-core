@@ -21,10 +21,6 @@ public class ClusterEventsTestListener implements DsoClusterListener {
   private List<String>  eventDescriptions = new ArrayList<String>();
   private List<DsoNode> eventNodes = new ArrayList<DsoNode>();
 
-  public ClusterEventsTestListener() {
-    System.out.println(">>>>>> ClusterEventsTestListener.cluster : "+cluster);
-  }
-
   public List<String> getOccurredEvents() {
     return eventDescriptions;
   }

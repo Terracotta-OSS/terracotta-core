@@ -689,7 +689,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       System.exit(-1);
     }
 
-    dsoCluster.init(clusterMetaDataManager, objectManager);
     this.clientHandshakeManager.waitForHandshake();
 
     final TCSocketAddress remoteAddress = this.channel.channel().getRemoteAddress();

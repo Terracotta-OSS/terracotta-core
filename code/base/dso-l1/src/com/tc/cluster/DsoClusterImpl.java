@@ -38,7 +38,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   private volatile DsoNodeInternal               currentNode;
 
-  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl(this);
+  private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
   private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
 
   private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
@@ -236,10 +236,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
   }
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
-    if (null == clusterMetaDataManager) {
-      new Exception().printStackTrace();
-      return null;
-    }
+    Assert.assertNotNull(clusterMetaDataManager);
 
     return clusterMetaDataManager.retrieveMetaDataForDsoNode(node);
   }
