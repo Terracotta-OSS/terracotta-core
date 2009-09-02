@@ -5,6 +5,7 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.DsoCluster;
+import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
@@ -35,7 +36,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
-   *
+   * 
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -207,7 +208,7 @@ public final class NullManager implements Manager {
   }
 
   public final TCLogger getLogger(final String loggerName) {
-    throw new UnsupportedOperationException();
+    return new NullTCLogger();
   }
 
   public final SessionMonitor getHttpSessionMonitor() {
