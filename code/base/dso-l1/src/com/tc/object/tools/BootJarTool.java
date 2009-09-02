@@ -489,6 +489,7 @@ public class BootJarTool {
       loadTerracottaClass(InstrumentationLogger.class.getName());
       loadTerracottaClass(NullInstrumentationLogger.class.getName());
       loadTerracottaClass(NullManager.class.getName());
+      loadTerracottaClass(NullTCLogger.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
       loadTerracottaClass(TCObject.class.getName());
@@ -1985,7 +1986,6 @@ public class BootJarTool {
   private final void addInstrumentedJavaUtilConcurrentLinkedBlockingQueue() {
     if (!Vm.isJDK15Compliant()) { return; }
 
-    
     { // Instrumentation for Itr inner class
       byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
 
@@ -2029,14 +2029,20 @@ public class BootJarTool {
                                                                                        getClass().getClassLoader(),
                                                                                        true, true);
       Map instrumentedContext = new HashMap();
-      ClassVisitor cv = new SerialVersionUIDAdder(new JavaUtilConcurrentLinkedBlockingQueueClassAdapter
-                                                  (new MergeTCToJavaClassAdapter
-                                                   (cw, dsoAdapter, jClassNameDots, tcClassNameDots, tcCN, instrumentedContext)));
+      ClassVisitor cv = new SerialVersionUIDAdder(
+                                                  new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(
+                                                                                                        new MergeTCToJavaClassAdapter(
+                                                                                                                                      cw,
+                                                                                                                                      dsoAdapter,
+                                                                                                                                      jClassNameDots,
+                                                                                                                                      tcClassNameDots,
+                                                                                                                                      tcCN,
+                                                                                                                                      instrumentedContext)));
       jCR.accept(cv, ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
-      
-      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(jClassNameDots,
-                                                                     "com.tc.object.applicator.LinkedBlockingQueueApplicator");
+
+      TransparencyClassSpec spec = this.configHelper
+          .getOrCreateSpec(jClassNameDots, "com.tc.object.applicator.LinkedBlockingQueueApplicator");
       spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
       spec.markPreInstrumented();
       jData = doDSOTransform(spec.getClassName(), jData);
@@ -2649,7 +2655,8 @@ public class BootJarTool {
         boolean makeItAnyway = cmdLine.hasOption("w");
         if (targetFile.exists()) {
           if (makeItAnyway) {
-            consoleLogger.info("Overwrite mode specified, existing boot JAR file at '" + targetFile.getCanonicalPath() + "' will be overwritten.");
+            consoleLogger.info("Overwrite mode specified, existing boot JAR file at '" + targetFile.getCanonicalPath()
+                               + "' will be overwritten.");
           } else {
             consoleLogger.info("Found boot JAR file at '" + targetFile.getCanonicalPath() + "'; validating...");
             validating = true;
