@@ -208,12 +208,12 @@ public class Resolver {
   }
 
   private String findNewestVersion(String groupId, String name) {
-    //logger.info("findNewestVersion(" + groupId + ", " + name + ")");
+    // logger.info("findNewestVersion(" + groupId + ", " + name + ")");
 
     final String symName = MavenToOSGi.artifactIdToSymbolicName(groupId, name);
     String newestVersion = null;
 
-    //logger.info("  looking for symName = " + symName);
+    // logger.info("  looking for symName = " + symName);
 
     for (Repository repo : repositories) {
       Collection<URL> possibles = repo.search(groupId, name);
@@ -236,28 +236,28 @@ public class Resolver {
 
             // See if any of the required dependencies is modules-base - the version is the api version
             String requiredBundles = manifest.getMainAttributes().getValue(BundleSpec.REQUIRE_BUNDLE);
-            if(requiredBundles != null) {
-              //logger.info("  checking for api in required bundles");
+            if (requiredBundles != null) {
+              // logger.info("  checking for api in required bundles");
               String[] specs = requiredBundles.split(",");
-              for(String spec : specs) {
+              for (String spec : specs) {
                 BundleSpec bundleSpec = new BundleSpecImpl(spec);
-                //logger.info("    found " + bundleSpec.getSymbolicName() + ":" + bundleSpec.getVersion());
-                if(bundleSpec.getSymbolicName().equals("org.terracotta.modules.modules-base")) {
+                // logger.info("    found " + bundleSpec.getSymbolicName() + ":" + bundleSpec.getVersion());
+                if (bundleSpec.getSymbolicName().equals("org.terracotta.modules.modules-base")) {
                   moduleApiVersion = OSGiToMaven.bundleVersionToProjectVersion(bundleSpec.getVersion());
-                  //logger.info("    found modules-base api version: " + moduleApiVersion);
+                  // logger.info("    found modules-base api version: " + moduleApiVersion);
                   break;
                 }
               }
             }
           }
-          
+
           if (versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
-            //logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
+            // logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             logger.info("new version = " + newestVersion);
-          // } else {
-          //   logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
-          //               + " - not appropriate for current tc version");
+            // } else {
+            // logger.info("skipping module with " + moduleTcVersion + " / " + moduleApiVersion
+            // + " - not appropriate for current tc version");
           }
         }
       }
@@ -463,7 +463,18 @@ public class Resolver {
 
   private URL addToRegistry(final URL location, final Manifest manifest) {
     final Entry entry = new Entry(location, manifest);
-    if (!registry.contains(entry)) registry.add(entry);
+    if (!registry.contains(entry)) {
+      // Check if we're somehow resolving more than one version of the "same" TIM
+      for (Entry existing : registry) {
+        if (existing.getSymbolicName().equals(entry.getSymbolicName())) {
+          // XXX: It'd be nice to provide deeper context here (ie. something like
+          // mvn dependency:tree that would show how we got to this state)
+          throw new ConflictingModuleException(existing.getSymbolicName(), existing.getVersion(), entry.getVersion());
+        }
+      }
+
+      registry.add(entry);
+    }
     return entry.getLocation();
   }
 
@@ -569,11 +580,11 @@ public class Resolver {
 
   private static final class Message {
 
-    static final Message WARN_FILE_IGNORED_MISSING_MANIFEST   = new Message("warn.file.ignored.missing-manifest");
+    static final Message WARN_FILE_IGNORED_MISSING_MANIFEST = new Message("warn.file.ignored.missing-manifest");
     // static final Message WARN_REPOSITORY_PROTOCOL_UNSUPPORTED = new Message("warn.repository.protocol.unsupported");
-    static final Message ERROR_BUNDLE_UNREADABLE              = new Message("error.bundle.unreadable");
-    static final Message ERROR_BUNDLE_UNRESOLVED              = new Message("error.bundle.unresolved");
-    static final Message ERROR_BUNDLE_DEPENDENCY_UNRESOLVED   = new Message("error.bundle-dependency.unresolved");
+    static final Message ERROR_BUNDLE_UNREADABLE            = new Message("error.bundle.unreadable");
+    static final Message ERROR_BUNDLE_UNRESOLVED            = new Message("error.bundle.unresolved");
+    static final Message ERROR_BUNDLE_DEPENDENCY_UNRESOLVED = new Message("error.bundle-dependency.unresolved");
 
     private final String resourceBundleKey;
 
