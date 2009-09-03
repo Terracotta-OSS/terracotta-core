@@ -7,6 +7,7 @@ package com.tc.server;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
@@ -15,6 +16,7 @@ public class TCServerMain {
 
   public static void main(final String[] args) {
     ThrowableHandler throwableHandler = new ThrowableHandler(TCLogging.getLogger(TCServerMain.class));
+    throwableHandler.addHelper(new MortbayMultiExceptionHelper());
 
     try {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);

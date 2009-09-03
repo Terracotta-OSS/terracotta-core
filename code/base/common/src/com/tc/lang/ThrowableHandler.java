@@ -8,8 +8,8 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.exception.DatabaseException;
+import com.tc.exception.ExceptionHelper;
 import com.tc.exception.ExceptionHelperImpl;
-import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.handler.CallbackStartupExceptionLoggingAdapter;
 import com.tc.logging.CallbackOnExitHandler;
@@ -35,10 +35,10 @@ public class ThrowableHandler {
   // single
   // place first, then come up with fancy ways of dealing with them. --Orion 03/20/2006
 
-  private final TCLogger            logger;
-  private final ExceptionHelperImpl helper;
-  private CopyOnWriteArrayList      callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
-  private HashMap                   callbackOnExitExceptionHandlers = new HashMap();
+  private final TCLogger             logger;
+  private final ExceptionHelperImpl  helper;
+  private final CopyOnWriteArrayList callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
+  private final HashMap              callbackOnExitExceptionHandlers = new HashMap();
 
   /**
    * Construct a new ThrowableHandler with a logger
@@ -49,8 +49,11 @@ public class ThrowableHandler {
     this.logger = logger;
     helper = new ExceptionHelperImpl();
     helper.addHelper(new RuntimeExceptionHelper());
-    helper.addHelper(new MortbayMultiExceptionHelper());
     registerStartupExceptionCallbackHandlers();
+  }
+
+  public void addHelper(ExceptionHelper toAdd) {
+    helper.addHelper(toAdd);
   }
 
   protected void registerStartupExceptionCallbackHandlers() {

@@ -3,5 +3,6 @@
   <info organisation="org.terracotta" module="tim-get-tool-tests-unit"/>
   <dependencies defaultconf="default">
     <dependency name="jetty" rev="6.1.8" org="org.mortbay.jetty"/>
+    <dependency name="jetty-util" rev="6.1.8" org="org.mortbay.jetty"/>
   </dependencies>
 </ivy-module>
