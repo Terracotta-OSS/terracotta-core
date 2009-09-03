@@ -20,6 +20,7 @@ import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,6 +55,10 @@ public class DsoClusterImpl implements DsoClusterInternal {
   public void init(final ClusterMetaDataManager metaDataManager, final ClientObjectManager objectManager) {
     this.clusterMetaDataManager = metaDataManager;
     this.clientObjectManager = objectManager;
+
+    for (DsoNodeInternal node : new ArrayList<DsoNodeInternal>(topology.getInternalNodes())) {
+      retrieveMetaDataForDsoNode(node);
+    }
   }
 
   public void addClusterListener(final DsoClusterListener listener) {
@@ -68,7 +73,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     }
 
     if (isNodeJoined) {
-      fireNodeJoinedInternal(new DsoClusterEventImpl(currentNode), listener);
+      fireNodeJoinedInternal(currentNode, new DsoClusterEventImpl(currentNode), listener);
     }
 
     if (areOperationsEnabled) {
@@ -312,11 +317,15 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
     final DsoClusterEvent event = new DsoClusterEventImpl(topology.getAndRegisterDsoNode(nodeId));
     for (DsoClusterListener listener : listeners) {
-      fireNodeJoinedInternal(event, listener);
+      fireNodeJoinedInternal(topology.getInternalNode(nodeId), event, listener);
     }
   }
 
-  private void fireNodeJoinedInternal(final DsoClusterEvent event, final DsoClusterListener listener) {
+  private void fireNodeJoinedInternal(final DsoNodeInternal node, final DsoClusterEvent event, final DsoClusterListener listener) {
+    if (node != null) {
+      retrieveMetaDataForDsoNode(node);
+    }
+
     try {
       listener.nodeJoined(event);
     } catch (Throwable e) {

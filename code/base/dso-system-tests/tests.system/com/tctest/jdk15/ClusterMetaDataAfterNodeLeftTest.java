@@ -28,17 +28,12 @@ import com.tctest.runner.TransparentAppConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Date;
 
 public class ClusterMetaDataAfterNodeLeftTest extends TransparentTestBase {
 
   private int  port;
   private File configFile;
   private int  adminPort;
-
-  public ClusterMetaDataAfterNodeLeftTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
-  }
 
   @Override
   protected Class getApplicationClass() {
