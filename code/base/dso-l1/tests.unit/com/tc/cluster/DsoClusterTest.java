@@ -5,12 +5,23 @@
 package com.tc.cluster;
 
 import com.tc.net.ClientID;
+import com.tc.net.NodeID;
+import com.tc.object.ClusterMetaDataManager;
+import com.tc.object.ObjectID;
+import com.tc.object.bytecode.TCMap;
+import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.test.TCTestCase;
 import com.tcclient.cluster.DsoNode;
+import com.tcclient.cluster.DsoNodeInternal;
+import com.tcclient.cluster.DsoNodeMetaData;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
 public class DsoClusterTest extends TCTestCase {
 
@@ -19,6 +30,51 @@ public class DsoClusterTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     cluster = new DsoClusterImpl();
+    cluster.init(new MockClusterMetaDataManager(), null);
+  }
+
+  private final static class MockClusterMetaDataManager implements ClusterMetaDataManager {
+
+    public DNAEncoding getEncoding() {
+      return null;
+    }
+
+    public Set<?> getKeysForOrphanedValues(TCMap tcMap) {
+      return null;
+    }
+
+    public Set<NodeID> getNodesWithObject(ObjectID id) {
+      return null;
+    }
+
+    public Map<ObjectID, Set<NodeID>> getNodesWithObjects(Collection<ObjectID> ids) {
+      return null;
+    }
+
+    public DsoNodeMetaData retrieveMetaDataForDsoNode(DsoNodeInternal node) {
+      return null;
+    }
+
+    public void setResponse(ThreadID threadId, Object response) {
+      // no-op
+    }
+
+    public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+      // no-op
+
+    }
+
+    public void pause(NodeID remoteNode, int disconnected) {
+      // no-op
+    }
+
+    public void shutdown() {
+      // no-op
+    }
+
+    public void unpause(NodeID remoteNode, int disconnected) {
+      // no-op
+    }
   }
 
   public void testGetThisNode() {
