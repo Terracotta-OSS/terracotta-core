@@ -17,9 +17,9 @@ public interface GCHook {
   public ObjectIDSet getGCCandidates();
 
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs);
-  
+
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id);
-  
+
   public String getDescription();
 
   public void startMonitoringReferenceChanges();
@@ -30,7 +30,7 @@ public interface GCHook {
 
   public void waitUntilReadyToGC();
 
-  public ObjectIDSet getObjectReferencesFrom(ObjectID id);
+  public Set<ObjectID> getObjectReferencesFrom(ObjectID id);
 
   public ObjectIDSet getRescueIDs();
 

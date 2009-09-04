@@ -47,6 +47,7 @@ import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -66,42 +67,53 @@ import java.util.Set;
 public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable,
     DumpHandler, PrettyPrintable {
 
-  private static final TCLogger                       logger                   = TCLogging
-                                                                                   .getLogger(ObjectManager.class);
+  private static final TCLogger                       logger                = TCLogging.getLogger(ObjectManager.class);
 
-  private static final int                            MAX_COMMIT_SIZE          = TCPropertiesImpl
-                                                                                   .getProperties()
-                                                                                   .getInt(
-                                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+  private static final int                            MAX_COMMIT_SIZE       = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getInt(
+                                                                                        TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+  private static final long                           THROTTLE_GC_MILLIS    = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getLong(
+                                                                                         TCPropertiesConsts.L2_OBJECTMANAGER_DGC_THROTTLE_TIME);
+
+  private static final long                           REQUESTS_PER_THROTTLE = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getLong(
+                                                                                         TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
+
   // XXX:: Should go to property file
-  private static final int                            INITIAL_SET_SIZE         = 16;
-  private static final float                          LOAD_FACTOR              = 0.75f;
+  private static final int                            INITIAL_SET_SIZE      = 16;
+  private static final float                          LOAD_FACTOR           = 0.75f;
 
   private final ManagedObjectStore                    objectStore;
   private final Map<ObjectID, ManagedObjectReference> references;
   private final EvictionPolicy                        evictionPolicy;
-  private final Counter                               flushCount               = new Counter();
-  private final PendingList                           pending                  = new PendingList();
+  private final Counter                               flushCount            = new Counter();
+  private final PendingList                           pending               = new PendingList();
 
-  private GarbageCollector                            collector                = new NullGarbageCollector();
-  private int                                         checkedOutCount          = 0;
+  private GarbageCollector                            collector             = new NullGarbageCollector();
+  private int                                         checkedOutCount       = 0;
 
-  private volatile boolean                            inShutdown               = false;
+  private volatile boolean                            inShutdown            = false;
 
   private final ClientStateManager                    stateManager;
   private final ObjectManagerConfig                   config;
-  private ObjectManagerStatsListener                  stats                    = new NullObjectManagerStatsListener();
+  private ObjectManagerStatsListener                  stats                 = new NullObjectManagerStatsListener();
   private final PersistenceTransactionProvider        persistenceTransactionProvider;
   private final Sink                                  faultSink;
   private final Sink                                  flushSink;
-  private TransactionalObjectManager                  txnObjectMgr             = new NullTransactionalObjectManager();
-  private int                                         preFetchedCount          = 0;
+  private TransactionalObjectManager                  txnObjectMgr          = new NullTransactionalObjectManager();
+  private int                                         preFetchedCount       = 0;
 
   private final ObjectStatsRecorder                   objectStatsRecorder;
+  private final ObjectIDSet                           noReferencesIDSet     = new ObjectIDSet();
 
-  public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager, final ManagedObjectStore objectStore,
-                           final EvictionPolicy cache, final PersistenceTransactionProvider persistenceTransactionProvider,
-                           final Sink faultSink, final Sink flushSink, final ObjectStatsRecorder objectStatsRecorder) {
+  public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
+                           final ManagedObjectStore objectStore, final EvictionPolicy cache,
+                           final PersistenceTransactionProvider persistenceTransactionProvider, final Sink faultSink,
+                           final Sink flushSink, final ObjectStatsRecorder objectStatsRecorder) {
     this.faultSink = faultSink;
     this.flushSink = flushSink;
     Assert.assertNotNull(objectStore);
@@ -239,38 +251,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return lookup(id, false, false);
   }
 
-  /**
-   * This method lookups objects just like getObjectByID except it returns null if the object is still new.
-   */
-  public ManagedObject getObjectByIDOrNull(final ObjectID id) {
-    ManagedObject mo = lookup(id, false, true);
-    if (mo.isNew()) {
-      logger.warn("Returning null since looking up " + id + " which is still a new Object : " + mo);
-      releaseReadOnly(mo);
-      return null;
-    }
-    return mo;
-  }
-
-  /**
-   * This method returns null if you are looking up a newly created object that is not yet initialized or an Object that
-   * is not in cache. This is mainly used by DGC.
-   */
-  public ManagedObject getObjectFromCacheByIDOrNull(final ObjectID id) {
-    if (isObjectInCache(id)) {
-      // There is still a small race where this call might fault objects that were just flushed to disk, but we can live
-      // with that.
-      return getObjectByIDOrNull(id);
-    } else {
-      // Not in cache.
-      return null;
-    }
-  }
-
-  private synchronized boolean isObjectInCache(final ObjectID id) {
-    return this.references.containsKey(id);
-  }
-
   private void markReferenced(final ManagedObjectReference reference) {
     if (reference.isReferenced()) { throw new AssertionError("Attempt to mark an already referenced object: "
                                                              + reference); }
@@ -359,6 +339,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
       }
       addNewReference(mo, removeOnRelease);
+      addToNoReferences(mo);
     }
     makeUnBlocked(oid);
     postRelease();
@@ -384,7 +365,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease) throws AssertionError {
+  private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease)
+      throws AssertionError {
     ManagedObjectReference newReference = obj.getReference();
     newReference.setRemoveOnRelease(isRemoveOnRelease);
 
@@ -585,7 +567,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * TODO:: Implement a mechanism where Objects are marked pending to commit and give it out for other transactions but
    * not for client lookups.
    */
-  public void releaseAll(final PersistenceTransaction persistenceTransaction, final Collection<ManagedObject> managedObjects) {
+  public void releaseAll(final PersistenceTransaction persistenceTransaction,
+                         final Collection<ManagedObject> managedObjects) {
     if (this.config.paranoid()) {
       flushAllAndCommit(persistenceTransaction, managedObjects);
     }
@@ -613,6 +596,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
         ref = this.references.remove(id);
       }
+      noReferencesIDSet.remove(id);
       if (ref != null) {
         if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         this.evictionPolicy.remove(ref);
@@ -646,6 +630,37 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.objectStore.getObjectCount();
   }
 
+  public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
+    synchronized (this) {
+      if (this.noReferencesIDSet.contains(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
+      ManagedObjectReference mor = getReference(id);
+      if ((mor == null && cacheOnly) || (mor != null && mor.isNew())) { // OK to inspect isNew even if its checkedout.
+        // Object either not in cache or is a new object, return emtpy set
+        return TCCollections.EMPTY_OBJECT_ID_SET;
+      }
+      if (mor != null && !mor.isReferenced()) {
+        // the object is not checked out and in memory, short circuit checking out and checking it back in.
+        this.stats.cacheHit();
+        return new ObjectIDSet(mor.getObject().getObjectReferences());
+      }
+    }
+    // The object is either not in the cache or someone else has checked it out, do a regular look and wait for the
+    // object.
+    throttleIfNecessary();
+    ManagedObject mo = lookup(id, false, true);
+    Set references2Return = mo.getObjectReferences();
+    releaseReadOnly(mo);
+    return references2Return;
+  }
+
+  private long request_count = 0;
+
+  private void throttleIfNecessary() {
+    if (THROTTLE_GC_MILLIS > 0 && ++this.request_count % REQUESTS_PER_THROTTLE == 0) {
+      ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
+    }
+  }
+
   private void postRelease() {
     if (this.collector.isPausingOrPaused()) {
       checkAndNotifyGC();
@@ -673,8 +688,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void updateNewFlagAndCreateIfNecessary(final ManagedObject object) {
     if (object.isNew()) {
       this.objectStore.addNewObject(object);
+      addToNoReferences(object);
       object.setIsNew(false);
       fireNewObjectinitialized(object.getID());
+    }
+  }
+
+  private void addToNoReferences(final ManagedObject object) {
+    if (object.getManagedObjectState().hasNoReferences()) {
+      noReferencesIDSet.add(object.getID());
     }
   }
 
@@ -764,6 +786,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     // Not adding to the store yet since this transaction containing the new objects is not yet applied.
     // objectStore.addNewObject(object);
     addNewReference(object, false);
+
     this.stats.newObjectCreated();
     fireObjectCreated(oid);
   }
@@ -889,7 +912,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST, true);
   }
 
-  private void updateFlushStats(final Collection<ManagedObject> toFlush, final Collection<ManagedObjectReference> removedObjects) {
+  private void updateFlushStats(final Collection<ManagedObject> toFlush,
+                                final Collection<ManagedObjectReference> removedObjects) {
     Iterator<ManagedObject> flushIter = toFlush.iterator();
     while (flushIter.hasNext()) {
       String className = flushIter.next().getManagedObjectState().getClassName();
@@ -1161,5 +1185,4 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private static Set<ManagedObjectReference> createNewSet() {
     return new HashSet<ManagedObjectReference>(INITIAL_SET_SIZE, LOAD_FACTOR);
   }
-
 }

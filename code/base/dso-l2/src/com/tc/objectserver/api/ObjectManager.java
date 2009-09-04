@@ -93,6 +93,14 @@ public interface ObjectManager extends ManagedObjectProvider {
   public void setGarbageCollector(GarbageCollector gc);
 
   /**
+   * This method return a set of ids that are the children of the param
+   * 
+   * @param id - to return children of
+   * @param cacheOnly - return set if only in cache.
+   */
+  public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly);
+
+  /**
    * Called by DGC thread (in object manager)
    */
   public void waitUntilReadyToGC();
@@ -121,17 +129,5 @@ public interface ObjectManager extends ManagedObjectProvider {
   public void flushAndEvict(List objects2Flush);
 
   public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
-
-  /**
-   * This method returns null if you are looking up a newly created object that is not yet initialized. This is mainly
-   * used by DGC.
-   */
-  public ManagedObject getObjectByIDOrNull(ObjectID id);
-
-  /**
-   * This method returns null if you are looking up a newly created object that is not yet initialized or an Object that
-   * is not in cache. This is mainly used by DGC.
-   */
-  public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id);
 
 }

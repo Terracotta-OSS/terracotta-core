@@ -9,36 +9,22 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Set;
 
 public class FullGCHook extends AbstractGCHook {
 
-  private static final TCLogger logger                = TCLogging.getLogger(FullGCHook.class);
+  private static final TCLogger logger      = TCLogging.getLogger(FullGCHook.class);
 
-  private static final long     THROTTLE_GC_MILLIS    = TCPropertiesImpl
-                                                          .getProperties()
-                                                          .getLong(
-                                                                   TCPropertiesConsts.L2_OBJECTMANAGER_DGC_THROTTLE_TIME);
-
-  private static final long     REQUESTS_PER_THROTTLE = TCPropertiesImpl
-                                                          .getProperties()
-                                                          .getLong(
-                                                                   TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
-
-  private static final Filter   NULL_FILTER           = new Filter() {
-                                                        public boolean shouldVisit(ObjectID referencedObject) {
-                                                          return true;
-                                                        }
-                                                      };
+  private static final Filter   NULL_FILTER = new Filter() {
+                                              public boolean shouldVisit(ObjectID referencedObject) {
+                                                return true;
+                                              }
+                                            };
 
   public FullGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager, ClientStateManager stateManager) {
     super(collector, objectManager, stateManager);
@@ -64,24 +50,8 @@ public class FullGCHook extends AbstractGCHook {
     return NULL_FILTER;
   }
 
-  public ObjectIDSet getObjectReferencesFrom(ObjectID id) {
-    throttleIfNecessary();
-    ManagedObject obj = this.objectManager.getObjectByIDOrNull(id);
-    if (obj == null) {
-      logger.warn("Looked up a new Object before its initialized, skipping : " + id);
-      return new ObjectIDSet();
-    }
-    Set references = obj.getObjectReferences();
-    this.objectManager.releaseReadOnly(obj);
-    return new ObjectIDSet(references);
-  }
-
-  private long request_count = 0;
-  private void throttleIfNecessary() {
-    if (THROTTLE_GC_MILLIS > 0 && ++this.request_count % REQUESTS_PER_THROTTLE == 0) {
-      this.request_count = 0;
-      ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
-    }
+  public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
+    return this.objectManager.getObjectReferencesFrom(id, false);
   }
 
   public ObjectIDSet getRescueIDs() {

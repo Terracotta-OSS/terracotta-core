@@ -57,6 +57,16 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
       }
     }
   }
+  
+  /**
+   * This method returns whether this ManagedObjectState can have references or not.
+   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
+   *         false : The Managed object represented by this state object can have references to other objects. 
+   */
+  @Override
+  public boolean hasNoReferences() {
+    return true;
+  }
 
   public void dehydrate(ObjectID objectID, DNAWriter writer) {
     writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(referenceTime) });

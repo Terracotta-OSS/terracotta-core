@@ -47,14 +47,13 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   protected Set                            released            = null;
   protected PersistenceTransactionProvider transactionProvider = null;
   protected GarbageCollectionInfoPublisher gcPublisher;
-  
-  
+
   public GCTestObjectManager(Set lookedUp, Set released, PersistenceTransactionProvider transactionProvider) {
     this.lookedUp = lookedUp;
     this.released = released;
     this.transactionProvider = transactionProvider;
   }
-  
+
   public void setPublisher(GarbageCollectionInfoPublisher gcPublisher) {
     this.gcPublisher = gcPublisher;
   }
@@ -180,15 +179,13 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return mo;
   }
 
-  //TODO: just garbage collector complete interface.
+  // TODO: just garbage collector complete interface.
   public void notifyGCComplete(GCResultContext resultContext) {
 
-    
     GarbageCollectionInfo gcInfo = resultContext.getGCInfo();
-     
+
     gcPublisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();
-   
 
     SortedSet<ObjectID> ids = resultContext.getGCedObjectIDs();
     for (Iterator i = ids.iterator(); i.hasNext();) {
@@ -199,14 +196,14 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     int b4 = gced.size();
     gced.addAll(ids);
     Assert.assertEquals(b4 + ids.size(), gced.size());
-    
+
     long elapsed = System.currentTimeMillis() - start;
-    gcInfo.setDeleteStageTime(elapsed); 
+    gcInfo.setDeleteStageTime(elapsed);
     long endMillis = System.currentTimeMillis();
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
 
     gcPublisher.fireGCCompletedEvent(gcInfo);
- 
+
   }
 
   public ObjectIDSet getObjectIDsInCache() {
@@ -236,10 +233,30 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
-    if(managed.containsKey(id) ) {
+    if (managed.containsKey(id)) {
       return getObjectByIDOrNull(id);
     } else {
       return null;
     }
   }
+
+  public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
+    if (cacheOnly) {
+      ManagedObject obj = getObjectFromCacheByIDOrNull(id);
+      if (obj == null) {
+        // Not in cache, rescue stage to take care of these inward references.
+        return new ObjectIDSet();
+      }
+      Set refs = obj.getObjectReferences();
+      releaseReadOnly(obj);
+      return new ObjectIDSet(refs);
+    } else {
+      ManagedObject obj = getObjectByIDOrNull(id);
+      if (obj == null) { return new ObjectIDSet(); }
+      Set refs = obj.getObjectReferences();
+      releaseReadOnly(obj);
+      return new ObjectIDSet(refs);
+    }
+  }
+
 }

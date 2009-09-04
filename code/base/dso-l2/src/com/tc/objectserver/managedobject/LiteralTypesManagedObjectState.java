@@ -100,6 +100,16 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     o.writeObject(this.reference);
   }
 
+  /**
+   * This method returns whether this ManagedObjectState can have references or not.
+   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
+   *         false : The Managed object represented by this state object can have references to other objects. 
+   */
+  @Override
+  public boolean hasNoReferences() {
+    return true;
+  }
+
   static LiteralTypesManagedObjectState readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
     LiteralTypesManagedObjectState lmos = new LiteralTypesManagedObjectState();
     lmos.reference = in.readObject();

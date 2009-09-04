@@ -114,7 +114,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private class TestServerTransaction implements ServerTransaction {
-    private int srcID;
+    private final int srcID;
 
     public TestServerTransaction(int srcID) {
       this.srcID = srcID;
@@ -199,9 +199,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private class TestServerConfigurationContext implements ServerConfigurationContext {
-    private int                          noOfClients;
-    private int                          clientDisconnectNo;
-    private TestServerTransactionManager testServerTxManager;
+    private final int                          noOfClients;
+    private final int                          clientDisconnectNo;
+    private final TestServerTransactionManager testServerTxManager;
 
     public TestServerConfigurationContext(int noOfClients, int clientDisconnectNo) {
       this.clientDisconnectNo = clientDisconnectNo;
@@ -280,7 +280,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private class TestStage implements Stage {
-    private Sink sink = new TestSink();
+    private final Sink sink = new TestSink();
 
     public void destroy() {
       throw new ImplementMe();
@@ -369,8 +369,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private class TestDSOChannelManager implements DSOChannelManager {
-    private int noOfChannels;
-    private int deadChannelID;
+    private final int noOfChannels;
+    private final int deadChannelID;
 
     public TestDSOChannelManager(int noOfChannels, int deadChannelID) {
       this.noOfChannels = noOfChannels;
@@ -433,8 +433,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   }
 
   private class TestMessageChannel implements MessageChannel {
-    private long    id;
-    private boolean isClosed;
+    private final long    id;
+    private final boolean isClosed;
 
     public TestMessageChannel(int id, boolean isClosed) {
       this.isClosed = isClosed;
@@ -664,8 +664,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   private class TestServerTransactionManager implements ServerTransactionManager {
 
-    private NodeID       deadNodeID;
-    private List<NodeID> acknowledgedBack = new ArrayList<NodeID>();
+    private final NodeID       deadNodeID;
+    private final List<NodeID> acknowledgedBack = new ArrayList<NodeID>();
 
     public TestServerTransactionManager(NodeID dead) {
       deadNodeID = dead;

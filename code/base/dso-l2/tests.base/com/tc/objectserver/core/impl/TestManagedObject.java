@@ -39,19 +39,29 @@ import java.util.Set;
  * @author steve
  */
 public class TestManagedObject implements ManagedObject, ManagedObjectReference, Serializable {
-  public final NoExceptionLinkedQueue setTransientStateCalls = new NoExceptionLinkedQueue();
-  private final ObjectID              id;
-  private final ArrayList<ObjectID>   references;
-  public boolean                      isDirty;
-  public boolean                      isNew;
+  public final NoExceptionLinkedQueue    setTransientStateCalls   = new NoExceptionLinkedQueue();
+
+  public static final TestManagedObject NULL_TEST_MANAGED_OBJECT = new TestManagedObject(new ObjectID(-1));
+  private final ObjectID                 id;
+  private final ArrayList<ObjectID>      references;
+  public boolean                         isDirty;
+  public boolean                         isNew;
+  public boolean                         noReferences;
+  TLinkable                              next                     = null;
+  TLinkable                              previous                 = null;
 
   public TestManagedObject(ObjectID id, ArrayList<ObjectID> references) {
+    this(id, references, false);
+  }
+
+  public TestManagedObject(ObjectID id, ArrayList<ObjectID> references, boolean noReferences) {
     this.id = id;
     this.references = references;
+    this.noReferences = noReferences;
   }
 
   public TestManagedObject(ObjectID id) {
-    this(id, new ArrayList<ObjectID>());
+    this(id, new ArrayList<ObjectID>(), false);
   }
 
   public void setReference(int index, ObjectID id) {
@@ -180,9 +190,6 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     throw new ImplementMe();
   }
 
-  TLinkable next;
-  TLinkable previous;
-
   public TLinkable getNext() {
     return this.next;
   }
@@ -200,7 +207,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public ManagedObjectState getManagedObjectState() {
-    return new NullManagedObjectState();
+    return noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
   }
 
   @Override
@@ -227,6 +234,14 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   public void setIsNew(boolean newFlag) {
     this.isNew = newFlag;
+  }
+
+  private class NullNoReferencesManagedObjectState extends NullManagedObjectState {
+
+    @Override
+    public boolean hasNoReferences() {
+      return true;
+    }
   }
 
   private class NullManagedObjectState extends AbstractManagedObjectState {

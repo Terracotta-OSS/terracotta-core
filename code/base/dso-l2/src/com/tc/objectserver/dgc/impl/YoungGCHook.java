@@ -9,7 +9,6 @@ import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.Filter;
-import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.GarbageCollectionID;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -54,15 +53,8 @@ public class YoungGCHook extends AbstractGCHook {
     return new SelectiveFilter(candidateIDs);
   }
 
-  public ObjectIDSet getObjectReferencesFrom(ObjectID id) {
-    ManagedObject obj = this.objectManager.getObjectFromCacheByIDOrNull(id);
-    if (obj == null) {
-      // Not in cache, rescue stage to take care of these inward references.
-      return new ObjectIDSet();
-    }
-    Set references = obj.getObjectReferences();
-    this.objectManager.releaseReadOnly(obj);
-    return new ObjectIDSet(references);
+  public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
+    return this.objectManager.getObjectReferencesFrom(id, true);
   }
 
   public ObjectIDSet getRescueIDs() {

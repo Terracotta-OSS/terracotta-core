@@ -304,5 +304,27 @@ public class ManagedObjectStateTest extends TestCase {
 
     assertEquals(ObjectID.NULL_ID, state.getParentID());
   }
+  
+  public void testStaticHasNoReference() {
+    
+    ArrayManagedObjectState arrayManagedObjectState = new ArrayManagedObjectState(1);
+    ManagedObjectStateTest [] objArray = new ManagedObjectStateTest[]{};
+    arrayManagedObjectState.initArray(objArray);
+    assertFalse(arrayManagedObjectState.hasNoReferences());
+    arrayManagedObjectState.initArray(new byte[]{});
+    assertTrue(arrayManagedObjectState.hasNoReferences());
+    
+    LiteralTypesManagedObjectState literalTypesManagedObjectState = new LiteralTypesManagedObjectState();
+    assertTrue(literalTypesManagedObjectState.hasNoReferences());
+    
+    DateManagedObjectState dateManagedObjectState = new DateManagedObjectState(1);
+    assertTrue(dateManagedObjectState.hasNoReferences());
+    
+    URLManagedObjectState urlManagedObjectState = new URLManagedObjectState(1);
+    assertTrue(urlManagedObjectState.hasNoReferences());
+    
+    TcHibernateSerializedEntryManagedObjectState tcHibernateSerializedEntryManagedObjectState = new TcHibernateSerializedEntryManagedObjectState(1);
+    assertTrue(tcHibernateSerializedEntryManagedObjectState.hasNoReferences());
+  }
 
 }

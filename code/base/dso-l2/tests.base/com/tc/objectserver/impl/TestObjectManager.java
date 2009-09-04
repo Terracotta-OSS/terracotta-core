@@ -10,8 +10,8 @@ import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.GCStatsEventListener;
+import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
@@ -233,6 +233,10 @@ public class TestObjectManager implements ObjectManager {
   }
 
   public ManagedObject getObjectFromCacheByIDOrNull(ObjectID id) {
+    throw new ImplementMe();
+  }
+
+  public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     throw new ImplementMe();
   }
 
