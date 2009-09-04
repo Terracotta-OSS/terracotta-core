@@ -596,7 +596,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
         ref = this.references.remove(id);
       }
-      noReferencesIDSet.remove(id);
+      this.noReferencesIDSet.remove(id);
       if (ref != null) {
         if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         this.evictionPolicy.remove(ref);
@@ -641,7 +641,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       if (mor != null && !mor.isReferenced()) {
         // the object is not checked out and in memory, short circuit checking out and checking it back in.
         this.stats.cacheHit();
-        return new ObjectIDSet(mor.getObject().getObjectReferences());
+        return mor.getObject().getObjectReferences();
       }
     }
     // The object is either not in the cache or someone else has checked it out, do a regular look and wait for the
@@ -696,7 +696,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void addToNoReferences(final ManagedObject object) {
     if (object.getManagedObjectState().hasNoReferences()) {
-      noReferencesIDSet.add(object.getID());
+      this.noReferencesIDSet.add(object.getID());
     }
   }
 
