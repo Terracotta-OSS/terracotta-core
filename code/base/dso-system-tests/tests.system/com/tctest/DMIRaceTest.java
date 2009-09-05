@@ -33,15 +33,22 @@ public class DMIRaceTest extends TransparentTestBase {
   private static final int NODE_COUNT = 6;
   private static final int PRODUCERS  = 3;
 
+  public DMIRaceTest() {
+    disableAllUntil("2009-09-10");
+  }
+
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
     configFactory.setPersistenceMode(PersistenceMode.PERMANENT_STORE);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return App.class;
   }
@@ -60,6 +67,7 @@ public class DMIRaceTest extends TransparentTestBase {
       barrier = new CyclicBarrier(getParticipantCount());
     }
 
+    @Override
     protected void runTest() throws Throwable {
       final int index = barrier.barrier();
       final boolean dmiSource = index == 0;
