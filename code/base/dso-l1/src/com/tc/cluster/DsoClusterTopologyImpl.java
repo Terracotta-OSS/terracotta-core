@@ -25,11 +25,21 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   private final ReentrantReadWriteLock.WriteLock nodesWriteLock = nodesLock.writeLock();
 
   Collection<DsoNodeInternal> getInternalNodes() {
-    return nodes.values();
+    nodesReadLock.lock();
+    try {
+      return Collections.unmodifiableCollection(new ArrayList<DsoNodeInternal>(nodes.values()));
+    } finally {
+      nodesReadLock.unlock();
+    }
   }
 
   DsoNodeInternal getInternalNode(NodeID nodeId) {
-    return nodes.get(nodeId);
+    nodesReadLock.lock();
+    try {
+      return nodes.get(nodeId);
+    } finally {
+      nodesReadLock.unlock();
+    }
   }
 
   public Collection<DsoNode> getNodes() {

@@ -20,7 +20,6 @@ import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,7 +55,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     this.clusterMetaDataManager = metaDataManager;
     this.clientObjectManager = objectManager;
 
-    for (DsoNodeInternal node : new ArrayList<DsoNodeInternal>(topology.getInternalNodes())) {
+    for (DsoNodeInternal node : topology.getInternalNodes()) {
       retrieveMetaDataForDsoNode(node);
     }
   }
