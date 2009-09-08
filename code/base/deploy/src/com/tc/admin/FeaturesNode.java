@@ -154,13 +154,13 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
           allFeaturesMap.put(symbolicName, feature);
         }
       }
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      TIMByteProviderMBean byteProvider = activeCoord.getMBeanProxy(on, TIMByteProviderMBean.class);
+      feature.getFeatureClassLoader().addTIMByteProvider(on, byteProvider);
       if (!activeFeatureMap.containsKey(symbolicName)) {
         activeFeatureMap.put(symbolicName, feature);
+        return true;
       }
-      TIMByteProviderMBean byteProvider = clusterModel.getActiveCoordinator().getMBeanProxy(on,
-                                                                                            TIMByteProviderMBean.class);
-      feature.getFeatureClassLoader().addTIMByteProvider(on, byteProvider);
-      return true;
     }
     return false;
   }
@@ -264,18 +264,17 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 
-    synchronized (allFeaturesMap) {
-      for (Feature feature : allFeaturesMap.values()) {
+    synchronized (activeFeatureMap) {
+      for (Feature feature : activeFeatureMap.values()) {
         tearDownFeature(feature);
       }
-      allFeaturesMap.clear();
+      activeFeatureMap.clear();
     }
 
     synchronized (this) {
       adminClientContext = null;
       clusterModel = null;
       clusterListener = null;
-      activeFeatureMap.clear();
       activeFeatureMap = null;
       nodeMap.clear();
       nodeMap = null;

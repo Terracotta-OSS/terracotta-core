@@ -257,6 +257,7 @@ public class ClusterModel implements IClusterModel {
       oldReady = isReady();
       this.ready = ready;
     }
+
     firePropertyChange(PROP_READY, oldReady, ready);
     if (oldReady != ready) {
       setPolledAttributeTaskEnabled(ready);
@@ -683,7 +684,7 @@ public class ClusterModel implements IClusterModel {
       if (IClusterModelElement.PROP_READY.equals(prop)) {
         if (!server.isReady()) {
           clearActiveCoordinator();
-          setReady(false);
+          setReady(determineReady());
         }
       }
     }

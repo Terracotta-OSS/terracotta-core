@@ -52,8 +52,6 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
   private XLabel              connectSummaryLabel;
   private PagedView           pagedView;
   private final XTextPane     introPane;
-  private String              originalHost;
-  private int                 originalPort;
   private JTextField          hostField;
   private JTextField          portField;
   private final JCheckBox     autoConnectToggle;
@@ -115,8 +113,8 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     autoConnectToggle.addActionListener(new AutoConnectHandler());
     connectButton.addActionListener(new ConnectionButtonHandler());
 
-    hostField.setText(originalHost = clusterNode.getHost());
-    portField.setText(Integer.toString(originalPort = clusterNode.getPort()));
+    hostField.setText(clusterNode.getHost());
+    portField.setText(Integer.toString(clusterNode.getPort()));
 
     setupConnectButton();
 
@@ -212,7 +210,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     if (host == null || host.length() == 0) {
       hostField.setText(host = "localhost");
     }
-    clusterNode.setHost(originalHost = host);
+    clusterNode.setHost(host);
     clusterNode.nodeChanged();
     adminClientContext.getAdminClientController().updateServerPrefs();
   }
@@ -242,13 +240,10 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     String portText = portField.getText().trim();
 
     try {
-      int port = Integer.parseInt(portText);
-      if (port != originalPort) {
-        clusterNode.setPort(originalPort = port);
-        clusterNode.nodeChanged();
-        adminClientContext.getAdminClientController().updateServerPrefs();
-        return true;
-      }
+      clusterNode.setPort(Integer.parseInt(portText));
+      clusterNode.nodeChanged();
+      adminClientContext.getAdminClientController().updateServerPrefs();
+      return true;
     } catch (Exception e) {
       Toolkit.getDefaultToolkit().beep();
       adminClientContext.log("'" + portText + "' not a number");
@@ -411,12 +406,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
 
   void disconnected() {
     hostField.setEditable(true);
-    hostField.setText(originalHost);
-    clusterNode.setHost(originalHost);
-
     portField.setEditable(true);
-    portField.setText(Integer.toString(originalPort));
-    clusterNode.setPort(originalPort);
 
     String startTime = new Date().toString();
     setupConnectButton();

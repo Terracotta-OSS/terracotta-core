@@ -91,7 +91,10 @@ public class TooltipChartPanel extends ChartPanel {
     String result = null;
 
     Point2D translatedPoint = this.translateScreenToJava2D(point);
-    Plot plot = this.getChart().getPlot();
+    JFreeChart chart = this.getChart();
+    if (chart == null) { return null; }
+    Plot plot = chart.getPlot();
+    if (plot == null) { return null; }
     PlotRenderingInfo info = this.getChartRenderingInfo().getPlotInfo();
     if (plot instanceof CombinedDomainXYPlot) {
       int index = info.getSubplotIndex(translatedPoint);

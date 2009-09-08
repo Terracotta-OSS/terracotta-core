@@ -91,6 +91,9 @@ public class ServerGroup implements IServerGroup {
     IServer oldActiveServer = _setActiveServer(theActiveServer);
     if (oldActiveServer != null) {
       oldActiveServer.removePropertyChangeListener(activeServerListener);
+      if (oldActiveServer.isActive()) {
+        oldActiveServer.splitbrain();
+      }
     }
     firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, theActiveServer);
     if (theActiveServer != null) {
@@ -168,10 +171,10 @@ public class ServerGroup implements IServerGroup {
       IServer server = (Server) evt.getSource();
       fireServerStateChanged(server, evt);
       if (IServer.PROP_CONNECTED.equals(prop)) {
+        setConnected(determineConnected());
         if (server.isConnected() && server.isActive()) {
           setActiveServer(server);
         }
-        setConnected(determineConnected());
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
         setReady(determineReady());
       }
@@ -201,7 +204,8 @@ public class ServerGroup implements IServerGroup {
       String prop = evt.getPropertyName();
       if (IClusterModelElement.PROP_READY.equals(prop)) {
         IServer server = (IServer) evt.getSource();
-        if (!server.isReady()) {
+        IServer theActiveServer = getActiveServer();
+        if ((server == theActiveServer) && !server.isReady()) {
           clearActiveServer();
         }
       }

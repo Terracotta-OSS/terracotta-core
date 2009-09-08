@@ -489,10 +489,9 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private final AtomicBoolean addingChildren = new AtomicBoolean(false);
 
   void tryAddChildren() {
-    if (addingChildren.get()) { return; }
+    if (addingChildren.getAndSet(true)) { return; }
 
     try {
-      addingChildren.set(true);
       if (getChildCount() == 0) {
         addChildren();
         AdminClientController controller = adminClientContext.getAdminClientController();

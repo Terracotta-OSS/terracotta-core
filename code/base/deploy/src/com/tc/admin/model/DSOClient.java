@@ -108,7 +108,16 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     setListeningForTunneledBeans(true);
   }
 
+  private void safeRemoveNotificationListener(ObjectName objectName, NotificationListener listener) {
+    try {
+      cc.removeNotificationListener(objectName, listener);
+    } catch (Exception e) {
+      /**/
+    }
+  }
+
   private void addMBeanNotificationListener(ObjectName objectName, NotificationListener listener, String beanType) {
+    safeRemoveNotificationListener(objectName, listener);
     try {
       cc.addNotificationListener(objectName, listener);
     } catch (Exception e) {
@@ -240,10 +249,11 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public void addNotificationListener(NotificationListener listener) throws Exception {
-    cc.addNotificationListener(beanName, listener);
+    addNotificationListener(beanName, listener);
   }
 
   public void addNotificationListener(ObjectName on, NotificationListener listener) throws Exception {
+    safeRemoveNotificationListener(on, listener);
     cc.addNotificationListener(on, listener);
   }
 

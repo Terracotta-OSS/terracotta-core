@@ -122,7 +122,16 @@ public class ConnectionContext {
   public void addNotificationListener(ObjectName bean, NotificationListener listener) throws InstanceNotFoundException,
       IOException {
     if (mbsc != null) {
+      safeRemoveNotificationListener(bean, listener);
       mbeanHelper.addNotificationListener(mbsc, bean, listener);
+    }
+  }
+
+  private void safeRemoveNotificationListener(ObjectName bean, NotificationListener listener) {
+    try {
+      removeNotificationListener(bean, listener);
+    } catch (Exception e) {
+      /**/
     }
   }
 
@@ -137,14 +146,17 @@ public class ConnectionContext {
     return mbsc != null ? mbeanHelper.isRegistered(mbsc, bean) : false;
   }
 
+  @Override
   public String toString() {
     return this.host + ":" + this.port;
   }
 
+  @Override
   public int hashCode() {
     return new HashCodeBuilder().append(port).append(host).toHashCode();
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof ConnectionContext) {
       ConnectionContext other = (ConnectionContext) obj;

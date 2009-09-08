@@ -283,18 +283,22 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void setupFromDSOBean() throws Exception {
+    DSOMBean theDsoBean = getDSOBean();
+
+    if (theDsoBean == null) { return; }
+
     if (isActiveCoordinator()) {
       synchronized (Server.this) {
         clients.clear();
         clientMap.clear();
-        for (ObjectName clientBeanName : getDSOBean().getClients()) {
+        for (ObjectName clientBeanName : theDsoBean.getClients()) {
           if (!haveClient(clientBeanName)) {
             addClient(clientBeanName);
           }
         }
         roots.clear();
         rootMap.clear();
-        for (ObjectName rootBeanName : getDSOBean().getRoots()) {
+        for (ObjectName rootBeanName : theDsoBean.getRoots()) {
           if (!haveRoot(rootBeanName)) {
             addRoot(rootBeanName);
           }
@@ -452,7 +456,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (scm == null) throw new IllegalStateException("ServerConnectManager is null");
     if (port != scm.getJMXPortNumber()) {
       scm.setJMXPortNumber(port);
-      displayLabel = getConnectionManager().toString();
+      jmxPort = Integer.valueOf(port);
+      displayLabel = scm.toString();
     }
   }
 
@@ -483,7 +488,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public synchronized String getPersistenceMode() {
     if (persistenceMode == null) {
       try {
-        persistenceMode = getServerInfoBean().getPersistenceMode();
+        TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+        if (theServerInfoBean != null) {
+          persistenceMode = theServerInfoBean.getPersistenceMode();
+        } else {
+          persistenceMode = "unknown";
+        }
       } catch (UndeclaredThrowableException edte) {
         persistenceMode = "unknown";
       }
@@ -494,7 +504,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public synchronized String getFailoverMode() {
     if (failoverMode == null) {
       try {
-        failoverMode = getServerInfoBean().getFailoverMode();
+        TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+        if (theServerInfoBean != null) {
+          failoverMode = theServerInfoBean.getFailoverMode();
+        } else {
+          failoverMode = "unknown";
+        }
       } catch (UndeclaredThrowableException udte) {
         failoverMode = "unknown";
       }
@@ -545,7 +560,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public void doShutdown() {
-    getServerInfoBean().shutdown();
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    if (theServerInfoBean != null) {
+      theServerInfoBean.shutdown();
+    }
   }
 
   public synchronized boolean isAutoConnect() {
@@ -594,10 +612,22 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return null;
   }
 
+  private void safeRemoveNotificationListener(ObjectName on, NotificationListener listener) {
+    try {
+      ConnectionContext cc = getConnectionContext();
+      if (cc.mbsc != null) {
+        cc.mbsc.removeNotificationListener(on, listener, null, null);
+      }
+    } catch (Exception e) {
+      /**/
+    }
+  }
+
   public boolean addNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
       InstanceNotFoundException {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
+      safeRemoveNotificationListener(on, listener);
       cc.mbsc.addNotificationListener(on, listener, null, null);
       return true;
     }
@@ -616,7 +646,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public Set<ObjectName> queryNames(ObjectName on, QueryExp query) throws IOException {
     ConnectionContext cc = getConnectionContext();
-    if (cc != null) { return cc.mbsc.queryNames(on, query); }
+    if (cc != null && cc.mbsc != null) { return cc.mbsc.queryNames(on, query); }
     return Collections.emptySet();
   }
 
@@ -624,6 +654,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (serverInfoBean == null) {
       ConnectionContext cc = getConnectionContext();
       if (cc != null) {
+        if (cc.mbsc == null) { return null; }
         serverInfoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                   TCServerInfoMBean.class, false);
       }
@@ -635,6 +666,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (dsoBean == null) {
       ConnectionContext cc = getConnectionContext();
       if (cc != null) {
+        if (cc.mbsc == null) { return null; }
         dsoBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
       }
     }
@@ -645,6 +677,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (objectManagementMonitorBean == null) {
       ConnectionContext cc = getConnectionContext();
       if (cc != null) {
+        if (cc.mbsc == null) { return null; }
         objectManagementMonitorBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.OBJECT_MANAGEMENT,
                                                                                ObjectManagementMonitorMBean.class,
                                                                                false);
@@ -655,12 +688,15 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized IProductVersion getProductInfo() {
     if (productInfo == null) {
+      DSOMBean theDsoBean = getDSOBean();
+      if (theDsoBean == null) { return null; }
+
       Map<ObjectName, Set<String>> requestMap = new HashMap<ObjectName, Set<String>>();
       String[] attributes = { "Version", "MavenArtifactsVersion", "Patched", "PatchLevel", "PatchVersion", "BuildID",
           "DescriptionOfCapabilities", "Copyright" };
       requestMap.put(L2MBeanNames.TC_SERVER_INFO, new HashSet(Arrays.asList(attributes)));
-      Map<ObjectName, Map<String, Object>> resultMap = getDSOBean().getAttributeMap(requestMap, Integer.MAX_VALUE,
-                                                                                    TimeUnit.SECONDS);
+      Map<ObjectName, Map<String, Object>> resultMap = theDsoBean.getAttributeMap(requestMap, Integer.MAX_VALUE,
+                                                                                  TimeUnit.SECONDS);
       Map<String, Object> results = resultMap.get(L2MBeanNames.TC_SERVER_INFO);
       String version = ProductInfo.UNKNOWN_VALUE;
       String mavenArtifactsVersion = ProductInfo.UNKNOWN_VALUE;
@@ -726,53 +762,65 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public String getEnvironment() {
-    return getServerInfoBean().getEnvironment();
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getEnvironment() : "";
   }
 
   public String getConfig() {
-    return getServerInfoBean().getConfig();
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    return theServerInfoBean != null ? theServerInfoBean.getConfig() : "";
   }
 
   public long getStartTime() {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+
     if (startTime == -1) {
-      startTime = getServerInfoBean().getStartTime();
+      startTime = theServerInfoBean != null ? theServerInfoBean.getStartTime() : 0;
     }
     return startTime;
   }
 
   public long getActivateTime() {
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+
     if (activateTime == -1) {
-      activateTime = getServerInfoBean().getActivateTime();
+      activateTime = theServerInfoBean != null ? theServerInfoBean.getActivateTime() : 0;
     }
     return activateTime;
   }
 
   public synchronized long getTransactionRate() {
     DSOMBean theDsoBean = getDSOBean();
-    return theDsoBean != null ? theDsoBean.getTransactionRate() : null;
+    return theDsoBean != null ? theDsoBean.getTransactionRate() : 0;
   }
+
+  private static final StatisticData[] EMPTY_STATDATA_ARRAY = {};
 
   public synchronized StatisticData[] getCpuUsage() {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    return theServerInfoBean != null ? theServerInfoBean.getCpuUsage() : null;
+    return theServerInfoBean != null ? theServerInfoBean.getCpuUsage() : EMPTY_STATDATA_ARRAY;
   }
 
+  private static final String[] EMPTY_CPU_ARRAY = {};
+
   public String[] getCpuStatNames() {
-    if (isReady()) {
-      return getServerInfoBean().getCpuStatNames();
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+
+    if (theServerInfoBean != null && isReady()) {
+      return theServerInfoBean.getCpuStatNames();
     } else {
-      return new String[0];
+      return EMPTY_CPU_ARRAY;
     }
   }
 
   public synchronized Map getServerStatistics() {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    return theServerInfoBean != null ? theServerInfoBean.getStatistics() : null;
+    return theServerInfoBean != null ? theServerInfoBean.getStatistics() : Collections.emptyMap();
   }
 
   public synchronized Number[] getDSOStatistics(String[] names) {
     DSOMBean theDsoBean = getDSOBean();
-    return theDsoBean != null ? theDsoBean.getStatistics(names) : null;
+    return theDsoBean != null ? theDsoBean.getStatistics(names) : new Number[names.length];
   }
 
   public synchronized Map getPrimaryStatistics() {
@@ -782,7 +830,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public Map<IClient, Long> getAllPendingTransactionsCount() {
-    Map<ObjectName, Long> map = getDSOBean().getAllPendingTransactionsCount();
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean == null) { return Collections.emptyMap(); }
+
+    Map<ObjectName, Long> map = theDsoBean.getAllPendingTransactionsCount();
     Map<IClient, Long> result = new HashMap<IClient, Long>();
     Iterator<DSOClient> clientIter = clients.iterator();
     while (clientIter.hasNext()) {
@@ -793,7 +844,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public Map<IClient, Integer> getClientLiveObjectCount() {
-    Map<ObjectName, Integer> map = getDSOBean().getClientLiveObjectCount();
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean == null) { return Collections.emptyMap(); }
+
+    Map<ObjectName, Integer> map = theDsoBean.getClientLiveObjectCount();
     Map<IClient, Integer> result = new HashMap<IClient, Integer>();
     Iterator<DSOClient> clientIter = clients.iterator();
     while (clientIter.hasNext()) {
@@ -804,7 +858,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public Map<IClient, Map<String, Object>> getPrimaryClientStatistics() {
-    Map<ObjectName, Map> map = getDSOBean().getPrimaryClientStatistics();
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean == null) { return Collections.emptyMap(); }
+
+    Map<ObjectName, Map> map = theDsoBean.getPrimaryClientStatistics();
     Map<IClient, Map<String, Object>> result = new HashMap<IClient, Map<String, Object>>();
     for (DSOClient client : getClients()) {
       result.put(client, map.get(client.getBeanName()));
@@ -813,7 +870,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public Map<IClient, Long> getClientTransactionRates() {
-    Map<ObjectName, Long> map = getDSOBean().getClientTransactionRates();
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean == null) { return Collections.emptyMap(); }
+
+    Map<ObjectName, Long> map = theDsoBean.getClientTransactionRates();
     Map<IClient, Long> result = new HashMap<IClient, Long>();
     for (DSOClient client : getClients()) {
       result.put(client, map.get(client.getBeanName()));
@@ -942,7 +1002,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private synchronized DSOClient removeClient(ObjectName clientBeanName) {
     DSOClient client = clientMap.remove(clientBeanName);
     if (client != null) {
-      System.err.println("Removed clientBeanName from clientMap: " + clientBeanName);
       clients.remove(client);
       return client;
     }
@@ -1089,22 +1148,32 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return scm != null ? scm.safeGetHostAddress() : "not connected";
   }
 
+  private static final IServer[] EMPTY_SERVER_ARRAY = {};
+
   public IServer[] getClusterServers() {
-    TCServerInfoMBean serverInfo = getServerInfoBean();
-    L2Info[] l2Infos = serverInfo.getL2Info();
-    Server[] result = new Server[l2Infos.length];
-    for (int i = 0; i < l2Infos.length; i++) {
-      result[i] = new Server(getClusterModel(), getServerGroup(), l2Infos[i]);
+    IServer[] result = EMPTY_SERVER_ARRAY;
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    if (theServerInfoBean != null) {
+      L2Info[] l2Infos = theServerInfoBean.getL2Info();
+      result = new Server[l2Infos.length];
+      for (int i = 0; i < l2Infos.length; i++) {
+        result[i] = new Server(getClusterModel(), getServerGroup(), l2Infos[i]);
+      }
     }
     return result;
   }
 
+  private static final IServerGroup[] EMPTY_SERVER_GROUP_ARRAY = {};
+
   public IServerGroup[] getClusterServerGroups() {
-    TCServerInfoMBean serverInfo = getServerInfoBean();
-    ServerGroupInfo[] serverGroupInfos = serverInfo.getServerGroupInfo();
-    ServerGroup[] result = new ServerGroup[serverGroupInfos.length];
-    for (int i = 0; i < serverGroupInfos.length; i++) {
-      result[i] = new ServerGroup(getClusterModel(), serverGroupInfos[i]);
+    IServerGroup[] result = EMPTY_SERVER_GROUP_ARRAY;
+    TCServerInfoMBean theServerInfoBean = getServerInfoBean();
+    if (theServerInfoBean != null) {
+      ServerGroupInfo[] serverGroupInfos = theServerInfoBean.getServerGroupInfo();
+      result = new ServerGroup[serverGroupInfos.length];
+      for (int i = 0; i < serverGroupInfos.length; i++) {
+        result[i] = new ServerGroup(getClusterModel(), serverGroupInfos[i]);
+      }
     }
     return result;
   }
@@ -1128,6 +1197,14 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     ServerConnectionManager scm = getConnectionManager();
     if (scm != null) {
       scm.disconnect();
+    }
+  }
+
+  public synchronized void splitbrain() {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm != null) {
+      setConnectError(new RuntimeException("split-brain"));
+      scm.setConnected(false);
     }
   }
 
@@ -1231,14 +1308,18 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return theDsoBean != null ? theDsoBean.lookupFacade(objectID, limit) : null;
   }
 
+  private static final DSOClassInfo[] EMPTY_CLASSINFO_ARRAY = {};
+
   public synchronized DSOClassInfo[] getClassInfo() {
     DSOMBean theDsoBean = getDSOBean();
-    return theDsoBean != null ? theDsoBean.getClassInfo() : null;
+    return theDsoBean != null ? theDsoBean.getClassInfo() : EMPTY_CLASSINFO_ARRAY;
   }
+
+  private static final GCStats[] EMPTY_GCSTATS_ARRAY = {};
 
   public synchronized GCStats[] getGCStats() {
     DSOMBean theDsoBean = getDSOBean();
-    return theDsoBean != null ? theDsoBean.getGarbageCollectorStats() : null;
+    return theDsoBean != null ? theDsoBean.getGarbageCollectorStats() : EMPTY_GCSTATS_ARRAY;
   }
 
   public void addDGCListener(DGCListener listener) {
@@ -1468,33 +1549,38 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public int getLockProfilerTraceDepth() {
     if (lockProfilerTraceDepth != -1) return lockProfilerTraceDepth;
-    if (lockProfilerBean != null) { return lockProfilerTraceDepth = lockProfilerBean.getTraceDepth(); }
+    LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
+    if (theLockProfilerBean != null) { return lockProfilerTraceDepth = theLockProfilerBean.getTraceDepth(); }
     return -1;
   }
 
   public void setLockProfilerTraceDepth(int traceDepth) {
-    if (lockProfilerBean != null && traceDepth != lockProfilerTraceDepth) {
-      lockProfilerBean.setLockStatisticsConfig(traceDepth, 1);
+    LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
+    if (theLockProfilerBean != null && traceDepth != lockProfilerTraceDepth) {
+      theLockProfilerBean.setLockStatisticsConfig(traceDepth, 1);
     }
   }
 
   public boolean isLockProfilingEnabled() {
     if (lockProfilingEnabled != null) return lockProfilingEnabled.booleanValue();
-    if (lockProfilerBean != null) {
-      lockProfilingEnabled = Boolean.valueOf(lockProfilerBean.isLockStatisticsEnabled());
+    LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
+    if (theLockProfilerBean != null) {
+      lockProfilingEnabled = Boolean.valueOf(theLockProfilerBean.isLockStatisticsEnabled());
       return lockProfilingEnabled;
     }
     return false;
   }
 
   public void setLockProfilingEnabled(boolean lockStatsEnabled) {
-    if (lockProfilerBean != null) {
-      lockProfilerBean.setLockStatisticsEnabled(lockStatsEnabled);
+    LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
+    if (theLockProfilerBean != null) {
+      theLockProfilerBean.setLockStatisticsEnabled(lockStatsEnabled);
     }
   }
 
   public Collection<LockSpec> getLockSpecs() {
-    if (lockProfilerBean != null) { return lockProfilerBean.getLockSpecs(); }
+    LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
+    if (theLockProfilerBean != null) { return theLockProfilerBean.getLockSpecs(); }
     return Collections.emptySet();
   }
 
@@ -1832,12 +1918,14 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                               TimeUnit unit) {
-    if (isReady()) { return getDSOBean().getAttributeMap(attributeMap, timeout, unit); }
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean != null && isReady()) { return theDsoBean.getAttributeMap(attributeMap, timeout, unit); }
     return Collections.emptyMap();
   }
 
   public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit) {
-    if (isReady()) { return getDSOBean().invoke(onSet, operation, timeout, unit); }
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean != null && isReady()) { return theDsoBean.invoke(onSet, operation, timeout, unit); }
     return Collections.emptyMap();
   }
 }

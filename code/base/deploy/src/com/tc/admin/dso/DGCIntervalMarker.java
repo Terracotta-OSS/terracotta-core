@@ -28,10 +28,16 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
   public void setGCStats(GCStats dgcStats) {
     this.dgcInfo = dgcStats;
     double endValue;
-    if (dgcInfo.getElapsedTime() == -1) {
+    long elapsedTime = dgcInfo.getElapsedTime();
+    if (dgcInfo.getStatus().equals(GCStats.GC_CANCELED)) {
+      if (elapsedTime == -1) {
+        elapsedTime = System.currentTimeMillis();
+      }
+      endValue = dgcInfo.getStartTime() + elapsedTime;
+    } else if (elapsedTime == -1) {
       endValue = dgcInfo.getStartTime() + 100000000;
     } else {
-      endValue = dgcInfo.getStartTime() + dgcInfo.getElapsedTime();
+      endValue = dgcInfo.getStartTime() + elapsedTime;
     }
     setEndValue(endValue);
     fToolTip = null;

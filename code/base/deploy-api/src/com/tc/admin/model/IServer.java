@@ -235,6 +235,8 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   void disconnect();
 
+  void splitbrain();
+
   void setFaultDebug(boolean faultDebug);
 
   boolean getFaultDebug();
