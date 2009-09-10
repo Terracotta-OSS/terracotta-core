@@ -88,9 +88,8 @@ public abstract class TerracottaManagement {
   }
 
   public enum MBeanDomain {
-    PUBLIC (MANAGEMENT_RESOURCES.getPublicMBeanDomain()),
-    INTERNAL (MANAGEMENT_RESOURCES.getInternalMBeanDomain()),
-    TIM (MANAGEMENT_RESOURCES.getTimMBeanDomain());
+    PUBLIC(MANAGEMENT_RESOURCES.getPublicMBeanDomain()), INTERNAL(MANAGEMENT_RESOURCES.getInternalMBeanDomain()), TIM(
+        MANAGEMENT_RESOURCES.getTimMBeanDomain()), EHCACHE(MANAGEMENT_RESOURCES.getEhCacheMBeanDomain());
 
     private final String value;
 
@@ -144,7 +143,8 @@ public abstract class TerracottaManagement {
         .append(remotePort);
   }
 
-  public static ObjectName addNodeInfo(final ObjectName objName, final TCSocketAddress addr) throws MalformedObjectNameException {
+  public static ObjectName addNodeInfo(final ObjectName objName, final TCSocketAddress addr)
+      throws MalformedObjectNameException {
     if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
     StringBuffer sb = new StringBuffer(objName.getCanonicalName());
     if (objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
@@ -167,7 +167,8 @@ public abstract class TerracottaManagement {
 
   public static final QueryExp matchAllTerracottaMBeans() {
     try {
-      return Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*"), new ObjectName(MBeanDomain.INTERNAL + ":*"));
+      return Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*"), new ObjectName(MBeanDomain.INTERNAL + ":*")),
+                      new ObjectName(MBeanDomain.EHCACHE + ":*"));
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }

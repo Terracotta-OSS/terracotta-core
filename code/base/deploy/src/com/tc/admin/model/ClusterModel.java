@@ -760,9 +760,17 @@ public class ClusterModel implements IClusterModel {
   }
 
   public IBasicObject[] getRoots() {
-    IServer activeCoord = getActiveCoordinator();
-    if (activeCoord != null) { return activeCoord.getRoots(); }
-    return IBasicObject.NULL_SET;
+    List<IBasicObject> list = new ArrayList<IBasicObject>();
+    IServerGroup[] theServerGroups = getServerGroups();
+    if (theServerGroups != null) {
+      for (IServerGroup group : theServerGroups) {
+        IServer active = group.getActiveServer();
+        if (active != null) {
+          list.addAll(Arrays.asList(active.getRoots()));
+        }
+      }
+    }
+    return list.isEmpty() ? IBasicObject.NULL_SET : list.toArray(IBasicObject.NULL_SET);
   }
 
   public IClient[] getClients() {

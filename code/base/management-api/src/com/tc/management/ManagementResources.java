@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management;
 
@@ -10,7 +11,7 @@ class ManagementResources {
   private final ResourceBundle resources;
 
   ManagementResources() {
-    resources = ResourceBundle.getBundle(getClass().getPackage().getName()+".management");
+    resources = ResourceBundle.getBundle(getClass().getPackage().getName() + ".management");
   }
 
   String getPublicMBeanDomain() {
@@ -23,6 +24,10 @@ class ManagementResources {
 
   String getTimMBeanDomain() {
     return resources.getString("domain.tim");
+  }
+
+  String getEhCacheMBeanDomain() {
+    return resources.getString("domain.ehcache");
   }
 
   String getNodeNameSystemProperty() {
@@ -38,8 +43,8 @@ class ManagementResources {
   }
 
   public String getTerracottaClusterType() {
-	    return TerracottaManagement.quoteIfNecessary(resources.getString("type.cluster"));
-	}
+    return TerracottaManagement.quoteIfNecessary(resources.getString("type.cluster"));
+  }
 
   String getTerracottaServerType() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("type.l2"));
