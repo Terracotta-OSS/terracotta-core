@@ -15,6 +15,7 @@ import java.net.Socket;
 public class TestTCConnection implements TCConnection {
 
   public final NoExceptionLinkedQueue addListenerCalls = new NoExceptionLinkedQueue();
+  private volatile boolean            connected;
 
   public long getConnectTime() {
     throw new ImplementMe();
@@ -29,7 +30,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public void removeListener(TCConnectionEventListener listener) {
-    throw new ImplementMe();
+    //
   }
 
   public void asynchClose() {
@@ -49,7 +50,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public boolean isConnected() {
-    throw new ImplementMe();
+    return connected;
   }
 
   public boolean isClosed() {
@@ -77,7 +78,7 @@ public class TestTCConnection implements TCConnection {
   }
 
   public void addWeight(int addWeightBy) {
-    //
+    connected = true;
   }
 
 }

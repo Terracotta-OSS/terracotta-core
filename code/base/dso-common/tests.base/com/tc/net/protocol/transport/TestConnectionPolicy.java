@@ -10,12 +10,12 @@ import java.util.HashSet;
 
 public class TestConnectionPolicy implements ConnectionPolicy {
 
-  public int                    clientConnected;
-  public boolean                maxConnectionsExceeded;
-  public int                    maxConnections;
-  private HashSet<ConnectionID> clientSet = new HashSet<ConnectionID>();
+  int                   clientConnected;
+  boolean               maxConnectionsExceeded;
+  int                   maxConnections;
+  HashSet<ConnectionID> clientSet = new HashSet<ConnectionID>();
 
-  public boolean connectClient(ConnectionID id) {
+  public synchronized boolean connectClient(ConnectionID id) {
     if (!isMaxConnectionsReached()) {
       clientSet.add(id);
       clientConnected++;
@@ -24,18 +24,19 @@ public class TestConnectionPolicy implements ConnectionPolicy {
     return false;
   }
 
-  public void clientDisconnected(ConnectionID id) {
+  public synchronized void clientDisconnected(ConnectionID id) {
     if (clientSet.remove(id)) {
       Assert.assertTrue(clientConnected > 0);
       clientConnected--;
     }
   }
 
-  public boolean isMaxConnectionsReached() {
-    return maxConnectionsExceeded;
+  public synchronized boolean isMaxConnectionsReached() {
+    if (maxConnectionsExceeded) { return maxConnectionsExceeded; }
+    return (clientSet.size() >= maxConnections);
   }
 
-  public int getMaxConnections() {
+  public synchronized int getMaxConnections() {
     return maxConnections;
   }
 }

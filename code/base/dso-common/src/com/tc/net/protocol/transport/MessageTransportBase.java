@@ -187,7 +187,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  public final void sendToConnection(TCNetworkMessage message) {
+  // Do not override this method. Not a final method, as a test class is deriving it
+  public void sendToConnection(TCNetworkMessage message) {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
     if (!(message instanceof WireProtocolMessage)) {
       final TCNetworkMessage payload = message;

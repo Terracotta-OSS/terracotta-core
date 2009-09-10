@@ -6,11 +6,18 @@ package com.tc.net.protocol.transport;
 
 import com.tc.logging.TCLogging;
 import com.tc.net.core.MockTCConnection;
+import com.tc.net.core.TCConnection;
 import com.tc.net.core.TestTCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
+import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.StackNotFoundException;
+import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.MessageChannelInternal;
+import com.tc.net.protocol.tcm.MockMessageChannel;
+import com.tc.net.protocol.tcm.MockMessageChannelFactory;
 import com.tc.net.protocol.transport.MockTransportMessageFactory.CallContext;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -123,6 +130,130 @@ public class ServerStackProviderTest extends TCTestCase {
 
     // At the server side, for Tx un-ESTABLISHED clients we don't fire any disconnect/closed events.
     assertEquals(0, connectionPolicy.clientConnected);
+
+  }
+
+  private MessageChannelInternal getNewDummyClientChannel(ChannelID clientID) {
+    return new MockMessageChannel(clientID) {
+      @Override
+      public void notifyTransportDisconnected(MessageTransport transport) {
+        //
+      }
+    };
+  }
+
+  private TCConnection getNewDummyTCConnection() {
+    return new TestTCConnection() {
+      @Override
+      public void asynchClose() {
+        //
+      }
+    };
+  }
+
+  private MockMessageTransport connectNewClient(ServerStackProvider serverProvider, boolean checkNonNullConnID)
+      throws WireProtocolException {
+    serverProvider.getInstance();
+    MockMessageTransport serverTxForClient = new MockMessageTransport();
+    transportFactory.transport = serverTxForClient;
+    WireProtocolMessageSink sink = (WireProtocolMessageSink) wpaFactory.newWireProtocolAdaptorCalls.take();
+    TestSynMessage syn = new TestSynMessage();
+    syn.connection = new TestTCConnection();
+    syn.connectionID = ConnectionID.NULL_ID;
+    sink.putMessage(syn);
+    SynAckMessage synAckMessage = (SynAckMessage) serverTxForClient.sendToConnectionCalls.take();
+    System.out.println("XXX Client connect :" + synAckMessage.getConnectionId());
+    if (checkNonNullConnID) {
+      Assert.eval(synAckMessage.getConnectionId() != ConnectionID.NULL_ID);
+    } else {
+      Assert.eval(synAckMessage.getConnectionId().equals(ConnectionID.NULL_ID));
+    }
+    return serverTxForClient;
+  }
+
+  public void testConnectionPolicyExtended() throws Exception {
+
+    connectionPolicy.maxConnectionsExceeded = false;
+    connectionPolicy.maxConnections = 2;
+    connectionPolicy.clientConnected = 0;
+    connectionPolicy.clientSet.clear();
+
+    WireProtocolMessageSink sink;
+    TestSynMessage syn;
+    SynAckMessage synAckMessage;
+
+    MockMessageChannelFactory messageChannelFactory = new MockMessageChannelFactory();
+    this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
+                                            new TransportNetworkStackHarnessFactory(), messageChannelFactory,
+                                            transportFactory, new TransportMessageFactoryImpl(),
+                                            this.connectionIdFactory, connectionPolicy, wpaFactory);
+
+    // Client1
+    MockMessageTransport serverTxForClietn1 = connectNewClient(this.provider, true);
+    Assert.assertEquals(1, connectionPolicy.clientConnected);
+
+    // Client2
+    provider.getInstance();
+    syn = new TestSynMessage();
+    syn.connection = getNewDummyTCConnection();
+    syn.connectionID = ConnectionID.NULL_ID;
+    syn.flag = NetworkLayer.TYPE_TRANSPORT_LAYER;
+    MockServerMessageTransport serverTxForClietn2 = new MockServerMessageTransport(ConnectionID.NULL_ID,
+                                                                                   syn.connection, null,
+                                                                                   new TransportMessageFactoryImpl());
+    serverTxForClietn2.setAllowConnectionReplace(true);
+    transportFactory.transport = serverTxForClietn2;
+    sink = (WireProtocolMessageSink) wpaFactory.newWireProtocolAdaptorCalls.take();
+    messageChannelFactory.channel = getNewDummyClientChannel(new ChannelID(2));
+    sink.putMessage(syn);
+    synAckMessage = (SynAckMessage) serverTxForClietn2.sendToConnectionCalls.take();
+    System.out.println("XXX Client 2 :" + synAckMessage.getConnectionId());
+    ConnectionID client2ConnID = synAckMessage.getConnectionId();
+    Assert.eval(synAckMessage.getConnectionId() != ConnectionID.NULL_ID);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
+    serverTxForClietn2.status.established();
+    serverTxForClietn2.addTransportListener(provider);
+
+    // Client3 cannot connect
+    connectNewClient(this.provider, false);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
+
+    // Client4 cannot connect
+    connectNewClient(this.provider, false);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
+
+    // client1 disconencted
+    provider.notifyTransportDisconnected(serverTxForClietn1);
+    Assert.assertEquals(1, connectionPolicy.clientConnected);
+
+    // Client5 connected
+    MockMessageTransport serverTxForClietn5 = connectNewClient(this.provider, true);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
+
+    // client 2 reconnecting without disconnecting
+    provider.getInstance();
+    MockMessageTransport notUsedTx = new MockMessageTransport();
+    transportFactory.transport = notUsedTx;
+    sink = (WireProtocolMessageSink) wpaFactory.newWireProtocolAdaptorCalls.take();
+    syn = new TestSynMessage();
+    syn.connection = new TestTCConnection();
+    syn.connectionID = client2ConnID;
+    syn.flag = NetworkLayer.TYPE_TRANSPORT_LAYER;
+    sink.putMessage(syn);
+    synAckMessage = (SynAckMessage) serverTxForClietn2.sendToConnectionCalls.take();
+    System.out.println("XXX Client 6 :" + synAckMessage.getConnectionId());
+    Assert.eval(!synAckMessage.isMaxConnectionsExceeded());
+    Assert.assertNull(notUsedTx.sendToConnectionCalls.peek());
+    Assert.eval(synAckMessage.getConnectionId() != ConnectionID.NULL_ID);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
+
+    // client5 disconnected
+    provider.notifyTransportDisconnected(serverTxForClietn5);
+    Assert.assertEquals(1, connectionPolicy.clientConnected);
+
+    // Client6 connected
+    connectNewClient(this.provider, true);
+    Assert.assertEquals(2, connectionPolicy.clientConnected);
 
   }
 

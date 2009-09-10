@@ -8,6 +8,8 @@ import com.tc.net.protocol.NetworkLayer;
 
 public class TestSynMessage extends TestTransportHandshakeMessage implements SynMessage {
 
+  protected short flag = NetworkLayer.TYPE_TEST_MESSAGE;
+
   public boolean isSyn() {
     return true;
   }
@@ -21,8 +23,7 @@ public class TestSynMessage extends TestTransportHandshakeMessage implements Syn
   }
 
   public short getStackLayerFlags() {
-    // its a test
-    return NetworkLayer.TYPE_TEST_MESSAGE;
+    return flag;
   }
 
   public int getCallbackPort() {

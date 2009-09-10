@@ -263,17 +263,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
       }
 
       /*
-       * Clients after max License Count are not given any valid clientID. clients anyway close after seeing max
+       * New Clients after max License Count are not given any valid clientID. clients anyway close after seeing max
        * connection error message from server.
        */
       synchronized (connectionPolicy) {
-        if (connectionPolicy.isMaxConnectionsReached()) {
+        if (connectionId.isNewConnection() && connectionPolicy.isMaxConnectionsReached()) {
           isMaxConnectionReached = true;
           this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
                                                                       createHandshakeErrorHandler(),
                                                                       handshakeMessageFactory, transportListeners);
         } else {
-          isMaxConnectionReached = false;
           try {
             this.transport = attachNewConnection(connectionId, syn.getSource());
           } catch (IllegalReconnectException e) {
@@ -281,8 +280,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
             return;
           }
           connectionId = this.transport.getConnectionId();
-          boolean clientAdded = connectionPolicy.connectClient(connectionId);
-          Assert.assertTrue(clientAdded);
+          isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
         }
       }
 
