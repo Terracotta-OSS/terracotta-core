@@ -34,7 +34,7 @@ public class DMIRaceTest extends TransparentTestBase {
   private static final int PRODUCERS  = 3;
 
   public DMIRaceTest() {
-    disableAllUntil("2009-09-10");
+    //
   }
 
   @Override
