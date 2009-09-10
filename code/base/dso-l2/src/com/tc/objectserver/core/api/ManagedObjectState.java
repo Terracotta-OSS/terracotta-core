@@ -44,7 +44,7 @@ public interface ManagedObjectState {
   public static final byte LINKED_LIST_TYPE                = 0x10;
   // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
   public static final byte CONCURRENT_DISTRIBUTED_MAP_TYPE = 0x11;
-  public static final byte TC_HIBERNATE_SERIALIZED_ENTRY   = 0x12;
+  public static final byte TDC_SERIALIZED_ENTRY            = 0x12;
 
   public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
 
@@ -61,11 +61,11 @@ public interface ManagedObjectState {
   public String getClassName();
 
   public String getLoaderDescription();
-  
+
   /**
    * This method returns whether this ManagedObjectState can have references or not.
    * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   *         false : The Managed object represented by this state object can have references to other objects.
    */
   public boolean hasNoReferences();
 

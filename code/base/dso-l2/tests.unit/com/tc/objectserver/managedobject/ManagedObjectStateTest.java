@@ -323,7 +323,7 @@ public class ManagedObjectStateTest extends TestCase {
     URLManagedObjectState urlManagedObjectState = new URLManagedObjectState(1);
     assertTrue(urlManagedObjectState.hasNoReferences());
     
-    TcHibernateSerializedEntryManagedObjectState tcHibernateSerializedEntryManagedObjectState = new TcHibernateSerializedEntryManagedObjectState(1);
+    TDCSerializedEntryManagedObjectState tcHibernateSerializedEntryManagedObjectState = new TDCSerializedEntryManagedObjectState(1);
     assertTrue(tcHibernateSerializedEntryManagedObjectState.hasNoReferences());
   }
 

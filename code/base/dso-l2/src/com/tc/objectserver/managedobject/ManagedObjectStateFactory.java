@@ -77,8 +77,8 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso", Byte
         .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
     // XXX: hack to support Hibernate cache entry type
-    classNameToStateMap.put(TcHibernateSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
-                            new Byte(ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY));
+    classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
+                            new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
 
   }
 
@@ -179,8 +179,8 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
         return new ConcurrentDistributedMapManagedObjectState(classID, this.persistentCollectionFactory
             .createPersistentMap(oid));
-      case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
-        return new TcHibernateSerializedEntryManagedObjectState(classID);
+      case ManagedObjectState.TDC_SERIALIZED_ENTRY:
+        return new TDCSerializedEntryManagedObjectState(classID);
 
     }
     // Unreachable
@@ -274,8 +274,8 @@ public class ManagedObjectStateFactory {
           // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
         case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
           return ConcurrentDistributedMapManagedObjectState.readFrom(in);
-        case ManagedObjectState.TC_HIBERNATE_SERIALIZED_ENTRY:
-          return TcHibernateSerializedEntryManagedObjectState.readFrom(in);
+        case ManagedObjectState.TDC_SERIALIZED_ENTRY:
+          return TDCSerializedEntryManagedObjectState.readFrom(in);
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }

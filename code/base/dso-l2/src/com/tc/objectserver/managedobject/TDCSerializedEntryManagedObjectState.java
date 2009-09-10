@@ -22,12 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TcHibernateSerializedEntryManagedObjectState extends AbstractManagedObjectState {
+public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectState {
 
   private static final TCLogger logger                 = TCLogging
-                                                           .getLogger(TcHibernateSerializedEntryManagedObjectState.class);
+                                                           .getLogger(TDCSerializedEntryManagedObjectState.class);
 
-  public static final String    SERIALIZED_ENTRY       = "org.terracotta.modules.hibernatecache.clustered.SerializedEntry";
+  public static final String    SERIALIZED_ENTRY       = "org.terracotta.cache.serialization.SerializedEntry";
 
   public static final String    CREATE_TIME_FIELD      = SERIALIZED_ENTRY + ".createTime";
   public static final String    LAST_ACCESS_TIME_FIELD = SERIALIZED_ENTRY + ".lastAccessedTime";
@@ -38,13 +38,13 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   private int                   createTime;
   private int                   lastAccessedTime;
 
-  public TcHibernateSerializedEntryManagedObjectState(long classID) {
+  public TDCSerializedEntryManagedObjectState(long classID) {
     this.classID = classID;
   }
 
   @Override
   protected boolean basicEquals(AbstractManagedObjectState o) {
-    TcHibernateSerializedEntryManagedObjectState other = (TcHibernateSerializedEntryManagedObjectState) o;
+    TDCSerializedEntryManagedObjectState other = (TDCSerializedEntryManagedObjectState) o;
 
     if (createTime != other.createTime) return false;
     if (lastAccessedTime != other.lastAccessedTime) return false;
@@ -94,7 +94,7 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   /**
    * This method returns whether this ManagedObjectState can have references or not.
    * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects. 
+   *         false : The Managed object represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
@@ -138,7 +138,7 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
   }
 
   public byte getType() {
-    return TC_HIBERNATE_SERIALIZED_ENTRY;
+    return TDC_SERIALIZED_ENTRY;
   }
 
   public void writeTo(ObjectOutput out) throws IOException {
@@ -153,8 +153,8 @@ public class TcHibernateSerializedEntryManagedObjectState extends AbstractManage
     }
   }
 
-  static TcHibernateSerializedEntryManagedObjectState readFrom(ObjectInput in) throws IOException {
-    TcHibernateSerializedEntryManagedObjectState state = new TcHibernateSerializedEntryManagedObjectState(in.readLong());
+  static TDCSerializedEntryManagedObjectState readFrom(ObjectInput in) throws IOException {
+    TDCSerializedEntryManagedObjectState state = new TDCSerializedEntryManagedObjectState(in.readLong());
 
     state.createTime = in.readInt();
     state.lastAccessedTime = in.readInt();
