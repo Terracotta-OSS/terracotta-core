@@ -40,6 +40,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.utils.L2CommUtils;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManagerImpl;
@@ -207,7 +208,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
     communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          this.connectionPolicy, 0,
+                                                          this.connectionPolicy, L2CommUtils.getNumCommWorkerThreads(),
                                                           new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
                                                           thisNodeID);
