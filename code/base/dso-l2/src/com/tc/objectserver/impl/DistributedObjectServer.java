@@ -293,11 +293,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private final Sink                             httpSink;
   protected final HaConfig                       haConfig;
 
-  private static final int                       MAX_DEFAULT_COMM_THREADS = 16;
-  private static final TCLogger                  logger                   = CustomerLogging.getDSOGenericLogger();
-  private static final TCLogger                  consoleLogger            = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                  logger           = CustomerLogging.getDSOGenericLogger();
+  private static final TCLogger                  consoleLogger    = CustomerLogging.getConsoleLogger();
 
-  private ServerID                               thisServerNodeID         = ServerID.NULL_ID;
+  private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
   protected GCStatsEventPublisher                gcStatsEventPublisher;
   private CommunicationsManager                  communicationsManager;
@@ -1057,8 +1056,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     this.l1Listener.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    this.l1Listener
-        .addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE,
+                                    LockStatisticsResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
     this.l1Listener
@@ -1164,11 +1163,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
       this.serverBuilder.populateAdditionalStatisticsRetrivalRegistry(registry);
     }
-  }
-
-  private int getCommWorkerCount(final TCProperties props) {
-    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
-    return props.getInt("tccom.workerthreads", def);
   }
 
   public boolean isBlocking() {
