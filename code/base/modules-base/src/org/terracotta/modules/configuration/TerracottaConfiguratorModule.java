@@ -4,6 +4,7 @@
  */
 package org.terracotta.modules.configuration;
 
+import org.apache.commons.io.IOUtils;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -18,8 +19,15 @@ import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.Assert;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
@@ -72,12 +80,6 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
     // default empty body
   }
 
-  protected final String getBundleJarUrl(final Bundle bundle) {
-    String location = bundle.getLocation();
-    boolean isJar = location.startsWith("file:") && location.endsWith(".jar");
-    return (isJar ? "jar:" : "") + location + "!/";
-  }
-
   protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
                                            final String replacementClassName) {
     addClassReplacement(bundle, originalClassName, replacementClassName, null);
@@ -85,12 +87,48 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
   protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
                                            final String replacementClassName, ClassReplacementTest test) {
-    String url = getBundleJarUrl(bundle) + ByteCodeUtil.classNameToFileName(replacementClassName);
+    URL resource = getBundleResource(bundle, ByteCodeUtil.classNameToFileName(replacementClassName));
+    configHelper.addClassReplacement(originalClassName, replacementClassName, resource, test);
+  }
+
+  private URL getBundleResource(Bundle bundle, String resourceName) {
+    URL bundleURL = configHelper.getBundleURL(bundle);
+    if (bundleURL == null) { throw new RuntimeException(bundle.getLocation() + " was not loaded with this config"); }
+
+    byte[] data = getResourceData(bundleURL, resourceName);
+    if (data == null) { throw new RuntimeException("No resource for " + resourceName + " in " + bundleURL); }
+
     try {
-      configHelper.addClassReplacement(originalClassName, replacementClassName, new URL(url), test);
+      return new URL("TIM-bytes", "", -1, resourceName, new BytesUrlHandler(data));
     } catch (MalformedURLException e) {
-      throw new RuntimeException("Unexpected error while constructing the URL '" + url + "'", e);
+      throw new RuntimeException("Cannot create URL for " + resourceName, e);
     }
+  }
+
+  private static byte[] getResourceData(URL bundleURL, String resourceName) {
+    byte[] data = null;
+    InputStream in = null;
+    JarInputStream jis = null;
+    try {
+      in = bundleURL.openStream();
+      jis = new JarInputStream(in);
+
+      JarEntry entry;
+      while ((entry = jis.getNextJarEntry()) != null) {
+        if (entry.getName().equals(resourceName)) {
+          data = IOUtils.toByteArray(jis);
+          break;
+        }
+      }
+
+    } catch (IOException ioe) {
+      throw new RuntimeException(ioe);
+    } finally {
+      IOUtils.closeQuietly(in);
+      IOUtils.closeQuietly(jis);
+    }
+
+    return data;
   }
 
   /**
@@ -106,12 +144,8 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    */
   protected final void addExportedBundleClass(final Bundle bundle, final String classname,
                                               final boolean targetSystemLoaderOnly) {
-    String url = getBundleJarUrl(bundle) + ByteCodeUtil.classNameToFileName(classname);
-    try {
-      configHelper.addClassResource(classname, new URL(url), targetSystemLoaderOnly);
-    } catch (MalformedURLException e) {
-      throw new RuntimeException("Unexpected error while constructing the URL '" + url + "'", e);
-    }
+    URL url = getBundleResource(bundle, ByteCodeUtil.classNameToFileName(classname));
+    configHelper.addClassResource(classname, url, targetSystemLoaderOnly);
   }
 
   protected final void addExportedBundleClass(final Bundle bundle, final String classname) {
@@ -160,6 +194,32 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
       }
     }
     return null;
+  }
+
+  private static class BytesUrlHandler extends URLStreamHandler {
+
+    private final byte data[];
+
+    public BytesUrlHandler(byte data[]) {
+      this.data = data;
+    }
+
+    @Override
+    protected URLConnection openConnection(URL u) {
+      return new URLConnection(u) {
+
+        @Override
+        public void connect() {
+          //
+        }
+
+        @Override
+        public InputStream getInputStream() {
+          return new ByteArrayInputStream(data);
+        }
+
+      };
+    }
   }
 
 }

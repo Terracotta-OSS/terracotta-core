@@ -4,6 +4,8 @@
  */
 package org.terracotta.dso;
 
+import org.osgi.framework.Bundle;
+
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
@@ -502,6 +504,14 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
 
   public boolean hasBootJar() {
     return false;
+  }
+
+  public void setBundleURLs(Map<Bundle, URL> bundleURLs) {
+    //
+  }
+
+  public URL getBundleURL(Bundle bundle) {
+    return null;
   }
 
 }

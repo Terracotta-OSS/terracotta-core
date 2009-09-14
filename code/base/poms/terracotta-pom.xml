@@ -33,10 +33,6 @@
       <artifactId>tcstats</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
-    </dependency>    
-    <dependency>
       <groupId>net.sourceforge</groupId>
       <artifactId>yamlbeans</artifactId>
     </dependency>    

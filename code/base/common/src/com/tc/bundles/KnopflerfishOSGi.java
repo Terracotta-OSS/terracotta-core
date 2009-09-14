@@ -22,6 +22,8 @@ import com.tc.util.ProductInfo;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -55,10 +57,14 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     return this.repositories;
   }
 
-  public void installBundles(final URL[] locations) throws BundleException {
+  public Map<Bundle, URL> installBundles(final URL[] locations) throws BundleException {
+    Map<Bundle, URL> rv = new HashMap<Bundle, URL>();
+
     for (URL location : locations) {
-      installBundle(location);
+      Bundle bundle = installBundle(location);
+      rv.put(bundle, location);
     }
+    return rv;
   }
 
   public void startBundles(final URL[] locations, final EmbeddedOSGiEventHandler handler) throws BundleException {
@@ -177,7 +183,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     }
   }
 
-  public void installBundle(final URL location) throws BundleException {
+  public Bundle installBundle(final URL location) throws BundleException {
     try {
       if (logger.isDebugEnabled()) info(Message.INSTALLING_BUNDLE, new Object[] { location });
 
@@ -193,8 +199,13 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       }
 
       versionCheck(bundle);
+
+      return bundle;
     } catch (Exception e) {
       exception(Message.ERROR_BUNDLE_INACCESSIBLE, new Object[] { location.toString() }, e);
+
+      // unreachable (although the compiler doesn't know it)
+      throw new AssertionError();
     }
   }
 

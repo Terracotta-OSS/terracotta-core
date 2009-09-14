@@ -4,6 +4,8 @@
  */
 package com.tc.object.config;
 
+import org.osgi.framework.Bundle;
+
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
@@ -299,4 +301,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    * @return {@code true} when custom adapters were added; or {@code false} otherwise
    */
   boolean addClassConfigBasedAdapters(ClassInfo classInfo);
+
+  void setBundleURLs(Map<Bundle, URL> bundleURLs);
+
+  URL getBundleURL(Bundle bundle);
 }

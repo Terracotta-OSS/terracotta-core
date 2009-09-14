@@ -4,7 +4,9 @@
  */
 package com.tc.util;
 
-import com.google.common.collect.MapMaker;
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
+
 import com.tc.object.util.ToggleableStrongReference;
 
 import java.lang.ref.WeakReference;
@@ -25,7 +27,8 @@ import java.util.Map;
  */
 public class ToggleableReferenceManager {
 
-  private final Map<Object, ToggleableStrongReference> refs = new MapMaker().weakKeys().makeMap();
+  private final Map<Object, ToggleableStrongReference> refs = new ReferenceIdentityMap(AbstractReferenceMap.WEAK,
+                                                                                       AbstractReferenceMap.HARD, true);
 
   public ToggleableReferenceManager() {
     //

@@ -4,7 +4,9 @@
  */
 package com.tc.object;
 
-import com.google.common.collect.MapMaker;
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
+
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
@@ -98,7 +100,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Object                         shutdownLock                 = new Object();
   private final Map                            roots                        = new HashMap();
   private final Map                            idToManaged                  = new HashMap();
-  private final Map                            pojoToManaged                = new MapMaker().weakKeys().makeMap();
+  private final Map                            pojoToManaged                = new ReferenceIdentityMap(
+                                                                                                       AbstractReferenceMap.WEAK,
+                                                                                                       AbstractReferenceMap.HARD,
+                                                                                                       true);
   private final ClassProvider                  classProvider;
   private final RemoteObjectManager            remoteObjectManager;
   private final EvictionPolicy                 cache;
@@ -904,7 +909,9 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
 
-    return (TCObject) this.pojoToManaged.get(obj);
+    synchronized (pojoToManaged) {
+      return (TCObject) this.pojoToManaged.get(obj);
+    }
   }
 
   private void basicAddLocal(final TCObject obj, final boolean fromLookup) {
@@ -922,16 +929,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           ManagerUtil.register(pojo, obj);
         }
 
-        if (pojo instanceof Manageable) {
-          Manageable m = (Manageable) pojo;
-          if (m.__tc_managed() == null) {
-            m.__tc_managed(obj);
+        synchronized (this.pojoToManaged) {
+          if (pojo instanceof Manageable) {
+            Manageable m = (Manageable) pojo;
+            if (m.__tc_managed() == null) {
+              m.__tc_managed(obj);
+            } else {
+              Assert.assertTrue(m.__tc_managed() == obj);
+            }
           } else {
-            Assert.assertTrue(m.__tc_managed() == obj);
-          }
-        } else {
-          if (!isLiteralPojo(pojo)) {
-            this.pojoToManaged.put(pojo, obj);
+            if (!isLiteralPojo(pojo)) {
+              this.pojoToManaged.put(pojo, obj);
+            }
           }
         }
       }

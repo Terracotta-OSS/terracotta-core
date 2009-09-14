@@ -4,6 +4,7 @@
  */
 package com.tc.bundles;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -15,6 +16,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.List;
+import java.util.Map;
 
 /**
  * For OSGi information please refer to the documentation at the <a href="http://www.osgi.org/">OSGi web page</a>
@@ -23,9 +25,9 @@ public interface EmbeddedOSGiRuntime {
 
   URL[] getRepositories();
 
-  void installBundle(final URL bundle) throws BundleException;
+  Bundle installBundle(final URL bundle) throws BundleException;
 
-  void installBundles(final URL[] bundles) throws BundleException;
+  Map<Bundle, URL> installBundles(final URL[] bundles) throws BundleException;
 
   void startBundles(final URL[] bundles, final EmbeddedOSGiEventHandler handler) throws BundleException;
 

@@ -4,6 +4,8 @@
  */
 package com.tc.object.config;
 
+import org.osgi.framework.Bundle;
+
 import com.tc.object.bytecode.ClassAdapterFactory;
 
 import java.net.URL;
@@ -59,5 +61,7 @@ public interface StandardDSOClientConfigHelper {
   void addAutolock(String methodPattern, ConfigLockLevel type);
 
   void addExcludePattern(String string);
+
+  URL getBundleURL(Bundle bundle);
 
 }

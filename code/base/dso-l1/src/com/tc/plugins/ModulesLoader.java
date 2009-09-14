@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +63,7 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -169,6 +169,21 @@ public class ModulesLoader {
       osgiRuntime.registerService(StandardDSOClientConfigHelper.class.getName(), configHelper, serviceProps);
     }
 
+    final List moduleList = new ArrayList();
+    moduleList.addAll(getAdditionalModules());
+    moduleList.addAll(Arrays.asList(modules));
+
+    final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
+
+    final URL[] osgiRepositories = osgiRuntime.getRepositories();
+    final ProductInfo info = ProductInfo.getInstance();
+    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), true, info
+        .mavenArtifactsVersion(), info.apiVersion(), addlRepos);
+    final URL[] locations = resolver.resolve(allModules);
+
+    final Map<Bundle, URL> bundleURLs = osgiRuntime.installBundles(locations);
+    configHelper.setBundleURLs(bundleURLs);
+
     EmbeddedOSGiEventHandler handler = new EmbeddedOSGiEventHandler() {
       public void callback(final Object payload) throws BundleException {
         Assert.assertTrue(payload instanceof Bundle);
@@ -184,25 +199,13 @@ public class ModulesLoader {
             }
           }
           printModuleBuildInfo(bundle);
-          loadConfiguration(configHelper, bundle);
+          loadConfiguration(configHelper, bundle, bundleURLs.get(bundle));
         }
       }
     };
 
-    final List moduleList = new ArrayList();
-    moduleList.addAll(getAdditionalModules());
-    moduleList.addAll(Arrays.asList(modules));
-
-    final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-
-    final URL[] osgiRepositories = osgiRuntime.getRepositories();
-    final ProductInfo info = ProductInfo.getInstance();
-    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), true, info
-        .mavenArtifactsVersion(), info.apiVersion(), addlRepos);
-    final URL[] locations = resolver.resolve(allModules);
-
-    osgiRuntime.installBundles(locations);
     osgiRuntime.startBundles(locations, handler);
+
   }
 
   private static void installTIMByteProvider(final Bundle bundle) {
@@ -386,18 +389,16 @@ public class ModulesLoader {
     return paths;
   }
 
-  private static void loadConfiguration(final DSOClientConfigHelper configHelper, final Bundle bundle)
+  private static void loadConfiguration(final DSOClientConfigHelper configHelper, Bundle bundle, final URL url)
       throws BundleException {
     // attempt to load all of the config fragments found in the config-bundle
     final String[] paths = getConfigPath(bundle);
     for (final String configPath : paths) {
       final InputStream is;
       try {
-        is = JarResourceLoader.getJarResource(new URL(bundle.getLocation()), configPath);
-      } catch (MalformedURLException murle) {
-        throw new BundleException("Unable to create URL from: " + bundle.getLocation(), murle);
+        is = JarResourceLoader.getJarResource(url, configPath);
       } catch (IOException ioe) {
-        throw new BundleException("Unable to extract " + configPath + " from URL: " + bundle.getLocation(), ioe);
+        throw new BundleException("Unable to extract " + configPath + " from URL: " + url, ioe);
       }
 
       if (is == null) {
