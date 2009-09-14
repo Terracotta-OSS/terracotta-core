@@ -5,7 +5,6 @@
 	<classpathentry excluding="**/.svn/*" kind="src" output="build.eclipse/tests.system.classes" path="tests.system.resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/cglib-nodep-2.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-collections-3.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-dbcp-1.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-pool-1.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/dom4j-1.6.1.jar"/>

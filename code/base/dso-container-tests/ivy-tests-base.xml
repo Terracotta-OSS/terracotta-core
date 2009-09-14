@@ -15,7 +15,6 @@
     <dependency name="spring" rev="2.5.6" org="org.springframework" conf="compile->default"/>
     <dependency name="spring-webmvc" rev="2.5.6" org="org.springframework" conf="compile->default"/>
     <dependency name="dom4j" rev="1.6.1" org="dom4j"/>
-    <dependency name="commons-collections" rev="3.1" org="commons-collections"/>
     <dependency name="derby" rev="10.4.2.0" org="org.apache.derby"/>
     <dependency name="derbyclient" rev="10.4.2.0" org="org.apache.derby"/>
     <dependency name="derbynet" rev="10.4.2.0" org="org.apache.derby"/>

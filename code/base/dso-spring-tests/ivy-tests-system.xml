@@ -3,7 +3,6 @@
   <info organisation="org.terracotta" module="dso-spring-tests-tests-system"/>
   <dependencies defaultconf="default">
   	<dependency name="cglib-nodep" rev="2.2" org="cglib"/>
-  	<dependency name="commons-collections" rev="3.1" org="commons-collections"/>
   	<dependency name="commons-dbcp" rev="1.2.1" org="commons-dbcp"/>
   	<dependency name="commons-pool" rev="1.2" org="commons-pool"/>
   	<dependency name="dom4j" rev="1.6.1" org="dom4j"/>
