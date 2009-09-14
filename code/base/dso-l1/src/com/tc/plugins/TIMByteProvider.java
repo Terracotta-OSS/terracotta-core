@@ -20,14 +20,14 @@ import java.util.jar.Manifest;
 
 public class TIMByteProvider implements TIMByteProviderMBean {
   private static final TCLogger     logger = TCLogging.getLogger(TIMByteProvider.class);
-  private final String              url;
+  private final URL                 url;
   private final Manifest            manifest;
   private final Map<String, byte[]> entryMap;
 
-  public TIMByteProvider(String url) throws IOException {
+  public TIMByteProvider(URL url) throws IOException {
     super();
-    URL location = new URL(this.url = url);
-    JarInputStream jis = new JarInputStream(location.openStream());
+    this.url = url;
+    JarInputStream jis = new JarInputStream(url.openStream());
     manifest = jis.getManifest();
     entryMap = new HashMap<String, byte[]>();
     for (JarEntry entry = jis.getNextJarEntry(); entry != null; entry = jis.getNextJarEntry()) {
@@ -49,11 +49,10 @@ public class TIMByteProvider implements TIMByteProviderMBean {
   }
 
   public byte[] getModuleBytes() throws IOException {
-    URL location = new URL(url);
     InputStream is = null;
 
     try {
-      return IOUtils.toByteArray(is = location.openStream());
+      return IOUtils.toByteArray(is = url.openStream());
     } finally {
       IOUtils.closeQuietly(is);
     }

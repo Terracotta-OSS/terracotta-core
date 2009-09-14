@@ -188,6 +188,9 @@ public class ModulesLoader {
       public void callback(final Object payload) throws BundleException {
         Assert.assertTrue(payload instanceof Bundle);
         Bundle bundle = (Bundle) payload;
+        URL bundleURL = bundleURLs.get(bundle);
+        if (bundleURL == null) { throw new AssertionError("missing URL for " + bundle.getLocation()); }
+
         if (bundle != null) {
           if (!forBootJar) {
             registerClassLoader(configHelper, classProvider, bundle);
@@ -195,11 +198,11 @@ public class ModulesLoader {
             Dictionary headers = bundle.getHeaders();
             if (headers.get("Presentation-Factory") != null) {
               logger.info("Installing TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'");
-              installTIMByteProvider(bundle);
+              installTIMByteProvider(bundle, bundleURL);
             }
           }
           printModuleBuildInfo(bundle);
-          loadConfiguration(configHelper, bundle, bundleURLs.get(bundle));
+          loadConfiguration(configHelper, bundle, bundleURL);
         }
       }
     };
@@ -208,7 +211,7 @@ public class ModulesLoader {
 
   }
 
-  private static void installTIMByteProvider(final Bundle bundle) {
+  private static void installTIMByteProvider(final Bundle bundle, final URL bundleURL) {
     try {
       MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
       Dictionary headers = bundle.getHeaders();
@@ -223,8 +226,7 @@ public class ModulesLoader {
       }
       ObjectName loader = new ObjectName(prefix + feature);
       if (!mbs.isRegistered(loader)) {
-        mbs.registerMBean(new StandardMBean(new TIMByteProvider(bundle.getLocation()), TIMByteProviderMBean.class),
-                          loader);
+        mbs.registerMBean(new StandardMBean(new TIMByteProvider(bundleURL), TIMByteProviderMBean.class), loader);
       }
     } catch (Exception e) {
       logger.warn("Unable to install TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'", e);
