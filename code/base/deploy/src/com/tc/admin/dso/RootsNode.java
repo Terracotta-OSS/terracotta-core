@@ -12,7 +12,6 @@ import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterModelElement;
-import com.tc.admin.model.IServer;
 import com.tc.admin.model.RootCreationListener;
 
 import java.awt.Component;
@@ -51,6 +50,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
     setLabel(adminClientContext.getMessage("dso.roots"));
     clusterModel.addPropertyChangeListener(this);
+    clusterModel.addRootCreationListener(this);
     if (clusterModel.isReady()) {
       init();
     }
@@ -74,12 +74,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
-    if (IClusterModel.PROP_ACTIVE_COORDINATOR.equals(prop)) {
-      IServer oldActive = (IServer) evt.getOldValue();
-      if (oldActive != null) {
-        oldActive.removeRootCreationListener(this);
-      }
-    } else if (IClusterModelElement.PROP_READY.equals(prop)) {
+    if (IClusterModelElement.PROP_READY.equals(prop)) {
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel != null && theClusterModel.isReady()) {
         SwingUtilities.invokeLater(new InitRunnable());
@@ -100,10 +95,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel == null) { return; }
 
-    IServer activeCoord = theClusterModel.getActiveCoordinator();
-    if (activeCoord != null) {
-      activeCoord.removeRootCreationListener(this);
-    }
     roots = EMPTY_ROOTS;
     if (objectBrowserPanel != null) {
       objectBrowserPanel.clearModel();
@@ -140,12 +131,6 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
         }
         updateLabel();
       }
-
-      IServer activeCoord = theClusterModel.getActiveCoordinator();
-      if (activeCoord != null) {
-        activeCoord.addRootCreationListener(RootsNode.this);
-      }
-
     }
   }
 
@@ -251,10 +236,7 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(this);
-    IServer activeCoord = clusterModel.getActiveCoordinator();
-    if (activeCoord != null) {
-      activeCoord.removeRootCreationListener(this);
-    }
+    clusterModel.removeRootCreationListener(this);
 
     if (objectBrowserPanel != null) {
       objectBrowserPanel.tearDown();

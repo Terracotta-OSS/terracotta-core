@@ -514,11 +514,13 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   TopologyNode topologyNode;
 
   protected void addChildren() {
-    createFeaturesNode();
+    featuresNode = createFeaturesNode();
     add(createClusteredHeapNode());
     add(createDiagnosticsNode());
     add(topologyNode = createTopologyNode());
   }
+
+  private FeaturesNode featuresNode;
 
   protected FeaturesNode createFeaturesNode() {
     return new FeaturesNode(this, adminClientContext, getClusterModel());
@@ -688,6 +690,11 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       testStopMonitoringTask();
       adminClientContext.getAdminClientController().select(this);
 
+      if (featuresNode != null && featuresNode.getParent() == null) {
+        featuresNode.tearDown();
+      }
+      featuresNode = null;
+
       tearDownChildren();
       nodeStructureChanged();
       clusterPanel.disconnected();
@@ -744,6 +751,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       autoConnectAction = null;
       monitoringActivityTask = null;
       topologyNode = null;
+      featuresNode = null;
     }
   }
 

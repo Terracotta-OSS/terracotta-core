@@ -75,6 +75,10 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
 
   IBasicObject[] getRoots();
 
+  void addRootCreationListener(RootCreationListener listener);
+
+  void removeRootCreationListener(RootCreationListener listener);
+
   IClient[] getClients();
 
   boolean isResidentOnClient(IClient client, ObjectID oid);

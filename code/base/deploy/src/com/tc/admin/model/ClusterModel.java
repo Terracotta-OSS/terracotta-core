@@ -35,7 +35,7 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.swing.event.EventListenerList;
 
-public class ClusterModel implements IClusterModel {
+public class ClusterModel implements IClusterModel, RootCreationListener {
   private String                                               name;
   private IServer                                              connectServer;
   private boolean                                              autoConnect;
@@ -523,6 +523,28 @@ public class ClusterModel implements IClusterModel {
     return connectServer.getConnectErrorMessage(e);
   }
 
+  public synchronized void addRootCreationListener(RootCreationListener listener) {
+    removeRootCreationListener(listener);
+    listenerList.add(RootCreationListener.class, listener);
+  }
+
+  public synchronized void removeRootCreationListener(RootCreationListener listener) {
+    listenerList.remove(RootCreationListener.class, listener);
+  }
+
+  public void rootCreated(IBasicObject root) {
+    fireRootCreated(root);
+  }
+
+  protected void fireRootCreated(IBasicObject root) {
+    Object[] listeners = listenerList.getListenerList();
+    for (int i = listeners.length - 2; i >= 0; i -= 2) {
+      if (listeners[i] == RootCreationListener.class) {
+        ((RootCreationListener) listeners[i + 1]).rootCreated(root);
+      }
+    }
+  }
+
   public synchronized void addServerStateListener(ServerStateListener listener) {
     removeServerStateListener(listener);
     listenerList.add(ServerStateListener.class, listener);
@@ -701,13 +723,17 @@ public class ClusterModel implements IClusterModel {
           String[] connectCreds = connectServer.getConnectionCredentials();
           serverGroups = connectServer.getClusterServerGroups();
           for (IServerGroup group : serverGroups) {
+            IServer activeServer = group.getActiveServer();
             if (group.isCoordinator()) {
               activeCoordinatorGroup = group;
-              activeCoordinator = group.getActiveServer();
+              activeCoordinator = activeServer;
             }
             group.setConnectionCredentials(connectCreds);
             group.addServerStateListener(serverStateListenerDelegate);
             group.addPropertyChangeListener(serverGroupListener);
+            if (activeServer != null) {
+              activeServer.addRootCreationListener(ClusterModel.this);
+            }
             group.connect();
           }
           stopConnectListener();
@@ -728,8 +754,16 @@ public class ClusterModel implements IClusterModel {
       String prop = evt.getPropertyName();
       IServerGroup group = (IServerGroup) evt.getSource();
       if (IServerGroup.PROP_ACTIVE_SERVER.equals(prop)) {
+        IServer oldActive = (IServer) evt.getOldValue();
+        IServer newActive = (IServer) evt.getNewValue();
         if (group.isCoordinator()) {
-          setActiveCoordinator(group.getActiveServer());
+          setActiveCoordinator(newActive);
+        }
+        if (oldActive != null) {
+          oldActive.removeRootCreationListener(ClusterModel.this);
+        }
+        if (newActive != null) {
+          newActive.addRootCreationListener(ClusterModel.this);
         }
         setReady(determineReady());
       } else if (IServerGroup.PROP_CONNECTED.equals(prop)) {
@@ -789,7 +823,7 @@ public class ClusterModel implements IClusterModel {
     return null;
   }
 
-  public synchronized ManagedObjectFacade lookupFacade(ObjectID oid, int limit) throws NoSuchObjectException {
+  public ManagedObjectFacade lookupFacade(ObjectID oid, int limit) throws NoSuchObjectException {
     IServerGroup group = groupForObjectID(oid);
     if (group != null) {
       IServer activeServer = group.getActiveServer();

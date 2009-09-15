@@ -1303,7 +1303,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public synchronized ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
+  public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
     DSOMBean theDsoBean = getDSOBean();
     return theDsoBean != null ? theDsoBean.lookupFacade(objectID, limit) : null;
   }
