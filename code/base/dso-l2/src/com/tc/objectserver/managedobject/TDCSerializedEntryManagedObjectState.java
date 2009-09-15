@@ -24,13 +24,14 @@ import java.util.Set;
 
 public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectState {
 
-  private static final TCLogger logger                 = TCLogging
-                                                           .getLogger(TDCSerializedEntryManagedObjectState.class);
+  private static final TCLogger logger                     = TCLogging
+                                                               .getLogger(TDCSerializedEntryManagedObjectState.class);
 
-  public static final String    SERIALIZED_ENTRY       = "org.terracotta.cache.serialization.SerializedEntry";
+  public static final String    SERIALIZED_ENTRY           = "org.terracotta.cache.serialization.SerializedEntry";
+  public static final String    ABSTRACT_TIMESTAMPED_VALUE = "org.terracotta.cache.value.AbstractTimestampedValue";
 
-  public static final String    CREATE_TIME_FIELD      = SERIALIZED_ENTRY + ".createTime";
-  public static final String    LAST_ACCESS_TIME_FIELD = SERIALIZED_ENTRY + ".lastAccessedTime";
+  public static final String    CREATE_TIME_FIELD          = SERIALIZED_ENTRY + ".createTime";
+  public static final String    LAST_ACCESS_TIME_FIELD     = ABSTRACT_TIMESTAMPED_VALUE + ".lastAccessedTime";
 
   private final long            classID;
 
@@ -38,12 +39,12 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   private int                   createTime;
   private int                   lastAccessedTime;
 
-  public TDCSerializedEntryManagedObjectState(long classID) {
+  public TDCSerializedEntryManagedObjectState(final long classID) {
     this.classID = classID;
   }
 
   @Override
-  protected boolean basicEquals(AbstractManagedObjectState o) {
+  protected boolean basicEquals(final AbstractManagedObjectState o) {
     TDCSerializedEntryManagedObjectState other = (TDCSerializedEntryManagedObjectState) o;
 
     if (createTime != other.createTime) return false;
@@ -53,11 +54,11 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return true;
   }
 
-  public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
+  public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs) throws IOException {
     while (cursor.next()) {
       PhysicalAction pa = cursor.getPhysicalAction();
       if (pa.isEntireArray()) {
@@ -92,25 +93,25 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   }
 
   /**
-   * This method returns whether this ManagedObjectState can have references or not.
-   * @ return true : The Managed object represented by this state object will never have any reference to other objects.
-   *         false : The Managed object represented by this state object can have references to other objects.
+   * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
+   * represented by this state object will never have any reference to other objects. false : The Managed object
+   * represented by this state object can have references to other objects.
    */
   @Override
   public boolean hasNoReferences() {
     return true;
   }
 
-  private static void logInvalidType(String field, Object val) {
+  private static void logInvalidType(final String field, final Object val) {
     logger.error("recieved invalid type (" + safeTypeName(val) + "] for " + field + " field -- ignoring it");
   }
 
-  private static String safeTypeName(Object obj) {
+  private static String safeTypeName(final Object obj) {
     String type = obj == null ? "null" : obj.getClass().getName();
     return type;
   }
 
-  public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
+  public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
     // The byte[] value field is not shown in the admin console
     Map data = new HashMap();
     data.put(CREATE_TIME_FIELD, Integer.valueOf(createTime));
@@ -119,7 +120,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return new PhysicalManagedObjectFacade(objectID, null, className, data, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
     writer.addEntireArray(value);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(createTime));
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
@@ -141,7 +142,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return TDC_SERIALIZED_ENTRY;
   }
 
-  public void writeTo(ObjectOutput out) throws IOException {
+  public void writeTo(final ObjectOutput out) throws IOException {
     out.writeLong(classID);
     out.writeInt(createTime);
     out.writeInt(lastAccessedTime);
@@ -153,7 +154,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     }
   }
 
-  static TDCSerializedEntryManagedObjectState readFrom(ObjectInput in) throws IOException {
+  static TDCSerializedEntryManagedObjectState readFrom(final ObjectInput in) throws IOException {
     TDCSerializedEntryManagedObjectState state = new TDCSerializedEntryManagedObjectState(in.readLong());
 
     state.createTime = in.readInt();
