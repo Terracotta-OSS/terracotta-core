@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.beans.impl;
 
@@ -21,35 +22,32 @@ import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 import javax.management.Notification;
 
-public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean implements StatisticsLocalGathererMBean, StatisticsGathererListener, StatisticsStoreListener {
+public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean implements StatisticsLocalGathererMBean,
+    StatisticsGathererListener, StatisticsStoreListener {
   public final static MBeanNotificationInfo[] NOTIFICATION_INFO;
 
   static {
-    final String[] notifTypes = new String[] {
-      STATISTICS_LOCALGATHERER_STARTEDUP_TYPE,
-      STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE,
-      STATISTICS_LOCALGATHERER_REINITIALIZED_TYPE,
-      STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE,
-      STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE,
-      STATISTICS_LOCALGATHERER_SESSION_CREATED_TYPE,
-      STATISTICS_LOCALGATHERER_SESSION_CLOSED_TYPE,
-      STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE,
-      STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE,
-      STATISTICS_LOCALGATHERER_STORE_OPENED_TYPE,
-      STATISTICS_LOCALGATHERER_STORE_CLOSED_TYPE
-    };
+    final String[] notifTypes = new String[] { STATISTICS_LOCALGATHERER_STARTEDUP_TYPE,
+      STATISTICS_LOCALGATHERER_SHUTDOWN_TYPE, STATISTICS_LOCALGATHERER_REINITIALIZED_TYPE,
+      STATISTICS_LOCALGATHERER_CAPTURING_STARTED_TYPE, STATISTICS_LOCALGATHERER_CAPTURING_STOPPED_TYPE,
+      STATISTICS_LOCALGATHERER_SESSION_CREATED_TYPE, STATISTICS_LOCALGATHERER_SESSION_CLOSED_TYPE,
+      STATISTICS_LOCALGATHERER_SESSION_CLEARED_TYPE, STATISTICS_LOCALGATHERER_ALLSESSIONS_CLEARED_TYPE,
+      STATISTICS_LOCALGATHERER_STORE_OPENED_TYPE, STATISTICS_LOCALGATHERER_STORE_CLOSED_TYPE };
     final String name = Notification.class.getName();
     final String description = "Each notification sent contains information about what happened with the local statistics gathering";
     NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
   }
 
-  private final SynchronizedLong sequenceNumber;
+  private final SynchronizedLong              sequenceNumber;
 
-  private final StatisticsGathererSubSystem subsystem;
-  private final NewCommonL2Config config;
-  private final NewL2DSOConfig dsoConfig;
+  private final StatisticsGathererSubSystem   subsystem;
+  private final NewCommonL2Config             config;
+  private final NewL2DSOConfig                dsoConfig;
+  private String                              username;
+  private String                              password;
 
-  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config, final NewL2DSOConfig dsoConfig) throws NotCompliantMBeanException {
+  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config,
+                                          final NewL2DSOConfig dsoConfig) throws NotCompliantMBeanException {
     super(StatisticsLocalGathererMBean.class, true);
     Assert.assertNotNull("subsystem", subsystem);
     Assert.assertNotNull("config", config);
@@ -79,25 +77,25 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void startup() {
-    if (!subsystem.isActive()) {
-      return;
-    }
-    
+    if (!subsystem.isActive()) { return; }
+
     try {
       String hostname = dsoConfig.bind().getString();
       if (null == hostname) {
         hostname = dsoConfig.host().getString();
       }
-      subsystem.getStatisticsGatherer().connect(hostname, config.jmxPort().getInt());
+      if (username != null && password != null) {
+        subsystem.getStatisticsGatherer().connect(username, password, hostname, config.jmxPort().getInt());
+      } else {
+        subsystem.getStatisticsGatherer().connect(hostname, config.jmxPort().getInt());
+      }
     } catch (StatisticsGathererException e) {
       throw new RuntimeException(e);
     }
   }
 
   public void shutdown() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().disconnect();
@@ -107,9 +105,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void reinitialize() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.reinitialize();
@@ -119,9 +115,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void createSession(final String sessionId) {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().createSession(sessionId);
@@ -131,17 +125,13 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public String getActiveSessionId() {
-    if (!subsystem.isActive()) {
-      return null;
-    }
+    if (!subsystem.isActive()) { return null; }
 
     return subsystem.getStatisticsGatherer().getActiveSessionId();
   }
 
   public String[] getAvailableSessionIds() {
-    if (!subsystem.isActive()) {
-      return new String[0];
-    }
+    if (!subsystem.isActive()) { return new String[0]; }
 
     try {
       return subsystem.getStatisticsStore().getAvailableSessionIds();
@@ -151,9 +141,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void closeSession() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().closeSession();
@@ -163,9 +151,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public String[] getSupportedStatistics() {
-    if (!subsystem.isActive()) {
-      return new String[0];
-    }
+    if (!subsystem.isActive()) { return new String[0]; }
 
     try {
       return subsystem.getStatisticsGatherer().getSupportedStatistics();
@@ -175,9 +161,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void enableStatistics(String[] names) {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().enableStatistics(names);
@@ -187,9 +171,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public StatisticData[] captureStatistic(final String name) {
-    if (!subsystem.isActive()) {
-      return new StatisticData[0];
-    }
+    if (!subsystem.isActive()) { return new StatisticData[0]; }
 
     try {
       return subsystem.getStatisticsGatherer().captureStatistic(name);
@@ -199,9 +181,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void startCapturing() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().startCapturing();
@@ -211,9 +191,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void stopCapturing() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().stopCapturing();
@@ -223,17 +201,13 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public boolean isCapturing() {
-    if (!subsystem.isActive()) {
-      return false;
-    }
+    if (!subsystem.isActive()) { return false; }
 
     return subsystem.getStatisticsGatherer().isCapturing();
   }
-  
+
   public void setGlobalParam(final String key, final Object value) {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().setGlobalParam(key, value);
@@ -243,9 +217,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public Object getGlobalParam(final String key) {
-    if (!subsystem.isActive()) {
-      return null;
-    }
+    if (!subsystem.isActive()) { return null; }
 
     try {
       return subsystem.getStatisticsGatherer().getGlobalParam(key);
@@ -255,9 +227,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void setSessionParam(final String key, final Object value) {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsGatherer().setSessionParam(key, value);
@@ -267,9 +237,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public Object getSessionParam(final String key) {
-    if (!subsystem.isActive()) {
-      return null;
-    }
+    if (!subsystem.isActive()) { return null; }
 
     try {
       return subsystem.getStatisticsGatherer().getSessionParam(key);
@@ -279,10 +247,8 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void clearStatistics(final String sessionId) {
-    if (!subsystem.isActive()) {
-      return;
-    }
-    
+    if (!subsystem.isActive()) { return; }
+
     try {
       subsystem.getStatisticsStore().clearStatistics(sessionId);
     } catch (StatisticsStoreException e) {
@@ -291,9 +257,7 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   public void clearAllStatistics() {
-    if (!subsystem.isActive()) {
-      return;
-    }
+    if (!subsystem.isActive()) { return; }
 
     try {
       subsystem.getStatisticsStore().clearAllStatistics();
@@ -303,7 +267,8 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   }
 
   private void createAndSendNotification(final String type, final Object data) {
-    final Notification notification = new Notification(type, StatisticsLocalGathererMBeanImpl.this, sequenceNumber.increment(), System.currentTimeMillis());
+    final Notification notification = new Notification(type, StatisticsLocalGathererMBeanImpl.this, sequenceNumber
+        .increment(), System.currentTimeMillis());
     notification.setUserData(data);
     sendNotification(notification);
   }
@@ -354,5 +319,13 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
 
   public void closed() {
     createAndSendNotification(STATISTICS_LOCALGATHERER_STORE_CLOSED_TYPE, null);
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 }

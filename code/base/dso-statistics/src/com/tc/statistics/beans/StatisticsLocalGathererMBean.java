@@ -60,4 +60,8 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
   public void clearStatistics(String sessionId);
 
   public void clearAllStatistics();
+  
+  public void setUsername(String username);
+  
+  public void setPassword(String password);
 }

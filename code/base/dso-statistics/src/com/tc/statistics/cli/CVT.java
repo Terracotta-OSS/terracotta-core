@@ -46,6 +46,8 @@ public class CVT {
     options.addOption(createOption("number", "option.port", "port", "p"));
     options.addOption(createOption("hostname|ip", "option.host", "host", "H"));
     options.addOption(createOption("filename", "option.file", "file", "f"));
+    options.addOption("u", "username", true, "username");
+    options.addOption("w", "password", true, "password");
   }
 
   private static Option createOption(String argName, String descString, String longOpt, String opt) {
@@ -54,6 +56,15 @@ public class CVT {
     OptionBuilder.withDescription(BUNDLE_HELPER.getString(descString));
     OptionBuilder.withLongOpt(longOpt);
     return OptionBuilder.create(opt);
+  }
+
+  private static String readPassword() {
+    try {
+      System.out.print("Enter password: ");
+      return new jline.ConsoleReader().readLine(Character.valueOf('*'));
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private void run(final String[] args) throws Exception {
@@ -72,6 +83,17 @@ public class CVT {
     }
     if (cli.hasOption("p")) {
       commands.getConnection().setPort(Integer.parseInt(cli.getOptionValue("p")));
+    }
+    if (cli.hasOption("u")) {
+      commands.getConnection().setUsername(cli.getOptionValue("u"));
+      String password = null;
+      if (cli.hasOption("w")) {
+        password = cli.getOptionValue("w");
+      } else {
+        password = readPassword();
+      }
+      System.out.println("Password: " + password);
+      commands.getConnection().setPassword(password);
     }
 
     // create the commands to process

@@ -14,9 +14,9 @@ import org.apache.commons.cli.UnrecognizedOptionException;
 
 import com.tc.management.JMXConnectorProxy;
 
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.management.remote.JMXConnector;
 
@@ -144,31 +144,24 @@ public class CommandLineBuilder {
 
   public static String readPassword() {
     try {
-      Method m = System.class.getMethod("console", new Class[] {});
-      Object console = m.invoke(null, (Object[]) null);
-      if (console != null) {
-        m = console.getClass().getMethod("readPassword", new Class[] { String.class, Object[].class });
-        if (m != null) {
-          byte[] pw = (byte[]) m.invoke(console, new Object[] { "[%s]", "[console] Enter Password: " });
-          return new String(pw);
-        }
-      }
-    } catch (RuntimeException re) {/**/
-    } catch (Exception e) {/**/
-    }
-    try {
       System.out.print("Enter password: ");
       return new jline.ConsoleReader().readLine(Character.valueOf('*'));
-    } catch (Exception e) {/**/
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-    return null;
   }
 
-  public static JMXConnector getJMXConnector(String userName, String host, int port) {
-    HashMap env = null;
-    if (userName != null) {
-      env = new HashMap();
-      String[] creds = { userName, readPassword() };
+  public static JMXConnector getJMXConnector(String host, int port) {
+    return new JMXConnectorProxy(host, port, null);
+  }
+
+  /**
+   * username and password must not be null. If either is null, they won't be used
+   */
+  public static JMXConnector getJMXConnector(String username, String password, String host, int port) {
+    Map env = new HashMap();
+    if (username != null && password != null) {
+      String[] creds = { username, password };
       env.put("jmx.remote.credentials", creds);
     }
     return new JMXConnectorProxy(host, port, env);

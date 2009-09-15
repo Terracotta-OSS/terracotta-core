@@ -284,7 +284,7 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
   }
 
   private void setDbHome() {
-    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(null, "localhost", jmxPort);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector("localhost", jmxPort);
     MBeanServerConnection mbs = ServerDBBackupRunner.getMBeanServerConnection(jmxConnector, "localhost", jmxPort);
     if (mbs == null) return;
     ServerDBBackupMBean mbean = ServerDBBackupRunner.getServerDBBackupMBean(mbs);

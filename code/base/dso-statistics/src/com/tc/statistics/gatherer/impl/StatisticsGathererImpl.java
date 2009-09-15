@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.gatherer.impl;
 
@@ -36,16 +37,16 @@ import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 
 public class StatisticsGathererImpl implements StatisticsGatherer {
-  private final StatisticsStore store;
-  private final Set listeners = new CopyOnWriteArraySet();
+  private final StatisticsStore               store;
+  private final Set                           listeners             = new CopyOnWriteArraySet();
   private final GathererTopologyChangeHandler topologyChangeHandler = new GathererTopologyChangeHandler();
 
-  private volatile StatisticsGatewayMBean statGateway = null;
-  private volatile String sessionId = null;
+  private volatile StatisticsGatewayMBean     statGateway           = null;
+  private volatile String                     sessionId             = null;
 
-  private JMXConnectorProxy proxy = null;
-  private MBeanServerConnection mbeanServerConnection = null;
-  private StoreDataListener listener = null;
+  private JMXConnectorProxy                   proxy                 = null;
+  private MBeanServerConnection               mbeanServerConnection = null;
+  private StoreDataListener                   listener              = null;
 
   public StatisticsGathererImpl(final StatisticsStore store) {
     Assert.assertNotNull("store can't be null", store);
@@ -53,6 +54,11 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
   }
 
   public void connect(final String managerHostName, final int managerPort) throws StatisticsGathererException {
+    connect(null, null, managerHostName, managerPort);
+  }
+
+  public void connect(String username, String password, String managerHostName, int managerPort)
+      throws StatisticsGathererException {
     synchronized (this) {
       if (statGateway != null) throw new StatisticsGathererAlreadyConnectedException();
 
@@ -64,6 +70,8 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
 
       final Map environment = new HashMap();
       environment.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
+      String[] creds = { username, password };
+      environment.put("jmx.remote.credentials", creds);
       proxy = new JMXConnectorProxy(managerHostName, managerPort, environment);
 
       try {
@@ -74,8 +82,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       }
 
       // setup the mbeans
-      statGateway = (StatisticsGatewayMBean)MBeanServerInvocationHandler
-          .newProxyInstance(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_GATEWAY, StatisticsGatewayMBean.class, false);
+      statGateway = (StatisticsGatewayMBean) MBeanServerInvocationHandler
+          .newProxyInstance(mbeanServerConnection, StatisticsMBeanNames.STATISTICS_GATEWAY,
+                            StatisticsGatewayMBean.class, false);
 
       // enable the statistics envoy
       topologyChangeHandler.setEnabled(true);
@@ -94,7 +103,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       try {
         closeSession();
       } catch (Exception e) {
-        exception = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the capturing session '"+sessionId+"'.", e);
+        exception = new StatisticsGathererDisconnectErrorException(
+                                                                   "Unexpected error while closing the capturing session '"
+                                                                       + sessionId + "'.", e);
       }
 
       // disable the notification
@@ -102,7 +113,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         try {
           statGateway.disable();
         } catch (Exception e) {
-          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while disabling the statistics gateway.", e);
+          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException(
+                                                                                          "Unexpected error while disabling the statistics gateway.",
+                                                                                          e);
           if (exception != null) {
             exception.setNextException(ex);
           } else {
@@ -116,7 +129,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         try {
           proxy.close();
         } catch (Exception e) {
-          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the JMX proxy.", e);
+          StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException(
+                                                                                          "Unexpected error while closing the JMX proxy.",
+                                                                                          e);
           if (exception != null) {
             exception.setNextException(ex);
           } else {
@@ -128,7 +143,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       try {
         store.close();
       } catch (StatisticsStoreException e) {
-        StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException("Unexpected error while closing the statistics store.", e);
+        StatisticsGathererException ex = new StatisticsGathererDisconnectErrorException(
+                                                                                        "Unexpected error while closing the statistics store.",
+                                                                                        e);
         if (exception != null) {
           exception.setNextException(ex);
         } else {
@@ -140,9 +157,7 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
       listener = null;
       statGateway = null;
 
-      if (exception != null) {
-        throw exception;
-      }
+      if (exception != null) { throw exception; }
     }
 
     fireDisconnected();
@@ -165,7 +180,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         listener = new StoreDataListener();
         mbeanServerConnection.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, store);
       } catch (Exception e) {
-        throw new StatisticsGathererSessionCreationErrorException("Unexpected error while registering the notification listener for statistics emitting.", e);
+        throw new StatisticsGathererSessionCreationErrorException(
+                                                                  "Unexpected error while registering the notification listener for statistics emitting.",
+                                                                  e);
       }
     }
 
@@ -197,7 +214,9 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
         try {
           mbeanServerConnection.removeNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener);
         } catch (Exception e) {
-          throw new StatisticsGathererCloseSessionErrorException("Unexpected error while removing the statistics gateway notification listener.", e);
+          throw new StatisticsGathererCloseSessionErrorException(
+                                                                 "Unexpected error while removing the statistics gateway notification listener.",
+                                                                 e);
         }
       }
     }
@@ -307,81 +326,77 @@ public class StatisticsGathererImpl implements StatisticsGatherer {
   }
 
   public void addListener(final StatisticsGathererListener gathererListener) {
-    if (null == gathererListener) {
-      return;
-    }
+    if (null == gathererListener) { return; }
 
     listeners.add(gathererListener);
   }
 
   public void removeListener(final StatisticsGathererListener gathererListener) {
-    if (null == gathererListener) {
-      return;
-    }
+    if (null == gathererListener) { return; }
 
     listeners.remove(gathererListener);
   }
 
   private void fireConnected(final String managerHostName, final int managerPort) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).connected(managerHostName, managerPort);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).connected(managerHostName, managerPort);
       }
     }
   }
 
   private void fireDisconnected() {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).disconnected();
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).disconnected();
       }
     }
   }
 
   private void fireReinitialized() {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).reinitialized();
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).reinitialized();
       }
     }
   }
 
   private void fireCapturingStarted(final String sessionID) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).capturingStarted(sessionID);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).capturingStarted(sessionID);
       }
     }
   }
 
   private void fireCapturingStopped(final String sessionID) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).capturingStopped(sessionID);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).capturingStopped(sessionID);
       }
     }
   }
 
   private void fireSessionCreated(final String sessionID) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).sessionCreated(sessionID);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).sessionCreated(sessionID);
       }
     }
   }
 
   private void fireSessionClosed(final String sessionID) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).sessionClosed(sessionID);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).sessionClosed(sessionID);
       }
     }
   }
 
   private void fireStatisticsEnabled(final String[] names) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsGathererListener)it.next()).statisticsEnabled(names);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsGathererListener) it.next()).statisticsEnabled(names);
       }
     }
   }

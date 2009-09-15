@@ -29,41 +29,49 @@ public class GCRunner {
 
   private String                host;
   private int                   port;
-  private String                userName;
+  private final String          username;
+  private final String          password;
 
   public static final String    DEFAULT_HOST  = "localhost";
   public static final int       DEFAULT_PORT  = 9520;
 
   public static void main(String[] args) throws Exception {
 
-    CommandLineBuilder comandLineBuilder = new CommandLineBuilder(GCRunner.class.getName(), args);
+    CommandLineBuilder commandLineBuilder = new CommandLineBuilder(GCRunner.class.getName(), args);
 
-    comandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false,
-                                "l2-hostname");
-    comandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false,
-                                "l2-jmx-port");
-    comandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
-    comandLineBuilder.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption("n", "hostname", true, "The Terracotta Server instane hostname", String.class, false,
+                                 "l2-hostname");
+    commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false,
+                                 "l2-jmx-port");
+    commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
+    commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
+    commandLineBuilder.addOption("h", "help", String.class, false);
 
-    comandLineBuilder.parse();
+    commandLineBuilder.parse();
 
-    String[] arguments = comandLineBuilder.getArguments();
+    String[] arguments = commandLineBuilder.getArguments();
     if (arguments.length > 2) {
-      comandLineBuilder.usageAndDie();
+      commandLineBuilder.usageAndDie();
     }
 
-    if (comandLineBuilder.hasOption('h')) {
-      comandLineBuilder.usageAndDie();
+    if (commandLineBuilder.hasOption('h')) {
+      commandLineBuilder.usageAndDie();
     }
 
-    String userName = null;
-    if (comandLineBuilder.hasOption('u')) {
-      userName = comandLineBuilder.getOptionValue('u');
+    String username = null;
+    String password = null;
+    if (commandLineBuilder.hasOption('u')) {
+      username = commandLineBuilder.getOptionValue('u');
+      if (commandLineBuilder.hasOption('w')) {
+        password = commandLineBuilder.getOptionValue('w');
+      } else {
+        password = CommandLineBuilder.readPassword();
+      }
     }
 
-    String host = comandLineBuilder.getOptionValue('n');
-    String portString = comandLineBuilder.getOptionValue('p');
-    int port = portString != null ? parsePort(comandLineBuilder.getOptionValue('p')) : DEFAULT_PORT;
+    String host = commandLineBuilder.getOptionValue('n');
+    String portString = commandLineBuilder.getOptionValue('p');
+    int port = portString != null ? parsePort(commandLineBuilder.getOptionValue('p')) : DEFAULT_PORT;
 
     if (arguments.length == 1) {
       host = DEFAULT_HOST;
@@ -77,13 +85,13 @@ public class GCRunner {
 
     try {
       System.err.println("Invoking DGC on " + host + ":" + port);
-      new GCRunner(host, port, userName).runGC();
+      new GCRunner(host, port, username, password).runGC();
     } catch (IOException ioe) {
       System.err.println("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server instance running there?");
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
-      comandLineBuilder.usageAndDie();
+      commandLineBuilder.usageAndDie();
     }
   }
 
@@ -99,13 +107,14 @@ public class GCRunner {
   }
 
   public GCRunner(String host, int port) {
-    this.host = host;
-    this.port = port;
+    this(host, port, null, null);
   }
 
-  public GCRunner(String host, int port, String userName) {
-    this(host, port);
-    this.userName = userName;
+  public GCRunner(String host, int port, String userName, String password) {
+    this.host = host;
+    this.port = port;
+    this.username = userName;
+    this.password = password;
   }
 
   public void runGC() throws Exception {
@@ -115,7 +124,7 @@ public class GCRunner {
     }
 
     ObjectManagementMonitorMBean mbean = null;
-    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.OBJECT_MANAGEMENT,
                                                      ObjectManagementMonitorMBean.class, false);
@@ -158,7 +167,7 @@ public class GCRunner {
   private ServerGroupInfo[] getServerGroupInfo() throws Exception {
     ServerGroupInfo[] serverGrpInfos = null;
     TCServerInfoMBean mbean = null;
-    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    final JMXConnector jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
     final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
     mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
     serverGrpInfos = mbean.getServerGroupInfo();
@@ -172,7 +181,7 @@ public class GCRunner {
     JMXConnector jmxConnector = null;
 
     try {
-      jmxConnector = CommandLineBuilder.getJMXConnector(userName, hostname, jmxPort);
+      jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostname, jmxPort);
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);

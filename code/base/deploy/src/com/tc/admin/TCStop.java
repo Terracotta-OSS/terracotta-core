@@ -27,9 +27,10 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class TCStop {
-  private String             host;
-  private int                port;
-  private String             userName;
+  private final String       host;
+  private final int          port;
+  private final String       username;
+  private final String       password;
 
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
@@ -38,8 +39,8 @@ public class TCStop {
     Options options = StandardTVSConfigurationSetupManagerFactory.createOptions(true);
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
     commandLineBuilder.setOptions(options);
-
-    commandLineBuilder.addOption("u", "username", true, "user name", String.class, false);
+    commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
+    commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
 
     commandLineBuilder.parse();
@@ -61,10 +62,17 @@ public class TCStop {
     boolean configSpecified = commandLineBuilder.hasOption('f');
     boolean nameSpecified = commandLineBuilder.hasOption('n');
     boolean userNameSpecified = commandLineBuilder.hasOption('u');
+    boolean passwordSpecified = commandLineBuilder.hasOption('w');
 
     String userName = null;
+    String password = null;
     if (userNameSpecified) {
       userName = commandLineBuilder.getOptionValue('u');
+      if (passwordSpecified) {
+        password = commandLineBuilder.getOptionValue('w');
+      } else {
+        password = CommandLineBuilder.readPassword();
+      }
     }
 
     if (configSpecified || System.getProperty("tc.config") != null || configFile.exists()) {
@@ -129,7 +137,7 @@ public class TCStop {
     }
 
     try {
-      new TCStop(host, port, userName).stop();
+      new TCStop(host, port, userName, password).stop();
     } catch (SecurityException se) {
       System.err.println(se.getMessage());
       commandLineBuilder.usageAndDie();
@@ -152,17 +160,19 @@ public class TCStop {
   }
 
   public TCStop(String host, int port) {
-    this.host = host;
-    this.port = port;
+    this(host, port, null, null);
   }
 
-  public TCStop(String host, int port, String userName) {
-    this(host, port);
-    this.userName = userName;
+  public TCStop(String host, int port, String userName, String password) {
+    this.host = host;
+    this.port = port;
+    this.username = userName;
+    this.password = password;
   }
 
   public void stop() throws IOException {
-    JMXConnector jmxc = CommandLineBuilder.getJMXConnector(userName, host, port);
+    JMXConnector jmxc = null;
+    jmxc = CommandLineBuilder.getJMXConnector(username, password, host, port);
     MBeanServerConnection mbsc = jmxc.getMBeanServerConnection();
 
     if (mbsc != null) {

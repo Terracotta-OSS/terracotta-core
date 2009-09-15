@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.gatherer;
 
@@ -8,6 +9,9 @@ import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
 
 public interface StatisticsGatherer {
   public void connect(String managerHostName, int managerPort) throws StatisticsGathererException;
+
+  public void connect(String username, String password, String managerHostName, int managerPort)
+      throws StatisticsGathererException;
 
   public void disconnect() throws StatisticsGathererException;
 

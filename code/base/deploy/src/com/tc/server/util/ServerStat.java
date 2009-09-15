@@ -9,7 +9,6 @@ import org.apache.xmlbeans.XmlException;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.terracottatech.config.Server;
@@ -21,22 +20,27 @@ import java.io.IOException;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
+import javax.management.remote.JMXConnector;
 
 public class ServerStat {
   private static final String   UNKNOWN          = "unknown";
   private static final String   NEWLINE          = System.getProperty("line.separator");
   private static final int      DEFAULT_JMX_PORT = 9520;
 
-  public String                 host;
-  public int                    port;
-  private JMXConnectorProxy     jmxProxy;
+  private final String          host;
+  private final int             port;
+  private final String          username;
+  private final String          password;
+  private JMXConnector          jmxProxy;
   private MBeanServerConnection mbsc;
 
   private TCServerInfoMBean     infoBean;
   private boolean               connected;
   private String                errorMessage     = "";
 
-  public ServerStat(String host, int port) {
+  public ServerStat(String username, String password, String host, int port) {
+    this.username = username;
+    this.password = password;
     this.host = host;
     this.port = port;
     connect();
@@ -50,14 +54,16 @@ public class ServerStat {
         // ignore
       }
     }
-    jmxProxy = new JMXConnectorProxy(host, port);
+    jmxProxy = CommandLineBuilder.getJMXConnector(username, password, host, port);
     try {
       mbsc = jmxProxy.getMBeanServerConnection();
       infoBean = (TCServerInfoMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.TC_SERVER_INFO,
                                                                                    TCServerInfoMBean.class, false);
       connected = true;
     } catch (Exception e) {
-      errorMessage = "Failed to connect to " + host + ":" + port;
+      String rootCauseMessage = e.getMessage() != null ? e.getMessage() : e.getCause().getMessage();
+      errorMessage = "Failed to connect to " + host + ":" + port + ". "
+                     + (rootCauseMessage != null ? rootCauseMessage : "");
       connected = false;
     }
   }
@@ -99,11 +105,24 @@ public class ServerStat {
                                  "list");
     commandLineBuilder.addOption("f", true, "Terracotta tc-config file", String.class, false, "file");
     commandLineBuilder.addOption("h", "help", String.class, false);
+    commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
+    commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.setUsageMessage(usage);
     commandLineBuilder.parse();
 
     if (commandLineBuilder.hasOption('h')) {
-      commandLineBuilder.usageAndDie(usage);
+      commandLineBuilder.usageAndDie();
+    }
+
+    String username = null;
+    String password = null;
+    if (commandLineBuilder.hasOption('u')) {
+      username = commandLineBuilder.getOptionValue('u');
+      if (commandLineBuilder.hasOption('w')) {
+        password = commandLineBuilder.getOptionValue('w');
+      } else {
+        password = CommandLineBuilder.readPassword();
+      }
     }
 
     String hostList = commandLineBuilder.getOptionValue('s');
@@ -111,9 +130,9 @@ public class ServerStat {
 
     try {
       if (configFile != null) {
-        handleConfigFile(configFile);
+        handleConfigFile(username, password, configFile);
       } else {
-        handleList(hostList);
+        handleList(username, password, hostList);
       }
     } catch (Exception e) {
       System.err.println(e.getMessage());
@@ -121,7 +140,7 @@ public class ServerStat {
     }
   }
 
-  private static void handleConfigFile(String configFile) {
+  private static void handleConfigFile(String username, String password, String configFile) {
     TcConfigDocument tcConfigDocument = null;
     try {
       tcConfigDocument = new Loader().parse(new File(configFile));
@@ -137,25 +156,25 @@ public class ServerStat {
       if ("%h".equals(host)) host = ParameterSubstituter.getHostname();
       if ("%i".equals(host)) host = ParameterSubstituter.getIpAddress();
       int jmxPort = servers[i].getJmxPort() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort();
-      ServerStat stat = new ServerStat(host, jmxPort);
+      ServerStat stat = new ServerStat(username, password, host, jmxPort);
       System.out.println(stat.toString());
     }
   }
 
-  private static void handleList(String hostList) {
+  private static void handleList(String username, String password, String hostList) {
     if (hostList == null) {
-      printStat("localhost:9520");
+      printStat(username, password, "localhost:9520");
     } else {
       String[] pairs = hostList.split(",");
       for (String info : pairs) {
-        printStat(info);
+        printStat(username, password, info);
         System.out.println();
       }
     }
   }
 
   // info = host | host:port
-  private static void printStat(String info) {
+  private static void printStat(String username, String password, String info) {
     String host = info;
     int port = DEFAULT_JMX_PORT;
     if (info.indexOf(':') > 0) {
@@ -167,7 +186,7 @@ public class ServerStat {
         throw new RuntimeException("Failed to parse jmxport: " + info);
       }
     }
-    ServerStat stat = new ServerStat(host, port);
+    ServerStat stat = new ServerStat(username, password, host, port);
     System.out.println(stat.toString());
   }
 }

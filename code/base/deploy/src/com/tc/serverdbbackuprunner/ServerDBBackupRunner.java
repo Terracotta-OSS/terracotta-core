@@ -25,7 +25,8 @@ import javax.management.remote.JMXConnector;
 public class ServerDBBackupRunner {
   private String             host;
   private int                port;
-  private String             userName;
+  private final String       username;
+  private final String       password;
   public static final String DEFAULT_HOST = "localhost";
   public static final int    DEFAULT_PORT = 9520;
   private JMXConnector       jmxConnector;
@@ -37,7 +38,8 @@ public class ServerDBBackupRunner {
                                  "hostname");
     commandLineBuilder.addOption("p", "jmxport", true, "Terracotta Server instance JMX port", Integer.class, false,
                                  "jmx-port");
-    commandLineBuilder.addOption("u", "username", true, "User name", String.class, false);
+    commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
+    commandLineBuilder.addOption("w", "password", true, "password", String.class, false);
     commandLineBuilder.addOption("d", "directory", true, "Directory to back up to", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
 
@@ -54,10 +56,17 @@ public class ServerDBBackupRunner {
       commandLineBuilder.usageAndDie("backup-data.bat/backup-data.sh");
     }
 
-    String userName = null;
+    String username = null;
     if (commandLineBuilder.hasOption('u')) {
-      userName = commandLineBuilder.getOptionValue('u');
+      username = commandLineBuilder.getOptionValue('u');
     }
+    String password = null;
+    if (commandLineBuilder.hasOption('w')) {
+      password = commandLineBuilder.getOptionValue('w');
+    } else {
+      password = CommandLineBuilder.readPassword();
+    }
+
     String path = null;
     if (commandLineBuilder.hasOption('d')) {
       path = commandLineBuilder.getOptionValue('d');
@@ -81,7 +90,7 @@ public class ServerDBBackupRunner {
 
     ServerDBBackupRunner serverDBBackupRunner = null;
     try {
-      serverDBBackupRunner = new ServerDBBackupRunner(host, port, userName);
+      serverDBBackupRunner = new ServerDBBackupRunner(host, port, username, password);
       serverDBBackupRunner.runBackup(path);
     } catch (Exception se) {
       System.err.println(se.getMessage());
@@ -94,13 +103,14 @@ public class ServerDBBackupRunner {
   }
 
   public ServerDBBackupRunner(String host, int port) {
-    this.host = host;
-    this.port = port;
+    this(host, port, null, null);
   }
 
-  public ServerDBBackupRunner(String host, int port, String userName) {
-    this(host, port);
-    this.userName = userName;
+  public ServerDBBackupRunner(String host, int port, String username, String password) {
+    this.host = host;
+    this.port = port;
+    this.username = username;
+    this.password = password;
   }
 
   public void runBackup(String path) throws IOException {
@@ -109,7 +119,7 @@ public class ServerDBBackupRunner {
 
   public void runBackup(String path, NotificationListener listener, NotificationFilter filter, Object obj,
                         boolean closeJMXAndListener) throws IOException {
-    jmxConnector = CommandLineBuilder.getJMXConnector(userName, host, port);
+    jmxConnector = CommandLineBuilder.getJMXConnector(username, password, host, port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConnector, host, port);
     if (mbs == null) throw new RuntimeException("");
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
@@ -182,7 +192,7 @@ public class ServerDBBackupRunner {
   }
 
   public String getDefaultBackupPath() {
-    final JMXConnector jmxConn = CommandLineBuilder.getJMXConnector(userName, host, port);
+    final JMXConnector jmxConn = CommandLineBuilder.getJMXConnector(username, password, host, port);
     MBeanServerConnection mbs = getMBeanServerConnection(jmxConn, host, port);
     if (mbs == null) return null;
     ServerDBBackupMBean mbean = getServerDBBackupMBean(mbs);
