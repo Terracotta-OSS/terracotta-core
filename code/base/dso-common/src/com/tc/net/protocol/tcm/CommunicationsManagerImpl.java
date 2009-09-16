@@ -57,6 +57,7 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Communications manager for setting up listeners and creating client connections
@@ -69,6 +70,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   private final SetOnceFlag                      shutdown             = new SetOnceFlag();
   private final Set                              listeners            = new HashSet();
+  private final ReentrantLock                    licenseLock          = new ReentrantLock();
   private final TCConnectionManager              connectionManager;
   private final boolean                          privateConnMgr;
   private final NetworkStackHarnessFactory       stackHarnessFactory;
@@ -304,7 +306,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 this.connectionPolicy,
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
 
-                                                                wireProtocolMessageSink);
+                                                                wireProtocolMessageSink, licenseLock);
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
   }
 

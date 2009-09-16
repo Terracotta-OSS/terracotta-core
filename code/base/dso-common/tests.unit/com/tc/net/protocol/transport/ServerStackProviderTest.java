@@ -21,6 +21,7 @@ import com.tc.util.Assert;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ServerStackProviderTest extends TCTestCase {
 
@@ -55,7 +56,7 @@ public class ServerStackProviderTest extends TCTestCase {
     this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
                                             this.harnessFactory, null, transportFactory,
                                             transportHandshakeMessageFactory, this.connectionIdFactory,
-                                            connectionPolicy, wpaFactory);
+                                            connectionPolicy, wpaFactory, new ReentrantLock());
     connectionIDProvider = new DefaultConnectionIdFactory();
     this.connId = connectionIDProvider.nextConnectionId();
   }
@@ -186,7 +187,7 @@ public class ServerStackProviderTest extends TCTestCase {
     this.provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), new HashSet(),
                                             new TransportNetworkStackHarnessFactory(), messageChannelFactory,
                                             transportFactory, new TransportMessageFactoryImpl(),
-                                            this.connectionIdFactory, connectionPolicy, wpaFactory);
+                                            this.connectionIdFactory, connectionPolicy, wpaFactory, new ReentrantLock());
 
     // Client1
     MockMessageTransport serverTxForClietn1 = connectNewClient(this.provider, true);
@@ -265,7 +266,7 @@ public class ServerStackProviderTest extends TCTestCase {
 
     provider = new ServerStackProvider(TCLogging.getLogger(ServerStackProvider.class), rebuild, this.harnessFactory,
                                        null, transportFactory, null, this.connectionIdFactory, connectionPolicy,
-                                       new WireProtocolAdaptorFactoryImpl());
+                                       new WireProtocolAdaptorFactoryImpl(), new ReentrantLock());
 
     MockTCConnection conn = new MockTCConnection();
     provider.attachNewConnection(connectionID1, conn);

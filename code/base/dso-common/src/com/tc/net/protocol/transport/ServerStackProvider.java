@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Provides network stacks on the server side
@@ -43,15 +44,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final List                             transportListeners = new ArrayList(1);
   private final TCLogger                         logger;
   private final TCLogger                         consoleLogger      = CustomerLogging.getConsoleLogger();
+  private final ReentrantLock                    licenseLock;
 
   public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
-                             WireProtocolAdaptorFactory wireProtocolAdaptorFactory) {
+                             WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
     this(logger, initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
-         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null);
+         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock);
   }
 
   public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
@@ -60,7 +62,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                             WireProtocolMessageSink wireProtoMsgSink) {
+                             WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
@@ -72,6 +74,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.connectionIdFactory = connectionIdFactory;
     this.transportListeners.add(this);
     this.logger = logger;
+    Assert.assertNotNull(licenseLock);
+    this.licenseLock = licenseLock;
     for (Iterator i = initialConnectionIDs.iterator(); i.hasNext();) {
       ConnectionID connectionID = (ConnectionID) i.next();
       logger.info("Preparing comms stack for previously connected client: " + connectionID);
@@ -266,7 +270,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
        * New Clients after max License Count are not given any valid clientID. clients anyway close after seeing max
        * connection error message from server.
        */
-      synchronized (connectionPolicy) {
+      licenseLock.lock();
+      try {
         if (connectionId.isNewConnection() && connectionPolicy.isMaxConnectionsReached()) {
           isMaxConnectionReached = true;
           this.transport = messageTransportFactory.createNewTransport(connectionId, syn.getSource(),
@@ -282,6 +287,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           connectionId = this.transport.getConnectionId();
           isMaxConnectionReached = !connectionPolicy.connectClient(connectionId);
         }
+      } finally {
+        licenseLock.unlock();
       }
 
       this.transport.setRemoteCallbackPort(syn.getCallbackPort());
