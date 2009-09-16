@@ -12,6 +12,7 @@ import org.terracotta.modules.tool.InstallOption;
 import org.terracotta.modules.tool.Module;
 
 import com.tc.config.Loader;
+import com.tc.text.Banner;
 import com.tc.util.StringUtil;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -26,7 +27,7 @@ public class UpgradeCommand extends ModuleOperatorCommand {
 
   private static final String             LONGOPT_OVERWRITE = "overwrite";
   private static final String             LONGOPT_FORCE     = "force";
-  private static final String             LONGOPT_DRYRUN   = "dry-run";
+  private static final String             LONGOPT_DRYRUN    = "dry-run";
   private static final String             LONGOPT_NOVERIFY  = "no-verify";
 
   private final Collection<InstallOption> installOptions;
@@ -84,6 +85,10 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       return;
     }
 
+    if (cli.hasOption(LONGOPT_DRYRUN)) {
+      Banner.infoBanner("--dry-run detected: no modules will actually be installed during this execution.");
+    }
+
     InstallListener listener = new DefaultInstallListener(report, out);
 
     boolean updateConfig = false;
@@ -93,9 +98,9 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       out.print("Found no module to upgrade.");
       return;
     }
-    
+
     com.terracottatech.config.Module[] xmlModules = tcConfig.getClients().getModules().getModuleArray();
-    
+
     for (com.terracottatech.config.Module xmlModule : xmlModules) {
       String version = xmlModule.getVersion();
       String versionStr = (version == null) ? "latest" : version;
@@ -103,7 +108,7 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       out.print("* Parsing module: " + xmlModule.getName() + ":" + versionStr);
       Module latest = modules.findLatest(xmlModule.getName(), xmlModule.getGroupId());
       boolean neededToInstall = false;
-      
+
       if (latest == null) {
         out.println(": No module found on server");
       } else {
@@ -119,15 +124,18 @@ public class UpgradeCommand extends ModuleOperatorCommand {
           }
         }
       }
-      
+
       if (neededToInstall) {
         out.println(": latest version " + latest.version());
-        latest.install(listener, actionLog(), installOptions);
+        if (!cli.hasOption(LONGOPT_DRYRUN)) {
+          latest.install(listener, actionLog(), installOptions);
+        }
         out.println();
-        
+
         // Don't update config if module version is not specified - it will automatically pick up the latest
-        if(version != null) {
-          actionLog.addModifiedModuleAction(xmlModule.getGroupId(), xmlModule.getName(), xmlModule.getVersion(), latest.version());
+        if (version != null) {
+          actionLog.addModifiedModuleAction(xmlModule.getGroupId(), xmlModule.getName(), xmlModule.getVersion(), latest
+              .version());
 
           xmlModule.setVersion(latest.version());
           updateConfig = true;
@@ -135,15 +143,17 @@ public class UpgradeCommand extends ModuleOperatorCommand {
       }
     }
 
-    // save original file to .original if found newer module
-    if (updateConfig && !cli.hasOption(LONGOPT_DRYRUN)) {
-      File originalFile = new File(tcConfigPath.getAbsolutePath() + ".original");
-      FileUtils.copyFile(tcConfigPath, originalFile);
-      out.println("Your original config file has been saved to " + originalFile);
-      tcConfigDocument.save(tcConfigPath);
-    } else {
-      out.println();
-      out.println("Found no module that requires upgrade.");
+    if (!cli.hasOption(LONGOPT_DRYRUN)) {
+      // save original file to .original if found newer module
+      if (updateConfig && !cli.hasOption(LONGOPT_DRYRUN)) {
+        File originalFile = new File(tcConfigPath.getAbsolutePath() + ".original");
+        FileUtils.copyFile(tcConfigPath, originalFile);
+        out.println("Your original config file has been saved to " + originalFile);
+        tcConfigDocument.save(tcConfigPath);
+      } else {
+        out.println();
+        out.println("Found no module that requires upgrade.");
+      }
     }
   }
 
