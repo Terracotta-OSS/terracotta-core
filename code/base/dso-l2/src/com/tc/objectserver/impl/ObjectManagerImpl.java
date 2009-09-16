@@ -82,6 +82,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                                                 .getProperties()
                                                                                 .getLong(
                                                                                          TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
+  private static final boolean                        FAULTING_OPTIMIZATION = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION);
 
   // XXX:: Should go to property file
   private static final int                            INITIAL_SET_SIZE      = 16;
@@ -596,7 +599,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
         ref = this.references.remove(id);
       }
-      this.noReferencesIDSet.remove(id);
+      if(FAULTING_OPTIMIZATION) {
+        this.noReferencesIDSet.remove(id);
+      }
       if (ref != null) {
         if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         this.evictionPolicy.remove(ref);
@@ -632,7 +637,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     synchronized (this) {
-      if (this.noReferencesIDSet.contains(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
+      if (FAULTING_OPTIMIZATION && this.noReferencesIDSet.contains(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
       ManagedObjectReference mor = getReference(id);
       if ((mor == null && cacheOnly) || (mor != null && mor.isNew())) { // OK to inspect isNew even if its checkedout.
         // Object either not in cache or is a new object, return emtpy set
@@ -688,7 +693,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void updateNewFlagAndCreateIfNecessary(final ManagedObject object) {
     if (object.isNew()) {
       this.objectStore.addNewObject(object);
-      addToNoReferences(object);
+      if(FAULTING_OPTIMIZATION) {
+        addToNoReferences(object);
+      }
       object.setIsNew(false);
       fireNewObjectinitialized(object.getID());
     }

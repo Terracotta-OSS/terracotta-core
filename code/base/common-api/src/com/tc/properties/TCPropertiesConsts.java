@@ -121,6 +121,7 @@ public interface TCPropertiesConsts {
    * l2.objectmanager.persistor.measure.performance - Enable/disable logging for object manager persistor                                 
    * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
    *                                 from object manager after which dgc will throttle
+   * dgc.faulting.optimization      - This property will not fault in objects during DGC mark stage
    * dgc.young.enabled              - Enables/Disables the young gen collector
    * dgc.young.frequencyInMillis    - The time in millis between each young gen collection.
    *                                  (default : 1 min, not advisable to run more frequently)
@@ -148,6 +149,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                   = "l2.objectmanager.passive.sync.throttle.timeInMillis";
   public static final String   L2_OBJECTMANAGER_DGC_THROTTLE_TIME                            = "l2.objectmanager.dgc.throttle.timeInMillis";
   public static final String   L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                     = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
+  public static final String   L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION                    = "l2.objectmanager.dgc.faulting.optimization";
   public static final String   L2_OBJECTMANAGER_DGC_YOUNG_ENABLED                            = "l2.objectmanager.dgc.young.enabled";
   public static final String   L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                          = "l2.objectmanager.dgc.young.frequencyInMillis";
   public static final String   L2_DATA_BACKUP_THROTTLE_TIME                                  = "l2.data.backup.throttle.timeInMillis";
