@@ -715,7 +715,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     sb.append("&jvm-name=");
     sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
     sb.append("&jvm-version=");
-    sb.append(URLEncoder.encode(System.getProperty("java.vm.version")));
+    sb.append(URLEncoder.encode(System.getProperty("java.version")));
     sb.append("&platform=");
     sb.append(URLEncoder.encode(System.getProperty("os.arch")));
     sb.append("&tc-version=");

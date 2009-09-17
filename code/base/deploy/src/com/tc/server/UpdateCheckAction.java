@@ -65,12 +65,12 @@ class UpdateCheckAction extends TimerTask {
 
     sb.append("id=");
     sb.append(URLEncoder.encode(Integer.toString(getIpAddress())));
-    sb.append("os-name=");
+    sb.append("&os-name=");
     sb.append(URLEncoder.encode(System.getProperty("os.name")));
     sb.append("&jvm-name=");
     sb.append(URLEncoder.encode(System.getProperty("java.vm.name")));
     sb.append("&jvm-version=");
-    sb.append(URLEncoder.encode(System.getProperty("java.vm.version")));
+    sb.append(URLEncoder.encode(System.getProperty("java.version")));
     sb.append("&platform=");
     sb.append(URLEncoder.encode(System.getProperty("os.arch")));
     sb.append("&tc-version=");
