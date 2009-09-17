@@ -121,7 +121,10 @@ public interface TCPropertiesConsts {
    * l2.objectmanager.persistor.measure.performance - Enable/disable logging for object manager persistor                                 
    * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
    *                                 from object manager after which dgc will throttle
-   * dgc.faulting.optimization      - This property will not fault in objects during DGC mark stage
+   * dgc.faulting.optimization      - This property will not fault in objects that has no references during DGC mark stage
+   *                                   0 - disable faulting optimization 
+   *                                   1 - enabled with standard implementation (continous oids)
+   *                                   2 - enabled with compressed implementation (spare oids)
    * dgc.young.enabled              - Enables/Disables the young gen collector
    * dgc.young.frequencyInMillis    - The time in millis between each young gen collection.
    *                                  (default : 1 min, not advisable to run more frequently)

@@ -82,7 +82,9 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
       longAry = map.get(mapIndex);
       if (longAry == null) {
         try {
-          longAry = readDiskEntry(null, oid);
+          if(oidDB != null) {
+            longAry = readDiskEntry(null, oid);
+          }
         } catch (DatabaseException e) {
           logger.error("Reading object ID " + oid + ":" + e);
         }

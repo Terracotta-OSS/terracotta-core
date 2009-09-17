@@ -82,10 +82,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
                                                                                 .getProperties()
                                                                                 .getLong(
                                                                                          TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
-  private static final boolean                        FAULTING_OPTIMIZATION = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION);
-
   // XXX:: Should go to property file
   private static final int                            INITIAL_SET_SIZE      = 16;
   private static final float                          LOAD_FACTOR           = 0.75f;
@@ -111,7 +107,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private int                                         preFetchedCount       = 0;
 
   private final ObjectStatsRecorder                   objectStatsRecorder;
-  private final ObjectIDSet                           noReferencesIDSet     = new ObjectIDSet();
+  private final NoReferencesIDStore                   noReferencesIDStore;
 
   public ObjectManagerImpl(final ObjectManagerConfig config, final ClientStateManager stateManager,
                            final ManagedObjectStore objectStore, final EvictionPolicy cache,
@@ -127,6 +123,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.persistenceTransactionProvider = persistenceTransactionProvider;
     this.references = new HashMap<ObjectID, ManagedObjectReference>(10000);
     this.objectStatsRecorder = objectStatsRecorder;
+    this.noReferencesIDStore = new NoReferencesIDStoreImpl();
   }
 
   public void setTransactionalObjectManager(final TransactionalObjectManager txnObjectManager) {
@@ -342,7 +339,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
       }
       addNewReference(mo, removeOnRelease);
-      addToNoReferences(mo);
+      this.noReferencesIDStore.addToNoReferences(mo);
     }
     makeUnBlocked(oid);
     postRelease();
@@ -599,9 +596,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
         ref = this.references.remove(id);
       }
-      if(FAULTING_OPTIMIZATION) {
-        this.noReferencesIDSet.remove(id);
-      }
+      this.noReferencesIDStore.clearFromNoReferencesStore(id);
       if (ref != null) {
         if (ref.isNew()) { throw new AssertionError("DGCed Reference is still new : " + ref); }
         this.evictionPolicy.remove(ref);
@@ -637,7 +632,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     synchronized (this) {
-      if (FAULTING_OPTIMIZATION && this.noReferencesIDSet.contains(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
+      if (this.noReferencesIDStore.hasNoReferences(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
       ManagedObjectReference mor = getReference(id);
       if ((mor == null && cacheOnly) || (mor != null && mor.isNew())) { // OK to inspect isNew even if its checkedout.
         // Object either not in cache or is a new object, return emtpy set
@@ -693,17 +688,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void updateNewFlagAndCreateIfNecessary(final ManagedObject object) {
     if (object.isNew()) {
       this.objectStore.addNewObject(object);
-      if(FAULTING_OPTIMIZATION) {
-        addToNoReferences(object);
-      }
+      this.noReferencesIDStore.addToNoReferences(object);
       object.setIsNew(false);
       fireNewObjectinitialized(object.getID());
-    }
-  }
-
-  private void addToNoReferences(final ManagedObject object) {
-    if (object.getManagedObjectState().hasNoReferences()) {
-      this.noReferencesIDSet.add(object.getID());
     }
   }
 
