@@ -43,6 +43,7 @@ import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -325,4 +326,10 @@ public class DSOContextImpl implements DSOContext {
   public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
     return configHelper.getClassResource(className, loader, hideSystemResources);
   }
+
+  public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+                          ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+    return preProcess(className, classfileBuffer, 0, classfileBuffer.length, loader);
+  }
+
 }

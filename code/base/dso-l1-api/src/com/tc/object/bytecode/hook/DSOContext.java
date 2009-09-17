@@ -6,12 +6,13 @@ package com.tc.object.bytecode.hook;
 
 import com.tc.object.bytecode.Manager;
 
+import java.lang.instrument.ClassFileTransformer;
 import java.net.URL;
 
 /**
  * The idea behind DSOContext is to encapsulate a DSO "world" in a client VM. But this idea has not been fully realized.
  */
-public interface DSOContext extends ClassProcessor {
+public interface DSOContext extends ClassProcessor, ClassFileTransformer {
 
   public static final String CLASS = "com/tc/object/bytecode/hook/DSOContext";
   public static final String TYPE  = "L" + CLASS + ";";
