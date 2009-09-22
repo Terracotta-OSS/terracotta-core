@@ -80,7 +80,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
   private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
 
-    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
                                                                       new NullConnectionPolicy());
     ClientMessageChannel clientMsgCh = clientComms
@@ -96,7 +96,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
-    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
+                                                                         new NullMessageMonitor(),
                                                                          getNetworkStackHarnessFactory(false),
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -150,7 +151,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExitAfterOOO() throws Exception {
-    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
+                                                                         new NullMessageMonitor(),
                                                                          getNetworkStackHarnessFactory(true),
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl

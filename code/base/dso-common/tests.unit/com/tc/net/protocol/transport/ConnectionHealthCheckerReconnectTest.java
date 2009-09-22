@@ -72,19 +72,19 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
     }
 
     if (serverHCConf != null) {
-      serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy(), serverHCConf);
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf);
     } else {
-      serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy());
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy());
     }
 
     if (clientHCConf != null) {
-      clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy(), clientHCConf);
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), clientHCConf);
     } else {
-      clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy());
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy());
 
     }
 

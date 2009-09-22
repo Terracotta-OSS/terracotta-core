@@ -57,6 +57,24 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     assertTrue(to1.test2 == to2);
   }
 
+  public void testSomething() throws Exception {
+
+    TestClientObjectManager objectManager = new TestClientObjectManager();
+    TCClass clazz = new TestTCClass(objectManager);
+    // TestObject to1 = new TestObject(null, null);
+    TestObject to2 = new TestObject("TestObject2", null);
+    ObjectID id2 = new ObjectID(2);
+    TCObject obj1 = new TCObjectPhysical(id2, to2, clazz, false);
+    obj1.markAccessed();
+    obj1.markAccessed();
+    obj1.markAccessed();
+    obj1.markAccessed();
+    obj1.markAccessed();
+    obj1.markAccessed();
+    obj1.markAccessed();
+
+  }
+
   private static class TestObject implements TransparentAccess {
     public String     test1;
     public TestObject test2;

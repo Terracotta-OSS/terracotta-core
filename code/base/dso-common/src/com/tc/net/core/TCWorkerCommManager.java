@@ -31,13 +31,13 @@ public class TCWorkerCommManager {
 
   private int                     nextWorkerCommId   = 0;
 
-  TCWorkerCommManager(int workerCommCount, SocketParams socketParams) {
+  TCWorkerCommManager(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
-    logger.info("Creating " + workerCommCount + " worker comm threads.");
+    logger.info("Creating " + workerCommCount + " worker comm threads for " + name);
     this.totalWorkerComm = workerCommCount;
     workerCommThreads = new CoreNIOServices[workerCommCount];
     for (int i = 0; i < workerCommThreads.length; i++) {
-      workerCommThreads[i] = new CoreNIOServices(WORKER_NAME_PREFIX + i, this, socketParams);
+      workerCommThreads[i] = new CoreNIOServices(name + ":" + WORKER_NAME_PREFIX + i, this, socketParams);
     }
   }
 

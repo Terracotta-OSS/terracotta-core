@@ -630,7 +630,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
 
-    this.communicationsManager = new CommunicationsManagerImpl(mm, networkStackHarnessFactory, this.connectionPolicy,
+    this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
+                                                               networkStackHarnessFactory, this.connectionPolicy,
                                                                numCommWorkers,
                                                                new HealthCheckerConfigImpl(this.l2Properties
                                                                    .getPropertiesFor("healthcheck.l1"), "DSO Server"),

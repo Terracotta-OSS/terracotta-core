@@ -82,13 +82,15 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
                                                                      Integer.MAX_VALUE, 2, TCSocketAddress.WILDCARD_IP,
                                                                      0);
 
-    clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                new NullConnectionPolicy(), clientHC);
+    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
+                                                new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(),
+                                                clientHC);
 
     TCConnectionManager serverConnMgr = new MyConnectionManager(serverSocketConnects);
 
-    serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                serverConnMgr, new NullConnectionPolicy(), 0, serverHC);
+    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                new PlainNetworkStackHarnessFactory(), serverConnMgr,
+                                                new NullConnectionPolicy(), 0, serverHC);
     String host = "localhost";
 
     NetworkListener listener = serverComms

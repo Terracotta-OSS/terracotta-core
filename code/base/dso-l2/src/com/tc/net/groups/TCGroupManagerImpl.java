@@ -207,7 +207,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
 
     l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
-    communicationsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
+    communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
+                                                          new NullMessageMonitor(), networkStackHarnessFactory,
                                                           this.connectionPolicy, L2CommUtils.getNumCommWorkerThreads(),
                                                           new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),

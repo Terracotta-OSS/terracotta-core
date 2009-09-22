@@ -34,8 +34,11 @@ public class ChannelManagerTest extends TestCase {
   final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
                                                      public MessageChannelInternal createNewChannel(ChannelID id) {
                                                        return new ServerMessageChannelImpl(id, msgRouter, msgFactory,
-                                                       new ServerID("test:9520", new byte[] { 1,3, 5, 7 }));
-                                                     }};
+                                                                                           new ServerID("test:9520",
+                                                                                                        new byte[] { 1,
+      3, 5, 7                                                                                          }));
+                                                     }
+                                                   };
 
   public void testEvents() {
     Events events = new Events();
@@ -106,9 +109,11 @@ public class ChannelManagerTest extends TestCase {
   }
 
   public void testTransportDisconnectRemovesChannel() throws Exception {
-    CommunicationsManager clientComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(),
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor,
+                                                                      new PlainNetworkStackHarnessFactory(),
                                                                       new NullConnectionPolicy(), 0);
-    CommunicationsManager serverComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(),
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor,
+                                                                      new PlainNetworkStackHarnessFactory(),
                                                                       new NullConnectionPolicy(), 0);
     try {
       NetworkListener lsnr = serverComms.createListener(sessionManager,

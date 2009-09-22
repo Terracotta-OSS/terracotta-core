@@ -104,7 +104,7 @@ public abstract class TCObjectImpl implements TCObject {
    * Reconstitutes the object using the data in the DNA strand. XXX: We may need to signal (via a different signature or
    * args) that the hydration is intended to initialize the object from scratch or if it's a delta. We must avoid
    * creating a new instance of the peer object if the strand is just a delta.
-   *
+   * 
    * @throws ClassNotFoundException
    */
   public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
@@ -189,6 +189,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   private synchronized void setFlag(final int offset, final boolean value) {
     flags = Conversion.setFlag(flags, offset, value);
+    System.out.println("XXX flags " + flags);
   }
 
   private synchronized boolean getFlag(final int offset) {
@@ -320,7 +321,8 @@ public abstract class TCObjectImpl implements TCObject {
     }
   }
 
-  public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue, final int index) {
+  public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
+                                         final int index) {
     String fieldname = tcClazz.getFieldNameByOffset(fieldOffset);
     objectFieldChanged(classname, fieldname, newValue, index);
   }
@@ -333,7 +335,8 @@ public abstract class TCObjectImpl implements TCObject {
     return tcClazz.getFieldNameByOffset(fieldOffset);
   }
 
-  public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue, final int index) {
+  public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
+                                  final int index) {
     objectFieldChanged(classname, fieldname, Boolean.valueOf(newValue), index);
   }
 

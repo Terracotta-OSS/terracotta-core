@@ -48,15 +48,15 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   private final SocketParams            socketParams;
 
   public TCConnectionManagerJDK14() {
-    this(0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
+    this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
   }
 
-  public TCConnectionManagerJDK14(int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
+  public TCConnectionManagerJDK14(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
     this.healthCheckerConfig = healthCheckerConfig;
-    this.comm = new TCCommJDK14(workerCommCount, socketParams);
+    this.comm = new TCCommJDK14(name, workerCommCount, socketParams);
     this.comm.start();
   }
 

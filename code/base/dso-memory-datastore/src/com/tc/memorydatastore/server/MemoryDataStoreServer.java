@@ -68,10 +68,12 @@ public class MemoryDataStoreServer {
   }
 
   private void setupListener(int serverPort) {
-    this.communicationManager = new CommunicationsManagerImpl(new NullMessageMonitor(),
-        new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
-    this.lsnr = communicationManager.createListener(new NullSessionManager(), new TCSocketAddress(
-        TCSocketAddress.WILDCARD_ADDR, serverPort), true, new DefaultConnectionIdFactory());
+    this.communicationManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+                                                              new PlainNetworkStackHarnessFactory(),
+                                                              new NullConnectionPolicy(), 0);
+    this.lsnr = communicationManager.createListener(new NullSessionManager(),
+                                                    new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, serverPort),
+                                                    true, new DefaultConnectionIdFactory());
   }
 
   public void start() throws IOException {
@@ -86,9 +88,9 @@ public class MemoryDataStoreServer {
 
     MemoryDataStoreRequestHandler memoryDataStoreRequestHandler = new MemoryDataStoreRequestHandler();
     Stage memoryDataStoreRequestStage = stageManager.createStage(MEMORY_DATA_STORE_REQUEST_STAGE,
-        memoryDataStoreRequestHandler, 1, 1);
+                                                                 memoryDataStoreRequestHandler, 1, 1);
     lsnr.routeMessageType(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, memoryDataStoreRequestStage.getSink(),
-        hydrateStage.getSink());
+                          hydrateStage.getSink());
 
     stageManager.startAll(new NullContext(stageManager), Collections.EMPTY_LIST); // temporary hack to
     // start the stage
@@ -124,11 +126,10 @@ public class MemoryDataStoreServer {
     }
 
   }
-  
 
   public static void main(String[] args) {
-    final String                         PropertyMemoryStorePort = "l2.memorystore.port";
-    final int                            memoryStorePort;
+    final String PropertyMemoryStorePort = "l2.memorystore.port";
+    final int memoryStorePort;
     memoryStorePort = TCPropertiesImpl.getProperties().getInt(PropertyMemoryStorePort);
 
     MemoryDataStoreServer server = createInstance(memoryStorePort);

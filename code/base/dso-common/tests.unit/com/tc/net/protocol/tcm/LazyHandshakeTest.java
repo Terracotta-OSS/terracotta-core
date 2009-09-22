@@ -58,9 +58,9 @@ public class LazyHandshakeTest extends TCTestCase {
 
   private void lazySetUp() {
     pc = new PortChooser();
-    serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+    serverComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 new NullConnectionPolicy());
-    clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+    clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                 new NullConnectionPolicy());
 
     listener = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(0), true,

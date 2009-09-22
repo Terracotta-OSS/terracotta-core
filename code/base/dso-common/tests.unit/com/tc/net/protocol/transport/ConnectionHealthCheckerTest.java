@@ -44,19 +44,19 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     logger.setLevel(LogLevelImpl.DEBUG);
 
     if (serverHCConf != null) {
-      serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy(), serverHCConf);
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf);
     } else {
-      serverComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy());
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy());
     }
 
     if (clientHCConf != null) {
-      clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy(), clientHCConf);
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), clientHCConf);
     } else {
-      clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(), networkStackHarnessFactory,
-                                                  new NullConnectionPolicy());
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
+                                                  networkStackHarnessFactory, new NullConnectionPolicy());
 
     }
 
@@ -208,10 +208,12 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     HealthCheckerConfig hcConfig2 = new HealthCheckerConfigImpl(10000, 4000, 3, "ClientCommsHC-Test03", false);
     this.setUp(hcConfig, new DisabledHealthCheckerConfigImpl());
 
-    CommunicationsManager clientComms1 = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager clientComms1 = new CommunicationsManagerImpl("TestCommsMgr-Client1",
+                                                                       new NullMessageMonitor(),
                                                                        new PlainNetworkStackHarnessFactory(true),
                                                                        new NullConnectionPolicy(), hcConfig2);
-    CommunicationsManager clientComms2 = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager clientComms2 = new CommunicationsManagerImpl("TestCommsMgr-Client2",
+                                                                       new NullMessageMonitor(),
                                                                        new PlainNetworkStackHarnessFactory(true),
                                                                        new NullConnectionPolicy(), hcConfig2);
     ClientMessageChannel clientMsgCh1 = createClientMsgCh(clientComms1);

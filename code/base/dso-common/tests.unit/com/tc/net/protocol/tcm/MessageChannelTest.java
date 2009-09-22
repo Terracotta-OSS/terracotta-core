@@ -83,8 +83,10 @@ public class MessageChannelTest extends TCTestCase {
     serverWatcher = new MessageSendAndReceiveWatcher();
 
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl(mm, clientStackHarnessFactory, new NullConnectionPolicy(), 0);
-    serverComms = new CommunicationsManagerImpl(mm, serverStackHarnessFactory, new NullConnectionPolicy(), 0);
+    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientStackHarnessFactory,
+                                                new NullConnectionPolicy(), 0);
+    serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverStackHarnessFactory,
+                                                new NullConnectionPolicy(), 0);
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
     this.clientChannel = createClientMessageChannel(maxReconnectTries);

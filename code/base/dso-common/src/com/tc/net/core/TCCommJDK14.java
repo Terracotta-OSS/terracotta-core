@@ -10,7 +10,7 @@ import com.tc.logging.TCLogging;
 /**
  * JDK 1.4 (NIO) version of TCComm. Uses a single internal thread and a selector to manage channels associated with
  * <code>TCConnection</code>'s
- *
+ * 
  * @author teck
  */
 class TCCommJDK14 implements TCComm {
@@ -23,20 +23,15 @@ class TCCommJDK14 implements TCComm {
 
   private volatile boolean          started        = false;
 
-  public TCCommJDK14(SocketParams socketParams) {
-    // no worker threads for you ...
-    this(-1, socketParams);
-  }
-
-  TCCommJDK14(int workerCommCount, SocketParams socketParams) {
+  TCCommJDK14(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount > 0) {
-      workerCommMgr = new TCWorkerCommManager(workerCommCount, socketParams);
+      workerCommMgr = new TCWorkerCommManager(name, workerCommCount, socketParams);
     } else {
       logger.info("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
 
-    this.commThread = new CoreNIOServices(commThreadName, workerCommMgr, socketParams);
+    this.commThread = new CoreNIOServices(name + ":" + commThreadName, workerCommMgr, socketParams);
   }
 
   public int getClientCountForWorkerComm(int workerCommId) {

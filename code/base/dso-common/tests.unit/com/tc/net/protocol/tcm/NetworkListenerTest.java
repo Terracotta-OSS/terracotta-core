@@ -31,8 +31,8 @@ public class NetworkListenerTest extends TestCase {
 
   public void setUp() throws Exception {
     super.setUp();
-    commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                             new NullConnectionPolicy(), 0);
+    commsMgr = new CommunicationsManagerImpl("TestCommMgr", new NullMessageMonitor(),
+                                             new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
   }
 
   public void tearDown() throws Exception {

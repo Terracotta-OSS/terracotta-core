@@ -67,7 +67,7 @@ public class MessageTransportTest extends TCTestCase {
     clientConnection.localAddress = new TCSocketAddress("localhost", 0);
     connManager = new MockConnectionManager();
     connManager.setConnection(clientConnection);
-    commsManager = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
+    commsManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
                                                  connManager, new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl());
     lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                        new DefaultConnectionIdFactory());

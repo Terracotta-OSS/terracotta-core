@@ -80,7 +80,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                            final NetworkStackHarnessFactory stackHarnessFactory,
                                                            final ConnectionPolicy connectionPolicy,
                                                            final HealthCheckerConfig aConfig) {
-    return new CommunicationsManagerImpl(monitor, stackHarnessFactory, connectionPolicy, aConfig);
+    return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, stackHarnessFactory,
+                                         connectionPolicy, aConfig);
   }
 
   public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch) {

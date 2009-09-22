@@ -40,10 +40,10 @@ public class ClientMessageTransportTest extends TCTestCase {
   private MockTCConnection                   connection;
   private TransportHandshakeMessageFactory   transportMessageFactory;
   private TestTransportHandshakeErrorHandler handshakeErrorHandler;
-  private final int                          maxRetries   = 10;
+  private final int                          maxRetries = 10;
   private MessageTransportFactory            transportFactory;
-  private final int                          timeout      = 3000;
-  
+  private final int                          timeout    = 3000;
+
   public void setUp() {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
     this.connectionId = connectionIDProvider.nextConnectionId();
@@ -110,7 +110,7 @@ public class ClientMessageTransportTest extends TCTestCase {
    * Test interaction with a real network listener.
    */
   public void testConnectAndHandshakeActuallyConnected() throws Exception {
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy(), 0);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
@@ -140,6 +140,7 @@ public class ClientMessageTransportTest extends TCTestCase {
     // Case 1: Server has the OOO layer and client doesn't
 
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl(
+                                                                         "TestCommsMgr-Server",
                                                                          new NullMessageMonitor(),
                                                                          new OOONetworkStackHarnessFactory(
                                                                                                            new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
@@ -148,7 +149,8 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                                                            new L1ReconnectConfigImpl()),
                                                                          new NullConnectionPolicy(), 0);
 
-    CommunicationsManager clientCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager clientCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Client",
+                                                                         new NullMessageMonitor(),
                                                                          new PlainNetworkStackHarnessFactory(),
                                                                          new NullConnectionPolicy(), 0);
 
@@ -163,10 +165,11 @@ public class ClientMessageTransportTest extends TCTestCase {
     }
 
     // Case 2: Client has the OOO layer and server doesn't
-    serverCommsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                   new NullConnectionPolicy(), 0);
+    serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
+                                                   new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy(), 0);
 
     clientCommsMgr = new CommunicationsManagerImpl(
+                                                   "TestCommsMgr-Client",
                                                    new NullMessageMonitor(),
                                                    new OOONetworkStackHarnessFactory(
                                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),

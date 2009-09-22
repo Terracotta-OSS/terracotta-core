@@ -87,30 +87,28 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * Create a communications manager. This implies that one or more network handling threads will be started on your
    * behalf. As such, you should not be instantiating one of these per connection for instance.
    */
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   ConnectionPolicy connectionPolicy) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+                                   NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy) {
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
   }
 
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   ConnectionPolicy connectionPolicy, int workerCommCount) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, new DisabledHealthCheckerConfigImpl());
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+                                   NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
+                                   int workerCommCount) {
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount,
+         new DisabledHealthCheckerConfigImpl());
   }
 
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   TCConnectionManager connMgr, ConnectionPolicy connectionPolicy) {
-    this(monitor, stackHarnessFactory, connMgr, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+                                   NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
+                                   HealthCheckerConfig config) {
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, config);
   }
 
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   ConnectionPolicy connectionPolicy, HealthCheckerConfig config) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, 0, config);
-  }
-
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   ConnectionPolicy connectionPolicy, int workerCommCount, HealthCheckerConfig config,
-                                   ServerID serverID) {
-    this(monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config);
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+                                   NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
+                                   int workerCommCount, HealthCheckerConfig config, ServerID serverID) {
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config);
     this.serverID = serverID;
   }
 
@@ -121,8 +119,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * @param connMgr the connection manager to use
    * @param serverDescriptors
    */
-  public CommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                   TCConnectionManager connMgr, ConnectionPolicy connectionPolicy, int workerCommCount,
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+                                   NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
+                                   ConnectionPolicy connectionPolicy, int workerCommCount,
                                    HealthCheckerConfig healthCheckerConf) {
 
     this.monitor = monitor;
@@ -132,8 +131,9 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     this.healthCheckerConfig = healthCheckerConf;
     privateConnMgr = (connMgr == null);
 
+    Assert.assertNotNull(commsMgrName);
     if (null == connMgr) {
-      this.connectionManager = new TCConnectionManagerJDK14(workerCommCount, healthCheckerConfig);
+      this.connectionManager = new TCConnectionManagerJDK14(commsMgrName, workerCommCount, healthCheckerConfig);
     } else {
       this.connectionManager = connMgr;
     }

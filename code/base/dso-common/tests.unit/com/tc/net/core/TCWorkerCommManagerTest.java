@@ -92,7 +92,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testBasic() throws Exception {
     // comms manager with 4 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy(), 4);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
@@ -126,7 +126,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testWorkerCommDistributionAfterClose() throws Exception {
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
@@ -188,7 +188,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
 
-    CommunicationsManager clientComms = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
                                                                       new NullConnectionPolicy());
 
@@ -206,7 +206,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testWorkerCommDistributionAfterReconnect() throws Exception {
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl(new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(true),
                                                                    new NullConnectionPolicy(), 3,
                                                                    new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -315,7 +315,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
     // all clients should reconnect and should be distributed fairly among the worker comms.
     ThreadUtil.reallySleep(5000);
-    
+
     System.out.println("XXX waiting for all clients reconnect");
     while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(0) != 2)
            && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(1) != 2)

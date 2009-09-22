@@ -78,10 +78,12 @@ public class TCGroupMessageWrapperTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    clientComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl());
-    serverComms = new CommunicationsManagerImpl(monitor, new PlainNetworkStackHarnessFactory(), null,
-                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl());
+    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new PlainNetworkStackHarnessFactory(),
+                                                null, new NullConnectionPolicy(), 0,
+                                                new DisabledHealthCheckerConfigImpl());
+    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new PlainNetworkStackHarnessFactory(),
+                                                null, new NullConnectionPolicy(), 0,
+                                                new DisabledHealthCheckerConfigImpl());
   }
 
   protected void tearDown() throws Exception {
@@ -175,7 +177,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT,  new GarbageCollectionInfo(), oidSet);
+    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
     sendGroupMessage(sendMesg);
   }
 

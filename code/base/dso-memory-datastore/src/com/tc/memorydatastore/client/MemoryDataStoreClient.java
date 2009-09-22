@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.memorydatastore.client;
 
@@ -32,9 +33,11 @@ import java.util.Map;
 
 public class MemoryDataStoreClient implements MemoryDataMap {
   private final static CommunicationsManager communicationsManager = new CommunicationsManagerImpl(
-                                                                       new NullMessageMonitor(),
-                                                                       new PlainNetworkStackHarnessFactory(),
-                                                                       new NullConnectionPolicy(), 0);
+                                                                                                   "MemoryDataStoreClient",
+                                                                                                   new NullMessageMonitor(),
+                                                                                                   new PlainNetworkStackHarnessFactory(),
+                                                                                                   new NullConnectionPolicy(),
+                                                                                                   0);
 
   private ClientMessageChannel               channel;
   private final Map                          pendingRequests       = new HashMap();
@@ -57,8 +60,10 @@ public class MemoryDataStoreClient implements MemoryDataMap {
 
   private void setupClient(String serverHost, int serverPort) {
 
-    this.channel = communicationsManager.createClientChannel(new NullSessionManager(), -1, serverHost, serverPort,
-        10000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverHost, serverPort) }));
+    this.channel = communicationsManager
+        .createClientChannel(new NullSessionManager(), -1, serverHost, serverPort, 10000,
+                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverHost,
+                                                                                                     serverPort) }));
 
     channel.addClassMapping(TCMessageType.MEMORY_DATA_STORE_RESPONSE_MESSAGE, MemoryDataStoreResponseMessage.class);
     channel.addClassMapping(TCMessageType.MEMORY_DATA_STORE_REQUEST_MESSAGE, MemoryDataStoreRequestMessage.class);
@@ -136,10 +141,10 @@ public class MemoryDataStoreClient implements MemoryDataMap {
     Assert.assertTrue(responseMessage.isRequestCompletedFlag());
     return responseMessage.getValues();
   }
-  
+
   public Collection getAll() {
     byte[] emptyKey = new byte[0];
-    return(getAll(emptyKey));
+    return (getAll(emptyKey));
   }
 
   public void remove(byte[] key) {
