@@ -189,7 +189,6 @@ public abstract class TCObjectImpl implements TCObject {
 
   private synchronized void setFlag(final int offset, final boolean value) {
     flags = Conversion.setFlag(flags, offset, value);
-    System.out.println("XXX flags " + flags);
   }
 
   private synchronized boolean getFlag(final int offset) {
