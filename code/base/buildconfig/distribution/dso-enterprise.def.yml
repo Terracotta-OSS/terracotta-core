@@ -134,6 +134,7 @@ postscripts:
         - tim-apache-struts-1.1
         - tim-jetty-6.1
         - terracotta-hibernate-cache-ee
+        - ehcache-terracotta-ee
   - extract-hibernate-cache-reference:
       args:
         - dest: hibernate

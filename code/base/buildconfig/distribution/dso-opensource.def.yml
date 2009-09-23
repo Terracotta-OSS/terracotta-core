@@ -150,6 +150,7 @@ postscripts:
         - tim-apache-struts-1.1
         - tim-jetty-6.1
         - terracotta-hibernate-cache
+        - ehcache-terracotta
   - extract-hibernate-cache-reference:
       args:
         - dest: hibernate
