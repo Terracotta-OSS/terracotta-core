@@ -649,8 +649,8 @@ public class ManagerUtil {
    * @param lockLevel The lock level
    * @return True if held by current thread
    */
-  public static boolean isHeldByCurrentThread(final String lockId, final int lockLevel) {
-    return getManager().isHeldByCurrentThread(lockId, lockLevel);
+  public static boolean isLockHeldByCurrentThread(final String lockId, final int lockLevel) {
+    return getManager().isLockHeldByCurrentThread(lockId, lockLevel);
   }
 
   /**

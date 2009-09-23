@@ -36,7 +36,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
-   * 
+   *
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -173,6 +173,10 @@ public final class NullManager implements Manager {
   }
 
   public final boolean isHeldByCurrentThread(final Object obj, final int lockLevel) {
+    return false;
+  }
+
+  public final boolean isLockHeldByCurrentThread(final String lockId, final int lockLevel) {
     return false;
   }
 
