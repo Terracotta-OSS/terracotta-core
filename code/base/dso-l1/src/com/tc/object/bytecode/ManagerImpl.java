@@ -666,11 +666,15 @@ public class ManagerImpl implements Manager {
     TCObject tco = lookupExistingOrNull(obj);
 
     if (tco != null) {
-      return this.txManager.isHeldByCurrentThread(generateAutolockName(tco), lockLevel);
+      return isHeldByCurrentThread(generateAutolockName(tco), lockLevel);
     } else {
-      return this.txManager.isHeldByCurrentThread(generateLiteralLockName(obj), lockLevel);
+      return isHeldByCurrentThread(generateLiteralLockName(obj), lockLevel);
     }
 
+  }
+
+  public boolean isHeldByCurrentThread(final String lockId, final int lockLevel) {
+    return this.txManager.isHeldByCurrentThread(lockId, lockLevel);
   }
 
   public int queueLength(final Object obj) {
