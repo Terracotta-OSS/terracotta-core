@@ -31,14 +31,11 @@ bundled_components:
           - disclaimer
           - license
           - INSTALL
-          - INSTALL_HIBERNATE_ONLY
   - shared-base:
       documentations:
         install_directory: docs
         guides:
-          - TerracottaDSOGuide
-          - TerracottaSessionsQuickStart
-          - TerracottaHibernateQuickStartGuide
+          - TerracottaQuickStart
         references:
           - tc-config-reference
   - common:
