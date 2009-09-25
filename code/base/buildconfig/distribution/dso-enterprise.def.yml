@@ -145,6 +145,9 @@ postscripts:
             - tim-jetty-6.1
         - dest: 
             - tools/sessions/configurator-sandbox
+  - include-external-resources:
+      args:
+        - buildconfig/distribution/external-resources.yml            
   - delete-tim-get-index
   - include-schemas:
       args:
