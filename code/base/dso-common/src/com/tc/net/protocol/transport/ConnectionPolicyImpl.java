@@ -28,7 +28,6 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   public synchronized boolean connectClient(ConnectionID connID) {
     if (clientSet.contains(connID) || !isMaxConnectionsReached()) {
       clientSet.add(connID);
-      logger.info("Accepting " + connID + "; " + toString());
       return true;
     } else {
       logger.info("Rejecting " + connID + "; " + toString());
