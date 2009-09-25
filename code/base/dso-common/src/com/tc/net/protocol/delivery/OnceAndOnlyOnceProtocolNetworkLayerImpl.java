@@ -139,6 +139,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         reconnectMode.set(false);
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
+        logger.info("Sending OOO handshake fail message to a different session client " + getConnectionId());
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
         handshakeMode.set(false);
@@ -222,7 +223,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     sendMessage(opm);
     sendLayer.close();
   }
-  
+
   public void initConnectionID(ConnectionID cid) {
     Assert.assertNotNull(sendLayer);
     sendLayer.initConnectionID(cid);
@@ -408,7 +409,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public boolean isClosed() {
     return isClosed;
   }
-
 
   /**
    * this function gets the stackLayerFlag, added to build the communication stack information
