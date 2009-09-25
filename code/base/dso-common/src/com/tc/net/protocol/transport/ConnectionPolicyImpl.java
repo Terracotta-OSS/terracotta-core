@@ -4,6 +4,8 @@
  */
 package com.tc.net.protocol.transport;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
 import java.util.HashSet;
@@ -12,6 +14,7 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
 
   private HashSet<ConnectionID> clientSet = new HashSet<ConnectionID>();
   private int                   maxConnections;
+  private TCLogger              logger    = TCLogging.getLogger(ConnectionPolicyImpl.class);
 
   public ConnectionPolicyImpl(int maxConnections) {
     Assert.assertTrue("negative maxConnections", maxConnections >= 0);
@@ -23,11 +26,14 @@ public class ConnectionPolicyImpl implements ConnectionPolicy {
   }
 
   public synchronized boolean connectClient(ConnectionID connID) {
-    if (!isMaxConnectionsReached()) {
+    if (clientSet.contains(connID) || !isMaxConnectionsReached()) {
       clientSet.add(connID);
+      logger.info("Accepting " + connID + "; " + toString());
       return true;
+    } else {
+      logger.info("Rejecting " + connID + "; " + toString());
+      return false;
     }
-    return false;
   }
 
   public synchronized void clientDisconnected(ConnectionID connID) {
