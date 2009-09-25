@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
+import com.sleepycat.je.JEVersion;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -51,9 +52,9 @@ public class DBVersionChecker {
       dbVersion = clusterStore.get(DBKEY_VERSION);
       if (dbVersion == null) {
         clusterStore.put(DBKEY_VERSION, DB_VERSION_CURRENT.getVersion());
-        logger.info(DB_VERSION_CURRENT);
+        logger.info("Terracotta persistence version is " +  DB_VERSION_CURRENT.getVersion() + ", underlying persistence store: ( Sleepycat " +  JEVersion.CURRENT_VERSION.getVersionString() + " )");
       } else {
-        logger.info("Sleepy Cat DB version is " + dbVersion);
+        logger.info("Terracotta persistence version is " + dbVersion + ", underlying persistence store: ( Sleepycat " +  JEVersion.CURRENT_VERSION.getVersionString() + " )");
         if (!dbVersion.equals(DB_VERSION_CURRENT.getVersion())) { throw new DBVersionMismatchException(
                                                                                                        "There is a mismatch in Terracotta and DB data format. "
                                                                                                            + "Please ensure that both Terracotta Server instance and "
