@@ -513,7 +513,7 @@ class SubtreeTestRun
       url = nil
       urls.each do | u |
         testurl = "#{u}/#{@config_source['tc.tests.configuration.appserver.factory.name']}/#{os_name}/#{appserver}.zip"
-        if isLive?(testurl)
+        if is_live?(testurl)
           url = testurl
           break
         end
@@ -950,18 +950,5 @@ class SubtreeTestRun
     out = @jvmargs || [ ]
     out += @extra_jvmargs unless @extra_jvmargs.empty?
     out
-  end
-
-  def isLive?(url_string)
-    begin
-      url = URI.parse(url_string)
-      response = nil
-      Net::HTTP.start(url.host, url.port) { |http|
-        response = http.head(url.path.size > 0 ? url.path : "/")
-      }
-      return response.code == "200"
-    rescue
-      return false
-    end
   end
 end

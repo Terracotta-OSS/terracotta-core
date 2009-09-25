@@ -149,3 +149,47 @@ module CallWithVariableArguments
     end
   end
 end
+
+
+def download_external(default_repos, dest_dir, artifact)
+  success = false
+  default_repos.each do |repo|
+    url = artifact['maven_artifact'] == true ? create_maven_url(repo, artifact) : artifact['url']
+    puts "Fetching #{url}"
+    if is_live?(url)
+      dest = File.join(dest_dir, artifact['destination'])
+      FileUtils.mkdir_p(dest) unless File.directory?(dest)
+      dest_file = artifact['maven_artifact'] == true ? File.join(dest, File.basename(url)) : File.join(dest, artifact['name'])
+      ant.get(:src => url, :dest => dest_file, :verbose => true)
+      success = true
+      break
+    end
+  end
+  raise("Couldn't find artifact #{artifact} on any of the repos") unless success
+end
+
+def create_maven_url(repo, artifact)
+  extension = artifact['type'] || 'jar'
+  classifier = artifact['classifier'] ? "-#{artifact['classifier']}" : ''
+  filename = "#{artifact['artifactId']}-#{artifact['version']}#{classifier}.#{extension}"
+
+  "#{repo}/#{artifact['groupId'].gsub('.', '/')}/#{artifact['artifactId']}/#{artifact['version']}/#{filename}"
+end
+
+def is_live?(url_string)
+  begin
+    url = URI.parse(url_string)
+    response = nil
+    Net::HTTP.start(url.host, url.port) { |http|
+      response = http.head(url.path.size > 0 ? url.path : "/")
+    }
+    forwarded_link = response['Location']
+    if forwarded_link && forwarded_link != url_string
+      return is_live?(forwarded_link)
+    else
+      return response.code == "200"
+    end
+  rescue
+    return false
+  end
+end

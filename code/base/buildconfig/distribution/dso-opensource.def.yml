@@ -130,6 +130,10 @@ packaging:
       assert: '!@build_environment.os_type =~ /^\s*windows\s*$/i'
   - izpack
 postscripts:
+  - include-external-resources:
+      args:
+        - buildconfig/distribution/external-resources.yml
+        
   - fix-bin-perms
   - inject-copyright
   - make-build-data:
@@ -147,7 +151,7 @@ postscripts:
         - tim-apache-struts-1.1
         - tim-jetty-6.1
         - terracotta-hibernate-cache
-        - ehcache-terracotta
+        
   - extract-hibernate-cache-reference:
       args:
         - dest: hibernate
@@ -161,6 +165,9 @@ postscripts:
             - tim-jetty-6.1
         - dest: 
             - tools/sessions/configurator-sandbox
+
+
+        
   - delete-tim-get-index
   - include-schemas:
       args:
