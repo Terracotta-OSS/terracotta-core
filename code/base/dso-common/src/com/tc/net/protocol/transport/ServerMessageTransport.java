@@ -83,8 +83,8 @@ public class ServerMessageTransport extends MessageTransportBase {
       Assert.eval("Wrong connection ID: [" + this.connectionId + "] != [" + ack.getConnectionId() + "]",
                   this.connectionId.equals(ack.getConnectionId()));
       status.established();
-      fireTransportConnectedEvent();
     }
+    fireTransportConnectedEvent();
   }
 
   private boolean verifyAck(WireProtocolMessage message) {

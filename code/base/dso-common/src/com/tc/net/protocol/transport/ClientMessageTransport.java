@@ -245,8 +245,8 @@ public class ClientMessageTransport extends MessageTransportBase {
       // send ack message
       this.sendToConnection(ack);
       this.status.established();
-      fireTransportConnectedEvent();
     }
+    fireTransportConnectedEvent();
   }
 
   void reconnect(TCConnection connection) throws Exception {
