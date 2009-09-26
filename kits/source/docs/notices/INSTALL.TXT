@@ -1,33 +1,103 @@
+Terracotta 3.1.1 - Simple Scale for Enterprise Java
+===================================================
+
+These simplified installation instructions are intended for quick platform 
+deployments such as those performed by operations staff. 
+
+For more information on installing and configuring Terracotta for specific use
+cases, see
+http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=GettingStarted
 
 
+Preparing to Run a Terracotta Cluster
+-------------------------------------
+
+This document is part of the Terracotta download for supported UNIX/Linux 
+platforms and Microsoft Windows. For the latest supported platforms, 
+including JVMs and application servers, see the list of certified Terracotta 
+platforms at 
+http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=PlatformSupport.
 
 
+General Considerations
+----------------------
+The following is a checklist of general preparedness issues:
+
+* Operating systems are up to date, including patches.
+* Java (JDK) is installed on all nodes.
+* JAVA_HOME is set correctly for the user under which Terracotta will run.
+* The network path between Terracotta server machines in the cluster is clean.
+  A clean path has low latency (end-to-end Gigabit connections are recommended),
+  and no packet loss.
+  NOTE: In a production environment, it is likely that the Terracotta cluster
+  will consist of at least one active server and one backup (or "hot standby") 
+  server.
+* The network path between Terracotta server machines and Terracotta client 
+  machines is clean. Terracotta clients are the application servers in a 
+  cluster. A clean path has low latency (end-to-end Gigabit connections are 
+  recommended), and no packet loss.
+* None of the network paths between cluster nodes are blocked by a firewall.
+* If Terracotta servers are configured to generate logs, be sure 
+  there is enough space where the logs are stored. You can set the path for
+  log files in the Terracotta configuration file (tc-config.xml by default) 
+  using the <logs> element found in the <clients> section and in each 
+  <server> section.
+
+   
+Configuring Terracotta
+----------------------
+Terracotta is configured using a configuration file (tc-config.xml by default).
+The major sections include <servers> (setting up Terracotta servers), <clients> 
+(setting Terracotta clients or application servers), and <application> (the
+application being clustered). If no configuration file is provided, a default 
+configuration is used.
+
+Servers can be configured with a name, bind (IP) address, and various ports.
+Naming a server is recommended because it allows you to use that name when
+executing commands and scripts that must refer to the server.
+
+See tc-config-reference.xml in the Terracotta docs directory for an annotated 
+version of the Terracotta configuration file.
+
+Terracotta servers and clients can obtain configuration in different ways. One
+way is to start the server with the following flag:
+
+   -Dtc.config=<path/to/Terracotta/configuration/file>
+
+Then start all clients with the following flag:
+
+   -Dtc.config=<server IP or host address>:<port number> 
+
+Clients started this way obtain their configuration from the specified server 
+(see Starting Terracotta, below).
+
+See http://www.terracotta.org/kit/reflector?kitID=3.1&pageID=
+AboutConfigurationFiles for more information on how 
+Terracotta configuration is propagated.
 
 
+Starting Terracotta
+-------------------
+The startup script for Terracotta servers is start-tc-server.sh (UNIX/Linux) or
+start-tc-server.bat (Microsoft Windows). If you have configured more than one
+Terracotta server, start a specific server by referring to its name with the -n
+flag
 
-<html>
-<head>
-	<title>ACCESS DENIED</title>
-</head>
+For example, to start a server you named "myServer" from the Terracotta home
+directory and using a specific configuration file, enter the following:
 
-<body>
+   start-tc-server.sh -n myServer -f <path/to/Terracotta/configuration/file>
+   
+For Microsoft Windows, enter the following:
+   
+   start-tc-server.bat -n myServer -f <path\to\Terracotta\configuration\file> 
+   
 
-	<table cellpadding="1" cellspacing="0" border="0" align="center" width="80%" bgcolor="#cc0000"><tr><td>
-	<table cellpadding="4" cellspacing="0" border="0" width="100%" bgcolor="#ffcccc"><tr><td>
-		<span style="color:#cc0000;font-weight:bold;">ACCESS DENIED</span>
-		<p>
-        It seems that you have tried to perform an operation which you are not permitted to perform.
-		</p>
-        
-        <p>
-            You cannot view this URL as a guest. You must <a rel="nofollow" href="/jira/login.jsp?os_destination=%2Fsecure%2Fattachment%2F14013%2FINSTALL.TXT">login</a>.
-        </p>
-        
-        <p>
-		If you think this message is wrong, please consult your <a href="/jira/secure/Administrators.jspa">administrators</a> about getting the necessary permissions.
-		</p>
-	</td></tr></table>
-	</td></tr></table>
+More Information
+----------------
+You'll find a number of helpful guides in the documentation section of the 
+Terracotta website (http://www.terracotta.org/web/display/orgsite/Documentation)
 
-</body>
-</html>
+----
+Copyright (c) 2009, Terracotta, Inc.
+http://www.terracotta.org
