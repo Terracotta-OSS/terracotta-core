@@ -1,0 +1,35 @@
+
+default_repos:
+  - http://kong/maven2
+  - http://forge-dev/repo
+  - http://www.terracotta.org/download/reflector/maven2
+
+artifacts:
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-core
+    version: 1.7.0-SNAPSHOT
+    destination: distributed-cache
+
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-core
+    classifier: javadoc
+    version: 1.7.0-SNAPSHOT
+    destination: distributed-cache
+    
+  - maven_artifact: false
+    name: RELEASE_NOTES.txt
+    destination: distributed-cache
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/RELEASE_NOTES.txt
+
+  - maven_artifact: false
+    name: ehcache.xml
+    destination: distributed-cache
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xml
+    
+  - maven_artifact: false
+    name: ehcache.xsd
+    destination: distributed-cache
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xsd
+  
