@@ -140,7 +140,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
       throw new RuntimeException(e1);
     }
 
-    ThreadUtil.reallySleep(3000);
+    ThreadUtil.reallySleep(10000);
   }
 
   private void verifyDirtyObjectDbBackupDirs(File dirtyObjectDB, int expectedBackupCount) {
