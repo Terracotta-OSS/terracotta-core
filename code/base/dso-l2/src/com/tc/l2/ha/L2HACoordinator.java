@@ -58,11 +58,14 @@ import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
     SequenceGeneratorListener {
 
   private static final TCLogger         logger = TCLogging.getLogger(L2HACoordinator.class);
+  private static final String           DATABASE_CREATION_TIMESTAMP_KEY = "BERKELEYDB::DB_CREATION_TIMESTAMP_KEY";
 
   private final TCLogger                consoleLogger;
   private final DistributedObjectServer server;
@@ -77,7 +80,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private ClusterState                  clusterState;
   private SequenceGenerator             sequenceGenerator;
 
-  private NewHaConfig                   haConfig;
+  private final NewHaConfig             haConfig;
 
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          GroupManager groupCommsManager, PersistentMapStore clusterStateStore,
@@ -95,6 +98,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                     ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                     DSOChannelManager channelManager, MessageRecycler recycler) {
+
+    boolean isCleanDB = isCleanDB(clusterStateStore);
 
     this.clusterState = new ClusterState(clusterStateStore, server.getManagedObjectStore(), server
         .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider());
@@ -147,7 +152,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
                                                           rTxnManager, objectManager, transactionManager,
-                                                          objectsSyncRequestSink, sequenceGenerator);
+                                                          objectsSyncRequestSink, sequenceGenerator, isCleanDB);
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
@@ -282,5 +287,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   public void sequenceDestroyedFor(Object key) {
     // NOP
+  }
+  
+  private boolean isCleanDB(PersistentMapStore clusterStateStore) {
+    if (clusterStateStore.get(DATABASE_CREATION_TIMESTAMP_KEY) == null) {
+      Calendar cal = Calendar.getInstance();
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+      clusterStateStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
+      return true;
+    }
+    return false;
   }
 }

@@ -14,8 +14,9 @@ public class ObjectListSyncMessageFactory {
     return new ObjectListSyncMessage(ObjectListSyncMessage.REQUEST);
   }
 
-  public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg, Set knownIDs) {
-    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, knownIDs);
+  public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg, Set knownIDs,
+                                                                 boolean isCleanDB) {
+    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, knownIDs, isCleanDB);
   }
 
   public static GroupMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {

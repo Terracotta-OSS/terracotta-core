@@ -58,12 +58,13 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final SequenceGenerator            sequenceGenerator;
   private final GCMonitor                    gcMonitor;
   private final AtomicLong                   gcIdGenerator = new AtomicLong();
+  private final boolean                      isCleanDB;
 
   public ReplicatedObjectManagerImpl(GroupManager groupManager, StateManager stateManager,
                                      L2ObjectStateManager l2ObjectStateManager,
                                      ReplicatedTransactionManager txnManager, ObjectManager objectManager,
                                      ServerTransactionManager transactionManager, Sink objectsSyncRequestSink,
-                                     SequenceGenerator sequenceGenerator) {
+                                     SequenceGenerator sequenceGenerator, boolean isCleanDB) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
     this.rTxnManager = txnManager;
@@ -76,6 +77,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.objectManager.getGarbageCollector().addListener(gcMonitor);
     l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
+    this.isCleanDB = isCleanDB;
   }
 
   /**
@@ -176,10 +178,15 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListResponse(final NodeID nodeID, ObjectListSyncMessage clusterMsg) {
     Assert.assertTrue(stateManager.isActiveCoordinator());
     final Set oids = clusterMsg.getObjectIDs();
-    if (!oids.isEmpty()) {
-      String error = "Nodes joining the cluster after startup shouldnt have any Objects. " + nodeID + " contains "
-                     + oids.size() + " Objects !!!";
-      logger.error(error + " Forcing node to Quit !!");
+    if (!oids.isEmpty() || !clusterMsg.isCleanDB()) {
+      StringBuilder error = new StringBuilder();
+      if (!clusterMsg.isCleanDB()) {
+        error.append("Node with a stale Database is trying to join the cluster. isCleanDB: " + clusterMsg.isCleanDB());
+      } else {
+        error.append("Nodes joining the cluster after startup shouldnt have any Objects. " + nodeID + " contains "
+                     + oids.size() + " Objects !!!");
+      }
+      logger.error(error.toString() + " Forcing node to Quit !!");
       groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.NODE_JOINED_WITH_DIRTY_DB,
                            error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
@@ -232,9 +239,9 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     if (!stateManager.isActiveCoordinator()) {
       Set knownIDs = objectManager.getAllObjectIDs();
       rTxnManager.init(knownIDs);
-      logger.info("Send response to Active's query : known id lists = " + knownIDs.size());
-      groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
-          .createObjectListSyncResponseMessage(clusterMsg, knownIDs));
+      logger.info("Send response to Active's query : known id lists = " + knownIDs.size() + " isCleanDB: " + isCleanDB);
+      groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncResponseMessage(clusterMsg,
+                                                                                                   knownIDs, isCleanDB));
     } else {
       logger.error("Recd. ObjectListRequest when in ACTIVE state from " + nodeID + ". Zapping node ...");
       groupManager.sendTo(nodeID, ObjectListSyncMessageFactory.createObjectListSyncFailedResponseMessage(clusterMsg));

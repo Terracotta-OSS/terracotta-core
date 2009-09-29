@@ -143,7 +143,7 @@ public class TcConfigBuilder {
   public int getJmxPort(int serverIndex) {
     ensureServers();
     Assert.assertNotNull(tcConfig.getServers().getServerArray(serverIndex));
-    return tcConfig.getServers().getServerArray(0).getJmxPort();
+    return tcConfig.getServers().getServerArray(serverIndex).getJmxPort();
   }
 
   public void addProperty(String key, String value) {

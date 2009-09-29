@@ -21,6 +21,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
   public static final int FAILED_RESPONSE = 2;
 
   private ObjectIDSet     oids;
+  private boolean         isCleanDB;
 
   // To make serialization happy
   public ObjectListSyncMessage() {
@@ -31,15 +32,17 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, Set oids) {
+  public ObjectListSyncMessage(MessageID messageID, int type, Set oids, boolean isCleanDB) {
     super(type, messageID);
     this.oids = (ObjectIDSet)oids;
+    this.isCleanDB = isCleanDB;
   }
 
   public ObjectListSyncMessage(MessageID messageID, int type) {
     super(type, messageID);
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     switch (getType()) {
       case REQUEST:
@@ -47,6 +50,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         // Nothing to read
         break;
       case RESPONSE:
+        isCleanDB = in.readBoolean();
         oids = new ObjectIDSet();
         oids.deserializeFrom(in);
         break;
@@ -55,6 +59,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     }
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     switch (getType()) {
       case REQUEST:
@@ -62,6 +67,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         // Nothing to write
         break;
       case RESPONSE:
+        out.writeBoolean(isCleanDB);
         Assert.assertNotNull(oids);
         oids.serializeTo(out);
         break;
@@ -75,6 +81,11 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     return oids;
   }
 
+  public boolean isCleanDB() {
+    return this.isCleanDB;
+  }
+
+  @Override
   public String toString() {
     return "ObjectListSyncMessage [ " + messageFrom() + ", type = " + getTypeString() + ", " + oids + "]";
   }
