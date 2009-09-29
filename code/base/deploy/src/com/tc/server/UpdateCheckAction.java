@@ -76,7 +76,7 @@ class UpdateCheckAction extends TimerTask {
     sb.append("&tc-version=");
     sb.append(URLEncoder.encode(productInfo.version()));
     sb.append("&tc-product=");
-    sb.append(productInfo.edition().equals("opensource") ? "oss" : "ee");
+    sb.append(productInfo.isOpenSource() ? "oss" : "ee");
     sb.append("&uptime-secs=");
     sb.append((System.currentTimeMillis() - server.getStartTime()) / 1000);
     sb.append("&source=server");

@@ -106,6 +106,9 @@ public final class ProductInfo {
     this.mavenVersion = getBuildProperty(properties, BUILD_DATA_MAVEN_VERSION_KEY, UNKNOWN_VALUE);
     this.apiVersion = getBuildProperty(properties, BUILD_DATA_API_VERSION_KEY, UNKNOWN_VALUE);
     this.edition = getBuildProperty(properties, BUILD_DATA_EDITION_KEY, OPENSOURCE);
+    if (!isOpenSource() && !isEnterprise()) {
+      throw new AssertionError("Can't recognize kit edition: " + edition);
+    }
 
     this.timestamp = parseTimestamp(getBuildProperty(properties, BUILD_DATA_TIMESTAMP_KEY, null));
     this.host = getBuildProperty(properties, BUILD_DATA_HOST_KEY, UNKNOWN_VALUE);
@@ -302,7 +305,7 @@ public final class ProductInfo {
   }
 
   public String toShortString() {
-    return moniker + " " + (OPENSOURCE.equals(edition) ? "" : (edition + " ")) + buildVersion;
+    return moniker + " " + (isOpenSource() ? "" : (edition + " ")) + buildVersion;
   }
 
   public String toLongString() {
@@ -312,7 +315,7 @@ public final class ProductInfo {
   public String buildID() {
     if (buildID == null) {
       String rev = revision;
-      if (ENTERPRISE.equals(edition)) {
+      if (isEnterprise()) {
         rev = ee_revision + "-" + revision;
       }
       buildID = buildTimestampAsString() + " (Revision " + rev + " by " + user + "@" + host + " from " + branch + ")";
@@ -330,12 +333,20 @@ public final class ProductInfo {
 
   public String patchBuildID() {
     String rev = patchRevision;
-    if (ENTERPRISE.equals(edition)) {
+    if (isEnterprise()) {
       rev = patchEERevision + "-" + patchRevision;
     }
 
     return patchTimestampAsString() + " (Revision " + rev + " by " + patchUser + "@" + patchHost + " from "
            + patchBranch + ")";
+  }
+  
+  public boolean isOpenSource() {
+    return OPENSOURCE.equalsIgnoreCase(edition);
+  }
+  
+  public boolean isEnterprise() {
+    return ENTERPRISE.equalsIgnoreCase(edition);
   }
 
   public String toString() {
