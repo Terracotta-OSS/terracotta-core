@@ -18,10 +18,22 @@ artifacts:
     version: 1.7.0-SNAPSHOT
     destination: distributed-cache
     
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-core
+    classifier: sources
+    version: 1.7.0-SNAPSHOT
+    destination: distributed-cache
+    
   - maven_artifact: false
     name: RELEASE_NOTES.txt
     destination: distributed-cache
-    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/RELEASE_NOTES.txt
+    url: http://svn.terracotta.org/svn/ehcache/trunk/ehcache/src/assemble/RELEASE_NOTES.txt
+    
+  - maven_artifact: false
+    name: EHCACHE_CORE_LICENSE.txt
+    destination: distributed-cache
+    url: http://svn.terracotta.org/svn/ehcache/trunk/ehcache/src/assemble/EHCACHE_CORE_LICENSE.txt   
 
   - maven_artifact: false
     name: ehcache.xml
