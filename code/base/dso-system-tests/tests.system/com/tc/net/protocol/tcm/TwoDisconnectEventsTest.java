@@ -70,8 +70,10 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         // server ping client
         TCMessage msg = serverChannel.createMessage(TCMessageType.PING_MESSAGE);
         msg.send();
-        ThreadUtil.reallySleep(500);
-        Assert.assertEquals(1, clientSink.getReceivedCount());
+        while (clientSink.getReceivedCount() != 1) {
+          ThreadUtil.reallySleep(500);
+          System.out.println(".");
+        }
         PingMessage pingReceived = clientSink.getReceivedPing();
         Assert.assertTrue(msg.getSourceNodeID().equals(server.getDSOServer().getServerNodeID()));
         Assert.assertTrue(msg.getDestinationNodeID().equals(pingReceived.getDestinationNodeID()));
@@ -79,8 +81,10 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         // client ping server
         msg = clientChannel.createMessage(TCMessageType.PING_MESSAGE);
         msg.send();
-        ThreadUtil.reallySleep(500);
-        Assert.assertEquals(1, serverSink.getReceivedCount());
+        while (serverSink.getReceivedCount() != 1) {
+          ThreadUtil.reallySleep(500);
+          System.out.println(".");
+        }
         pingReceived = serverSink.getReceivedPing();
         Assert.assertTrue(msg.getSourceNodeID().equals(pingReceived.getSourceNodeID()));
         Assert.assertTrue(server.getDSOServer().getServerNodeID().equals(pingReceived.getDestinationNodeID()));
@@ -118,7 +122,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
   }
 
   private class PingMessageSink implements TCMessageSink {
-    Queue<PingMessage>  queue         = new LinkedBlockingQueue<PingMessage>();
+    Queue<PingMessage> queue = new LinkedBlockingQueue<PingMessage>();
 
     public void putMessage(final TCMessage message) throws UnsupportedMessageTypeException {
 
