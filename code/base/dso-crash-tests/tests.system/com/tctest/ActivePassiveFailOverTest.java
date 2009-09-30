@@ -12,6 +12,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.Os;
 import com.tctest.process.ExternalDsoClient;
 import com.tctest.process.ExternalDsoServer;
 
@@ -65,7 +66,11 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
     System.out.println("server2 became active");
     server_1.start();
     System.out.println("server1 started");
-    ThreadUtil.reallySleep(10000);
+    if (Os.isSolaris()) {
+      ThreadUtil.reallySleep(20000);
+    } else {
+      ThreadUtil.reallySleep(10000);
+    }
     Assert.assertFalse(server_1.isRunning());
   }
 
