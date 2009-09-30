@@ -282,8 +282,8 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         }
       }
 
-      ThreadUtil.reallySleep(5000);
-      Assert.eval(totalNoOfDisconnectedClients == 4);
+      ThreadUtil.reallySleep(10000);
+      Assert.assertEquals(4, totalNoOfDisconnectedClients);
       System.out.println("All clients killed and verified. Test passed");
       Assert.eval(dsoMBean.getClients().length == 1);
       return;
