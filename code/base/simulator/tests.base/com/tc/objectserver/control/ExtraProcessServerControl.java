@@ -6,9 +6,13 @@ package com.tc.objectserver.control;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
+import com.tc.management.beans.L2DumperMBean;
+import com.tc.management.beans.L2MBeanNames;
 import com.tc.process.StreamCopier;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -23,6 +27,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.management.MBeanServerConnection;
+import javax.management.remote.JMXConnector;
 
 public class ExtraProcessServerControl extends ServerControlBase {
   private static final String NOT_DEF            = "";
@@ -331,6 +338,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
       Thread.sleep(1000);
       if (System.currentTimeMillis() > timeout) {
         System.err.println("TCStoper output: " + stopperOutput);
+        System.out.println("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME);
+        dumpServerControl();
         throw new Exception("Server was shutdown but still up after " + SHUTDOWN_WAIT_TIME + " ms");
       }
     }
@@ -395,6 +404,40 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   public List getJvmArgs() {
     return jvmArgs;
+  }
+  
+  private void dumpServerControl() throws Exception {
+    JMXConnector jmxConnector = null;
+    try {
+      jmxConnector = CommandLineBuilder.getJMXConnector("localhost", getAdminPort());
+      MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      L2DumperMBean mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class,
+                                                                     false);
+      while (true) {
+        try {
+          mbean.doServerDump();
+          break;
+        } catch (Exception e) {
+          System.out.println("Could not find L2DumperMBean... sleep for 1 sec.");
+          Thread.sleep(1000);
+        }
+      }
+
+      mbean.setThreadDumpCount(3);
+      mbean.setThreadDumpInterval(500);
+      System.out.println("XXX Thread dumping server=[" + getDsoPort() + "]");
+      mbean.doThreadDump();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          System.out.println("Exception while trying to close the JMX connector for port no: " + getAdminPort());
+        }
+      }
+    }
   }
 
 }

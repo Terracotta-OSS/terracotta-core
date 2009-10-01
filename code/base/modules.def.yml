@@ -285,6 +285,8 @@ modules:
         - common
         - common-api
         - license-common
+        - deploy
+        - management-api
         - dso-common
         - dso-common-jdk16
         - dso-l1
