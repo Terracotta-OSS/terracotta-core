@@ -22,16 +22,12 @@ import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.util.Assert;
 import com.tc.util.Conversion;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.OidLongArray;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.sequence.MutableSequence;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implements ObjectIDManager {
@@ -49,14 +45,14 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
   private final int                            longsPerDiskEntry;
   private final int                            longsPerStateEntry;
   private final boolean                        isMeasurePerf;
+  private final Object                         checkpointLock     = new Object();
+  private final Object                         objectIDUpdateLock = new Object();
 
   private final Database                       objectOidStoreDB;
   private final Database                       mapsOidStoreDB;
   private final Database                       oidStoreLogDB;
   private final PersistenceTransactionProvider ptp;
   private final CheckpointRunner               checkpointThread;
-  private final Object                         checkpointSyncObj     = new Object();
-  private final Object                         objectIDUpdateSyncObj = new Object();
   private final MutableSequence                sequence;
   private long                                 nextSequence;
   private long                                 endSequence;
@@ -86,7 +82,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     endSequence = nextSequence + SEQUENCE_BATCH_SIZE;
 
     // process left over from previous run
-    processPreviousRunOidLog();
+    processPreviousRunToCompressedStorage();
 
     // start checkpoint thread
     checkpointThread = new CheckpointRunner(checkpointMaxSleep);
@@ -168,12 +164,14 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
   /*
    * Flush out oidLogDB to bitsArray on disk.
    */
-  private boolean oidFlushLogToBitsArray(StoppedFlag stoppedFlag, int maxProcessLimit) {
+  boolean flushToCompressedStorage(StoppedFlag stoppedFlag, int maxProcessLimit) {
     boolean isAllFlushed = true;
-    synchronized (objectIDUpdateSyncObj) {
+    synchronized (objectIDUpdateLock) {
       if (stoppedFlag.isStopped()) return isAllFlushed;
-      OidBitsArrayMap oidStoreMap = new OidBitsArrayMapImpl(longsPerDiskEntry, this.objectOidStoreDB);
-      OidBitsArrayMap mapOidStoreMap = new OidBitsArrayMapImpl(longsPerStateEntry, this.mapsOidStoreDB);
+      OidBitsArrayMapDiskStoreImpl oidStoreMap = new OidBitsArrayMapDiskStoreImpl(longsPerDiskEntry,
+                                                                                  this.objectOidStoreDB);
+      OidBitsArrayMapDiskStoreImpl mapOidStoreMap = new OidBitsArrayMapDiskStoreImpl(longsPerStateEntry,
+                                                                                     this.mapsOidStoreDB);
       PersistenceTransaction tx = null;
       try {
         tx = ptp.newTransaction();
@@ -226,31 +224,28 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
           if (cursor != null) cursor.close();
           cursor = null;
         }
-        oidStoreMap.updateToDisk(pt2nt(tx));
-        mapOidStoreMap.updateToDisk(pt2nt(tx));
+        oidStoreMap.flushToDisk(pt2nt(tx));
+        mapOidStoreMap.flushToDisk(pt2nt(tx));
 
         tx.commit();
         logger.debug("Checkpoint updated " + changes + " objectIDs");
       } catch (DatabaseException e) {
         logger.error("Error ojectID checkpoint: " + e);
         abortOnError(tx);
-      } finally {
-        oidStoreMap.clear();
-        mapOidStoreMap.clear();
       }
     }
     return isAllFlushed;
   }
 
-  private void processPreviousRunOidLog() {
-    oidFlushLogToBitsArray(new StoppedFlag(), Integer.MAX_VALUE);
+  private void processPreviousRunToCompressedStorage() {
+    flushToCompressedStorage(new StoppedFlag(), Integer.MAX_VALUE);
   }
 
-  private boolean processCheckpoint(StoppedFlag stoppedFlag, int maxProcessLimit) {
-    return oidFlushLogToBitsArray(stoppedFlag, maxProcessLimit);
+  private boolean checkpointToCompressedStorage(StoppedFlag stoppedFlag, int maxProcessLimit) {
+    return flushToCompressedStorage(stoppedFlag, maxProcessLimit);
   }
 
-  private static class StoppedFlag {
+  static class StoppedFlag {
     private volatile boolean isStopped = false;
 
     public boolean isStopped() {
@@ -270,7 +265,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     private final StoppedFlag stoppedFlag = new StoppedFlag();
 
     public CheckpointRunner(int maxSleep) {
-      super("ObjectID-Checkpoint");
+      super("ObjectID-CompressedStorage Checkpoint");
       this.maxSleep = maxSleep;
     }
 
@@ -283,16 +278,17 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
       int currentwait = maxSleep;
       int maxProcessLimit = checkpointMaxLimit;
       while (!stoppedFlag.isStopped()) {
-        // Wait for enough changes or specified time-period
-        synchronized (checkpointSyncObj) {
+        // Sleep for enough changes or specified time-period
+        synchronized (checkpointLock) {
           try {
-            checkpointSyncObj.wait(currentwait);
+            checkpointLock.wait(currentwait);
           } catch (InterruptedException e) {
             //
           }
         }
+
         if (stoppedFlag.isStopped()) break;
-        boolean isAllFlushed = processCheckpoint(stoppedFlag, maxProcessLimit);
+        boolean isAllFlushed = checkpointToCompressedStorage(stoppedFlag, maxProcessLimit);
 
         if (isAllFlushed) {
           // All flushed, wait longer for next time
@@ -437,50 +433,6 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
 
   public OperationStatus deleteAll(PersistenceTransaction tx, Set<ObjectID> oidSet) throws TCDatabaseException {
     return (doAll(tx, oidSet, false));
-  }
-
-  /*
-   * for testing purpose. Load bitsArray from disk
-   */
-  OidBitsArrayMapImpl loadBitsArrayFromDisk() {
-    OidBitsArrayMapImpl oidMap = new OidBitsArrayMapImpl(longsPerDiskEntry, this.objectOidStoreDB);
-    oidMap.loadAllFromDisk();
-    return (oidMap);
-  }
-
-  /*
-   * for testing purpose. Load bitsArray from disk
-   */
-  OidBitsArrayMapImpl loadMapsOidStoreFromDisk() {
-    OidBitsArrayMapImpl oidMap = new OidBitsArrayMapImpl(longsPerStateEntry, this.mapsOidStoreDB);
-    oidMap.loadAllFromDisk();
-    return (oidMap);
-  }
-
-  /*
-   * for testing purpose only. Return all IDs with ObjectID
-   */
-  Collection bitsArrayMapToObjectID() {
-    OidBitsArrayMapImpl oidMap = loadBitsArrayFromDisk();
-    HashSet objectIDs = new HashSet();
-    for (Iterator i = oidMap.getMapKeySet().iterator(); i.hasNext();) {
-      long oid = ((Long) i.next()).longValue();
-      OidLongArray bits = oidMap.getBitsArray(oid);
-      for (int offset = 0; offset < bits.totalBits(); ++offset) {
-        if (bits.isSet(offset)) {
-          Assert.assertTrue("Same object ID represented by different bits in memory", objectIDs
-              .add(new ObjectID(oid + offset)));
-        }
-      }
-    }
-    return (objectIDs);
-  }
-
-  /*
-   * for testing purpose only.
-   */
-  void runCheckpoint() {
-    oidFlushLogToBitsArray(new StoppedFlag(), Integer.MAX_VALUE);
   }
 
 }

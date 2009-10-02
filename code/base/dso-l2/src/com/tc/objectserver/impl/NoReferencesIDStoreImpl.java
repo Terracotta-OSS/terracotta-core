@@ -5,11 +5,11 @@ package com.tc.objectserver.impl;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.persistence.sleepycat.OidBitsArrayMap;
-import com.tc.objectserver.persistence.sleepycat.OidBitsArrayMapInMemoryImpl;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.OidBitsArrayMap;
+import com.tc.util.OidBitsArrayMapImpl;
 
 public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
@@ -68,7 +68,7 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
   private static class OidBitsStore implements NoReferencesIDStore {
 
-    private OidBitsArrayMap store = new OidBitsArrayMapInMemoryImpl(8);
+    private OidBitsArrayMap store = new OidBitsArrayMapImpl(8);
 
     public void addToNoReferences(ManagedObject mo) {
       if (mo.getManagedObjectState().hasNoReferences()) {

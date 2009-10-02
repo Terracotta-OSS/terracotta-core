@@ -1,67 +1,60 @@
 /*
  * All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
  */
-package com.tc.objectserver.persistence.sleepycat;
+package com.tc.util;
 
-import com.sleepycat.je.Transaction;
 import com.tc.object.ObjectID;
-import com.tc.util.OidLongArray;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-public class OidBitsArrayMapInMemoryImpl implements OidBitsArrayMap {
-  private final TreeMap<Long, OidLongArray> map;
-  private final int                         bitsLength;
-  private final int                         longsPerDiskUnit;
+public class OidBitsArrayMapImpl implements OidBitsArrayMap {
+  protected final TreeMap<Long, OidLongArray> map;
+  protected final int                         bitsLength;
+  protected final int                         longsPerDiskUnit;
 
-  public OidBitsArrayMapInMemoryImpl(int longsPerDiskUnit) {
+  public OidBitsArrayMapImpl(int longsPerDiskUnit) {
     this.longsPerDiskUnit = longsPerDiskUnit;
     this.bitsLength = longsPerDiskUnit * OidLongArray.BITS_PER_LONG;
     map = new TreeMap();
   }
-
-  public void clear() {
-    map.clear();
-  }
-
-
-  private Long oidIndex(long oid) {
-    return new Long(oid / bitsLength * bitsLength);
-  }
-
+  
   public Long oidIndex(ObjectID id) {
-    long oid = id.toLong();
+    return new Long(id.toLong() / bitsLength * bitsLength);
+  }
+  
+  public Long oidIndex(long oid) {
     return new Long(oid / bitsLength * bitsLength);
+  }
+
+  public OidLongArray getBitsArray(long oid) {
+    return map.get(oidIndex(oid));
   }
 
   private OidLongArray getOrLoadBitsArray(long oid) {
     Long mapIndex = oidIndex(oid);
     OidLongArray longAry;
-    synchronized (map) {
-      longAry = map.get(mapIndex);
-      if (longAry == null) longAry = new OidLongArray(longsPerDiskUnit, mapIndex.longValue());
-      map.put(mapIndex, longAry);
-    }
+    longAry = map.get(mapIndex);
+    if (longAry == null) longAry = loadArray(oid, longsPerDiskUnit, mapIndex.longValue());
+    map.put(mapIndex, longAry);
     return longAry;
   }
-
-  public void updateToDisk(Transaction tx) {
-    // do nothing
+  
+  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex) {
+    return new OidLongArray(lPerDiskUnit, mapIndex);
   }
-
+  
   private OidLongArray getAndModify(long oid, boolean doSet) {
     OidLongArray longAry = getOrLoadBitsArray(oid);
     int oidInArray = (int) (oid % bitsLength);
-    synchronized (longAry) {
-      if (doSet) {
-        longAry.setBit(oidInArray);
-      } else {
-        longAry.clrBit(oidInArray);
-      }
+    if (doSet) {
+      longAry.setBit(oidInArray);
+    } else {
+      longAry.clrBit(oidInArray);
     }
     return (longAry);
   }
+  
 
   public OidLongArray getAndSet(ObjectID id) {
     return (getAndModify(id.toLong(), true));
@@ -74,11 +67,9 @@ public class OidBitsArrayMapInMemoryImpl implements OidBitsArrayMap {
   public boolean contains(ObjectID id) {
     long oid = id.toLong();
     Long mapIndex = oidIndex(oid);
-    synchronized (map) {
-      if (map.containsKey(mapIndex)) {
-        OidLongArray longAry = map.get(mapIndex);
-        return (longAry.isSet((int) oid % bitsLength));
-      }
+    if (map.containsKey(mapIndex)) {
+      OidLongArray longAry = map.get(mapIndex);
+      return (longAry.isSet((int) oid % bitsLength));
     }
     return (false);
   }

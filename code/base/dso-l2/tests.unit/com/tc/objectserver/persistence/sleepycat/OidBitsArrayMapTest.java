@@ -4,11 +4,17 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
+import com.sleepycat.je.Cursor;
+import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
+import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.LockMode;
+import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
 import com.tc.util.OidLongArray;
 
 import java.io.File;
@@ -66,29 +72,75 @@ public class OidBitsArrayMapTest extends TCTestCase {
     return idList;
   }
 
-  private void verifyObjectIDInList(List<ObjectID> idList, OidBitsArrayMapImpl oids) {
+  private void verifyObjectIDInList(List<ObjectID> idList, OidBitsArrayMapDiskStoreImpl oids) {
     for (int i = 0; i < idList.size(); ++i) {
       Assert.assertTrue("Not found index=" + oids.oidIndex(idList.get(i)), oids.contains(idList.get(i)));
     }
+  }
+  
+  private void saveAllToDisk(OidBitsArrayMapDiskStoreImpl oids) {
+
+    // use another set to avoid ConcurrentModificationException
+    Set dupKeySet = new HashSet();
+    dupKeySet.addAll(oids.getMap().keySet());
+    Iterator i = dupKeySet.iterator();
+    while (i.hasNext()) {
+      OidLongArray bitsArray = oids.getMap().get(i.next());
+      try {
+        oids.writeDiskEntry(null, bitsArray);
+      } catch (DatabaseException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+  
+  private void loadAllFromDisk(OidBitsArrayMapDiskStoreImpl oids) {
+    oids.getMap().clear();
+    Cursor cursor = null;
+    try {
+      cursor = oidDB.openCursor(null, CursorConfig.READ_COMMITTED);
+      DatabaseEntry key = new DatabaseEntry();
+      DatabaseEntry value = new DatabaseEntry();
+      while (OperationStatus.SUCCESS.equals(cursor.getNext(key, value, LockMode.DEFAULT))) {
+        // load its only records indicated by auxKey
+        long index = Conversion.bytes2Long(key.getData());
+        if (index == (oids.oidIndex(index) + oids.getAuxKey())) {
+          index -= oids.getAuxKey();
+          OidLongArray bitsArray = new OidLongArray(index, value.getData());
+          oids.getMap().put(new Long(index), bitsArray);
+        }
+      }
+      cursor.close();
+      cursor = null;
+    } catch (DatabaseException e) {
+      throw new RuntimeException(e);
+    } finally {
+      try {
+        if (cursor != null) cursor.close();
+      } catch (DatabaseException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
   }
 
   public void testReadWriteDB() {
     List<ObjectID> idList = populateObjectIDList();
 
-    OidBitsArrayMapImpl oids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB);
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
     }
 
     // write and read back
-    oids.saveAllToDisk();
-    oids.loadAllFromDisk();
+    saveAllToDisk(oids);
+    loadAllFromDisk(oids);
     verifyObjectIDInList(idList, oids);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapImpl secOids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB);
-    secOids.loadAllFromDisk();
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB);
+    loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
 
     // remove all one by one
@@ -97,7 +149,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // verify
-    Set keySet = secOids.getMapKeySet();
+    Set keySet = secOids.getMap().keySet();
     Iterator i = keySet.iterator();
     while (i.hasNext()) {
       OidLongArray ary = secOids.getBitsArray(((Long) i.next()));
@@ -105,29 +157,29 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // zero arrays shall be removed from db
-    secOids.saveAllToDisk();
-    secOids.loadAllFromDisk();
-    Assert.assertEquals(0, secOids.getMapKeySet().size());
+    saveAllToDisk(secOids);
+    loadAllFromDisk(secOids);
+    Assert.assertEquals(0, secOids.getMap().keySet().size());
   }
 
   public void testReadWriteAuxDB() {
     int auxDB = 1;
     List<ObjectID> idList = populateObjectIDList();
 
-    OidBitsArrayMapImpl oids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB, auxDB);
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
     }
 
     // write and read back
-    oids.saveAllToDisk();
-    oids.loadAllFromDisk();
+    saveAllToDisk(oids);
+    loadAllFromDisk(oids);
     verifyObjectIDInList(idList, oids);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapImpl secOids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB, auxDB);
-    secOids.loadAllFromDisk();
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB, auxDB);
+    loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
 
     // remove all one by one
@@ -136,7 +188,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // verify
-    Set keySet = secOids.getMapKeySet();
+    Set keySet = secOids.getMap().keySet();
     Iterator i = keySet.iterator();
     while (i.hasNext()) {
       OidLongArray ary = secOids.getBitsArray(((Long) i.next()));
@@ -144,9 +196,9 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // zero arrays shall be removed from db
-    secOids.saveAllToDisk();
-    secOids.loadAllFromDisk();
-    Assert.assertEquals(0, secOids.getMapKeySet().size());
+    saveAllToDisk(secOids);
+    loadAllFromDisk(secOids);
+    Assert.assertEquals(0, secOids.getMap().keySet().size());
   }
 
   public void testReadWriteDBandAuxDB() {
@@ -157,8 +209,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
       if ((i % 3) == 0) auxList.add(idList.get(i));
     }
 
-    OidBitsArrayMapImpl oids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB);
-    OidBitsArrayMapImpl oidAux = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB);
+    OidBitsArrayMapDiskStoreImpl oidAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB, auxDB);
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
@@ -168,19 +220,19 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // write and read back
-    oids.saveAllToDisk();
-    oidAux.saveAllToDisk();
-    oids.loadAllFromDisk();
-    oidAux.loadAllFromDisk();
+    saveAllToDisk(oids);
+    saveAllToDisk(oidAux);
+    loadAllFromDisk(oids);
+    loadAllFromDisk(oidAux);
     verifyObjectIDInList(idList, oids);
     verifyObjectIDInList(auxList, oidAux);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapImpl secOids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB);
-    secOids.loadAllFromDisk();
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB);
+    loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
-    OidBitsArrayMapImpl secAux = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB, auxDB);
-    secAux.loadAllFromDisk();
+    OidBitsArrayMapDiskStoreImpl secAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB, auxDB);
+    loadAllFromDisk(secAux);
     verifyObjectIDInList(auxList, secAux);
 
     // remove all one by one
@@ -192,13 +244,13 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // verify
-    Set keySet = secOids.getMapKeySet();
+    Set keySet = secOids.getMap().keySet();
     Iterator i = keySet.iterator();
     while (i.hasNext()) {
       OidLongArray ary = secOids.getBitsArray(((Long) i.next()));
       Assert.assertTrue(ary.isZero());
     }
-    keySet = secAux.getMapKeySet();
+    keySet = secAux.getMap().keySet();
     i = keySet.iterator();
     while (i.hasNext()) {
       OidLongArray ary = secAux.getBitsArray(((Long) i.next()));
@@ -206,12 +258,12 @@ public class OidBitsArrayMapTest extends TCTestCase {
     }
 
     // zero arrays shall be removed from db
-    secOids.saveAllToDisk();
-    secOids.loadAllFromDisk();
-    Assert.assertEquals(0, secOids.getMapKeySet().size());
-    secAux.saveAllToDisk();
-    secAux.loadAllFromDisk();
-    Assert.assertEquals(0, secAux.getMapKeySet().size());
+    saveAllToDisk(secOids);
+    loadAllFromDisk(secOids);
+    Assert.assertEquals(0, secOids.getMap().keySet().size());
+    saveAllToDisk(secAux);
+    loadAllFromDisk(secAux);
+    Assert.assertEquals(0, secAux.getMap().keySet().size());
   }
 
   public void baseTestReadDiskEntry(int auxDB) {
@@ -219,7 +271,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
     Set<Long> indexSet = new HashSet<Long>();
     Map<Long, OidLongArray> map = new HashMap<Long, OidLongArray>();
 
-    OidBitsArrayMapImpl oids = new OidBitsArrayMapImpl(LongPerDiskUnit, oidDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidDB, auxDB);
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
@@ -227,7 +279,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
       indexSet.add(oids.oidIndex(id));
     }
 
-    oids.saveAllToDisk();
+    saveAllToDisk(oids);
 
     // read back to memory
     for (Long index : indexSet) {
