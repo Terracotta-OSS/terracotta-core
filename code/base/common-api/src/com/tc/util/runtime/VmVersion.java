@@ -4,6 +4,8 @@
  */
 package com.tc.util.runtime;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -213,6 +215,20 @@ public final class VmVersion {
   }
 
   private static String getIBMRuntimeVersion() {
+    Properties props = new Properties();
+    try {
+      InputStream is = Class.class.getResourceAsStream("/javasdkversion.properties");
+      if (is != null) {
+        props.load(is);
+        String version = props.getProperty("sdk.version");
+        if (version != null) {
+          return version;
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     try {
       Class c = Class.forName("com.ibm.misc.JavaRuntimeVersion");
       Method m = c.getDeclaredMethod("getValue", new Class[] {});
