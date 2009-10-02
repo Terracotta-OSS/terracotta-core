@@ -116,7 +116,6 @@ import com.tc.object.tx.ClientTransactionFactoryImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.ClientTransactionManagerImpl;
 import com.tc.object.tx.RemoteTransactionManager;
-import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.ReconnectConfig;
@@ -293,20 +292,20 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRANetworkActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRADiskActivity");
       registry.registerActionInstance("com.tc.statistics.retrieval.actions.SRAThreadDump");
-      registry.registerActionInstance(new SRAStageQueueDepths(stageManager));
+      registry.registerActionInstance(new SRAStageQueueDepths(this.stageManager));
       registry.registerActionInstance(new SRACacheObjectsEvictRequest());
       registry.registerActionInstance(new SRACacheObjectsEvicted());
-      registry.registerActionInstance(new SRAMessages(messageMonitor));
-      registry.registerActionInstance(new SRAL1OutstandingBatches(outstandingBatchesCounter));
-      registry.registerActionInstance(new SRAL1TransactionsPerBatch(transactionsPerBatchCounter));
-      registry.registerActionInstance(new SRAL1TransactionSize(transactionSizeCounter));
-      registry.registerActionInstance(new SRAL1PendingBatchesSize(pendingBatchesSize));
+      registry.registerActionInstance(new SRAMessages(this.messageMonitor));
+      registry.registerActionInstance(new SRAL1OutstandingBatches(this.outstandingBatchesCounter));
+      registry.registerActionInstance(new SRAL1TransactionsPerBatch(this.transactionsPerBatchCounter));
+      registry.registerActionInstance(new SRAL1TransactionSize(this.transactionSizeCounter));
+      registry.registerActionInstance(new SRAL1PendingBatchesSize(this.pendingBatchesSize));
       registry.registerActionInstance(new SRAHttpSessions());
-      registry.registerActionInstance(new SRAL1TransactionCount(txCounter));
+      registry.registerActionInstance(new SRAL1TransactionCount(this.txCounter));
       registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
 
       // register the SRAs from TIMs
-      final SRASpec[] sraSpecs = config.getSRASpecs();
+      final SRASpec[] sraSpecs = DistributedObjectClient.this.config.getSRASpecs();
       if (sraSpecs != null) {
         for (SRASpec spec : sraSpecs) {
           final Collection<StatisticRetrievalAction> sras = spec.getSRAs();
@@ -456,9 +455,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     SampledCounter txnCounter = (SampledCounter) this.counterManager.createCounter(sampledCounterConfig);
 
     // setup statistics subsystem
-    statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
-                                                                     pendingBatchesSize, transactionSizeCounter,
-                                                                     transactionsPerBatchCounter, txnCounter));
+    this.statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
+                                                                          pendingBatchesSize, transactionSizeCounter,
+                                                                          transactionsPerBatchCounter, txnCounter));
     this.statisticsAgentSubSystem.setup(StatisticsSystemType.CLIENT, this.config.getNewCommonL1Config());
 
     RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
@@ -505,7 +504,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel());
     this.l1Management = new L1Management(teh, this.statisticsAgentSubSystem, this.runtimeLogger, this.manager
-        .getInstrumentationLogger(), this.config.rawConfigText(), this, config.getMBeanSpecs());
+        .getInstrumentationLogger(), this.config.rawConfigText(), this, this.config.getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
     // Setup the transaction manager
@@ -789,8 +788,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     if (this.objectManager != null) {
       this.objectManager.dumpToLogger();
     }
-    
-    if(this.rtxManager != null) {
+
+    if (this.rtxManager != null) {
       this.rtxManager.dumpToLogger();
     }
   }

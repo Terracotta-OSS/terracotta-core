@@ -6,6 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -111,11 +112,11 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   public void shutdown() {
-    isShutdown = true;
+    this.isShutdown = true;
   }
 
   public void pause(final NodeID remote, final int disconnected) {
-    if (isShutdown) return;
+    if (this.isShutdown) { return; }
     synchronized (this.lock) {
       this.remoteTxManagerTimerTask.reset();
       if (isStoppingOrStopped()) { return; }
@@ -125,7 +126,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   public void unpause(final NodeID remote, final int disconnected) {
-    if (isShutdown) return;
+    if (this.isShutdown) { return; }
     synchronized (this.lock) {
       if (isStoppingOrStopped()) { return; }
       if (this.status == RUNNING) { throw new AssertionError("Attempt to unpause while in running state."); }
@@ -137,7 +138,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
-    if (isShutdown) return;
+    if (this.isShutdown) { return; }
     synchronized (this.lock) {
       if (this.status != PAUSED) { throw new AssertionError("At " + this.status + " from " + remoteNode + " to "
                                                             + thisNode + " . "
@@ -183,7 +184,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       if (this.incompleteBatches.size() != 0) {
         try {
           int incompleteBatchesCount = 0;
-          LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLogger.COUNT_BASED);
+          LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLoggerType.COUNT_BASED);
           while ((this.status != STOPPED)
                  && ((this.ackOnExitTimeout <= 0) || (t0 + this.ackOnExitTimeout) > System.currentTimeMillis())) {
             if (incompleteBatchesCount != this.incompleteBatches.size()) {
@@ -523,9 +524,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.println(getClass().getName());
     synchronized (this.lock) {
-      out.indent().print("incompleteBatches count: ").println(new Integer(incompleteBatches.size()));
-      out.indent().print("batchAccounting: ").println(batchAccounting);
-      out.indent().print("lockAccounting: ").println(lockAccounting);
+      out.indent().print("incompleteBatches count: ").println(new Integer(this.incompleteBatches.size()));
+      out.indent().print("batchAccounting: ").println(this.batchAccounting);
+      out.indent().print("lockAccounting: ").println(this.lockAccounting);
     }
     return out;
 

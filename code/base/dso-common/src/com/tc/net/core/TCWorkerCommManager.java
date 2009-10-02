@@ -7,6 +7,7 @@ package com.tc.net.core;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -20,7 +21,8 @@ import java.util.Arrays;
  */
 public class TCWorkerCommManager {
   private static final TCLogger   logger             = TCLogging.getLogger(TCWorkerCommManager.class);
-  private static final TCLogger   lossyLogger        = new LossyTCLogger(logger, 10, LossyTCLogger.COUNT_BASED, false);
+  private static final TCLogger   lossyLogger        = new LossyTCLogger(logger, 10, LossyTCLoggerType.COUNT_BASED,
+                                                                         false);
 
   private static final String     WORKER_NAME_PREFIX = "TCWorkerComm # ";
 
@@ -35,23 +37,23 @@ public class TCWorkerCommManager {
     if (workerCommCount <= 0) { throw new IllegalArgumentException("invalid worker count: " + workerCommCount); }
     logger.info("Creating " + workerCommCount + " worker comm threads for " + name);
     this.totalWorkerComm = workerCommCount;
-    workerCommThreads = new CoreNIOServices[workerCommCount];
-    for (int i = 0; i < workerCommThreads.length; i++) {
-      workerCommThreads[i] = new CoreNIOServices(name + ":" + WORKER_NAME_PREFIX + i, this, socketParams);
+    this.workerCommThreads = new CoreNIOServices[workerCommCount];
+    for (int i = 0; i < this.workerCommThreads.length; i++) {
+      this.workerCommThreads[i] = new CoreNIOServices(name + ":" + WORKER_NAME_PREFIX + i, this, socketParams);
     }
   }
 
   public synchronized CoreNIOServices getNextWorkerComm() {
-    CoreNIOServices[] leastWeightWorkerComms = getLeastWeightWorkerComms(workerCommThreads);
+    CoreNIOServices[] leastWeightWorkerComms = getLeastWeightWorkerComms(this.workerCommThreads);
     CoreNIOServices rv;
     Assert.eval(leastWeightWorkerComms.length >= 1);
     if (leastWeightWorkerComms.length == 1) {
       rv = leastWeightWorkerComms[0];
     } else {
-      rv = leastWeightWorkerComms[nextWorkerCommId++ % leastWeightWorkerComms.length];
+      rv = leastWeightWorkerComms[this.nextWorkerCommId++ % leastWeightWorkerComms.length];
     }
 
-    String message = "Selecting " + rv + "  from " + Arrays.asList(workerCommThreads);
+    String message = "Selecting " + rv + "  from " + Arrays.asList(this.workerCommThreads);
     if (logger.isDebugEnabled()) {
       logger.debug(message);
     } else {
@@ -64,14 +66,14 @@ public class TCWorkerCommManager {
   private CoreNIOServices[] getLeastWeightWorkerComms(CoreNIOServices[] workerComms) {
     ArrayList<CoreNIOServices> selectedWorkerComms = new ArrayList<CoreNIOServices>();
     int leastValue = Integer.MAX_VALUE;
-    for (int i = 0; i < workerComms.length; i++) {
-      int presentValue = workerComms[i].getWeight();
+    for (CoreNIOServices workerComm : workerComms) {
+      int presentValue = workerComm.getWeight();
       if (presentValue < leastValue) {
         selectedWorkerComms.clear();
-        selectedWorkerComms.add(workerComms[i]);
+        selectedWorkerComms.add(workerComm);
         leastValue = presentValue;
       } else if (presentValue == leastValue) {
-        selectedWorkerComms.add(workerComms[i]);
+        selectedWorkerComms.add(workerComm);
       }
     }
 
@@ -79,9 +81,9 @@ public class TCWorkerCommManager {
   }
 
   public synchronized void start() {
-    if (started.attemptSet()) {
-      for (int i = 0; i < workerCommThreads.length; i++) {
-        workerCommThreads[i].start();
+    if (this.started.attemptSet()) {
+      for (CoreNIOServices workerCommThread : this.workerCommThreads) {
+        workerCommThread.start();
       }
     } else {
       throw new IllegalStateException("already started");
@@ -89,21 +91,21 @@ public class TCWorkerCommManager {
   }
 
   public synchronized void stop() {
-    if (!started.isSet()) { return; }
+    if (!this.started.isSet()) { return; }
 
-    if (stopped.attemptSet()) {
-      for (int i = 0; i < totalWorkerComm; i++) {
-        workerCommThreads[i].requestStop();
+    if (this.stopped.attemptSet()) {
+      for (int i = 0; i < this.totalWorkerComm; i++) {
+        this.workerCommThreads[i].requestStop();
       }
     }
   }
 
   public synchronized int getClientCountForWorkerComm(int workerCommId) {
-    return workerCommThreads[workerCommId].getWeight();
+    return this.workerCommThreads[workerCommId].getWeight();
   }
 
   public synchronized long getBytesReadByWorkerComm(int workerCommId) {
-    return workerCommThreads[workerCommId].getTotalBytesRead();
+    return this.workerCommThreads[workerCommId].getTotalBytesRead();
   }
 
 }
