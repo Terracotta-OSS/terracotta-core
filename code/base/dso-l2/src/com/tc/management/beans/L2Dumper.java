@@ -22,13 +22,13 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
 
   private static final boolean  DEBUG                         = false;
 
-  public static final String    THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
-  public static final Class[]   THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
-  public static final int       DEFAULT_THREAD_DUMP_COUNT     = 3;
-  public static final long      DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
+  private static final String   THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
+  private static final Class[]  THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
+  private static final int      DEFAULT_THREAD_DUMP_COUNT     = 3;
+  private static final long     DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
 
-  public int                    threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
-  public long                   threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
+  private int                   threadDumpCount               = DEFAULT_THREAD_DUMP_COUNT;
+  private long                  threadDumpInterval            = DEFAULT_THREAD_DUMP_INTERVAL;
 
   private final TCDumper        dumper;
 
@@ -41,6 +41,7 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   }
 
   public void doServerDump() {
+    logger.info("Server dump: ");
     dumper.dump();
   }
 

@@ -590,7 +590,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
         }
         L2DumperMBean mbean = (L2DumperMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, L2MBeanNames.DUMPER,
                                                                                             L2DumperMBean.class, true);
-        mbean.doServerDump();
+        mbean.dumpClusterState();
         if (pid != 0) {
           mbean.setThreadDumpCount(dumpCount);
           mbean.setThreadDumpInterval(dumpInterval);

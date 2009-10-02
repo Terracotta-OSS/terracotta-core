@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.logging.DumpHandler;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.lockmanager.api.LockFlushCallback;
@@ -13,7 +14,7 @@ import com.tc.object.session.SessionID;
 /**
  * Client representation of the server transaction manager
  */
-public interface RemoteTransactionManager extends ClientHandshakeCallback {
+public interface RemoteTransactionManager extends ClientHandshakeCallback, DumpHandler {
 
   public void stop();
 

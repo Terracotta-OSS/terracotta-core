@@ -92,7 +92,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new ClientGlobalTransactionManagerImpl(remoteTxnMgr);
   }
 
-  public RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+  public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                        final ObjectRequestMonitor objectRequestMonitor,
                                                        final int faultCount, final SessionManager sessionManager) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();

@@ -77,4 +77,12 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void shutdown() {
     // NOP
   }
+
+  public String dump() {
+    return "";
+  }
+
+  public void dumpToLogger() {
+    //
+  }
 }

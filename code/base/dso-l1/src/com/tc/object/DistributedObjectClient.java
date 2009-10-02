@@ -116,6 +116,7 @@ import com.tc.object.tx.ClientTransactionFactoryImpl;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.ClientTransactionManagerImpl;
 import com.tc.object.tx.RemoteTransactionManager;
+import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.ReconnectConfig;
@@ -787,6 +788,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     if (this.objectManager != null) {
       this.objectManager.dumpToLogger();
+    }
+    
+    if(this.rtxManager != null) {
+      this.rtxManager.dumpToLogger();
     }
   }
 
