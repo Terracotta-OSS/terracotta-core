@@ -124,7 +124,7 @@ class ClientStatePersistorImpl extends SleepycatPersistorBase implements ClientS
       }
 
       tx.commit();
-      logger.debug("Deleted client state for " + id);
+      logger.info("Deleted client state for " + id);
     } catch (DatabaseException e) {
       throw new DBException(e);
     }
