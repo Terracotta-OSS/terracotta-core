@@ -190,6 +190,9 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
 
     @Override
     protected void finished() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);

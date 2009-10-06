@@ -73,6 +73,14 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     threadDumpTreeModel.nodeStructureChanged(root);
   }
 
+  public int getThreadDumpCount() {
+    return ((XRootNode) threadDumpTreeModel.getRoot()).getChildCount();
+  }
+
+  private boolean haveAnyEntries() {
+    return getThreadDumpCount() > 0;
+  }
+
   private boolean isWaiting() {
     return threadDumpButton.getText().equals(appContext.getString("cancel"));
   }
@@ -136,9 +144,9 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     deleteAllAction.setEnabled(haveSelection);
     exportAsTextAction.setEnabled(haveSelection);
     if (!haveSelection) {
-      exportButton.setEnabled(haveSelection);
       textArea.setText("");
     }
+    exportButton.setEnabled(haveAnyEntries());
   }
 
   private void exportAsArchive() throws Exception {

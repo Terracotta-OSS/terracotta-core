@@ -245,8 +245,10 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   public boolean determineConnected() {
-    for (IServerGroup group : serverGroups) {
-      if (group.isConnected()) { return true; }
+    if (serverGroups != null) {
+      for (IServerGroup group : serverGroups) {
+        if (group.isConnected()) { return true; }
+      }
     }
     return false;
   }

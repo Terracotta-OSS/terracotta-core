@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
@@ -63,6 +64,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void handleReady() {
+      if (tornDown.get()) { return; }
       if (clusterModel.isReady()) {
         init();
       }
@@ -70,6 +72,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (tornDown.get()) { return; }
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(ClientsNode.this);
       }
@@ -107,6 +110,7 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
 
     @Override
     protected void finished() {
+      if (tornDown.get()) { return; }
       Exception e = getException();
       if (e != null) {
         Throwable rootCause = ExceptionHelper.getRootCause(e);
@@ -153,8 +157,68 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     nodeChanged();
   }
 
+  public void clientConnected(IClient client) {
+    if (!tornDown.get()) {
+      SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
+    }
+  }
+
+  private class ClientConnectedRunnable implements Runnable {
+    private final IClient client;
+
+    private ClientConnectedRunnable(IClient client) {
+      this.client = client;
+    }
+
+    public void run() {
+      if (tornDown.get()) { return; }
+      appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
+      List<IClient> list = new ArrayList(Arrays.asList(clients));
+      list.add(client);
+      clients = list.toArray(new IClient[list.size()]);
+      addClientNode(createClientNode(client));
+      updateLabel();
+      appContext.setStatus(appContext.getMessage("dso.client.new") + client);
+    }
+  }
+
+  public void clientDisconnected(IClient client) {
+    if (!tornDown.get()) {
+      SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
+    }
+  }
+
+  private class ClientDisconnectedRunnable implements Runnable {
+    private final IClient client;
+
+    private ClientDisconnectedRunnable(IClient client) {
+      this.client = client;
+    }
+
+    public void run() {
+      if (tornDown.get()) { return; }
+      appContext.setStatus(appContext.getMessage("dso.client.detaching"));
+      ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(clients));
+      int nodeIndex = list.indexOf(client);
+      if (nodeIndex != -1) {
+        list.remove(client);
+        clients = list.toArray(new IClient[] {});
+        removeChild((XTreeNode) getChildAt(nodeIndex));
+        if (clientsPanel != null) {
+          clientsPanel.remove(client);
+        }
+      }
+      updateLabel();
+      appContext.setStatus(appContext.getMessage("dso.client.detached") + client);
+    }
+  }
+
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
@@ -176,60 +240,6 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     }
 
     super.tearDown();
-  }
-
-  public void clientConnected(IClient client) {
-    if (appContext == null) return;
-    SwingUtilities.invokeLater(new ClientConnectedRunnable(client));
-  }
-
-  private class ClientConnectedRunnable implements Runnable {
-    private final IClient client;
-
-    private ClientConnectedRunnable(IClient client) {
-      this.client = client;
-    }
-
-    public void run() {
-      if (appContext == null) return;
-      appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
-      List<IClient> list = new ArrayList(Arrays.asList(clients));
-      list.add(client);
-      clients = list.toArray(new IClient[list.size()]);
-      addClientNode(createClientNode(client));
-      updateLabel();
-      appContext.setStatus(appContext.getMessage("dso.client.new") + client);
-    }
-  }
-
-  public void clientDisconnected(IClient client) {
-    if (appContext == null) return;
-    SwingUtilities.invokeLater(new ClientDisconnectedRunnable(client));
-  }
-
-  private class ClientDisconnectedRunnable implements Runnable {
-    private final IClient client;
-
-    private ClientDisconnectedRunnable(IClient client) {
-      this.client = client;
-    }
-
-    public void run() {
-      if (appContext == null) return;
-      appContext.setStatus(appContext.getMessage("dso.client.detaching"));
-      ArrayList<IClient> list = new ArrayList<IClient>(Arrays.asList(clients));
-      int nodeIndex = list.indexOf(client);
-      if (nodeIndex != -1) {
-        list.remove(client);
-        clients = list.toArray(new IClient[] {});
-        removeChild((XTreeNode) getChildAt(nodeIndex));
-        if (clientsPanel != null) {
-          clientsPanel.remove(client);
-        }
-      }
-      updateLabel();
-      appContext.setStatus(appContext.getMessage("dso.client.detached") + client);
-    }
   }
 
 }
