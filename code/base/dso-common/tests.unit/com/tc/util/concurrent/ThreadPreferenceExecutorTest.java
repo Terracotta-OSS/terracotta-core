@@ -4,8 +4,7 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.util.concurrent.ThreadPreferenceExecutor;
-import com.tc.util.concurrent.ThreadUtil;
+import com.tc.logging.TCLogging;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -19,7 +18,8 @@ import junit.framework.TestCase;
 public class ThreadPreferenceExecutorTest extends TestCase {
 
   public void testBasic() {
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS);
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS, TCLogging
+        .getLogger(ThreadPreferenceExecutorTest.class));
     assertEquals(0, exec.getActiveThreadCount());
 
     final AtomicInteger run = new AtomicInteger();
@@ -57,7 +57,8 @@ public class ThreadPreferenceExecutorTest extends TestCase {
   }
 
   public void testThreadReuse() {
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS);
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS, TCLogging
+        .getLogger(ThreadPreferenceExecutorTest.class));
 
     final Set<Thread> threads = Collections.synchronizedSet(new HashSet<Thread>());
 

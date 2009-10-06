@@ -7,6 +7,7 @@ package com.tc.management;
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -31,7 +32,8 @@ public class RemoteJMXProcessor implements Sink {
 
     // we're not using a standard thread pool executor here since it seems that some jmx tasks are inter-dependent (such
     // that if they are queued, things will lock up)
-    executor = new ThreadPreferenceExecutor(getClass().getSimpleName(), maxThreads, idleTime, TimeUnit.SECONDS);
+    executor = new ThreadPreferenceExecutor(getClass().getSimpleName(), maxThreads, idleTime, TimeUnit.SECONDS,
+                                            TCLogging.getLogger(RemoteJMXProcessor.class));
   }
 
   public void add(final EventContext context) {

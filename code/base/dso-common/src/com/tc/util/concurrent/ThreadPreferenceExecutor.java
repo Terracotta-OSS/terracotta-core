@@ -4,6 +4,8 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.logging.TCLogger;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -24,24 +26,27 @@ public class ThreadPreferenceExecutor implements Executor {
   private final ThreadFactory           threadFactory;
   private final BlockingQueue<Runnable> queue;
   private final String                  name;
+  private final TCLogger                logger;
 
   private int                           numThreads = 0;
 
-  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit) {
-    this(name, maxThreads, idleTime, unit, defaultThreadFactory(name));
+  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit, TCLogger logger) {
+    this(name, maxThreads, idleTime, unit, defaultThreadFactory(name), logger);
   }
 
   private static ThreadFactory defaultThreadFactory(String name) {
     return new DefaultThreadFactory(name);
   }
 
-  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit, ThreadFactory threadFactory) {
+  public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit,
+                                  ThreadFactory threadFactory, TCLogger logger) {
     this.name = name;
     this.maxThreads = maxThreads;
     this.idleTime = idleTime;
     this.unit = unit;
     this.threadFactory = threadFactory;
     this.queue = new SynchronousQueue<Runnable>();
+    this.logger = logger;
   }
 
   public void execute(Runnable command) {
@@ -61,6 +66,9 @@ public class ThreadPreferenceExecutor implements Executor {
     numThreads++;
     Thread newThread = threadFactory.newThread(new WorkerTask(command));
     newThread.start();
+    if (numThreads % 5 == 0) {
+      logger.info(getName() + " thread count : " + numThreads);
+    }
     return true;
   }
 
