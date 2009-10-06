@@ -46,7 +46,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private byte[]                                   destinationAddress;
   private int                                      destinationPort;
   private boolean                                  allowConnectionReplace = false;
-  private ConnectionHealthCheckerContext           healthCheckerContext   = null;
+  private volatile ConnectionHealthCheckerContext  healthCheckerContext   = null;
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
   /**
@@ -115,12 +115,11 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
       logger.info(message.toString());
       throw new AssertionError("Wrong handshake message from: " + message.getSource());
     } else if (message.getMessageProtocol() == WireProtocolHeader.PROTOCOL_HEALTHCHECK_PROBES) {
-      Assert.assertNotNull(healthCheckerContext);
       if (this.healthCheckerContext.receiveProbe((HealthCheckerProbeMessage) message)) {
-        // Proper health checker probe message. The context would have taken care of processing.
         return;
+      } else {
+        throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
       }
-      throw new AssertionError("Wrong HealthChecker Probe message from: " + message.getSource());
     }
     this.receiveLayer.receive(message.getPayload());
     message.getWireProtocolHeader().recycle();
