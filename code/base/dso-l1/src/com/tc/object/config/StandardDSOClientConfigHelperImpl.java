@@ -855,10 +855,17 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     Resource res = this.classResources.get(className);
     if (res == null) return null;
 
-    if (res.isTargetSystemLoaderOnly()
-        && (ClassLoader.getSystemClassLoader() != loader || hideSystemLoaderOnlyResources)) { return null; }
+    if (!res.isTargetSystemLoaderOnly()) {
+      return res.getResource();
+    } else {
+      if (!hideSystemLoaderOnlyResources) {
+        if (ClassLoader.getSystemClassLoader() == loader) { return res.getResource(); }
+        if (System.getProperty("java.system.class.loader") != null
+            && ClassLoader.getSystemClassLoader().getParent() == loader) { return res.getResource(); }
+      }
+    }
 
-    return res.getResource();
+    return null;
   }
 
   private void markAllSpecsPreInstrumented() {
