@@ -72,7 +72,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
-    elementChooser.addActionListener(this);
+    elementChooser.setSelectedPath(ALL_NODES_NODE_NAME);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     add(topPanel, BorderLayout.NORTH);
@@ -96,7 +96,8 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
       aggregateViewsNode.add(clusterDumpNode);
       ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
         @Override
-        protected void updateLabel() {/**/
+        protected void updateLabel() {
+          /**/
         }
       };
       clientsNode.setLabel(adminClientContext.getString("runtime.stats.per.client.view"));

@@ -110,6 +110,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
+    elementChooser.setSelectedPath(CLUSTER_HEAP_NODE_NAME);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     panel.add(topPanel, BorderLayout.NORTH);

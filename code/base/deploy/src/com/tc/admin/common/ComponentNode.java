@@ -29,6 +29,7 @@ public class ComponentNode extends XTreeNode implements IComponentProvider {
 
   public void setLabel(String label) {
     this.label = label;
+    nodeChanged();
   }
 
   public String getLabel() {

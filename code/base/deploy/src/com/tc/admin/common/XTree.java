@@ -23,10 +23,10 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 public class XTree extends JTree implements TreeModelListener {
@@ -175,11 +175,32 @@ public class XTree extends JTree implements TreeModelListener {
   }
 
   public void expandAll() {
-    int row = 0;
-    int count = getRowCount();
-    while (row < count) {
-      expandRow(row);
-      row++;
+    expandAll(this, true);
+  }
+
+  public void collapseAll() {
+    expandAll(this, false);
+  }
+
+  public static void expandAll(JTree tree, boolean expand) {
+    TreeNode root = (TreeNode) tree.getModel().getRoot();
+    expandAll(tree, new TreePath(root), expand);
+  }
+
+  public static void expandAll(JTree tree, TreePath parent, boolean expand) {
+    TreeNode node = (TreeNode) parent.getLastPathComponent();
+    if (node.getChildCount() >= 0) {
+      for (Enumeration e = node.children(); e.hasMoreElements();) {
+        TreeNode n = (TreeNode) e.nextElement();
+        TreePath path = parent.pathByAddingChild(n);
+        expandAll(tree, path, expand);
+      }
+    }
+
+    if (expand) {
+      tree.expandPath(parent);
+    } else {
+      tree.collapsePath(parent);
     }
   }
 
@@ -202,15 +223,14 @@ public class XTree extends JTree implements TreeModelListener {
   public Component getRendererComponent(TreePath path) {
     if (isVisible(path)) {
       TreeCellRenderer r = getCellRenderer();
-      if (r == null) { return null; }
-      TreeUI treeUI = getUI();
-      if (treeUI != null) {
+      if (r != null) {
         Object obj = path.getLastPathComponent();
-        int row = treeUI.getRowForPath(this, path);
+        int row = getRowForPath(path);
         boolean selected = false;
         boolean expanded = true;
         boolean hasFocus = false;
-        return r.getTreeCellRendererComponent(this, obj, selected, expanded, getModel().isLeaf(obj), row, hasFocus);
+        boolean isLeaf = getModel().isLeaf(obj);
+        return r.getTreeCellRendererComponent(this, obj, selected, expanded, isLeaf, row, hasFocus);
       }
     }
     return null;

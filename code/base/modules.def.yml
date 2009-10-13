@@ -284,9 +284,7 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - deploy
-        - management-api
         - dso-common
         - dso-common-jdk16
         - dso-l1
@@ -295,6 +293,8 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
+        - license-common
+        - management-api
   - ui-configurator:
       options:
         jdk: J2SE-1.5

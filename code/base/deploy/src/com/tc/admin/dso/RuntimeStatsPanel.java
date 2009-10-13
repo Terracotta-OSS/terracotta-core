@@ -32,6 +32,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
@@ -87,13 +88,13 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
-    elementChooser.addActionListener(this);
+    elementChooser.setSelectedPath(AGGREGATE_SERVER_STATS_NODE_NAME);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     add(topPanel, BorderLayout.NORTH);
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isConnected()) {
+    if (clusterModel.isReady()) {
       addNodePanels();
     }
   }
@@ -151,19 +152,21 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     }
 
     @Override
-    protected void handleConnected() {
-      if (!inited && clusterModel.isConnected()) {
+    protected void handleReady() {
+      if (tornDown.get()) { return; }
+      if (!inited && clusterModel.isReady()) {
         addNodePanels();
       }
     }
 
     @Override
     protected void handleActiveCoordinator(IServer oldActive, IServer newActive) {
+      if (tornDown.get()) { return; }
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(RuntimeStatsPanel.this);
       }
       if (newActive != null) {
-        newActive.removeClientConnectionListener(RuntimeStatsPanel.this);
+        newActive.addClientConnectionListener(RuntimeStatsPanel.this);
       }
     }
   }
@@ -171,7 +174,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   public void clientConnected(final IClient client) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        pagedView.addPage(createClientViewPanel(client));
+        if (!tornDown.get()) {
+          pagedView.addPage(createClientViewPanel(client));
+        }
       }
     });
   }
@@ -179,16 +184,20 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   public void clientDisconnected(final IClient client) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        pagedView.remove(pagedView.getPage(client.toString()));
+        if (!tornDown.get()) {
+          pagedView.remove(pagedView.getPage(client.toString()));
+        }
       }
     });
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
-    String prop = evt.getPropertyName();
-    if (PagedView.PROP_CURRENT_PAGE.equals(prop)) {
-      String newPage = (String) evt.getNewValue();
-      elementChooser.setSelectedPath(newPage);
+    if (!tornDown.get()) {
+      String prop = evt.getPropertyName();
+      if (PagedView.PROP_CURRENT_PAGE.equals(prop)) {
+        String newPage = (String) evt.getNewValue();
+        elementChooser.setSelectedPath(newPage);
+      }
     }
   }
 
@@ -234,8 +243,12 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     return clusterModel;
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 

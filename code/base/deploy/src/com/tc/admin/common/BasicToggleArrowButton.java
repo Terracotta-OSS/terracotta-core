@@ -16,10 +16,10 @@ import javax.swing.UIManager;
 import javax.swing.plaf.UIResource;
 
 public class BasicToggleArrowButton extends JToggleButton implements SwingConstants {
-  protected int direction;
-  private Color shadow;
-  private Color darkShadow;
-  private Color highlight;
+  protected int       direction;
+  private final Color shadow;
+  private final Color darkShadow;
+  private final Color highlight;
 
   public BasicToggleArrowButton(int direction, Color background, Color shadow, Color darkShadow, Color highlight) {
     super();
@@ -44,6 +44,7 @@ public class BasicToggleArrowButton extends JToggleButton implements SwingConsta
     direction = dir;
   }
 
+  @Override
   public void paint(Graphics g) {
     Color origColor;
     boolean isSelected, isEnabled;
@@ -105,18 +106,22 @@ public class BasicToggleArrowButton extends JToggleButton implements SwingConsta
 
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return new Dimension(16, 16);
   }
 
+  @Override
   public Dimension getMinimumSize() {
-    return new Dimension(5, 5);
+    return getPreferredSize();
   }
 
+  @Override
   public Dimension getMaximumSize() {
     return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }
 
+  @Override
   public boolean isFocusTraversable() {
     return false;
   }

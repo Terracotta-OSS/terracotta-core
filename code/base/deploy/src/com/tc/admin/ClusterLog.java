@@ -73,7 +73,6 @@ public class ClusterLog extends XContainer implements ActionListener {
     gbc.gridx++;
 
     topPanel.add(elementChooser = new ElementChooser(), gbc);
-    elementChooser.addActionListener(this);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     add(topPanel, BorderLayout.NORTH);
