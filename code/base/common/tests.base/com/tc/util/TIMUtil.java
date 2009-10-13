@@ -33,6 +33,8 @@ public class TIMUtil {
   public static final String      GLASSFISH_V1;
   public static final String      GLASSFISH_V2;
 
+  public static final String      RESIN;
+
   private static final Properties modules = new Properties();
 
   static {
@@ -55,6 +57,7 @@ public class TIMUtil {
     WASCE_1_0 = "tim-wasce-1.0";
     GLASSFISH_V1 = "tim-glassfish-v1";
     GLASSFISH_V2 = "tim-glassfish-v2";
+    RESIN = "tim-resin";
   }
 
   private TIMUtil() {
