@@ -57,7 +57,7 @@ public class TIMUtil {
     WASCE_1_0 = "tim-wasce-1.0";
     GLASSFISH_V1 = "tim-glassfish-v1";
     GLASSFISH_V2 = "tim-glassfish-v2";
-    RESIN = "tim-resin";
+    RESIN = "tim-resin-3.1";
   }
 
   private TIMUtil() {
