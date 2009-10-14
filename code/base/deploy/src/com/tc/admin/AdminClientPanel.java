@@ -590,7 +590,6 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   }
 
   public void handleQuit() {
-    adminClientContext.storePrefs();
     if (testWarnMonitoringActivity()) {
       Runtime.getRuntime().exit(0);
     }
