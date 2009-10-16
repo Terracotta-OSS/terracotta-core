@@ -12,6 +12,7 @@ import com.tc.test.server.appserver.glassfishv2.GlassfishV2AppServerFactory;
 import com.tc.test.server.appserver.jboss3x.JBoss3xAppServerFactory;
 import com.tc.test.server.appserver.jboss42x.JBoss42xAppServerFactory;
 import com.tc.test.server.appserver.jboss4x.JBoss4xAppServerFactory;
+import com.tc.test.server.appserver.jboss51x.JBoss51xAppServerFactory;
 import com.tc.test.server.appserver.jetty6x.Jetty6xAppServerFactory;
 import com.tc.test.server.appserver.resin31x.Resin31xAppServerFactory;
 import com.tc.test.server.appserver.tomcat5x.Tomcat5xAppServerFactory;
@@ -74,7 +75,9 @@ public abstract class AppServerFactory {
             return new JBoss4xAppServerFactory(new ProtectedKey());
           } else if (minorVersion.startsWith("2")) { return new JBoss42xAppServerFactory(new ProtectedKey()); }
         }
-
+        if ("5".equals(majorVersion) && minorVersion.startsWith("1")) {
+          return new JBoss51xAppServerFactory(new ProtectedKey());
+        }
         break;
       case AppServerInfo.GLASSFISH:
         if ("v1".equals(majorVersion)) return new GlassfishV1AppServerFactory(new ProtectedKey());

@@ -24,6 +24,7 @@ public class TIMUtil {
   public static final String      JBOSS_3_2;
   public static final String      JBOSS_4_0;
   public static final String      JBOSS_4_2;
+  public static final String      JBOSS_5_1;
 
   public static final String      WEBLOGIC_9;
   public static final String      WEBLOGIC_10;
@@ -33,7 +34,7 @@ public class TIMUtil {
   public static final String      GLASSFISH_V1;
   public static final String      GLASSFISH_V2;
 
-  public static final String      RESIN;
+  public static final String      RESIN_3_1;
 
   private static final Properties modules = new Properties();
 
@@ -52,12 +53,13 @@ public class TIMUtil {
     JBOSS_3_2 = "tim-jboss-3.2";
     JBOSS_4_0 = "tim-jboss-4.0";
     JBOSS_4_2 = "tim-jboss-4.2";
+    JBOSS_5_1 = "tim-jboss-5.1";
     WEBLOGIC_9 = "tim-weblogic-9";
     WEBLOGIC_10 = "tim-weblogic-10";
     WASCE_1_0 = "tim-wasce-1.0";
     GLASSFISH_V1 = "tim-glassfish-v1";
     GLASSFISH_V2 = "tim-glassfish-v2";
-    RESIN = "tim-resin-3.1";
+    RESIN_3_1 = "tim-resin-3.1";
   }
 
   private TIMUtil() {

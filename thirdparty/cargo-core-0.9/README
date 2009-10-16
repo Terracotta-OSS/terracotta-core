@@ -14,10 +14,10 @@ Last Changed Date: 2007-03-03 10:00:39 -0800 (Sat, 03 Mar 2007)
 
 ---------------------------------------------------------------------
 
-The diff file is what we changed to make Cargo work with our test framework.
-It can be applied to Cargo source found above to make it a working version.
 
-After applying the diff, do "mvn package -Dmaven.test.skip=true" to create
-an uberjar.
+TC custom Cargo source found at (this is what we use)
+https://svn.terracotta.org/repo/tc/cargo-core-0.9
+
+Modify build.sh after you check out to match with your path before running
 
 

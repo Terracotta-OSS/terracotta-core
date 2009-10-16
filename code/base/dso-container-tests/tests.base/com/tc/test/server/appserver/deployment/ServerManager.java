@@ -272,7 +272,14 @@ public class ServerManager {
         AppServerInfo info = config.appServerInfo();
         String major = info.getMajor();
         String minor = info.getMinor();
-        if (major.equals("4")) {
+        if (major.equals("5")) {
+          if (minor.startsWith("1.")) {
+            aCopy.addModule(TIMUtil.JBOSS_5_1, resolveContainerTIM(TIMUtil.JBOSS_5_1));
+          } else {
+            throw new RuntimeException("unexpected version: " + info);
+          }
+        }
+        else if (major.equals("4")) {
           if (minor.startsWith("0.")) {
             aCopy.addModule(TIMUtil.JBOSS_4_0, resolveContainerTIM(TIMUtil.JBOSS_4_0));
           } else if (minor.startsWith("2.")) {
@@ -320,7 +327,7 @@ public class ServerManager {
         String minor = info.getMinor();
         if (major.equals("3")) {
           if (minor.startsWith("0.") || minor.startsWith("1.")) {
-            aCopy.addModule(TIMUtil.RESIN, resolveContainerTIM(TIMUtil.RESIN));
+            aCopy.addModule(TIMUtil.RESIN_3_1, resolveContainerTIM(TIMUtil.RESIN_3_1));
           } else {
             throw new RuntimeException("unexpected minor version: " + info);
           }
