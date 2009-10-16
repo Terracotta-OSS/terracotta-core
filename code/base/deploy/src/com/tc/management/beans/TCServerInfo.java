@@ -4,6 +4,8 @@
  */
 package com.tc.management.beans;
 
+import sun.management.ManagementFactory;
+
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.l2.context.StateChangedEvent;
@@ -136,7 +138,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   public void stop() {
     server.stop();
-    _sendNotification("TCServer stopped", "Started", "jmx.terracotta.L2.stopped", Boolean.TRUE, Boolean.FALSE);
+    _sendNotification("TCServer stopped", "Started", "java.lang.Boolean", Boolean.TRUE, Boolean.FALSE);
   }
 
   public boolean isShutdownable() {
@@ -425,4 +427,17 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     objectStatsRecorder.setCommitDebug(commitDebug);
   }
 
+  public void gc() {
+    ManagementFactory.getMemoryMXBean().gc();
+  }
+
+  public boolean isVerboseGC() {
+    return ManagementFactory.getMemoryMXBean().isVerbose();
+  }
+
+  public void setVerboseGC(boolean verboseGC) {
+    boolean oldValue = isVerboseGC();
+    ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);
+    _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
+  }
 }

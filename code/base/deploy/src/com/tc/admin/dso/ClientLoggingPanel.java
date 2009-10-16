@@ -6,10 +6,13 @@ package com.tc.admin.dso;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModelElement;
+import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
@@ -25,6 +28,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.concurrent.Callable;
 
+import javax.management.AttributeChangeNotification;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import javax.swing.BorderFactory;
@@ -54,6 +58,9 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
   protected XCheckBox                  callerCheckBox;
   protected XCheckBox                  fullStackCheckBox;
 
+  protected XCheckBox                  verboseGCCheckBox;
+  protected XButton                    gcButton;
+
   protected ActionListener             loggingChangeHandler;
   protected HashMap<String, XCheckBox> loggingControlMap;
 
@@ -75,6 +82,18 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
 
     add(createObjectManagerOptionsPanel(), gbc);
     gbc.gridx++;
+
+    add(createGCPanel(), gbc);
+    gbc.gridx++;
+
+    // filler
+    gbc.weightx = gbc.weighty = 1.0;
+    gbc.fill = GridBagConstraints.BOTH;
+    add(new XLabel(), gbc);
+    gbc.gridx = 0;
+    gbc.gridy++;
+    gbc.gridwidth = GridBagConstraints.REMAINDER;
+    add(new XLabel(), gbc);
 
     loggingControlMap = new HashMap<String, XCheckBox>();
     loggingChangeHandler = new LoggingChangeHandler();
@@ -146,7 +165,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     panel.add(namedLoaderDebugCheckBox = new XCheckBox("NamedLoaderDebug"), gbc);
     namedLoaderDebugCheckBox.setName("NamedLoaderDebug");
     gbc.gridy++;
-    
+
     gbc.anchor = GridBagConstraints.CENTER;
     panel.add(createOutputOptionsPanel(), gbc);
 
@@ -197,6 +216,33 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     return panel;
   }
 
+  private XContainer createGCPanel() {
+    XContainer panel = new XContainer(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridx = gbc.gridy = 0;
+    gbc.anchor = GridBagConstraints.WEST;
+
+    panel.add(verboseGCCheckBox = new XCheckBox("Verbose"), gbc);
+    verboseGCCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        client.setVerboseGC(verboseGCCheckBox.isSelected());
+      }
+    });
+    gbc.gridy++;
+
+    panel.add(gcButton = new XButton("Request GC"), gbc);
+    gcButton.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        client.gc();
+      }
+    });
+    gbc.gridy++;
+
+    panel.setBorder(BorderFactory.createTitledBorder("Java GC"));
+
+    return panel;
+  }
+
   public void setClient(IClient client) {
     this.client = client;
 
@@ -206,9 +252,8 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
       } catch (Exception e) {
         appContext.log(e);
       }
-    } else {
-      client.addPropertyChangeListener(this);
     }
+    client.addPropertyChangeListener(this);
   }
 
   public IClient getClient() {
@@ -219,6 +264,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     setupInstrumentationLogging();
     setupRuntimeLogging();
     setupRuntimeOutputOptions();
+    setupGCLogging();
   }
 
   private void setupInstrumentationLogging() throws Exception {
@@ -253,6 +299,10 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
     setupLoggingControl(fullStackCheckBox, runtimeOutputOptionsBean);
   }
 
+  private void setupGCLogging() {
+    verboseGCCheckBox.setSelected(client.isVerboseGC());
+  }
+
   private void setupLoggingControl(XCheckBox checkBox, Object bean) {
     setLoggingControl(checkBox, bean);
     checkBox.putClientProperty(checkBox.getName(), bean);
@@ -283,6 +333,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
       });
     }
 
+    @Override
     protected void finished() {
       Exception e = getException();
       if (e != null) {
@@ -311,56 +362,66 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
       if (checkBox != null) {
         checkBox.setSelected(Boolean.valueOf(notification.getMessage()));
       }
+    } else if (type.equals(L1InfoMBean.VERBOSE_GC)) {
+      Boolean value = (Boolean) ((AttributeChangeNotification) notification).getNewValue();
+      verboseGCCheckBox.setSelected(value.booleanValue());
     }
   }
 
-  public void propertyChange(PropertyChangeEvent evt) {
-    String prop = evt.getPropertyName();
-    if (IClusterModelElement.PROP_READY.equals(prop)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
+  public void propertyChange(final PropertyChangeEvent evt) {
+    final String prop = evt.getPropertyName();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (IClusterModelElement.PROP_READY.equals(prop)) {
           try {
             setupTunneledBeans();
           } catch (Exception e) {
             appContext.log(e);
           }
+        } else if (prop.startsWith("tc.logging.")) {
+          String name = prop.substring(prop.lastIndexOf('.') + 1);
+          XCheckBox checkBox = loggingControlMap.get(name);
+          if (checkBox != null) {
+            checkBox.setSelected((Boolean) evt.getNewValue());
+          }
+        } else if (prop.equals("VerboseGC")) {
+          Boolean value = (Boolean) evt.getNewValue();
+          verboseGCCheckBox.setSelected(value.booleanValue());
         }
-      });
-    } else if (prop.startsWith("tc.logging.")) {
-      String name = prop.substring(prop.lastIndexOf('.') + 1);
-      XCheckBox checkBox = loggingControlMap.get(name);
-      if (checkBox != null) {
-        checkBox.setSelected((Boolean) evt.getNewValue());
       }
-    }
+    });
   }
 
+  @Override
   public void tearDown() {
+    client.removePropertyChangeListener(this);
+
+    synchronized (this) {
+      appContext = null;
+      client = null;
+      classCheckBox = null;
+      locksCheckBox = null;
+      transientRootCheckBox = null;
+      rootsCheckBox = null;
+      distributedMethodsCheckBox = null;
+      nonPortableDumpCheckBox = null;
+      lockDebugCheckBox = null;
+      fieldChangeDebugCheckBox = null;
+      waitNotifyDebugCheckBox = null;
+      distributedMethodDebugCheckBox = null;
+      newObjectDebugCheckBox = null;
+      namedLoaderDebugCheckBox = null;
+      flushDebugCheckBox = null;
+      faultDebugCheckBox = null;
+      autoLockDetailsCheckBox = null;
+      callerCheckBox = null;
+      fullStackCheckBox = null;
+      verboseGCCheckBox = null;
+      loggingChangeHandler = null;
+      loggingControlMap.clear();
+      loggingControlMap = null;
+    }
+
     super.tearDown();
-
-    appContext = null;
-    client = null;
-
-    classCheckBox = null;
-    locksCheckBox = null;
-    transientRootCheckBox = null;
-    rootsCheckBox = null;
-    distributedMethodsCheckBox = null;
-    nonPortableDumpCheckBox = null;
-    lockDebugCheckBox = null;
-    fieldChangeDebugCheckBox = null;
-    waitNotifyDebugCheckBox = null;
-    distributedMethodDebugCheckBox = null;
-    newObjectDebugCheckBox = null;
-    namedLoaderDebugCheckBox = null;
-    flushDebugCheckBox = null;
-    faultDebugCheckBox = null;
-    autoLockDetailsCheckBox = null;
-    callerCheckBox = null;
-    fullStackCheckBox = null;
-
-    loggingChangeHandler = null;
-    loggingControlMap.clear();
-    loggingControlMap = null;
   }
 }

@@ -215,4 +215,16 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public String getMavenArtifactsVersion() {
     return null;
   }
+
+  public void gc() {
+    /**/
+  }
+
+  public boolean isVerboseGC() {
+    return false;
+  }
+
+  public void setVerboseGC(boolean verboseGC) {
+    /**/
+  }
 }

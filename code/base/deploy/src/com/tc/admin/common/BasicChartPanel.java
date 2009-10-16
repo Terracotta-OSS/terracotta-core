@@ -51,21 +51,24 @@ public class BasicChartPanel extends TooltipChartPanel {
   public String getToolTipText(MouseEvent me) {
     String toolTip = super.getToolTipText(me);
     if (toolTip == null) {
-      Plot plot = getChart().getXYPlot();
-      if (plot instanceof XYPlot) {
-        XYPlot xyPlot = (XYPlot) plot;
-        Collection<?> domainMarkers = xyPlot.getDomainMarkers(Layer.BACKGROUND);
-        if (domainMarkers == null) return null;
-        PlotRenderingInfo info = getChartRenderingInfo().getPlotInfo();
-        Insets insets = getInsets();
-        double x = (me.getX() - insets.left) / getScaleX();
-        double xx = xyPlot.getDomainAxis().java2DToValue(x, info.getDataArea(), xyPlot.getDomainAxisEdge());
-        Iterator<?> domainMarkerIter = domainMarkers.iterator();
-        while (domainMarkerIter.hasNext()) {
-          IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
-          if (marker instanceof ToolTipProvider) {
-            if (xx >= marker.getStartValue() && xx <= marker.getEndValue()) {
-              toolTip = ((ToolTipProvider) marker).getToolTipText(me);
+      JFreeChart chart = getChart();
+      if (chart != null) {
+        Plot plot = chart.getXYPlot();
+        if (plot instanceof XYPlot) {
+          XYPlot xyPlot = (XYPlot) plot;
+          Collection<?> domainMarkers = xyPlot.getDomainMarkers(Layer.BACKGROUND);
+          if (domainMarkers == null) return null;
+          PlotRenderingInfo info = getChartRenderingInfo().getPlotInfo();
+          Insets insets = getInsets();
+          double x = (me.getX() - insets.left) / getScaleX();
+          double xx = xyPlot.getDomainAxis().java2DToValue(x, info.getDataArea(), xyPlot.getDomainAxisEdge());
+          Iterator<?> domainMarkerIter = domainMarkers.iterator();
+          while (domainMarkerIter.hasNext()) {
+            IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
+            if (marker instanceof ToolTipProvider) {
+              if (xx >= marker.getStartValue() && xx <= marker.getEndValue()) {
+                toolTip = ((ToolTipProvider) marker).getToolTipText(me);
+              }
             }
           }
         }

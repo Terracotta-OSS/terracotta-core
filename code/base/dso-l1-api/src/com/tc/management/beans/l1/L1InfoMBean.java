@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.management.NotificationEmitter;
 
 public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, RuntimeStatisticConstants {
+  public static final String VERBOSE_GC = "jmx.terracotta.L1.verboseGC";
 
   String getVersion();
 
@@ -47,4 +48,10 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
   long getMaxMemory();
 
   StatisticData[] getCpuUsage();
+
+  boolean isVerboseGC();
+
+  void setVerboseGC(boolean verboseGC);
+
+  void gc();
 }

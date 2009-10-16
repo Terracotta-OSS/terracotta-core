@@ -4,6 +4,8 @@
  */
 package com.tc.management;
 
+import sun.management.ManagementFactory;
+
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -26,22 +28,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.management.AttributeChangeNotification;
+import javax.management.MBeanNotificationInfo;
 import javax.management.NotCompliantMBeanException;
 
 public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
-  private static final TCLogger     logger = TCLogging.getLogger(L1Info.class);
-  private final ProductInfo         productInfo;
-  private final String              buildID;
+  private static final TCLogger                logger = TCLogging.getLogger(L1Info.class);
 
-  private final String              rawConfigText;
-  private final JVMMemoryManager    manager;
-  private StatisticRetrievalAction  cpuSRA;
-  private String[]                  cpuNames;
-  private final TCClient            client;
-  private final LockInfoDumpHandler lockInfoDumpHandler;
+  private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
+  static {
+    final String[] notifTypes = new String[] { AttributeChangeNotification.ATTRIBUTE_CHANGE };
+    final String name = AttributeChangeNotification.class.getName();
+    final String description = "An attribute of this MBean has changed";
+    NOTIFICATION_INFO = new MBeanNotificationInfo[] { new MBeanNotificationInfo(notifTypes, name, description) };
+  }
+  private long                                 nextSequenceNumber;
+
+  private final ProductInfo                    productInfo;
+  private final String                         buildID;
+  private final String                         rawConfigText;
+  private final JVMMemoryManager               manager;
+  private StatisticRetrievalAction             cpuSRA;
+  private String[]                             cpuNames;
+  private final TCClient                       client;
+  private final LockInfoDumpHandler            lockInfoDumpHandler;
 
   public L1Info(TCClient client, String rawConfigText) throws NotCompliantMBeanException {
-    super(L1InfoMBean.class, false);
+    super(L1InfoMBean.class, true);
 
     this.productInfo = ProductInfo.getInstance();
     this.buildID = productInfo.buildID();
@@ -49,6 +62,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.rawConfigText = rawConfigText;
     this.client = client;
     this.lockInfoDumpHandler = client;
+    this.nextSequenceNumber = 1;
     try {
       Class sraCpuType = Class.forName("com.tc.statistics.retrieval.actions.SRACpuCombined");
       if (sraCpuType != null) {
@@ -64,15 +78,26 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     }
   }
 
+  @Override
+  public MBeanNotificationInfo[] getNotificationInfo() {
+    return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
+  }
+
+  private synchronized void _sendNotification(String msg, String attr, String type, Object oldVal, Object newVal) {
+    sendNotification(new AttributeChangeNotification(this, nextSequenceNumber++, System.currentTimeMillis(), msg, attr,
+                                                     type, oldVal, newVal));
+  }
+
   // for tests
   public L1Info(LockInfoDumpHandler lockInfoDumpHandler) throws NotCompliantMBeanException {
-    super(L1InfoMBean.class, false);
+    super(L1InfoMBean.class, true);
     this.productInfo = ProductInfo.getInstance();
     this.buildID = productInfo.buildID();
     this.rawConfigText = null;
     this.manager = TCRuntime.getJVMMemoryManager();
     this.lockInfoDumpHandler = lockInfoDumpHandler;
     this.client = null;
+    this.nextSequenceNumber = 1;
   }
 
   public String getVersion() {
@@ -226,4 +251,17 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     this.client.startBeanShell(port);
   }
 
+  public void gc() {
+    ManagementFactory.getMemoryMXBean().gc();
+  }
+
+  public boolean isVerboseGC() {
+    return ManagementFactory.getMemoryMXBean().isVerbose();
+  }
+
+  public void setVerboseGC(boolean verboseGC) {
+    boolean oldValue = isVerboseGC();
+    ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);
+    _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
+  }
 }

@@ -13,6 +13,8 @@ import com.tc.statistics.StatisticData;
 import java.util.Map;
 
 public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticConstants {
+  public static final String STOPPED    = "jmx.terracotta.L2.stopped";
+  public static final String VERBOSE_GC = "jmx.terracotta.L2.verboseGC";
 
   boolean isStarted();
 
@@ -108,4 +110,9 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   boolean getCommitDebug();
 
+  boolean isVerboseGC();
+
+  void setVerboseGC(boolean verboseGC);
+
+  void gc();
 }

@@ -20,6 +20,7 @@ import java.beans.PropertyChangeEvent;
 import java.util.Map;
 
 import javax.management.Attribute;
+import javax.management.AttributeChangeNotification;
 import javax.management.AttributeList;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.MalformedObjectNameException;
@@ -77,7 +78,9 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
 
   private void setupTunneledBeans() {
     l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate.getL1InfoBeanName(),
-                                                                             L1InfoMBean.class, false);
+                                                                             L1InfoMBean.class, true);
+    addMBeanNotificationListener(delegate.getL1InfoBeanName(), this, "L1InfoMBean");
+
     instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
         .newProxyInstance(cc.mbsc, delegate.getInstrumentationLoggingBeanName(), InstrumentationLoggingMBean.class,
                           true);
@@ -145,6 +148,11 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       Boolean newValue = Boolean.valueOf(notification.getMessage());
       Boolean oldValue = Boolean.valueOf(!newValue.booleanValue());
       PropertyChangeEvent pce = new PropertyChangeEvent(this, type, newValue, oldValue);
+      propertyChangeSupport.firePropertyChange(pce);
+    } else if ("jmx.attribute.change".equals(type)) {
+      AttributeChangeNotification acn = (AttributeChangeNotification) notification;
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
+          .getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }
@@ -428,5 +436,17 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       stopListeningForTunneledBeans();
     }
     super.tearDown();
+  }
+
+  public void gc() {
+    getL1InfoBean().gc();
+  }
+
+  public boolean isVerboseGC() {
+    return getL1InfoBean().isVerboseGC();
+  }
+
+  public void setVerboseGC(boolean verboseGC) {
+    getL1InfoBean().setVerboseGC(verboseGC);
   }
 }

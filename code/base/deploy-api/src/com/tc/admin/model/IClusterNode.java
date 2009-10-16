@@ -76,6 +76,12 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
 
   Set<PolledAttributeListener> getPolledAttributeListeners();
 
+  boolean isVerboseGC();
+
+  void setVerboseGC(boolean verboseGC);
+
+  void gc();
+
   void tearDown();
 
   String dump();

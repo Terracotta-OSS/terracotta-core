@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.AttributeChangeNotification;
 import javax.management.InstanceNotFoundException;
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanServerNotification;
@@ -942,12 +943,25 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         initServerDBBackupBean();
       } else if (beanName.equals(L2MBeanNames.LOCK_STATISTICS)) {
         initLockProfilerBean();
+      } else if (beanName.equals(L2MBeanNames.TC_SERVER_INFO)) {
+        initServerInfoBean();
       }
 
       synchronized (this) {
         theReadySet.remove(beanName);
       }
       setReady(theReadySet.isEmpty());
+    }
+  }
+
+  private void initServerInfoBean() {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      try {
+        cc.addNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      } catch (Exception e) {
+        /**/
+      }
     }
   }
 
@@ -1135,6 +1149,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       if (isActiveCoordinator()) {
         fireStatusUpdated((GCStats) notification.getSource());
       }
+    } else if ("jmx.attribute.change".equals(type)) {
+      AttributeChangeNotification acn = (AttributeChangeNotification) notification;
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
+          .getNewValue());
+      propertyChangeSupport.firePropertyChange(pce);
     }
   }
 
@@ -1927,5 +1946,17 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     DSOMBean theDsoBean = getDSOBean();
     if (theDsoBean != null && isReady()) { return theDsoBean.invoke(onSet, operation, timeout, unit); }
     return Collections.emptyMap();
+  }
+
+  public void gc() {
+    getServerInfoBean().gc();
+  }
+
+  public boolean isVerboseGC() {
+    return getServerInfoBean().isVerboseGC();
+  }
+
+  public void setVerboseGC(boolean verboseGC) {
+    getServerInfoBean().setVerboseGC(verboseGC);
   }
 }
