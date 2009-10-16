@@ -286,8 +286,10 @@ public class WARBuilder implements DeploymentBuilder {
       pw.println("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
 
       pw
-          .println("<!DOCTYPE web-app PUBLIC \"-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN\" \"http://java.sun.com/dtd/web-app_2_3.dtd\">");
-      pw.println("<web-app>\n");
+          .println("<web-app xmlns=\"http://java.sun.com/xml/ns/j2ee\"\n"
+                   + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+                   + "xsi:schemaLocation=\"http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd\"\n"
+                   + "version=\"2.4\">\n");
 
       if (!beanDefinitionFiles.isEmpty()) {
         writeContextParam(pw, ContextLoader.CONFIG_LOCATION_PARAM, generateContextConfigLocationValue());
@@ -357,8 +359,10 @@ public class WARBuilder implements DeploymentBuilder {
         for (Iterator it = taglibs.entrySet().iterator(); it.hasNext();) {
           Map.Entry taglib = (Map.Entry) it.next();
           logger.debug("Writing taglib[" + taglib.getKey() + "/" + taglib.getValue() + "]");
-          pw.println("    <taglib-uri>" + taglib.getKey() + "</taglib-uri>");
-          pw.println("    <taglib-location>" + taglib.getValue() + "</taglib-location>");
+          pw.println("    <taglib>");
+          pw.println("      <taglib-uri>" + taglib.getKey() + "</taglib-uri>");
+          pw.println("      <taglib-location>" + taglib.getValue() + "</taglib-location>");
+          pw.println("    </taglib>");
         }
         pw.println("  </jsp-config>");
       }
