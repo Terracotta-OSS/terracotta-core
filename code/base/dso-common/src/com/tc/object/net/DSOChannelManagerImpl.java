@@ -23,6 +23,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,7 +108,26 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   }
 
   public TCConnection[] getAllActiveClientConnections() {
-    return connectionManager.getAllActiveConnections();
+    TCConnection[] connections = connectionManager.getAllActiveConnections();
+    ArrayList activeChannelConnections = new ArrayList(connections.length);
+    Set activeConnectionAddresses = getActiveChannelRemoteAddress();
+    for (TCConnection connection : connections) {
+      if(activeConnectionAddresses.contains(connection.getRemoteAddress())) {
+      activeChannelConnections.add(connection); 
+    }
+    }
+    return (TCConnection[]) activeChannelConnections.toArray(new TCConnection[activeChannelConnections.size()]);
+  }
+
+  private Set getActiveChannelRemoteAddress() {
+    Set activeConnectionAddresses = new HashSet();
+    synchronized (activeChannels) {
+      for (Iterator i = activeChannels.values().iterator(); i.hasNext();) {
+        MessageChannel channel = (MessageChannel) i.next();
+        activeConnectionAddresses.add(channel.getRemoteAddress());
+      }
+    }
+    return activeConnectionAddresses;
   }
 
   public void makeChannelActive(final ClientID clientID, final boolean persistent) {
