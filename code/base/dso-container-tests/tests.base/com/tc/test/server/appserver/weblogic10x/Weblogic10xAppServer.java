@@ -135,6 +135,13 @@ public final class Weblogic10xAppServer extends WeblogicAppServerBase {
         classpath.createPathElement().setLocation(
                                                   new File(modulesDir,
                                                            "net.sf.antcontrib_1.0.0.0_1-0b2/lib/ant-contrib.jar"));
+      } else if (appServerInfo.toString().equals("weblogic-10.3.1")) {
+        classpath.createPathElement()
+            .setLocation(new File(modulesDir, "features/weblogic.server.modules_10.3.1.0.jar"));
+        classpath.createPathElement().setLocation(new File(modulesDir, "org.apache.ant_1.7.0/lib/ant-all.jar"));
+        classpath.createPathElement().setLocation(
+                                                  new File(modulesDir,
+                                                           "net.sf.antcontrib_1.0.0.0_1-0b2/lib/ant-contrib.jar"));
       }
     }
   }
