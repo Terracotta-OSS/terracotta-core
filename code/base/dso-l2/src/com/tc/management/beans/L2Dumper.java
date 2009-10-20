@@ -86,7 +86,7 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
     for (Iterator i = allL1DumperMBeans.iterator(); i.hasNext();) {
       ObjectName l1DumperBean = (ObjectName) i.next();
       try {
-        mbs.invoke(l1DumperBean, "dump", new Object[] {}, new String[] {});
+        mbs.invoke(l1DumperBean, "doClientDump", new Object[] {}, new String[] {});
       } catch (Exception e) {
         logger.error("error dumping on " + l1DumperBean, e);
       }
