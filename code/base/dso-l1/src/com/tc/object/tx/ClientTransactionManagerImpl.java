@@ -8,7 +8,6 @@ import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.net.NodeID;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
@@ -78,7 +77,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   private final ClientIDProvider               cidProvider;
 
-  private final ClientTxMonitorMBean           txMonitor;
   private final SampledCounter                 txCounter;
 
   private final boolean                        sendErrors      = System.getProperty("project.name") != null;
@@ -93,7 +91,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   public ClientTransactionManagerImpl(final ClientIDProvider cidProvider, final ClientObjectManager objectManager,
                                       final ThreadLockManager lockManager, final ClientTransactionFactory txFactory,
                                       final RemoteTransactionManager remoteTxManager,
-                                      final RuntimeLogger runtimeLogger, final ClientTxMonitorMBean txMonitor,
+                                      final RuntimeLogger runtimeLogger,
                                       SampledCounter txCounter) {
     this.cidProvider = cidProvider;
     this.txFactory = txFactory;
@@ -101,7 +99,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     this.objectManager = objectManager;
     this.objectManager.setTransactionManager(this);
     this.lockManager = lockManager;
-    this.txMonitor = txMonitor;
     this.txCounter = txCounter;
     this.appEventContextFactory = new NonPortableEventContextFactory(cidProvider);
   }
@@ -517,7 +514,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       // If the current transactionContext is READ_ONLY, there is no need to commit.
       TransactionContext tc = peekContext(lockID);
       if (TxnType.READ_ONLY == tc.getLockType()) {
-        this.txMonitor.committedReadTransaction();
         return false;
       }
 
@@ -529,9 +525,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
       currentTransaction.setAlreadyCommitted();
 
       if (currentTransaction.hasChangesOrNotifies() || hasPendingCreateObjects) {
-        if (this.txMonitor.isEnabled()) {
-          currentTransaction.updateMBean(this.txMonitor);
-        }
         this.txCounter.increment();
         this.remoteTxManager.commit(currentTransaction);
       }

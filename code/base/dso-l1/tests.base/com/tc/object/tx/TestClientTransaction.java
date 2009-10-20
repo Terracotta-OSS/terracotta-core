@@ -5,7 +5,6 @@
 package com.tc.object.tx;
 
 import com.tc.exception.ImplementMe;
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -118,10 +117,6 @@ public class TestClientTransaction implements ClientTransaction {
   }
 
   public void arrayChanged(TCObject source, int startPos, Object array, int length) {
-    throw new ImplementMe();
-  }
-
-  public void updateMBean(ClientTxMonitorMBean txMBean) {
     throw new ImplementMe();
   }
 

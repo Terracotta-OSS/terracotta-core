@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -71,10 +70,6 @@ public class NullClientTransaction extends AbstractClientTransaction {
 
   public int getNotifiesCount() {
     return 0;
-  }
-
-  public void updateMBean(ClientTxMonitorMBean txMBean) {
-    // null do nothing
   }
 
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {

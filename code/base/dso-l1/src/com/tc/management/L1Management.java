@@ -20,8 +20,6 @@ import com.tc.management.beans.logging.RuntimeOutputOptions;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.management.beans.sessions.SessionMonitorImpl;
-import com.tc.management.beans.tx.ClientTxMonitor;
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
@@ -56,7 +54,6 @@ public final class L1Management extends TerracottaManagement {
   private final Object                   mBeanServerLock;
   private MBeanServer                    mBeanServer;
 
-  private final ClientTxMonitor          clientTxBean;
   private final SessionMonitor           httpSessionsMonitor;
   private final TerracottaCluster        clusterBean;
   private final L1Info                   l1InfoBean;
@@ -83,7 +80,6 @@ public final class L1Management extends TerracottaManagement {
 
     try {
       l1DumpBean = new L1Dumper(client);
-      clientTxBean = new ClientTxMonitor();
       httpSessionsMonitor = new SessionMonitorImpl();
       clusterBean = new TerracottaCluster();
       l1InfoBean = new L1Info(client, rawConfigText);
@@ -150,8 +146,7 @@ public final class L1Management extends TerracottaManagement {
 
   @Override
   public Object findMBean(final ObjectName objectName, final Class mBeanInterface) throws IOException {
-    if (objectName.equals(MBeanNames.CLIENT_TX_INTERNAL)) return clientTxBean;
-    else if (objectName.equals(L1MBeanNames.HTTP_SESSIONS_PUBLIC)) return httpSessionsMonitor;
+    if (objectName.equals(L1MBeanNames.HTTP_SESSIONS_PUBLIC)) return httpSessionsMonitor;
     else if (objectName.equals(L1MBeanNames.L1INFO_PUBLIC)) return l1InfoBean;
     else if (objectName.equals(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC)) return instrumentationLoggingBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC)) return runtimeOutputOptionsBean;
@@ -162,10 +157,6 @@ public final class L1Management extends TerracottaManagement {
       }
     }
     return null;
-  }
-
-  public ClientTxMonitorMBean findClientTxMonitorMBean() {
-    return clientTxBean;
   }
 
   public SessionMonitor getHttpSessionMonitor() {
@@ -205,7 +196,6 @@ public final class L1Management extends TerracottaManagement {
     }
 
     mBeanServer.registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
-    mBeanServer.registerMBean(clientTxBean, MBeanNames.CLIENT_TX_INTERNAL);
     mBeanServer.registerMBean(httpSessionsMonitor, L1MBeanNames.HTTP_SESSIONS_PUBLIC);
     mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
     if (statisticsAgentSubSystem.isActive()) {

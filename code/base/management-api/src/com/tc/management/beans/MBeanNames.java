@@ -13,14 +13,10 @@ import javax.management.ObjectName;
 
 public class MBeanNames {
 
-  public static final ObjectName CLIENT_TX_INTERNAL;
   public static final ObjectName L1DUMPER_INTERNAL;
 
   static {
     try {
-      CLIENT_TX_INTERNAL = TerracottaManagement.createObjectName(TerracottaManagement.Type.DsoClient,
-                                                                 TerracottaManagement.Subsystem.Tx, null,
-                                                                 "Client transactions", TerracottaManagement.MBeanDomain.INTERNAL);
       L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null,
                                                                 "DSO Client Dump Bean", TerracottaManagement.MBeanDomain.INTERNAL);
     } catch (MalformedObjectNameException mone) {

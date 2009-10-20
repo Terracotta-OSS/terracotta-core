@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
@@ -14,14 +13,11 @@ import com.tc.object.lockmanager.api.Notify;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
 
-import gnu.trove.TIntArrayList;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -149,35 +145,6 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
 
   public int getNotifiesCount() {
     return getNotifies().size();
-  }
-
-  public void updateMBean(ClientTxMonitorMBean txMBean) {
-    int modifiedObjectCount = 0;
-    final TIntArrayList writesPerObject = new TIntArrayList(objectChanges.size());
-
-    final Map creationCountByClass = new HashMap();
-    if (!objectChanges.isEmpty()) {
-      int currentIndex = 0;
-      for (Iterator iter = objectChanges.values().iterator(); iter.hasNext(); currentIndex++) {
-        final TCChangeBuffer buffer = (TCChangeBuffer) iter.next();
-        final TCObject tco = buffer.getTCObject();
-        if (tco.isNew()) {
-          final Class instanceClass = tco.getTCClass().getPeerClass();
-          Integer counter = (Integer) creationCountByClass.get(instanceClass);
-          if (counter == null) {
-            counter = new Integer(1);
-          } else {
-            counter = new Integer(counter.intValue() + 1);
-          }
-          creationCountByClass.put(instanceClass, counter);
-        } else {
-          ++modifiedObjectCount;
-        }
-        writesPerObject.add(buffer.getTotalEventCount());
-      }
-    }
-    txMBean.committedWriteTransaction(getNotifiesCount(), modifiedObjectCount, writesPerObject.toNativeArray(),
-                                      creationCountByClass);
   }
 
   public void addDmiDescritor(DmiDescriptor dd) {

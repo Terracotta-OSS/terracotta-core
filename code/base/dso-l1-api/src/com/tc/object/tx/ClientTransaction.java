@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.management.beans.tx.ClientTxMonitorMBean;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
@@ -210,13 +209,6 @@ public interface ClientTransaction {
    * @return Count of notify's in transaction
    */
   public int getNotifiesCount();
-
-  /**
-   * Update MBean with state
-   *
-   * @param txMBean MBean to update
-   */
-  public void updateMBean(ClientTxMonitorMBean txMBean);
 
   /**
    * Get all references of objects included in the transaction
