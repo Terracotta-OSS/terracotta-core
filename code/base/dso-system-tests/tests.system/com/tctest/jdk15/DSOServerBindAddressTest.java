@@ -41,7 +41,9 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
 
   static String localAddr() {
     try {
-      return InetAddress.getLocalHost().getHostAddress();
+      String rv = InetAddress.getLocalHost().getHostAddress();
+      if (rv.startsWith("127.")) { throw new RuntimeException("Wrong local address " + rv); }
+      return rv;
     } catch (UnknownHostException uhe) {
       throw new TCRuntimeException("Host resolve error:" + uhe);
     }
