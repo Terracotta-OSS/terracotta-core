@@ -175,7 +175,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
               float minutes = seconds / 60f;
               return appContext.format("dso.gcstats.overview.enabled", seconds, minutes);
             } else {
-              return appContext.getString("dso.gcstats.overview.enabled");
+              return appContext.getString("dso.gcstats.overview.disabled");
             }
           }
           return "";
