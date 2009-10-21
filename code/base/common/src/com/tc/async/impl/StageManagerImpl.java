@@ -19,7 +19,6 @@ import com.tc.stats.Stats;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
-import com.tc.util.concurrent.TCQueue;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
@@ -89,9 +88,14 @@ public class StageManagerImpl implements StageManager {
   }
 
   public synchronized Stage createStage(String name, EventHandler handler, int threads, int maxSize) {
+    return createStage(name, handler, threads, threads, maxSize);
+  }
+
+  public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadToQueueRatio,
+                                        int maxSize) {
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
-    TCQueue q = this.queueFactory.createInstance(capacity);
-    Stage s = new StageImpl(loggerProvider, name, handler, new StageQueueImpl(loggerProvider, name, q), threads, group);
+    Stage s = new StageImpl(loggerProvider, name, handler, threads, threadToQueueRatio, group, this.queueFactory,
+                            capacity);
     addStage(name, s);
     return s;
   }

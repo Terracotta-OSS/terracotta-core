@@ -15,7 +15,6 @@ import com.tc.stats.Stats;
 import com.tc.util.concurrent.ThreadPreferenceExecutor;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -73,19 +72,11 @@ public class RemoteJMXProcessor implements Sink {
     throw new UnsupportedOperationException();
   }
 
-  public void pause(List pauseEvents) {
-    throw new UnsupportedOperationException();
-  }
-
   public void setAddPredicate(AddPredicate predicate) {
     throw new UnsupportedOperationException();
   }
 
   public int size() {
-    throw new UnsupportedOperationException();
-  }
-
-  public void unpause() {
     throw new UnsupportedOperationException();
   }
 

@@ -7,6 +7,7 @@ package com.tc.async.impl;
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.EventContext;
+import com.tc.async.api.EventMultiThreadedContext;
 import com.tc.async.api.Stage;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -74,6 +75,56 @@ public class StageManagerImplTest extends TestCase {
     stageManager.stopAll();
   }
 
+  public void testMultiThreadedStage() {
+    stageManager.createStage("testStage2", testEventHandler, 3, 1, 10);
+    Stage s = stageManager.getStage("testStage2");
+    assertTrue(s != null);
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    assertTrue(s.getSink().size() == 4);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    s.getSink().add(new TestEventContext());
+    assertTrue(s.getSink().size() == 8);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.start(new ConfigurationContextImpl(null));
+    ThreadUtil.reallySleep(1000);
+    assertTrue(s.getSink().size() == 0);
+    assertTrue(testEventHandler.getContexts().size() == 8);
+    stageManager.stopAll();
+  }
+
+  public void testMultiThreadedContext() {
+    stageManager.createStage("testStage2", testEventHandler, 3, 1, 10);
+    Stage s = stageManager.getStage("testStage2");
+    assertTrue(s != null);
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    assertTrue(s.getSink().size() == 4);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    s.getSink().add(new TestMultiThreadedEventContext());
+    assertTrue(s.getSink().size() == 8);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.start(new ConfigurationContextImpl(null));
+    ThreadUtil.reallySleep(1000);
+    assertTrue(s.getSink().size() == 0);
+    assertTrue(testEventHandler.getContexts().size() == 8);
+    stageManager.stopAll();
+  }
+
   /*
    * @see TestCase#tearDown()
    */
@@ -85,6 +136,13 @@ public class StageManagerImplTest extends TestCase {
   private static class TestEventContext implements EventContext {
     public TestEventContext() {
       //
+    }
+
+  }
+
+  private static class TestMultiThreadedEventContext implements EventMultiThreadedContext {
+    public Object getKey() {
+      return new Object();
     }
 
   }

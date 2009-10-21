@@ -15,35 +15,30 @@ import com.tc.async.api.Stage;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.tc.util.concurrent.QueueFactory;
 
 /**
  * @author steve
  */
 public class StageImpl implements Stage {
-  private static final long         pollTime    = 3000; // This is the poor man's solution for stage
-  // shutdown
-  private static final EventContext PAUSE_TOKEN = new EventContext() {
-                                                  //
-                                                };
+  private static final long    pollTime = 3000; // This is the poor man's solution for stage
+  private final String         name;
+  private final EventHandler   handler;
+  private final StageQueueImpl sink;
+  private final WorkerThread[] threads;
+  private final ThreadGroup    group;
+  private final TCLogger       logger;
 
-  private final String              name;
-  private final EventHandler        handler;
-  private final Sink                sink;
-  private final WorkerThread[]      threads;
-  private final ThreadGroup         group;
-  private final TCLogger            logger;
-  private boolean                   isPaused    = false;
-
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, Sink sink, int threadCount,
-                   ThreadGroup group) {
+  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, int threadCount, int queueRatio,
+                   ThreadGroup group, QueueFactory queueFactory, int queueSize) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[threadCount];
-    this.sink = sink;
+    if (queueRatio > threadCount) {
+      logger.warn("Worker Queue Ratio " + queueRatio + " > Worker Threads " + threadCount);
+    }
+    this.sink = new StageQueueImpl(threadCount, queueRatio, queueFactory, loggerProvider, name, queueSize);
     this.group = group;
   }
 
@@ -66,7 +61,13 @@ public class StageImpl implements Stage {
 
   private synchronized void startThreads() {
     for (int i = 0; i < threads.length; i++) {
-      threads[i] = new WorkerThread("WorkerThread(" + name + "," + i + ")", (Source) sink, handler, group);
+      String threadName = "WorkerThread(" + name + ", " + i;
+      if (threads.length > 1) {
+        threadName = threadName + ", " + this.sink.getSource(i).getSourceName() + ")";
+      } else {
+        threadName = threadName + ")";
+      }
+      threads[i] = new WorkerThread(threadName, this.sink.getSource(i), handler, group);
       threads[i].start();
     }
   }
@@ -82,13 +83,9 @@ public class StageImpl implements Stage {
   }
 
   private static class WorkerThread extends Thread {
-    private static final com.tc.util.State RUNNING           = new com.tc.util.State("RUNNING");
-    private static final com.tc.util.State PAUSED            = new com.tc.util.State("PAUSED");
-
-    private com.tc.util.State              state;
-    private final Source                   source;
-    private final EventHandler             handler;
-    private boolean                        shutdownRequested = false;
+    private final Source       source;
+    private final EventHandler handler;
+    private volatile boolean   shutdownRequested = false;
 
     public WorkerThread(String name, Source source, EventHandler handler, ThreadGroup group) {
       super(group, name);
@@ -97,45 +94,20 @@ public class StageImpl implements Stage {
       this.handler = handler;
     }
 
-    public synchronized void shutdown() {
+    public void shutdown() {
       this.shutdownRequested = true;
     }
 
-    private synchronized boolean shutdownRequested() {
+    private boolean shutdownRequested() {
       return this.shutdownRequested;
     }
 
-    synchronized void pause() {
-      while (state != PAUSED) {
-        try {
-          wait();
-        } catch (InterruptedException e) {
-          throw new TCRuntimeException(e);
-        }
-      }
-    }
-
-    synchronized void unpause() {
-      if (state != PAUSED) throw new AssertionError("Attempt to unpause when not paused: " + state);
-      state = RUNNING;
-      notifyAll();
-    }
-
     public void run() {
-      state = RUNNING;
       while (!shutdownRequested()) {
         EventContext ctxt;
         try {
           ctxt = source.poll(pollTime);
-          if (ctxt == PAUSE_TOKEN) {
-            synchronized (this) {
-              state = PAUSED;
-              notifyAll();
-              while (state == PAUSED) {
-                wait();
-              }
-            }
-          } else if (ctxt != null) {
+          if (ctxt != null) {
             if (ctxt instanceof SpecializedEventContext) {
               ((SpecializedEventContext) ctxt).execute();
             } else {
@@ -158,37 +130,4 @@ public class StageImpl implements Stage {
     }
   }
 
-  public void pause() {
-    if (isPaused) throw new AssertionError("Attempt to pause while already paused.");
-
-    log("Pausing...");
-
-    List pauseTokens = new ArrayList(threads.length);
-    for (int i = 0; i < threads.length; i++) {
-      pauseTokens.add(PAUSE_TOKEN);
-    }
-    sink.pause(pauseTokens);
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].pause();
-    }
-    isPaused = true;
-    log("Paused.");
-  }
-
-  public void unpause() {
-    if (!isPaused) throw new AssertionError("Attempt to unpause while not paused.");
-    log("Unpausing...");
-
-    sink.unpause();
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].unpause();
-    }
-
-    isPaused = false;
-    log("Unpaused.");
-  }
-
-  private void log(Object msg) {
-    logger.info("Stage " + name + ": " + msg);
-  }
 }

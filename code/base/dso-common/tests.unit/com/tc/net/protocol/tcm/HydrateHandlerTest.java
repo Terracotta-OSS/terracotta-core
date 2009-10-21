@@ -17,7 +17,6 @@ import com.tc.stats.Stats;
 import com.tc.test.TCTestCase;
 
 import java.util.Collection;
-import java.util.List;
 
 public class HydrateHandlerTest extends TCTestCase {
 
@@ -55,19 +54,11 @@ public class HydrateHandlerTest extends TCTestCase {
       throw new AssertionError("not supposed to happen");
     }
 
-    public void pause(List pauseEvents) {
-      throw new AssertionError("not supposed to happen");
-    }
-
     public void setAddPredicate(AddPredicate predicate) {
       throw new AssertionError("not supposed to happen");
     }
 
     public int size() {
-      throw new AssertionError("not supposed to happen");
-    }
-
-    public void unpause() {
       throw new AssertionError("not supposed to happen");
     }
 

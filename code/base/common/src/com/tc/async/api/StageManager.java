@@ -13,6 +13,8 @@ import java.util.List;
 public interface StageManager {
   public Stage createStage(String name, EventHandler handler, int threads, int maxSize);
 
+  public Stage createStage(String name, EventHandler handler, int threads, int queueRatio, int maxSize);
+
   public void startStage(Stage stage, ConfigurationContext context);
 
   public void startAll(ConfigurationContext context, List<PostInit> toInit);

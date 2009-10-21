@@ -14,7 +14,6 @@ import com.tc.stats.Stats;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -110,21 +109,12 @@ public class OrderedSink implements Sink {
     return predicate;
   }
 
-  public void pause(List pauseEvents) {
-    clear();
-    sink.pause(pauseEvents);
-  }
-
   public synchronized void setAddPredicate(AddPredicate ap) {
     this.predicate = ap;
   }
 
   public int size() {
     return sink.size();
-  }
-
-  public void unpause() {
-    sink.unpause();
   }
 
   public void enableStatsCollection(boolean enable) {

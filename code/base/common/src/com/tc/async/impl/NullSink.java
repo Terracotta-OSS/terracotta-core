@@ -10,7 +10,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.stats.Stats;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * @author steve
@@ -46,16 +45,6 @@ public class NullSink implements Sink {
 
   public void clear() {
     throw new ImplementMe();
-  }
-
-  public void pause(List pauseTokens) {
-    throw new ImplementMe();
-    
-  }
-
-  public void unpause() {
-    throw new ImplementMe();
-    
   }
 
   public void enableStatsCollection(boolean enable) {
