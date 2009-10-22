@@ -46,7 +46,16 @@ public class JBossHelper {
     }
 
     ReplaceLine.parseFile(tokens.toArray(new ReplaceLine.Token[] {}), dest);
-    
+
+    // fix up "caculated" AJP and https ports (since they can collide and drop below 1024)
+    tokens.clear();
+    for (int line : new int[] { 440, 441 }) {
+      int port = pc.chooseRandomPort();
+      tokens.add(new ReplaceLine.Token(line, "select=\"\\$port . [0-9]+\"", "select=\"" + port + "\""));
+    }
+
+    ReplaceLine.parseFile(tokens.toArray(new ReplaceLine.Token[] {}), dest);
+
     // handling another file
     tokens.clear();
     dest = new File(serverDir, "deploy/ejb3-connectors-jboss-beans.xml");
