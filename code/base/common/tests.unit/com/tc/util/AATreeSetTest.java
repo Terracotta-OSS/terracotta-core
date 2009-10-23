@@ -4,7 +4,7 @@
  */
 package com.tc.util;
 
-import com.tc.test.TCTestCase;
+import com.tc.util.AATreeSet.AANode;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.TreeSet;
 
-public class AATreeSetTest extends TCTestCase {
+import junit.framework.TestCase;
+
+public class AATreeSetTest extends TestCase {
 
   public void testRandom() {
     List longs = populateRandomLongs(new ArrayList(), 1000);
@@ -359,6 +361,89 @@ public class AATreeSetTest extends TCTestCase {
       arrayList.add(new Long(r.nextLong()));
     }
     return arrayList;
+  }
+
+  public void testRemove() {
+    AATreeSet aaTree = new AATreeSet();
+    assertTrue(aaTree.insert(new MyInt(5)));
+    assertTrue(aaTree.insert(new MyInt(10)));
+    assertTrue(aaTree.insert(new MyInt(1)));
+    assertTrue(aaTree.insert(new MyInt(7)));
+    assertTrue(aaTree.insert(new MyInt(12)));
+    assertTrue(aaTree.insert(new MyInt(11)));
+
+    MyInt ten = (MyInt) aaTree.remove(new MyInt(10));
+    assertEquals(new MyInt(10), ten);
+
+    MyInt five = (MyInt) aaTree.remove(new MyInt(5));
+    assertEquals(new MyInt(5), five);
+
+    MyInt none = (MyInt) aaTree.remove(new MyInt(13));
+    assertNull(none);
+
+    MyInt eleven = (MyInt) aaTree.remove(new MyInt(11));
+    assertEquals(new MyInt(11), eleven);
+
+    assertEquals(3, aaTree.size());
+    Iterator i = aaTree.iterator();
+    MyInt one = (MyInt) i.next();
+    assertEquals(new MyInt(1), one);
+    aaTree.remove(one);
+
+    assertEquals(2, aaTree.size());
+    i = aaTree.iterator();
+    MyInt seven = (MyInt) i.next();
+    assertEquals(new MyInt(7), seven);
+    aaTree.remove(seven);
+
+    assertEquals(1, aaTree.size());
+    MyInt twelve = (MyInt) aaTree.remove(new MyInt(12));
+    assertEquals(new MyInt(12), twelve);
+
+    assertTrue(aaTree.isEmpty());
+  }
+
+  private class MyInt extends AANode implements Comparable {
+
+    private int i;
+
+    public MyInt(int i) {
+      this.i = i;
+    }
+
+    public int compareTo(Object o) {
+      return this.i - ((MyInt) o).i;
+    }
+
+    @Override
+    protected void swap(AANode element) {
+      MyInt other = ((MyInt) element);
+      int temp = this.i;
+      this.i = other.i;
+      other.i = temp;
+    }
+
+    @Override
+    protected Comparable getElement() {
+      return this;
+    }
+
+    @Override
+    public int hashCode() {
+      return this.i;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof MyInt) { return this.i == ((MyInt) o).i; }
+      return false;
+    }
+
+    @Override
+    public String toString() {
+      return "MyInt[" + this.i + "]";
+    }
+
   }
 
 }

@@ -17,6 +17,10 @@ import java.util.NoSuchElementException;
  * <p>
  * Note:: "matching" is based on the compareTo method. This class is *NOT* thread safe. Synchronize externally if you
  * want it to be thread safe.
+ * <p>
+ * There are memory optimizations done to this which allows users to extend AANode and implement a couple of methods
+ * themselves thus saving an extra object plus a reference for every node in this tree. But if you do so, then you
+ * either can't have different types of elements in the same AATreeSet or should handle copying one over other.
  * 
  * @author Mark Allen Weiss
  */
@@ -33,7 +37,7 @@ public class AATreeSet {
 
   static // static initializer for nullNode
   {
-    nullNode = new AANode(null);
+    nullNode = new AANodeWrapper(null);
     nullNode.left = nullNode.right = nullNode;
     nullNode.level = 0;
   }
@@ -98,7 +102,7 @@ public class AATreeSet {
       ptr = ptr.left;
     }
 
-    return ptr.element;
+    return ptr.getElement();
   }
 
   /**
@@ -115,7 +119,7 @@ public class AATreeSet {
       ptr = ptr.right;
     }
 
-    return ptr.element;
+    return ptr.getElement();
   }
 
   /**
@@ -129,13 +133,13 @@ public class AATreeSet {
     AANode current = this.root;
 
     while (current != nullNode) {
-      int res = x.compareTo(current.element);
+      int res = x.compareTo(current.getElement());
       if (res < 0) {
         current = current.left;
       } else if (res > 0) {
         current = current.right;
       } else {
-        return current.element;
+        return current.getElement();
       }
     }
     return null;
@@ -179,10 +183,10 @@ public class AATreeSet {
    */
   private AANode insert(Comparable x, AANode t) {
     if (t == nullNode) {
-      t = new AANode(x);
-    } else if (x.compareTo(t.element) < 0) {
+      t = createOrGetAANode(x);
+    } else if (x.compareTo(t.getElement()) < 0) {
       t.left = insert(x, t.left);
-    } else if (x.compareTo(t.element) > 0) {
+    } else if (x.compareTo(t.getElement()) > 0) {
       t.right = insert(x, t.right);
     } else {
       // XXX:: Not throwing DuplicateItemException as we may want to insert elements without doing a lookup.
@@ -197,6 +201,18 @@ public class AATreeSet {
   }
 
   /**
+   * This method is here to save us some memory while working with AATreeSet by not creating internal AANodes object if
+   * the inserted nodes extends AANodes.
+   */
+  protected AANode createOrGetAANode(Comparable x) {
+    if (x instanceof AANode) {
+      return (AANode) x;
+    } else {
+      return new AANodeWrapper(x);
+    }
+  }
+
+  /**
    * Internal method to remove from a subtree.
    * 
    * @param x the item to remove.
@@ -207,7 +223,7 @@ public class AATreeSet {
     if (t != nullNode) {
       // Step 1: Search down the tree and set lastNode and deletedNode
       this.lastNode = t;
-      if (x.compareTo(t.element) < 0) {
+      if (x.compareTo(t.getElement()) < 0) {
         t.left = remove(x, t.left);
       } else {
         this.deletedNode = t;
@@ -217,13 +233,13 @@ public class AATreeSet {
       // Step 2: If at the bottom of the tree and
       // x is present, we remove it
       if (t == this.lastNode) {
-        if (this.deletedNode == nullNode || x.compareTo(this.deletedNode.element) != 0) {
+        if (this.deletedNode == nullNode || x.compareTo(this.deletedNode.getElement()) != 0) {
           // XXX:: Modified to not throw ItemNotFoundException as we want to be able to remove elements without doing a
           // lookup.
           // throw new RuntimeException("ItemNotFoundException : " + x.toString());
         } else {
-          this.deletedElement = this.deletedNode.element;
-          this.deletedNode.element = t.element;
+          this.deletedNode.swap(t);
+          this.deletedElement = t.getElement();
           t = t.right;
         }
       }
@@ -294,17 +310,56 @@ public class AATreeSet {
     return "AATree = { " + this.root.dump() + " }";
   }
 
-  private static class AANode {
-    // Constructors
-    AANode(Comparable theElement) {
+  /**
+   * This class is used when the elements in the tree is not extending AANode, either because they dont care for the
+   * memory that they will be saving or because they can't. (like Numbers and other classes that already extends
+   * something else)
+   */
+  private static final class AANodeWrapper extends AANode {
+
+    Comparable element; // The data in the node
+
+    public AANodeWrapper(Comparable theElement) {
       this.element = theElement;
+    }
+
+    @Override
+    public String toString() {
+      return "AANodeWrapper@" + System.identityHashCode(this) + "{" + this.element + "}";
+    }
+
+    @Override
+    public Comparable getElement() {
+      return this.element;
+    }
+
+    @Override
+    protected void swap(AANode other) {
+      AANodeWrapper otherWapper = (AANodeWrapper) other;
+      Comparable otherElement = otherWapper.element;
+      otherWapper.element = this.element;
+      this.element = otherElement;
+    }
+  }
+
+  /**
+   * This is public coz anyone who cares about saving memory (like in ObjectIDSet) can just extend this class and save
+   * one object (plus a reference) per entry thus saving about 24 bytes per entry.
+   */
+  public static abstract class AANode {
+
+    AANode left; // Left child
+    AANode right; // Right child
+    int    level; // Level
+
+    AANode() {
       this.left = this.right = nullNode;
       this.level = 1;
     }
 
     // XXX:: for debugging - costly operation
     public String dump() {
-      String ds = String.valueOf(this.element);
+      String ds = String.valueOf(this.getElement());
       if (this.left != nullNode) {
         ds = ds + "," + this.left.dump();
       }
@@ -314,15 +369,10 @@ public class AATreeSet {
       return ds;
     }
 
-    Comparable element; // The data in the node
-    AANode     left;   // Left child
-    AANode     right;  // Right child
-    int        level;  // Level
+    protected abstract Comparable getElement();
 
-    @Override
-    public String toString() {
-      return "AANode@" + System.identityHashCode(this) + "{" + this.element + "}";
-    }
+    protected abstract void swap(AANode element);
+
   }
 
   /*
@@ -345,7 +395,7 @@ public class AATreeSet {
     public AATreeSetIterator(Comparable c) {
       int result = 0;
       while (this.next != nullNode) {
-        result = c.compareTo(this.next.element);
+        result = c.compareTo(this.next.getElement());
         if (result < 0) {
           this.s.push(this.next);
           this.next = this.next.left;
@@ -382,7 +432,7 @@ public class AATreeSet {
         } else {
           AANode current = (AANode) this.s.pop();
           this.next = current.right;
-          return current.element;
+          return current.getElement();
         }
       }
     }

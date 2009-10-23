@@ -10,6 +10,7 @@ import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.AATreeSet.AANode;
 
 import java.io.IOException;
 import java.util.AbstractSet;
@@ -204,7 +205,7 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  private static class Range implements Cloneable, Comparable {
+  private static class Range extends AANode implements Cloneable, Comparable {
     public long start;
     public long end;
 
@@ -294,6 +295,27 @@ public class ObjectIDSet extends AbstractSet implements SortedSet, PrettyPrintab
         }
       }
     }
+
+    @Override
+    protected void swap(AANode other) {
+      if (other instanceof Range) {
+        Range r = (Range) other;
+        long temp = this.start;
+        this.start = r.start;
+        r.start = temp;
+        temp = this.end;
+        this.end = r.end;
+        r.end = temp;
+      } else {
+        throw new AssertionError("AATree can't contain both Ranges and other types : " + this + " other : " + other);
+      }
+    }
+
+    @Override
+    protected Comparable getElement() {
+      return this;
+    }
+
   }
 
   // This class is used as a key for lookup.
