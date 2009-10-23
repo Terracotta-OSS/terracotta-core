@@ -8,21 +8,21 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 1.7.0-SNAPSHOT
+    version: 1.7.1-SNAPSHOT
     destination: distributed-cache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 1.7.0-SNAPSHOT
+    version: 1.7.1-SNAPSHOT
     destination: distributed-cache
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 1.7.0-SNAPSHOT
+    version: 1.7.1-SNAPSHOT
     destination: distributed-cache
     
   - maven_artifact: false
