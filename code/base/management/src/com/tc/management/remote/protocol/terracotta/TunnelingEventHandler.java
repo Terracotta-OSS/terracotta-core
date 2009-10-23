@@ -21,7 +21,7 @@ import java.io.IOException;
 import javax.management.remote.generic.MessageConnection;
 import javax.management.remote.message.Message;
 
-public final class TunnelingEventHandler extends AbstractEventHandler implements ChannelEventListener {
+public class TunnelingEventHandler extends AbstractEventHandler implements ChannelEventListener {
 
   private static final TCLogger      logger = TCLogging.getLogger(TunnelingEventHandler.class);
 
@@ -78,7 +78,7 @@ public final class TunnelingEventHandler extends AbstractEventHandler implements
     }
   }
 
-  synchronized MessageConnection accept() throws IOException {
+  protected synchronized MessageConnection accept() throws IOException {
     while (!acceptOk) {
       try {
         wait();

@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -20,7 +21,7 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     super(hdrData, MIN_LENGTH, MAX_LENGTH);
   }
 
-  TCMessageHeaderImpl(TCMessageType type) {
+  protected TCMessageHeaderImpl(TCMessageType type) {
     super(MIN_LENGTH, MAX_LENGTH);
 
     setMessageType(type.getType());
@@ -88,7 +89,7 @@ public class TCMessageHeaderImpl extends AbstractTCNetworkHeader implements TCMe
     final short expect = VERSION_1;
     if (version != expect) { throw new TCProtocolException("Version " + version + " does not match expected version "
                                                            + expect); }
-        
+
     // XXX: validate other fields
   }
 

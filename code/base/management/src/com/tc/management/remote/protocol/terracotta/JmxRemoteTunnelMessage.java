@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.management.remote.protocol.terracotta;
 
@@ -24,7 +25,7 @@ import java.io.ObjectOutputStream;
 
 import javax.management.remote.message.Message;
 
-public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable {
+public class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSerializable {
 
   private static final byte TUNNEL_MESSAGE = 0;
   private static final byte FLAG           = 1;
@@ -36,8 +37,8 @@ public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSe
   private Message           tunneledMessage;
   private byte              flag;
 
-  public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
-                                TCMessageType type) {
+  public JmxRemoteTunnelMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
+                                MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
     flag = DATA_FLAG;
   }
@@ -96,7 +97,7 @@ public final class JmxRemoteTunnelMessage extends DSOMessageBase implements TCSe
     }
   }
 
-  synchronized void setInitConnection() {
+  protected synchronized void setInitConnection() {
     setFlag(SYN_FLAG);
   }
 
