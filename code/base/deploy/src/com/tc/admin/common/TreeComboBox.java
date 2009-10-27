@@ -106,7 +106,7 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
     tree.setLargeModel(true);
     tree.setVisibleRowCount(10);
     tree.addTreeWillExpandListener(this);
-    popup.add(new JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
+    popup.add(new JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
     tree.addMouseListener(treeMouseHandler);
     tree.addMouseMotionListener(treeMouseHandler);
