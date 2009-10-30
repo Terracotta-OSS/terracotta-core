@@ -3,10 +3,10 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.EventContext;
+import com.tc.async.api.EventMultiThreadedContext;
 import com.tc.async.api.Sink;
 
-public class HydrateContext implements EventContext {
+public class HydrateContext implements EventMultiThreadedContext {
 
   private final Sink      destSink;
   private final TCMessage message;
@@ -22,5 +22,9 @@ public class HydrateContext implements EventContext {
 
   public TCMessage getMessage() {
     return message;
+  }
+
+  public Object getKey() {
+    return message.getSourceNodeID();
   }
 }

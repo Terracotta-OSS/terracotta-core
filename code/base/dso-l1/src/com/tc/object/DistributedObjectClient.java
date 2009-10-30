@@ -539,7 +539,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     Stage transactionResponse = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_COMPLETE_STAGE,
                                                          new ReceiveTransactionCompleteHandler(), 1, maxSize);
     Stage hydrateStage = stageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE,
-                                                  new HydrateHandler(), 1, maxSize);
+                                                  new HydrateHandler(), channel.getGroupIDs().length, 1, maxSize);
     Stage batchTxnAckStage = stageManager.createStage(ClientConfigurationContext.BATCH_TXN_ACK_STAGE,
                                                       new BatchTransactionAckHandler(), 1, maxSize);
 
