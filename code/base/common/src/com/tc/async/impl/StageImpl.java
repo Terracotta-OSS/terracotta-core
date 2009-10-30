@@ -72,10 +72,6 @@ public class StageImpl implements Stage {
     return stageQueue;
   }
 
-  public String getName() {
-    return name;
-  }
-
   private synchronized void startThreads() {
     for (int i = 0; i < threads.length; i++) {
       String threadName = "WorkerThread(" + name + ", " + i;

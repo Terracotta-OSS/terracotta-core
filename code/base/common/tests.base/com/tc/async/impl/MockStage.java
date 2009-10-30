@@ -29,10 +29,6 @@ public class MockStage implements Stage {
     return sink;
   }
 
-  public String getName() {
-    return name;
-  }
-
   public void start(ConfigurationContext context) {
     //
   }
@@ -43,6 +39,11 @@ public class MockStage implements Stage {
 
   public void turnTracingOff() {
     //
+  }
+
+  @Override
+  public String toString() {
+    return "MockStage(" + name + ")";
   }
 
 }

@@ -286,10 +286,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public String getName() {
-      throw new ImplementMe();
-    }
-
     public Sink getSink() {
       return sink;
     }

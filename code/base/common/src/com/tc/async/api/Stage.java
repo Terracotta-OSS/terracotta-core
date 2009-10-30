@@ -13,8 +13,6 @@ public interface Stage {
 
   public Sink getSink();
 
-  public String getName();
-
   public void start(ConfigurationContext context);
 
 }
