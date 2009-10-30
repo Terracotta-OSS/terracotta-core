@@ -9,7 +9,7 @@ import com.tc.stats.Monitorable;
 import java.util.Collection;
 
 /**
- * @author steve
+ * Represents the sink in the SEDA system
  */
 public interface Sink extends Monitorable {
   /**
@@ -43,9 +43,8 @@ public interface Sink extends Monitorable {
   public void setAddPredicate(AddPredicate predicate);
 
   /**
-   * Get the predicate (I hate the useless javadocs)
+   * Get the predicate 
    * 
-   * @return
    */
   public AddPredicate getPredicate();
 

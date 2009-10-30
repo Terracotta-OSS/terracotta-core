@@ -91,10 +91,10 @@ public class StageManagerImpl implements StageManager {
     return createStage(name, handler, threads, threads, maxSize);
   }
 
-  public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadToQueueRatio,
+  public synchronized Stage createStage(String name, EventHandler handler, int threads, int threadsToQueueRatio,
                                         int maxSize) {
     int capacity = maxSize > 0 ? maxSize : Integer.MAX_VALUE;
-    Stage s = new StageImpl(loggerProvider, name, handler, threads, threadToQueueRatio, group, this.queueFactory,
+    Stage s = new StageImpl(loggerProvider, name, handler, threads, threadsToQueueRatio, group, this.queueFactory,
                             capacity);
     addStage(name, s);
     return s;

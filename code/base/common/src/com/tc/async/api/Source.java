@@ -4,15 +4,13 @@
  */
 package com.tc.async.api;
 
-import com.tc.stats.Monitorable;
-
 /**
- * This is used buy the internals to manage the process of processing EventContexts in the maner that makes sense for
+ * This is used by the internals to manage the process of processing EventContexts in the manner that makes sense for
  * each one. Individual Stages SHOULD NOT HAVE TO EITHER USE OR IMPLEMENT THIS INTERFACE
  * 
- * @author steve
  */
-public interface Source extends Monitorable {
+
+public interface Source {
 
   public EventContext poll(long period) throws InterruptedException;
 

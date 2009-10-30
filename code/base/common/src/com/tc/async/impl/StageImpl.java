@@ -18,27 +18,44 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.util.concurrent.QueueFactory;
 
 /**
- * @author steve
+ * The SEDA Stage
  */
 public class StageImpl implements Stage {
   private static final long    pollTime = 3000; // This is the poor man's solution for stage
   private final String         name;
   private final EventHandler   handler;
-  private final StageQueueImpl sink;
+  private final StageQueueImpl stageQueue;
   private final WorkerThread[] threads;
   private final ThreadGroup    group;
   private final TCLogger       logger;
 
-  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, int threadCount, int queueRatio,
-                   ThreadGroup group, QueueFactory queueFactory, int queueSize) {
+  /**
+   * The Constructor.
+   * 
+   * @param loggerProvider : logger
+   * @param name : The stage name
+   * @param handler : Event handler for this stage
+   * @param threadCount : Number of threads working on this stage
+   * @param threadsToQueueRatio : The ratio determines the number of queues internally used and the number of threads
+   *        per each queue. Ideally you would want this to be same as threadCount, in which case there is only 1 queue
+   *        used internally and all thread are working on the same queue (which doesn't guarantee order in processing)
+   *        or set it to 1 where each thread gets its own queue but the (multithreaded) event contexts are distributed
+   *        based on the key they return. 
+   * @param group : The thread group to be used
+   * @param queueFactory : Factory used to create the queues
+   * @param queueSize : Max queue Size allowed
+   */
+  public StageImpl(TCLoggerProvider loggerProvider, String name, EventHandler handler, int threadCount,
+                   int threadsToQueueRatio, ThreadGroup group, QueueFactory queueFactory, int queueSize) {
     this.logger = loggerProvider.getLogger(Stage.class.getName() + ": " + name);
     this.name = name;
     this.handler = handler;
     this.threads = new WorkerThread[threadCount];
-    if (queueRatio > threadCount) {
-      logger.warn("Worker Queue Ratio " + queueRatio + " > Worker Threads " + threadCount);
+    if (threadsToQueueRatio > threadCount) {
+      logger.warn("Thread to Queue Ratio " + threadsToQueueRatio + " > Worker Threads " + threadCount);
     }
-    this.sink = new StageQueueImpl(threadCount, queueRatio, queueFactory, loggerProvider, name, queueSize);
+    this.stageQueue = new StageQueueImpl(threadCount, threadsToQueueRatio, queueFactory, loggerProvider, name,
+                                         queueSize);
     this.group = group;
   }
 
@@ -52,7 +69,7 @@ public class StageImpl implements Stage {
   }
 
   public Sink getSink() {
-    return sink;
+    return stageQueue;
   }
 
   public String getName() {
@@ -63,11 +80,11 @@ public class StageImpl implements Stage {
     for (int i = 0; i < threads.length; i++) {
       String threadName = "WorkerThread(" + name + ", " + i;
       if (threads.length > 1) {
-        threadName = threadName + ", " + this.sink.getSource(i).getSourceName() + ")";
+        threadName = threadName + ", " + this.stageQueue.getSource(i).getSourceName() + ")";
       } else {
         threadName = threadName + ")";
       }
-      threads[i] = new WorkerThread(threadName, this.sink.getSource(i), handler, group);
+      threads[i] = new WorkerThread(threadName, this.stageQueue.getSource(i), handler, group);
       threads[i].start();
     }
   }
