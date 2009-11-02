@@ -10,7 +10,7 @@ import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.NotClearable;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockLevel;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
 
@@ -53,13 +53,13 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     public boolean tryLock() {
       if (ManagerUtil.isManaged(lock)) {
-        return ManagerUtil.tryMonitorEnter(lock, lockLevel, 0L);
+        return ManagerUtil.tryMonitorEnter(lock, lockLevel);
       } else {
         return true;
       }
     }
 
-    public boolean tryLock(long timeout, TimeUnit unit) {
+    public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
       if (ManagerUtil.isManaged(lock)) {
         long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
         boolean rv = ManagerUtil.tryMonitorEnter(lock, lockLevel, timeoutInNanos);
@@ -71,7 +71,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     public void unlock() {
       if (ManagerUtil.isManaged(lock)) {
-        ManagerUtil.monitorExit(lock);
+        ManagerUtil.monitorExit(lock, lockLevel);
       }
     }
 
@@ -93,7 +93,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     protected ReadLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
-      dsoLock = new DsoLock(sync, LockLevel.READ);
+      dsoLock = new DsoLock(sync, LockLevel.READ.toInt());
     }
 
     public void lock() {
@@ -143,7 +143,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
     public String toString() {
       if (ManagerUtil.isManaged(this)) {
         String objectString = getClass().getName() + "@" + Integer.toHexString(hashCode());
-        return (new StringBuilder()).append(objectString).append(dsoLock.getLockState(LockLevel.READ)).toString();
+        return (new StringBuilder()).append(objectString).append(dsoLock.getLockState(LockLevel.READ.toInt())).toString();
       } else {
         return super.toString();
       }
@@ -151,7 +151,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
       s.defaultReadObject();
-      this.dsoLock = new DsoLock(sync, LockLevel.READ);
+      this.dsoLock = new DsoLock(sync, LockLevel.READ.toInt());
     }
 
     public void __tc_managed(TCObject tcObject) {
@@ -174,7 +174,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     protected WriteLock(ReentrantReadWriteLockTC lock, Sync sync) {
       super(lock);
-      this.dsoLock = new DsoLock(sync, LockLevel.WRITE);
+      this.dsoLock = new DsoLock(sync, LockLevel.WRITE.toInt());
     }
 
     public void lock() {
@@ -235,13 +235,13 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
     private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
       s.defaultReadObject();
-      this.dsoLock = new DsoLock(sync, LockLevel.WRITE);
+      this.dsoLock = new DsoLock(sync, LockLevel.WRITE.toInt());
     }
 
     public String toString() {
       if (ManagerUtil.isManaged(this)) {
         String objectString = getClass().getName() + "@" + Integer.toHexString(hashCode());
-        return (new StringBuilder()).append(objectString).append(dsoLock.getLockState(LockLevel.WRITE)).toString();
+        return (new StringBuilder()).append(objectString).append(dsoLock.getLockState(LockLevel.WRITE.toInt())).toString();
       } else {
         return super.toString();
       }
@@ -295,7 +295,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
   // TODO: need to review
   public int getReadLockCount() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.localHeldCount(sync, LockLevel.READ);
+      return ManagerUtil.localHeldCount(sync, LockLevel.READ.toInt());
     } else {
       return super.getReadLockCount();
     }
@@ -329,7 +329,7 @@ public class ReentrantReadWriteLockTC extends ReentrantReadWriteLock implements 
 
   public boolean isWriteLocked() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.isLocked(sync, LockLevel.WRITE);
+      return ManagerUtil.isLocked(sync, LockLevel.WRITE.toInt());
     } else {
       return super.isWriteLocked();
     }

@@ -10,9 +10,11 @@ import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.net.ClientID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.TestLockManager;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -23,8 +25,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
-import com.tc.objectserver.lockmanager.api.TestLockManager;
+import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
@@ -74,7 +75,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
   public void testLockManagerNotifyIsCalled() throws Exception {
     TxnBatchID batchID = new TxnBatchID(1);
     TransactionID txID = new TransactionID(1);
-    LockID[] lockIDs = new LockID[] { new LockID("1") };
+    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
     ClientID cid = new ClientID(1);
     List dnas = Collections.unmodifiableList(new LinkedList());
     ObjectStringSerializer serializer = null;
@@ -83,7 +84,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     List notifies = new LinkedList();
 
     for (int i = 0; i < 10; i++) {
-      notifies.add(new Notify(new LockID("" + i), new ThreadID(i), i % 2 == 0));
+      notifies.add(new Notify(new StringLockID("" + i), new ThreadID(i), i % 2 == 0));
     }
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,

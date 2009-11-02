@@ -20,7 +20,7 @@ public class ReadOnlyException extends RuntimeException {
   /**
    * @param message Message, which will be wrapped
    */
-  public ReadOnlyException(String message) {
+  protected ReadOnlyException(String message) {
     super(wrapper.wrap(message));
   }
   

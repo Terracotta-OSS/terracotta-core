@@ -7,6 +7,7 @@ package com.tc.object.bytecode;
 import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Type;
+import com.tc.object.locks.LockLevel;
 
 public abstract class AbstractVolatileFieldMethodVisitor extends MaxLocalVarStoreDetectingMethodAdapter {
   public AbstractVolatileFieldMethodVisitor(MethodVisitor mv) {
@@ -50,7 +51,7 @@ public abstract class AbstractVolatileFieldMethodVisitor extends MaxLocalVarStor
     mv.visitLabel(label_begin_volatile);
     mv.visitVarInsn(ALOAD, tcobject_var_store);
     mv.visitLdcInsn(fieldName);
-    mv.visitInsn(ICONST_2);
+    mv.visitInsn(LockLevel.WRITE.toInt());
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "beginVolatile",
                        "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
 
@@ -63,8 +64,9 @@ public abstract class AbstractVolatileFieldMethodVisitor extends MaxLocalVarStor
     mv.visitVarInsn(ASTORE, exception_var_store);
     mv.visitVarInsn(ALOAD, tcobject_var_store);
     mv.visitLdcInsn(fieldName);
+    mv.visitInsn(LockLevel.WRITE.toInt());
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "commitVolatile",
-                       "(Lcom/tc/object/TCObject;Ljava/lang/String;)V");
+                       "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
     mv.visitVarInsn(ALOAD, exception_var_store);
     mv.visitInsn(ATHROW);
 
@@ -72,8 +74,9 @@ public abstract class AbstractVolatileFieldMethodVisitor extends MaxLocalVarStor
     mv.visitLabel(label_commit_volatile);
     mv.visitVarInsn(ALOAD, tcobject_var_store);
     mv.visitLdcInsn(fieldName);
+    mv.visitInsn(LockLevel.WRITE.toInt());
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "commitVolatile",
-                       "(Lcom/tc/object/TCObject;Ljava/lang/String;)V");
+                       "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
 
     mv.visitLabel(label_tcobject_null);
   }

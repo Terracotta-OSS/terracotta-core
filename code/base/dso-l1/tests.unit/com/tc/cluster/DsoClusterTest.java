@@ -10,7 +10,7 @@ import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.test.TCTestCase;
 import com.tcclient.cluster.DsoNode;

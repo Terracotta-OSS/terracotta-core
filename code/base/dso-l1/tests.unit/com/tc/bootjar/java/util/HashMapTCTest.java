@@ -21,6 +21,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -89,8 +90,9 @@ public class HashMapTCTest extends TCTestCase {
 
     TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
     MockTransactionManager testTransactionManager = new MockTransactionManager();
+    MockClientLockManager testClientLockManager = new MockClientLockManager();
     IsolationClassLoader classLoader = new IsolationClassLoader((DSOClientConfigHelper) proxy, testClientObjectManager,
-                                                                testTransactionManager);
+                                                                testTransactionManager, testClientLockManager);
     classLoader.init();
 
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();

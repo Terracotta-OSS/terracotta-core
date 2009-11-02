@@ -16,7 +16,8 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDAlreadySetException;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.msg.NullMessageRecycler;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
@@ -211,7 +212,7 @@ public class ReplicatedTransactionManagerTest extends TestCase {
     LinkedHashMap map = new LinkedHashMap();
 
     TxnBatchID batchID = new TxnBatchID(this.bid++);
-    LockID[] lockIDs = new LockID[] { new LockID("1") };
+    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
     ObjectStringSerializer serializer = null;
     Map newRoots = Collections.unmodifiableMap(new HashMap());
     TxnType txnType = TxnType.NORMAL;

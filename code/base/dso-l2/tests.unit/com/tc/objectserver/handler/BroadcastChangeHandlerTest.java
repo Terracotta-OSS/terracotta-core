@@ -27,7 +27,8 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.BroadcastTransactionMessage;
 import com.tc.object.net.ChannelStats;
@@ -48,8 +49,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.lockmanager.api.LockManager;
-import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
+import com.tc.objectserver.locks.LockManager;
+import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
@@ -137,7 +138,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public LockID[] getLockIDs() {
-      return new LockID[] { new LockID("1") };
+      return new LockID[] { new StringLockID("1") };
     }
 
     public ObjectIDSet getNewObjectIDs() {

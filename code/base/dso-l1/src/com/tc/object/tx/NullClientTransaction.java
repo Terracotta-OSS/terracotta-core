@@ -7,7 +7,7 @@ package com.tc.object.tx;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.Notify;
 
 import java.util.Collection;
 import java.util.Collections;

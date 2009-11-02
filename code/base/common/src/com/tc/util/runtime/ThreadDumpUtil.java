@@ -6,7 +6,7 @@ package com.tc.util.runtime;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tc.util.Assert;
 
 import java.lang.management.ManagementFactory;

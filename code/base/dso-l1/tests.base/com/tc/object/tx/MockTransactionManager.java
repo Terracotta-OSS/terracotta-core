@@ -12,6 +12,9 @@ import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockLevel;
+import com.tc.object.locks.Notify;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManagerImpl.ThreadTransactionLoggingStack;
 import com.tc.text.PrettyPrinter;
@@ -54,11 +57,10 @@ public class MockTransactionManager implements ClientTransactionManager {
     return rv;
   }
 
-  public boolean begin(String lock, int lockType, String lockObjectType, String contextInfo) {
+  public void begin(LockID lock, LockLevel lockType) {
     // System.err.println(this + ".begin(" + lock + ")");
 
     this.begins.add(new Begin(lock, lockType));
-    return true;
   }
 
   public void clearCommitCount() {
@@ -86,16 +88,16 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public static class Begin {
-    public String lockName;
-    public int    lockType;
+    public LockID    lock;
+    public LockLevel level;
 
-    Begin(String name, int type) {
-      this.lockName = name;
-      this.lockType = type;
+    Begin(LockID lock, LockLevel level) {
+      this.lock = lock;
+      this.level = level;
     }
   }
 
-  public void notify(String lockName, boolean all, Object object) throws UnlockedSharedObjectException {
+  public void notify(Notify notify) throws UnlockedSharedObjectException {
     throw new ImplementMe();
   }
 
@@ -103,7 +105,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void apply(TxnType txType, List lockIDs, Collection objectChanges, Map newRoots) {
+  public void apply(TxnType txType, List<LockID> lockIDs, Collection objectChanges, Map newRoots) {
     throw new ImplementMe();
   }
 
@@ -127,9 +129,9 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public void commit(String lockName) throws UnlockedSharedObjectException {
+  public void commit(LockID lock, LockLevel level) throws UnlockedSharedObjectException {
     if (logger.isDebugEnabled()) {
-      logger.debug("commit(lockName)");
+      logger.debug("commit(" + lock + ")");
     }
     this.commitCount++;
   }
@@ -170,18 +172,10 @@ public class MockTransactionManager implements ClientTransactionManager {
     return (txnStack != null) && (((ThreadTransactionLoggingStack) txnStack).get() > 0);
   }
 
-  public boolean isHeldByCurrentThread(String lockName, int lockLevel) {
-    throw new ImplementMe();
+  public boolean isObjectCreationInProgress() {
+    return false;
   }
-
-  public boolean beginInterruptibly(String lockID, int type, String lockObjectType, String contextInfo) {
-    throw new ImplementMe();
-  }
-
-  public boolean tryBegin(String lock, TimerSpec timeout, int lockLevel, String lockObjectType) {
-    throw new ImplementMe();
-  }
-
+  
   public void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
     throw new ImplementMe();
   }
@@ -198,7 +192,7 @@ public class MockTransactionManager implements ClientTransactionManager {
     throw new ImplementMe();
   }
 
-  public boolean isLockOnTopStack(String lockName) {
+  public boolean isLockOnTopStack(LockID lock) {
     return false;
   }
 
@@ -215,22 +209,6 @@ public class MockTransactionManager implements ClientTransactionManager {
   }
 
   public ClientTransaction getCurrentTransaction() {
-    throw new ImplementMe();
-  }
-
-  public boolean beginLockWithoutTxn(String lockName, int lockLevel, String lockObjectType, String contextInfo) {
-    throw new ImplementMe();
-  }
-
-  public void evictLock(String lockName) {
-    throw new ImplementMe();
-  }
-
-  public void pinLock(String lockName) {
-    throw new ImplementMe();
-  }
-
-  public void unpinLock(String lockName) {
     throw new ImplementMe();
   }
 }

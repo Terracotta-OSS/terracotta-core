@@ -4,7 +4,7 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 public class NullThreadIDMapImpl implements ThreadIDMap {
 

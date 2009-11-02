@@ -258,5 +258,9 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
       return new ObjectIDSet(refs);
     }
   }
+  
+  public String getObjectTypeFromID(ObjectID id, boolean cacheOnly) {
+    return null;
+  }
 
 }

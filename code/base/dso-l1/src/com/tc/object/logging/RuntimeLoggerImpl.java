@@ -7,10 +7,12 @@ package com.tc.object.logging;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.object.TCObject;
-import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.NamedClassLoader;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.DsoLiteralLockID;
+import com.tc.object.locks.DsoLockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockLevel;
 import com.tc.object.tx.TimerSpec;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -197,35 +199,16 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
-  public void lockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
-    boolean isAutoLock = ByteCodeUtil.isAutolockName(lockName);
+  public void lockAcquired(LockID lock, LockLevel level) {
+    StringBuffer message = new StringBuffer("Lock [").append(lock).append("] acquired with level ").append(level);
 
-    if (isAutoLock) {
-      autoLockAcquired(lockName, level, instance, tcObject);
-    } else {
-      namedLockAcquired(lockName, level);
+    if (autoLockDetails && (lock instanceof DsoLockID || lock instanceof DsoLiteralLockID)) {
+      message.append("\n  AUTOLOCK DETAILS NOT CURRENTLY SUPPORTED: ");
     }
-  }
-
-  private void namedLockAcquired(String lockName, int level) {
-    StringBuffer message = new StringBuffer("Named lock [").append(lockName).append("] acquired with level ")
-        .append(LockLevel.toString(level));
+    
     appendCall(message);
     logger.info(message);
-  }
-
-  private void autoLockAcquired(String lockName, int level, Object instance, TCObject tcObject) {
-    StringBuffer message = new StringBuffer("Autolock [").append(lockName).append("] acquired with level ")
-        .append(LockLevel.toString(level));
-
-    if (autoLockDetails && (instance != null)) {
-      message.append("\n  type: ").append(instance.getClass().getName());
-      message.append(", identityHashCode: 0x").append(Integer.toHexString(System.identityHashCode(instance)));
-    }
-
-    appendCall(message);
-
-    logger.info(message);
+    
   }
 
   private void appendCall(StringBuffer message) {

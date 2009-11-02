@@ -8,7 +8,7 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.treetable.AbstractTreeTableModel;
 import com.tc.admin.common.treetable.TreeTableModel;
 import com.tc.management.lock.stats.LockSpec;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -5,8 +5,8 @@
 package com.tcclient.util.concurrent.locks;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.UnsafeUtil;
 import com.tc.util.concurrent.locks.TCLock;
 
@@ -74,7 +74,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   }
 
   private boolean isLockRealConditionInUnshared() {
-    if (!ManagerUtil.isManaged(realCondition) || !ManagerUtil.isHeldByCurrentThread(realCondition, LockLevel.WRITE)) { return true; }
+    if (!ManagerUtil.isManaged(realCondition) || !ManagerUtil.isHeldByCurrentThread(realCondition, Manager.LOCK_TYPE_WRITE)) { return true; }
     return false;
   }
 
@@ -90,7 +90,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     int version = realCondition.getVersion();
     fullRelease();
     try {
-      ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(realCondition, Manager.LOCK_TYPE_WRITE);
       UnsafeUtil.monitorEnter(realCondition);
       boolean isLockInUnshared = isLockRealConditionInUnshared();
       try {
@@ -110,7 +110,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
       } finally {
         UnsafeUtil.monitorExit(realCondition);
         if (!isLockInUnshared) {
-          ManagerUtil.monitorExit(realCondition);
+          ManagerUtil.monitorExit(realCondition, Manager.LOCK_TYPE_WRITE);
         }
       }
     } catch (TCRuntimeException e) {
@@ -131,7 +131,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     int version = realCondition.getVersion();
     fullRelease();
     try {
-      ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(realCondition, Manager.LOCK_TYPE_WRITE);
       UnsafeUtil.monitorEnter(realCondition);
       boolean isLockInUnshared = isLockRealConditionInUnshared();
       try {
@@ -156,7 +156,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
       } finally {
         UnsafeUtil.monitorExit(realCondition);
         if (!isLockInUnshared) {
-          ManagerUtil.monitorExit(realCondition);
+          ManagerUtil.monitorExit(realCondition, Manager.LOCK_TYPE_WRITE);
         }
       }
     } finally {
@@ -179,7 +179,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     int version = realCondition.getVersion();
     fullRelease();
     try {
-      ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(realCondition, Manager.LOCK_TYPE_WRITE);
       UnsafeUtil.monitorEnter(realCondition);
       boolean isLockInUnshared = isLockRealConditionInUnshared();
       try {
@@ -204,7 +204,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
       } finally {
         UnsafeUtil.monitorExit(realCondition);
         if (!isLockInUnshared) {
-          ManagerUtil.monitorExit(realCondition);
+          ManagerUtil.monitorExit(realCondition, Manager.LOCK_TYPE_WRITE);
         }
       }
     } catch (TCRuntimeException e) {
@@ -235,7 +235,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   public void signal() {
     if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
-    ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(realCondition, Manager.LOCK_TYPE_WRITE);
     UnsafeUtil.monitorEnter(realCondition);
     boolean isLockInUnshared = isLockRealConditionInUnshared();
     try {
@@ -248,7 +248,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     } finally {
       UnsafeUtil.monitorExit(realCondition);
       if (!isLockInUnshared) {
-        ManagerUtil.monitorExit(realCondition);
+        ManagerUtil.monitorExit(realCondition, Manager.LOCK_TYPE_WRITE);
       }
     }
   }
@@ -256,7 +256,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
   public void signalAll() {
     if (!((TCLock) originalLock).isHeldByCurrentThread()) { throw new IllegalMonitorStateException(); }
 
-    ManagerUtil.monitorEnter(realCondition, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(realCondition, Manager.LOCK_TYPE_WRITE);
     UnsafeUtil.monitorEnter(realCondition);
     boolean isLockInUnshared = isLockRealConditionInUnshared();
     try {
@@ -268,7 +268,7 @@ public class ConditionObject implements Condition, java.io.Serializable {
     } finally {
       UnsafeUtil.monitorExit(realCondition);
       if (!isLockInUnshared) {
-        ManagerUtil.monitorExit(realCondition);
+        ManagerUtil.monitorExit(realCondition, Manager.LOCK_TYPE_WRITE);
       }
     }
   }

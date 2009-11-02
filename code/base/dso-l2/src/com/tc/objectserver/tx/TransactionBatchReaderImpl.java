@@ -15,8 +15,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockIDSerializer;
+import com.tc.object.locks.Notify;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
@@ -101,7 +102,8 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     final int numLocks = this.in.readInt();
     LockID[] locks = new LockID[numLocks];
     for (int i = 0; i < numLocks; i++) {
-      locks[i] = new LockID(this.in.readString());
+      LockIDSerializer lidsr = new LockIDSerializer();
+      locks[i] = ((LockIDSerializer) lidsr.deserializeFrom(this.in)).getLockID();
     }
 
     Map newRoots = new HashMap();

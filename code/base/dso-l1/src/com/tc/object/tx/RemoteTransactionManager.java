@@ -7,8 +7,8 @@ package com.tc.object.tx;
 import com.tc.logging.DumpHandler;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
-import com.tc.object.lockmanager.api.LockFlushCallback;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockFlushCallback;
+import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
 /**

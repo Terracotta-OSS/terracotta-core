@@ -102,7 +102,7 @@ public class TryLockStressTest extends TransparentTestBase {
               lockSucceeded = true;
               ThreadUtil.reallySleep(random.nextInt(5));
             } finally {
-              ManagerUtil.commitLock(lock);
+              ManagerUtil.commitLock(lock, Manager.LOCK_TYPE_WRITE);
             }
           } else if (1 == lock_mode) {
             if (ManagerUtil.tryBeginLock(lock, Manager.LOCK_TYPE_WRITE, random.nextInt(20)*1000L)) {
@@ -110,7 +110,7 @@ public class TryLockStressTest extends TransparentTestBase {
                 tryLockTimeoutSucceeded = true;
                 ThreadUtil.reallySleep(random.nextInt(5));
               } finally {
-                ManagerUtil.commitLock(lock);
+                ManagerUtil.commitLock(lock, Manager.LOCK_TYPE_WRITE);
               }
             } else {
               tryLockTimeoutFailed = true;
@@ -121,7 +121,7 @@ public class TryLockStressTest extends TransparentTestBase {
                 tryLockSucceeded = true;
                 ThreadUtil.reallySleep(random.nextInt(5));
               } finally {
-                ManagerUtil.commitLock(lock);
+                ManagerUtil.commitLock(lock, Manager.LOCK_TYPE_WRITE);
               }
             } else {
               tryLockFailed = true;

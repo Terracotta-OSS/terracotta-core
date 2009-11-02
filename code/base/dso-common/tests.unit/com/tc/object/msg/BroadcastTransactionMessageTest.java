@@ -16,10 +16,11 @@ import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.ThreadID;
+import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
@@ -53,7 +54,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     // / XXX: TODO: Add changes to test.
 
     ObjectStringSerializer serializer = new ObjectStringSerializer();
-    LockID[] lockIDs = new LockID[] { new LockID("1") };
+    LockID[] lockIDs = new LockID[] { new StringLockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);
     ClientID clientID = new ClientID(1);
@@ -63,8 +64,8 @@ public class BroadcastTransactionMessageTest extends TestCase {
 
     Collection notified = new LinkedList();
     for (int i = 0; i < 100; i++) {
-      notified.add(new LockContext(new LockID("" + (i + 1)), clientID, new ThreadID(i + 1), LockLevel.WRITE,
-                                   String.class.getName()));
+      notified.add(new ClientServerExchangeLockContext(new StringLockID("" + (i + 1)), clientID, new ThreadID(i + 1),
+                                                       State.WAITER));
     }
     this.msg.initialize(changes, serializer, lockIDs, cid, txID, clientID, gtx, txnType,
                         lowGlobalTransactionIDWatermark, notified, new HashMap(), DmiDescriptor.EMPTY_ARRAY);

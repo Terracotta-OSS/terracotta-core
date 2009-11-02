@@ -3,8 +3,8 @@
  */
 package com.tc.util;
 
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.lockmanager.api.LockLevel;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -24,12 +24,12 @@ public class EnumerationWrapper implements Enumeration {
   }
 
   public final Object nextElement() {
-    ManagerUtil.monitorEnter(vector, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(vector, Manager.LOCK_TYPE_WRITE);
     Object o = null;
     try {
       o = realEnumeration.nextElement();
     } finally {
-      ManagerUtil.monitorExit(vector);
+      ManagerUtil.monitorExit(vector, Manager.LOCK_TYPE_WRITE);
     }
     return o;
   }

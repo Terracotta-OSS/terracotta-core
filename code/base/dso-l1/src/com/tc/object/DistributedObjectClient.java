@@ -27,7 +27,6 @@ import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.beans.sessions.SessionMonitor;
-import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
@@ -78,10 +77,9 @@ import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.RemoteLockManager;
-import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
-import com.tc.object.lockmanager.impl.ThreadLockManagerImpl;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientLockManagerConfigImpl;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
@@ -158,6 +156,7 @@ import com.tc.util.TCTimeoutException;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
+import com.tc.util.runtime.LockState;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.runtime.ThreadIDManagerImpl;
 import com.tc.util.runtime.ThreadIDMap;
@@ -251,7 +250,21 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
     if (this.lockManager != null) {
-      this.lockManager.addAllLocksTo(lockInfo);
+      for (ClientServerExchangeLockContext c : lockManager.getAllLockContexts()) {
+        switch (c.getState().getType()) {
+          case GREEDY_HOLDER:
+          case HOLDER:
+            lockInfo.addLock(LockState.HOLDING, c.getThreadID(), c.getLockID().toString());
+            break;
+          case WAITER:
+            lockInfo.addLock(LockState.WAITING_ON, c.getThreadID(), c.getLockID().toString());
+            break;
+          case TRY_PENDING:
+          case PENDING:
+            lockInfo.addLock(LockState.WAITING_TO, c.getThreadID(), c.getLockID().toString());
+            break;
+        }
+      }
     } else {
       DSO_LOGGER.error("LockManager not initialised still. LockInfo for threads cannot be updated");
     }
@@ -420,17 +433,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     ClientGlobalTransactionManager gtxManager = this.dsoClientBuilder
         .createClientGlobalTransactionManager(this.rtxManager);
 
-    ClientLockStatManager lockStatManager = new ClientLockStatisticsManagerImpl();
-
-    RemoteLockManager remoteLockManager = this.dsoClientBuilder.createRemoteLockManager(this.channel, this.channel
-        .getLockRequestMessageFactory(), gtxManager);
-    this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
-        .getClientIDProvider(), TCLogging.getLogger(ClientLockManager.class)), remoteLockManager, sessionManager,
-                                                               lockStatManager,
-                                                               new ClientLockManagerConfigImpl(this.l1Properties
-                                                                   .getPropertiesFor("lockmanager")));
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
-
     RemoteObjectIDBatchSequenceProvider remoteIDProvider = new RemoteObjectIDBatchSequenceProvider(this.channel
         .getObjectIDBatchRequestMessageFactory());
 
@@ -507,12 +509,18 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .getInstrumentationLogger(), this.config.rawConfigText(), this, this.config.getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
+    //Setup the lock manager
+    ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
+    this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
+        .getClientIDProvider(), TCLogging.getLogger(ClientLockManager.class)), sessionManager, lockStatManager,
+                                                               this.channel.getLockRequestMessageFactory(), threadIDManager, gtxManager,
+                                                               new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")));
+    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
+
     // Setup the transaction manager
-    this.txManager = new ClientTransactionManagerImpl(
-                                                      this.channel.getClientIDProvider(),
-                                                      this.objectManager,
-                                                      new ThreadLockManagerImpl(this.lockManager, this.threadIDManager),
-                                                      txFactory, this.rtxManager, this.runtimeLogger, txnCounter);
+    this.txManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(),
+                                                      this.objectManager, txFactory, lockManager,
+                                                      this.rtxManager, this.runtimeLogger, txnCounter);
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.txManager));
 
@@ -557,7 +565,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                          new LockStatisticsResponseHandler(), 1, 1);
     final Stage lockStatisticsEnableDisableStage = stageManager
         .createStage(ClientConfigurationContext.LOCK_STATISTICS_ENABLE_DISABLE_STAGE,
-                     new LockStatisticsEnableDisableHandler(), 1, 1);
+                     new LockStatisticsEnableDisableHandler(lockStatManager), 1, 1);
     lockStatManager.start(this.channel, lockStatisticsStage.getSink());
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
@@ -735,6 +743,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     return this.txManager;
   }
 
+  public ClientLockManager getLockManager() {
+    return this.lockManager;
+  }
+  
   public ClientObjectManager getObjectManager() {
     return this.objectManager;
   }

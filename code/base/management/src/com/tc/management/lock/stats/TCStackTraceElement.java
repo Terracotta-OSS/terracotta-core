@@ -9,7 +9,8 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockIDSerializer;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -38,7 +39,8 @@ public class TCStackTraceElement implements TCSerializable, Serializable {
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    this.lockID = new LockID(serialInput.readString());
+    LockIDSerializer lidsr = new LockIDSerializer();
+    this.lockID = ((LockIDSerializer) lidsr.deserializeFrom(serialInput)).getLockID();
     lockStatElement = new LockStatElement();
     lockStatElement.deserializeFrom(serialInput);
     computeHashCode();
@@ -46,7 +48,7 @@ public class TCStackTraceElement implements TCSerializable, Serializable {
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeString(lockID.asString());
+    new LockIDSerializer(lockID).serializeTo(serialOutput);
     lockStatElement.serializeTo(serialOutput);
   }
 

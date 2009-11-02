@@ -17,6 +17,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -35,6 +36,7 @@ public class HashtableAutoLockTest extends TCTestCase {
   private ClassLoader             origThreadContextClassLoader;
   private TestClientObjectManager testClientObjectManager;
   private MockTransactionManager  testTransactionManager;
+  private MockClientLockManager   testClientLockManager;
 
   @Override
   protected void setUp() throws Exception {
@@ -81,8 +83,9 @@ public class HashtableAutoLockTest extends TCTestCase {
 
     testClientObjectManager = new TestClientObjectManager();
     testTransactionManager = new MockTransactionManager();
+    testClientLockManager = new MockClientLockManager();
     IsolationClassLoader classLoader = new IsolationClassLoader((DSOClientConfigHelper) proxy, testClientObjectManager,
-                                                                testTransactionManager);
+                                                                testTransactionManager, testClientLockManager);
     classLoader.init();
 
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();

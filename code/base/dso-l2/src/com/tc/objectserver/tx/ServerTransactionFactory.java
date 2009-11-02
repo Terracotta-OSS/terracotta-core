@@ -7,7 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;

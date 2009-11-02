@@ -7,14 +7,16 @@ package com.tc.objectserver.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.Sink;
-import com.tc.async.impl.NullSink;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.lockmanager.api.LockManager;
+import com.tc.objectserver.locks.LockManager;
+
+import java.util.Collection;
 
 /**
  * Makes the request for a lock on behalf of a client
@@ -22,10 +24,7 @@ import com.tc.objectserver.lockmanager.api.LockManager;
  * @author steve
  */
 public class RequestLockUnLockHandler extends AbstractEventHandler {
-  public static final Sink NULL_SINK = new NullSink();
-
-  private LockManager      lockManager;
-  private Sink             lockResponseSink;
+  private LockManager lockManager;
 
   public void handleEvent(EventContext context) {
     LockRequestMessage lrm = (LockRequestMessage) context;
@@ -33,25 +32,30 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     LockID lid = lrm.getLockID();
     NodeID cid = lrm.getSourceNodeID();
     ThreadID tid = lrm.getThreadID();
-    if (lrm.isObtainLockRequest()) {
-      lockManager.requestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getLockType(), lockResponseSink);
-    } else if (lrm.isTryObtainLockRequest()) {
-      lockManager.tryRequestLock(lid, cid, tid, lrm.getLockLevel(), lrm.getLockType(), lrm.getWaitInvocation(), lockResponseSink);
-    } else if (lrm.isReleaseLockRequest()) {
-      if (lrm.isWaitRelease()) {
-        lockManager.wait(lid, cid, tid, lrm.getWaitInvocation(), lockResponseSink);
-      } else {
-        lockManager.unlock(lid, cid, tid);
-      }
-    } else if (lrm.isRecallCommitLockRequest()) {
-      lockManager.recallCommit(lid, cid, lrm.getLockContexts(), lrm.getWaitContexts(), lrm.getPendingLockContexts(),
-                               lrm.getPendingTryLockContexts(), lockResponseSink);
-    } else if (lrm.isQueryLockRequest()) {
-      lockManager.queryLock(lid, cid, tid, lockResponseSink);
-    } else if (lrm.isInterruptWaitRequest()) {
-      lockManager.interrupt(lid, cid, tid);
-    } else {
-      throw new AssertionError("Unknown lock request message: " + lrm);
+    
+    switch (lrm.getRequestType()) {
+      case LOCK:
+        lockManager.lock(lid, (ClientID) cid, tid, lrm.getLockLevel());
+        return;
+      case TRY_LOCK:
+        lockManager.tryLock(lid, (ClientID) cid, tid, lrm.getLockLevel(), lrm.getTimeout());
+        return;
+      case UNLOCK:
+        lockManager.unlock(lid, (ClientID) cid, tid);
+        return;
+      case WAIT:
+        lockManager.wait(lid, (ClientID) cid, tid, lrm.getTimeout());
+        return;
+      case RECALL_COMMIT:
+        Collection<ClientServerExchangeLockContext> contexts = lrm.getContexts();
+        lockManager.recallCommit(lid, (ClientID) cid, contexts);
+        return;
+      case QUERY:
+        lockManager.queryLock(lid, (ClientID) cid, tid);
+        return;
+      case INTERRUPT_WAIT:
+        lockManager.interrupt(lid, (ClientID) cid, tid);
+        return;
     }
   }
 
@@ -59,6 +63,5 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.lockManager = oscc.getLockManager();
-    this.lockResponseSink = oscc.getStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE).getSink();
   }
 }

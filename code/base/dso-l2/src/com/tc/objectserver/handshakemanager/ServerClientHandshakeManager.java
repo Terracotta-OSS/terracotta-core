@@ -12,14 +12,12 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.transport.ConnectionID;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.TryLockContext;
-import com.tc.object.lockmanager.api.WaitContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ObjectIDBatchRequest;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.lockmanager.api.LockManager;
+import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.util.SequenceValidator;
@@ -47,7 +45,6 @@ public class ServerClientHandshakeManager {
   private final ReconnectTimerTask       reconnectTimerTask;
   private final ClientStateManager       clientStateManager;
   private final LockManager              lockManager;
-  private final Sink                     lockResponseSink;
   private final Sink                     oidRequestSink;
   private final long                     reconnectTimeout;
   private final DSOChannelManager        channelManager;
@@ -73,7 +70,6 @@ public class ServerClientHandshakeManager {
     this.sequenceValidator = sequenceValidator;
     this.clientStateManager = clientStateManager;
     this.lockManager = lockManager;
-    this.lockResponseSink = lockResponseSink;
     this.oidRequestSink = oidRequestSink;
     this.reconnectTimeout = reconnectTimeout;
     this.timer = timer;
@@ -102,9 +98,10 @@ public class ServerClientHandshakeManager {
           throw new ClientHandshakeException(
                                              "Clients connected after startup should have no existing object references.");
         }
-        if (handshake.getWaitContexts().size() > 0) {
-          //
-          throw new ClientHandshakeException("Clients connected after startup should have no existing wait contexts.");
+
+        for (ClientServerExchangeLockContext context : handshake.getLockContexts()) {
+          if (context.getState() == com.tc.object.locks.ServerLockContext.State.WAITER) { throw new ClientHandshakeException(
+                                                                                                                             "Clients connected after startup should have no existing wait contexts."); }
         }
         if (!handshake.getResentTransactionIDs().isEmpty()) {
           //
@@ -128,29 +125,7 @@ public class ServerClientHandshakeManager {
 
       this.clientStateManager.addReferences(clientID, handshake.getObjectIDs());
 
-      for (Iterator i = handshake.getLockContexts().iterator(); i.hasNext();) {
-        LockContext ctxt = (LockContext) i.next();
-        this.lockManager.reestablishLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                         this.lockResponseSink);
-      }
-
-      for (Iterator i = handshake.getWaitContexts().iterator(); i.hasNext();) {
-        WaitContext ctxt = (WaitContext) i.next();
-        this.lockManager.reestablishWait(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                         ctxt.getTimerSpec(), this.lockResponseSink);
-      }
-
-      for (Iterator i = handshake.getPendingLockContexts().iterator(); i.hasNext();) {
-        LockContext ctxt = (LockContext) i.next();
-        this.lockManager.requestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(), ctxt
-            .getLockType(), this.lockResponseSink);
-      }
-
-      for (Iterator i = handshake.getPendingTryLockContexts().iterator(); i.hasNext();) {
-        TryLockContext ctxt = (TryLockContext) i.next();
-        this.lockManager.tryRequestLock(ctxt.getLockID(), ctxt.getNodeID(), ctxt.getThreadID(), ctxt.getLockLevel(),
-                                        ctxt.getLockType(), ctxt.getTimerSpec(), this.lockResponseSink);
-      }
+      this.lockManager.reestablishState(clientID, handshake.getLockContexts());
 
       if (handshake.isObjectIDsRequested()) {
         this.clientsRequestingObjectIDSequence.add(clientID);

@@ -9,11 +9,9 @@ import com.tc.util.Assert;
  * Type safe enumeration of transaction types
  */
 public class TxnType {
-  private static final byte   TYPE_RO         = 1;
   private static final byte   TYPE_NORMAL     = 2;
   private static final byte   TYPE_CONCURRENT = 3;
 
-  public static final TxnType READ_ONLY       = new TxnType(TYPE_RO);
   public static final TxnType NORMAL          = new TxnType(TYPE_NORMAL);
   public static final TxnType CONCURRENT      = new TxnType(TYPE_CONCURRENT);
 
@@ -24,9 +22,6 @@ public class TxnType {
    */
   public static TxnType typeFor(byte type) {
     switch (type) {
-      case TYPE_RO: {
-        return READ_ONLY;
-      }
       case TYPE_NORMAL: {
         return NORMAL;
       }
@@ -69,9 +64,6 @@ public class TxnType {
 
   public String toString() {
     switch (type) {
-      case TYPE_RO: {
-        return "READ_ONLY";
-      }
       case TYPE_NORMAL: {
         return "NORMAL";
       }

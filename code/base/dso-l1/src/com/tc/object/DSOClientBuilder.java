@@ -22,9 +22,8 @@ import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.RemoteLockManager;
-import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -80,10 +79,15 @@ public interface DSOClientBuilder {
                                               final ToggleableReferenceManager toggleRefMgr);
 
   ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel, final ClientIDLogger clientIDLogger,
-                                      final RemoteLockManager remoteLockManager, final SessionManager sessionManager,
-                                      final ClientLockStatManager lockStatManager,
-                                      final ClientLockManagerConfigImpl clientLockManagerConfigImpl);
+                                      final SessionManager sessionManager, final ClientLockStatManager lockStatManager,
+                                      final LockRequestMessageFactory lockRequestMessageFactory,
+                                      final ThreadIDManager threadManager,
+                                      final ClientGlobalTransactionManager clientGlobalTransactionManager,
+                                      final ClientLockManagerConfig clientLockManagerConfig);
 
+  @Deprecated
+  ClientLockStatManager createLockStatsManager();
+  
   RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                           final DNAEncoding encoding,
                                                           final FoldingConfig foldingConfig,
@@ -102,9 +106,5 @@ public interface DSOClientBuilder {
   ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider clientIDProvider);
 
   BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences);
-
-  RemoteLockManager createRemoteLockManager(final DSOClientMessageChannel dsoChannel,
-                                            final LockRequestMessageFactory lockRequestMessageFactory,
-                                            final ClientGlobalTransactionManager gtxManager);
 
 }

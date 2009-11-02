@@ -9,7 +9,7 @@ import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.UnknownNameException;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 import java.io.IOException;
 

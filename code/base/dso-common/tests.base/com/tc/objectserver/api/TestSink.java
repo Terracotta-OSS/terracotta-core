@@ -70,7 +70,7 @@ public class TestSink implements Sink {
   }
 
   public void clear() {
-    throw new ImplementMe();
+    queue.clear();
   }
 
   public void enableStatsCollection(boolean enable) {

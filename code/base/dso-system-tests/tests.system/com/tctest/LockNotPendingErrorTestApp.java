@@ -111,7 +111,7 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
             boolean acquired = namedLock.tryWriteLock();
             if (acquired) {
               acquiredCount++;
-              namedLock.commitLock();
+              namedLock.commitWriteLock();
             } else {
               notAcquired++;
             }
@@ -139,7 +139,7 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
             if (exceptions.size() > 0) break;
             namedLock.getReadLock();
             acquiredCount++;
-            namedLock.commitLock();
+            namedLock.commitReadLock();
             appThreadBarrier.await();
           }
           debug("Acquired Count=" + acquiredCount);
@@ -172,10 +172,14 @@ public class LockNotPendingErrorTestApp extends AbstractErrorCatchingTransparent
       this.lockId = lockId;
     }
 
-    public void commitLock() {
-      ManagerUtil.commitLock(lockId);
+    public void commitWriteLock() {
+      ManagerUtil.commitLock(lockId, lockType);      
     }
-
+    
+    public void commitReadLock() {
+      ManagerUtil.commitLock(lockId, Manager.LOCK_TYPE_READ);
+    }
+    
     public boolean tryWriteLock() {
       return ManagerUtil.tryBeginLock(lockId, lockType);
     }

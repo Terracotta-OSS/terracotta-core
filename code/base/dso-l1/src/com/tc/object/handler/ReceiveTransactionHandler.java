@@ -18,8 +18,8 @@ import com.tc.object.event.DmiEventContext;
 import com.tc.object.event.DmiManager;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.LockContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -95,7 +95,7 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
 
     Collection notifies = btm.addNotifiesTo(new LinkedList());
     for (Iterator i = notifies.iterator(); i.hasNext();) {
-      LockContext lc = (LockContext) i.next();
+      ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) i.next();
       this.lockManager.notified(lc.getLockID(), lc.getThreadID());
     }
 

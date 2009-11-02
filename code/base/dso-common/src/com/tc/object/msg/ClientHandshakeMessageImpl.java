@@ -12,9 +12,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.TryLockContext;
-import com.tc.object.lockmanager.api.WaitContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.SequenceID;
@@ -30,21 +28,15 @@ import java.util.Set;
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
 
   private static final byte MANAGED_OBJECT_ID        = 1;
-  private static final byte WAIT_CONTEXT             = 2;
-  private static final byte LOCK_CONTEXT             = 3;
-  private static final byte TRANSACTION_SEQUENCE_IDS = 4;
-  private static final byte PENDING_LOCK_CONTEXT     = 5;
-  private static final byte RESENT_TRANSACTION_IDS   = 6;
-  private static final byte REQUEST_OBJECT_IDS       = 7;
-  private static final byte PENDING_TRY_LOCK_CONTEXT = 8;
-  private static final byte CLIENT_VERSION           = 9;
-  private static final byte SERVER_HIGH_WATER_MARK   = 10;
+  private static final byte LOCK_CONTEXT             = 2;
+  private static final byte TRANSACTION_SEQUENCE_IDS = 3;
+  private static final byte RESENT_TRANSACTION_IDS   = 4;
+  private static final byte REQUEST_OBJECT_IDS       = 5;
+  private static final byte CLIENT_VERSION           = 6;
+  private static final byte SERVER_HIGH_WATER_MARK   = 7;
 
   private final Set         objectIDs                = new HashSet();
   private final Set         lockContexts             = new HashSet();
-  private final Set         waitContexts             = new HashSet();
-  private final Set         pendingLockContexts      = new HashSet();
-  private final Set         pendingTryLockContexts   = new HashSet();
   private final List        sequenceIDs              = new ArrayList();
   private final List        txnIDs                   = new ArrayList();
   private boolean           requestObjectIDs;
@@ -65,20 +57,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     return this.lockContexts;
   }
 
-  public Collection getWaitContexts() {
-    return this.waitContexts;
-  }
-
   public Set getObjectIDs() {
     return this.objectIDs;
-  }
-
-  public Collection getPendingLockContexts() {
-    return this.pendingLockContexts;
-  }
-
-  public Collection getPendingTryLockContexts() {
-    return this.pendingTryLockContexts;
   }
 
   public List getTransactionSequenceIDs() {
@@ -113,20 +93,8 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     this.clientVersion = version;
   }
 
-  public void addLockContext(LockContext ctxt) {
+  public void addLockContext(ClientServerExchangeLockContext ctxt) {
     this.lockContexts.add(ctxt);
-  }
-
-  public void addPendingLockContext(LockContext ctxt) {
-    this.pendingLockContexts.add(ctxt);
-  }
-
-  public void addPendingTryLockContext(TryLockContext ctxt) {
-    this.pendingTryLockContexts.add(ctxt);
-  }
-
-  public void addWaitContext(WaitContext ctxt) {
-    this.waitContexts.add(ctxt);
   }
 
   @Override
@@ -136,15 +104,6 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     }
     for (Iterator i = this.lockContexts.iterator(); i.hasNext();) {
       putNVPair(LOCK_CONTEXT, (TCSerializable) i.next());
-    }
-    for (Iterator i = this.waitContexts.iterator(); i.hasNext();) {
-      putNVPair(WAIT_CONTEXT, (TCSerializable) i.next());
-    }
-    for (Iterator i = this.pendingLockContexts.iterator(); i.hasNext();) {
-      putNVPair(PENDING_LOCK_CONTEXT, (TCSerializable) i.next());
-    }
-    for (Iterator i = this.pendingTryLockContexts.iterator(); i.hasNext();) {
-      putNVPair(PENDING_TRY_LOCK_CONTEXT, (TCSerializable) i.next());
     }
     for (Iterator i = this.sequenceIDs.iterator(); i.hasNext();) {
       putNVPair(TRANSACTION_SEQUENCE_IDS, ((SequenceID) i.next()).toLong());
@@ -164,16 +123,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
         this.objectIDs.add(new ObjectID(getLongValue()));
         return true;
       case LOCK_CONTEXT:
-        this.lockContexts.add(getObject(new LockContext()));
-        return true;
-      case WAIT_CONTEXT:
-        this.waitContexts.add(getObject(new WaitContext()));
-        return true;
-      case PENDING_LOCK_CONTEXT:
-        this.pendingLockContexts.add(getObject(new LockContext()));
-        return true;
-      case PENDING_TRY_LOCK_CONTEXT:
-        this.pendingTryLockContexts.add(getObject(new TryLockContext()));
+        this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));
         return true;
       case TRANSACTION_SEQUENCE_IDS:
         this.sequenceIDs.add(new SequenceID(getLongValue()));

@@ -8,7 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
 

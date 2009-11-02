@@ -6,9 +6,9 @@ package java.util.concurrent.locks;
 
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotSharableException;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.NotClearable;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.util.concurrent.locks.TCLock;
 import com.tcclient.util.concurrent.locks.ConditionObject;
 
@@ -17,18 +17,18 @@ import java.util.concurrent.TimeUnit;
 
 public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearable {
   public void lock() {
-    ManagerUtil.monitorEnter(this, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(this, Manager.LOCK_TYPE_WRITE);
     super.lock();
   }
 
   public void lockInterruptibly() throws InterruptedException {
     if (Thread.interrupted()) { throw new InterruptedException(); }
 
-    ManagerUtil.monitorEnterInterruptibly(this, LockLevel.WRITE);
+    ManagerUtil.monitorEnterInterruptibly(this, Manager.LOCK_TYPE_WRITE);
     try {
       super.lockInterruptibly();
     } catch (InterruptedException e) {
-      ManagerUtil.monitorExit(this);
+      ManagerUtil.monitorExit(this, Manager.LOCK_TYPE_WRITE);
       throw e;
     }
   }
@@ -39,7 +39,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearab
 
   public void unlock() {
     super.unlock();
-    ManagerUtil.monitorExit(this);
+    ManagerUtil.monitorExit(this, Manager.LOCK_TYPE_WRITE);
   }
 
   public int getHoldCount() {
@@ -86,7 +86,7 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearab
 
   public boolean isLocked() {
     if (ManagerUtil.isManaged(this)) {
-      return isHeldByCurrentThread() || ManagerUtil.isLocked(this, LockLevel.WRITE);
+      return isHeldByCurrentThread() || ManagerUtil.isLocked(this, Manager.LOCK_TYPE_WRITE);
     } else {
       return super.isLocked();
     }
@@ -107,16 +107,16 @@ public class ReentrantLockTC extends ReentrantLock implements TCLock, NotClearab
 
   private boolean dsoTryLock() {
     if (ManagerUtil.isManaged(this)) {
-      return ManagerUtil.tryMonitorEnter(this, LockLevel.WRITE, 0L);
+      return ManagerUtil.tryMonitorEnter(this, Manager.LOCK_TYPE_WRITE);
     } else {
       return true;
     }
   }
 
-  public boolean dsoTryLock(long timeout, TimeUnit unit) {
+  public boolean dsoTryLock(long timeout, TimeUnit unit) throws InterruptedException {
     if (ManagerUtil.isManaged(this)) {
       long timeoutInNanos = TimeUnit.NANOSECONDS.convert(timeout, unit);
-      return ManagerUtil.tryMonitorEnter(this, LockLevel.WRITE, timeoutInNanos);
+      return ManagerUtil.tryMonitorEnter(this, Manager.LOCK_TYPE_WRITE, timeoutInNanos);
     } else {
       return true;
     }

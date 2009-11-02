@@ -4,7 +4,7 @@
  */
 package com.tc.object.msg;
 
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 public interface NodeMetaDataResponseMessage extends ClusterMetaDataResponseMessage {
 

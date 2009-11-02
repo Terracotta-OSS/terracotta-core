@@ -7,8 +7,8 @@ package com.tc.management.lock.stats;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ThreadID;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -30,7 +30,8 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
 
   public void recordLockRequested(NodeID nodeID, ThreadID threadID, long requestTimeInMillis,
                                   int numberOfPendingRequests, StackTraceElement[] stackTraces, String contextInfo) {
-    statElement.recordLockRequested(nodeID, threadID, requestTimeInMillis, numberOfPendingRequests, contextInfo, stackTraces, 0);
+    statElement.recordLockRequested(nodeID, threadID, requestTimeInMillis, numberOfPendingRequests, contextInfo,
+                                    stackTraces, 0);
     if (gatherInterval > 0) {
       this.recordedFrequency = (this.recordedFrequency + 1) % gatherInterval;
     }
@@ -106,7 +107,7 @@ public class ClientLockStatisticsInfoImpl implements LockSpec, LockStatisticsInf
   public boolean hasChildren() {
     return statElement.hasChildren();
   }
-  
+
   public Collection children() {
     return statElement.children();
   }

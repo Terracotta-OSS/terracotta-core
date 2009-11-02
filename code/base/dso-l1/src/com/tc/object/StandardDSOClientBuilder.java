@@ -8,9 +8,9 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
-import com.tc.net.OrderedGroupIDs;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -31,13 +31,11 @@ import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
-import com.tc.object.lockmanager.api.ClientLockManager;
-import com.tc.object.lockmanager.api.RemoteLockManager;
-import com.tc.object.lockmanager.impl.ClientLockManagerConfigImpl;
-import com.tc.object.lockmanager.impl.LockDistributionStrategy;
-import com.tc.object.lockmanager.impl.RemoteLockManagerImpl;
-import com.tc.object.lockmanager.impl.StandardLockDistributionStrategy;
-import com.tc.object.lockmanager.impl.StripedClientLockManagerImpl;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientLockManagerConfig;
+import com.tc.object.locks.ClientLockManagerImpl;
+import com.tc.object.locks.RemoteLockManager;
+import com.tc.object.locks.RemoteLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
@@ -133,18 +131,23 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
                                              final ClientIDLogger clientIDLogger,
-                                             final RemoteLockManager remoteLockManager,
                                              final SessionManager sessionManager,
                                              final ClientLockStatManager lockStatManager,
-                                             final ClientLockManagerConfigImpl clientLockManagerConfigImpl) {
+                                             final LockRequestMessageFactory lockRequestMessageFactory,
+                                             final ThreadIDManager threadManager,
+                                             final ClientGlobalTransactionManager gtxManager,
+                                             final ClientLockManagerConfig config) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
-    LockDistributionStrategy strategy = new StandardLockDistributionStrategy(defaultGroups[0]);
-    return new StripedClientLockManagerImpl(strategy, new OrderedGroupIDs(defaultGroups), clientIDLogger,
-                                            remoteLockManager, sessionManager, lockStatManager,
-                                            clientLockManagerConfigImpl);
+    RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(), defaultGroups[0], lockRequestMessageFactory, gtxManager, lockStatManager);
+    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config, lockStatManager);
   }
 
+  @Deprecated
+  public ClientLockStatManager createLockStatsManager() {
+    return new ClientLockStatisticsManagerImpl(null);
+  }
+  
   public RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                                  final DNAEncoding encoding,
                                                                  final FoldingConfig foldingConfig,
@@ -194,13 +197,4 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     Assert.assertTrue(sequences.length == 1);
     return sequences[0];
   }
-
-  public RemoteLockManager createRemoteLockManager(final DSOClientMessageChannel dsoChannel,
-                                                   final LockRequestMessageFactory lockRequestMessageFactory,
-                                                   final ClientGlobalTransactionManager gtxManager) {
-    GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
-    return new RemoteLockManagerImpl(defaultGroups[0], lockRequestMessageFactory, gtxManager);
-  }
-
 }

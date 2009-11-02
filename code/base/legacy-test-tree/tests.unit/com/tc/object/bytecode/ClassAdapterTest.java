@@ -15,8 +15,13 @@ import com.tc.object.config.LockDefinition;
 import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.object.locks.DsoLiteralLockID;
+import com.tc.object.locks.DsoLockID;
+import com.tc.object.locks.LockLevel;
+import com.tc.object.locks.MockClientLockManager;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.MockClientLockManager.Begin;
 import com.tc.object.tx.MockTransactionManager;
-import com.tc.object.tx.MockTransactionManager.Begin;
 import com.tctest.ClassAdapterTestTarget;
 import com.tctest.ClassAdapterTestTargetBase;
 import com.tctest.ClassAdapterTestTargetBaseBase;
@@ -45,6 +50,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private IsolationClassLoader    classLoader;
   private TestClientObjectManager testClientObjectManager;
   private MockTransactionManager  testTransactionManager;
+  private MockClientLockManager   testLockManager;
   private String                  targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
   private ClassLoader             origThreadContextClassLoader;
 
@@ -53,6 +59,8 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     initializeConfig();
     this.testClientObjectManager = new TestClientObjectManager();
     this.testTransactionManager = new MockTransactionManager();
+    this.testLockManager = new MockClientLockManager();
+    
     initClassLoader();
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(this.classLoader);
@@ -73,7 +81,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     testClientObjectManager.setIsManaged(false);
 
     try {
-      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager);
+      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager, testLockManager);
       this.classLoader.init();
     } finally {
       testClientObjectManager.setIsManaged(isManaged);
@@ -138,14 +146,14 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     bogus.commit();
     assertFalse(checkForLock(bogus));
     assertNoTransactions();
-    assertTransactionCount(0);
+    assertLockCount(0);
   }
 
   public void testWildcardPatternWithNamedLocksAdaptsOK() throws Exception {
     createNamedLockDefinition("test");
     createLockConfigurationForMethodExpression("*", "*", "(..)");
     callNoArgCtor();
-    assertTransactionCount(1);
+    assertLockCount(1);
   }
 
   public void testWildcardPatternWithAutolockAdaptsOK() throws Exception {
@@ -396,7 +404,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertTrue(checkForLockName(ldnamed.getLockName(), ldnamed.getLockLevelAsInt()));
     assertTrue(checkForLock(ldnamed));
     assertAutolockCount(1);
-    assertTransactionCount(2);
+    assertLockCount(2);
     assertNoAutolockLiteral();
   }
 
@@ -1105,7 +1113,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
     invokeWithNoArgs(methodName);
 
-    assertTransactionCount(0);
+    assertLockCount(0);
   }
 
   public void testAutolockCtorNoException() throws Exception {
@@ -1123,7 +1131,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     System.setProperty(ClassAdapterTestTarget.KEY, ClassAdapterTestTarget.CSTR_AUTOLOCK_NO_EXCEPTION);
 
     callNoArgCtor();
-    assertTransactionCount(1);
+    assertLockCount(1);
     assertAutolockCount(1);
   }
 
@@ -1138,7 +1146,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertNoTransactions();
 
     callNoArgCtor();
-    assertTransactionCount(1);
+    assertLockCount(1);
     assertAutolockCount(0);
   }
 
@@ -1162,7 +1170,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
           || !re.getMessage().equals(ClassAdapterTestTarget.CSTR_THROW_EXCEPTION)) { throw re; }
     }
 
-    assertTransactionCount(1);
+    assertLockCount(1);
     assertAutolockCount(0);
   }
 
@@ -1192,7 +1200,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
     int numTxn = inside ? 1 : 0;
 
-    assertTransactionCount(numTxn);
+    assertLockCount(numTxn);
     assertAutolockCount(numTxn);
   }
 
@@ -1237,7 +1245,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
     invokeWithNoArgs(methodName);
 
-    assertTransactionCount(2);
+    assertLockCount(2);
     assertTrue(checkForLocks(declaredLockDefs));
   }
 
@@ -1265,7 +1273,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertTrue(checkForLockName(ldnamed.getLockName(), ldnamed.getLockLevelAsInt()));
     assertTrue(checkForLock(ldnamed));
     assertAutolockCount(1);
-    assertTransactionCount(2);
+    assertLockCount(2);
     assertNoAutolockLiteral();
   }
 
@@ -1292,7 +1300,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertTrue(checkForLockName(ldnamed.getLockName(), ldnamed.getLockLevelAsInt()));
     assertTrue(checkForLock(ldnamed));
     assertAutolockCount(1);
-    assertTransactionCount(2);
+    assertLockCount(2);
     assertNoAutolockLiteral();
   }
 
@@ -1547,10 +1555,10 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void assertAutolockConditionsPostInvocation(int expectedTransactionCount) {
-    assertTrue("Transaction count " + getTransactionCount() + " should be greater than or equal to"
-               + " expected autolocks: " + expectedTransactionCount, getTransactionCount() >= expectedTransactionCount);
+    assertTrue("Transaction count " + getLockCount() + " should be greater than or equal to"
+               + " expected autolocks: " + expectedTransactionCount, getLockCount() >= expectedTransactionCount);
     assertAutolockCount(expectedTransactionCount);
-    assertTransactionCount(expectedTransactionCount);
+    assertLockCount(expectedTransactionCount);
     assertNoAutolockLiteral();
   }
 
@@ -1563,7 +1571,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
       assertTrue(checkForLockName(lockDefs[i].getLockName(), lockDefs[i].getLockLevelAsInt()));
       assertTrue(checkForLock(lockDefs[i]));
     }
-    assertTransactionCount(expectedTransactionCount);
+    assertLockCount(expectedTransactionCount);
   }
 
   private void assertExceptionType(InvocationTargetException e) {
@@ -1573,13 +1581,13 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     assertEquals(LockTestThrowsExceptionException.class.getName(), target.getClass().getName());
   }
 
-  private void assertTransactionCount(int transactionCount) {
-    assertEquals(transactionCount, getTransactionCount());
-    assertEquals(transactionCount, testTransactionManager.getCommitCount());
+  private void assertLockCount(int transactionCount) {
+    assertEquals(transactionCount, getLockCount());
+    assertEquals(transactionCount, testLockManager.getUnlockCount());
   }
 
-  private int getTransactionCount() {
-    return testTransactionManager.getBegins().size();
+  private int getLockCount() {
+    return testLockManager.getBegins().size();
   }
 
   private void assertAutolockCount(int autolockCount) {
@@ -1587,7 +1595,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void assertNoTransactions() {
-    assertTransactionCount(0);
+    assertLockCount(0);
   }
 
   private void assertNoAutolocks() {
@@ -1597,10 +1605,13 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
 
   private int getAutolockBeginCount() {
     int rv = 0;
-    for (Iterator i = testTransactionManager.getBegins().iterator(); i.hasNext();) {
+    for (Iterator i = testLockManager.getBegins().iterator(); i.hasNext();) {
       Begin b = (Begin) i.next();
       // hack
-      if (b.lockName.startsWith("@")) {
+      if ((b.lock instanceof DsoLockID) || (b.lock instanceof DsoLiteralLockID)) {
+        rv++;
+      }
+      if ((b.lock instanceof StringLockID) && (!((StringLockID) b.lock).asString().startsWith("^"))) {
         rv++;
       }
     }
@@ -1615,7 +1626,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private boolean checkForLock(LockDefinition lockdef) {
-    return checkForLock(lockdef, this.testTransactionManager.getBegins());
+    return checkForLock(lockdef, this.testLockManager.getBegins());
   }
 
   /**
@@ -1637,17 +1648,21 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private boolean checkForLock(LockDefinition lockdef, Begin lock) {
     boolean rv = false;
     if (lock != null) {
-      rv = lockdef.getLockName().equals(ByteCodeUtil.stripGeneratedLockHeader(lock.lockName));
+      if (lockdef.isAutolock()) {
+        rv = (lock.lock instanceof DsoLiteralLockID);
+      } else {
+        rv = new StringLockID("^" + lockdef.getLockName()).equals(lock.lock);
+      }
       if (rv) {
         // make sure that the lock type is the same
-        rv = checkLockType(lockdef, lock.lockType);
+        rv = checkLockType(lockdef, lock.level.toInt());
       }
     }
     return rv;
   }
 
   private boolean checkForLockName(String lockName, int lockType) {
-    List begins = this.testTransactionManager.getBegins();
+    List begins = this.testLockManager.getBegins();
     for (Iterator i = begins.iterator(); i.hasNext();) {
       Begin lock = (Begin) i.next();
       if (checkForLockName(lockName, lock)) return true;
@@ -1656,7 +1671,11 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private static boolean checkForLockName(String lockName, Begin lock) {
-    return ByteCodeUtil.stripGeneratedLockHeader(lock.lockName).equals(lockName);
+    if (LockDefinition.TC_AUTOLOCK_NAME.equals(lockName)) {
+      return (lock.lock instanceof DsoLiteralLockID);
+    } else {
+      return (new StringLockID("^" + lockName)).equals(lock.lock);
+    }    
   }
 
   /**
@@ -1667,7 +1686,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   }
 
   private void assertNoAutolockLiteral() {
-    assertFalse(checkForLockName(LockDefinition.TC_AUTOLOCK_NAME, com.tc.object.lockmanager.api.LockLevel.WRITE));
+    assertFalse(checkForLockName(LockDefinition.TC_AUTOLOCK_NAME, LockLevel.WRITE.toInt()));
   }
 
   private void createNamedLockDefinition(String lockName) {
@@ -1693,8 +1712,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     setTargetClientObjectManager(c);
 
     // depending on the compiler (eclipse vs. javac, there might methods called that obtain locks)
-    this.testTransactionManager.clearBegins();
-    this.testTransactionManager.clearCommitCount();
+    this.testLockManager.resetCounts();
 
     Constructor ctor = c.getConstructor(new Class[] {});
     try {

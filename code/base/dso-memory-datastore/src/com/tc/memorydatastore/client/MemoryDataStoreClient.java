@@ -19,7 +19,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.session.NullSessionManager;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;

@@ -9,7 +9,7 @@ import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.change.TCChangeBufferImpl;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.Notify;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
 

@@ -6,6 +6,8 @@ package com.tc.object.logging;
 
 import com.tc.object.TCObject;
 import com.tc.object.loaders.NamedClassLoader;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockLevel;
 import com.tc.object.tx.TimerSpec;
 
 /**
@@ -62,7 +64,7 @@ public interface RuntimeLogger {
   // log methods
   // /////////////////////////////
 
-  void lockAcquired(String lockName, int level, Object instance, TCObject tcobj);
+  void lockAcquired(LockID lock, LockLevel level);
 
   void literalValueChanged(TCObject source, Object newValue);
 

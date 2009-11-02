@@ -5,9 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.TryLockContext;
-import com.tc.object.lockmanager.api.WaitContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,25 +17,13 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public Set getObjectIDs();
 
-  public void addLockContext(LockContext ctxt);
+  public void addLockContext(ClientServerExchangeLockContext ctxt);
 
-  public Collection getLockContexts();
-
-  public void addWaitContext(WaitContext ctxt);
-
-  public Collection getWaitContexts();
-
-  public void addPendingLockContext(LockContext ctxt);
-
-  public void addPendingTryLockContext(TryLockContext ctxt);
+  public Collection<ClientServerExchangeLockContext> getLockContexts();
 
   public void setClientVersion(String v);
 
   public String getClientVersion();
-
-  public Collection getPendingLockContexts();
-
-  public Collection getPendingTryLockContexts();
 
   public void addTransactionSequenceIDs(List transactionSequenceIDs);
 

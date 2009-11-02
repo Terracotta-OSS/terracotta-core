@@ -13,9 +13,9 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.lockmanager.impl.LockHolder;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockIDSerializer;
+import com.tc.object.locks.ThreadID;
 import com.tc.util.Stack;
 
 import java.io.ByteArrayInputStream;
@@ -265,7 +265,8 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   }
 
   public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
-    this.lockID = new LockID(serialInput.readString());
+    LockIDSerializer lidsr = new LockIDSerializer();
+    this.lockID = ((LockIDSerializer) lidsr.deserializeFrom(serialInput)).getLockID();
     this.lockConfigElement = serialInput.readString();
     LockStats newLockStat = new LockStats();
     newLockStat.deserializeFrom(serialInput);
@@ -295,7 +296,7 @@ public class LockStatElement implements TCSerializable, Serializable, LockTraceE
   }
 
   public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeString(lockID.asString());
+    new LockIDSerializer(lockID).serializeTo(serialOutput);
     serialOutput.writeString(lockConfigElement);
     lockStat.serializeTo(serialOutput);
     try {

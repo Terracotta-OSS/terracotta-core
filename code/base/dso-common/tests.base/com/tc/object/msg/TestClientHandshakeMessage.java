@@ -12,25 +12,20 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.net.protocol.tcm.TestTCMessage;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.TryLockContext;
-import com.tc.object.lockmanager.api.WaitContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
   public Set                    clientObjectIds                = new HashSet();
-  public Set                    waitContexts                   = new HashSet();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
   public ClientID               clientID;
   public List                   lockContexts                   = new ArrayList();
-  public List                   pendingLockContexts            = new ArrayList();
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
   public NoExceptionLinkedQueue setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue();
@@ -87,28 +82,8 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return 0;
   }
 
-  public void addLockContext(LockContext ctxt) {
-    this.lockContexts.add(ctxt);
-  }
-
   public Collection getLockContexts() {
     return this.lockContexts;
-  }
-
-  public Collection getWaitContexts() {
-    return this.waitContexts;
-  }
-
-  public void addWaitContext(WaitContext ctxt) {
-    this.waitContexts.add(ctxt);
-  }
-
-  public void addPendingLockContext(LockContext ctxt) {
-    this.pendingLockContexts.add(ctxt);
-  }
-
-  public Collection getPendingLockContexts() {
-    return this.pendingLockContexts;
   }
 
   public List getTransactionSequenceIDs() {
@@ -138,15 +113,6 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
     return this.requestedObjectIDs;
   }
 
-  public void addPendingTryLockContext(TryLockContext ctxt) {
-    throw new ImplementMe();
-
-  }
-
-  public Collection getPendingTryLockContexts() {
-    return Collections.EMPTY_LIST;
-  }
-
   public String getClientVersion() {
     return this.clientVersion;
   }
@@ -161,5 +127,9 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
 
   public void setServerHighWaterMark(long serverHighWaterMark) {
     throw new ImplementMe();
+  }
+
+  public void addLockContext(ClientServerExchangeLockContext ctxt) {
+    this.lockContexts.add(ctxt);
   }
 }

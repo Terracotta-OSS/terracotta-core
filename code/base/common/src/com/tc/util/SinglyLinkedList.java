@@ -3,6 +3,7 @@
  */
 package com.tc.util;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -20,7 +21,7 @@ import java.util.NoSuchElementException;
  * supported. An Iterator is implemented to facilitate adding in the middle and iterating all the elements. The Iterator
  * of this class does not throw ConcurrentModificationException as we don't want to store mod count to save space.
  */
-public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> {
+public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implements Iterable<E> {
 
   public interface LinkedNode<L extends LinkedNode> {
 
@@ -29,7 +30,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> {
     public L setNext(L next);
   }
 
-  public interface SinglyLinkedListIterator<I extends LinkedNode> {
+  public interface SinglyLinkedListIterator<I extends LinkedNode> extends Iterator<I> {
 
     public boolean hasNext();
 
@@ -109,6 +110,33 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> {
     return this.tail;
   }
 
+  public E remove(E obj) {
+    E current = null;
+    E next = head;
+    
+    while (next != null) {
+      E prev = current;
+      current = next;
+      next = next.getNext();
+      
+      if (current == obj || obj.equals(current)) {
+        //remove
+        if (prev == null) {
+          head = current.setNext(null);
+        } else {
+          prev.setNext(current.setNext(null));
+        }
+        if (next == null) {
+          tail = prev;
+        }
+        
+        return current;
+      }
+    }
+    
+    return null;
+  }
+  
   public SinglyLinkedListIterator<E> iterator() {
     return new ListIterator();
   }
@@ -117,13 +145,13 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> {
    * This implementation does not throw ConcurrentModification Exception as we don't want to store mod count to save
    * space.
    */
-  private class ListIterator implements SinglyLinkedListIterator<E> {
+  protected class ListIterator implements SinglyLinkedListIterator<E> {
 
     E prev;
     E current;
     E next;
 
-    ListIterator() {
+    protected ListIterator() {
       this.prev = this.current = null;
       this.next = SinglyLinkedList.this.head;
     }

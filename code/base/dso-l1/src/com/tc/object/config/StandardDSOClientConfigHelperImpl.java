@@ -60,7 +60,7 @@ import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
@@ -1836,9 +1836,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public int getSessionLockType(final String appName) {
     for (Iterator iter = synchronousWriteApplications.iterator(); iter.hasNext();) {
       String webApp = (String) iter.next();
-      if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE; }
+      if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE.toInt(); }
     }
-    return LockLevel.WRITE;
+    return LockLevel.WRITE.toInt();
   }
 
   public boolean isApplicationSessionLocked(final String appName) {

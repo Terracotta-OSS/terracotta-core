@@ -7,9 +7,10 @@ package com.tc.management;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.TCStackTraceElement;
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
@@ -18,7 +19,7 @@ import java.util.Collections;
 
 public interface L2LockStatsManager {
   public final static L2LockStatsManager NULL_LOCK_STATS_MANAGER = new L2LockStatsManager() {
-    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats) {
+    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objManager) {
       // do nothing
     }
     
@@ -26,7 +27,7 @@ public interface L2LockStatsManager {
       // do nothing
     }
     
-    public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType, int numberOfPendingRequests) {
+    public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int numberOfPendingRequests) {
       // do nothing
     }
     
@@ -97,17 +98,16 @@ public interface L2LockStatsManager {
     public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
       return null;
     }
-    
   };
   
-  public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats);
+  public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objManager);
   
   public void setLockStatisticsConfig(int traceDepth, int gatherInterval);
   
   public void recordLockHopRequested(LockID lockID);
   
-  public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, String lockType, int numberOfPendingRequests);
-  
+  public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, int numberOfPendingRequests);
+    
   public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp);
   
   public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID);

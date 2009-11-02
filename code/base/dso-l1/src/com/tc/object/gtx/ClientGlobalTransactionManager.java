@@ -5,8 +5,8 @@
 package com.tc.object.gtx;
 
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockFlushCallback;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockFlushCallback;
+import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
 
 public interface ClientGlobalTransactionManager extends GlobalTransactionManager {

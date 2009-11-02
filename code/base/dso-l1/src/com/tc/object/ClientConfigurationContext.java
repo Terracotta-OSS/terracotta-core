@@ -7,7 +7,7 @@ package com.tc.object;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
 
 public class ClientConfigurationContext extends ConfigurationContextImpl {

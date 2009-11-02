@@ -9,7 +9,7 @@ import com.tc.objectserver.DSOApplicationEventsMBean;
 import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
-import com.tc.objectserver.lockmanager.api.LockManagerMBean;
+import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 
 public class ServerManagementContext {

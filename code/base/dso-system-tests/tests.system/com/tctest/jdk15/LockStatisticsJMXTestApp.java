@@ -9,9 +9,8 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStatElement;
-import com.tc.object.LiteralValues;
 import com.tc.object.bytecode.ByteCodeUtil;
-import com.tc.object.bytecode.Manageable;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.ConfigVisitor;
@@ -19,7 +18,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.LockDefinitionImpl;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockID;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -28,7 +27,6 @@ import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -93,22 +91,17 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       
       enableStackTraces(index, 0, 1);
 
-      String lockName = "lock0";
-      testServerLockAggregateWaitTime(lockName, index);
+      testServerLockAggregateWaitTime("lock0", index);
 
       enableStackTraces(index, 1, 1);
 
-      lockName = "lock1";
-      testLockAggregateWaitTime(lockName, index);
+      testLockAggregateWaitTime("lock1", index);
 
-      lockName = "lock2";
-      testBasicStatistics(lockName, index);
-
-      lockName = "lock3";
+      testBasicStatistics("lock2", index);
 
       enableStackTraces(index, 2, 1);
 
-      testCollectClientStatistics(lockName, index, 1);
+      testCollectClientStatistics("lock3", index, 1);
 
     } catch (Throwable t) {
       notifyError(t);
@@ -145,7 +138,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      verifyClientStat(NAMED_LOCK_NAME, 1, traceDepth);
+      verifyClientStat(ManagerUtil.getManager().generateLockIdentifier(ByteCodeUtil.generateNamedLockName(NAMED_LOCK_NAME)), 1, traceDepth);
       disconnect();
     } else {
       TestClass tc = (TestClass)sharedRoot;
@@ -161,8 +154,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      String lockID = ByteCodeUtil.generateAutolockName(((Manageable)sharedRoot).__tc_managed().getObjectID());
-      verifyClientStat(lockID, TestClass.class.getName(), 2, traceDepth);
+      LockID lock = ManagerUtil.getManager().generateLockIdentifier(sharedRoot);
+      verifyClientStat(lock, TestClass.class.getName(), 2, traceDepth);
       disconnect();
     } else {
       TestClass tc = (TestClass)sharedRoot;
@@ -180,8 +173,8 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       connect();
       Thread.sleep(2000);
       TestClass tc = (TestClass)sharedRoot;
-      String lockID = ByteCodeUtil.generateAutolockName(((Manageable)tc.getTryLock()).__tc_managed().getObjectID());
-      verifyClientStat(lockID, ReentrantLock.class.getName(), 1, traceDepth);
+      LockID lock = ManagerUtil.getManager().generateLockIdentifier(tc.getTryLock());
+      verifyClientStat(lock, ReentrantLock.class.getName(), 1, traceDepth);
       disconnect();
     } else {
       TestClass tc = (TestClass)sharedRoot;
@@ -197,15 +190,15 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       waitForAllToMoveOn();
       connect();
       Thread.sleep(2000);
-      verifyClientStat(ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName), 1, traceDepth);
+      verifyClientStat(ManagerUtil.getManager().generateLockIdentifier(lockName), 1, traceDepth);
       disconnect();
     } else {
       int count = 2;
       for (int i = 0; i < count; i++) {
-        ManagerUtil.monitorEnter(lockName, LockLevel.READ);
+        ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_READ);
       }
       for (int i = 0; i < count; i++) {
-        ManagerUtil.monitorExit(lockName);
+        ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_READ);
       }
 
       waitForAllToMoveOn();
@@ -229,7 +222,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
+      LockID lockID = ManagerUtil.getManager().generateLockIdentifier(lockName);
       long avgWaitTimeInMillis = getServerAggregateAverageWaitTime(lockID);
       long avgHeldTimeInMillis = getServerAggregateAverageHeldTime(lockID);
 
@@ -238,21 +231,21 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       assertExpectedTime(1000, avgWaitTimeInMillis);
       assertExpectedTime(2000, avgHeldTimeInMillis);
     } else if (index == 1) {
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       ThreadUtil.reallySleep(2000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       ThreadUtil.reallySleep(3000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       ThreadUtil.reallySleep(2000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForAllToMoveOn();
     }
     waitForAllToMoveOn();
@@ -262,7 +255,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     if (index == 0) {
       connect();
       waitForAllToMoveOn();
-      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
+      LockID lockID = ManagerUtil.getManager().generateLockIdentifier(lockName);
       long avgWaitTimeInMillis = getAggregateAverageWaitTime(lockID);
       long avgHeldTimeInMillis = getAggregateAverageHeldTime(lockID);
 
@@ -271,21 +264,21 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       assertExpectedTime(1000, avgWaitTimeInMillis);
       assertExpectedTime(2000, avgHeldTimeInMillis);
     } else if (index == 1) {
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       ThreadUtil.reallySleep(2000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       ThreadUtil.reallySleep(3000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       ThreadUtil.reallySleep(2000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForAllToMoveOn();
     }
     waitForAllToMoveOn();
@@ -293,7 +286,7 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
 
   private void testBasicStatistics(String lockName, int index) throws Throwable {
     if (index == 0) {
-      String lockID = ByteCodeUtil.generateLiteralLockName(LiteralValues.valueFor(lockName).name(), lockName);
+      LockID lockID = ManagerUtil.getManager().generateLockIdentifier(lockName);
       connect();
       waitForAllToMoveOn();
 
@@ -318,41 +311,41 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
       disconnect();
 
     } else if (index == 1) {
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForAllToMoveOn();
       waitForAllToMoveOn();
 
       waitForTwoToMoveOn();
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
 
       waitForAllToMoveOn();
 
       waitForAllToMoveOn();
 
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       Thread.sleep(1000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       waitForAllToMoveOn();
       waitForAllToMoveOn();
     } else if (index == 2) {
       waitForAllToMoveOn();
       waitForAllToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
 
       waitForAllToMoveOn();
 
       waitForAllToMoveOn();
 
       Thread.sleep(1000);
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
-      ManagerUtil.monitorEnter(lockName, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(lockName, Manager.LOCK_TYPE_WRITE);
       waitForTwoToMoveOn();
       waitForAllToMoveOn();
       waitForAllToMoveOn();
-      ManagerUtil.monitorExit(lockName);
+      ManagerUtil.monitorExit(lockName, Manager.LOCK_TYPE_WRITE);
     }
 
     waitForAllToMoveOn();
@@ -366,110 +359,52 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     barrier2.await();
   }
 
-  private void verifyLockRequest(String lockName, int expectedValue) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockRequested());
-        return;
-      }
-    }
-    throw new AssertionError(lockName + " cannot be found in the statistics.");
+  private void verifyLockRequest(LockID lock, int expectedValue) {
+    LockSpec ls = getLockSpecFor(lock);
+    Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockRequested());
   }
 
-  private void verifyLockAwarded(String lockName, long expectedValue) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockAwarded());
-        return;
-      }
-    }
-    throw new AssertionError(lockName + " cannot be found in the statistics.");
+  private void verifyLockAwarded(LockID lock, long expectedValue) {
+    LockSpec ls = getLockSpecFor(lock);
+    Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockAwarded());
   }
   
-  private long getServerAggregateAverageHeldTime(String lockName) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        return lsi.getServerStats().getAvgHeldTimeInMillis();
-      }
-    }
-    return -1;
+  private long getServerAggregateAverageHeldTime(LockID lock) {
+    LockSpec ls = getLockSpecFor(lock);
+    return ls.getServerStats().getAvgHeldTimeInMillis();
   }
 
-  private long getAggregateAverageHeldTime(String lockName) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        return lsi.getClientStats().getAvgHeldTimeInMillis();
-      }
-    }
-    return -1;
+  private long getAggregateAverageHeldTime(LockID lock) {
+    LockSpec ls = getLockSpecFor(lock);
+    return ls.getClientStats().getAvgHeldTimeInMillis();
   }
   
-  private long getServerAggregateAverageWaitTime(String lockName) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        return lsi.getServerStats().getAvgWaitTimeToAwardInMillis();
-      }
-    }
-    return -1;
+  private long getServerAggregateAverageWaitTime(LockID lock) {
+    LockSpec ls = getLockSpecFor(lock);
+    return ls.getServerStats().getAvgWaitTimeToAwardInMillis();
   }
 
-  private long getAggregateAverageWaitTime(String lockName) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        return lsi.getClientStats().getAvgWaitTimeToAwardInMillis();
-      }
-    }
-    return -1;
+  private long getAggregateAverageWaitTime(LockID lock) {
+    LockSpec ls = getLockSpecFor(lock);
+    return ls.getClientStats().getAvgWaitTimeToAwardInMillis();
   }
 
-  private void verifyLockHop(String lockName, int expectedValue) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().equals(lockName)) {
-        Assert.assertEquals(expectedValue, lsi.getClientStats().getNumOfLockHopRequests());
-        return;
-      }
-    }
-    throw new AssertionError(lockName + " cannot be found in the statistics.");
+  private void verifyLockHop(LockID lock, int expectedValue) {
+    LockSpec ls = getLockSpecFor(lock);
+    Assert.assertEquals(expectedValue, ls.getClientStats().getNumOfLockHopRequests());
   }
 
-  private void verifyClientStat(String lockName, int numOfClientsStackTraces, int traceDepth) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().indexOf(lockName) != -1) {
-        Assert.assertEquals(numOfClientsStackTraces, lsi.children().size());
-        assertStackTracesDepth(lsi.children(), traceDepth);
-        return;
-      }
-    }
+  private void verifyClientStat(LockID lock, int numOfClientsStackTraces, int traceDepth) {
+    LockSpec ls = getLockSpecFor(lock);
+    Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
+    assertStackTracesDepth(ls.children(), traceDepth);
   }
   
-  private void verifyClientStat(String lockName, String lockType, int numOfClientsStackTraces, int traceDepth) {
-    Collection c = statMBean.getLockSpecs();
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      LockSpec lsi = (LockSpec) i.next();
-      if (lsi.getLockID().asString().indexOf(lockName) != -1) {
-        Assert.assertEquals(lockType, lsi.getObjectType());
-
-        Assert.assertEquals(numOfClientsStackTraces, lsi.children().size());
-        assertStackTracesDepth(lsi.children(), traceDepth);
-        return;
-      }
-    }
+  private void verifyClientStat(LockID lock, String lockType, int numOfClientsStackTraces, int traceDepth) {
+    LockSpec ls = getLockSpecFor(lock);
+//    Assert.assertEquals(lockType, ls.getObjectType());
+    Assert.assertEquals(numOfClientsStackTraces, ls.children().size());
+    assertStackTracesDepth(ls.children(), traceDepth);
   }
 
   private boolean assertStackTracesDepth(Collection traces, int expectedDepthOfStackTraces) {
@@ -484,6 +419,18 @@ public class LockStatisticsJMXTestApp extends AbstractTransparentApp {
     System.err.println(msg);
   }
 
+  private LockSpec getLockSpecFor(LockID lock) {
+    Collection<LockSpec> c = statMBean.getLockSpecs();
+    System.err.println("Statistics For: ");
+    for (LockSpec ls : c) {
+      System.err.println("\t" + ls.getLockID());
+      if (ls.getLockID().equals(lock)) {
+        return ls;
+      }
+    }
+    throw new AssertionError(lock + " cannot be found in the statistics.");    
+  }
+  
   private static class TestClass {
     private ReentrantLock rLock = new ReentrantLock();
     

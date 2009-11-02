@@ -14,6 +14,7 @@ import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.object.locks.MockClientLockManager;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tx.MockTransactionManager;
 import com.tc.process.StreamCollector;
@@ -123,8 +124,9 @@ public class SerializationTest extends BaseDSOTestCase {
 
       TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
       MockTransactionManager testTransactionManager = new MockTransactionManager();
+      MockClientLockManager testClientLockManager = new MockClientLockManager();
       IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager,
-                                                                  testTransactionManager);
+                                                                  testTransactionManager, testClientLockManager);
       classLoader.init();
       Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -149,8 +151,9 @@ public class SerializationTest extends BaseDSOTestCase {
 
       TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
       MockTransactionManager testTransactionManager = new MockTransactionManager();
+      MockClientLockManager testClientLockManager = new MockClientLockManager();
       IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager,
-                                                                  testTransactionManager);
+                                                                  testTransactionManager, testClientLockManager);
       classLoader.init();
       Thread.currentThread().setContextClassLoader(classLoader);
 

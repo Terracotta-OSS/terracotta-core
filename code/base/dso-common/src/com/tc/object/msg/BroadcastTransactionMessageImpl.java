@@ -21,8 +21,8 @@ import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
@@ -59,7 +59,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private final List             dmis                  = new LinkedList();
   private final Collection       notifies              = new LinkedList();
   private final Map              newRoots              = new HashMap();
-  private List                   lockIDs;
+  private List<LockID>           lockIDs;
 
   private long                   changeID;
   private TransactionID          transactionID;
@@ -69,13 +69,15 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   private GlobalTransactionID    lowWatermark;
   private ObjectStringSerializer serializer;
 
-  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final TCByteBufferOutputStream out,
-                                         final MessageChannel channel, final TCMessageType type) {
+  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                         final TCByteBufferOutputStream out, final MessageChannel channel,
+                                         final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor, final MessageChannel channel,
-                                         final TCMessageHeader header, final TCByteBuffer[] data) {
+  public BroadcastTransactionMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                         final MessageChannel channel, final TCMessageHeader header,
+                                         final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -84,11 +86,11 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     putNVPair(TRANSACTION_TYPE_ID, this.transactionType.getType());
     for (Iterator i = this.lockIDs.iterator(); i.hasNext();) {
       LockID lockID = (LockID) i.next();
-      putNVPair(LOCK_ID, lockID.asString());
+      putNVPair(LOCK_ID, lockID);
     }
 
     for (Iterator i = this.notifies.iterator(); i.hasNext();) {
-      LockContext notified = (LockContext) i.next();
+      ClientServerExchangeLockContext notified = (ClientServerExchangeLockContext) i.next();
       putNVPair(NOTIFIED, notified);
     }
 
@@ -131,10 +133,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         if (this.lockIDs == null) {
           this.lockIDs = new LinkedList();
         }
-        this.lockIDs.add(new LockID(getStringValue()));
+        this.lockIDs.add(getLockIDValue());
         return true;
       case NOTIFIED:
-        this.notifies.add(this.getObject(new LockContext()));
+        this.notifies.add(this.getObject(new ClientServerExchangeLockContext()));
         return true;
       case CHANGE_ID:
         this.changeID = getLongValue();
@@ -164,10 +166,10 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
     }
   }
 
-  public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids, final long cid, final TransactionID txID,
-                         final NodeID client, final GlobalTransactionID gtx, final TxnType txnType,
-                         final GlobalTransactionID lowGlobalTransactionIDWatermark, final Collection theNotifies, final Map roots,
-                         final DmiDescriptor[] dmiDescs) {
+  public void initialize(final List chges, final ObjectStringSerializer aSerializer, final LockID[] lids,
+                         final long cid, final TransactionID txID, final NodeID client, final GlobalTransactionID gtx,
+                         final TxnType txnType, final GlobalTransactionID lowGlobalTransactionIDWatermark,
+                         final Collection theNotifies, final Map roots, final DmiDescriptor[] dmiDescs) {
     Assert.eval(lids.length > 0);
     Assert.assertNotNull(txnType);
 

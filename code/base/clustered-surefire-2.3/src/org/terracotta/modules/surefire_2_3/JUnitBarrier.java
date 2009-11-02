@@ -42,7 +42,7 @@ public class JUnitBarrier {
       barrier = (JUnitBarrier) ManagerUtil.lookupOrCreateRoot("barrier:" + testName, //
           new JUnitBarrier(numberOfNodes));
     } finally {
-      ManagerUtil.commitLock(globalLock);
+      ManagerUtil.commitLock(globalLock, Manager.LOCK_TYPE_WRITE);
     }
 
     barrier.barrier();

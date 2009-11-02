@@ -8,8 +8,8 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;

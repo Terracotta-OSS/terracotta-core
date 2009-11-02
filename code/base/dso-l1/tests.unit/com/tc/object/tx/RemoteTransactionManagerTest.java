@@ -17,7 +17,8 @@ import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
@@ -104,7 +105,7 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000);
     this.batchAccounting = this.manager.getBatchAccounting();
 
-    final LockID lockID1 = new LockID("lock1");
+    final LockID lockID1 = new StringLockID("lock1");
     this.manager.flush(lockID1);
     TestClientTransaction tx1 = new TestClientTransaction();
     tx1.lockID = lockID1;
@@ -139,7 +140,7 @@ public class RemoteTransactionManagerTest extends TestCase {
                                                     this.transactionsPerBatchCounter, ackOnExitTimeout * 1000);
     this.batchAccounting = this.manager.getBatchAccounting();
 
-    final LockID lockID1 = new LockID("lock1");
+    final LockID lockID1 = new StringLockID("lock1");
     this.manager.flush(lockID1);
     TestClientTransaction tx1 = new TestClientTransaction();
     tx1.lockID = lockID1;
@@ -165,7 +166,7 @@ public class RemoteTransactionManagerTest extends TestCase {
   }
 
   public void testFlush() throws Exception {
-    final LockID lockID1 = new LockID("lock1");
+    final LockID lockID1 = new StringLockID("lock1");
     this.manager.flush(lockID1);
     TestClientTransaction tx1 = new TestClientTransaction();
     tx1.lockID = lockID1;
@@ -506,7 +507,7 @@ public class RemoteTransactionManagerTest extends TestCase {
 
   private ClientTransaction makeTransaction() {
     int num = this.number.increment();
-    LockID lid = new LockID("lock" + num);
+    LockID lid = new StringLockID("lock" + num);
     TransactionContext tc = new TransactionContextImpl(lid, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn = new ClientTransactionImpl(new NullRuntimeLogger());
     txn.setTransactionContext(tc);

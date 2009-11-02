@@ -5,8 +5,8 @@
 package com.tc.management.lock.stats;
 
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ThreadID;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Counter;
@@ -24,7 +24,7 @@ public abstract class LockStatisticsManager implements Serializable {
   protected final LockStatConfig    lockStatConfig = new LockStatConfig();
   protected final Map               nestedDepth    = new HashMap();          // map<ThreadID/NodeID, int>
 
-  protected boolean                 lockStatisticsEnabled;
+  protected volatile boolean        lockStatisticsEnabled;
 
   public void recordLockRequested(LockID lockID, NodeID nodeID, ThreadID threadID, StackTraceElement[] stackTraces,
                                   String contextInfo, int numberOfPendingRequests) {

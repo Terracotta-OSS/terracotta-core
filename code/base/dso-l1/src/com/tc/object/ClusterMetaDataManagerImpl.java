@@ -13,7 +13,7 @@ import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClusterMetaDataMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;

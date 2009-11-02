@@ -4,8 +4,8 @@
 package com.tcclient.util;
 
 import com.tc.object.SerializationUtil;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.lockmanager.api.LockLevel;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class HashtableEntrySetWrapper extends MapEntrySetWrapper {
 
   public final boolean remove(Object o) {
     boolean removed = false;
-    ManagerUtil.monitorEnter(map, LockLevel.WRITE);
+    ManagerUtil.monitorEnter(map, Manager.LOCK_TYPE_WRITE);
     try {
       ManagerUtil.checkWriteAccess(map);
       removed = realEntrySet.remove(o);
@@ -37,7 +37,7 @@ public class HashtableEntrySetWrapper extends MapEntrySetWrapper {
                                   new Object[] { ((Map.Entry) o).getKey() });
       }
     } finally {
-      ManagerUtil.monitorExit(map);
+      ManagerUtil.monitorExit(map, Manager.LOCK_TYPE_WRITE);
     }
     return removed;
   }
@@ -54,7 +54,7 @@ public class HashtableEntrySetWrapper extends MapEntrySetWrapper {
     }
 
     public final void remove() {
-      ManagerUtil.monitorEnter(map, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(map, Manager.LOCK_TYPE_WRITE);
       try {
         realIterator.remove();
 
@@ -62,7 +62,7 @@ public class HashtableEntrySetWrapper extends MapEntrySetWrapper {
         // started, at end, concurrent mod, etc)
         ManagerUtil.logicalInvoke(map, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { current.getKey() });
       } finally {
-        ManagerUtil.monitorExit(map);
+        ManagerUtil.monitorExit(map, Manager.LOCK_TYPE_WRITE);
       }
     }
 

@@ -11,77 +11,51 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.lockmanager.api.LockContext;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.LockLevel;
-import com.tc.object.lockmanager.api.ThreadID;
-import com.tc.object.lockmanager.api.TryLockContext;
-import com.tc.object.lockmanager.api.WaitContext;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
+import com.tc.object.locks.ThreadIDFactory;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.TimerSpec;
-import com.tc.object.tx.TimerSpecFactory;
 import com.tc.util.Assert;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
  * Message for obtaining/releasing locks, and for modifying them (ie. wait/notify)
- *
+ * 
  * @author steve
  */
-public class LockRequestMessage extends DSOMessageBase implements LockRequestMessageConsts {
+public class LockRequestMessage extends DSOMessageBase {
 
-  private static final TimerSpecFactory waitInvocationFactory           = new TimerSpecFactory();
-
-  private final static byte                  LOCK_ID                         = 1;
-  private final static byte                  LOCK_LEVEL                      = 2;
-  private final static byte                  THREAD_ID                       = 3;
-  private final static byte                  REQUEST_TYPE                    = 4;
-  private final static byte                  WITH_WAIT                       = 5;
-  private final static byte                  WAIT_MILLIS                     = 6;
-  private final static byte                  WAIT_NANOS                      = 7;
-  private final static byte                  NOTIFY_ALL                      = 8;
-  private static final byte                  WAIT_ARG_COUNT                  = 9;
-  private static final byte                  WAIT_CONTEXT                    = 10;
-  private static final byte                  LOCK_CONTEXT                    = 11;
-  private static final byte                  PENDING_LOCK_CONTEXT            = 12;
-  private static final byte                  PENDING_TRY_LOCK_CONTEXT        = 13;
-  private static final byte                  LOCK_OBJECT_TYPE                = 14;
+  private final static byte LOCK_ID      = 1;
+  private final static byte LOCK_LEVEL   = 2;
+  private final static byte THREAD_ID    = 3;
+  private final static byte REQUEST_TYPE = 4;
+  private final static byte WAIT_MILLIS  = 5;
+  private static final byte CONTEXT      = 6;
 
   // request types
-  private final static byte                  UNITIALIZED_REQUEST_TYPE        = -1;
-  private final static byte                  OBTAIN_LOCK_REQUEST_TYPE        = 1;
-  private final static byte                  RELEASE_LOCK_REQUEST_TYPE       = 2;
-  private final static byte                  RECALL_COMMIT_LOCK_REQUEST_TYPE = 3;
-  private final static byte                  QUERY_LOCK_REQUEST_TYPE         = 4;
-  private final static byte                  TRY_OBTAIN_LOCK_REQUEST_TYPE    = 5;
-  private final static byte                  INTERRUPT_WAIT_REQUEST_TYPE     = 6;
+  public static enum RequestType {
+    LOCK, UNLOCK, WAIT, RECALL_COMMIT, QUERY, TRY_LOCK, INTERRUPT_WAIT;
+  }
 
-  private final static String                UNINITIALED_LOCK_TYPE           = "";
+  private static final ThreadIDFactory               threadIDFactory = new ThreadIDFactory();
 
-  private final Set                          lockContexts                    = new LinkedHashSet();
-  private final Set                          waitContexts                    = new LinkedHashSet();
-  private final Set                          pendingLockContexts             = new LinkedHashSet();
-  private final List                         pendingTryLockContexts          = new ArrayList();
+  private final Set<ClientServerExchangeLockContext> contexts        = new LinkedHashSet<ClientServerExchangeLockContext>();
 
-  private LockID                             lockID                          = LockID.NULL_ID;
-  private int                                lockLevel                       = LockLevel.NIL_LOCK_LEVEL;
-  private String                             lockObjectType                  = UNINITIALED_LOCK_TYPE;
-  private ThreadID                           threadID                        = ThreadID.NULL_ID;
-  private byte                               requestType                     = UNITIALIZED_REQUEST_TYPE;
-  private boolean                            withWait;
-  private long                               waitMillis                      = UNITIALIZED_TIME_INTERVAL;
-  private int                                waitNanos                       = UNITIALIZED_TIME_INTERVAL;
-  private boolean                            notifyAll;
-  private int                                waitArgCount                    = -1;
+  private LockID                                     lockID          = null;
+  private ServerLockLevel                            lockLevel       = null;
+  private ThreadID                                   threadID        = null;
+  private RequestType                                requestType     = null;
+  private long                                       waitMillis      = -1;
 
-  public LockRequestMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel, TCMessageType type) {
+  public LockRequestMessage(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
+                            MessageChannel channel, TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
@@ -91,87 +65,60 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
   }
 
   protected void dehydrateValues() {
-    putNVPair(LOCK_ID, lockID.asString());
-    putNVPair(LOCK_LEVEL, lockLevel);
-    putNVPair(LOCK_OBJECT_TYPE, lockObjectType);
-    putNVPair(THREAD_ID, threadID.toLong());
-
-    putNVPair(REQUEST_TYPE, requestType);
-
-    putNVPair(WITH_WAIT, withWait);
-
-    if (withWait || isTryObtainLockRequest()) {
-      putNVPair(WAIT_ARG_COUNT, this.waitArgCount);
-      putNVPair(WAIT_MILLIS, waitMillis);
-      putNVPair(WAIT_NANOS, waitNanos);
-    }
-
-    putNVPair(NOTIFY_ALL, notifyAll);
-
-    for (Iterator i = lockContexts.iterator(); i.hasNext();) {
-      putNVPair(LOCK_CONTEXT, (TCSerializable) i.next());
-    }
-
-    for (Iterator i = waitContexts.iterator(); i.hasNext();) {
-      putNVPair(WAIT_CONTEXT, (TCSerializable) i.next());
-    }
-
-    for (Iterator i = pendingLockContexts.iterator(); i.hasNext();) {
-      putNVPair(PENDING_LOCK_CONTEXT, (TCSerializable) i.next());
-    }
-
-    for (Iterator i = pendingTryLockContexts.iterator(); i.hasNext();) {
-      putNVPair(PENDING_TRY_LOCK_CONTEXT, (TCSerializable) i.next());
-    }
-  }
-
-  private static boolean isValidRequestType(byte type) {
-    if ((type == RELEASE_LOCK_REQUEST_TYPE) || (type == OBTAIN_LOCK_REQUEST_TYPE)
-        || (type == RECALL_COMMIT_LOCK_REQUEST_TYPE) || (type == QUERY_LOCK_REQUEST_TYPE)
-        || (type == TRY_OBTAIN_LOCK_REQUEST_TYPE) || (type == INTERRUPT_WAIT_REQUEST_TYPE)) { return true; }
-
-    return false;
-  }
-
-  private static String getRequestTypeDescription(byte type) {
-    switch (type) {
-      case RELEASE_LOCK_REQUEST_TYPE:
-        return "Lock Release";
-      case OBTAIN_LOCK_REQUEST_TYPE:
-        return "Obtain Lock";
-      case RECALL_COMMIT_LOCK_REQUEST_TYPE:
-        return "Recall Lock Commit";
-      case QUERY_LOCK_REQUEST_TYPE:
-        return "Query Lock";
-      case TRY_OBTAIN_LOCK_REQUEST_TYPE:
-        return "Try Obtain Lock";
-      case INTERRUPT_WAIT_REQUEST_TYPE:
-        return "Interrupt Wait";
-      default:
-        return "UNKNOWN (" + type + ")";
+    putNVPair(REQUEST_TYPE, (byte) requestType.ordinal());
+    switch (requestType) {
+      case LOCK:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        putNVPair(LOCK_LEVEL, (byte) lockLevel.ordinal());
+        break;
+      case UNLOCK:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        if (lockLevel != null) {
+          putNVPair(LOCK_LEVEL, (byte) lockLevel.ordinal());
+        }
+        break;
+      case TRY_LOCK:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        putNVPair(LOCK_LEVEL, (byte) lockLevel.ordinal());
+        putNVPair(WAIT_MILLIS, waitMillis);
+        break;
+      case WAIT:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        // putNVPair(LOCK_LEVEL, (byte) lockLevel.ordinal());
+        putNVPair(WAIT_MILLIS, waitMillis);
+        break;
+      case INTERRUPT_WAIT:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        break;
+      case QUERY:
+        putNVPair(LOCK_ID, lockID);
+        putNVPair(THREAD_ID, threadID.toLong());
+        break;
+      case RECALL_COMMIT:
+        putNVPair(LOCK_ID, lockID);
+        for (Iterator i = contexts.iterator(); i.hasNext();) {
+          putNVPair(CONTEXT, (TCSerializable) i.next());
+        }
+        break;
     }
   }
 
   protected String describePayload() {
     StringBuffer rv = new StringBuffer();
 
-    rv.append("Request Type: ").append(getRequestTypeDescription(this.requestType)).append('\n');
-    rv.append(lockID).append(' ').append(threadID).append(' ').append("Lock Type: ").append(
-                                                                                            LockLevel
-                                                                                                .toString(lockLevel))
-        .append('\n');
+    rv.append("Request Type: ").append(requestType).append('\n');
+    rv.append(lockID).append(' ').append(threadID).append(' ').append("Lock Type: ").append(lockLevel).append('\n');
 
-    if (isWaitRelease()) {
-      rv.append("Wait millis: ").append(waitMillis).append(", nanos: ").append(waitNanos).append('\n');
+    if (waitMillis >= 0) {
+      rv.append("Timeout : ").append(waitMillis).append("ms\n");
     }
-    if (waitContexts.size() > 0) {
-      rv.append("Wait contexts size = ").append(waitContexts.size()).append('\n');
-    }
-    if (lockContexts.size() > 0) {
-      rv.append("Lock contexts size = ").append(lockContexts.size()).append('\n');
-    }
-    if (pendingLockContexts.size() > 0) {
-      rv.append("Pending Lock contexts size = ").append(pendingLockContexts.size()).append('\n');
+    if (contexts.size() > 0) {
+      rv.append("Holder/Waiters/Pending contexts size = ").append(contexts.size()).append('\n');
     }
 
     return rv.toString();
@@ -181,52 +128,38 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
     switch (name) {
       case LOCK_ID:
         // TODO: Make this use a lockID factory so that we can avoid dups
-        lockID = new LockID(getStringValue());
+        lockID = getLockIDValue();
         return true;
       case LOCK_LEVEL:
-        lockLevel = getIntValue();
-        return true;
-      case LOCK_OBJECT_TYPE:
-        lockObjectType = getStringValue();
+        try {
+          lockLevel = ServerLockLevel.values()[getByteValue()];
+        } catch (ArrayIndexOutOfBoundsException e) {
+          return false;
+        }
         return true;
       case THREAD_ID:
-        threadID = new ThreadID(getLongValue());
-        return true;
-      case WITH_WAIT:
-        withWait = getBooleanValue();
+        threadID = threadIDFactory.getOrCreate(getLongValue());
         return true;
       case REQUEST_TYPE:
-        final byte req = getByteValue();
-        if (!isValidRequestType(req)) { return false; }
-        requestType = req;
+        try {
+          requestType = RequestType.values()[getByteValue()];
+        } catch (ArrayIndexOutOfBoundsException e) {
+          return false;
+        }
         return true;
       case WAIT_MILLIS:
         waitMillis = getLongValue();
         return true;
-      case WAIT_NANOS:
-        waitNanos = getIntValue();
-        return true;
-      case NOTIFY_ALL:
-        notifyAll = getBooleanValue();
-        return true;
-      case WAIT_ARG_COUNT:
-        waitArgCount = getIntValue();
-        return true;
-      case LOCK_CONTEXT:
-        lockContexts.add(getObject(new LockContext()));
-        return true;
-      case WAIT_CONTEXT:
-        waitContexts.add(getObject(new WaitContext()));
-        return true;
-      case PENDING_LOCK_CONTEXT:
-        pendingLockContexts.add(getObject(new LockContext()));
-        return true;
-      case PENDING_TRY_LOCK_CONTEXT:
-        pendingTryLockContexts.add(getObject(new TryLockContext()));
+      case CONTEXT:
+        contexts.add((ClientServerExchangeLockContext) getObject(new ClientServerExchangeLockContext()));
         return true;
       default:
         return false;
     }
+  }
+
+  public RequestType getRequestType() {
+    return requestType;
   }
 
   public LockID getLockID() {
@@ -237,176 +170,56 @@ public class LockRequestMessage extends DSOMessageBase implements LockRequestMes
     return threadID;
   }
 
-  public int getLockLevel() {
+  public ServerLockLevel getLockLevel() {
     return lockLevel;
   }
 
-  public String getLockType() {
-    return lockObjectType;
+  public void addContext(ClientServerExchangeLockContext ctxt) {
+    Assert.assertTrue(contexts.add(ctxt));
   }
 
-  public boolean isNotifyAll() {
-    return notifyAll;
+  public Collection<ClientServerExchangeLockContext> getContexts() {
+    return contexts;
   }
 
-  public void addLockContext(LockContext ctxt) {
-    synchronized (lockContexts) {
-      Assert.assertTrue(lockContexts.add(ctxt));
-    }
-  }
-
-  public Collection getLockContexts() {
-    synchronized (lockContexts) {
-      return new LinkedHashSet(lockContexts);
-    }
-  }
-
-  public void addWaitContext(WaitContext ctxt) {
-    synchronized (waitContexts) {
-      Assert.assertTrue(waitContexts.add(ctxt));
-    }
-  }
-
-  public Collection getWaitContexts() {
-    synchronized (waitContexts) {
-      return new LinkedHashSet(waitContexts);
-    }
-  }
-
-  public void addPendingLockContext(LockContext ctxt) {
-    synchronized (pendingLockContexts) {
-      Assert.assertTrue(pendingLockContexts.add(ctxt));
-    }
-  }
-
-  public Collection getPendingLockContexts() {
-    synchronized (pendingLockContexts) {
-      return new LinkedHashSet(pendingLockContexts);
-    }
-  }
-
-  public void addPendingTryLockContext(LockContext ctxt) {
-    Assert.eval(ctxt instanceof TryLockContext);
-    synchronized (pendingTryLockContexts) {
-      pendingTryLockContexts.add(ctxt);
-    }
-  }
-
-  public Collection getPendingTryLockContexts() {
-    synchronized (pendingTryLockContexts) {
-      return new ArrayList(pendingTryLockContexts);
-    }
-  }
-
-  public boolean isInterruptWaitRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == INTERRUPT_WAIT_REQUEST_TYPE;
-  }
-
-  public boolean isQueryLockRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == QUERY_LOCK_REQUEST_TYPE;
-  }
-
-  public boolean isTryObtainLockRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == TRY_OBTAIN_LOCK_REQUEST_TYPE;
-  }
-
-  public boolean isObtainLockRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == OBTAIN_LOCK_REQUEST_TYPE;
-  }
-
-  public boolean isReleaseLockRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == RELEASE_LOCK_REQUEST_TYPE;
-  }
-
-  public boolean isRecallCommitLockRequest() {
-    if (!isValidRequestType(requestType)) { throw new AssertionError("Invalid request type: " + requestType); }
-    return requestType == RECALL_COMMIT_LOCK_REQUEST_TYPE;
-  }
-
-  public TimerSpec getWaitInvocation() {
-    if (!this.withWait && !isTryObtainLockRequest()) { throw new IllegalStateException("not a wait request"); }
-    return waitInvocationFactory.newTimerSpec(this.waitArgCount, this.waitMillis, this.waitNanos);
-  }
-
-  public boolean isWaitRelease() {
-    return this.withWait;
+  public long getTimeout() {
+    return waitMillis;
   }
 
   public void initializeInterruptWait(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, INTERRUPT_WAIT_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
-               UNITIALIZED_TIME_INTERVAL, -1);
+    initialize(lid, id, null, RequestType.INTERRUPT_WAIT, -1);
   }
 
-  public void initializeQueryLock(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, QUERY_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
-               UNITIALIZED_TIME_INTERVAL, -1);
+  public void initializeQuery(LockID lid, ThreadID id) {
+    initialize(lid, id, null, RequestType.QUERY, -1);
   }
 
-  public void initializeObtainLock(LockID lid, ThreadID id, int lockLevelArg, String lockObjectTypeArg) {
-    initialize(lid, id, lockLevelArg, OBTAIN_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
-    if (lockObjectTypeArg != null) {
-      this.lockObjectType = lockObjectTypeArg;
-    }
+  public void initializeLock(LockID lid, ThreadID id, ServerLockLevel level) {
+    initialize(lid, id, level, RequestType.LOCK, -1);
   }
 
-  public void initializeTryObtainLock(LockID lid, ThreadID id, TimerSpec timeout, int lockLevelArg, String lockObjectTypeArg) {
-    initialize(lid, id, lockLevelArg, TRY_OBTAIN_LOCK_REQUEST_TYPE, false, false, timeout.getMillis(), timeout.getNanos(),
-               timeout.getSignature().getArgCount());
-    if (lockObjectTypeArg != null) {
-      this.lockObjectType = lockObjectTypeArg;
-    }
+  public void initializeTryLock(LockID lid, ThreadID id, long timeout, ServerLockLevel level) {
+    initialize(lid, id, level, RequestType.TRY_LOCK, timeout);
   }
 
-  public void initializeLockRelease(LockID lid, ThreadID id) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, RELEASE_LOCK_REQUEST_TYPE, false, false, UNITIALIZED_TIME_INTERVAL,
-               UNITIALIZED_TIME_INTERVAL, -1);
+  public void initializeUnlock(LockID lid, ThreadID id, ServerLockLevel level) {
+    initialize(lid, id, level, RequestType.UNLOCK, -1);
   }
 
-  public void initializeLockReleaseWait(LockID lid, ThreadID id, TimerSpec call) {
-    initialize(lid, id, LockLevel.NIL_LOCK_LEVEL, RELEASE_LOCK_REQUEST_TYPE, true, false, call.getMillis(), call
-        .getNanos(), call.getSignature().getArgCount());
+  public void initializeWait(LockID lid, ThreadID id, long timeout) {
+    initialize(lid, id, null, RequestType.WAIT, timeout);
   }
 
-  public void initializeLockRecallCommit(LockID lid) {
-    initialize(lid, ThreadID.VM_ID, LockLevel.NIL_LOCK_LEVEL, RECALL_COMMIT_LOCK_REQUEST_TYPE, false, false,
-               UNITIALIZED_TIME_INTERVAL, UNITIALIZED_TIME_INTERVAL, -1);
+  public void initializeRecallCommit(LockID lid) {
+    initialize(lid, ThreadID.VM_ID, null, RequestType.RECALL_COMMIT, -1);
   }
 
-  private void initialize(LockID lid, ThreadID id, int level, byte reqType, boolean wait, boolean all, long millis,
-                          int nanos, int waitArgs) {
+  private void initialize(LockID lid, ThreadID id, ServerLockLevel level, RequestType reqType, long millis) {
     this.lockID = lid;
     this.lockLevel = level;
     this.threadID = id;
-
-    if (!isValidRequestType(reqType)) { throw new IllegalArgumentException("Invalid request type: " + reqType); }
     this.requestType = reqType;
-
-    if (this.requestType == RELEASE_LOCK_REQUEST_TYPE || this.requestType == RECALL_COMMIT_LOCK_REQUEST_TYPE) {
-      if (this.lockLevel != LockLevel.NIL_LOCK_LEVEL) {
-        // make the formatter happy
-        throw new IllegalArgumentException("Cannot specify a lock level for release or recall commit(yet)");
-      }
-    }
-
-    this.withWait = wait;
-    this.notifyAll = all;
-
-    if (wait || isTryObtainLockRequest()) {
-      if ((waitArgs < 0) || (waitArgs > 2)) { throw new IllegalArgumentException(
-                                                                                 "Wait argument count must be 0, 1 or 2"); }
-
-      if (requestType != RELEASE_LOCK_REQUEST_TYPE && requestType != TRY_OBTAIN_LOCK_REQUEST_TYPE) { throw new IllegalArgumentException(
-                                                                                                                                        "Can't include withWait option for non lock release requests"); }
-
-      this.waitArgCount = waitArgs;
-      this.waitMillis = millis;
-      this.waitNanos = nanos;
-    }
+    this.waitMillis = millis;
   }
 
 }

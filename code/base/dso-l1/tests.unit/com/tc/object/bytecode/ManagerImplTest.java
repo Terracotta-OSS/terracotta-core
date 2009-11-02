@@ -4,159 +4,160 @@
  */
 package com.tc.object.bytecode;
 
-import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.net.NodeID;
 import com.tc.object.BaseDSOTestCase;
-import com.tc.object.ClientIDProvider;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
-import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.LoaderDescription;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockLevel;
+import com.tc.object.locks.Notify;
+import com.tc.object.locks.ServerLockLevel;
+import com.tc.object.locks.ThreadID;
+import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionManager;
-import com.tc.object.tx.TimerSpec;
-import com.tc.object.tx.TransactionID;
-import com.tc.object.tx.TxnBatchID;
-import com.tc.object.tx.TxnType;
-import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.text.PrettyPrinter;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 public class ManagerImplTest extends BaseDSOTestCase {
 
   public void testClassAutolocksIgnored() throws Exception {
     ClientObjectManager objMgr = new ObjMgr();
-    ClientTransactionManager txnMgr = new TxnMgr();
+    ClientLockManager lockMgr = new LockMgr();
+    
+    Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, this.configHelper(), null);
 
-    Manager manager = new ManagerImpl(false, objMgr, txnMgr, this.configHelper(), null);
-
-    manager.monitorEnter(getClass(), Manager.LOCK_TYPE_WRITE, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
-
-    manager.monitorExit(getClass());
+    LockID classLock = manager.generateLockIdentifier(getClass());
+    manager.lock(classLock, LockLevel.WRITE);
+    manager.unlock(classLock, LockLevel.WRITE);
   }
 
-  private static class TxnMgr implements ClientTransactionManager {
+  private static class LockMgr implements ClientLockManager {
 
-    public boolean begin(final String lock, final int lockLevel, final String lockType, final String contextInfo) {
-      throw new AssertionError("should not be called");
+    public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
+      throw new ImplementMe();      
     }
 
-    public void apply(final TxnType txType, final List lockIDs, final Collection objectChanges, final Map newRoots) {
+    public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
+      throw new ImplementMe();
+      
+    }
+
+    public void notified(LockID lock, ThreadID thread) {
+      throw new ImplementMe();
+      
+    }
+
+    public void recall(LockID lock, ServerLockLevel level, int lease) {
+      throw new ImplementMe();
+      
+    }
+
+    public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
+      throw new ImplementMe();
+      
+    }
+
+    public LockID generateLockIdentifier(String str) {
       throw new ImplementMe();
     }
 
-    public void createObject(final TCObject source) {
+    public LockID generateLockIdentifier(Object obj) {
       throw new ImplementMe();
     }
 
-    public void createRoot(final String name, final ObjectID id) {
+    public LockID generateLockIdentifier(Object obj, String field) {
       throw new ImplementMe();
     }
 
-    public void fieldChanged(final TCObject source, final String classname, final String fieldname,
-                             final Object newValue, final int index) {
+    public int globalHoldCount(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public void logicalInvoke(final TCObject source, final int method, final String methodName,
-                              final Object[] parameters) {
+    public int globalPendingCount(LockID lock) {
       throw new ImplementMe();
     }
 
-    public void notify(final String lockName, final boolean all, final Object object)
-        throws UnlockedSharedObjectException {
+    public int globalWaitingCount(LockID lock) {
       throw new ImplementMe();
     }
 
-    public void checkWriteAccess(final Object context) {
+    public boolean isLocked(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public void addReference(final TCObject tco) {
+    public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public ClientIDProvider getClientIDProvider() {
+    public int localHoldCount(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public boolean isLocked(final String lockName, final int lockLevel) {
+    public void lock(LockID lock, LockLevel level) {
+      throw new AssertionError();
+    }
+
+    public void lockInterruptibly(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public void commit(final String lockName) throws UnlockedSharedObjectException {
-      throw new AssertionError("should not be called");
-    }
-
-    public void wait(final String lockName, final TimerSpec call, final Object object)
-        throws UnlockedSharedObjectException {
+    public Notify notify(LockID lock, Object waitObject) {
       throw new ImplementMe();
     }
 
-    public int queueLength(final String lockName) {
+    public Notify notifyAll(LockID lock, Object waitObject) {
+      throw new ImplementMe();
+      
+    }
+
+    public boolean tryLock(LockID lock, LockLevel level) {
       throw new ImplementMe();
     }
 
-    public int waitLength(final String lockName) {
+    public boolean tryLock(LockID lock, LockLevel level, long timeout) {
       throw new ImplementMe();
     }
 
-    public void disableTransactionLogging() {
+    public void unlock(LockID lock, LockLevel level) {
+      throw new AssertionError();
+    }
+
+    public void wait(LockID lock, Object waitObject) {
       throw new ImplementMe();
     }
 
-    public void enableTransactionLogging() {
+    public void wait(LockID lock, Object waitObject, long timeout) {
       throw new ImplementMe();
     }
 
-    public boolean isTransactionLoggingDisabled() {
+    public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
       throw new ImplementMe();
     }
 
-    public boolean isHeldByCurrentThread(final String lockName, final int lockLevel) {
+    public void pause(NodeID remoteNode, int disconnected) {
       throw new ImplementMe();
     }
 
-    public boolean beginInterruptibly(final String lockID, final int type, final String lockObjectType,
-                                      final String contextInfo) {
+    public void shutdown() {
       throw new ImplementMe();
     }
 
-    public boolean tryBegin(final String lock, final TimerSpec timeout, final int lockLevel, final String lockType) {
+    public void unpause(NodeID remoteNode, int disconnected) {
       throw new ImplementMe();
-    }
-
-    public void arrayChanged(final TCObject src, final int startPos, final Object array, final int length) {
-      throw new ImplementMe();
-    }
-
-    public void literalValueChanged(final TCObject source, final Object newValue, final Object oldValue) {
-      throw new ImplementMe();
-    }
-
-    public void addDmiDescriptor(final DmiDescriptor d) {
-      throw new ImplementMe();
-    }
-
-    public int localHeldCount(final String lockName, final int lockLevel) {
-      throw new ImplementMe();
-    }
-
-    public boolean isLockOnTopStack(final String lockName) {
-      return false;
     }
 
     public String dump() {
@@ -167,36 +168,21 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
       throw new ImplementMe();
     }
 
-    public ClientTransaction getCurrentTransaction() {
+    public void pinLock(LockID lock) {
       throw new ImplementMe();
+      
     }
 
-    public void receivedAcknowledgement(final SessionID sessionID, final TransactionID requestID, final NodeID nodeID) {
+    public void unpinLock(LockID lock) {
       throw new ImplementMe();
+      
     }
 
-    public void receivedBatchAcknowledgement(final TxnBatchID batchID, final NodeID nodeID) {
-      throw new ImplementMe();
-    }
-
-    public boolean beginLockWithoutTxn(final String lockName, final int lockLevel, final String lockObjectType,
-                                       final String contextInfo) {
-      throw new ImplementMe();
-    }
-
-    public void evictLock(String lockName) {
-      throw new ImplementMe();
-    }
-
-    public void pinLock(String lockName) {
-      throw new ImplementMe();
-    }
-
-    public void unpinLock(String lockName) {
+    public boolean isLockedByCurrentThread(LockLevel level) {
       throw new ImplementMe();
     }
   }

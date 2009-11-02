@@ -5,8 +5,8 @@ package com.tc.util;
 
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.lockmanager.api.LockLevel;
 
 import java.util.Collection;
 import java.util.Hashtable;
@@ -139,7 +139,7 @@ public class HashtableValuesWrapper implements Collection {
       // XXX: This linear scan of the hashtable to find the proper key is bad. The only way to it (I think) would be to
       // instrument the actual hastable.values.iterator.remove code that has access to the key object right then and
       // there
-      ManagerUtil.monitorEnter(hashtable, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(hashtable, Manager.LOCK_TYPE_WRITE);
 
       try {
         TCObject tco = ManagerUtil.lookupExistingOrNull(hashtable);
@@ -164,7 +164,7 @@ public class HashtableValuesWrapper implements Collection {
           ManagerUtil.logicalInvoke(hashtable, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { key });
         }
       } finally {
-        ManagerUtil.monitorExit(hashtable);
+        ManagerUtil.monitorExit(hashtable, Manager.LOCK_TYPE_WRITE);
       }
     }
   }

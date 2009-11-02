@@ -6,7 +6,8 @@ package com.tc.management.lock.stats;
 
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 import com.tc.test.TCTestCase;
 
 import java.util.ArrayList;
@@ -93,11 +94,11 @@ public class LockStatElementConcurrencyTest extends TCTestCase {
   }
 
   private LockStatElement createRootLockStatElement() {
-    return new LockStatElement(new LockID("testLock0"), new Exception().getStackTrace()[0]);
+    return new LockStatElement(new StringLockID("testLock0"), new Exception().getStackTrace()[0]);
   }
 
   private LockStatElement createSlowLockStatElement(String id) {
-    return new LockStatElementSlow(new LockID(id), new Exception().getStackTrace()[0]);
+    return new LockStatElementSlow(new StringLockID(id), new Exception().getStackTrace()[0]);
   }
 
   private void populateWithInitialChildren(final LockStatElement element) {

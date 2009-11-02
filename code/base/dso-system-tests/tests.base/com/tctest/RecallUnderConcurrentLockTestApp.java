@@ -3,11 +3,11 @@
  */
 package com.tctest;
 
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.concurrent.ThreadUtil;
@@ -37,26 +37,26 @@ public class RecallUnderConcurrentLockTestApp extends AbstractTransparentApp {
 
       if (nodeId == 0) {
         // Grab the greedy lock
-        ManagerUtil.beginLock(LOCK_STRING, LockLevel.WRITE);
-        ManagerUtil.commitLock(LOCK_STRING);
+        ManagerUtil.beginLock(LOCK_STRING, Manager.LOCK_TYPE_WRITE);
+        ManagerUtil.commitLock(LOCK_STRING, Manager.LOCK_TYPE_WRITE);
 
-        ManagerUtil.beginLock(LOCK_STRING, LockLevel.CONCURRENT);
+        ManagerUtil.beginLock(LOCK_STRING, Manager.LOCK_TYPE_CONCURRENT);
         try {
           this.barrier.await();
           // other node tries to take the lock here
           ThreadUtil.reallySleep(5000);
         } finally {
           // Unlock before awaiting
-          ManagerUtil.commitLock(LOCK_STRING);
+          ManagerUtil.commitLock(LOCK_STRING, Manager.LOCK_TYPE_CONCURRENT);
         }
         this.barrier.await();
       } else {
         this.barrier.await();
-        ManagerUtil.beginLock(LOCK_STRING, LockLevel.READ);
+        ManagerUtil.beginLock(LOCK_STRING, Manager.LOCK_TYPE_READ);
         try {
           this.barrier.await();
         } finally {
-          ManagerUtil.commitLock(LOCK_STRING);
+          ManagerUtil.commitLock(LOCK_STRING, Manager.LOCK_TYPE_READ);
         }
       }
 

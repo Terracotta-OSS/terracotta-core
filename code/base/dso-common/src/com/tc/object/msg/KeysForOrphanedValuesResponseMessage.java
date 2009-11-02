@@ -5,7 +5,7 @@
 package com.tc.object.msg;
 
 import com.tc.object.ObjectID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 import java.util.Set;
 

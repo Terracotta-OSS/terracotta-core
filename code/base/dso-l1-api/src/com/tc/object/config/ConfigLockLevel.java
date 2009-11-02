@@ -4,7 +4,7 @@
  */
 package com.tc.object.config;
 
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockLevel;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,9 +88,9 @@ public class ConfigLockLevel {
   }
 
   private final String                lockLevelName;
-  private final int                   level;
+  private final LockLevel             level;
 
-  private ConfigLockLevel(String lockTypeName, int type) {
+  private ConfigLockLevel(String lockTypeName, LockLevel type) {
     this.lockLevelName = lockTypeName;
     this.level = type;
   }
@@ -98,8 +98,8 @@ public class ConfigLockLevel {
   /**
    * @return Ordinal lock level value
    */
-  public int getLevel() {
-    return level;
+  public int getLockLevelAsInt() {
+    return level.toInt();
   }
 
   public String toString() {

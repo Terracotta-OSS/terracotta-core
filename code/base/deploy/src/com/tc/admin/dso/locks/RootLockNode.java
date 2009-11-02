@@ -6,7 +6,7 @@ package com.tc.admin.dso.locks;
 
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.management.lock.stats.LockStats;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 
 import java.util.ArrayList;
 import java.util.Collection;

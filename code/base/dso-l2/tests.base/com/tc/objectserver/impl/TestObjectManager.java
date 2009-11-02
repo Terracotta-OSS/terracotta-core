@@ -13,6 +13,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStatsEventListener;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
+import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.objectserver.core.api.ManagedObject;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TestObjectManager implements ObjectManager {
+public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public boolean makePending = false;
 
@@ -238,6 +239,10 @@ public class TestObjectManager implements ObjectManager {
 
   public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     throw new ImplementMe();
+  }
+  
+  public String getObjectTypeFromID(ObjectID id) {
+    return "";
   }
 
 }

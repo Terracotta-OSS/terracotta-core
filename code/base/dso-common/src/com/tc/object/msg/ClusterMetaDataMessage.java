@@ -4,7 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.net.protocol.tcm.TCMessage;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 public interface ClusterMetaDataMessage extends TCMessage {
 

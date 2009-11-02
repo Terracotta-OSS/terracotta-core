@@ -5,7 +5,7 @@
 package com.tc.management.lock.stats;
 
 import com.tc.net.NodeID;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 
 import java.util.Collection;
 

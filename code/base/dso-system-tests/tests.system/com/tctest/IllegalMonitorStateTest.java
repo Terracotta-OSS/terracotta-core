@@ -61,7 +61,8 @@ public class IllegalMonitorStateTest extends TransparentTestBase {
 
     private void concurrentLockHeld() throws InterruptedException {
       synchronized (root1) {
-        assertTrue(ManagerUtil.isLocked(root1, Manager.LOCK_TYPE_CONCURRENT));
+        // Locking system no longer tracks concurrent holds
+        //assertTrue(ManagerUtil.isLocked(root1, Manager.LOCK_TYPE_CONCURRENT));
         testMethods(root1);
       }
     }

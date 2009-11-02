@@ -6,7 +6,7 @@ package com.tc.object.tx;
 
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
@@ -59,10 +59,6 @@ abstract class AbstractClientTransaction implements ClientTransaction {
     return this.transactionContext.getEffectiveType();
   }
 
-  public boolean isEffectivelyReadOnly() {
-    return this.transactionContext.isEffectivelyReadOnly();
-  }
-
   public List getAllLockIDs() {
     return this.transactionContext.getAllLockIDs();
   }
@@ -79,24 +75,16 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void createObject(TCObject source) {
-    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
-                                                                                    source.getClass().getName()
-                                                                                        + " was already checked to have write access!"); }
-
     alreadyCommittedCheck();
     basicCreate(source);
   }
 
   public final void createRoot(String name, ObjectID rootID) {
-    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError(
-                                                                                    name
-                                                                                        + " was already checked to have write access!"); }
     alreadyCommittedCheck();
     basicCreateRoot(name, rootID);
   }
 
   public final void fieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
-    assertNotReadOnlyTxn();
     if (source.getTCClass().isEnum()) { throw new AssertionError("fieldChanged() on an enum type "
                                                                  + source.getTCClass().getPeerClass().getName()); }
 
@@ -105,19 +93,16 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   }
 
   public final void literalValueChanged(TCObject source, Object newValue, Object oldValue) {
-    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicLiteralValueChanged(source, newValue, oldValue);
   }
 
   public final void arrayChanged(TCObject source, int startPos, Object array, int length) {
-    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicArrayChanged(source, startPos, array, length);
   }
 
   public final void logicalInvoke(TCObject source, int method, Object[] parameters, String methodName) {
-    assertNotReadOnlyTxn();
     alreadyCommittedCheck();
     basicLogicalInvoke(source, method, parameters);
   }
@@ -128,10 +113,6 @@ abstract class AbstractClientTransaction implements ClientTransaction {
 
   protected void alreadyCommittedCheck() {
     if (this.alreadyCommittedFlag) { throw new AssertionError("Transaction " + this.txID + " already commited."); }
-  }
-
-  private void assertNotReadOnlyTxn() {
-    if (this.transactionContext.isEffectivelyReadOnly()) { throw new AssertionError("fail to perform read only check"); }
   }
 
   public void setAlreadyCommitted() {

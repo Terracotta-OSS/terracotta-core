@@ -13,7 +13,8 @@ import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.LoaderDescription;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockLevel;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
 import com.tcclient.object.DistributedMethodCall;
@@ -24,9 +25,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class DmiManagerImpl implements DmiManager {
-  private static final TCLogger     logger   = TCLogging.getLogger(DmiManager.class);
-  private static final String       lockName = "@DistributedMethodCall";
-  private static final Object       TRUE     = new Object();
+  private static final TCLogger     logger = TCLogging.getLogger(DmiManager.class);
+  private static final StringLockID lock   = new StringLockID("@DistributedMethodCall");
+  private static final Object       TRUE   = new Object();
 
   private final ClassProvider       classProvider;
   private final ClientObjectManager objMgr;
@@ -59,7 +60,7 @@ public class DmiManagerImpl implements DmiManager {
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
     if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
         .getMethodName(), dmc.getParameterDesc());
-    objMgr.getTransactionManager().begin(lockName, LockLevel.CONCURRENT, lockName, "Distributed Invoke");
+    objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
       final ObjectID dmiCallId = objMgr.lookupOrCreate(dmc).getObjectID();
@@ -68,7 +69,7 @@ public class DmiManagerImpl implements DmiManager {
       objMgr.getTransactionManager().addDmiDescriptor(dd);
       return true;
     } finally {
-      objMgr.getTransactionManager().commit(lockName);
+      objMgr.getTransactionManager().commit(lock, LockLevel.CONCURRENT);
     }
   }
 

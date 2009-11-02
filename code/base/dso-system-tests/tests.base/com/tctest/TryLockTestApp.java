@@ -120,7 +120,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
         queue.startProcessingThread(this);
       } finally {
         System.out.println("> "+queue.getName()+" : start - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);
+        ManagerUtil.commitLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);
         System.out.println("> "+queue.getName()+" : start - unlocked");
       }
     }
@@ -139,7 +139,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
         queue.cancel();
       } finally {
         System.out.println("> "+queue.getName()+" : stop - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);
+        ManagerUtil.commitLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);
         System.out.println("> "+queue.getName()+" : stop - unlocked");
       }
     }
@@ -151,7 +151,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
         System.out.println("> "+queue.getName()+" : normalLock - locked");
       } finally {
         System.out.println("> "+queue.getName()+" : normalLock - unlock()");
-        ManagerUtil.commitLock(LOCK_ID);
+        ManagerUtil.commitLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);
         System.out.println("> "+queue.getName()+" : normalLock - unlocked");
       }
     }
@@ -167,7 +167,7 @@ public class TryLockTestApp extends AbstractTransparentApp {
           }
         } finally {
           System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlock()");
-          ManagerUtil.commitLock(LOCK_ID);
+          ManagerUtil.commitLock(LOCK_ID, Manager.LOCK_TYPE_WRITE);
           System.out.println("> "+Thread.currentThread().getName()+" : tryLock - unlocked");
         }
         return true;

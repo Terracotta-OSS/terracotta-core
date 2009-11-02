@@ -4,8 +4,8 @@
 package com.tc.util;
 
 import com.tc.object.SerializationUtil;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
-import com.tc.object.lockmanager.api.LockLevel;
 
 import java.util.Collection;
 import java.util.Hashtable;
@@ -107,13 +107,13 @@ public class HashtableKeySetWrapper implements Set {
     }
 
     public final void remove() {
-      ManagerUtil.monitorEnter(hashtable, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(hashtable, Manager.LOCK_TYPE_WRITE);
       try {
         realIterator.remove();
         // Do the real remove first. If no exception thrown, then proceed with the DSO stuff
         ManagerUtil.logicalInvoke(hashtable, SerializationUtil.REMOVE_KEY_SIGNATURE, new Object[] { last });
       } finally {
-        ManagerUtil.monitorExit(hashtable);
+        ManagerUtil.monitorExit(hashtable, Manager.LOCK_TYPE_WRITE);
       }
     }
 

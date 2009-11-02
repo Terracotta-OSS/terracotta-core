@@ -7,7 +7,8 @@ import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
@@ -412,7 +413,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
   private LockID[] createLocks(int s, int e) {
     LockID[] locks = new LockID[e - s + 1];
     for (int j = s; j <= e; j++) {
-      locks[j - s] = new LockID("@" + j);
+      locks[j - s] = new StringLockID("@" + j);
     }
     return locks;
   }

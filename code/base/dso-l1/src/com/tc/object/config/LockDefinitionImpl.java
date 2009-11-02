@@ -55,7 +55,7 @@ public class LockDefinitionImpl implements LockDefinition {
   }
 
   public int getLockLevelAsInt() {
-    return getLockLevel().getLevel();
+    return getLockLevel().getLockLevelAsInt();
   }
   
   public String getLockContextInfo() {

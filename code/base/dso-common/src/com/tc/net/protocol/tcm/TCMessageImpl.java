@@ -11,6 +11,8 @@ import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockIDSerializer;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -227,6 +229,10 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   protected NodeID getNodeIDValue() throws IOException {
     return ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
   }
+  
+  protected LockID getLockIDValue() throws IOException {
+    return ((LockIDSerializer) getObject(new LockIDSerializer())).getLockID();
+  }
 
   protected Object getObject(final TCSerializable target) throws IOException {
     return target.deserializeFrom(bbis);
@@ -306,6 +312,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     nvCount++;
     out.write(name);
     new NodeIDSerializer(nodeID).serializeTo(out);
+  }
+  
+  protected void putNVPair(final byte name, final LockID lid) {
+    nvCount++;
+    out.write(name);
+    new LockIDSerializer(lid).serializeTo(out);
   }
 
   protected void putNVPair(final byte name, final TCSerializable object) {

@@ -17,6 +17,7 @@ import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.DSOContextImpl;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
 
 import java.io.IOException;
@@ -40,20 +41,20 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   private final Map                   adapters      = new HashMap();
 
   public IsolationClassLoader(DSOClientConfigHelper config, PreparedComponentsFromL2Connection connectionComponents) {
-    this(config, true, null, null, connectionComponents);
+    this(config, true, null, null, null, connectionComponents);
   }
 
   public IsolationClassLoader(DSOClientConfigHelper config, ClientObjectManager objectManager,
-                              ClientTransactionManager txManager) {
-    this(config, false, objectManager, txManager, null);
+                              ClientTransactionManager txManager, ClientLockManager lockManager) {
+    this(config, false, objectManager, txManager, lockManager, null);
   }
 
   private IsolationClassLoader(DSOClientConfigHelper config, boolean startClient, ClientObjectManager objectManager,
-                               ClientTransactionManager txManager,
+                               ClientTransactionManager txManager, ClientLockManager lockManager,
                                PreparedComponentsFromL2Connection connectionComponents) {
     super(getSystemURLS(), null);
     this.config = config;
-    this.manager = createManager(startClient, objectManager, txManager, config, connectionComponents);
+    this.manager = createManager(startClient, objectManager, txManager, lockManager, config, connectionComponents);
     this.onLoadErrors = new HashMap();
   }
 
@@ -68,9 +69,9 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   private Manager createManager(boolean startClient, ClientObjectManager objectManager,
-                                ClientTransactionManager txManager, DSOClientConfigHelper theConfig,
-                                PreparedComponentsFromL2Connection connectionComponents) {
-    Manager rv = new ManagerImpl(startClient, objectManager, txManager, theConfig, connectionComponents, false, null,
+                                ClientTransactionManager txManager, ClientLockManager lockManager, 
+                                DSOClientConfigHelper theConfig, PreparedComponentsFromL2Connection connectionComponents) {
+    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, theConfig, connectionComponents, false, null,
                                  null);
     rv.registerNamedLoader(this, null);
     return rv;

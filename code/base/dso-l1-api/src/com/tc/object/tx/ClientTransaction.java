@@ -7,8 +7,8 @@ package com.tc.object.tx;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
 import com.tc.util.SequenceID;
 
 import java.util.Collection;
@@ -160,17 +160,6 @@ public interface ClientTransaction {
    */
   public TxnType getEffectiveType();
   
-  /**
-   * Evaluates the effective transaction type to see if it's read-only.
-   * 
-   * Read the docs of {@link TransactionContext#getEffectiveType()} for more details.
-   * 
-   * @return {@code true} when the effective transaction type is read-only, or
-   * {@code false} when it's not
-   * @see #getEffectiveType()
-   */
-  public boolean isEffectivelyReadOnly();
-
   /**
    * Add a new Notify
    *

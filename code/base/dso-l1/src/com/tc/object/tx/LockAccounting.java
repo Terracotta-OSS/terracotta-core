@@ -3,7 +3,7 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 
 import java.util.Collection;
 import java.util.Collections;

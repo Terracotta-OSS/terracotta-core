@@ -37,6 +37,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
+import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
@@ -45,7 +46,6 @@ import com.tc.management.L2Management;
 import com.tc.management.RemoteJMXProcessor;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
-import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackup;
@@ -127,6 +127,8 @@ import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.api.ObjectStatsManager;
+import com.tc.objectserver.api.ObjectStatsManagerImpl;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManagerImpl;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
@@ -171,8 +173,9 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
-import com.tc.objectserver.lockmanager.api.LockManagerMBean;
-import com.tc.objectserver.lockmanager.impl.LockManagerImpl;
+import com.tc.objectserver.locks.LockManager;
+import com.tc.objectserver.locks.LockManagerImpl;
+import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
@@ -305,7 +308,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private ObjectRequestManager                   objectRequestManager;
   private TransactionalObjectManager             txnObjectManager;
   private CounterManager                         sampledCounterManager;
-  private LockManagerImpl                        lockManager;
+  private LockManager                            lockManager;
   private ServerManagementContext                managementContext;
   private StartupLock                            startupLock;
   private ClientStateManager                     clientStateManager;
@@ -322,7 +325,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
   private ConnectionIDFactoryImpl                connectionIdFactory;
 
-  private LockStatisticsMonitorMBean             lockStatisticsMBean;
+  private LockStatisticsMonitor                  lockStatisticsMBean;
 
   private StatisticsAgentSubSystemImpl           statisticsAgentSubSystem;
   private StatisticsGatewayMBeanImpl             statisticsGateway;
@@ -377,7 +380,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
   public void dump() {
     if (this.lockManager != null) {
-      this.lockManager.dumpToLogger();
+      ((DumpHandler) this.lockManager).dumpToLogger();
     }
 
     if (this.objectManager != null) {
@@ -741,8 +744,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
     toInit.add(recycler);
 
-    this.lockManager = new LockManagerImpl(channelManager, lockStatsManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
+    // Creating a stage here so that the sink can be passed
+    Stage respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
+                                                        new RespondToRequestLockHandler(), 1, maxStageSize);
+    this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
+    this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener((LockManagerImpl) this.lockManager);
+
+    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter((DumpHandler) this.lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
@@ -833,8 +841,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                changesPerBroadcast);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
                              maxStageSize);
-    stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-                             new RespondToRequestLockHandler(), 1, maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
                                                  new RequestLockUnLockHandler(), 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
@@ -992,7 +998,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
 
-    lockStatsManager.start(channelManager, serverStats);
+    ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(objectManager, objectManager.getObjectStore());
+    lockStatsManager.start(channelManager, serverStats, objStatsManager);
 
     CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
@@ -1249,14 +1256,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       this.statisticsGateway.cleanup();
     } catch (Throwable e) {
       logger.warn(e);
-    }
-
-    try {
-      if (this.lockManager != null) {
-        this.lockManager.stop();
-      }
-    } catch (InterruptedException e) {
-      logger.error(e);
     }
 
     this.seda.getStageManager().stopAll();

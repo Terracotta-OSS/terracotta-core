@@ -17,7 +17,7 @@ import com.tc.exception.TCInternalError;
 import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.TransparencyCodeSpec;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.locks.LockLevel;
 
 import java.util.AbstractMap;
 
@@ -313,17 +313,23 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     for (int i = 0; i < locks.length; i++) {
       if (!locks[i].isAutolock()) {
         c.visitLdcInsn(ByteCodeUtil.generateNamedLockName(locks[i].getLockName()));
-        c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;)V");
+        c.visitLdcInsn(new Integer(locks[i].getLockLevelAsInt()));
+        c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitLock", "(Ljava/lang/String;I)V");
       }
     }
   }
 
   private void callMonitorEnterWithContextInfo() {
     super.visitLdcInsn(new Integer(autoLockType));
-    super.visitLdcInsn(autoLockContextInfo);
-    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnter", "(Ljava/lang/Object;ILjava/lang/String;)V");
+    //super.visitLdcInsn(autoLockContextInfo);
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter", "(Ljava/lang/Object;I)V");
   }
 
+  private void callMonitorExit() {
+    super.visitLdcInsn(new Integer(autoLockType));
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");    
+  }
+  
   private void visitInsnForReadLock(int opCode) {
     switch (opCode) {
       case MONITORENTER:
@@ -345,7 +351,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
                               "(Ljava/lang/Object;)Z");
         Label l3 = new Label();
         super.visitJumpInsn(IFEQ, l3);
-        visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
+        callMonitorExit();
         Label l4 = new Label();
         super.visitJumpInsn(GOTO, l4);
         super.visitLabel(l3);
@@ -361,7 +367,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       switch (opCode) {
         case MONITORENTER:
           if (this.isAutolock) {
-            if (autoLockType == LockLevel.READ) {
+            if (autoLockType == LockLevel.READ.toInt()) {
               visitInsnForReadLock(opCode);
               return;
             }
@@ -374,13 +380,13 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           return;
         case MONITOREXIT:
           if (this.isAutolock) {
-            if (autoLockType == LockLevel.READ) {
+            if (autoLockType == LockLevel.READ.toInt()) {
               visitInsnForReadLock(opCode);
               return;
             }
             super.visitInsn(DUP);
             super.visitInsn(opCode);
-            visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;)V");
+            callMonitorExit();
           } else {
             super.visitInsn(opCode);
           }

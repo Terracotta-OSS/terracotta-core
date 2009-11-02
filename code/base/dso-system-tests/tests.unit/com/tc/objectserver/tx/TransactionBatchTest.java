@@ -17,9 +17,10 @@ import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.Notify;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionImpl;
@@ -89,7 +90,7 @@ public class TransactionBatchTest extends TestCase {
       TestClientTransaction tx = new TestClientTransaction();
       tx.txID = new TransactionID(i);
       tx.txnType = TxnType.NORMAL;
-      tx.allLockIDs = Arrays.asList(new Object[] { new LockID("" + i) });
+      tx.allLockIDs = Arrays.asList(new Object[] { new StringLockID("" + i) });
       list.add(tx);
       boolean folded = writer.addTransaction(tx, sequenceGenerator, tidGenerator);
       Assert.assertFalse(folded);
@@ -132,11 +133,11 @@ public class TransactionBatchTest extends TestCase {
 
     List tx1Notifies = new LinkedList();
     // A nested transaction (all this buys us is more than 1 lock in a txn)
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction tmp = new ClientTransactionImpl(new NullRuntimeLogger());
     tmp.setTransactionContext(tc);
-    LockID lid2 = new LockID("2");
+    LockID lid2 = new StringLockID("2");
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL, Arrays.asList(new LockID[] { lid1, lid2 }));
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn1.setTransactionContext(tc);
@@ -149,12 +150,12 @@ public class TransactionBatchTest extends TestCase {
     txn1.createObject(mtco);
     txn1.createRoot("root", new ObjectID(3));
     for (int i = 0; i < 10; i++) {
-      Notify notify = new Notify(new LockID("" + i), new ThreadID(i), i % 2 == 0);
+      Notify notify = new Notify(new StringLockID("" + i), new ThreadID(i), i % 2 == 0);
       tx1Notifies.add(notify);
       txn1.addNotify(notify);
     }
 
-    tc = new TransactionContextImpl(new LockID("3"), TxnType.CONCURRENT, TxnType.CONCURRENT);
+    tc = new TransactionContextImpl(new StringLockID("3"), TxnType.CONCURRENT, TxnType.CONCURRENT);
     ClientTransaction txn2 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 
@@ -193,7 +194,7 @@ public class TransactionBatchTest extends TestCase {
           assertEquals(2, txn.getObjectIDs().size());
           assertTrue(txn.getObjectIDs().containsAll(Arrays.asList(new ObjectID[] { new ObjectID(1), new ObjectID(2) })));
           assertEquals(TxnType.NORMAL, txn.getTransactionType());
-          assertTrue(Arrays.equals(new LockID[] { new LockID("1"), new LockID("2") }, txn.getLockIDs()));
+          assertTrue(Arrays.equals(new LockID[] { new StringLockID("1"), new StringLockID("2") }, txn.getLockIDs()));
           assertEquals(tx1Notifies, txn.getNotifies());
           break;
         case 2:
@@ -201,7 +202,7 @@ public class TransactionBatchTest extends TestCase {
           assertEquals(0, txn.getNewRoots().size());
           assertEquals(0, txn.getObjectIDs().size());
           assertEquals(TxnType.CONCURRENT, txn.getTransactionType());
-          assertTrue(Arrays.equals(new LockID[] { new LockID("3") }, txn.getLockIDs()));
+          assertTrue(Arrays.equals(new LockID[] { new StringLockID("3") }, txn.getLockIDs()));
           break;
         default:
           fail("count is " + count);
@@ -228,7 +229,7 @@ public class TransactionBatchTest extends TestCase {
 
     ClientID clientID = new ClientID(69);
 
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn1.setTransactionContext(tc);
@@ -263,7 +264,7 @@ public class TransactionBatchTest extends TestCase {
 
     // this txn does not share a common lock with the others (even though it has a common object) -- it
     // should not be folded
-    LockID lid2 = new LockID("2");
+    LockID lid2 = new StringLockID("2");
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn4 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn4.setTransactionContext(tc);
@@ -298,7 +299,7 @@ public class TransactionBatchTest extends TestCase {
           assertEquals(2, txn.getObjectIDs().size());
           assertTrue(txn.getObjectIDs().containsAll(Arrays.asList(new ObjectID[] { new ObjectID(1), new ObjectID(2) })));
           assertEquals(TxnType.NORMAL, txn.getTransactionType());
-          assertTrue(Arrays.equals(new LockID[] { new LockID("1") }, txn.getLockIDs()));
+          assertTrue(Arrays.equals(new LockID[] { new StringLockID("1") }, txn.getLockIDs()));
           assertEquals(Collections.EMPTY_LIST, txn.getNotifies());
           break;
         case 2:
@@ -309,7 +310,7 @@ public class TransactionBatchTest extends TestCase {
           assertEquals(1, txn.getObjectIDs().size());
           assertTrue(txn.getObjectIDs().containsAll(Arrays.asList(new ObjectID[] { new ObjectID(2) })));
           assertEquals(TxnType.NORMAL, txn.getTransactionType());
-          assertTrue(Arrays.equals(new LockID[] { new LockID("2") }, txn.getLockIDs()));
+          assertTrue(Arrays.equals(new LockID[] { new StringLockID("2") }, txn.getLockIDs()));
           assertEquals(Collections.EMPTY_LIST, txn.getNotifies());
           break;
         default:
@@ -336,7 +337,7 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 2);
 
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn1.setTransactionContext(tc);
@@ -370,9 +371,9 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 2, 0);
 
-    LockID lid1 = new LockID("1");
-    LockID lid2 = new LockID("2");
-    LockID lid3 = new LockID("3");
+    LockID lid1 = new StringLockID("1");
+    LockID lid2 = new StringLockID("2");
+    LockID lid3 = new StringLockID("3");
     List threeLocks = Arrays.asList(lid1, lid2, lid3);
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL, threeLocks);
@@ -404,7 +405,7 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, false, 0, 0);
 
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
@@ -435,7 +436,7 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
 
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
@@ -489,8 +490,8 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
 
-    LockID lid1 = new LockID("1");
-    LockID lid2 = new LockID("2");
+    LockID lid1 = new StringLockID("1");
+    LockID lid2 = new StringLockID("2");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
@@ -535,7 +536,7 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
 
-    LockID lid1 = new LockID("1");
+    LockID lid1 = new StringLockID("1");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());
@@ -568,8 +569,8 @@ public class TransactionBatchTest extends TestCase {
     ObjectStringSerializer serializer = new ObjectStringSerializer();
     writer = newWriter(serializer, true, 0, 0);
 
-    LockID lid1 = new LockID("1");
-    LockID lid2 = new LockID("2");
+    LockID lid1 = new StringLockID("1");
+    LockID lid2 = new StringLockID("2");
 
     TransactionContext tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn1 = new ClientTransactionImpl(new NullRuntimeLogger());

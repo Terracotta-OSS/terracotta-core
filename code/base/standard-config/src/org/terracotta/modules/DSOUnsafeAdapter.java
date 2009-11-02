@@ -13,7 +13,7 @@ import com.tc.asm.Type;
 import com.tc.asm.commons.LocalVariablesSorter;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.lockmanager.api.LockLevel;
+import com.tc.object.bytecode.Manager;
 
 public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdapterFactory {
 
@@ -70,7 +70,7 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     mv.visitVarInsn(params[0].getOpcode(ILOAD), pos + 1);
     pos += params[0].getSize();
     mv.visitVarInsn(params[1].getOpcode(ILOAD), pos + 1);
-    mv.visitIntInsn(BIPUSH, LockLevel.WRITE);
+    mv.visitIntInsn(BIPUSH, Manager.LOCK_TYPE_WRITE);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "beginVolatile",
                        "(Ljava/lang/Object;JI)V");
   }
@@ -80,8 +80,9 @@ public class DSOUnsafeAdapter extends ClassAdapter implements Opcodes, ClassAdap
     mv.visitVarInsn(params[0].getOpcode(ILOAD), pos + 1);
     pos += params[0].getSize();
     mv.visitVarInsn(params[1].getOpcode(ILOAD), pos + 1);
+    mv.visitIntInsn(BIPUSH, Manager.LOCK_TYPE_WRITE);
     mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "commitVolatile",
-                       "(Ljava/lang/Object;J)V");
+                       "(Ljava/lang/Object;JI)V");
   }
 
   private void addCheckedManagedConditionCode(MethodVisitor mv, Type[] params, int objParamIndex, int offsetParamIndex, Label nonSharedLabel,

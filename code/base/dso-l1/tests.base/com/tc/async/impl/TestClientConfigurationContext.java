@@ -10,7 +10,7 @@ import com.tc.logging.TCLogger;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.RemoteObjectManager;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
-import com.tc.object.lockmanager.api.ClientLockManager;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.object.tx.ClientTransactionManager;
 
 public class TestClientConfigurationContext extends ClientConfigurationContext {

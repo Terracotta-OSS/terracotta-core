@@ -33,7 +33,7 @@ public class LockSpecNode extends BasicLockNode {
     });
     fChildren = list.toArray(new LockTraceElementNode[0]);
 
-    fLabel = fLockSpec.getLockID().asString();
+    fLabel = fLockSpec.getLockID().toString();
     String objectType = fLockSpec.getObjectType();
     if (objectType != null && objectType.length() > 0) {
       fLabel += " (" + objectType + ")";

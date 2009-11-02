@@ -8,11 +8,11 @@ import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.objectserver.lockmanager.api.NotifiedWaiters;
+import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.tx.ServerTransaction;
 

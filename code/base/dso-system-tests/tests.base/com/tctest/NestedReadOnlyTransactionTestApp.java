@@ -6,12 +6,12 @@ package com.tctest;
 
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.config.spec.CyclicBarrierSpec;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -38,7 +38,7 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
 
   private void nestedReadLockTest(int index) throws Exception {
     if (index == 0) {
-      ManagerUtil.monitorEnter(dataRoot, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(dataRoot, Manager.LOCK_TYPE_WRITE);
       dataRoot.setLongValue(15);
       Assert.assertEquals(15, dataRoot.getSynchronizedLongValue());
     }
@@ -47,7 +47,7 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
     } finally {
       if (index == 0) {
         dataRoot.setCommit(true);
-        ManagerUtil.monitorExit(dataRoot);
+        ManagerUtil.monitorExit(dataRoot, Manager.LOCK_TYPE_WRITE);
       }
     }
 
@@ -62,7 +62,7 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
     barrier.barrier();
 
     if (index == 0) {
-      ManagerUtil.monitorEnter(dataRoot, LockLevel.WRITE);
+      ManagerUtil.monitorEnter(dataRoot, Manager.LOCK_TYPE_WRITE);
       dataRoot.setLongValue(15);
     }
     try {
@@ -81,7 +81,7 @@ public class NestedReadOnlyTransactionTestApp extends AbstractTransparentApp {
       barrier.barrier();
     } finally {
       if (index == 0) {
-        ManagerUtil.monitorExit(dataRoot);
+        ManagerUtil.monitorExit(dataRoot, Manager.LOCK_TYPE_WRITE);
       }
     }
 

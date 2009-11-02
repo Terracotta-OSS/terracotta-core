@@ -7,11 +7,11 @@ package com.tctest;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotSharableException;
 import com.tc.exception.TCRuntimeException;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.lockmanager.api.LockLevel;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -334,10 +334,10 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
       CyclicBarrier localBarrier = new CyclicBarrier(2);
       Thread thread1 = new Thread(new TestTryLockFailRunnable(lockId, localBarrier));
 
-      ManagerUtil.beginLock(lockId, LockLevel.WRITE);
+      ManagerUtil.beginLock(lockId, Manager.LOCK_TYPE_WRITE);
       thread1.start();
       localBarrier.await();
-      ManagerUtil.commitLock(lockId);
+      ManagerUtil.commitLock(lockId, Manager.LOCK_TYPE_WRITE);
     }
 
     barrier.await();
@@ -1540,7 +1540,7 @@ public class ReentrantLockTestApp extends AbstractTransparentApp {
 
     public void run() {
       try {
-        boolean locked = ManagerUtil.tryBeginLock(lockId, LockLevel.WRITE);
+        boolean locked = ManagerUtil.tryBeginLock(lockId, Manager.LOCK_TYPE_WRITE);
 
         Assert.assertFalse(locked);
         this.barrier.await();

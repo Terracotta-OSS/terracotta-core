@@ -3,7 +3,8 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,10 +32,10 @@ public class LockAccountingTest extends TestCase {
   }
   
   public void tests() throws Exception {
-    lockID1 = new LockID("lock1");
-    lockID2 = new LockID("lock2");
-    lockID3 = new LockID("lock3");
-    lockID4 = new LockID("lock4");
+    lockID1 = new StringLockID("lock1");
+    lockID2 = new StringLockID("lock2");
+    lockID3 = new StringLockID("lock3");
+    lockID4 = new StringLockID("lock4");
     txID1 = new TransactionID(1);
     txID2 = new TransactionID(2);
     txID3 = new TransactionID(3);

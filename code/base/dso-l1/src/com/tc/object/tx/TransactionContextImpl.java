@@ -4,7 +4,7 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.lockmanager.api.LockID;
+import com.tc.object.locks.LockID;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +39,6 @@ public class TransactionContextImpl implements TransactionContext {
     return effectiveTxType;
   }
   
-  public boolean isEffectivelyReadOnly() {
-    if (effectiveTxType != null) {
-      return TxnType.READ_ONLY == effectiveTxType;
-    } else {
-      return TxnType.READ_ONLY == lockTxType;
-    }
-  }
-
   public LockID getLockID() {
     return lockID;
   }

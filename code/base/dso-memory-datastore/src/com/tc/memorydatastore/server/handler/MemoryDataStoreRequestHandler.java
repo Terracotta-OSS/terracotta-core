@@ -10,7 +10,7 @@ import com.tc.memorydatastore.message.MemoryDataStoreResponseMessage;
 import com.tc.memorydatastore.server.MemoryDataStore;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.lockmanager.api.ThreadID;
+import com.tc.object.locks.ThreadID;
 import com.tc.util.Assert;
 
 import java.util.Collection;

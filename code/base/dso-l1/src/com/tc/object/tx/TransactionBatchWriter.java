@@ -23,8 +23,9 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.loaders.LoaderDescription;
-import com.tc.object.lockmanager.api.LockID;
-import com.tc.object.lockmanager.api.Notify;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.LockIDSerializer;
+import com.tc.object.locks.Notify;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.properties.TCProperties;
@@ -571,7 +572,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       Collection locks = txn.getAllLockIDs();
       this.output.writeInt(locks.size());
       for (Iterator i = locks.iterator(); i.hasNext();) {
-        this.output.writeString(((LockID) i.next()).asString());
+        new LockIDSerializer((LockID) i.next()).serializeTo(output);
       }
 
       Map newRoots = txn.getNewRoots();

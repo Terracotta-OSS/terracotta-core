@@ -24,7 +24,7 @@ import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.lockmanager.api.LockManager;
+import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.tx.ServerTransactionManager;
