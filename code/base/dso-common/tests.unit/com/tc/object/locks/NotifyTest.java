@@ -4,7 +4,7 @@
 package com.tc.object.locks;
 
 import com.tc.object.locks.LockID;
-import com.tc.object.locks.Notify;
+import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
 
@@ -31,28 +31,28 @@ public class NotifyTest extends TestCase {
       ThreadID tid1 = new ThreadID(startValue);
       ThreadID tid2 = new ThreadID(startValue + 1);
       
-      Notify aa = new Notify(lockID1, tid1, true);
-      Notify ab = new Notify(lockID1, tid1, true);
+      Notify aa = new NotifyImpl(lockID1, tid1, true);
+      Notify ab = new NotifyImpl(lockID1, tid1, true);
       pairs.add(new Notify[] {aa, ab});
       
-      Notify ba = new Notify(lockID1, tid2, true);
-      Notify bb = new Notify(lockID1, tid2, true);
+      Notify ba = new NotifyImpl(lockID1, tid2, true);
+      Notify bb = new NotifyImpl(lockID1, tid2, true);
       pairs.add(new Notify[] {ba, bb});
       
-      Notify ca = new Notify(lockID1, tid1, false);
-      Notify cb = new Notify(lockID1, tid1, false);
+      Notify ca = new NotifyImpl(lockID1, tid1, false);
+      Notify cb = new NotifyImpl(lockID1, tid1, false);
       pairs.add(new Notify[] {ca, cb});
       
-      Notify da = new Notify(lockID2, tid1, true);
-      Notify db = new Notify(lockID2, tid1, true);
+      Notify da = new NotifyImpl(lockID2, tid1, true);
+      Notify db = new NotifyImpl(lockID2, tid1, true);
       pairs.add(new Notify[] {da, db});
       
-      Notify ea = new Notify(lockID2, tid2, true);
-      Notify eb = new Notify(lockID2, tid2, true);
+      Notify ea = new NotifyImpl(lockID2, tid2, true);
+      Notify eb = new NotifyImpl(lockID2, tid2, true);
       pairs.add(new Notify[] {ea, eb});
       
-      Notify fa = new Notify(lockID2, tid2, false);
-      Notify fb = new Notify(lockID2, tid2, false);
+      Notify fa = new NotifyImpl(lockID2, tid2, false);
+      Notify fb = new NotifyImpl(lockID2, tid2, false);
       pairs.add(new Notify[] {fa, fb});
     }
     

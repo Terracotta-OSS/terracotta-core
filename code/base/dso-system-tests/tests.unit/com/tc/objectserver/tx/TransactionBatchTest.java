@@ -19,6 +19,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
+import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.logging.NullRuntimeLogger;
@@ -150,7 +151,7 @@ public class TransactionBatchTest extends TestCase {
     txn1.createObject(mtco);
     txn1.createRoot("root", new ObjectID(3));
     for (int i = 0; i < 10; i++) {
-      Notify notify = new Notify(new StringLockID("" + i), new ThreadID(i), i % 2 == 0);
+      Notify notify = new NotifyImpl(new StringLockID("" + i), new ThreadID(i), i % 2 == 0);
       tx1Notifies.add(notify);
       txn1.addNotify(notify);
     }
@@ -456,7 +457,7 @@ public class TransactionBatchTest extends TestCase {
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txnWithNotify = new ClientTransactionImpl(new NullRuntimeLogger());
     txnWithNotify.setTransactionContext(tc);
-    txnWithNotify.addNotify(new Notify(lid1, new ThreadID(122), true));
+    txnWithNotify.addNotify(new NotifyImpl(lid1, new ThreadID(122), true));
 
     SequenceGenerator sequenceGenerator = new SequenceGenerator();
     TransactionIDGenerator tidGenerator = new TransactionIDGenerator();

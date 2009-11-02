@@ -39,6 +39,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIdFactory;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
+import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.UnclusteredLockID;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
@@ -744,7 +745,7 @@ public class ManagerImpl implements Manager {
     } else {
       waitObject.notify();
     }
-    return Notify.NULL;
+    return NotifyImpl.NULL;
   }
 
   public Notify notifyAll(LockID lock, Object waitObject) {
@@ -753,7 +754,7 @@ public class ManagerImpl implements Manager {
     } else {
       waitObject.notifyAll();
     }
-    return Notify.NULL;
+    return NotifyImpl.NULL;
   }
 
   public boolean tryLock(LockID lock, LockLevel level) {

@@ -182,9 +182,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     ClientLock lockState = getOrCreateClientLockState(lock);
     ThreadID thread = threadManager.getThreadID();
     if (lockState.notify(remoteManager, thread, null)) {
-      return new Notify(lock, thread, false);
+      return new NotifyImpl(lock, thread, false);
     } else {
-      return Notify.NULL;
+      return NotifyImpl.NULL;
     }
   }
 
@@ -193,9 +193,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     ClientLock lockState = getOrCreateClientLockState(lock);
     ThreadID thread = threadManager.getThreadID();
     if (lockState.notifyAll(remoteManager, thread, null)) {
-      return new Notify(lock, thread, true);
+      return new NotifyImpl(lock, thread, true);
     } else {
-      return Notify.NULL;
+      return NotifyImpl.NULL;
     }
   }
 

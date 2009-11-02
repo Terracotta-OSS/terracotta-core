@@ -18,6 +18,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
 import com.tc.object.locks.Notify;
+import com.tc.object.locks.NotifyImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
@@ -118,7 +119,7 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     List notifies = new LinkedList();
     final int numNotifies = this.in.readInt();
     for (int i = 0; i < numNotifies; i++) {
-      Notify n = new Notify();
+      Notify n = new NotifyImpl();
       n.deserializeFrom(this.in);
       notifies.add(n);
     }

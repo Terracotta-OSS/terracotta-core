@@ -18,7 +18,7 @@ public class LockIdFactory {
     if (obj instanceof String) {
       return generateLockIdentifier((String) obj);
     } else if (mgr.isLiteralAutolock(obj)) {
-      return new DsoLiteralLockID(obj);
+      return new DsoLiteralLockID(mgr, obj);
     } else {
       TCObject tco = mgr.lookupExistingOrNull(obj);
       if ((tco == null) || tco.autoLockingDisabled()) {

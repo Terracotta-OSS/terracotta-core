@@ -549,30 +549,10 @@ public class BootJarTool {
       loadTerracottaClass(com.tc.object.locks.LockID.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockID.LockIDType.class.getName());
       loadTerracottaClass(com.tc.object.locks.UnclusteredLockID.class.getName());
-      loadTerracottaClass(com.tc.object.locks.StringLockID.class.getName());
-      loadTerracottaClass(com.tc.object.locks.DsoLockID.class.getName());
-      loadTerracottaClass(com.tc.object.locks.DsoLiteralLockID.class.getName());
-      loadTerracottaClass(com.tc.object.locks.DsoLiteralLockID.class.getName() + "$1");
-      loadTerracottaClass(com.tc.object.locks.DsoVolatileLockID.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName() + "$1");
       loadTerracottaClass(com.tc.object.locks.TerracottaLocking.class.getName());
       loadTerracottaClass(com.tc.io.TCSerializable.class.getName());
-      loadTerracottaClass(com.tc.io.TCByteBufferInput.class.getName());
-      loadTerracottaClass(com.tc.io.TCByteBufferInput.Mark.class.getName());
-      loadTerracottaClass(com.tc.io.TCByteBufferOutput.class.getName());
-      loadTerracottaClass(com.tc.io.TCDataInput.class.getName());
-      loadTerracottaClass(com.tc.io.TCDataOutput.class.getName());
-      loadTerracottaClass(com.tc.lang.Recyclable.class.getName());
-
-      loadTerracottaClass(com.tc.object.LiteralValues.class.getName());
-      for (int i = 1; i < 15; i++) {
-        loadTerracottaClass(com.tc.object.LiteralValues.class.getName() + "$" + i);
-      }
-      loadTerracottaClass(com.tc.util.ClassUtils.class.getName());
-      loadTerracottaClass(com.tc.util.ClassUtils.class.getName() + "$1");
-      loadTerracottaClass(com.tc.util.ClassUtils.class.getName() + "$ClassSpec");
-      loadTerracottaClass(com.tc.util.ClassUtils.class.getName() + "$ClassSpecImpl");
       
       addManagementClasses();
 

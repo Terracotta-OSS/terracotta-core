@@ -12,6 +12,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
+import com.tc.object.locks.NotifyImpl;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.TestLockManager;
 import com.tc.object.locks.ThreadID;
@@ -84,7 +85,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     List notifies = new LinkedList();
 
     for (int i = 0; i < 10; i++) {
-      notifies.add(new Notify(new StringLockID("" + i), new ThreadID(i), i % 2 == 0));
+      notifies.add(new NotifyImpl(new StringLockID("" + i), new ThreadID(i), i % 2 == 0));
     }
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
