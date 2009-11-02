@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.l1.api;
 
@@ -14,20 +15,17 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author steve
+ * Client State Manager Interface
  */
 public interface ClientStateManager extends PrettyPrintable {
 
-  public void stop();
-
   /**
-   * Initializes the internal datastructures for newly connected client
+   * Initializes the internal data structures for newly connected client
    */
   public void startupNode(NodeID nodeID);
-  
+
   /**
    * Clears internal data structures for disconnected clients
-   *
    */
   public void shutdownNode(NodeID deadNode);
 
@@ -45,10 +43,10 @@ public interface ClientStateManager extends PrettyPrintable {
 
   /**
    * Prunes the changes list down to include only changes for objects the given client has.
-   * @param objectIDs TODO
    */
-  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences references, NodeID clientID, Set<ObjectID> objectIDs);
-  
+  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences references,
+                                                       NodeID clientID, Set<ObjectID> objectIDs);
+
   public void addAllReferencedIdsTo(Set<ObjectID> rescueIds);
 
   public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass);

@@ -95,9 +95,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     super.setUp();
     SampledCounterImpl sci = new SampledCounterImpl(new SampledCounterConfig(5, 10, true, 0));
     SampledRateCounterImpl srci = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 10, true));
-    handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci);
-    serverCfgCxt = new TestServerConfigurationContext(NO_OF_CLIENTS, DISCONNECTED_CLIENT);
-    handler.initialize(serverCfgCxt);
+    this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci);
+    this.serverCfgCxt = new TestServerConfigurationContext(NO_OF_CLIENTS, DISCONNECTED_CLIENT);
+    this.handler.initialize(this.serverCfgCxt);
   }
 
   public void testBasic() throws Exception {
@@ -106,9 +106,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     ServerTransaction serverTX = new TestServerTransaction(SRC_CLIENT_ID);
     BroadcastChangeContext context = new BroadcastChangeContext(serverTX, new GlobalTransactionID(1),
                                                                 new NotifiedWaiters(), new BackReferences());
-    handler.handleEvent(context);
+    this.handler.handleEvent(context);
 
-    TestServerTransactionManager serverTxManager = (TestServerTransactionManager) serverCfgCxt.getTransactionManager();
+    TestServerTransactionManager serverTxManager = (TestServerTransactionManager) this.serverCfgCxt
+        .getTransactionManager();
     List<NodeID> clients = serverTxManager.acknowledgedBack;
 
     Assert.assertEquals(NO_OF_CLIENTS - 1, clients.size());
@@ -170,7 +171,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public NodeID getSourceID() {
-      return new ClientID(srcID);
+      return new ClientID(this.srcID);
     }
 
     public TransactionID getTransactionID() {
@@ -211,7 +212,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public DSOChannelManager getChannelManager() {
-      return new TestDSOChannelManager(noOfClients, clientDisconnectNo);
+      return new TestDSOChannelManager(this.noOfClients, this.clientDisconnectNo);
     }
 
     public ChannelStats getChannelStats() {
@@ -263,7 +264,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public ServerTransactionManager getTransactionManager() {
-      return testServerTxManager;
+      return this.testServerTxManager;
     }
 
     public TransactionalObjectManager getTransactionalObjectManager() {
@@ -288,7 +289,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public Sink getSink() {
-      return sink;
+      return this.sink;
     }
 
     public void start(ConfigurationContext context) {
@@ -371,9 +372,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public MessageChannel[] getActiveChannels() {
-      MessageChannel[] channels = new MessageChannel[noOfChannels];
-      for (int i = 1; i <= noOfChannels; i++) {
-        boolean isClosed = i == deadChannelID ? true : false;
+      MessageChannel[] channels = new MessageChannel[this.noOfChannels];
+      for (int i = 1; i <= this.noOfChannels; i++) {
+        boolean isClosed = i == this.deadChannelID ? true : false;
         channels[i - 1] = new TestMessageChannel(i, isClosed);
       }
 
@@ -443,7 +444,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public ChannelID getChannelID() {
-      return new ChannelID(id);
+      return new ChannelID(this.id);
     }
 
     public TCSocketAddress getLocalAddress() {
@@ -463,7 +464,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public boolean isClosed() {
-      return isClosed;
+      return this.isClosed;
     }
 
     public boolean isConnected() {
@@ -634,10 +635,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void stop() {
-      throw new ImplementMe();
-    }
-
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
@@ -649,15 +646,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     private final List<NodeID> acknowledgedBack = new ArrayList<NodeID>();
 
     public TestServerTransactionManager(NodeID dead) {
-      deadNodeID = dead;
+      this.deadNodeID = dead;
     }
 
     public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
-      acknowledgedBack.add(waitee);
+      this.acknowledgedBack.add(waitee);
     }
 
     public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
-      if (deadNodeID.equals(waitee)) { return; }
+      if (this.deadNodeID.equals(waitee)) { return; }
       acknowledgement(waiter, requestID, waitee);
     }
 

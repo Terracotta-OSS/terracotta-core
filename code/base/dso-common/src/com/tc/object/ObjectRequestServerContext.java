@@ -4,8 +4,9 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.MultiThreadedEventContext;
 
-public interface ObjectRequestServerContext extends ObjectRequestContext {
+public interface ObjectRequestServerContext extends ObjectRequestContext, MultiThreadedEventContext {
 
   public abstract String getRequestingThreadName();
 

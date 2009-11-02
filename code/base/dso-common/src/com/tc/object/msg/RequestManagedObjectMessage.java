@@ -4,6 +4,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -14,7 +15,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Set;
 
-public interface RequestManagedObjectMessage extends ObjectRequestServerContext, Recyclable {
+public interface RequestManagedObjectMessage extends ObjectRequestServerContext, Recyclable, MultiThreadedEventContext {
 
   public ObjectIDSet getRemoved();
 

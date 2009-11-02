@@ -14,43 +14,32 @@ import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.State;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * @author steve
+ * Client State Manager maintains the list of objects that are faulted into each client.
  */
 public class ClientStateManagerImpl implements ClientStateManager {
 
-  private static final State             STARTED = new State("STARTED");
-  private static final State             STOPPED = new State("STOPPED");
-
-  private State                          state   = STARTED;
-
-  private final Map<NodeID, ClientState> clientStates;
-  private final TCLogger                 logger;
-
-  // for testing
-  public ClientStateManagerImpl(TCLogger logger, Map<NodeID, ClientState> states) {
-    this.logger = logger;
-    this.clientStates = states;
-  }
+  private final Map<NodeID, ClientStateImpl> clientStates;
+  private final TCLogger                     logger;
 
   public ClientStateManagerImpl(TCLogger logger) {
-    this(logger, new HashMap<NodeID, ClientState>());
+    this.logger = logger;
+    this.clientStates = new ConcurrentHashMap<NodeID, ClientStateImpl>();
   }
 
-  public synchronized List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences includeIDs,
-                                                                    NodeID id, Set<ObjectID> lookupObjectIDs) {
-    assertStarted();
+  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences includeIDs, NodeID id,
+                                                       Set<ObjectID> lookupObjectIDs) {
     ClientStateImpl clientState = getClientState(id);
     if (clientState == null) {
       this.logger.warn(": createPrunedChangesAndAddObjectIDTo : Client state is NULL (probably due to disconnect) : "
@@ -58,150 +47,171 @@ public class ClientStateManagerImpl implements ClientStateManager {
       return Collections.emptyList();
     }
 
-    List<DNA> prunedChanges = new LinkedList<DNA>();
+    clientState.lock();
+    try {
+      List<DNA> prunedChanges = new LinkedList<DNA>();
 
-    for (final DNA dna : changes) {
-      if (clientState.containsReference(dna.getObjectID())) {
-        if (dna.isDelta()) {
-          prunedChanges.add(dna);
-        } else {
-          // This new Object must have already been sent as a part of a different lookup. So ignoring this change.
+      for (final DNA dna : changes) {
+        if (clientState.containsReference(dna.getObjectID())) {
+          if (dna.isDelta()) {
+            prunedChanges.add(dna);
+          } else {
+            // This new Object must have already been sent as a part of a different lookup. So ignoring this change.
+          }
+          // else if (clientState.containsParent(dna.getObjectID(), includeIDs)) {
+          // these objects needs to be looked up from the client during apply
+          // objectIDs.add(dna.getObjectID());
+          // }
         }
-        // else if (clientState.containsParent(dna.getObjectID(), includeIDs)) {
-        // these objects needs to be looked up from the client during apply
-        // objectIDs.add(dna.getObjectID());
-        // }
       }
-    }
-    clientState.addReferencedChildrenTo(lookupObjectIDs, includeIDs);
-    clientState.removeReferencedObjectIDsFrom(lookupObjectIDs);
+      clientState.addReferencedChildrenTo(lookupObjectIDs, includeIDs);
+      clientState.removeReferencedObjectIDsFrom(lookupObjectIDs);
 
-    return prunedChanges;
+      return prunedChanges;
+    } finally {
+      clientState.unlock();
+    }
   }
 
-  public synchronized void addReference(NodeID id, ObjectID objectID) {
-    assertStarted();
+  public void addReference(NodeID id, ObjectID objectID) {
     ClientStateImpl c = getClientState(id);
     if (c != null) {
-      c.addReference(objectID);
+      c.lock();
+      try {
+        c.addReference(objectID);
+      } finally {
+        c.unlock();
+      }
     } else {
       this.logger.warn(": addReference : Client state is NULL (probably due to disconnect) : " + id);
     }
   }
 
-  public synchronized void removeReferences(NodeID id, Set<ObjectID> removed) {
-    assertStarted();
+  public void removeReferences(NodeID id, Set<ObjectID> removed) {
     ClientStateImpl c = getClientState(id);
     if (c != null) {
-      c.removeReferences(removed);
+      c.lock();
+      try {
+        c.removeReferences(removed);
+      } finally {
+        c.unlock();
+      }
     } else {
       this.logger.warn(": removeReferences : Client state is NULL (probably due to disconnect) : " + id);
     }
   }
 
-  public synchronized boolean hasReference(NodeID id, ObjectID objectID) {
+  public boolean hasReference(NodeID id, ObjectID objectID) {
     ClientStateImpl c = getClientState(id);
     if (c != null) {
-      return c.containsReference(objectID);
+      c.lock();
+      try {
+        return c.containsReference(objectID);
+      } finally {
+        c.unlock();
+      }
     } else {
       this.logger.warn(": hasReference : Client state is NULL (probably due to disconnect) : " + id);
       return false;
     }
   }
 
-  public synchronized void addAllReferencedIdsTo(Set<ObjectID> ids) {
-    assertStarted();
-    for (final ClientState s : this.clientStates.values()) {
-      s.addReferencedIdsTo(ids);
+  public void addAllReferencedIdsTo(Set<ObjectID> ids) {
+    for (final ClientStateImpl c : this.clientStates.values()) {
+      c.lock();
+      try {
+        c.addReferencedIdsTo(ids);
+      } finally {
+        c.unlock();
+      }
     }
   }
 
-  public synchronized void removeReferencedFrom(NodeID id, Set<ObjectID> oids) {
-    ClientState cs = getClientState(id);
-    if (cs == null) {
+  public void removeReferencedFrom(NodeID id, Set<ObjectID> oids) {
+    ClientStateImpl c = getClientState(id);
+    if (c == null) {
       this.logger.warn(": removeReferencedFrom : Client state is NULL (probably due to disconnect) : " + id);
       return;
     }
-    Set<ObjectID> refs = cs.getReferences();
-
-    oids.removeAll(refs);
+    c.lock();
+    try {
+      Set<ObjectID> refs = c.getReferences();
+      oids.removeAll(refs);
+    } finally {
+      c.unlock();
+    }
   }
 
   /*
    * returns newly added references
    */
-  public synchronized Set<ObjectID> addReferences(NodeID id, Set<ObjectID> oids) {
-    ClientState cs = getClientState(id);
-    if (cs == null) {
+  public Set<ObjectID> addReferences(NodeID id, Set<ObjectID> oids) {
+    ClientStateImpl c = getClientState(id);
+    if (c == null) {
       this.logger.warn(": addReferences : Client state is NULL (probably due to disconnect) : " + id);
       return Collections.emptySet();
     }
-    Set<ObjectID> refs = cs.getReferences();
-    if (refs.isEmpty()) {
-      refs.addAll(oids);
-      return oids;
-    }
-
-    Set<ObjectID> newReferences = new HashSet<ObjectID>();
-    for (ObjectID oid : oids) {
-      if (refs.add(oid)) {
-        newReferences.add(oid);
+    c.lock();
+    try {
+      Set<ObjectID> refs = c.getReferences();
+      if (refs.isEmpty()) {
+        refs.addAll(oids);
+        return oids;
       }
+
+      Set<ObjectID> newReferences = new HashSet<ObjectID>();
+      for (ObjectID oid : oids) {
+        if (refs.add(oid)) {
+          newReferences.add(oid);
+        }
+      }
+      return newReferences;
+    } finally {
+      c.unlock();
     }
-    return newReferences;
   }
 
-  public synchronized void shutdownNode(NodeID waitee) {
-    if (!isStarted()) {
-      // it's too late to remove the client from the database. On startup, this guy will fail to reconnect
-      // within the timeout period and be slain.
-      return;
-    }
+  public void shutdownNode(NodeID waitee) {
     this.clientStates.remove(waitee);
   }
 
-  public synchronized void startupNode(NodeID nodeID) {
-    if (!isStarted()) { return; }
+  public void startupNode(NodeID nodeID) {
     Object old = this.clientStates.put(nodeID, new ClientStateImpl(nodeID));
     if (old != null) { throw new AssertionError("Client connected before disconnecting : old Client state = " + old); }
   }
 
-  public synchronized void stop() {
-    assertStarted();
-    this.state = STOPPED;
-    this.logger.info("ClientStateManager stopped.");
-  }
-
-  private boolean isStarted() {
-    return this.state == STARTED;
-  }
-
-  private void assertStarted() {
-    if (this.state != STARTED) { throw new AssertionError("Not started."); }
-  }
-
   private ClientStateImpl getClientState(NodeID id) {
-    return (ClientStateImpl) this.clientStates.get(id);
+    return this.clientStates.get(id);
   }
 
   public int getReferenceCount(NodeID nodeID) {
-    ClientState clientState = getClientState(nodeID);
-    return clientState != null ? clientState.getReferences().size() : 0;
+    ClientStateImpl c = getClientState(nodeID);
+    if (c == null) { return 0; }
+    c.lock();
+    try {
+      return c.getReferences().size();
+    } finally {
+      c.unlock();
+    }
   }
 
-  public synchronized Set<NodeID> getConnectedClientIDs() {
-    return this.clientStates.keySet();
+  public Set<NodeID> getConnectedClientIDs() {
+    return Collections.unmodifiableSet(this.clientStates.keySet());
   }
 
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out.println(getClass().getName());
     out = out.duplicateAndIndent();
     out.indent().println("client states: ");
     out = out.duplicateAndIndent();
-    for (NodeID key : this.clientStates.keySet()) {
-      ClientState st = this.clientStates.get(key);
-      out.indent().print(key + "=").visit(st).println();
+    for (ClientStateImpl c : this.clientStates.values()) {
+      c.lock();
+      try {
+        out.indent().print(c.getNodeID() + "=").visit(c).println();
+      } finally {
+        c.unlock();
+      }
     }
     return rv;
   }
@@ -209,9 +219,18 @@ public class ClientStateManagerImpl implements ClientStateManager {
   private static class ClientStateImpl implements PrettyPrintable, ClientState {
     private final NodeID        nodeID;
     private final Set<ObjectID> managed = new ObjectIDSet();
+    private final ReentrantLock lock    = new ReentrantLock();
 
     public ClientStateImpl(NodeID nodeID) {
       this.nodeID = nodeID;
+    }
+
+    public void lock() {
+      this.lock.lock();
+    }
+
+    public void unlock() {
+      this.lock.unlock();
     }
 
     public void removeReferencedObjectIDsFrom(Set<ObjectID> lookupObjectIDs) {

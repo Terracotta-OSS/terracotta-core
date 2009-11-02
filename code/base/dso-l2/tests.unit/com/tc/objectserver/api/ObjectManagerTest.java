@@ -319,23 +319,24 @@ public class ObjectManagerTest extends TCTestCase {
     TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
     this.testFaultSinkContext.resetCounter();
 
+    ClientID c1 = new ClientID(1);
     // fetch 10 objects and with fault-count -1
-    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
+    this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, -1);
     Assert.assertEquals(10, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 1K
-    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 1000);
+    this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 1000);
     Assert.assertEquals(1000, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 10K
-    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 10000);
+    this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 10000);
     Assert.assertEquals(10000, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 20K. but, max objects available are 10010
-    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 20000);
+    this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 20000);
     Assert.assertEquals(10010, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
 
@@ -347,7 +348,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.testFaultSinkContext.resetCounter();
 
     // fetch 1 object and with fault-count 5K. but, object can reach 7K
-    this.objectManager.lookupObjectsAndSubObjectsFor(null, results, 5000);
+    this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 5000);
     Assert.assertEquals(5000, results.objects.size());
     this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
 
@@ -1611,7 +1612,7 @@ public class ObjectManagerTest extends TCTestCase {
     }
 
     public Collection getRemovalCandidates(int maxCount) {
-      return objects;
+      return this.objects;
     }
 
     public void markReferenced(Cacheable obj) {

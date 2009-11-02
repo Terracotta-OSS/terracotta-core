@@ -854,7 +854,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                         new ManagedObjectRequestHandler(globalObjectFaultCounter,
                                                                                         globalObjectFlushCounter),
                                                         this.l2Properties
-                                                            .getInt("seda.managedobjectrequeststage.threads"),
+                                                            .getInt("seda.managedobjectrequeststage.threads"), 1,
                                                         maxStageSize);
     Stage respondToObjectRequestStage = stageManager
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
@@ -1279,8 +1279,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
         logger.error(e);
       }
     }
-
-    this.clientStateManager.stop();
 
     try {
       this.objectStore.shutdown();

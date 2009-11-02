@@ -6,7 +6,7 @@ package com.tc.async.impl;
 
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventMultiThreadedContext;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Source;
 import com.tc.async.api.StageQueueStats;
@@ -60,8 +60,8 @@ public class StageQueueImpl implements Sink {
   private void createWorkerQueues(int threads, int threadsToQueueRatio, QueueFactory queueFactory, int queueSize,
                                   TCLoggerProvider loggerProvider, String stage) {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
-    TCQueue q = queueFactory.createInstance(queueSize);
-    int queueCount = 0;
+    TCQueue q = null;
+    int queueCount = -1;
     for (int i = 0; i < threads; i++) {
       if (threadsToQueueRatio > 0) {
         if (i % threadsToQueueRatio == 0) {
@@ -71,15 +71,17 @@ public class StageQueueImpl implements Sink {
         } else {
           // use same queue for this worker too
         }
-      } else {
-        // all workers share the same queue
+      } else if (q == null) {
+        // all workers share the same queue, create queue only once
+        q = queueFactory.createInstance(queueSize);
+        queueCount++;
       }
-      sourceQueues[i] = new SourceQueueImpl(q, String.valueOf(queueCount), statsCollector);
+      this.sourceQueues[i] = new SourceQueueImpl(q, String.valueOf(queueCount), statsCollector);
     }
   }
 
   public Source getSource(int index) {
-    return sourceQueues[index];
+    return this.sourceQueues[index];
   }
 
   /**
@@ -89,12 +91,12 @@ public class StageQueueImpl implements Sink {
    */
   public boolean addLossy(EventContext context) {
     SourceQueueImpl sourceQueue;
-    if (context instanceof EventMultiThreadedContext) {
-      sourceQueue = getSourceQueueFor((EventMultiThreadedContext) context);
+    if (context instanceof MultiThreadedEventContext) {
+      sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
     } else {
-      sourceQueue = sourceQueues[0];
+      sourceQueue = this.sourceQueues[0];
     }
-    
+
     if (sourceQueue.isEmpty()) {
       add(context);
       return true;
@@ -104,7 +106,9 @@ public class StageQueueImpl implements Sink {
   }
 
   public void addMany(Collection contexts) {
-    if (logger.isDebugEnabled()) logger.debug("Added many:" + contexts + " to:" + stageName);
+    if (this.logger.isDebugEnabled()) {
+      this.logger.debug("Added many:" + contexts + " to:" + this.stageName);
+    }
     for (Iterator i = contexts.iterator(); i.hasNext();) {
       add((EventContext) i.next());
     }
@@ -112,30 +116,34 @@ public class StageQueueImpl implements Sink {
 
   public void add(EventContext context) {
     Assert.assertNotNull(context);
-    if (logger.isDebugEnabled()) logger.debug("Added:" + context + " to:" + stageName);
-    if (!predicate.accept(context)) {
-      if (logger.isDebugEnabled()) logger.debug("Predicate caused skip add for:" + context + " to:" + stageName);
+    if (this.logger.isDebugEnabled()) {
+      this.logger.debug("Added:" + context + " to:" + this.stageName);
+    }
+    if (!this.predicate.accept(context)) {
+      if (this.logger.isDebugEnabled()) {
+        this.logger.debug("Predicate caused skip add for:" + context + " to:" + this.stageName);
+      }
       return;
     }
 
     try {
-      if (context instanceof EventMultiThreadedContext) {
-        SourceQueueImpl sourceQueue = getSourceQueueFor((EventMultiThreadedContext) context);
+      if (context instanceof MultiThreadedEventContext) {
+        SourceQueueImpl sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
         sourceQueue.put(context);
       } else {
-        sourceQueues[0].put(context);
+        this.sourceQueues[0].put(context);
       }
     } catch (InterruptedException e) {
-      logger.error(e);
+      this.logger.error(e);
       throw new AssertionError(e);
     }
 
   }
 
-  private SourceQueueImpl getSourceQueueFor(EventMultiThreadedContext context) {
+  private SourceQueueImpl getSourceQueueFor(MultiThreadedEventContext context) {
     Object o = context.getKey();
-    int index = hashCodeToArrayIndex(o.hashCode(), sourceQueues.length);
-    return sourceQueues[index];
+    int index = hashCodeToArrayIndex(o.hashCode(), this.sourceQueues.length);
+    return this.sourceQueues[index];
   }
 
   private int hashCodeToArrayIndex(int hashcode, int arrayLength) {
@@ -145,8 +153,8 @@ public class StageQueueImpl implements Sink {
   // Used for testing
   public int size() {
     int totalQueueSize = 0;
-    for (int i = 0; i < sourceQueues.length; i++) {
-      totalQueueSize += sourceQueues[i].size();
+    for (SourceQueueImpl sourceQueue : this.sourceQueues) {
+      totalQueueSize += sourceQueue.size();
     }
     return totalQueueSize;
   }
@@ -157,19 +165,20 @@ public class StageQueueImpl implements Sink {
   }
 
   public AddPredicate getPredicate() {
-    return predicate;
+    return this.predicate;
   }
 
+  @Override
   public String toString() {
-    return "StageQueue(" + stageName + ")";
+    return "StageQueue(" + this.stageName + ")";
   }
 
   public void clear() {
     int clearCount = 0;
-    for (int i = 0; i < this.sourceQueues.length; i++) {
-      clearCount += sourceQueues[i].clear();
+    for (SourceQueueImpl sourceQueue : this.sourceQueues) {
+      clearCount += sourceQueue.clear();
     }
-    logger.info("Cleared " + clearCount);
+    this.logger.info("Cleared " + clearCount);
   }
 
   /*********************************************************************************************************************
@@ -179,18 +188,18 @@ public class StageQueueImpl implements Sink {
   public void enableStatsCollection(boolean enable) {
     StageQueueStatsCollector statsCollector;
     if (enable) {
-      statsCollector = new StageQueueStatsCollectorImpl(stageName);
+      statsCollector = new StageQueueStatsCollectorImpl(this.stageName);
     } else {
-      statsCollector = new NullStageQueueStatsCollector(stageName);
+      statsCollector = new NullStageQueueStatsCollector(this.stageName);
     }
-    for (int i = 0; i < sourceQueues.length; i++) {
-      sourceQueues[i].setStatesCollector(statsCollector);
+    for (SourceQueueImpl sourceQueue : this.sourceQueues) {
+      sourceQueue.setStatesCollector(statsCollector);
     }
   }
 
   public Stats getStats(long frequency) {
     // Since all source queues have the same collector, the first reference is passed.
-    return sourceQueues[0].getStatsCollector();
+    return this.sourceQueues[0].getStatsCollector();
   }
 
   public Stats getStatsAndReset(long frequency) {
@@ -199,12 +208,12 @@ public class StageQueueImpl implements Sink {
 
   public boolean isStatsCollectionEnabled() {
     // Since all source queues have the same collector, the first reference is used.
-    return sourceQueues[0].getStatsCollector() instanceof StageQueueStatsCollectorImpl;
+    return this.sourceQueues[0].getStatsCollector() instanceof StageQueueStatsCollectorImpl;
   }
 
   public void resetStats() {
     // Since all source queues have the same collector, the first reference is used.
-    sourceQueues[0].getStatsCollector().reset();
+    this.sourceQueues[0].getStatsCollector().reset();
   }
 
   private static final class SourceQueueImpl implements Source {
@@ -220,11 +229,11 @@ public class StageQueueImpl implements Sink {
     }
 
     public StageQueueStatsCollector getStatsCollector() {
-      return statsCollector;
+      return this.statsCollector;
     }
 
     public void setStatesCollector(StageQueueStatsCollector collector) {
-      statsCollector = collector;
+      this.statsCollector = collector;
     }
 
     // XXX: poor man's clear.
@@ -241,26 +250,28 @@ public class StageQueueImpl implements Sink {
     }
 
     public boolean isEmpty() {
-      return queue.isEmpty();
+      return this.queue.isEmpty();
     }
 
     public EventContext poll(long timeout) throws InterruptedException {
-      EventContext rv = (EventContext) queue.poll(timeout);
-      if (rv != null) statsCollector.contextRemoved();
+      EventContext rv = (EventContext) this.queue.poll(timeout);
+      if (rv != null) {
+        this.statsCollector.contextRemoved();
+      }
       return rv;
     }
 
     public void put(Object obj) throws InterruptedException {
-      queue.put(obj);
-      statsCollector.contextAdded();
+      this.queue.put(obj);
+      this.statsCollector.contextAdded();
     }
 
     public int size() {
-      return queue.size();
+      return this.queue.size();
     }
 
     public String getSourceName() {
-      return sourceName;
+      return this.sourceName;
     }
   }
 
@@ -300,23 +311,26 @@ public class StageQueueImpl implements Sink {
     }
 
     public String getDetails() {
-      return name + " : Not Monitored";
+      return this.name + " : Not Monitored";
     }
 
+    @Override
     public void contextAdded() {
       // NO-OP
     }
 
+    @Override
     public void contextRemoved() {
       // NO-OP
     }
 
+    @Override
     public void reset() {
       // NO-OP
     }
 
     public String getName() {
-      return trimmedName;
+      return this.trimmedName;
     }
 
     public int getDepth() {
@@ -327,8 +341,8 @@ public class StageQueueImpl implements Sink {
   private static class StageQueueStatsCollectorImpl extends StageQueueStatsCollector {
 
     private final AtomicInteger count = new AtomicInteger(0);
-    private final String  name;
-    private final String  trimmedName;
+    private final String        name;
+    private final String        trimmedName;
 
     public StageQueueStatsCollectorImpl(String stage) {
       this.trimmedName = stage.trim();
@@ -336,27 +350,30 @@ public class StageQueueImpl implements Sink {
     }
 
     public String getDetails() {
-      return name + " : " + count;
+      return this.name + " : " + this.count;
     }
 
+    @Override
     public void contextAdded() {
-      count.incrementAndGet();
+      this.count.incrementAndGet();
     }
 
+    @Override
     public void contextRemoved() {
-      count.decrementAndGet();
+      this.count.decrementAndGet();
     }
 
+    @Override
     public void reset() {
-      count.set(0);
+      this.count.set(0);
     }
 
     public String getName() {
-      return trimmedName;
+      return this.trimmedName;
     }
 
     public int getDepth() {
-      return count.get();
+      return this.count.get();
     }
   }
 }

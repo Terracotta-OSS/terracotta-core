@@ -3,10 +3,10 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.EventMultiThreadedContext;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Sink;
 
-public class HydrateContext implements EventMultiThreadedContext {
+public class HydrateContext implements MultiThreadedEventContext {
 
   private final Sink      destSink;
   private final TCMessage message;

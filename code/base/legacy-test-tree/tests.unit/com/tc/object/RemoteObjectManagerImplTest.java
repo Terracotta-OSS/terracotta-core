@@ -600,6 +600,10 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
+    public Object getKey() {
+      return new ClientID(1);
+    }
+
   }
 
 }

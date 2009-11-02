@@ -755,10 +755,6 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
-    public void stop() {
-      throw new NotImplementedException(TestClientStateManager.class);
-    }
-
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new NotImplementedException(TestClientStateManager.class);
     }

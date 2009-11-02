@@ -83,4 +83,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
   public boolean isPrefetched() {
     return false;
   }
+
+  public Object getKey() {
+    return this.channel.getRemoteNodeID();
+  }
 }

@@ -36,7 +36,7 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private ObjectRequestID   requestID;
   private int               requestDepth;
   private String            threadName;
-  private boolean prefetch;
+  private boolean           prefetch;
 
   public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                          MessageChannel channel, TCMessageType type) {
@@ -129,7 +129,11 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   }
 
   public boolean isPrefetched() {
-    return prefetch;
+    return this.prefetch;
+  }
+
+  public Object getKey() {
+    return getSourceNodeID();
   }
 
 }

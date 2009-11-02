@@ -9,7 +9,7 @@ public class L2CommUtils {
   private static final int MAX_DEFAULT_COMM_THREADS = 16;
 
   public static int getNumCommWorkerThreads() {
-    int def = Math.min(Runtime.getRuntime().availableProcessors(), MAX_DEFAULT_COMM_THREADS);
+    int def = Math.min(Runtime.getRuntime().availableProcessors() * 2, MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt("l2.tccom.workerthreads", def);
   }
 

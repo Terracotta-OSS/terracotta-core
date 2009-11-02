@@ -7,7 +7,7 @@ package com.tc.async.impl;
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventMultiThreadedContext;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.async.api.Stage;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -140,7 +140,7 @@ public class StageManagerImplTest extends TestCase {
 
   }
 
-  private static class TestMultiThreadedEventContext implements EventMultiThreadedContext {
+  private static class TestMultiThreadedEventContext implements MultiThreadedEventContext {
     public Object getKey() {
       return new Object();
     }

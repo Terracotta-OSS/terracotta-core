@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.context;
 
-import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
@@ -12,7 +11,7 @@ import com.tc.object.ObjectRequestServerContext;
 
 import java.util.SortedSet;
 
-public class ObjectRequestServerContextImpl implements EventContext, ObjectRequestServerContext {
+public class ObjectRequestServerContextImpl implements ObjectRequestServerContext {
 
   private final ClientID            requestedNodeID;
   private final ObjectRequestID     objectRequestID;
@@ -63,5 +62,9 @@ public class ObjectRequestServerContextImpl implements EventContext, ObjectReque
 
   public boolean isPrefetched() {
     return this.isPrefetched;
+  }
+
+  public Object getKey() {
+    return this.requestedNodeID;
   }
 }
