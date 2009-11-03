@@ -113,8 +113,15 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     }
   }
 
+  /*
+   * Ignoring messages from client while in starting state. Such a case might come up when a recall timer goes out and
+   * the lock is recalled by the client without it noticing that it might still be in paused state.
+   */
   public void recallCommit(LockID lid, ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts) {
-    if (!isValidStateFor(lid, cid, ThreadID.VM_ID, "Recall Commit")) { return; }
+    if (!isStarted()) {
+      logger.info("Ignoring recall commit messages from Client " + cid + " for Lock " + lid);
+      return;
+    }
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
@@ -297,6 +304,15 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
         return false;
       }
       return true;
+    } finally {
+      statusLock.readLock().unlock();
+    }
+  }
+
+  private boolean isStarted() {
+    statusLock.readLock().lock();
+    try {
+      return isStarted;
     } finally {
       statusLock.readLock().unlock();
     }
