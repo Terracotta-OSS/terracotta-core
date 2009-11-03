@@ -291,7 +291,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
 
   private void validateWaitNotifyState(ClientID cid, ThreadID tid, ServerLockContext holder, LockHelper helper) {
     if (holder == null) {
-      throw new TCIllegalMonitorStateException("No holder present for when trying to wait/notify " + cid + "," + tid);
+      throw new TCIllegalMonitorStateException("No holder present for when trying to wait/notify " + cid + "," + tid
+                                               + " for lock = " + lockID);
     } else if (holder.getState() != State.HOLDER_WRITE && holder.getState() != State.GREEDY_HOLDER_WRITE) {
       String message = "Holder not in correct state while wait/notify " + lockID + " " + holder;
       throw new TCIllegalMonitorStateException(message);
@@ -334,10 +335,14 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
         case HOLDER:
           if (isUpgradeRequest(cid, tid, reqLevel, context)) { throw new TCLockUpgradeNotSupportedError(
                                                                                                         "Lock upgrade is not supported."
-                                                                                                            + context); }
+                                                                                                            + context
+                                                                                                            + " lock = "
+                                                                                                            + lockID); }
           if (isAlreadyHeldBySameContext(cid, tid, reqLevel, context)) { throw new AssertionError(
                                                                                                   "Client requesting already held lock!"
-                                                                                                      + context); }
+                                                                                                      + context
+                                                                                                      + " lock = "
+                                                                                                      + lockID); }
           break;
         case PENDING:
         case TRY_PENDING:
@@ -345,7 +350,8 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
           break;
         case WAITER:
           if (context.getClientID().equals(cid) && context.getThreadID().equals(tid)) { throw new AssertionError(
-                                                                                                                 "This thread is already in wait state"); }
+                                                                                                                 "This thread is already in wait state for "
+                                                                                                                     + lockID); }
           break;
         default:
       }
