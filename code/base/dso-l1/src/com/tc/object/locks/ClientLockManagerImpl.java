@@ -754,13 +754,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
   
   @Deprecated
-  private void fireRemoteCall(LockID lock) {
-    if (statManager.isEnabled()) {
-      statManager.recordLockHopped(lock, threadManager.getThreadID());
-    }
-  }
-
-  @Deprecated
   private void fireRefused(LockID lock) {
     if (statManager.isEnabled()) {
       statManager.recordLockRejected(lock, threadManager.getThreadID());

@@ -27,7 +27,6 @@ import java.util.AbstractMap;
 public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
   private final boolean              isAutolock;
   private final int                  autoLockType;
-  private final String               autoLockContextInfo;
   private final InstrumentationSpec  spec;
   private final MemberInfo           memberInfo;
   private final boolean              isConstructor;
@@ -47,9 +46,6 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
     this.spec = spec;
     this.isAutolock = autoLockDefinition != null;
     this.autoLockType = isAutolock ? autoLockDefinition.getLockLevelAsInt() : -1;
-    this.autoLockContextInfo = isAutolock ? autoLockDefinition.getLockContextInfo() : null;
-    // this.isAutolock = isAutolock;
-    // this.autoLockType = autoLockType;
     this.memberInfo = memberInfo;
 
     this.codeSpec = spec.getTransparencyClassSpec().getCodeSpec(memberInfo.getName(), //

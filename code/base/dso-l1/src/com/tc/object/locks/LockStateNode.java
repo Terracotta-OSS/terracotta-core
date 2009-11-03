@@ -144,6 +144,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     private final long       waitTime;
     private volatile boolean responded = false;
     private volatile boolean awarded   = false;
+    private volatile boolean delegates = true;
     
     PendingLockHold(ThreadID owner, LockLevel level, long timeout) {
       super(owner);
@@ -178,6 +179,14 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       LockSupport.unpark(javaThread);
     }
 
+    boolean canDelegate() {
+      return delegates;
+    }
+
+    void delegated() {
+      delegates = false;
+    }
+    
     void refused() {
       awarded = false;
       responded = true;
@@ -261,6 +270,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
     
+    @Override
     void park() {
       synchronized (waitObject) {
         while (!unparked) {
@@ -279,15 +289,22 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
      * MonitorBasedQueuedLockAcquires are only used to reacquire locks after waiting
      *  - they should always park indefinitely
      */
+    @Override
     void park(long timeout) {
       throw new AssertionError();
     }
     
+    @Override
     void unpark() {
       synchronized (waitObject) {
         unparked = true;
         waitObject.notifyAll();
       }
+    }
+    
+    @Override
+    boolean canDelegate() {
+      return false;
     }
   }
   

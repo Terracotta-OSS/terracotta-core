@@ -1179,16 +1179,15 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     Assert.eval("Can't call tc monitorenter from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
-    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorExit", "(Ljava/lang/Object;I)V");
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");
   }
 
   private void callTCMonitorEnter(final int callingMethodModifier, final LockDefinition def, final MethodVisitor c) {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
-    c.visitLdcInsn(def.getLockContextInfo());
-    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "monitorEnter",
-                      "(Ljava/lang/Object;ILjava/lang/String;)V");
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter",
+                      "(Ljava/lang/Object;I)V");
   }
 
   private void addPrimitiveTypeZeroCompare(final MethodVisitor mv, final Type type, final Label notZeroLabel) {

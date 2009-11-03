@@ -273,7 +273,7 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
     while (!acquires.isEmpty()) {
       PendingLockHold qa = acquires.pop();
       try {
-        acquireQueued(remote, thread, qa.getLockLevel(), qa, false);
+        acquireQueued(remote, thread, qa.getLockLevel(), qa);
       } catch (GarbageLockException e) {
         throw new AssertionError("GarbageLockException thrown while reacquiring locks after wait");
       }
@@ -710,13 +710,18 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
       if (s instanceof LockHold && s.getOwner().equals(unlock.getOwner())) {
         LockHold hold = (LockHold) s;
         if (unlock.getLockLevel().isWrite()) {
-          if (hold.getLockLevel().isWrite()) return;
+          if (hold.getLockLevel().isWrite()) {
+            if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : " + unlock.getOwner() + " not remote unlocking " + unlock.getLockLevel() + " due to " + hold);
+            return;
+          }
         } else {
+          if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : " + unlock.getOwner() + " not remote unlocking " + unlock.getLockLevel() + " due to " + hold);
           return;
         }
       }
     }
 
+    if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : " + unlock.getOwner() + " remote unlocking " + unlock.getLockLevel());
     remote.unlock(lock, unlock.getOwner(), ServerLockLevel.fromClientLockLevel(unlock.getLockLevel()));
   }
   
@@ -757,21 +762,21 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
   private void acquireQueued(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException {
     final PendingLockHold node = new PendingLockHold(thread, level, -1);
     addLast(node);
-    acquireQueued(remote, thread, level, node, true);
+    acquireQueued(remote, thread, level, node);
   }
 
   /*
    * Generic acquire - uses an already existing queued node - used during wait notify
    */
-  private void acquireQueued(RemoteLockManager remote, ThreadID thread, LockLevel level, PendingLockHold node, boolean delegate) throws GarbageLockException {    
+  private void acquireQueued(RemoteLockManager remote, ThreadID thread, LockLevel level, PendingLockHold node) throws GarbageLockException {    
     boolean interrupted = false;
     try {
       for (;;) {
         // try to acquire before sleeping
-        LockAcquireResult result = tryAcquire(delegate, remote, thread, level, BLOCKING_LOCK);
+        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, BLOCKING_LOCK);
         if (result.usedServer()) {
           // we contacted server - disable delegation to prevent multiple messages
-          delegate = false;
+          node.delegated();
         }
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
@@ -809,11 +814,10 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
     final PendingLockHold node = new PendingLockHold(thread, level, -1);
     addLast(node);
     try {
-      boolean delegate = true;
       for (;;) {
-        LockAcquireResult result = tryAcquire(delegate, remote, thread, level, BLOCKING_LOCK);
+        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, BLOCKING_LOCK);
         if (result.usedServer()) {
-          delegate = false;
+          node.delegated();
         }
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
@@ -850,11 +854,10 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
     final PendingLockHold node = new PendingLockHold(thread, level, timeout);
     addLast(node);
     try {
-      boolean delegate = true;
       while (!node.isRefused()) {
-        LockAcquireResult result = tryAcquire(delegate, remote, thread, level, timeout);
+        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, timeout);
         if (result.usedServer()) {
-          delegate = false;
+          node.delegated();
         }
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
@@ -863,13 +866,13 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
           remove(node);
           return true;
         } else {
-          if (delegate && timeout <= 0) {
+          if (node.canDelegate() && timeout <= 0) {
             abortAndRemove(remote, node);
             return false;
           }
         }
 
-        if (!delegate) {
+        if (!node.canDelegate()) {
           node.park();
         } else {
           node.park(timeout);
@@ -995,6 +998,14 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
           }
         }
       }
+      
+      for (LockStateNode node : this) {
+        if (node instanceof PendingLockHold) {
+          //these nodes have now contacted the server
+          ((PendingLockHold) node).delegated();
+        }
+      }
+      
       remote.recallCommit(lock, contexts);
       if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : free'd greedy lock");
       
