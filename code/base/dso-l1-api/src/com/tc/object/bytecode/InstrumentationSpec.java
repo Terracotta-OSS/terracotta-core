@@ -298,8 +298,8 @@ class InstrumentationSpec {
     return this.readObjectSerializedMethod == IS_NEEDED;
   }
 
-  void handleSubclassOfLogicalClassWithFieldsIfNecessary(int access) {
-    if (ByteCodeUtil.isSynthetic(access) || Modifier.isStatic(access)) {
+  void handleSubclassOfLogicalClassWithFieldsIfNecessary(int access, String fieldName) {
+    if (ByteCodeUtil.isSynthetic(access) || Modifier.isStatic(access) || spec.isTransient(access, classInfo, fieldName)) {
       return;
     } else if (isSubclassOfLogicalClass && !hasVisitedField) {
       hasVisitedField = true;
@@ -333,13 +333,13 @@ class InstrumentationSpec {
         Field[] fields = superClazz.getDeclaredFields();
         for (int i = 0; i < fields.length; i++) {
           Field f = fields[i];
-          String fieldName = f.getName();
+          String fName = f.getName();
           int modifier = f.getModifiers();
-          if (!shouldVisitField(fieldName) || Modifier.isFinal(modifier) || Modifier.isPrivate(modifier)) {
+          if (!shouldVisitField(fName) || Modifier.isFinal(modifier) || Modifier.isPrivate(modifier)) {
             continue;
           }
           String fieldDesc = Type.getDescriptor(f.getType());
-          logicalExtendingFieldSpec.add(fieldName + fieldDesc);
+          logicalExtendingFieldSpec.add(fName + fieldDesc);
         }
       } catch (ClassNotFoundException e) {
         e.printStackTrace();

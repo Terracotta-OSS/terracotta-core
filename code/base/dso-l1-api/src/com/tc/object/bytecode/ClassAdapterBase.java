@@ -140,7 +140,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
   }
 
   public final FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-    spec.handleSubclassOfLogicalClassWithFieldsIfNecessary(access);
+    spec.handleSubclassOfLogicalClassWithFieldsIfNecessary(access, name);
     if (spec.needDelegateField()) {
       visitDelegateFieldIfNecessary();
     }
@@ -318,7 +318,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
       mv.visitInsn(RETURN);
       mv.visitMaxs(0, 0);
       mv.visitEnd();
-      
+
       // add isManaged() method
       // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
       mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION, null, null);
