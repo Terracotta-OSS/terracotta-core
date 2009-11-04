@@ -465,6 +465,8 @@ public interface TCPropertiesConsts {
    * Description : This section contains the defaults for the Object manager for the L1
    * remote.maxDNALRUSize    : Count of dnas after which l1s will remove unrequested object 
    * remote.logging.enabled  : Enable/disable logging of remote object manager
+   * remote.maxRequestSentImmediately
+   *                         : Maximum number of requests send immediately after which it will be batched
    * objectid.request.size   : Number of object ids requested at once from L2 for creating 
    *                           new objects
    * flush.logging.enabled   : Enable/disable object's flush logging
@@ -473,6 +475,8 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String   L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                       = "l1.objectmanager.remote.maxDNALRUSize";
   public static final String   L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED                       = "l1.objectmanager.remote.logging.enabled";
+  public static final String   L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY          = "l1.objectmanager.remote.maxRequestSentImmediately";
+  public static final String   L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD              = "l1.objectmanager.remote.batchLookupTimePeriod";
   public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                        = "l1.objectmanager.objectid.request.size";
   public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                        = "l1.objectmanager.flush.logging.enabled";
   public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                        = "l1.objectmanager.fault.logging.enabled";
@@ -764,7 +768,8 @@ public interface TCPropertiesConsts {
    * license.url                                 - URL to license key
    * </code>
    ********************************************************************************************************************/
-  public static final String   PRODUCTKEY_RESOURCE_PATH                                         = "productkey.resource.path";
-  public static final String   PRODUCTKEY_URL                                                   = "productkey.url";
-  public static final String   PRODUCTKEY_PATH                                                  = "productkey.path";
+  public static final String   PRODUCTKEY_RESOURCE_PATH                                      = "productkey.resource.path";
+  public static final String   PRODUCTKEY_URL                                                = "productkey.url";
+  public static final String   PRODUCTKEY_PATH                                               = "productkey.path";
+
 }

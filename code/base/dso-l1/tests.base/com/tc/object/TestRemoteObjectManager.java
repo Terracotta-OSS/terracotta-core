@@ -15,7 +15,6 @@ import com.tc.object.session.SessionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 public class TestRemoteObjectManager implements RemoteObjectManager {
@@ -31,7 +30,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public DNA retrieve(final ObjectID id) {
     this.retrieveCalls.put(id);
     DNA dna = (DNA) this.retrieveResults.take();
-    if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID", Collections.EMPTY_LIST); }
+    if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID"); }
     return dna;
   }
 
@@ -112,7 +111,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
   }
 
-  public boolean isPrefetched(final ObjectID id) {
+  public boolean isInDNACache(final ObjectID id) {
     throw new ImplementMe();
   }
 
@@ -131,7 +130,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     throw new ImplementMe();
 
   }
-  
+
   public void shutdown() {
     // NOP
   }

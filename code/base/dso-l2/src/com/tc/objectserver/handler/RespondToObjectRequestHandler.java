@@ -19,8 +19,8 @@ public class RespondToObjectRequestHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     RespondToObjectRequestContext rtorc = (RespondToObjectRequestContext) context;
     this.objectRequestManager.sendObjects(rtorc.getRequestedNodeID(), rtorc.getObjs(), rtorc.getRequestedObjectIDs(),
-                                          rtorc.getMissingObjectIDs(), rtorc.isServerInitiated(), rtorc.isPreFetched(),
-                                          rtorc.getRequestDepth());
+                                          rtorc.getMissingObjectIDs(), rtorc.isServerInitiated(), rtorc
+                                              .getRequestDepth());
 
   }
 

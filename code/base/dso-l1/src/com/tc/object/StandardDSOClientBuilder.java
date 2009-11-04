@@ -90,14 +90,13 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new ClientGlobalTransactionManagerImpl(remoteTxnMgr);
   }
 
-  public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                       final ObjectRequestMonitor objectRequestMonitor,
-                                                       final int faultCount, final SessionManager sessionManager) {
+  public RemoteObjectManagerImpl createRemoteObjectManager(final TCLogger logger,
+                                                           final DSOClientMessageChannel dsoChannel,
+                                                           final int faultCount, final SessionManager sessionManager) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
-    return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getClientIDProvider(), dsoChannel
-        .getRequestRootMessageFactory(), dsoChannel.getRequestManagedObjectMessageFactory(), objectRequestMonitor,
-                                       faultCount, sessionManager);
+    return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getRequestRootMessageFactory(), dsoChannel
+        .getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
   }
 
   public ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
@@ -130,8 +129,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,
-                                             final ClientIDLogger clientIDLogger,
-                                             final SessionManager sessionManager,
+                                             final ClientIDLogger clientIDLogger, final SessionManager sessionManager,
                                              final ClientLockStatManager lockStatManager,
                                              final LockRequestMessageFactory lockRequestMessageFactory,
                                              final ThreadIDManager threadManager,
@@ -139,15 +137,17 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                              final ClientLockManagerConfig config) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     assert defaultGroups != null && defaultGroups.length == 1;
-    RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(), defaultGroups[0], lockRequestMessageFactory, gtxManager, lockStatManager);
-    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config, lockStatManager);
+    RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(), defaultGroups[0],
+                                                                lockRequestMessageFactory, gtxManager, lockStatManager);
+    return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config,
+                                     lockStatManager);
   }
 
   @Deprecated
   public ClientLockStatManager createLockStatsManager() {
     return new ClientLockStatisticsManagerImpl(null);
   }
-  
+
   public RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                                  final DNAEncoding encoding,
                                                                  final FoldingConfig foldingConfig,

@@ -188,7 +188,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     if (this.idToManaged.containsKey(objectID)) { return true; }
 
-    return this.remoteObjectManager.isPrefetched(objectID);
+    return this.remoteObjectManager.isInDNACache(objectID);
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {

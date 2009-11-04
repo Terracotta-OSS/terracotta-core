@@ -6,7 +6,6 @@ package com.tc.object;
 
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
-import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
@@ -21,11 +20,8 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.State;
 import com.tc.util.TCCollections;
 import com.tc.util.Util;
-
-import gnu.trove.THashMap;
 
 import java.util.Collection;
 import java.util.Date;
@@ -35,6 +31,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Map.Entry;
 
 /**
@@ -42,66 +40,81 @@ import java.util.Map.Entry;
  */
 public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
-  private static final long                        RETRIEVE_WAIT_INTERVAL    = 15000;
+  private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
+  private static final int     REMOVE_OBJECTS_THRESHOLD                  = 10000;
+  private static final long    REMOVED_OBJECTS_SEND_TIMER                = 30000;
 
-  private static final State                       PAUSED                    = new State("PAUSED");
-  private static final State                       RUNNING                   = new State("RUNNING");
-  private static final State                       STARTING                  = new State("STARTING");
+  private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY);
+  private static final long    BATCH_LOOKUP_TIME_PERIOD                  = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD);
+  private final static int     MAX_LRU                                   = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
+  private final static boolean ENABLE_LOGGING                            = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getBoolean(
+                                                                                         TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
 
-  private final LinkedHashMap                      rootRequests              = new LinkedHashMap();
-  private final Map                                dnaRequests               = new HashMap();
-  private final Map                                outstandingObjectRequests = new HashMap();
-  private final Map                                outstandingRootRequests   = new HashMap();
-  private final Set                                preFetchInProgress        = new HashSet();
-  private final Set                                missingObjectIDs          = new HashSet();
-  private long                                     objectRequestIDCounter    = 0;
-  private final ObjectRequestMonitor               requestMonitor;
-  private final ClientIDProvider                   cip;
+  private static enum State {
+    PAUSED, RUNNING, STARTING, STOPPED
+  }
+
+  private final HashMap<String, ObjectID>          rootRequests             = new HashMap<String, ObjectID>();
+
+  private final Map<ObjectID, DNA>                 dnaCache                 = new HashMap<ObjectID, DNA>();
+  private final Map<ObjectID, ObjectLookupState>   objectLookupStates       = new HashMap<ObjectID, ObjectLookupState>();
+
+  private final Timer                              objectRequestTimer       = new Timer(
+                                                                                        "RemoteObjectManager Request Scheduler",
+                                                                                        true);
+
   private final RequestRootMessageFactory          rrmFactory;
   private final RequestManagedObjectMessageFactory rmomFactory;
-  private final DNALRU                             lruDNA                    = new DNALRU();
-  private final static int                         MAX_LRU                   = TCPropertiesImpl
-                                                                                 .getProperties()
-                                                                                 .getInt(
-                                                                                         TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE);
-  private final static boolean                     ENABLE_LOGGING            = TCPropertiesImpl
-                                                                                 .getProperties()
-                                                                                 .getBoolean(
-                                                                                             TCPropertiesConsts.L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED);
+  private final LRUCache                           lru                      = new LRUCache();
   private final GroupID                            groupID;
   private final int                                defaultDepth;
-  private State                                    state                     = RUNNING;
-  private ObjectIDSet                              removeObjects             = new ObjectIDSet();
   private final SessionManager                     sessionManager;
   private final TCLogger                           logger;
-  private static final int                         REMOVE_OBJECTS_THRESHOLD  = 10000;
-  private long                                     hit                       = 0;
-  private long                                     miss                      = 0;
-  private volatile boolean                         isShutdown                = false;
 
-  public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger, final ClientIDProvider cip,
+  private State                                    state                    = State.RUNNING;
+  private ObjectIDSet                              removeObjects            = new ObjectIDSet();
+
+  private boolean                                  pendingSendTaskScheduled = false;
+  private boolean                                  removeTaskScheduled      = false;
+  private long                                     objectRequestIDCounter   = 0;
+  private long                                     hit                      = 0;
+  private long                                     miss                     = 0;
+
+  public RemoteObjectManagerImpl(final GroupID groupID, final TCLogger logger,
                                  final RequestRootMessageFactory rrmFactory,
-                                 final RequestManagedObjectMessageFactory rmomFactory,
-                                 final ObjectRequestMonitor requestMonitor, final int defaultDepth,
+                                 final RequestManagedObjectMessageFactory rmomFactory, final int defaultDepth,
                                  final SessionManager sessionManager) {
     this.groupID = groupID;
     this.logger = logger;
-    this.cip = cip;
     this.rrmFactory = rrmFactory;
     this.rmomFactory = rmomFactory;
-    this.requestMonitor = requestMonitor;
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
   }
 
-  public void shutdown() {
-    isShutdown = true;
+  public synchronized void shutdown() {
+    this.state = State.STOPPED;
+  }
+
+  private boolean isStopped() {
+    return this.state == State.STOPPED;
   }
 
   public synchronized void pause(final NodeID remote, final int disconnected) {
-    if (isShutdown) return;
+    if (isStopped()) { return; }
     assertNotPaused("Attempt to pause while PAUSED");
-    this.state = PAUSED;
+    this.state = State.PAUSED;
     // XXX:: We are clearing unmaterialized DNAs and removed objects here because on connect we are going to send
     // the list of objects present in this L1 from Client Object Manager anyways. We can't be clearing the removed
     // object IDs in unpause(), then you get MNK-835
@@ -111,33 +124,28 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                   final ClientHandshakeMessage handshakeMessage) {
-    if (isShutdown) return;
+    if (isStopped()) { return; }
     assertPaused("Attempt to init handshake while not PAUSED");
-    this.state = STARTING;
+    this.state = State.STARTING;
   }
 
   public synchronized void unpause(final NodeID remote, final int disconnected) {
-    if (isShutdown) return;
+    if (isStopped()) { return; }
     assertNotRunning("Attempt to unpause while not PAUSED");
-    this.state = RUNNING;
+    this.state = State.RUNNING;
     requestOutstanding();
     notifyAll();
   }
 
   public synchronized void clear() {
-    this.lruDNA.clear();
-    for (Iterator i = this.dnaRequests.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      if (e.getValue() != null) {
-        i.remove();
-      }
-    }
+    this.lru.clear();
+    this.dnaCache.clear();
     this.removeObjects.clear();
   }
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    while (this.state != RUNNING) {
+    while (this.state != State.RUNNING) {
       try {
         wait();
       } catch (InterruptedException e) {
@@ -147,36 +155,38 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
-  private void assertPaused(final Object message) {
-    if (this.state != PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertPaused(final String message) {
+    if (this.state != State.PAUSED) { throw new AssertionError(message + ": " + this.state); }
   }
 
-  private void assertNotPaused(final Object message) {
-    if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
+  private void assertNotPaused(final String message) {
+    if (this.state == State.PAUSED) { throw new AssertionError(message + ": " + this.state); }
   }
-  
-  private void assertNotRunning(final Object message) {
-    if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
+
+  private void assertNotRunning(final String message) {
+    if (this.state == State.RUNNING) { throw new AssertionError(message + ": " + this.state); }
   }
 
   synchronized void requestOutstanding() {
-    for (Iterator i = this.outstandingObjectRequests.values().iterator(); i.hasNext();) {
-      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage((ObjectRequestContext) i.next());
-      rmom.send();
+    for (ObjectLookupState ols : this.objectLookupStates.values()) {
+      if (!ols.isMissing() && !ols.isPending()) {
+        sendRequestNow(ols);
+      }
     }
-    for (Iterator i = this.outstandingRootRequests.values().iterator(); i.hasNext();) {
-      RequestRootMessage rrm = createRootMessage((String) i.next());
-      rrm.send();
+    for (Entry<String, ObjectID> e : this.rootRequests.entrySet()) {
+      String rootName = e.getKey();
+      if (e.getValue().isNull()) {
+        RequestRootMessage rrm = createRootMessage(rootName);
+        rrm.send();
+      }
     }
   }
 
   public synchronized void preFetchObject(ObjectID id) {
-    if (this.dnaRequests.containsKey(id)) { return; }
-    this.preFetchInProgress.add(id);
-    ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
-                                                             new ObjectRequestID(this.objectRequestIDCounter++), id,
-                                                             this.defaultDepth, ObjectID.NULL_ID, true);
-    sendRequest(ctxt);
+    if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
+    ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth, ObjectID.NULL_ID);
+    ols.makePrefetchRequest();
+    sendRequest(ols);
   }
 
   public DNA retrieve(final ObjectID id) {
@@ -193,30 +203,27 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   public synchronized DNA basicRetrieve(final ObjectID id, final int depth, final ObjectID parentContext) {
     boolean isInterrupted = false;
-    if (id.getGroupID() != this.groupID.toInt()) {
-      //
-      throw new AssertionError("Looking up in the wrong Remote Manager : " + this.groupID + " id : " + id + " depth : "
-                               + depth + " parent : " + parentContext);
-    }
-    ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
-                                                             new ObjectRequestID(this.objectRequestIDCounter++), id,
-                                                             depth, parentContext);
+    if (id.getGroupID() != this.groupID.toInt()) { throw new AssertionError("Looking up in the wrong Remote Manager : "
+                                                                            + this.groupID + " id : " + id
+                                                                            + " depth : " + depth + " parent : "
+                                                                            + parentContext); }
     boolean inMemory = true;
     long startTime = System.currentTimeMillis();
     long totalTime = 0;
-    removePreFetchInProgress(id);
 
-    while (true) {
+    DNA dna;
+    while ((dna = this.dnaCache.remove(id)) == null) {
       waitUntilRunning();
-      DNA dna = (DNA) this.dnaRequests.get(id);
-      if (dna != null) {
-        break;
-      } else if (this.missingObjectIDs.contains(id)) {
-        throw new TCObjectNotFoundException(id.toString(), this.missingObjectIDs);
-      } else if (!this.dnaRequests.containsKey(id)) {
-        sendRequest(ctxt);
-      } else if (!this.outstandingObjectRequests.containsKey(id)) {
-        this.outstandingObjectRequests.put(id, ctxt);
+      ObjectLookupState ols = this.objectLookupStates.get(id);
+      if (ols == null) {
+        ols = new ObjectLookupState(getNextRequestID(), id, depth, parentContext);
+        ols.makeLookupRequest();
+        sendRequest(ols);
+      } else if (ols.isMissing()) {
+        this.objectLookupStates.remove(id);
+        throw new TCObjectNotFoundException(id.toString());
+      } else if (ols.isPrefetch()) {
+        ols.makeLookupRequest();
       }
 
       inMemory = false;
@@ -234,7 +241,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       }
     }
     Util.selfInterruptIfNeeded(isInterrupted);
-    this.lruDNA.remove(id);
+    this.lru.remove(id);
+    increamentStatsAndLogIfNecessary(inMemory);
+    return dna;
+  }
+
+  private void increamentStatsAndLogIfNecessary(boolean inMemory) {
     if (inMemory) {
       this.hit++;
     } else {
@@ -243,37 +255,95 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     if (ENABLE_LOGGING && ((this.hit + this.miss) % 1000 == 0)) {
       this.logger.info("Cache Hit : Miss ratio = " + this.hit + "  : " + this.miss);
     }
-    return (DNA) this.dnaRequests.remove(id);
+
   }
 
-  private boolean removePreFetchInProgress(ObjectID id) {
-    if (this.preFetchInProgress.size() > 0) { return this.preFetchInProgress.remove(id); }
-    return false;
+  private ObjectRequestID getNextRequestID() {
+    return new ObjectRequestID(this.objectRequestIDCounter++);
   }
 
-  private void sendRequest(final ObjectRequestContext ctxt) {
-    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
-    ObjectID id = null;
-    for (ObjectID element : ctxt.getRequestedObjectIDs()) {
-      id = element;
-      this.dnaRequests.put(id, null);
-    }
-    // XXX:: This is a little weird that we add only the last ObjectID to the outstandingObjectRequests map
-    // when we add all the list of ObjectIDs to dnaRequests. This is done so that we only send the request once
-    // on resend. Since the only way we request for more than one ObjectID in 1 message is when someone initiate
-    // non-blocking lookups. So if we loose those requests on restart it is still ok.
-    this.outstandingObjectRequests.put(id, ctxt);
-    rmom.send();
-    this.requestMonitor.notifyObjectRequest(ctxt);
-  }
-
-  private RequestManagedObjectMessage createRequestManagedObjectMessage(final ObjectRequestContext ctxt) {
-    RequestManagedObjectMessage rmom = this.rmomFactory.newRequestManagedObjectMessage(this.groupID);
-    Set<ObjectID> requestedObjectIDs = ctxt.getRequestedObjectIDs();
-    if (this.removeObjects.isEmpty()) {
-      rmom.initialize(ctxt, requestedObjectIDs, TCCollections.EMPTY_OBJECT_ID_SET);
+  /**
+   * basicRetrieve and preFetch can call this method, the ctxt gets added to the map here.
+   */
+  private void sendRequest(final ObjectLookupState ctxt) {
+    ObjectLookupState old = this.objectLookupStates.put(ctxt.getLookupID(), ctxt);
+    Assert.assertNull(old);
+    if (this.objectLookupStates.size() <= MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY) {
+      sendRequestNow(ctxt);
     } else {
-      rmom.initialize(ctxt, requestedObjectIDs, this.removeObjects);
+      scheduleRequestForLater(ctxt);
+    }
+  }
+
+  private void scheduleRequestForLater(ObjectLookupState ctxt) {
+    ctxt.makePending();
+    if (!this.pendingSendTaskScheduled) {
+      this.objectRequestTimer.schedule(new SendPendingRequestsTimer(), BATCH_LOOKUP_TIME_PERIOD);
+      this.pendingSendTaskScheduled = true;
+    }
+  }
+
+  public synchronized void sendPendingRequests() {
+    waitUntilRunning();
+    this.pendingSendTaskScheduled = false;
+    HashMap<Integer, ObjectIDSet> segregatedPending = getPendingRequestSegregated();
+    if (!segregatedPending.isEmpty()) {
+      sendSegregatedPendingRequests(segregatedPending);
+    }
+  }
+
+  private void sendSegregatedPendingRequests(HashMap<Integer, ObjectIDSet> segregatedPending) {
+    for (Entry<Integer, ObjectIDSet> e : segregatedPending.entrySet()) {
+      int requestDepth = e.getKey().intValue();
+      ObjectIDSet oids = e.getValue();
+      sendRequestNow(getNextRequestID(), oids, requestDepth);
+    }
+  }
+
+  private HashMap<Integer, ObjectIDSet> getPendingRequestSegregated() {
+    HashMap<Integer, ObjectIDSet> segregatedPending = new HashMap<Integer, ObjectIDSet>();
+    for (ObjectLookupState ols : this.objectLookupStates.values()) {
+      if (ols.isPending()) {
+        ols.makeUnPending();
+        Integer key = new Integer(ols.getRequestDepth());
+        ObjectIDSet oids = segregatedPending.get(key);
+        if (oids == null) {
+          oids = new ObjectIDSet();
+          segregatedPending.put(key, oids);
+        }
+        addRequestedObjectIDsTo(ols, oids);
+      }
+    }
+    return segregatedPending;
+  }
+
+  private void sendRequestNow(ObjectLookupState ctxt) {
+    Set<ObjectID> oids = addRequestedObjectIDsTo(ctxt, new HashSet<ObjectID>());
+    sendRequestNow(ctxt.getRequestID(), oids, ctxt.getRequestDepth());
+  }
+
+  private Set<ObjectID> addRequestedObjectIDsTo(ObjectLookupState ctxt, Set<ObjectID> oids) {
+    oids.add(ctxt.getLookupID());
+    ObjectID parent = ctxt.getParentID();
+    if (!parent.isNull()) {
+      // XXX:: This is a hacky way to let the L2 know about the parent but works for now.
+      oids.add(parent);
+    }
+    return oids;
+  }
+
+  private void sendRequestNow(ObjectRequestID requestID, Set<ObjectID> oids, int requestDepth) {
+    RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(requestID, oids, requestDepth);
+    rmom.send();
+  }
+
+  private RequestManagedObjectMessage createRequestManagedObjectMessage(ObjectRequestID requestID, Set<ObjectID> oids,
+                                                                        int requestDepth) {
+    RequestManagedObjectMessage rmom = this.rmomFactory.newRequestManagedObjectMessage(this.groupID);
+    if (this.removeObjects.isEmpty()) {
+      rmom.initialize(requestID, oids, requestDepth, TCCollections.EMPTY_OBJECT_ID_SET);
+    } else {
+      rmom.initialize(requestID, oids, requestDepth, this.removeObjects);
       this.removeObjects = new ObjectIDSet();
     }
     return rmom;
@@ -284,7 +354,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     if (!this.rootRequests.containsKey(name)) {
       RequestRootMessage rrm = createRootMessage(name);
       this.rootRequests.put(name, ObjectID.NULL_ID);
-      this.outstandingRootRequests.put(name, name);
       rrm.send();
     }
 
@@ -301,7 +370,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     }
     Util.selfInterruptIfNeeded(isInterrupted);
 
-    return (ObjectID) (this.rootRequests.containsKey(name) ? this.rootRequests.get(name) : ObjectID.NULL_ID);
+    return (this.rootRequests.containsKey(name) ? this.rootRequests.get(name) : ObjectID.NULL_ID);
   }
 
   private RequestRootMessage createRootMessage(final String name) {
@@ -317,12 +386,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     } else {
       this.rootRequests.put(name, id);
     }
-    Object rootName = this.outstandingRootRequests.remove(name);
-    if (rootName == null) {
-      // This is possible in some restart scenario
-      this.logger.warn("A root was added that was not found in the outstanding requests. root name = " + name + " "
-                       + id);
-    }
     notifyAll();
   }
 
@@ -333,8 +396,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       this.logger.warn("Ignoring DNA added from a different session: " + sessionID + ", " + this.sessionManager);
       return;
     }
-    this.lruDNA.clearUnrequestedDNA();
-    this.lruDNA.add(batchID, dnas);
+    this.lru.clearUnrequestedDNA();
+    this.lru.add(batchID, dnas);
     for (Iterator i = dnas.iterator(); i.hasNext();) {
       DNA dna = (DNA) i.next();
       // The server should not send us any objects that the server thinks we still have.
@@ -358,14 +421,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     }
     for (Iterator i = missingOIDs.iterator(); i.hasNext();) {
       ObjectID oid = (ObjectID) i.next();
-      boolean prefetched = removePreFetchInProgress(oid);
-      this.logger.warn("Received Missing Object ID from server : " + oid + " prefetched : " + prefetched);
-      if (prefetched) {
-        // Ignoring pre-fetch requests, as it could made under incorrect locking, reset the data structures
-        this.dnaRequests.remove(oid);
-        this.outstandingObjectRequests.remove(oid);
+      ObjectLookupState ols = this.objectLookupStates.get(oid);
+      this.logger.warn("Received Missing Object ID from server : " + oid + " ObjectLookup State : " + ols);
+      if (ols.isPrefetch()) {
+        // Ignoring prefetch requests, as it could made under incorrect locking, reset the data structures
+        this.objectLookupStates.remove(oid);
       } else {
-        this.missingObjectIDs.add(oid);
+        ols.makeMissingObject();
       }
     }
     notifyAll();
@@ -381,165 +443,191 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
 
   // Used only for testing
   synchronized int getDNACacheSize() {
-    return this.lruDNA.size();
+    return this.lru.size();
   }
 
   private void basicAddObject(final DNA dna) {
     ObjectID id = dna.getObjectID();
-    this.dnaRequests.put(id, dna);
-    this.outstandingObjectRequests.remove(id);
-    removePreFetchInProgress(id);
+    this.dnaCache.put(id, dna);
+    this.objectLookupStates.remove(id);
   }
 
   public synchronized void removed(final ObjectID id) {
-    this.dnaRequests.remove(id);
+    this.dnaCache.remove(id);
     this.removeObjects.add(id);
     if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
-      ObjectRequestContext ctxt = new ObjectRequestContextImpl(this.cip.getClientID(),
-                                                               new ObjectRequestID(this.objectRequestIDCounter++),
-                                                               new ObjectIDSet(), -1);
-      RequestManagedObjectMessage rmom = createRequestManagedObjectMessage(ctxt);
-      rmom.send();
+      sendRequestNow(getNextRequestID(), TCCollections.EMPTY_OBJECT_ID_SET, -1);
+    } else if (this.removeObjects.size() == 1 && !this.removeTaskScheduled) {
+      this.objectRequestTimer.schedule(new RemovedObjectTimer(), REMOVED_OBJECTS_SEND_TIMER);
+      this.removeTaskScheduled = true;
+
     }
   }
 
-  public synchronized boolean isPrefetched(final ObjectID id) {
-    return this.dnaRequests.get(id) != null;
+  public synchronized void sendRemovedObjects() {
+    this.removeTaskScheduled = false;
+    if (!this.removeObjects.isEmpty()) {
+      sendRequestNow(getNextRequestID(), TCCollections.EMPTY_OBJECT_ID_SET, -1);
+    }
   }
 
-  public class ObjectRequestContextImpl implements ObjectRequestContext {
+  public synchronized boolean isInDNACache(final ObjectID id) {
+    return this.dnaCache.get(id) != null;
+  }
 
-    private final long            timestamp;
+  private class SendPendingRequestsTimer extends TimerTask {
+    @Override
+    public void run() {
+      RemoteObjectManagerImpl.this.sendPendingRequests();
+    }
+  }
 
-    private final ObjectIDSet     objectIDs;
+  private class RemovedObjectTimer extends TimerTask {
+    @Override
+    public void run() {
+      RemoteObjectManagerImpl.this.sendRemovedObjects();
+    }
+  }
+
+  private static final class ObjectLookupState {
 
     private final ObjectRequestID requestID;
-
-    private final ClientID        clientID;
-
+    private final long            timestamp;
     private final int             depth;
+    private final ObjectID        lookupID;
+    private final ObjectID        parent;
+    private LookupState           state = LookupState.UNINITALIZED;
 
-    private final boolean         prefetch;
-
-    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID id,
-                             final int depth, final ObjectID parentContext) {
-      this(clientID, requestID, id, depth, parentContext, false);
-    }
-
-    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet objectIDs,
-                             final int depth) {
-      this(clientID, requestID, objectIDs, depth, false);
-    }
-
-    ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID, final ObjectID id,
-                             final int depth, final ObjectID parentContext, final boolean prefetch) {
-      this(clientID, requestID, new ObjectIDSet(), depth, prefetch);
-      this.objectIDs.add(id);
-      // XXX:: This is a hack for now. This parent context could be exposed to the L2 to make it more elegant.
-      if (!parentContext.isNull()) {
-        this.objectIDs.add(parentContext);
-      }
-    }
-
-    private ObjectRequestContextImpl(final ClientID clientID, final ObjectRequestID requestID,
-                                     final ObjectIDSet objectIDs, final int depth, boolean prefetch) {
+    ObjectLookupState(final ObjectRequestID requestID, final ObjectID id, final int depth, final ObjectID parent) {
+      this.lookupID = id;
+      this.parent = parent;
       this.timestamp = System.currentTimeMillis();
-      this.clientID = clientID;
       this.requestID = requestID;
-      this.objectIDs = objectIDs;
       this.depth = depth;
-      this.prefetch = false;
     }
 
-    public ClientID getClientID() {
-      return this.clientID;
+    public ObjectID getParentID() {
+      return this.parent;
+    }
+
+    public ObjectID getLookupID() {
+      return this.lookupID;
     }
 
     public ObjectRequestID getRequestID() {
       return this.requestID;
     }
 
-    public ObjectIDSet getRequestedObjectIDs() {
-      return this.objectIDs;
-    }
-
     public int getRequestDepth() {
       return this.depth;
     }
 
-    public boolean isPrefetched() {
-      return this.prefetch;
+    public void makeLookupRequest() {
+      this.state = this.state.makeLookupRequest();
+    }
+
+    public void makePrefetchRequest() {
+      this.state = this.state.makePrefetchRequest();
+    }
+
+    public void makePending() {
+      this.state = this.state.makePending();
+    }
+
+    public void makeUnPending() {
+      this.state = this.state.makeUnPending();
+    }
+
+    public void makeMissingObject() {
+      this.state = this.state.makeMissingObject();
+    }
+
+    public boolean isPrefetch() {
+      return this.state.isPrefetch();
+    }
+
+    public boolean isMissing() {
+      return this.state.isMissing();
+    }
+
+    public boolean isPending() {
+      return this.state.isPending();
     }
 
     @Override
     public String toString() {
-      return getClass().getName() + "[" + new Date(this.timestamp) + ", requestID =" + this.requestID + ", objectIDs ="
-             + this.objectIDs + ", depth = " + this.depth + ", prefetched = " + this.prefetch + "]";
+      return getClass().getName() + "[" + new Date(this.timestamp) + ", requestID =" + this.requestID + ", lookupID ="
+             + this.lookupID + ", parent = " + this.parent + ", depth = " + this.depth + ", state = " + this.state
+             + "]";
     }
   }
 
-  private class DNALRU {
-    // TODO:: These two data structure can be merged to one with into a LinkedHashMap with some marker object to
-    // identify buckets
-    private final LinkedHashMap dnas         = new LinkedHashMap();
-    private final HashMap       oids2BatchID = new HashMap();
+  private class LRUCache {
+    private final HashMap<ObjectID, Long>            lruOids = new HashMap<ObjectID, Long>();
+    private final LinkedHashMap<Long, Set<ObjectID>> batches = new LinkedHashMap<Long, Set<ObjectID>>();
 
-    public synchronized int size() {
-      return this.dnas.size();
+    public int size() {
+      return this.lruOids.size();
     }
 
-    public synchronized void clear() {
-      this.dnas.clear();
-      this.oids2BatchID.clear();
+    public void clear() {
+      this.lruOids.clear();
+      this.batches.clear();
     }
 
-    public synchronized void add(final long batchID, final Collection objs) {
-      Long key = new Long(batchID);
-      Map m = (Map) this.dnas.get(key);
-      if (m == null) {
-        m = new THashMap(objs.size() * 2, 0.8f);
-        this.dnas.put(key, m);
-      }
+    public void add(final long batchID, final Collection objs) {
+      Long batch = new Long(batchID);
+      Set<ObjectID> oids = getOrCreateSetForBatch(batch);
       for (Iterator i = objs.iterator(); i.hasNext();) {
         DNA dna = (DNA) i.next();
-        m.put(dna.getObjectID(), dna);
-        this.oids2BatchID.put(dna.getObjectID(), key);
+        ObjectID oid = dna.getObjectID();
+        oids.add(oid);
+        Long old = this.lruOids.put(oid, batch);
+        if (old != null) { throw new AssertionError("Old Entry present for :" + dna + " old : " + old); }
       }
     }
 
-    public synchronized void remove(final ObjectID id) {
-      Long batchID = (Long) this.oids2BatchID.remove(id);
-      if (batchID != null) {
-        Map m = (Map) this.dnas.get(batchID);
-        Object dna = m.remove(id);
-        Assert.assertNotNull(dna);
-        if (m.isEmpty()) {
-          this.dnas.remove(batchID);
-        }
+    private Set<ObjectID> getOrCreateSetForBatch(Long batchID) {
+      Set<ObjectID> oids = this.batches.get(batchID);
+      if (oids == null) {
+        oids = new HashSet<ObjectID>();
+        this.batches.put(batchID, oids);
+      }
+      return oids;
+    }
+
+    public void remove(final ObjectID id) {
+      Long batchID = this.lruOids.remove(id);
+      if (batchID == null) { return; }
+
+      Set<ObjectID> oids = this.batches.get(batchID);
+      oids.remove(id);
+      if (oids.isEmpty()) {
+        this.batches.remove(batchID);
       }
     }
 
-    public synchronized void clearUnrequestedDNA() {
-      if (this.dnas.size() > MAX_LRU) {
-        Iterator dnaMapIterator = this.dnas.values().iterator();
-        Map dnaMap = (Map) dnaMapIterator.next();
-        int removedDNACount = dnaMap.size();
-        for (Iterator i = dnaMap.keySet().iterator(); i.hasNext();) {
-          ObjectID id = (ObjectID) i.next();
-          if (!RemoteObjectManagerImpl.this.outstandingObjectRequests.containsKey(id)) {
-            // only include this ID in the removed set if this DNA has never left the request map.
-            // If it has left the map, this client is actually be referencing this object
-            if (RemoteObjectManagerImpl.this.dnaRequests.containsKey(id)) {
-              removed(id);
-            }
-          }
-          this.oids2BatchID.remove(id);
+    public void clearUnrequestedDNA() {
+      if (this.batches.isEmpty() || this.batches.size() <= MAX_LRU) { return; }
+      Set<ObjectID> oidsToRemove = removeFirstBatchToClear();
+
+      for (ObjectID oid : oidsToRemove) {
+        if (!RemoteObjectManagerImpl.this.objectLookupStates.containsKey(oid)) {
+          removed(oid);
         }
-        dnaMapIterator.remove();
-        if (ENABLE_LOGGING) {
-          RemoteObjectManagerImpl.this.logger.info("DNA LRU remove 1 map containing " + removedDNACount + " DNAs");
-        }
+        this.lruOids.remove(oid);
       }
+
+      if (ENABLE_LOGGING) {
+        RemoteObjectManagerImpl.this.logger.info("DNA LRU remove 1 batch containing " + oidsToRemove.size() + " DNAs");
+      }
+    }
+
+    private Set<ObjectID> removeFirstBatchToClear() {
+      Iterator<Entry<Long, Set<ObjectID>>> i = this.batches.entrySet().iterator();
+      Set<ObjectID> oidsToRemove = i.next().getValue();
+      i.remove();
+      return oidsToRemove;
     }
   }
 }

@@ -250,7 +250,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public void addAllLocksTo(final LockInfoByThreadID lockInfo) {
     if (this.lockManager != null) {
-      for (ClientServerExchangeLockContext c : lockManager.getAllLockContexts()) {
+      for (ClientServerExchangeLockContext c : this.lockManager.getAllLockContexts()) {
         switch (c.getState().getType()) {
           case GREEDY_HOLDER:
           case HOLDER:
@@ -464,8 +464,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(RemoteObjectManager.class)), this.channel, new NullObjectRequestMonitor(), faultCount,
-                                   sessionManager);
+            .getLogger(RemoteObjectManager.class)), this.channel, faultCount, sessionManager);
 
     this.objectManager = this.dsoClientBuilder.createObjectManager(remoteObjectManager, this.config, idProvider,
                                                                    new ClockEvictionPolicy(-1), this.runtimeLogger,
@@ -509,18 +508,20 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .getInstrumentationLogger(), this.config.rawConfigText(), this, this.config.getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
-    //Setup the lock manager
+    // Setup the lock manager
     ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
     this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
         .getClientIDProvider(), TCLogging.getLogger(ClientLockManager.class)), sessionManager, lockStatManager,
-                                                               this.channel.getLockRequestMessageFactory(), threadIDManager, gtxManager,
-                                                               new ClientLockManagerConfigImpl(this.l1Properties.getPropertiesFor("lockmanager")));
+                                                               this.channel.getLockRequestMessageFactory(),
+                                                               this.threadIDManager, gtxManager,
+                                                               new ClientLockManagerConfigImpl(this.l1Properties
+                                                                   .getPropertiesFor("lockmanager")));
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
 
     // Setup the transaction manager
-    this.txManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(),
-                                                      this.objectManager, txFactory, lockManager,
-                                                      this.rtxManager, this.runtimeLogger, txnCounter);
+    this.txManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(), this.objectManager,
+                                                      txFactory, this.lockManager, this.rtxManager, this.runtimeLogger,
+                                                      txnCounter);
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.txManager));
 
@@ -547,7 +548,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     Stage transactionResponse = stageManager.createStage(ClientConfigurationContext.RECEIVE_TRANSACTION_COMPLETE_STAGE,
                                                          new ReceiveTransactionCompleteHandler(), 1, maxSize);
     Stage hydrateStage = stageManager.createStage(ClientConfigurationContext.HYDRATE_MESSAGE_STAGE,
-                                                  new HydrateHandler(), channel.getGroupIDs().length, 1, maxSize);
+                                                  new HydrateHandler(), this.channel.getGroupIDs().length, 1, maxSize);
     Stage batchTxnAckStage = stageManager.createStage(ClientConfigurationContext.BATCH_TXN_ACK_STAGE,
                                                       new BatchTransactionAckHandler(), 1, maxSize);
 
@@ -746,7 +747,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   public ClientLockManager getLockManager() {
     return this.lockManager;
   }
-  
+
   public ClientObjectManager getObjectManager() {
     return this.objectManager;
   }

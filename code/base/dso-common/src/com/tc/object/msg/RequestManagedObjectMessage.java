@@ -9,7 +9,7 @@ import com.tc.lang.Recyclable;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
-import com.tc.object.ObjectRequestContext;
+import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext;
 import com.tc.util.ObjectIDSet;
 
@@ -19,7 +19,8 @@ public interface RequestManagedObjectMessage extends ObjectRequestServerContext,
 
   public ObjectIDSet getRemoved();
 
-  public void initialize(ObjectRequestContext ctxt, Set<ObjectID> requestedObjectIDs, ObjectIDSet removedIDs);
+  public void initialize(ObjectRequestID requestID, Set<ObjectID> requestedObjectIDs, int requestDepth,
+                         ObjectIDSet removeObjects);
 
   public void send();
 

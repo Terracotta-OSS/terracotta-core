@@ -59,8 +59,7 @@ public interface DSOClientBuilder {
   ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                final ObjectRequestMonitor objectRequestMonitor, final int faultCount,
-                                                final SessionManager sessionManager);
+                                                final int faultCount, final SessionManager sessionManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,
@@ -87,7 +86,7 @@ public interface DSOClientBuilder {
 
   @Deprecated
   ClientLockStatManager createLockStatsManager();
-  
+
   RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
                                                           final DNAEncoding encoding,
                                                           final FoldingConfig foldingConfig,

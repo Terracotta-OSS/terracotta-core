@@ -35,7 +35,7 @@ public interface RemoteObjectManager extends ClientHandshakeCallback {
 
   public void clear();
 
-  public boolean isPrefetched(ObjectID id);
+  public boolean isInDNACache(ObjectID id);
 
   public void preFetchObject(ObjectID id);
 }

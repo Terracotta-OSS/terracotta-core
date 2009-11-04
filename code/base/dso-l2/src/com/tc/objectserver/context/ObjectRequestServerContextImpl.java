@@ -19,18 +19,16 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
   private final String              requestingThreadName;
   private final int                 requestDepth;
   private final boolean             serverInitiated;
-  private final boolean             isPrefetched;
 
   public ObjectRequestServerContextImpl(ClientID requestNodeID, ObjectRequestID objectRequestID,
                                         SortedSet<ObjectID> lookupObjectIDs, String requestingThreadName,
-                                        int requestDepth, boolean serverInitiated, boolean isPrefetched) {
+                                        int requestDepth, boolean serverInitiated) {
     this.requestDepth = requestDepth;
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;
     this.lookupIDs = lookupObjectIDs;
     this.requestingThreadName = requestingThreadName;
     this.serverInitiated = serverInitiated;
-    this.isPrefetched = isPrefetched;
   }
 
   /**
@@ -58,10 +56,6 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
 
   public boolean isServerInitiated() {
     return this.serverInitiated;
-  }
-
-  public boolean isPrefetched() {
-    return this.isPrefetched;
   }
 
   public Object getKey() {

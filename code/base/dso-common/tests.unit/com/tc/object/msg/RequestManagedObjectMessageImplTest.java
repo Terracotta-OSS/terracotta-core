@@ -41,7 +41,7 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
                                                                               channel, type);
     ObjectIDSet oids = new ObjectIDSet();
     oids.add(id);
-    msg.initialize(ctxt, oids, removedIDs);
+    msg.initialize(ctxt.getRequestID(), oids, ctxt.getRequestDepth(), removedIDs);
 
     msg.dehydrate();
 
@@ -80,10 +80,6 @@ public class RequestManagedObjectMessageImplTest extends TCTestCase {
 
     public int getRequestDepth() {
       return 10;
-    }
-
-    public boolean isPrefetched() {
-      return false;
     }
   }
 }

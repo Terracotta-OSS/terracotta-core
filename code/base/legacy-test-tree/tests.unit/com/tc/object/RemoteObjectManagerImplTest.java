@@ -43,7 +43,6 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
   RemoteObjectManagerImpl                        manager;
   ThreadGroup                                    threadGroup;
-  private ClientIDProvider                       cidProvider;
   private TestRequestRootMessageFactory          rrmf;
   private TestRequestManagedObjectMessageFactory rmomf;
   private RetrieverThreads                       rt;
@@ -54,7 +53,6 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     super.setUp();
     TestChannelIDProvider channelIDProvider = new TestChannelIDProvider();
     channelIDProvider.channelID = new ChannelID(1);
-    this.cidProvider = new ClientIDProviderImpl(channelIDProvider);
     this.rmomf = new TestRequestManagedObjectMessageFactory();
     newRmom();
     this.rrmf = new TestRequestRootMessageFactory();
@@ -62,8 +60,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
 
     this.threadGroup = new ThreadGroup(getClass().getName());
     this.groupID = new GroupID(0);
-    this.manager = new RemoteObjectManagerImpl(this.groupID, new NullTCLogger(), this.cidProvider, this.rrmf,
-                                               this.rmomf, new NullObjectRequestMonitor(), 500,
+    this.manager = new RemoteObjectManagerImpl(this.groupID, new NullTCLogger(), this.rrmf, this.rmomf, 500,
                                                new NullSessionManager());
     this.rt = new RetrieverThreads(Thread.currentThread().getThreadGroup(), this.manager);
   }
@@ -397,9 +394,6 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     Set oids = new HashSet();
     oids.add(objectID);
     assertTrue(rmom.initializeQueue.isEmpty());
-    ObjectRequestContext ctxt = (ObjectRequestContext) initArgs[0];
-    assertEquals(this.cidProvider.getClientID(), ctxt.getClientID());
-    assertEquals(oids, ctxt.getRequestedObjectIDs());
     // The object id in the request
     assertEquals(oids, initArgs[1]);
     // The proper set of removed object ids
@@ -559,9 +553,10 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
-      this.objectIDs = oids;
-      this.initializeQueue.put(new Object[] { ctxt, oids, removedIDs });
+    public void initialize(ObjectRequestID requestID, Set<ObjectID> requestedObjectIDs, int requestDepth,
+                           ObjectIDSet removeObjects) {
+      this.objectIDs = requestedObjectIDs;
+      this.initializeQueue.put(new Object[] { requestID, requestedObjectIDs, removeObjects });
     }
 
     public void send() {
@@ -593,10 +588,6 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     }
 
     public ClientID getClientID() {
-      throw new ImplementMe();
-    }
-
-    public boolean isPrefetched() {
       throw new ImplementMe();
     }
 

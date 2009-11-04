@@ -119,10 +119,10 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
   }
 
   public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, boolean isPrefetched,
-                          int maxRequestDepth) {
+                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+
     this.delegate.sendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, isServerInitiated,
-                              isPrefetched, maxRequestDepth);
+                              maxRequestDepth);
 
   }
 

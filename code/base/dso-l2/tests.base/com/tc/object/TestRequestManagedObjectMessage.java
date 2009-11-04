@@ -44,7 +44,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     this.removed = rm;
   }
 
-  public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
+  public void initialize(ObjectRequestID rID, Set<ObjectID> requestedObjectIDs, int requestDepth,
+                         ObjectIDSet removeObjects) {
     //
   }
 
@@ -80,11 +81,8 @@ public class TestRequestManagedObjectMessage implements RequestManagedObjectMess
     return new ClientID(0);
   }
 
-  public boolean isPrefetched() {
-    return false;
-  }
-
   public Object getKey() {
     return this.channel.getRemoteNodeID();
   }
+
 }

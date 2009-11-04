@@ -13,7 +13,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
-import com.tc.object.ObjectRequestContext;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.session.SessionID;
 import com.tc.util.ObjectIDSet;
@@ -29,14 +28,12 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
   private final static byte REQUEST_ID                 = 4;
   private final static byte REQUEST_DEPTH_ID           = 5;
   private final static byte REQUESTING_THREAD_NAME     = 6;
-  private final static byte REQUEST_PREFETCH           = 7;
 
   private final ObjectIDSet objectIDs                  = new ObjectIDSet();
   private ObjectIDSet       removed                    = new ObjectIDSet();
   private ObjectRequestID   requestID;
   private int               requestDepth;
   private String            threadName;
-  private boolean           prefetch;
 
   public RequestManagedObjectMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                          MessageChannel channel, TCMessageType type) {
@@ -61,7 +58,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     }
     putNVPair(REQUEST_ID, this.requestID.toLong());
     putNVPair(REQUEST_DEPTH_ID, this.requestDepth);
-    putNVPair(REQUEST_PREFETCH, this.prefetch);
     putNVPair(REQUESTING_THREAD_NAME, this.threadName);
   }
 
@@ -79,9 +75,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
         return true;
       case REQUEST_DEPTH_ID:
         this.requestDepth = getIntValue();
-        return true;
-      case REQUEST_PREFETCH:
-        this.prefetch = getBooleanValue();
         return true;
       case REQUESTING_THREAD_NAME:
         this.threadName = getStringValue();
@@ -103,12 +96,11 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
     return this.removed;
   }
 
-  public void initialize(ObjectRequestContext ctxt, Set<ObjectID> oids, ObjectIDSet removedIDs) {
-    this.requestID = ctxt.getRequestID();
-    this.objectIDs.addAll(oids);
-    this.removed = removedIDs;
-    this.requestDepth = ctxt.getRequestDepth();
-    this.prefetch = ctxt.isPrefetched();
+  public void initialize(ObjectRequestID rid, Set<ObjectID> requestedObjectIDs, int depth, ObjectIDSet removeObjects) {
+    this.requestID = rid;
+    this.objectIDs.addAll(requestedObjectIDs);
+    this.removed = removeObjects;
+    this.requestDepth = depth;
     this.threadName = Thread.currentThread().getName();
   }
 
@@ -126,10 +118,6 @@ public class RequestManagedObjectMessageImpl extends DSOMessageBase implements E
 
   public ClientID getClientID() {
     return (ClientID) getSourceNodeID();
-  }
-
-  public boolean isPrefetched() {
-    return this.prefetch;
   }
 
   public Object getKey() {

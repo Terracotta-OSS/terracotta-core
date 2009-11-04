@@ -88,19 +88,19 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
           || includeDmi) {
         this.transactionManager.addWaitingForAcknowledgement(committerID, txnID, clientID);
-        
+
         // check here if the client is already not disconnected
         // if it is then we remove the clientID from the list of clients to acknowledge back
         // otherwise the committerID will never receive the acknowledgment from the server
-        if(client.isClosed()) {
+        if (client.isClosed()) {
           this.transactionManager.acknowledgement(committerID, txnID, clientID);
           continue;
         }
-        
+
         if (lookupObjectIDs.size() > 0) {
           this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
                                                                                lookupObjectIDs, Thread.currentThread()
-                                                                                   .getName(), -1, true, true));
+                                                                                   .getName(), -1, true));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
         BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
