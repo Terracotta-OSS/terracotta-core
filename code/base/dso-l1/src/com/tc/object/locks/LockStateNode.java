@@ -326,7 +326,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       
       this.reacquires = new Stack<PendingLockHold>();
       for (LockHold hold : holds) {
-        reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), waitObject, ClientLockImpl.BLOCKING_LOCK));
+        reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), this.waitObject, ClientLockImpl.BLOCKING_LOCK));
       }
       
       this.waitTime = timeout;

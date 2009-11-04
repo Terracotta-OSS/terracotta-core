@@ -145,19 +145,16 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
     Collection<LockWaiter> waiters = new ArrayList<LockWaiter>();
     
     synchronized (this) {
+      if (!isLockedBy(thread, WRITE_LEVELS)) {
+        throw new IllegalMonitorStateException();
+      }
+      
       if (greediness.isFree()) {
         //other L1s may be waiting (let server decide who to notify)
         result = true;
       } else {
-        boolean lockHeld = false;
         for (LockStateNode s : this) {
-          if ((s instanceof LockHold) && s.getOwner().equals(thread) && ((LockHold) s).getLockLevel().isWrite()) {
-            lockHeld = true;
-          }
           if (s instanceof LockWaiter) {
-            if (!lockHeld) {
-              throw new IllegalMonitorStateException();
-            }
             // move this waiters reacquire nodes into the queue - we must do this before returning to ensure transactional correctness on notifies.
             LockWaiter waiter = (LockWaiter) s;
             waiters.add(waiter);
@@ -739,6 +736,7 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
 
       if (s instanceof LockHold && s.getOwner().equals(unlock.getOwner())) {
         if (((LockHold) s).getLockLevel().isWrite()) return false;
+        if (unlock.getLockLevel().isRead()) return false;
       }
     }
     return true;
