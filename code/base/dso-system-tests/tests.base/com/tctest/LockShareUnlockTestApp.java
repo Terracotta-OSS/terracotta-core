@@ -52,8 +52,7 @@ public class LockShareUnlockTestApp extends AbstractErrorCatchingTransparentApp 
 
     System.out.println(Thread.currentThread().getName() + ": Waiting for client to finish.");
     int exitCode = client.waitFor();
-    Assert.assertEquals("Client exit code", 255, exitCode);
-    System.out.println("###### Client terminated correctly (exitCode=" + exitCode + ")");
+    Assert.assertTrue("Client terminated with failure", exitCode != 0);
   }
   
   public static void main(String[] args) {
