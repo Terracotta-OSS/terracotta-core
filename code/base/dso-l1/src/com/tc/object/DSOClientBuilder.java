@@ -51,7 +51,7 @@ public interface DSOClientBuilder {
 
   CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                     final NetworkStackHarnessFactory stackHarnessFactory,
-                                                    final ConnectionPolicy connectionPolicy,
+                                                    final ConnectionPolicy connectionPolicy, int workerCommThreads,
                                                     final HealthCheckerConfig hcConfig);
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch);

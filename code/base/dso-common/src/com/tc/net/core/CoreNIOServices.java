@@ -652,9 +652,15 @@ class CoreNIOServices extends Thread implements TCListenerEventListener, TCConne
     connection.addListener(this);
   }
 
-  /*
-   * Immediately after Client handshake, weight is added on that particular client connection. MainComm thread hands
-   * over this connection to a WorkerComm thread. Weights can be added to client connections whenever needed.
+  /**
+   * Change thread ownership of a connection or upgrade weight. Should be called only after reading a complete message
+   * from a connection
+   * 
+   * @param connection : connection which has to be transfered from the main selector thread to a new worker comm thread
+   *        that has the least weight. If the connection is already managed by a comm thread, then just update
+   *        connection's weight.
+   * @param addWeightBy : upgrade weight of connection
+   * @param channel : SocketChannel for the passed in connection
    */
   public synchronized void addWeight(final TCConnectionJDK14 connection, final int addWeightBy,
                                      final SocketChannel channel) {
@@ -665,7 +671,6 @@ class CoreNIOServices extends Thread implements TCListenerEventListener, TCConne
       this.managedConnectionsMap.put(connection, this.clientWeights);
     } else {
       // MainComm Thread
-
       if (workerCommMgr == null) {
         // no worker comms.
         return;
@@ -675,21 +680,10 @@ class CoreNIOServices extends Thread implements TCListenerEventListener, TCConne
       removeWriteInterest(connection, channel);
       unregister(channel);
 
-      Runnable task = new Runnable() {
-        public void run() {
-          final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
-          connection.setCommWorker(workerCommThread);
-          workerCommThread.addConnection(connection, addWeightBy);
-          workerCommThread.requestReadWriteInterest(connection, channel);
-        }
-      };
-
-      // we are at a message boundary. right time to set a new worker thread.
-
-      // adding task to its own queue. Ensuring this connection's protocol adaptor is in right state before giving it to
-      // other thread. This can also be done by making protocol adapters fire events on each message boundary (ie.,
-      // after addReadData detected full message) and then doing WorkerComm transfer in the event.
-      addSelectorTask(task);
+      final CoreNIOServices workerCommThread = workerCommMgr.getNextWorkerComm();
+      connection.setCommWorker(workerCommThread);
+      workerCommThread.addConnection(connection, addWeightBy);
+      workerCommThread.requestReadWriteInterest(connection, channel);
     }
   }
 
