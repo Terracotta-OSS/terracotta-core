@@ -417,9 +417,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    */
   public void preFetchObject(ObjectID id) {
     synchronized (this) {
-      if (basicHasLocal(id)) { return; }
+      if (basicHasLocal(id) || getObjectLatchState(id) != null) { return; }
+      // We are temporarily marking lookup in progress so that no other thread sneaks in under us and does a lookup
+      // while we are calling prefetch
+      markLookupInProgress(id);
     }
     this.remoteObjectManager.preFetchObject(id);
+    synchronized (this) {
+      lookupDone(id, false);
+      notifyAll();
+    }
   }
 
   public Object lookupObjectNoDepth(final ObjectID id) throws ClassNotFoundException {
@@ -500,12 +507,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       ObjectLatchState ols;
       synchronized (this) {
         while (true) {
-          ols = getObjectLatchState(id);
           obj = basicLookupByID(id);
           if (obj != null) {
             // object exists in local cache
             return obj;
-          } else if (ols != null && ols.isCreateState()) {
+          }
+          ols = getObjectLatchState(id);
+          if (ols != null && ols.isCreateState()) {
             // if the object is being created, add to the wait set and return the object
             lookupContext.getObjectLatchWaitSet().add(ols);
             return ols.getObject();
@@ -905,11 +913,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private TCObject basicLookup(final Object obj) {
-    if (obj == null) return null;
+    if (obj == null) { return null; }
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
 
-    synchronized (pojoToManaged) {
+    synchronized (this.pojoToManaged) {
       return (TCObject) this.pojoToManaged.get(obj);
     }
   }
