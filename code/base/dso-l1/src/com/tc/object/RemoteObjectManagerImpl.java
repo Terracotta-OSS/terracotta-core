@@ -240,8 +240,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
         isInterrupted = true;
       }
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
+    this.objectLookupStates.remove(id);
     this.lru.remove(id);
+    Util.selfInterruptIfNeeded(isInterrupted);
     increamentStatsAndLogIfNecessary(inMemory);
     return dna;
   }
@@ -263,15 +264,19 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   }
 
   /**
-   * basicRetrieve and preFetch can call this method, the ctxt gets added to the map here.
+   * basicRetrieve and preFetch can call this method, the lookupState gets added to the map here.
    */
-  private void sendRequest(final ObjectLookupState ctxt) {
-    ObjectLookupState old = this.objectLookupStates.put(ctxt.getLookupID(), ctxt);
+  private void sendRequest(final ObjectLookupState lookupState) {
+    ObjectLookupState old = this.objectLookupStates.put(lookupState.getLookupID(), lookupState);
     Assert.assertNull(old);
-    if (this.objectLookupStates.size() <= MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY) {
-      sendRequestNow(ctxt);
+    int size = this.objectLookupStates.size();
+    if(size % 5000 == 4999) {
+      logger.warn("Too many pending requests in the system : objectLookup states size : " + size + " dna Cache size : " + dnaCache.size());
+    }
+    if (size <= MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY) {
+      sendRequestNow(lookupState);
     } else {
-      scheduleRequestForLater(ctxt);
+      scheduleRequestForLater(lookupState);
     }
   }
 
@@ -449,7 +454,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
   private void basicAddObject(final DNA dna) {
     ObjectID id = dna.getObjectID();
     this.dnaCache.put(id, dna);
-    this.objectLookupStates.remove(id);
+    ObjectLookupState ols = this.objectLookupStates.get(id);
+    if(ols != null && ols.isPrefetch()) {
+      // Prefetched requests are removed from the lookupState map so it can be removed from the cache if it is not used within a certain time.
+      this.objectLookupStates.remove(id);
+    }
   }
 
   public synchronized void removed(final ObjectID id) {
