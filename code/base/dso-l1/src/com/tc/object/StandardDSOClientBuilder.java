@@ -76,7 +76,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   public CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                            final NetworkStackHarnessFactory stackHarnessFactory,
-                                                           final ConnectionPolicy connectionPolicy, int commThread,
+                                                           final ConnectionPolicy connectionPolicy,
                                                            final HealthCheckerConfig aConfig) {
     return new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_CLIENT, monitor, stackHarnessFactory,
                                          connectionPolicy, aConfig);
