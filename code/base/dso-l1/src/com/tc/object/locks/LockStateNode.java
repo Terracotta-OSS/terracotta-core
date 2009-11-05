@@ -233,7 +233,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     }
         
     public String toString() {
-      return super.toString() + " : " + level;
+      return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded() + ", refused=" + isRefused();
     }
     
     @Override

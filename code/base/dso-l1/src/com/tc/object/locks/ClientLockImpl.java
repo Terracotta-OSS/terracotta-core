@@ -1108,7 +1108,7 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
   public synchronized String toString() {
     StringBuilder sb = new StringBuilder();
     
-    sb.append("SynchronizedClientLock : ").append(lock).append('\n');
+    sb.append("ClientLockImpl : ").append(lock).append('\n');
     sb.append("GC Cycle Count : ").append(gcCycleCount).append('\n');
     sb.append("Greediness : ").append(greediness).append('\n');
     sb.append("State:").append('\n');
