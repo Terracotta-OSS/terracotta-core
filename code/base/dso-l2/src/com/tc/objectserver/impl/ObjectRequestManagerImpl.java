@@ -167,9 +167,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     if (!messageMap.isEmpty()) {
       boolean requestDebug = this.objectStatsRecorder.getRequestDebug();
 
-      for (Iterator<Map.Entry<ClientID, Set<ObjectID>>> i = clientNewIDsMap.entrySet().iterator(); i.hasNext();) {
-        Map.Entry<ClientID, Set<ObjectID>> entry = i.next();
-        final boolean isLast = !i.hasNext();
+      for (Entry<ClientID, Set<ObjectID>> entry : clientNewIDsMap.entrySet()) {
         ClientID clientID = entry.getKey();
         Set newIDs = entry.getValue();
         BatchAndSend batchAndSend = messageMap.get(clientID);
@@ -182,11 +180,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
               updateStats(mo);
             }
           }
-          if (isLast) {
-            this.objectManager.releaseReadOnly(mo);
-          }
         }
       }
+      this.objectManager.releaseAllReadOnly(objectsInOrder);
 
       if (!missingObjectIDs.isEmpty()) {
         if (isServerInitiated) {
@@ -212,9 +208,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       }
     } else {
       // no connected clients to send to
-      for (Iterator i = objectsInOrder.iterator(); i.hasNext();) {
-        this.objectManager.releaseReadOnly((ManagedObject) i.next());
-      }
+      this.objectManager.releaseAllReadOnly(objectsInOrder);
     }
   }
 
