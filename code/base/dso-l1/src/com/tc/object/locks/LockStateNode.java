@@ -146,6 +146,8 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     private volatile boolean awarded   = false;
     private volatile boolean delegates = true;
     
+    private volatile String delegationMethod = "Not Delegated";
+    
     PendingLockHold(ThreadID owner, LockLevel level, long timeout) {
       super(owner);
       this.javaThread = Thread.currentThread();
@@ -232,8 +234,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return (5 * super.hashCode()) ^ (7 * level.hashCode());
     }
         
+    void setDelegationMethod(String method) {
+      delegationMethod = method;
+    }
+    
     public String toString() {
-      return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded() + ", refused=" + isRefused();
+      return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded() + ", refused=" + isRefused() + ", " + delegationMethod;
     }
     
     @Override
