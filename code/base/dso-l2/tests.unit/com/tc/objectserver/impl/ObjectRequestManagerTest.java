@@ -929,7 +929,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void releaseAllReadOnly(Collection<ManagedObject> objects) {
-      throw new NotImplementedException(TestObjectManager.class);
+      // To Nothing
     }
 
     public void setGarbageCollector(GarbageCollector gc) {
