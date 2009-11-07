@@ -10,6 +10,7 @@ import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.util.Assert;
 import com.tc.util.SynchronizedSinglyLinkedList;
 
 import java.util.ArrayList;
@@ -25,11 +26,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> implements ClientLock {
-  private static final LockFlushCallback NULL_LOCK_FLUSH_CALLBACK = new LockFlushCallback() {
-    public void transactionsForLockFlushed(LockID id) {
-      //
-    }
-  };
   
   private static final Set<LockLevel> WRITE_LEVELS  = EnumSet.of(LockLevel.WRITE, LockLevel.SYNCHRONOUS_WRITE);  
   private static final Set<LockLevel> READ_LEVELS   = EnumSet.of(LockLevel.READ);  
@@ -283,7 +279,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
     switch (greediness) {
       case GARBAGE:
-        return Collections.emptyList();
+      case GARBAGE_COLLECTING:
+        break;
       default:
         ClientServerExchangeLockContext c = greediness.toContext(lock, client);
         if (c != null) contexts.add(c);
@@ -1032,10 +1029,10 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           greediness = ClientGreediness.GARBAGE;
           return true;
         } else {
-          greediness = ClientGreediness.GARBAGE;
-          if (remote.isTransactionsForLockFlushed(lock, NULL_LOCK_FLUSH_CALLBACK)) {
+          greediness = ClientGreediness.GARBAGE_COLLECTING;
+          if (remote.isTransactionsForLockFlushed(lock, null)) {
             if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : doing lock gc recall commit " + greediness);
-            recallCommit(remote);
+            greediness = recallCommit(remote);
             return true;
           }
         }
@@ -1049,7 +1046,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     
     synchronized (this) {
       if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : doing lock gc recall commit " + greediness);
-      recallCommit(remote);
+      greediness = recallCommit(remote);
       return true;
     }
   }  

@@ -12,7 +12,7 @@ enum ClientGreediness {
     }
     
     boolean isFree() {
-      return false;
+      return true;
     }
     
     boolean isRecalled() {
@@ -29,6 +29,49 @@ enum ClientGreediness {
 
     boolean isRecallInProgress() {
       return false;
+    }
+    
+    @Override
+    ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
+      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
+    }
+    
+    ClientGreediness recalled(ClientLock clientLock, int lease) {
+      return this;
+    }
+
+    ClientGreediness recallCommitted() {
+      return GARBAGE;
+    }
+    
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
+      throw new AssertionError("Garbage locks have no exchange context representation.");
+    }
+  },
+  
+  GARBAGE_COLLECTING {
+    boolean canAward(LockLevel level) {
+      return false;
+    }
+    
+    boolean isFree() {
+      return false;
+    }
+    
+    boolean isRecalled() {
+      return false;
+    }
+    
+    boolean isGreedy() {
+      return false;
+    }
+    
+    boolean flushOnUnlock() {
+      return true;
+    }
+
+    boolean isRecallInProgress() {
+      return true;
     }
     
     @Override

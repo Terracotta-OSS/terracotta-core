@@ -239,12 +239,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         return true;
       } else {
         // register for call back
-        Object prev = this.lockFlushCallbacks.put(lockID, callback);
-        if (prev != null) {
-          // Will this scenario come up in server restart scenario ? It should as we check for greediness in the Lock
-          // Manager before making this call
-          throw new TCAssertionError("There is already a registered call back on Lock Flush for this lock ID - "
-                                     + lockID);
+        if (callback != null) {
+          Object prev = this.lockFlushCallbacks.put(lockID, callback);
+          if (prev != null) {
+            // Will this scenario come up in server restart scenario ? It should as we check for greediness in the Lock
+            // Manager before making this call
+            throw new TCAssertionError("There is already a registered call back on Lock Flush for this lock ID - "
+                                       + lockID);
+          }
         }
         return false;
       }
