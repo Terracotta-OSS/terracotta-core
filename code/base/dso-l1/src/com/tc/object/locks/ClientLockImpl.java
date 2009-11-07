@@ -10,6 +10,7 @@ import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
+import com.tc.util.SynchronizedSinglyLinkedList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +24,7 @@ import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
 
-class ClientLockImpl extends ClientLockImplList implements ClientLock {
+class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> implements ClientLock {
   private static final LockFlushCallback NULL_LOCK_FLUSH_CALLBACK = new LockFlushCallback() {
     public void transactionsForLockFlushed(LockID id) {
       //
@@ -153,14 +154,14 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
         //other L1s may be waiting (let server decide who to notify)
         result = true;
       } else {
-        for (LockStateNode s : this) {
+        for (Iterator<LockStateNode> it = iterator(); it.hasNext();) {
+          LockStateNode s = it.next();
           if (s instanceof LockWaiter) {
+            it.remove();
             // move this waiters reacquire nodes into the queue - we must do this before returning to ensure transactional correctness on notifies.
-            LockWaiter waiter = (LockWaiter) s;
-            waiters.add(waiter);
-            if (all) {
-              moveWaiterToPending(waiter);
-            } else if (moveWaiterToPending(waiter)) {
+            waiters.add((LockWaiter) s);
+            addPendingAcquires((LockWaiter) s);
+            if (!all) {
               result = false;
               break;
             }
@@ -378,11 +379,13 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
     if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : server notifying " + thread);
     LockWaiter waiter = null;
     synchronized (this) {
-      for (LockStateNode s : this) {
+      for (Iterator<LockStateNode> it = iterator(); it.hasNext();) {
+        LockStateNode s = it.next();
         if ((s instanceof LockWaiter) && s.getOwner().equals(thread)) {
+          it.remove();
           // move the waiting nodes reacquires into the queue in this thread so we can be certain that the lock state has changed by the time the server gets the txn ack.
           waiter = (LockWaiter) s;
-          moveWaiterToPending(waiter);
+          addPendingAcquires(waiter);
           break;
         }
       }
@@ -402,18 +405,15 @@ class ClientLockImpl extends ClientLockImplList implements ClientLock {
   /*
    * Move the given waiters reacquire nodes into the queue
    */
-  private synchronized boolean moveWaiterToPending(LockWaiter waiter) {
-    if (waiter == null) {
-      return false;
+  private synchronized void moveWaiterToPending(LockWaiter waiter) {
+    if ((waiter != null) && (remove(waiter) != null)) {
+      addPendingAcquires(waiter);
     }
-    
-    if (remove(waiter) == null) {
-      return false;
-    } else {
-      for (PendingLockHold reacquire : waiter.getReacquires()) {
-        addLast(reacquire);
-      }
-      return true;
+  }
+  
+  private synchronized void addPendingAcquires(LockWaiter waiter) {
+    for (PendingLockHold reacquire : waiter.getReacquires()) {
+      addLast(reacquire);
     }
   }
   
