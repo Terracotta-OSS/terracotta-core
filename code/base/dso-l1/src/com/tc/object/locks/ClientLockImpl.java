@@ -10,7 +10,6 @@ import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
-import com.tc.util.Assert;
 import com.tc.util.SynchronizedSinglyLinkedList;
 
 import java.util.ArrayList;
