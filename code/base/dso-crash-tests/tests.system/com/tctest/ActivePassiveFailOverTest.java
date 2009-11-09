@@ -71,6 +71,9 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
     } else {
       ThreadUtil.reallySleep(10000);
     }
+    if (server_1.isRunning()) {
+      server_1.dumpServerControl();
+    }
     Assert.assertFalse(server_1.isRunning());
   }
 
