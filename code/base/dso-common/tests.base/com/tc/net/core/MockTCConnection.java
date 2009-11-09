@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.core;
 
@@ -18,23 +19,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @deprecated use TestTCConnection instead.  This implementation has a bunch of side effects.
+ * @deprecated use TestTCConnection instead. This implementation has a bunch of side effects.
  */
 public class MockTCConnection implements TCConnection {
 
-  private boolean                 isConnected;
-  private boolean                 isClosed;
+  private boolean                     isConnected;
+  private boolean                     isClosed;
 
-  private int                     closeCallCount  = 0;
-  private List                    sentMessages    = new ArrayList();
-  private NetworkMessageSink      messageSink;
-  private final TCProtocolAdaptor protocolAdaptor = new NullProtocolAdaptor();
+  private int                         closeCallCount  = 0;
+  private List                        sentMessages    = new ArrayList();
+  private NetworkMessageSink          messageSink;
+  private final TCProtocolAdaptor     protocolAdaptor = new NullProtocolAdaptor();
 
-  public TCSocketAddress          localAddress    = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0);
-  public TCSocketAddress          remoteAddress   = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0);
+  public TCSocketAddress              localAddress    = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0);
+  public TCSocketAddress              remoteAddress   = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0);
 
-  public boolean fail = false;
-  public final NoExceptionLinkedQueue connectCalls = new NoExceptionLinkedQueue();
+  public boolean                      fail            = false;
+  public final NoExceptionLinkedQueue connectCalls    = new NoExceptionLinkedQueue();
 
   public long getConnectTime() {
     throw new ImplementMe();
@@ -65,7 +66,7 @@ public class MockTCConnection implements TCConnection {
 
   public void connect(TCSocketAddress addr, int timeout) throws TCTimeoutException {
     connectCalls.put(new Object[] { addr, new Integer(timeout) });
-    if(fail) { throw new TCTimeoutException("Timed out !!!"); }
+    if (fail) { throw new TCTimeoutException("Timed out !!!"); }
     this.isConnected = true;
   }
 
@@ -123,8 +124,7 @@ public class MockTCConnection implements TCConnection {
   }
 
   public void addWeight(int addWeightBy) {
-    throw new ImplementMe();
-    
+    //
   }
 
 }

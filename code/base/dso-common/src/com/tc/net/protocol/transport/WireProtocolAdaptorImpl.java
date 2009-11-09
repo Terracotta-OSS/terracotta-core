@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -15,7 +16,7 @@ import com.tc.net.protocol.TCProtocolException;
 
 /**
  * Connection adaptor to parse wire protocol messages
- *
+ * 
  * @author teck
  */
 public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implements WireProtocolAdaptor {
@@ -32,19 +33,12 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     final WireProtocolMessage msg = (WireProtocolMessage) this.processIncomingData(source, data, length);
 
     if (msg != null) {
-      try {
-        // TODO: validate the src/dest IP and port in header against the connection it came in on
-
-        if (logger.isDebugEnabled()) {
-          logger.debug("\nRECEIVE\n" + msg.toString());
-        }
-
-        sink.putMessage(msg);
-      } finally {
-        init();
+      init();
+      if (logger.isDebugEnabled()) {
+        logger.debug("\nRECEIVE\n" + msg.toString());
       }
+      sink.putMessage(msg);
     }
-
     return;
   }
 

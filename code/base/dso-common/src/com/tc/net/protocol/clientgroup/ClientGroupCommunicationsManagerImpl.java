@@ -24,8 +24,9 @@ public class ClientGroupCommunicationsManagerImpl extends CommunicationsManagerI
   }
 
   public ClientGroupCommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
-                                              ConnectionPolicy connectionPolicy, HealthCheckerConfig config) {
-    super(COMMSMGR_CLIENT, monitor, stackHarnessFactory, connectionPolicy, config);
+                                              ConnectionPolicy connectionPolicy, int commThreads,
+                                              HealthCheckerConfig config) {
+    super(COMMSMGR_CLIENT, monitor, stackHarnessFactory, null, connectionPolicy, commThreads, config);
     this.monitor = monitor;
   }
 

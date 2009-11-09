@@ -53,8 +53,12 @@ public class TCWorkerCommManagerTest extends TCTestCase {
   TCLogger    logger               = TCLogging.getLogger(TCWorkerCommManager.class);
   private int L1_RECONNECT_TIMEOUT = 15000;
 
-  private ClientMessageTransport createClient(CommunicationsManager commsMgr, int port) {
-    final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, port);
+  private ClientMessageTransport createClient(String clientName, int serverPort) {
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl(clientName + "CommsMgr", new NullMessageMonitor(),
+                                                                   new TransportNetworkStackHarnessFactory(),
+                                                                   new NullConnectionPolicy());
+
+    final ConnectionInfo connInfo = new ConnectionInfo(TCSocketAddress.LOOPBACK_IP, serverPort);
     ClientConnectionEstablisher cce = new ClientConnectionEstablisher(
                                                                       commsMgr.getConnectionManager(),
                                                                       new ConnectionAddressProvider(
@@ -92,7 +96,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testBasic() throws Exception {
     // comms manager with 4 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
                                                                    new NullConnectionPolicy(), 4);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
@@ -100,10 +104,10 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     listener.start(Collections.EMPTY_SET);
     int port = listener.getBindPort();
 
-    ClientMessageTransport client1 = createClient(commsMgr, port);
-    ClientMessageTransport client2 = createClient(commsMgr, port);
-    ClientMessageTransport client3 = createClient(commsMgr, port);
-    ClientMessageTransport client4 = createClient(commsMgr, port);
+    ClientMessageTransport client1 = createClient("client1", port);
+    ClientMessageTransport client2 = createClient("client2", port);
+    ClientMessageTransport client3 = createClient("client3", port);
+    ClientMessageTransport client4 = createClient("client4", port);
 
     client1.open();
     client2.open();
@@ -126,7 +130,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   public void testWorkerCommDistributionAfterClose() throws Exception {
     // comms manager with 3 worker comms
-    CommunicationsManager commsMgr = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    getNetworkStackHarnessFactory(false),
                                                                    new NullConnectionPolicy(), 3);
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
@@ -188,7 +192,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
   private ClientMessageChannel createClientMsgCh(int port, boolean ooo) {
 
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("Client-TestCommsMgr", new NullMessageMonitor(),
                                                                       getNetworkStackHarnessFactory(ooo),
                                                                       new NullConnectionPolicy());
 

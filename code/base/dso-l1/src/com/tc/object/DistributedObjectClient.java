@@ -388,6 +388,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.communicationsManager = this.dsoClientBuilder
         .createCommunicationsManager(mm, networkStackHarnessFactory, new NullConnectionPolicy(),
+                                     this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
                                      new HealthCheckerConfigClientImpl(this.l1Properties
                                          .getPropertiesFor("healthcheck.l2"), "DSO Client"));
 

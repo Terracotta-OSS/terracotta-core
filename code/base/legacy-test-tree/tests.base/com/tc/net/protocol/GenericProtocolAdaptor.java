@@ -11,7 +11,7 @@ import com.tc.net.core.TCConnection;
 
 /**
  * A generic protocol adaptor (only useful for testing)
- *
+ * 
  * @author teck
  */
 public class GenericProtocolAdaptor extends AbstractTCProtocolAdaptor {
@@ -40,11 +40,8 @@ public class GenericProtocolAdaptor extends AbstractTCProtocolAdaptor {
     GenericNetworkMessage msg = (GenericNetworkMessage) processIncomingData(source, data, length);
 
     if (msg != null) {
-      try {
-        sink.putMessage(msg);
-      } finally {
-        init();
-      }
+      init();
+      sink.putMessage(msg);
     }
 
     return;
