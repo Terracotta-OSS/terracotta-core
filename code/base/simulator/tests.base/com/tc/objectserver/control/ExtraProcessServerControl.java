@@ -406,7 +406,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     return jvmArgs;
   }
   
-  private void dumpServerControl() throws Exception {
+  public void dumpServerControl() throws Exception {
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = CommandLineBuilder.getJMXConnector("localhost", getAdminPort());

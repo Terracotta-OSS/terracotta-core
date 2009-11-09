@@ -174,6 +174,7 @@ public class ExternalDsoServer {
     return theConfigFile;
   }
 
+  @Override
   public String toString() {
     return "DSO server; serverport:" + dsoPort + "; adminPort:" + jmxPort;
   }
@@ -192,6 +193,10 @@ public class ExternalDsoServer {
 
   public void addJvmArg(String jvmarg) {
     jvmArgs.add(jvmarg);
+  }
+  
+  public void dumpServerControl() throws Exception {
+    this.serverProc.dumpServerControl();
   }
 
 }
