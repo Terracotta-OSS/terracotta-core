@@ -105,7 +105,7 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
     tree = createTree();
     tree.setLargeModel(true);
     tree.setVisibleRowCount(10);
-    tree.addTreeWillExpandListener(this);
+    // tree.addTreeWillExpandListener(this);
     popup.add(new JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER));
     tree.addMouseListener(treeMouseHandler);
@@ -178,23 +178,26 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
     @Override
     public void mouseReleased(MouseEvent e) {
       Point p = e.getPoint();
-      int selRow = tree.getClosestRowForLocation(p.x, p.y);
+      int selRow = tree.getRowForLocation(p.x, p.y);
       if (selRow != -1) {
         TreePath path = tree.getPathForRow(selRow);
         if (!isSelectedPath(path)) {
           if (acceptPath(path)) {
             setSelectedPath(path);
+            hidePopup();
           }
+        } else {
+          hidePopup();
         }
       }
-      popup.setVisible(false);
     }
 
     // MouseMotionListener implementation
 
     private void handleMouseMotion(MouseEvent e) {
+      if (true) { return; }
       Point p = e.getPoint();
-      int selRow = tree.getClosestRowForLocation(p.x, p.y);
+      int selRow = tree.getRowForLocation(p.x, p.y);
       if (selRow != -1) {
         TreePath path = tree.getPathForRow(selRow);
         if (path != null) {
