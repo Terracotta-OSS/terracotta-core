@@ -19,7 +19,7 @@ public interface TerracottaLocking {
   /**
    * Try to acquire a Terracotta lock.
    * <p>
-   * Non-blocking try acquires will wait for a definitive server respons - in
+   * Non-blocking try acquires will wait for a definitive server response - in
    * this sense they are not truly non-blocking...
    * 
    * @param lock lock to act upon

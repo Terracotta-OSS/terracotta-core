@@ -6,7 +6,6 @@ package com.tc.object.bytecode;
 
 // import com.partitions.TCNoPartitionError;
 
-import com.tc.config.lock.LockContextInfo;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.sessions.SessionMonitor;
@@ -195,12 +194,15 @@ public class ManagerUtil {
    * @param type Lock type
    */
   public static void beginLock(final String lockID, final int type) {
-    beginLock(lockID, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    Manager mgr = getManager();
+    LockID lock = mgr.generateLockIdentifier(lockID);
+    mgr.lock(lock, LockLevel.fromInt(type));
   }
 
   /**
    * Begins a lock without associating any transaction context.
    */
+  @Deprecated
   public static void beginLockWithoutTxn(final String lockID, final int type) {
     beginLock(lockID, type);
   }
@@ -212,10 +214,9 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo
    */
+  @Deprecated
   public static void beginLock(final String lockID, final int type, final String contextInfo) {
-    Manager mgr = getManager();
-    LockID lock = mgr.generateLockIdentifier(lockID);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    beginLock(lockID, type);
   }
 
   /**
@@ -539,7 +540,9 @@ public class ManagerUtil {
    * @param type Lock type
    */
   public static void monitorEnter(final Object obj, final int type) {
-    monitorEnter(obj, type, LockContextInfo.NULL_LOCK_CONTEXT_INFO);
+    Manager mgr = getManager();
+    LockID lock = mgr.generateLockIdentifier(obj);
+    mgr.lock(lock, LockLevel.fromInt(type));
   }
 
   /**
@@ -549,10 +552,9 @@ public class ManagerUtil {
    * @param type Lock type
    * @param contextInfo Configuration text of the lock
    */
+  @Deprecated
   public static void monitorEnter(final Object obj, final int type, final String contextInfo) {
-    Manager mgr = getManager();
-    LockID lock = mgr.generateLockIdentifier(obj);
-    mgr.lock(lock, LockLevel.fromInt(type));
+    monitorEnter(obj, type);
   }
 
   /**
