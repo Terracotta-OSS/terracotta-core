@@ -460,7 +460,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Called by the stage thread when the server has awarded a lock (either greedy or per thread).
    */
-  public void award(RemoteLockManager remote, ThreadID thread, ServerLockLevel level) {
+  public void award(RemoteLockManager remote, ThreadID thread, ServerLockLevel level) throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : server awarded greedy " + level);
       synchronized (this) {
@@ -551,7 +551,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Attempt to acquire the lock at the given level locally
    */
-  private LockAcquireResult tryAcquireLocally(ThreadID thread, LockLevel level) {
+  private LockAcquireResult tryAcquireLocally(ThreadID thread, LockLevel level) throws GarbageLockException {
     if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : " + thread + " attempting to acquire " + level);
     // if this is a concurrent acquire then just let it through.
     if (level == LockLevel.CONCURRENT) {

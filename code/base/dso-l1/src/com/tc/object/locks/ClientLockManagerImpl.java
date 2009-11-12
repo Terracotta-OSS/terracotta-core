@@ -98,7 +98,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } catch (GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
         // gc thread should clear this object soon - spin and re-get...
-        logger.info("Hitting garbage lock state during lock on " + lock, e);
+        logger.info("Hitting garbage lock state during lock on " + lock);
       }
     }
     
@@ -122,7 +122,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } catch (GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
         // gc thread should clear this object soon - spin and re-get...
-        logger.info("Hitting garbage lock state during tryLock on " + lock, e);
+        logger.info("Hitting garbage lock state during tryLock on " + lock);
       }
     }
   }
@@ -144,7 +144,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } catch (GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
         // gc thread should clear this object soon - spin and re-get...
-        logger.info("Hitting garbage lock state during tryLock with timeout on " + lock, e);
+        logger.info("Hitting garbage lock state during tryLock with timeout on " + lock);
       }
     }
   }
@@ -162,7 +162,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       } catch (GarbageLockException e) {
         // ignorable - thrown when operating on a garbage collected lock
         // gc thread should clear this object soon - spin and re-get...
-        logger.info("Hitting garbage lock state during lockInterruptibly on " + lock, e);
+        logger.info("Hitting garbage lock state during lockInterruptibly on " + lock);
       }
     }
 
@@ -387,18 +387,26 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
     
     if (ThreadID.VM_ID.equals(thread)) {
-      ClientLock lockState = getOrCreateClientLockState(lock);
-      lockState.award(remoteManager, thread, level);
-      return;
-    } else {
       while (true) {
-        ClientLock lockState = getClientLockState(lock);
-        if (lockState == null) {
-          remoteManager.unlock(lock, thread, level);
-          return;
-        } else {
+        ClientLock lockState = getOrCreateClientLockState(lock);
+        try {
           lockState.award(remoteManager, thread, level);
-          return;
+          break;
+        } catch (GarbageLockException e) {
+          // ignorable - thrown when operating on a garbage collected lock
+          // gc thread should clear this object soon - spin and re-get...
+          logger.info("Hitting garbage lock state during award on " + lock);
+        }
+      }
+    } else {
+      ClientLock lockState = getClientLockState(lock);
+      if (lockState == null) {
+        remoteManager.unlock(lock, thread, level);
+      } else {
+        try {
+          lockState.award(remoteManager, thread, level);
+        } catch (GarbageLockException e) {
+          remoteManager.unlock(lock, thread, level);
         }
       }
     }
@@ -411,13 +419,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
 
     final ClientLock lockState = getClientLockState(lock);
-    while (true) {
-      if (lockState == null) {
-        throw new AssertionError("Server attempting to notify on non-existent lock " + lock);
-      } else {
-        lockState.notified(thread);
-        return;
-      }
+    if (lockState == null) {
+      throw new AssertionError("Server attempting to notify on non-existent lock " + lock);
+    } else {
+      lockState.notified(thread);
+      return;
     }
   }
 

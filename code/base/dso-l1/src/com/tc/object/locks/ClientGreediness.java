@@ -7,8 +7,8 @@ import com.tc.net.ClientID;
 
 enum ClientGreediness {
   GARBAGE {
-    boolean canAward(LockLevel level) {
-      return false;
+    boolean canAward(LockLevel level) throws GarbageLockException {
+      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
     }
     
     boolean isFree() {
@@ -32,10 +32,14 @@ enum ClientGreediness {
     }
     
     @Override
-    ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
-      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
+    ClientGreediness requested(ServerLockLevel level) {
+      return this;
     }
     
+    ClientGreediness awarded(ServerLockLevel level) throws GarbageLockException {
+      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
+    }
+
     ClientGreediness recalled(ClientLock clientLock, int lease) {
       return this;
     }
@@ -50,8 +54,8 @@ enum ClientGreediness {
   },
   
   GARBAGE_COLLECTING {
-    boolean canAward(LockLevel level) {
-      return false;
+    boolean canAward(LockLevel level) throws GarbageLockException {
+      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
     }
     
     boolean isFree() {
@@ -75,8 +79,8 @@ enum ClientGreediness {
     }
     
     @Override
-    ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
-      throw GarbageLockException.GARBAGE_LOCK_EXCEPTION;
+    ClientGreediness requested(ServerLockLevel level) {
+      return this;
     }
     
     ClientGreediness recalled(ClientLock clientLock, int lease) {
@@ -432,7 +436,7 @@ enum ClientGreediness {
     }
   };
   
-  abstract boolean canAward(LockLevel level);
+  abstract boolean canAward(LockLevel level) throws GarbageLockException;
   
   abstract boolean isFree();
   
@@ -447,11 +451,14 @@ enum ClientGreediness {
   /**
    * @throws GarbageLockException thrown if in a garbage state 
    */
-  ClientGreediness requested(ServerLockLevel level) throws GarbageLockException {
+  ClientGreediness requested(ServerLockLevel level) {
     throw new AssertionError("request level while in unexpected state (" + this + ")");
   }
 
-  ClientGreediness awarded(ServerLockLevel level) {
+  /**
+   * @throws GarbageLockException thrown if in a garbage state 
+   */
+  ClientGreediness awarded(ServerLockLevel level) throws GarbageLockException {
     throw new AssertionError("award while in unexpected state (" + this + ")");
   }
 
