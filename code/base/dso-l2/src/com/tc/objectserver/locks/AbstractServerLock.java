@@ -105,6 +105,7 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
     }
 
     moveWaiterToPending(context, helper);
+    processPendingRequests(helper);
   }
 
   public NotifiedWaiters notify(ClientID cid, ThreadID tid, NotifyAction action, NotifiedWaiters addNotifiedWaitersTo,

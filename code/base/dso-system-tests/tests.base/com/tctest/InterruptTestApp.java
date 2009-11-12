@@ -36,6 +36,7 @@ public class InterruptTestApp extends AbstractTransparentApp {
       testWaitInterrupt2(index);
       testWaitInterrupt3(index);
       testWaitInterrupt4(index);
+      testEveryoneInterrupts(index);
     } catch (Throwable t) {
       notifyError(t);
     }
@@ -292,6 +293,33 @@ public class InterruptTestApp extends AbstractTransparentApp {
     barrier.barrier();
   }
 
+  private void testEveryoneInterrupts(int index) throws Exception {
+    barrier.barrier();
+    
+    Thread target = new Thread() {
+      public void run() {
+        synchronized (lockObject) {
+          try {
+            lockObject.wait();
+          } catch (InterruptedException e) {
+            //expected
+          }
+        }
+      }
+    };
+    target.start();
+    try {
+      Thread.sleep(10000);
+    } catch (InterruptedException e) {
+      // ignore
+    } finally {
+      target.interrupt();
+    }
+    
+    target.join(10000);
+    Assert.assertFalse(target.isAlive());
+  }
+  
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     TransparencyClassSpec spec = config.getOrCreateSpec(CyclicBarrier.class.getName());
     config.addWriteAutolock("* " + CyclicBarrier.class.getName() + "*.*(..)");
