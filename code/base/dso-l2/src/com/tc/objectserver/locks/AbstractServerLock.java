@@ -21,6 +21,8 @@ import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.objectserver.locks.context.SingleServerLockContext;
 import com.tc.objectserver.locks.context.WaitServerLockContext;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.SinglyLinkedList;
 
@@ -34,7 +36,7 @@ import java.util.TimerTask;
  * This class extends SinglyLinkedList which stores ServerLockContext. The ServerLockContexts are placed in the order of
  * greedy holders, pending requests, try lock requests and then waiters.
  */
-public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockContext> implements ServerLock {
+public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockContext> implements ServerLock, PrettyPrintable {
   private final static EnumSet<Type> SET_OF_TRY_PENDING_OR_WAITERS = EnumSet.of(Type.TRY_PENDING, Type.WAITER);
   private final static EnumSet<Type> SET_OF_WAITERS                = EnumSet.of(Type.WAITER);
   private final static EnumSet<Type> SET_OF_HOLDERS                = EnumSet.of(Type.HOLDER, Type.GREEDY_HOLDER);
@@ -863,6 +865,23 @@ public abstract class AbstractServerLock extends SinglyLinkedList<ServerLockCont
       }
     }
     return contexts;
+  }
+  
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print("Lock Info").flush();
+    out.print(lockID).flush();
+    
+    out.print("Contexts [ ");
+    SinglyLinkedListIterator<ServerLockContext> iter = iterator();
+    while (iter.hasNext()) {
+      out.print(iter.next().toString());
+      if (iter.hasNext()) {
+        out.print(" , ");
+      }
+    }
+    out.print(" ]").flush();
+    
+    return out;
   }
 
   public String toString() {

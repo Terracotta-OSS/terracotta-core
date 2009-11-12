@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -17,7 +18,6 @@ import com.tc.util.Util;
 import com.tc.util.runtime.ThreadIDManager;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Timer;
@@ -650,22 +650,19 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     abstract State shutdown();
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
   
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println("ClientLockManagerImpl [" + locks.size() + " locks]");
+    out.print("ClientLockManagerImpl [" + locks.size() + " locks]").flush();
     for (ClientLock lock : locks.values()) {
-      out.indent().println(lock);
+      out.indent().print(lock).flush();
     }
     return out;
   }

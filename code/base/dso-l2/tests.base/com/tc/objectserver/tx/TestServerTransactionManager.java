@@ -103,10 +103,6 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     throw new ImplementMe();
   }
 
-  public String dump() {
-    throw new ImplementMe();
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
   }

@@ -160,10 +160,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public String dump() {
-      throw new ImplementMe();
-    }
-
     public void dumpToLogger() {
       throw new ImplementMe();
     }
@@ -325,10 +321,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-      throw new ImplementMe();
-    }
-
-    public String dump() {
       throw new ImplementMe();
     }
 

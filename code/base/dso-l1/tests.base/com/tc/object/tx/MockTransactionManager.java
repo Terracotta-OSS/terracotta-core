@@ -196,10 +196,6 @@ public class MockTransactionManager implements ClientTransactionManager {
     return false;
   }
 
-  public String dump() {
-    throw new ImplementMe();
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
   }

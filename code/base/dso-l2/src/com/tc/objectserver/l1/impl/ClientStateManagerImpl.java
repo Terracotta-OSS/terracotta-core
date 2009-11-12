@@ -201,14 +201,14 @@ public class ClientStateManagerImpl implements ClientStateManager {
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
-    out.println(getClass().getName());
+    out.print(getClass().getName()).flush();
     out = out.duplicateAndIndent();
-    out.indent().println("client states: ");
+    out.indent().print("client states: ").flush();
     out = out.duplicateAndIndent();
     for (ClientStateImpl c : this.clientStates.values()) {
       c.lock();
       try {
-        out.indent().print(c.getNodeID() + "=").visit(c).println();
+        out.indent().print(c.getNodeID() + "=").visit(c).flush();
       } finally {
         c.unlock();
       }
@@ -253,7 +253,7 @@ public class ClientStateManagerImpl implements ClientStateManager {
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      out.println(getClass().getName());
+      out.print(getClass().getName()).flush();
       out.duplicateAndIndent().indent().print("managed: ").visit(this.managed);
       return out;
     }

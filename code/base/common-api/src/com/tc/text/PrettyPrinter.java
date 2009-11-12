@@ -22,5 +22,5 @@ public interface PrettyPrinter {
   
   public PrettyPrinter visit(Object o);
   
-
+  public void flush();
 }

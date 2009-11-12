@@ -42,10 +42,6 @@ public class NullTransactionalObjectManager implements TransactionalObjectManage
     // Nop
   }
 
-  public String dump() {
-    return null;
-  }
-
   public void dumpToLogger() {
     // Nop
   }

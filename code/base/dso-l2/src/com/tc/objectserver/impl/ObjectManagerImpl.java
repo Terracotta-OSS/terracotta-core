@@ -40,6 +40,7 @@ import com.tc.objectserver.tx.NullTransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -50,7 +51,6 @@ import com.tc.util.TCCollections;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -156,15 +156,13 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
-    out.println(getClass().getName());
-    out.indent().print("collector: ").visit(this.collector).println();
-    out.indent().print("references: ").visit(this.references).println();
-
-    out.indent().println("checkedOutCount: " + this.checkedOutCount);
-    out.indent().print("pending: ").visit(this.pending).println();
-
-    out.indent().print("objectStore: ").duplicateAndIndent().visit(this.objectStore).println();
-    out.indent().print("stateManager: ").duplicateAndIndent().visit(this.stateManager).println();
+    out.indent().print("collector: ").visit(this.collector).flush();
+    out.indent().print("references: ").visit(this.references).flush();
+    out.indent().print("checkedOutCount: " + this.checkedOutCount).flush();
+    out.indent().print("pending: ").visit(this.pending).flush();
+    out.indent().print("objectStore: ").duplicateAndIndent().visit(this.objectStore).flush();
+    out.indent().print("stateManager: ").duplicateAndIndent().visit(this.stateManager).flush();
+    
     try {
 
       StringBuffer rootBuff = new StringBuffer();
@@ -174,10 +172,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
           rootBuff.append(",");
         }
       }
-      out.indent().print("roots: " + rootBuff.toString()).println();
+      out.indent().print("roots: " + rootBuff.toString()).println().flush();
+      
     } catch (Throwable t) {
       logger.error("exception printing roots in ObjectManagerImpl", t);
     }
+    
     return out;
   }
 
@@ -755,15 +755,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void dumpToLogger() {
-    logger.info(dump());
-  }
-
-  public String dump() {
-    StringWriter writer = new StringWriter();
+    LogWriter writer = new LogWriter(logger);
     PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
     writer.flush();
-    return writer.toString();
   }
 
   // This method is for tests only

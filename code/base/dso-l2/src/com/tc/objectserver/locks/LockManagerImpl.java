@@ -19,13 +19,13 @@ import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
 import com.tc.objectserver.locks.timer.TimerCallback;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -318,29 +318,25 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     }
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println(getClass().getName());
     int size = 0;
     LockIterator iter = lockStore.iterator();
     ServerLock lock = iter.getNextLock(null);
     while (lock != null) {
-      out.println(lock);
+      out.visit(lock);
       size++;
       lock = iter.getNextLock(lock);
     }
-    out.indent().println("locks: " + size);
+    out.indent().print("locks: " + size).println().flush();
     return out;
   }
 

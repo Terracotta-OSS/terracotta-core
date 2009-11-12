@@ -78,10 +78,6 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     // NOP
   }
 
-  public String dump() {
-    return "";
-  }
-
   public void dumpToLogger() {
     //
   }

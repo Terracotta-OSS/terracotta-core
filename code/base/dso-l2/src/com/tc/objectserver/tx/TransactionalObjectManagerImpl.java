@@ -18,6 +18,7 @@ import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -25,7 +26,6 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -219,7 +219,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       Object oid = i.next();
       Object mo = objects.get(oid);
       if (mo == null) {
-        dump();
+        dumpToLogger();
         log("NULL !! " + oid + " not found ! " + oids);
         log("Map contains " + objects);
         throw new AssertionError("Object is NULL !! : " + oid);
@@ -413,25 +413,21 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println(getClass().getName());
-    out.indent().print("checkedOutObjects: ").visit(this.checkedOutObjects).println();
-    out.indent().print("applyPendingTxns: ").visit(this.applyPendingTxns).println();
-    out.indent().print("commitPendingTxns: ").visit(this.commitPendingTxns).println();
-    out.indent().print("pendingTxnList: ").visit(this.pendingTxnList).println();
-    out.indent().print("pendingObjectRequest: ").visit(this.pendingObjectRequest).println();
+    out.indent().print("checkedOutObjects: ").visit(this.checkedOutObjects).flush();
+    out.indent().print("applyPendingTxns: ").visit(this.applyPendingTxns).flush();
+    out.indent().print("commitPendingTxns: ").visit(this.commitPendingTxns).flush();
+    out.indent().print("pendingTxnList: ").visit(this.pendingTxnList).flush();
+    out.indent().print("pendingObjectRequest: ").visit(this.pendingObjectRequest).println().flush();
     return out;
   }
 

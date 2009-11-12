@@ -34,6 +34,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
@@ -41,7 +42,6 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -133,21 +133,17 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println(getClass().getName());
-    out.indent().print("transactionAccounts: ").visit(this.transactionAccounts).println();
+    out.indent().print("transactionAccounts: ").visit(this.transactionAccounts).println().flush();
     return out;
   }
 

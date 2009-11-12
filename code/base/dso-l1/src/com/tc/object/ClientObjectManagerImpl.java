@@ -45,6 +45,7 @@ import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
+import com.tc.text.LogWriter;
 import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrintable;
@@ -1290,23 +1291,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.idToManaged.size();
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    this.logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
-    out.println(getClass().getName());
-    out.indent().print("roots Map: ").println(new Integer(this.roots.size()));
-    out.indent().print("idToManaged size: ").println(new Integer(this.idToManaged.size()));
-    out.indent().print("pojoToManaged size: ").println(new Integer(this.pojoToManaged.size()));
+    out.indent().print("roots Map: ").print(new Integer(this.roots.size())).flush();
+    out.indent().print("idToManaged size: ").print(new Integer(this.idToManaged.size())).flush();
+    out.indent().print("pojoToManaged size: ").print(new Integer(this.pojoToManaged.size())).flush();
     return out;
   }
 

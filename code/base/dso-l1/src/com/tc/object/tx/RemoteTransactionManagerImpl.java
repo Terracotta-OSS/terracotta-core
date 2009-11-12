@@ -20,6 +20,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.text.LogWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -30,7 +31,6 @@ import com.tc.util.TCAssertionError;
 import com.tc.util.Util;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -511,24 +511,20 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
   }
 
-  public String dump() {
-    StringWriter writer = new StringWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    new PrettyPrinterImpl(pw).visit(this);
-    writer.flush();
-    return writer.toString();
-  }
-
   public void dumpToLogger() {
-    this.logger.info(dump());
+    LogWriter writer = new LogWriter(logger);
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(this);
+    writer.flush();
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    out.println(getClass().getName());
     synchronized (this.lock) {
-      out.indent().print("incompleteBatches count: ").println(new Integer(this.incompleteBatches.size()));
-      out.indent().print("batchAccounting: ").println(this.batchAccounting);
-      out.indent().print("lockAccounting: ").println(this.lockAccounting);
+      out.indent().print("incompleteBatches count: ").print(new Integer(this.incompleteBatches.size())).flush();
+      out.indent().print("batchAccounting: ").print(this.batchAccounting).flush();
+      out.indent().print("lockAccounting: ").print(this.lockAccounting).flush();
     }
     return out;
 

@@ -122,10 +122,6 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public String dump() {
-    throw new ImplementMe();
-  }
-
   public void dumpToLogger() {
     throw new ImplementMe();
   }
