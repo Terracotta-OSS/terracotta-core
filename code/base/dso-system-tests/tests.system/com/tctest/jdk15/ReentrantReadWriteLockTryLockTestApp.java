@@ -56,7 +56,6 @@ public class ReentrantReadWriteLockTryLockTestApp extends AbstractTransparentApp
       // and let it run uncontended while getting tryLocks
       if (0 == id) {
         queue.resetTryLocksSucceededCount();
-        Assert.assertEquals(0, queue.getTryLocksSucceededCount());
 
         Thread.sleep(2000);
 
@@ -69,7 +68,6 @@ public class ReentrantReadWriteLockTryLockTestApp extends AbstractTransparentApp
       // explicitly take a lock and then let it run uncontended while getting tryLocks
       if (0 == id) {
         queue.resetTryLocksSucceededCount();
-        Assert.assertEquals(0, queue.getTryLocksSucceededCount());
 
         coordinator.normalLock(queue);
         Thread.sleep(2000);
