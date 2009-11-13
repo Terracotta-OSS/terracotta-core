@@ -414,7 +414,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);
@@ -423,6 +423,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
     out.indent().print("checkedOutObjects: ").visit(this.checkedOutObjects).flush();
     out.indent().print("applyPendingTxns: ").visit(this.applyPendingTxns).flush();
     out.indent().print("commitPendingTxns: ").visit(this.commitPendingTxns).flush();

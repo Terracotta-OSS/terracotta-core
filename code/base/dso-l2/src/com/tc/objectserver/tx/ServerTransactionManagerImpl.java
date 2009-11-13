@@ -134,7 +134,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);
@@ -143,6 +143,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
     out.indent().print("transactionAccounts: ").visit(this.transactionAccounts).println().flush();
     return out;
   }

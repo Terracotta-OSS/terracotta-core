@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class LogWriter extends StringWriter {
-  private TCLogger logger = TCLogging.getLogger(LogWriter.class);
+  private static TCLogger logger = TCLogging.getLogger(LogWriter.class);
 
-  public LogWriter(TCLogger logger) {
-    this.logger = logger;
+  public LogWriter() {
+    //
   }
   
   @Override

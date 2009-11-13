@@ -1292,7 +1292,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);
@@ -1301,6 +1301,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
     out.indent().print("roots Map: ").print(new Integer(this.roots.size())).flush();
     out.indent().print("idToManaged size: ").print(new Integer(this.idToManaged.size())).flush();
     out.indent().print("pojoToManaged size: ").print(new Integer(this.pojoToManaged.size())).flush();

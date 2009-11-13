@@ -156,6 +156,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
     out.indent().print("collector: ").visit(this.collector).flush();
     out.indent().print("references: ").visit(this.references).flush();
     out.indent().print("checkedOutCount: " + this.checkedOutCount).flush();
@@ -755,7 +756,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);

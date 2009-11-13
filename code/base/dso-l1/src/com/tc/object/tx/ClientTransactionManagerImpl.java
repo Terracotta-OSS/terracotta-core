@@ -669,7 +669,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.visit(this);

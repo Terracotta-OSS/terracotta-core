@@ -319,7 +319,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter(logger);
+    LogWriter writer = new LogWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);
@@ -328,6 +328,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
     int size = 0;
     LockIterator iter = lockStore.iterator();
     ServerLock lock = iter.getNextLock(null);
