@@ -417,7 +417,7 @@ public abstract class TCObjectImpl implements TCObject {
     return getFlag(IS_NEW_OFFSET);
   }
 
-  public void setNotNew() {
+  public synchronized void setNotNew() {
     // Flipping the "new" flag must occur AFTER dehydrate -- otherwise the client
     // memory manager might start nulling field values! (see canEvict() dependency on isNew() condition)
 
