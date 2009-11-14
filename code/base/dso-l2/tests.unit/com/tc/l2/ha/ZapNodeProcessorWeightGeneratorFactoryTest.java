@@ -230,7 +230,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
       isActive = active;
     }
 
-    public long getNumOfTransactions() {
+    public long getTotalNumOfActiveTransactions() {
       return numOfTransactions.get();
     }
 

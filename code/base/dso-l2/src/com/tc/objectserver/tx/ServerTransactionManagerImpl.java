@@ -58,22 +58,22 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ServerTransactionManagerImpl implements ServerTransactionManager, ServerTransactionManagerMBean,
     GlobalTransactionManager {
 
-  private static final TCLogger                         logger                   = TCLogging
-                                                                                     .getLogger(ServerTransactionManager.class);
+  private static final TCLogger                         logger                       = TCLogging
+                                                                                         .getLogger(ServerTransactionManager.class);
 
-  private static final State                            PASSIVE_MODE             = new State("PASSIVE-MODE");
-  private static final State                            ACTIVE_MODE              = new State("ACTIVE-MODE");
+  private static final State                            PASSIVE_MODE                 = new State("PASSIVE-MODE");
+  private static final State                            ACTIVE_MODE                  = new State("ACTIVE-MODE");
 
   // TODO::FIXME::Change this to concurrent HashMap
-  private final Map                                     transactionAccounts      = Collections
-                                                                                     .synchronizedMap(new HashMap());
+  private final Map                                     transactionAccounts          = Collections
+                                                                                         .synchronizedMap(new HashMap());
   private final ClientStateManager                      stateManager;
   private final ObjectManager                           objectManager;
   private final ResentTransactionSequencer              resentTxnSequencer;
   private final TransactionAcknowledgeAction            action;
   private final LockManager                             lockManager;
-  private final List                                    rootEventListeners       = new CopyOnWriteArrayList();
-  private final List                                    txnEventListeners        = new CopyOnWriteArrayList();
+  private final List                                    rootEventListeners           = new CopyOnWriteArrayList();
+  private final List                                    txnEventListeners            = new CopyOnWriteArrayList();
   private final GlobalTransactionIDLowWaterMarkProvider lwmProvider;
 
   private final Counter                                 transactionRateCounter;
@@ -84,17 +84,17 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private final ServerTransactionLogger                 txnLogger;
 
-  private volatile State                                state                    = PASSIVE_MODE;
-  private final AtomicInteger                           totalPendingTransactions = new AtomicInteger(0);
-  private final AtomicInteger                           txnsCommitted            = new AtomicInteger(0);
-  private final AtomicInteger                           objectsCommitted         = new AtomicInteger(0);
-  private final AtomicInteger                           noOfCommits              = new AtomicInteger(0);
-  private final AtomicLong                              numOfTransactions        = new AtomicLong(0);
+  private volatile State                                state                        = PASSIVE_MODE;
+  private final AtomicInteger                           totalPendingTransactions     = new AtomicInteger(0);
+  private final AtomicInteger                           txnsCommitted                = new AtomicInteger(0);
+  private final AtomicInteger                           objectsCommitted             = new AtomicInteger(0);
+  private final AtomicInteger                           noOfCommits                  = new AtomicInteger(0);
+  private final AtomicLong                              totalNumOfActiveTransactions = new AtomicLong(0);
   private final boolean                                 commitLoggingEnabled;
   private final boolean                                 broadcastStatsLoggingEnabled;
 
-  private volatile long                                 lastStatsTime            = 0;
-  private final Object                                  statsLock                = new Object();
+  private volatile long                                 lastStatsTime                = 0;
+  private final Object                                  statsLock                    = new Object();
 
   private final ObjectStatsRecorder                     objectStatsRecorder;
 
@@ -420,7 +420,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     ci.incommingTransactions(txnIDs);
     this.totalPendingTransactions.addAndGet(txnIDs.size());
     if (isActive()) {
-      this.numOfTransactions.addAndGet(txnIDs.size());
+      this.totalNumOfActiveTransactions.addAndGet(txnIDs.size());
     }
     for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
@@ -436,8 +436,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     this.resentTxnSequencer.addTransactions(txns);
   }
 
-  public long getNumOfTransactions() {
-    return this.numOfTransactions.get();
+  public long getTotalNumOfActiveTransactions() {
+    return this.totalNumOfActiveTransactions.get();
   }
 
   public int getTotalPendingTransactionsCount() {

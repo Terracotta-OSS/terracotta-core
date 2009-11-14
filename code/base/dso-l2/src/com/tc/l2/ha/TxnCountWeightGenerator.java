@@ -16,7 +16,7 @@ public class TxnCountWeightGenerator implements WeightGenerator {
   }
 
   public long getWeight() {
-    return serverTransactionManager.getNumOfTransactions();
+    return serverTransactionManager.getTotalNumOfActiveTransactions();
   }
 
 }

@@ -740,7 +740,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public long getNumOfTransactions() {
+    public long getTotalNumOfActiveTransactions() {
       throw new ImplementMe();
     }
   }

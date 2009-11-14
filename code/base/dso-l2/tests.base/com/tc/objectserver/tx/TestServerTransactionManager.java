@@ -123,7 +123,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     throw new ImplementMe();
   }
 
-  public long getNumOfTransactions() {
+  public long getTotalNumOfActiveTransactions() {
     throw new ImplementMe();
   }
 
