@@ -33,6 +33,8 @@ import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
+import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
@@ -960,10 +962,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     });
 
     if (networkedHA) {
-
+      WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
+                                                                                                 channelManager,
+                                                                                                 transactionBatchManager,
+                                                                                                 this.transactionManager,
+                                                                                                 host, serverPort);
       logger.info("L2 Networked HA Enabled ");
       this.l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, this.groupCommManager, this.persistor
-          .getClusterStateStore(), this.objectManager, this.transactionManager, gtxm, channelManager,
+          .getClusterStateStore(), this.objectManager, this.transactionManager, gtxm, weightGeneratorFactory,
                                                this.configSetupManager.haConfig(), recycler);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     } else {

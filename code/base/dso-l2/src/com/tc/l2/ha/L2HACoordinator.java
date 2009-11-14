@@ -11,7 +11,6 @@ import com.tc.config.schema.NewHaConfig;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
-import com.tc.l2.ha.WeightGeneratorFactory.WeightGenerator;
 import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
 import com.tc.l2.handler.L2ObjectSyncDehydrateHandler;
@@ -46,7 +45,6 @@ import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.msg.MessageRecycler;
-import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -85,19 +83,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          GroupManager groupCommsManager, PersistentMapStore clusterStateStore,
                          ObjectManager objectManager, ServerTransactionManager transactionManager,
-                         ServerGlobalTransactionManager gtxm, DSOChannelManager channelManager, NewHaConfig haConfig,
+                         ServerGlobalTransactionManager gtxm, WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfig,
                          MessageRecycler recycler) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.haConfig = haConfig;
 
-    init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, channelManager, recycler);
+    init(stageManager, clusterStateStore, objectManager, transactionManager, gtxm, weightGeneratorFactory, recycler);
   }
 
   private void init(StageManager stageManager, PersistentMapStore clusterStateStore, ObjectManager objectManager,
                     ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                    DSOChannelManager channelManager, MessageRecycler recycler) {
+                    WeightGeneratorFactory weightGeneratorFactory, MessageRecycler recycler) {
 
     boolean isCleanDB = isCleanDB(clusterStateStore);
 
@@ -119,7 +117,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                                                consoleLogger,
                                                                                stateManager,
                                                                                groupManager,
-                                                                               createWeightGeneratorFactoryForZapNodeProcessor(channelManager));
+                                                                               weightGeneratorFactory);
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     final Sink objectsSyncRequestSink = stageManager
@@ -166,17 +164,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .getSink();
     GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
     groupManager.registerForGroupEvents(dispatcher);
-  }
-
-  private WeightGeneratorFactory createWeightGeneratorFactoryForZapNodeProcessor(final DSOChannelManager channelManager) {
-    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
-    wgf.add(new WeightGenerator() {
-      public long getWeight() {
-        // return number of connected clients and are active
-        return channelManager.getAllActiveClientConnections().length;
-      }
-    });
-    return wgf;
   }
 
   private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager(ServerGlobalTransactionManager gtxm) {

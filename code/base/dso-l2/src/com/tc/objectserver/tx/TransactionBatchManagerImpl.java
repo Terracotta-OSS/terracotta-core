@@ -8,6 +8,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.l2.ha.TransactionBatchListener;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -30,24 +31,26 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TransactionBatchManagerImpl implements TransactionBatchManager, PostInit {
 
-  private static final TCLogger          logger = TCLogging.getLogger(TransactionBatchManagerImpl.class);
+  private static final TCLogger                logger       = TCLogging.getLogger(TransactionBatchManagerImpl.class);
 
-  private final Map                      map    = new HashMap();
+  private final Map                            map          = new HashMap();
 
-  private final SequenceValidator        sequenceValidator;
-  private final MessageRecycler          messageRecycler;
-  private final Object                   lock   = new Object();
+  private final SequenceValidator              sequenceValidator;
+  private final MessageRecycler                messageRecycler;
+  private final Object                         lock         = new Object();
 
-  private ServerTransactionManager       transactionManager;
-  private ReplicatedObjectManager        replicatedObjectMgr;
-  private Sink                           txnRelaySink;
-  private TransactionBatchReaderFactory  batchReaderFactory;
-  private final TransactionFilter        filter;
-  private ServerGlobalTransactionManager gtxm;
-  private DSOChannelManager              dsoChannelManager;
+  private ServerTransactionManager             transactionManager;
+  private ReplicatedObjectManager              replicatedObjectMgr;
+  private Sink                                 txnRelaySink;
+  private TransactionBatchReaderFactory        batchReaderFactory;
+  private final TransactionFilter              filter;
+  private ServerGlobalTransactionManager       gtxm;
+  private DSOChannelManager                    dsoChannelManager;
+  private final List<TransactionBatchListener> txnListeners = new CopyOnWriteArrayList<TransactionBatchListener>();
 
   public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
                                      TransactionFilter txnFilter) {
@@ -70,6 +73,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   public void addTransactionBatch(final CommitTransactionMessage ctm) {
+    fireBatchTxnEvent(ctm);
     try {
       final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(ctm);
 
@@ -256,6 +260,16 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       if (this.txnCount == 0) {
         cleanUp(this.nodeID);
       }
+    }
+  }
+
+  public void registerForBatchTransaction(TransactionBatchListener listener) {
+    txnListeners.add(listener);
+  }
+
+  private void fireBatchTxnEvent(CommitTransactionMessage ctm) {
+    for (TransactionBatchListener listener : txnListeners) {
+      listener.notifyTransactionBatchAdded(ctm);
     }
   }
 }

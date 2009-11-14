@@ -122,4 +122,9 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
     throw new ImplementMe();
   }
+
+  public long getNumOfTransactions() {
+    throw new ImplementMe();
+  }
+
 }

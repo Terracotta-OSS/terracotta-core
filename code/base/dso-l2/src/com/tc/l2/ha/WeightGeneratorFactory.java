@@ -37,7 +37,7 @@ public class WeightGeneratorFactory {
   public synchronized long[] generateWeightSequence() {
     long weights[] = new long[generators.size()];
     for (int i = 0; i < weights.length; i++) {
-      weights[i] = ((WeightGenerator) generators.get(0)).getWeight();
+      weights[i] = ((WeightGenerator) generators.get(i)).getWeight();
     }
     return weights;
   }

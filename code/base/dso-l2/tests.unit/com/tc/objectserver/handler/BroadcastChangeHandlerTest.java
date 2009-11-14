@@ -739,5 +739,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
+
+    public long getNumOfTransactions() {
+      throw new ImplementMe();
+    }
   }
 }

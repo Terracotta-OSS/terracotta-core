@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerTransactionManagerImpl implements ServerTransactionManager, ServerTransactionManagerMBean,
     GlobalTransactionManager {
@@ -88,6 +89,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   private final AtomicInteger                           txnsCommitted            = new AtomicInteger(0);
   private final AtomicInteger                           objectsCommitted         = new AtomicInteger(0);
   private final AtomicInteger                           noOfCommits              = new AtomicInteger(0);
+  private final AtomicLong                              numOfTransactions        = new AtomicLong(0);
   private final boolean                                 commitLoggingEnabled;
   private final boolean                                 broadcastStatsLoggingEnabled;
 
@@ -417,6 +419,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     TransactionAccount ci = getOrCreateTransactionAccount(source);
     ci.incommingTransactions(txnIDs);
     this.totalPendingTransactions.addAndGet(txnIDs.size());
+    if (isActive()) {
+      this.numOfTransactions.addAndGet(txnIDs.size());
+    }
     for (Iterator i = txns.iterator(); i.hasNext();) {
       final ServerTransaction txn = (ServerTransaction) i.next();
       final ServerTransactionID stxnID = txn.getServerTransactionID();
@@ -429,6 +434,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
     fireIncomingTransactionsEvent(source, txnIDs);
     this.resentTxnSequencer.addTransactions(txns);
+  }
+
+  public long getNumOfTransactions() {
+    return this.numOfTransactions.get();
   }
 
   public int getTotalPendingTransactionsCount() {

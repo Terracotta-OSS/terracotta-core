@@ -4,6 +4,7 @@
 package com.tc.objectserver.tx;
 
 import com.tc.exception.ImplementMe;
+import com.tc.l2.ha.TransactionBatchListener;
 import com.tc.net.NodeID;
 import com.tc.object.msg.CommitTransactionMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
@@ -45,5 +46,9 @@ public class TestTransactionBatchManager implements TransactionBatchManager {
 
   public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
     // Ignore
+  }
+
+  public void registerForBatchTransaction(TransactionBatchListener listener) {
+    throw new ImplementMe();
   }
 }
