@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 import com.tc.exception.TCInternalError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
@@ -63,7 +64,8 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws TCTimeoutException
    * @throws MaxConnectionsExceededException
    */
-  public NetworkStackID open() throws TCTimeoutException, IOException, MaxConnectionsExceededException {
+  public NetworkStackID open() throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+      CommStackMismatchException {
     // XXX: This extra boolean flag is dumb, but it's here because the close event can show up
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
     // comms thread which means that the handshake messages can't be sent.
@@ -74,17 +76,7 @@ public class ClientMessageTransport extends MessageTransportBase {
       try {
         wireNewConnection(connectionEstablisher.open(this));
         HandshakeResult result = handShake();
-        if (result.isMaxConnectionsExceeded()) {
-          // Hack to make the connection clear
-          // but don't do all the gunk around reconnect
-          // clean this up
-          List tl = this.getTransportListeners();
-          this.removeTransportListeners();
-          clearConnection();
-          this.addTransportListeners(tl);
-          status.reset();
-          throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
-        }
+        handleHandshakeError(result);
         sendAck();
         Assert.eval(!this.connectionId.isNull());
         isOpen.set(true);
@@ -104,6 +96,33 @@ public class ClientMessageTransport extends MessageTransportBase {
         isOpening.set(false);
       }
     }
+  }
+
+  private void handleHandshakeError(HandshakeResult result) throws IOException, MaxConnectionsExceededException,
+      CommStackMismatchException {
+    if (result.hasErrorContext()) {
+      switch (result.getErrorType()) {
+        case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
+          cleanConnectionWithoutNotifyListeners();
+          throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
+        case TransportHandshakeError.ERROR_STACK_MISMATCH:
+          cleanConnectionWithoutNotifyListeners();
+          throw new CommStackMismatchException("Disconnect due to comm stack mismatch");
+        default:
+          throw new IOException("Disconnect due to transport handshake error");
+      }
+    }
+  }
+
+  /*
+   * Do not trigger reconnection
+   */
+  private void cleanConnectionWithoutNotifyListeners() {
+    List tl = this.getTransportListeners();
+    this.removeTransportListeners();
+    clearConnection();
+    this.addTransportListeners(tl);
+    status.reset();
   }
 
   /**
@@ -168,7 +187,6 @@ public class ClientMessageTransport extends MessageTransportBase {
           }
           handleHandshakeError(new TransportHandshakeErrorContext(errorMessage + "\n\nPLEASE RECONFIGURE THE STACKS",
                                                                   TransportHandshakeError.ERROR_STACK_MISMATCH));
-          return;
         } else {
           handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + message,
                                                                   TransportHandshakeError.ERROR_GENERIC));
@@ -208,7 +226,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   HandshakeResult handShake() throws TCTimeoutException {
     sendSyn();
     SynAckMessage synAck = waitForSynAck();
-    return new HandshakeResult(synAck.isMaxConnectionsExceeded(), synAck.getMaxConnections());
+    return new HandshakeResult(synAck);
   }
 
   private SynAckMessage waitForSynAck() throws TCTimeoutException {
@@ -293,21 +311,32 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private static final class HandshakeResult {
-    private final boolean maxConnectionsExceeded;
-    private final int     maxConnections;
+    private final SynAckMessage synAck;
 
-    private HandshakeResult(boolean maxConnectionsExceeded, int maxConnections) {
-      this.maxConnectionsExceeded = maxConnectionsExceeded;
-      this.maxConnections = maxConnections;
+    private HandshakeResult(SynAckMessage synAck) {
+      this.synAck = synAck;
     }
 
     public int maxConnections() {
-      return this.maxConnections;
+      return this.synAck.getMaxConnections();
     }
 
     public boolean isMaxConnectionsExceeded() {
-      return this.maxConnectionsExceeded;
+      return this.synAck.isMaxConnectionsExceeded();
     }
+
+    public boolean hasErrorContext() {
+      return this.synAck.isMaxConnectionsExceeded() || this.synAck.hasErrorContext();
+    }
+
+    public short getErrorType() {
+      if (this.synAck.isMaxConnectionsExceeded()) {
+        return TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED;
+      } else {
+        return this.synAck.getErrorType();
+      }
+    }
+
   }
 
   public ClientConnectionEstablisher getConnectionEstablisher() {

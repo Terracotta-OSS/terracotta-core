@@ -11,6 +11,7 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -40,6 +41,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.utils.L2CommUtils;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.session.NullSessionManager;
@@ -214,7 +216,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                           this.connectionPolicy, L2CommUtils.getNumCommWorkerThreads(),
                                                           new HealthCheckerConfigImpl(l2Properties
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
-                                                          thisNodeID);
+                                                          thisNodeID, new TransportHandshakeErrorHandlerForGroupComm());
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
                                                          new DefaultConnectionIdFactory(), httpSink);
@@ -453,7 +455,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private void openChannel(ConnectionAddressProvider addrProvider, ChannelEventListener listener)
-      throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException {
+      throws TCTimeoutException, UnknownHostException, MaxConnectionsExceededException, IOException,
+      CommStackMismatchException {
 
     if (isStopped.get()) return;
 
@@ -480,7 +483,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   public void openChannel(String hostname, int port, ChannelEventListener listener) throws TCTimeoutException,
-      UnknownHostException, MaxConnectionsExceededException, IOException {
+      UnknownHostException, MaxConnectionsExceededException, IOException, CommStackMismatchException {
     openChannel(new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(hostname, port) }), listener);
   }
 

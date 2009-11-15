@@ -32,6 +32,7 @@ import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionInfo;
@@ -683,8 +684,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         CONSOLE_LOGGER.warn("Connection refused from server: " + e);
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
+        DSO_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(e.getMessage());
         CONSOLE_LOGGER.fatal(LicenseCheck.EXIT_MESSAGE);
+        System.exit(1);
+      } catch (CommStackMismatchException e) {
+        DSO_LOGGER.fatal(e.getMessage());
+        CONSOLE_LOGGER.fatal(e.getMessage());
         System.exit(1);
       } catch (IOException ioe) {
         CONSOLE_LOGGER.warn("IOException connecting to server: " + serverHost + ":" + serverPort + ". "

@@ -7,6 +7,7 @@ package com.tc.net.protocol.tcm;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -127,6 +128,8 @@ public class LazyHandshakeTest extends TCTestCase {
           } catch (UnknownHostException e) {
             // who am I, then
           } catch (MaxConnectionsExceededException e) {
+            // so what
+          } catch (CommStackMismatchException e) {
             // so what
           } catch (IOException e) {
             // IO-OI

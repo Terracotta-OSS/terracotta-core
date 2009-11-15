@@ -8,6 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.memorydatastore.message.MemoryDataStoreRequestMessage;
 import com.tc.memorydatastore.message.MemoryDataStoreResponseMessage;
 import com.tc.memorydatastore.server.MemoryDataStoreServer;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -78,6 +79,8 @@ public class MemoryDataStoreClient implements MemoryDataMap {
       } catch (ConnectException e) {
         ThreadUtil.reallySleep(5000);
       } catch (MaxConnectionsExceededException e) {
+        ThreadUtil.reallySleep(5000);
+      } catch (CommStackMismatchException e) {
         ThreadUtil.reallySleep(5000);
       } catch (IOException ioe) {
         ThreadUtil.reallySleep(5000);

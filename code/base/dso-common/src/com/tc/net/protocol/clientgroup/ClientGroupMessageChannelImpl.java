@@ -7,6 +7,7 @@ package com.tc.net.protocol.clientgroup;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -123,7 +124,7 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
 
   @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
-      MaxConnectionsExceededException {
+      MaxConnectionsExceededException, CommStackMismatchException {
     NetworkStackID nid = null;
     ClientMessageChannel ch = null;
     try {
@@ -150,6 +151,8 @@ public class ClientGroupMessageChannelImpl extends ClientMessageChannelImpl impl
       throw new UnknownHostException(connectionInfo(ch) + " " + e);
     } catch (MaxConnectionsExceededException e) {
       throw new MaxConnectionsExceededException(connectionInfo(ch) + " " + e);
+    } catch (CommStackMismatchException e) {
+      throw new CommStackMismatchException(connectionInfo(ch) + " " + e);
     }
 
     logger.info("All active sub-channels opened");

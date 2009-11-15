@@ -7,6 +7,7 @@ package com.tc.net.groups;
 import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
@@ -91,6 +92,9 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       stateMachine.loggerWarn("Node:" + node + " not up. Unknown host.");
     } catch (MaxConnectionsExceededException e) {
       stateMachine.maxConnExceed();
+      stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
+    } catch (CommStackMismatchException e) {
+      stateMachine.commStackMismatch();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (IOException e) {
       stateMachine.connetIOException();
@@ -216,6 +220,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     private final DiscoveryState STATE_CONNECTED       = new ConnectedState();
     private final DiscoveryState STATE_CONNECT_TIMEOUT = new ConnectTimeoutState();
     private final DiscoveryState STATE_MAX_CONNECTION  = new MaxConnExceedState();
+    private final DiscoveryState STATE_STACK_MISMATCH  = new CommStackMismatchState();
     private final DiscoveryState STATE_IO_EXCEPTION    = new IOExceptionState();
     private final DiscoveryState STATE_THROWABLE_EXCEP = new ThrowableExceptionState();
     private final DiscoveryState STATE_UNKNOWN_HOST    = new UnknownHostState();
@@ -306,6 +311,10 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     void maxConnExceed() {
       badConnect(STATE_MAX_CONNECTION);
+    }
+
+    void commStackMismatch() {
+      badConnect(STATE_STACK_MISMATCH);
     }
 
     void connetIOException() {
@@ -434,6 +443,19 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
 
     /*
+     * VeryBadState -- abstract very bad connection, no more attempts to connect
+     */
+    private abstract class VeryBadState extends DiscoveryState {
+      public VeryBadState(String name) {
+        super(name);
+      }
+
+      public boolean isTimeToConnect() {
+        return false;
+      }
+    }
+
+    /*
      * ConnetTimeoutState --
      */
     private class ConnectTimeoutState extends BadState {
@@ -448,6 +470,15 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     private class MaxConnExceedState extends BadState {
       public MaxConnExceedState() {
         super("Max-Connections-Exceed");
+      }
+    }
+
+    /*
+     * CommStackMismatchState --
+     */
+    private class CommStackMismatchState extends VeryBadState {
+      public CommStackMismatchState() {
+        super("Comm-Stack-Mismatch");
       }
     }
 

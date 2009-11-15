@@ -11,6 +11,7 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageFactoryImpl;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.object.session.SessionProvider;
 
 public class ClientGroupCommunicationsManagerImpl extends CommunicationsManagerImpl implements
@@ -26,7 +27,8 @@ public class ClientGroupCommunicationsManagerImpl extends CommunicationsManagerI
   public ClientGroupCommunicationsManagerImpl(MessageMonitor monitor, NetworkStackHarnessFactory stackHarnessFactory,
                                               ConnectionPolicy connectionPolicy, int commThreads,
                                               HealthCheckerConfig config) {
-    super(COMMSMGR_CLIENT, monitor, stackHarnessFactory, null, connectionPolicy, commThreads, config);
+    super(COMMSMGR_CLIENT, monitor, stackHarnessFactory, null, connectionPolicy, commThreads, config,
+          new TransportHandshakeErrorHandlerForL1());
     this.monitor = monitor;
   }
 

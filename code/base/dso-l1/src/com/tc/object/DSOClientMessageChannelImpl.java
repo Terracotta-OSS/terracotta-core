@@ -7,6 +7,7 @@ package com.tc.object;
 import com.tc.async.api.Sink;
 import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
@@ -78,7 +79,8 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this.channel;
   }
 
-  public void open() throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException {
+  public void open() throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException,
+      CommStackMismatchException {
     this.channel.open();
   }
 

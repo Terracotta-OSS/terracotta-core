@@ -12,6 +12,7 @@ import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
@@ -117,7 +118,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   }
 
   public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException,
-      UnknownHostException, IOException;
+      UnknownHostException, IOException, CommStackMismatchException;
 
   /**
    * Routes a TCMessage to a sink. The hydrate sink will do the hydrate() work

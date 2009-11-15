@@ -67,8 +67,10 @@ public class MessageTransportTest extends TCTestCase {
     clientConnection.localAddress = new TCSocketAddress("localhost", 0);
     connManager = new MockConnectionManager();
     connManager.setConnection(clientConnection);
-    commsManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new PlainNetworkStackHarnessFactory(),
-                                                 connManager, new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl());
+    commsManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+                                                 new PlainNetworkStackHarnessFactory(), connManager,
+                                                 new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+                                                 new TransportHandshakeErrorNullHandler());
     lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                        new DefaultConnectionIdFactory());
     lsnr.start(Collections.EMPTY_SET);
@@ -152,10 +154,10 @@ public class MessageTransportTest extends TCTestCase {
   public void testServerTransportEvents() throws Exception {
     createServerTransport();
     assertFalse(serverEventMonitor.waitForConnect(500));
-    
+
     // to establish connection, the status checked at closing
     TransportHandshakeMessage ack = this.transportHandshakeMessageFactory.createAck(connectionId, this.serverTransport
-                                                                                    .getConnection());
+        .getConnection());
     this.serverTransport.receiveTransportMessage(ack);
 
     // add an extra event monitor to make sur ethat, if there are multiple
@@ -237,7 +239,8 @@ public class MessageTransportTest extends TCTestCase {
 
     this.clientTransport = new ClientMessageTransport(cce, createHandshakeErrorHandler(),
                                                       this.transportHandshakeMessageFactory,
-                                                      new WireProtocolAdaptorFactoryImpl(), TransportHandshakeMessage.NO_CALLBACK_PORT);
+                                                      new WireProtocolAdaptorFactoryImpl(),
+                                                      TransportHandshakeMessage.NO_CALLBACK_PORT);
     this.clientResponder = new ClientHandshakeMessageResponder(this.clientResponderSentQueue,
                                                                this.clientResponderReceivedQueue,
                                                                this.transportHandshakeMessageFactory,

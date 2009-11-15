@@ -21,8 +21,6 @@ import com.tc.net.core.TCConnectionManagerJDK14;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.NetworkStackHarness;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
-import com.tc.net.protocol.transport.ClientConnectionEstablisher;
-import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.ConnectionHealthChecker;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerEchoImpl;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerImpl;
@@ -37,13 +35,11 @@ import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.MessageTransportListener;
 import com.tc.net.protocol.transport.ServerMessageTransport;
 import com.tc.net.protocol.transport.ServerStackProvider;
-import com.tc.net.protocol.transport.TransportHandshakeError;
-import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
+import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForL1;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportHandshakeMessageFactory;
 import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
-import com.tc.net.protocol.transport.WireProtocolAdaptorFactory;
 import com.tc.net.protocol.transport.WireProtocolAdaptorFactoryImpl;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
@@ -82,6 +78,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private ServerID                               serverID             = ServerID.NULL_ID;
   private int                                    callbackPort         = TransportHandshakeMessage.NO_CALLBACK_PORT;
   private NetworkListener                        callbackportListener = null;
+  private final TransportHandshakeErrorHandler   handshakeErrHandler;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -89,26 +86,30 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl());
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl(),
+         new TransportHandshakeErrorHandlerForL1());
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    int workerCommCount) {
     this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount,
-         new DisabledHealthCheckerConfigImpl());
+         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1());
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig config) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, config);
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, config,
+         new TransportHandshakeErrorHandlerForL1());
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
-                                   int workerCommCount, HealthCheckerConfig config, ServerID serverID) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config);
+                                   int workerCommCount, HealthCheckerConfig config, ServerID serverID,
+                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler) {
+    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
+         transportHandshakeErrorHandler);
     this.serverID = serverID;
   }
 
@@ -122,13 +123,15 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
                                    ConnectionPolicy connectionPolicy, int workerCommCount,
-                                   HealthCheckerConfig healthCheckerConf) {
+                                   HealthCheckerConfig healthCheckerConf,
+                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler) {
 
     this.monitor = monitor;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
     this.healthCheckerConfig = healthCheckerConf;
+    this.handshakeErrHandler = transportHandshakeErrorHandler;
     privateConnMgr = (connMgr == null);
 
     Assert.assertNotNull(commsMgrName);
@@ -200,10 +203,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     TCMessageRouter msgRouter = (router != null) ? router : new TCMessageRouterImpl();
     ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, msgRouter, sessionProvider,
                                                                new GroupID(addressProvider.getGroupId()));
-    if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(connectionManager,
+    if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
+                                                                                     connectionHealthChecker,
+                                                                                     connectionManager,
                                                                                      addressProvider,
                                                                                      maxReconnectTries, timeout,
-                                                                                     callbackPort);
+                                                                                     callbackPort, handshakeErrHandler);
     NetworkStackHarness stackHarness = this.stackHarnessFactory.createClientHarness(transportFactory, rv,
                                                                                     new MessageTransportListener[0]);
     stackHarness.finalizeStack();
@@ -386,84 +391,4 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     return this.callbackportListener;
   }
 
-  private class MessageTransportFactoryImpl implements MessageTransportFactory {
-    private final TCConnectionManager       connectionMgr;
-    private final ConnectionAddressProvider addressProvider;
-    private final int                       maxReconnectTries;
-    private final int                       timeout;
-    private final int                       callbackport;
-
-    public MessageTransportFactoryImpl(final TCConnectionManager connectionManager,
-                                       final ConnectionAddressProvider addressProvider, final int maxReconnectTries,
-                                       final int timeout, int callbackPort) {
-      this.connectionMgr = connectionManager;
-      this.addressProvider = addressProvider;
-      this.maxReconnectTries = maxReconnectTries;
-      this.timeout = timeout;
-      this.callbackport = callbackPort;
-    }
-
-    public MessageTransport createNewTransport() {
-      TransportHandshakeErrorHandler handshakeErrorHandler = new TransportHandshakeErrorHandler() {
-
-        public void handleHandshakeError(TransportHandshakeErrorContext e) {
-          if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) System.err.println(e.getMessage());
-          else System.err.println(e);
-          new TCRuntimeException("I'm crashing the client!").printStackTrace();
-          try {
-            Thread.sleep(30 * 1000);
-          } catch (InterruptedException e1) {
-            e1.printStackTrace();
-          }
-          System.exit(1);
-        }
-
-        public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-          System.err.println(e);
-          System.err.println(m);
-          new TCRuntimeException("I'm crashing the client").printStackTrace();
-          try {
-            Thread.sleep(30 * 1000);
-          } catch (InterruptedException e1) {
-            e1.printStackTrace();
-          }
-          System.exit(1);
-        }
-
-      };
-
-      ClientConnectionEstablisher clientConnectionEstablisher = new ClientConnectionEstablisher(connectionMgr,
-                                                                                                addressProvider,
-                                                                                                maxReconnectTries,
-                                                                                                timeout);
-      ClientMessageTransport cmt = createClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler,
-                                                                transportMessageFactory,
-                                                                new WireProtocolAdaptorFactoryImpl(), callbackport);
-      cmt.addTransportListener(connectionHealthChecker);
-      return cmt;
-    }
-
-    protected ClientMessageTransport createClientMessageTransport(
-                                                                  ClientConnectionEstablisher clientConnectionEstablisher,
-                                                                  TransportHandshakeErrorHandler handshakeErrorHandler,
-                                                                  TransportHandshakeMessageFactory messageFactory,
-                                                                  WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                                                                  int callbackPortNum) {
-      return new ClientMessageTransport(clientConnectionEstablisher, handshakeErrorHandler, transportMessageFactory,
-                                        wireProtocolAdaptorFactory, callbackPortNum);
-    }
-
-    public MessageTransport createNewTransport(ConnectionID connectionID, TransportHandshakeErrorHandler handler,
-                                               TransportHandshakeMessageFactory handshakeMessageFactory,
-                                               List transportListeners) {
-      throw new AssertionError();
-    }
-
-    public MessageTransport createNewTransport(ConnectionID connectionId, TCConnection connection,
-                                               TransportHandshakeErrorHandler handler,
-                                               TransportHandshakeMessageFactory handshakeMessageFactory,
-                                               List transportListeners) {
-      throw new AssertionError();
-    }
-  }
 }

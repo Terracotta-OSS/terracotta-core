@@ -10,6 +10,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.ConnectionIDProvider;
 import com.tc.logging.TCLogger;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
@@ -104,7 +105,8 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, IOException;
+  public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException, IOException,
+      CommStackMismatchException;
 
   protected abstract void receiveTransportMessageImpl(WireProtocolMessage message);
 

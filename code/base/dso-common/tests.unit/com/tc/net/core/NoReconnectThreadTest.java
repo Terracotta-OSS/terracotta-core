@@ -31,6 +31,7 @@ import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
@@ -104,7 +105,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                              .getProperties()
                                                                              .getPropertiesFor("l2.healthcheck.l2"),
                                                                                                      "Test Server"),
-                                                                         new ServerID());
+                                                                         new ServerID(),
+                                                                         new TransportHandshakeErrorNullHandler());
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);
@@ -159,7 +161,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                              .getProperties()
                                                                              .getPropertiesFor("l2.healthcheck.l2"),
                                                                                                      "Test Server"),
-                                                                         new ServerID());
+                                                                         new ServerID(),
+                                                                         new TransportHandshakeErrorNullHandler());
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);

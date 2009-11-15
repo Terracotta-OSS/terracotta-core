@@ -83,6 +83,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
+import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.utils.L2CommUtils;
 import com.tc.object.cache.CacheConfig;
 import com.tc.object.cache.CacheConfigImpl;
@@ -640,7 +641,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                numCommWorkers,
                                                                new HealthCheckerConfigImpl(this.l2Properties
                                                                    .getPropertiesFor("healthcheck.l1"), "DSO Server"),
-                                                               this.thisServerNodeID);
+                                                               this.thisServerNodeID,
+                                                               new TransportHandshakeErrorNullHandler());
 
     final DSOApplicationEvents appEvents;
     try {

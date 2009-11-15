@@ -7,6 +7,8 @@ package com.tc.net.protocol.transport;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedRef;
 
+import com.tc.exception.TCRuntimeException;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
@@ -156,6 +158,9 @@ public class ClientMessageTransportTest extends TCTestCase {
 
     try {
       createStacksAndTest(serverCommsMgr, clientCommsMgr);
+      throw new TCRuntimeException("Expect throwing CommStackMismatchException");
+    } catch (CommStackMismatchException e) {
+      // expected exception
     } finally {
       try {
         clientCommsMgr.shutdown();
@@ -179,6 +184,9 @@ public class ClientMessageTransportTest extends TCTestCase {
 
     try {
       createStacksAndTest(serverCommsMgr, clientCommsMgr);
+      throw new TCRuntimeException("Expect throwing CommStackMismatchException");
+    } catch (CommStackMismatchException e) {
+      // expected exception
     } finally {
       try {
         clientCommsMgr.shutdown();

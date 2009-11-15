@@ -32,6 +32,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorContext;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandler;
+import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.net.protocol.transport.TransportHandshakeMessage;
 import com.tc.net.protocol.transport.TransportMessageFactoryImpl;
 import com.tc.net.protocol.transport.TransportNetworkStackHarnessFactory;
@@ -217,7 +218,8 @@ public class TCWorkerCommManagerTest extends TCTestCase {
                                                                        .getProperties()
                                                                        .getPropertiesFor("l2.healthcheck.l1"),
                                                                                                "Test Server"),
-                                                                   new ServerID());
+                                                                   new ServerID(),
+                                                                   new TransportHandshakeErrorNullHandler());
     NetworkListener listener = commsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                        new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);
