@@ -278,7 +278,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
     switch (greediness) {
       case GARBAGE:
-      case GARBAGE_COLLECTING:
         break;
       default:
         ClientServerExchangeLockContext c = greediness.toContext(lock, client);
@@ -419,23 +418,19 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * gives us the benefit of not blocking future read recalls if a write recall is pending.  This can be a
    * problem when the write recall was triggered by a tryLock that no longer requires the lock.
    */
-  public synchronized void recall(final RemoteLockManager remote, final ServerLockLevel interest, int lease) {
+  public synchronized boolean recall(final RemoteLockManager remote, final ServerLockLevel interest, int lease) {
     // transition the greediness state
     greediness = greediness.recalled(this, lease);
 
     if (greediness.isRecalled()) {
       if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : server requested recall " + interest);
       greediness = doRecall(remote);
+      return false;
     } else if (greediness.isGreedy()) {
       if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : server granted leased " + interest);
-      // schedule the greedy lease
-      LOCK_TIMER.schedule(new TimerTask() {
-        @Override
-        public void run() {
-          if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(ClientLockImpl.this) + "] : doing recall commit after lease expiry");
-          recall(remote, interest, -1);
-        }
-      }, lease);
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -1021,32 +1016,18 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return true;
   }
 
-  public boolean tryMarkAsGarbage(final RemoteLockManager remote) {
-    synchronized (this) {
-      if (!pinned && isEmpty() && gcCycleCount > 0) {
-        if (greediness.isFree()) {
-          greediness = ClientGreediness.GARBAGE;
-          return true;
-        } else {
-          greediness = ClientGreediness.GARBAGE_COLLECTING;
-          if (remote.isTransactionsForLockFlushed(lock, null)) {
-            if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : doing lock gc recall commit " + greediness);
-            greediness = recallCommit(remote);
-            return true;
-          }
-        }
+  public synchronized boolean tryMarkAsGarbage(final RemoteLockManager remote) {
+    if (!pinned && isEmpty() && gcCycleCount > 0) {
+      greediness = greediness.markAsGarbage();
+      if (greediness.isGarbage()) {
+        return true;
       } else {
-        gcCycleCount = (byte) Math.max(Byte.MAX_VALUE, gcCycleCount++);
+        recall(remote, ServerLockLevel.WRITE, -1);
         return false;
       }
-    }
-    
-    remote.flush(lock);
-    
-    synchronized (this) {
-      if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : doing lock gc recall commit " + greediness);
-      greediness = recallCommit(remote);
-      return true;
+    } else {
+      gcCycleCount = (byte) Math.max(Byte.MAX_VALUE, gcCycleCount++);
+      return false;
     }
   }  
   
