@@ -9,7 +9,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.protocol.clientgroup.ClientGroupMessageChannel;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.MessageTransportFactory;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
@@ -31,11 +30,11 @@ public class TestCommunicationsManager implements CommunicationsManager {
     throw new ImplementMe();
   }
 
-  public ClientGroupMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
-                                                       String hostname, int port, final int timeout,
-                                                       ConnectionAddressProvider addressProvider,
-                                                       MessageTransportFactory transportFactory,
-                                                       TCMessageFactory msgFactory, TCMessageRouter router) {
+  public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
+                                                  String hostname, int port, final int timeout,
+                                                  ConnectionAddressProvider addressProvider,
+                                                  MessageTransportFactory transportFactory,
+                                                  TCMessageFactory msgFactory, TCMessageRouter router) {
     throw new ImplementMe();
   }
 
