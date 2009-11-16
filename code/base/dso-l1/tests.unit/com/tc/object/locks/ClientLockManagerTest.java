@@ -97,7 +97,7 @@ public class ClientLockManagerTest extends TCTestCase {
     clientLockManagerImpl.lock(lockID1, LockLevel.WRITE);
     clientLockManagerImpl.unlock(lockID1, LockLevel.WRITE);
 
-    ThreadUtil.reallySleep(200);
+    ThreadUtil.reallySleep(400);
 
     assertEquals(0, clientLockManagerImpl.runLockGc());
 
@@ -141,7 +141,7 @@ public class ClientLockManagerTest extends TCTestCase {
     clientLockManagerImpl.lock(lockID2, LockLevel.WRITE);
     clientLockManagerImpl.unlock(lockID2, LockLevel.WRITE);
 
-    ThreadUtil.reallySleep(200);
+    ThreadUtil.reallySleep(400);
     
 
     // One lock should be GCed
@@ -150,7 +150,7 @@ public class ClientLockManagerTest extends TCTestCase {
     // now unlock lock 1
     clientLockManagerImpl.unlock(lockID1, LockLevel.WRITE);
 
-    ThreadUtil.reallySleep(200);
+    ThreadUtil.reallySleep(400);
 
     // Both should be GCed
     assertEquals(0, clientLockManagerImpl.runLockGc());
