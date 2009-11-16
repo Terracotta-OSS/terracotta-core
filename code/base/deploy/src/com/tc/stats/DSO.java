@@ -124,6 +124,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
+  
+  public long getFlushedRate() {
+    return getStats().getFlushedRate();
+  }
 
   public long getTransactionRate() {
     return getStats().getTransactionRate();
@@ -595,4 +599,5 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
     return result;
   }
+
 }
