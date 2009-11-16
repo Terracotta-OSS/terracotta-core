@@ -890,6 +890,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     int evicted = (toFlush.size() + removed.size());
+    
+    stats.flushed(evicted);
+    
     // Let DGC work for us
     removed = null;
     removalCandidates = null;

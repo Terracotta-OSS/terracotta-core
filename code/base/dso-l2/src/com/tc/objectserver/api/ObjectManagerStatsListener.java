@@ -9,6 +9,8 @@ public interface ObjectManagerStatsListener {
 
   public void cacheMiss();
   
+  public void flushed(int count);
+  
   public void newObjectCreated();
   
 }

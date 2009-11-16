@@ -18,10 +18,12 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
   private long                 objectsCreated = 0L;
   private final SampledCounter newObjectCounter;
   private final SampledCounter faultRateCounter;
+  private final SampledCounter flushRateCounter;
 
-  public ObjectManagerStatsImpl(SampledCounter newObjectCounter, SampledCounter faultRateCounter) {
+  public ObjectManagerStatsImpl(SampledCounter newObjectCounter, SampledCounter faultRateCounter, SampledCounter flushRateCounter) {
     this.newObjectCounter = newObjectCounter;
     this.faultRateCounter = faultRateCounter;
+    this.flushRateCounter = flushRateCounter;
   }
 
   public synchronized void cacheHit() {
@@ -60,6 +62,14 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
 
   public TimeStampedCounterValue getCacheMissRate() {
     return this.faultRateCounter.getMostRecentSample();
+  }
+
+  public void flushed(int count) {
+    this.flushRateCounter.increment(count);
+  }
+
+  public TimeStampedCounterValue getFlushedRate() {
+    return this.flushRateCounter.getMostRecentSample();
   }
 
 }

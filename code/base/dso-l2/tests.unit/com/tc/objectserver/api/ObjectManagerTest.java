@@ -126,6 +126,7 @@ public class ObjectManagerTest extends TCTestCase {
   private ObjectManagerStatsImpl             stats;
   private SampledCounter                     newObjectCounter;
   private SampledCounterImpl                 objectfaultCounter;
+  private SampledCounterImpl                 objectflushCounter;
   private TestPersistenceTransactionProvider persistenceTransactionProvider;
   private TestPersistenceTransaction         NULL_TRANSACTION;
   private TestTransactionalStageCoordinator  coordinator;
@@ -155,7 +156,8 @@ public class ObjectManagerTest extends TCTestCase {
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
     this.newObjectCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
     this.objectfaultCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
-    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, this.objectfaultCounter);
+    this.objectflushCounter = new SampledCounterImpl(new SampledCounterConfig(1, 1, true, 0L));
+    this.stats = new ObjectManagerStatsImpl(this.newObjectCounter, this.objectfaultCounter, this.objectflushCounter);
     this.persistenceTransactionProvider = new TestPersistenceTransactionProvider();
     this.NULL_TRANSACTION = TestPersistenceTransaction.NULL_TRANSACTION;
     this.objectStatsRecorder = new ObjectStatsRecorder();

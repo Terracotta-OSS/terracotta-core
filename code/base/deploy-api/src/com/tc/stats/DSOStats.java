@@ -12,6 +12,8 @@ public interface DSOStats {
 
   long getCacheMissRate();
 
+  long getFlushedRate();
+
   long getTransactionRate();
 
   long getObjectFaultRate();

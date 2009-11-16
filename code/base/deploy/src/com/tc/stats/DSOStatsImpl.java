@@ -61,6 +61,10 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     return objMgrStats.getCacheMissRate().getCounterValue();
   }
 
+  public long getFlushedRate() {
+    return objMgrStats.getFlushedRate().getCounterValue();
+  }
+  
   public long getGlobalLockRecallRate() {
     return globalLockRecallRate.getMostRecentSample().getCounterValue();
   }
@@ -89,4 +93,6 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
 
     return result;
   }
+
+ 
 }

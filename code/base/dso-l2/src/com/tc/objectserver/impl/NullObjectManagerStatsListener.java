@@ -23,4 +23,8 @@ public class NullObjectManagerStatsListener implements ObjectManagerStatsListene
     //
   }
 
+  public void flushed(int count) {
+    //
+  }
+
 }
