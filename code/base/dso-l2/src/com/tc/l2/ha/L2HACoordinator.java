@@ -132,13 +132,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
                              new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
                              Integer.MAX_VALUE);
-    final Sink ackProcessingStage = stageManager
+    final Sink ackProcessingSink = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
                      new ServerTransactionAckHandler(), 1, Integer.MAX_VALUE).getSink();
-    final Sink stateMessageStage = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE,
+    final Sink stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE,
                                                             new L2StateMessageHandler(), 1, Integer.MAX_VALUE)
         .getSink();
-    final Sink gcResultStage = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
+    final Sink gcResultSink = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
                                                         new GCResultHandler(), 1, Integer.MAX_VALUE).getSink();
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
@@ -155,9 +155,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
-    this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingStage);
-    this.groupManager.routeMessages(L2StateMessage.class, stateMessageStage);
-    this.groupManager.routeMessages(GCResultMessage.class, gcResultStage);
+    this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingSink);
+    this.groupManager.routeMessages(L2StateMessage.class, stateMessageSink);
+    this.groupManager.routeMessages(GCResultMessage.class, gcResultSink);
 
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
                                                           new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)
