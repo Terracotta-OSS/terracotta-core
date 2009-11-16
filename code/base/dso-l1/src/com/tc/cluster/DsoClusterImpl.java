@@ -36,6 +36,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   private static final TCLogger                  LOGGER               = TCLogging.getLogger(DsoClusterImpl.class);
 
+  private volatile ClientID                      currentClientID;
   private volatile DsoNodeInternal               currentNode;
 
   private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
@@ -111,7 +112,8 @@ public class DsoClusterImpl implements DsoClusterInternal {
     if (object instanceof Manageable) {
       Manageable manageable = (Manageable) object;
       if (manageable.__tc_isManaged()) {
-        Set<NodeID> response = clusterMetaDataManager.getNodesWithObject(manageable.__tc_managed().getObjectID());
+        ObjectID objectId = manageable.__tc_managed().getObjectID();
+        Set<NodeID> response = mergeLocalInformation(objectId, clusterMetaDataManager.getNodesWithObject(objectId));
         if (response.isEmpty()) { return Collections.emptySet(); }
 
         final Set<DsoNode> result = new HashSet<DsoNode>();
@@ -160,7 +162,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
     if (0 == objectIDMapping.size()) { return Collections.emptyMap(); }
 
     // retrieve the object locality information from the L2
-    final Map<ObjectID, Set<NodeID>> response = clusterMetaDataManager.getNodesWithObjects(objectIDMapping.keySet());
+    final Map<ObjectID, Set<NodeID>> response = mergeLocalInformation(clusterMetaDataManager.getNodesWithObjects(objectIDMapping.keySet()));
     if (response.isEmpty()) { return Collections.emptyMap(); }
 
     // transform object IDs and node IDs in actual local instances
@@ -269,6 +271,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       // we might get multiple calls in a row, ignore all but the first one
       if (currentNode != null) return;
 
+      currentClientID = (ClientID) nodeId;
       currentNode = topology.registerDsoNode(nodeId);
       isNodeJoined = true;
 
@@ -398,5 +401,24 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   private void log(final Throwable t) {
     LOGGER.error("Unhandled exception in event callback " + this, t);
+  }
+  
+  private Map<ObjectID, Set<NodeID>> mergeLocalInformation(Map<ObjectID, Set<NodeID>> serverResult) {
+    if (currentClientID != null) {
+      for (Map.Entry<ObjectID, Set<NodeID>> e : serverResult.entrySet()) {
+        Set<NodeID> filtered = mergeLocalInformation(e.getKey(), e.getValue());
+        if (filtered != e.getValue()) {
+          e.setValue(filtered);
+        }
+      }
+    }
+    return serverResult;
+  }
+  
+  private Set<NodeID> mergeLocalInformation(ObjectID objectId, Set<NodeID> serverResult) {
+    if (clientObjectManager.isLocal(objectId)) {
+      serverResult.add(currentClientID);
+    }
+    return serverResult;
   }
 }
