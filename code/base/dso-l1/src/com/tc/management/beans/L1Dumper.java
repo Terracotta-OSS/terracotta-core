@@ -8,8 +8,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.management.TCClient;
-
-import java.lang.reflect.Method;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import javax.management.NotCompliantMBeanException;
 
@@ -18,8 +17,6 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
   private static final boolean  DEBUG                         = false;
 
   private static final TCLogger logger                        = TCLogging.getLogger(L1Dumper.class);
-  private static final String   THREAD_DUMP_METHOD_NAME       = "dumpThreadsMany";
-  private static final Class[]  THREAD_DUMP_METHOD_PARAMETERS = new Class[] { int.class, long.class };
   private static final int      DEFAULT_THREAD_DUMP_COUNT     = 3;
   private static final long     DEFAULT_THREAD_DUMP_INTERVAL  = 1000;
 
@@ -51,13 +48,12 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
     threadDumpInterval = interval;
   }
 
-  public int doThreadDump() throws Exception {
+  public void doThreadDump() throws Exception {
     debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
-    Class threadDumpClass = getClass().getClassLoader().loadClass("com.tc.util.runtime.ThreadDump");
-    Method method = threadDumpClass.getMethod(THREAD_DUMP_METHOD_NAME, THREAD_DUMP_METHOD_PARAMETERS);
-    Object[] args = { new Integer(threadDumpCount), new Long(threadDumpInterval) };
-    int pid = ((Integer) method.invoke(null, args)).intValue();
-    return pid;
+    for (int i = 0; i < threadDumpCount; i++) {
+      debugPrintln(ThreadDumpUtil.getThreadDump());
+      Thread.sleep(threadDumpInterval);
+    }
   }
 
   public void reset() {
