@@ -30,20 +30,21 @@ import javax.management.RuntimeMBeanException;
 
 public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp implements NotificationListener {
 
-  public static final String      CONFIG_FILE    = "config-file";
-  public static final String      PORT_NUMBER    = "port-number";
-  public static final String      HOST_NAME      = "host-name";
+  public static final String CONFIG_FILE    = "config-file";
+  public static final String PORT_NUMBER    = "port-number";
+  public static final String HOST_NAME      = "host-name";
 
-//  private final ApplicationConfig config;
+  // private final ApplicationConfig config;
 
-  private MBeanServer             server         = null;
-  private ObjectName              clusterBean    = null;
-  private final List                    clusterBeanBag = new ArrayList();
-  private final Map                     eventsCount    = new HashMap();
+  private MBeanServer        server         = null;
+  private ObjectName         clusterBean    = null;
+  private final List         clusterBeanBag = new ArrayList();
+  private final Map          eventsCount    = new HashMap();
 
-  public ClusterMembershipEventJMXTestApp(final String appId, final ApplicationConfig config, final ListenerProvider listenerProvider) {
+  public ClusterMembershipEventJMXTestApp(final String appId, final ApplicationConfig config,
+                                          final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
-//    this.config = config;
+    // this.config = config;
 
     try {
       registerMBeanListener();
@@ -68,8 +69,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   }
 
   private void runTest() throws Throwable {
-    TerracottaClusterMBean cluster = (TerracottaClusterMBean)MBeanServerInvocationHandler
-      .newProxyInstance(server, clusterBean, TerracottaClusterMBean.class, false);
+    TerracottaClusterMBean cluster = (TerracottaClusterMBean) MBeanServerInvocationHandler
+        .newProxyInstance(server, clusterBean, TerracottaClusterMBean.class, false);
 
     try {
       cluster.getNodeId();
@@ -100,39 +101,32 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
     // Disabling entire test since JMX event notifications have been deprecated
     /*
-    config.getServerControl().crash();
-    while (config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
-    // this sleep should be longer than l1-reconnect timeout
-    Thread.sleep(30 * 1000);
-    config.getServerControl().start();
-    while (!config.getServerControl().isRunning()) {
-      Thread.sleep(5000);
-    }
-    echo("Server restarted successfully.");
-    spawnNewClient();
-    synchronized (eventsCount) {
-      while (eventsCount.size() < 4) {
-        eventsCount.wait(3 * 60 * 1000);
-      }
-      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
-      Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1);
-    }
-    */
+     * config.getServerControl().crash(); while (config.getServerControl().isRunning()) { Thread.sleep(5000); } // this
+     * sleep should be longer than l1-reconnect timeout Thread.sleep(30 1000); config.getServerControl().start(); while
+     * (!config.getServerControl().isRunning()) { Thread.sleep(5000); } echo("Server restarted successfully.");
+     * spawnNewClient(); synchronized (eventsCount) { while (eventsCount.size() < 4) { eventsCount.wait(3 60 1000); }
+     * Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeDisconnected")).intValue() >= 1);
+     * Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.nodeConnected")).intValue() >= 1);
+     * Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeDisconnected")).intValue() >= 1);
+     * Assert.assertTrue(((Integer) eventsCount.get("com.tc.cluster.event.thisNodeConnected")).intValue() >= 1); }
+     */
   }
 
   private void registerMBeanListener() throws Exception {
     List servers = MBeanServerFactory.findMBeanServer(null);
     if (servers.size() == 0) { throw new RuntimeException("No bean server found!"); }
-    echo("Servers found: " + servers.size());
-    Assert.assertEquals(1, servers.size());
-    server = (MBeanServer) servers.get(0);
+    echo("Mbean Servers found: " + servers.size());
 
     // our *star* bean for memebership events
     clusterBean = new ObjectName("org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
+    for (int i = 0; i < servers.size(); i++) {
+      if (((MBeanServer) servers.get(i)).isRegistered(clusterBean)) {
+        server = (MBeanServer) servers.get(i);
+        break;
+      }
+    }
+
+    Assert.assertNotNull(server);
 
     // The MBeanServerDelegate emits notifications about
     // registration/unregistration of MBeans
@@ -208,32 +202,17 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     }
   }
   /*
-  private ExtraL1ProcessControl spawnNewClient() throws Exception {
-    final String hostName = config.getAttribute(HOST_NAME);
-    final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER));
-    final File configFile = new File(config.getAttribute(CONFIG_FILE));
-    File workingDir = new File(configFile.getParentFile(), "client-0");
-    FileUtils.forceMkdir(workingDir);
-
-    List jvmArgs = new ArrayList();
-    addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir, jvmArgs);
-    client.start();
-    client.mergeSTDERR();
-    client.mergeSTDOUT();
-    client.waitFor();
-    System.err.println("\n### Started New Client");
-    return client;
-  }
-
-  private void addTestTcPropertiesFile(final List jvmArgs) {
-    URL url = getClass().getResource("/com/tc/properties/tests.properties");
-    if (url == null) { return; }
-    String pathToTestTcProperties = url.getPath();
-    if (pathToTestTcProperties == null || pathToTestTcProperties.equals("")) { return; }
-    System.err.println("\n##### -Dcom.tc.properties=" + pathToTestTcProperties);
-    jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
-  }
- */
+   * private ExtraL1ProcessControl spawnNewClient() throws Exception { final String hostName =
+   * config.getAttribute(HOST_NAME); final int port = Integer.parseInt(config.getAttribute(PORT_NUMBER)); final File
+   * configFile = new File(config.getAttribute(CONFIG_FILE)); File workingDir = new File(configFile.getParentFile(),
+   * "client-0"); FileUtils.forceMkdir(workingDir); List jvmArgs = new ArrayList(); addTestTcPropertiesFile(jvmArgs);
+   * ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
+   * .getAbsolutePath(), new String[0], workingDir, jvmArgs); client.start(); client.mergeSTDERR();
+   * client.mergeSTDOUT(); client.waitFor(); System.err.println("\n### Started New Client"); return client; } private
+   * void addTestTcPropertiesFile(final List jvmArgs) { URL url =
+   * getClass().getResource("/com/tc/properties/tests.properties"); if (url == null) { return; } String
+   * pathToTestTcProperties = url.getPath(); if (pathToTestTcProperties == null || pathToTestTcProperties.equals("")) {
+   * return; } System.err.println("\n##### -Dcom.tc.properties=" + pathToTestTcProperties);
+   * jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties); }
+   */
 }

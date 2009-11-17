@@ -36,11 +36,6 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
   private static final WriteLock              writeLock     = myLock.writeLock();
   private ConcurrentHashMap                   sharedRoot    = new ConcurrentHashMap();
 
-  public static final String                  CONFIG_FILE   = "config-file";
-  public static final String                  PORT_NUMBER   = "port-number";
-  public static final String                  HOST_NAME     = "host-name";
-  public static final String                  JMX_PORT      = "jmx-port";
-
   private MBeanServerConnection               mbsc          = null;
   private JMXConnector                        jmxc;
   private ObjectManagementMonitorMBean        objectMBean;
@@ -100,7 +95,7 @@ public class RemoveObjectsTestApp extends AbstractTransparentApp {
 
   private void connect() throws Exception {
     System.out.println("connecting to jmx server....");
-    jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(JMX_PORT)));
+    jmxc = new JMXConnectorProxy("localhost", Integer.parseInt(config.getAttribute(ApplicationConfig.JMXPORT_KEY)));
     mbsc = jmxc.getMBeanServerConnection();
     System.out.println("obtained mbeanserver connection");
     objectMBean = (ObjectManagementMonitorMBean) MBeanServerInvocationHandler

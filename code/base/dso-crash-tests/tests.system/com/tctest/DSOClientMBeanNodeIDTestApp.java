@@ -26,17 +26,14 @@ import javax.management.ObjectName;
 
 public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
 
-  public static final String    CONFIG_FILE = "config-file";
-  public static final String    PORT_NUMBER = "port-number";
-  public static final String    HOST_NAME   = "host-name";
-  public static final String    JMX_PORT    = "jmx-port";
   // private static final int TOTAL_L1_PROCESS = 2;
 
-  private final ApplicationConfig     appConfig;
+  private final ApplicationConfig appConfig;
 
   // private final CyclicBarrier barrier = new CyclicBarrier(TOTAL_L1_PROCESS);
 
-  public DSOClientMBeanNodeIDTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
+  public DSOClientMBeanNodeIDTestApp(final String appId, final ApplicationConfig cfg,
+                                     final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     appConfig = cfg;
   }
@@ -62,7 +59,8 @@ public class DSOClientMBeanNodeIDTestApp extends AbstractTransparentApp {
     private MBeanServerConnection mbsc;
 
     public void startDSOClientMBeanCoordinator() {
-      JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+      JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig
+          .getAttribute(ApplicationConfig.JMXPORT_KEY)));
       try {
         mbsc = jmxc.getMBeanServerConnection();
       } catch (IOException e) {

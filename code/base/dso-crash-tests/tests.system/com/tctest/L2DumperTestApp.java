@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.concurrent.CyclicBarrier;
 
 public class L2DumperTestApp extends AbstractTransparentApp {
-  public static final String   SERVER_DB_BACKUP = "data-backup";
-  public static final String   JMX_PORT         = "jmx-port";
 
   private ArrayList<IntNumber> mySharedArrayList;
   private int                  jmxPort;
@@ -29,7 +27,7 @@ public class L2DumperTestApp extends AbstractTransparentApp {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
     mySharedArrayList = new ArrayList<IntNumber>();
-    jmxPort = Integer.parseInt(cfg.getAttribute(JMX_PORT));
+    jmxPort = Integer.parseInt(cfg.getAttribute(ApplicationConfig.JMXPORT_KEY));
   }
 
   public void run() {
