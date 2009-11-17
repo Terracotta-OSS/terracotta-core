@@ -72,7 +72,7 @@ public final class PortChooser {
     return isFree;
   }
 
-  private int choose() {
+  private synchronized int choose() {
     while (true) {
       final Integer attempt = new Integer(getNonEphemeralPort());
       boolean added = chosen.add(attempt);
