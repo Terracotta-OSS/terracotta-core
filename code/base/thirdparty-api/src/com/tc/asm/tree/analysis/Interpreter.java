@@ -163,6 +163,20 @@ public interface Interpreter {
             throws AnalyzerException;
 
     /**
+     * Interprets a bytecode return instruction. This method is called for the 
+     * following opcodes:
+     * 
+     * IRETURN, LRETURN, FRETURN, DRETURN, ARETURN
+     * 
+     * @param insn the bytecode instruction to be interpreted.
+     * @param value the argument of the instruction to be interpreted.
+     * @param expected the expected return type of the analyzed method.
+     * @throws AnalyzerException if an error occured during the interpretation.
+     */
+    void returnOperation(AbstractInsnNode insn, Value value, Value expected)
+            throws AnalyzerException;
+    
+    /**
      * Merges two values. The merge operation must return a value that
      * represents both values (for instance, if the two values are two types,
      * the merged value must be a common super type of the two types. If the two

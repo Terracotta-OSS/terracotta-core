@@ -96,7 +96,29 @@ public class Method {
     {
         this(name, Type.getMethodDescriptor(returnType, argumentTypes));
     }
+    
+    /**
+     * Creates a new {@link Method}.
+     * 
+     * @param m a java.lang.reflect method descriptor
+     * @return a {@link Method} corresponding to the given Java method
+     *         declaration.
+     */
+    public static Method getMethod(java.lang.reflect.Method m) {
+        return new Method(m.getName(), Type.getMethodDescriptor(m));
+    }
 
+    /**
+     * Creates a new {@link Method}.
+     * 
+     * @param c a java.lang.reflect constructor descriptor
+     * @return a {@link Method} corresponding to the given Java constructor
+     *         declaration.
+     */
+    public static Method getMethod(java.lang.reflect.Constructor c) {
+        return new Method("<init>", Type.getConstructorDescriptor(c));
+    }
+    
     /**
      * Returns a {@link Method} corresponding to the given Java method
      * declaration.

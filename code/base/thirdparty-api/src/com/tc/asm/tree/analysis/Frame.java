@@ -51,6 +51,12 @@ import com.tc.asm.tree.VarInsnNode;
 public class Frame {
 
     /**
+     * The expected return type of the analyzed method, or <tt>null</tt> if the
+     * method returns void.
+     */
+    private Value returnValue;
+
+    /**
      * The local variables and operand stack of this frame.
      */
     private Value[] values;
@@ -93,11 +99,22 @@ public class Frame {
      * @return this frame.
      */
     public Frame init(final Frame src) {
+        returnValue = src.returnValue;
         System.arraycopy(src.values, 0, values, 0, values.length);
         top = src.top;
         return this;
     }
 
+    /**
+     * Sets the expected return type of the analyzed method.
+     * 
+     * @param v the expected return type of the analyzed method, or
+     *        <tt>null</tt> if the method returns void.
+     */
+    public void setReturn(final Value v) {
+        returnValue = v;
+    }
+    
     /**
      * Returns the maximum number of local variables of this frame.
      * 
@@ -132,7 +149,7 @@ public class Frame {
             throws IndexOutOfBoundsException
     {
         if (i >= locals) {
-            throw new IndexOutOfBoundsException("Trying to access an inexistant local variable");
+            throw new IndexOutOfBoundsException("Trying to access an inexistant local variable "+i);
         }
         values[i] = value;
     }
@@ -291,7 +308,7 @@ public class Frame {
                 if (value1.getSize() != 1) {
                     throw new AnalyzerException("Illegal use of DUP");
                 }
-                push(interpreter.copyOperation(insn, value1));
+                push(value1);
                 push(interpreter.copyOperation(insn, value1));
                 break;
             case Opcodes.DUP_X1:
@@ -301,8 +318,8 @@ public class Frame {
                     throw new AnalyzerException("Illegal use of DUP_X1");
                 }
                 push(interpreter.copyOperation(insn, value1));
-                push(interpreter.copyOperation(insn, value2));
-                push(interpreter.copyOperation(insn, value1));
+                push(value2);
+                push(value1);
                 break;
             case Opcodes.DUP_X2:
                 value1 = pop();
@@ -312,15 +329,15 @@ public class Frame {
                         value3 = pop();
                         if (value3.getSize() == 1) {
                             push(interpreter.copyOperation(insn, value1));
-                            push(interpreter.copyOperation(insn, value3));
-                            push(interpreter.copyOperation(insn, value2));
-                            push(interpreter.copyOperation(insn, value1));
+                            push(value3);
+                            push(value2);
+                            push(value1);
                             break;
                         }
                     } else {
                         push(interpreter.copyOperation(insn, value1));
-                        push(interpreter.copyOperation(insn, value2));
-                        push(interpreter.copyOperation(insn, value1));
+                        push(value2);
+                        push(value1);
                         break;
                     }
                 }
@@ -330,14 +347,14 @@ public class Frame {
                 if (value1.getSize() == 1) {
                     value2 = pop();
                     if (value2.getSize() == 1) {
-                        push(interpreter.copyOperation(insn, value2));
-                        push(interpreter.copyOperation(insn, value1));
+                        push(value2);
+                        push(value1);
                         push(interpreter.copyOperation(insn, value2));
                         push(interpreter.copyOperation(insn, value1));
                         break;
                     }
                 } else {
-                    push(interpreter.copyOperation(insn, value1));
+                    push(value1);
                     push(interpreter.copyOperation(insn, value1));
                     break;
                 }
@@ -351,9 +368,9 @@ public class Frame {
                         if (value3.getSize() == 1) {
                             push(interpreter.copyOperation(insn, value2));
                             push(interpreter.copyOperation(insn, value1));
-                            push(interpreter.copyOperation(insn, value3));
-                            push(interpreter.copyOperation(insn, value2));
-                            push(interpreter.copyOperation(insn, value1));
+                            push(value3);
+                            push(value2);
+                            push(value1);
                             break;
                         }
                     }
@@ -361,8 +378,8 @@ public class Frame {
                     value2 = pop();
                     if (value2.getSize() == 1) {
                         push(interpreter.copyOperation(insn, value1));
-                        push(interpreter.copyOperation(insn, value2));
-                        push(interpreter.copyOperation(insn, value1));
+                        push(value2);
+                        push(value1);
                         break;
                     }
                 }
@@ -378,18 +395,18 @@ public class Frame {
                             if (value4.getSize() == 1) {
                                 push(interpreter.copyOperation(insn, value2));
                                 push(interpreter.copyOperation(insn, value1));
-                                push(interpreter.copyOperation(insn, value4));
-                                push(interpreter.copyOperation(insn, value3));
-                                push(interpreter.copyOperation(insn, value2));
-                                push(interpreter.copyOperation(insn, value1));
+                                push(value4);
+                                push(value3);
+                                push(value2);
+                                push(value1);
                                 break;
                             }
                         } else {
                             push(interpreter.copyOperation(insn, value2));
                             push(interpreter.copyOperation(insn, value1));
-                            push(interpreter.copyOperation(insn, value3));
-                            push(interpreter.copyOperation(insn, value2));
-                            push(interpreter.copyOperation(insn, value1));
+                            push(value3);
+                            push(value2);
+                            push(value1);
                             break;
                         }
                     }
@@ -399,15 +416,15 @@ public class Frame {
                         value3 = pop();
                         if (value3.getSize() == 1) {
                             push(interpreter.copyOperation(insn, value1));
-                            push(interpreter.copyOperation(insn, value3));
-                            push(interpreter.copyOperation(insn, value2));
-                            push(interpreter.copyOperation(insn, value1));
+                            push(value3);
+                            push(value2);
+                            push(value1);
                             break;
                         }
                     } else {
                         push(interpreter.copyOperation(insn, value1));
-                        push(interpreter.copyOperation(insn, value2));
-                        push(interpreter.copyOperation(insn, value1));
+                        push(value2);
+                        push(value1);
                         break;
                     }
                 }
@@ -526,14 +543,21 @@ public class Frame {
                 break;
             case Opcodes.TABLESWITCH:
             case Opcodes.LOOKUPSWITCH:
+                interpreter.unaryOperation(insn, pop());
+                break;
             case Opcodes.IRETURN:
             case Opcodes.LRETURN:
             case Opcodes.FRETURN:
             case Opcodes.DRETURN:
             case Opcodes.ARETURN:
-                interpreter.unaryOperation(insn, pop());
+                value1 = pop();
+                interpreter.unaryOperation(insn, value1);
+                interpreter.returnOperation(insn, value1, returnValue);
                 break;
             case Opcodes.RETURN:
+                if (returnValue != null) {
+                    throw new AnalyzerException("Incompatible return type");
+                }
                 break;
             case Opcodes.GETSTATIC:
                 push(interpreter.newOperation(insn));
@@ -553,12 +577,14 @@ public class Frame {
             case Opcodes.INVOKESPECIAL:
             case Opcodes.INVOKESTATIC:
             case Opcodes.INVOKEINTERFACE:
+            case Opcodes.INVOKEDYNAMIC:
                 values = new ArrayList();
                 String desc = ((MethodInsnNode) insn).desc;
                 for (int i = Type.getArgumentTypes(desc).length; i > 0; --i) {
                     values.add(0, pop());
                 }
-                if (insn.getOpcode() != Opcodes.INVOKESTATIC) {
+                if (insn.getOpcode() != Opcodes.INVOKESTATIC &&
+                    insn.getOpcode() != Opcodes.INVOKEDYNAMIC) {
                     values.add(0, pop());
                 }
                 if (Type.getReturnType(desc) == Type.VOID_TYPE) {
@@ -598,7 +624,7 @@ public class Frame {
                 interpreter.unaryOperation(insn, pop());
                 break;
             default:
-                throw new RuntimeException("Illegal opcode");
+                throw new RuntimeException("Illegal opcode "+insn.getOpcode());
         }
     }
 

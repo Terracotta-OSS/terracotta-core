@@ -29,11 +29,10 @@
  */
 package com.tc.asm.xml;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.FieldVisitor;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 
 /**
  * SAXFieldAdapter

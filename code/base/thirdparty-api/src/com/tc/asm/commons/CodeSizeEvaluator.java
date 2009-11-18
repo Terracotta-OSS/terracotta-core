@@ -121,7 +121,7 @@ public class CodeSizeEvaluator extends MethodAdapter implements Opcodes {
         final String name,
         final String desc)
     {
-        if (opcode == INVOKEINTERFACE) {
+        if (opcode == INVOKEINTERFACE || opcode == INVOKEDYNAMIC) {
             minSize += 5;
             maxSize += 5;
         } else {

@@ -32,15 +32,14 @@ package com.tc.asm.xml;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.helpers.AttributesImpl;
-
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Label;
 import com.tc.asm.Type;
 import com.tc.asm.util.AbstractVisitor;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.helpers.AttributesImpl;
 
 /**
  * A {@link MethodVisitor} that generates SAX 2.0 events from the visited
@@ -199,7 +198,9 @@ public final class SAXCodeAdapter extends SAXAdapter implements MethodVisitor {
         final String desc)
     {
         AttributesImpl attrs = new AttributesImpl();
-        attrs.addAttribute("", "owner", "owner", "", owner);
+        if (opcode != Opcodes.INVOKEDYNAMIC) {
+            attrs.addAttribute("", "owner", "owner", "", owner);
+        }
         attrs.addAttribute("", "name", "name", "", name);
         attrs.addAttribute("", "desc", "desc", "", desc);
         addElement(AbstractVisitor.OPCODES[opcode], attrs);

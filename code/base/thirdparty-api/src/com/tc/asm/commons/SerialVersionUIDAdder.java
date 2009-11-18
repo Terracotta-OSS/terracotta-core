@@ -177,8 +177,8 @@ public class SerialVersionUIDAdder extends ClassAdapter {
     // ------------------------------------------------------------------------
 
     /*
-     * Visit class header and get class name, access , and intefraces
-     * informatoin (step 1,2, and 3) for SVUID computation.
+     * Visit class header and get class name, access , and interfaces
+     * information (step 1,2, and 3) for SVUID computation.
      */
     public void visit(
         final int version,
@@ -201,7 +201,7 @@ public class SerialVersionUIDAdder extends ClassAdapter {
 
     /*
      * Visit the methods and get constructor and method information (step 5 and
-     * 7). Also determince if there is a class initializer (step 6).
+     * 7). Also determine if there is a class initializer (step 6).
      */
     public MethodVisitor visitMethod(
         final int access,
@@ -241,7 +241,7 @@ public class SerialVersionUIDAdder extends ClassAdapter {
     }
 
     /*
-     * Gets class field information for step 4 of the alogrithm. Also determines
+     * Gets class field information for step 4 of the algorithm. Also determines
      * if the class already has a SVUID.
      */
     public FieldVisitor visitField(
@@ -278,6 +278,28 @@ public class SerialVersionUIDAdder extends ClassAdapter {
         return super.visitField(access, name, desc, signature, value);
     }
 
+    /**
+     * Handle a bizarre special case. Nested classes (static classes declared
+     * inside another class) that are protected have their access bit set to
+     * public in their class files to deal with some odd reflection situation.
+     * Our SVUID computation must do as the JVM does and ignore access bits in
+     * the class file in favor of the access bits InnerClass attribute.
+     */
+    public void visitInnerClass(final String aname, final String outerName, final String innerName, final int attr_access) {
+        if (outerName != null && innerName != null && name != null) {
+            int len = name.length();
+            int ilen = innerName.length();
+            int olen = outerName.length();
+            if (len == olen + 1 + ilen 
+                    && this.name.startsWith(outerName) && this.name.endsWith(innerName) 
+                    && this.name.charAt(olen) == '$') 
+            {
+                this.access = attr_access; 
+            }
+        }
+        super.visitInnerClass(aname, outerName, innerName, attr_access);
+    }
+    
     /*
      * Add the SVUID if class doesn't have one
      */
@@ -348,7 +370,7 @@ public class SerialVersionUIDAdder extends ClassAdapter {
              * field written as a 32-bit integer. 3. The descriptor of the field
              * in UTF encoding
              * 
-             * Note that field signatutes are not dot separated. Method and
+             * Note that field signatures are not dot separated. Method and
              * constructor signatures are dot separated. Go figure...
              */
             writeItems(svuidFields, dos, false);

@@ -30,8 +30,8 @@
 package com.tc.asm.tree;
 
 import com.tc.asm.Label;
-import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.MethodVisitor;
 
 import java.util.List;
 import java.util.ArrayList;

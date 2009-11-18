@@ -48,11 +48,11 @@ import com.tc.asm.tree.InsnList;
 import com.tc.asm.tree.InsnNode;
 import com.tc.asm.tree.JumpInsnNode;
 import com.tc.asm.tree.LabelNode;
-import com.tc.asm.tree.LocalVariableNode;
 import com.tc.asm.tree.LookupSwitchInsnNode;
 import com.tc.asm.tree.MethodNode;
 import com.tc.asm.tree.TableSwitchInsnNode;
 import com.tc.asm.tree.TryCatchBlockNode;
+import com.tc.asm.tree.LocalVariableNode;
 
 /**
  * A {@link com.tc.asm.MethodAdapter} that removes JSR instructions and

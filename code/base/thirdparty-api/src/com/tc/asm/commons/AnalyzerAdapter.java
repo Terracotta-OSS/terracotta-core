@@ -280,7 +280,7 @@ public class AnalyzerAdapter extends MethodAdapter {
             mv.visitMethodInsn(opcode, owner, name, desc);
         }
         pop(desc);
-        if (opcode != Opcodes.INVOKESTATIC) {
+        if (opcode != Opcodes.INVOKESTATIC && opcode != Opcodes.INVOKEDYNAMIC) {
             Object t = pop();
             if (opcode == Opcodes.INVOKESPECIAL && name.charAt(0) == '<') {
                 Object u;

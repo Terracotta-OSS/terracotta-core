@@ -151,6 +151,7 @@ public class Analyzer implements Opcodes {
         // initializes the data structures for the control flow analysis
         Frame current = newFrame(m.maxLocals, m.maxStack);
         Frame handler = newFrame(m.maxLocals, m.maxStack);
+        current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
         Type[] args = Type.getArgumentTypes(m.desc);
         int local = 0;
         if ((m.access & ACC_STATIC) == 0) {

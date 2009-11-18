@@ -385,7 +385,7 @@ public class BasicVerifier extends BasicInterpreter {
         } else {
             int i = 0;
             int j = 0;
-            if (opcode != INVOKESTATIC) {
+            if (opcode != INVOKESTATIC && opcode != INVOKEDYNAMIC) {
                 Type owner = Type.getObjectType(((MethodInsnNode) insn).owner);
                 if (!isSubTypeOf((Value) values.get(i++), newValue(owner))) {
                     throw new AnalyzerException("Method owner",
@@ -405,6 +405,18 @@ public class BasicVerifier extends BasicInterpreter {
             }
         }
         return super.naryOperation(insn, values);
+    }
+
+    public void returnOperation(
+        final AbstractInsnNode insn,
+        final Value value,
+        final Value expected) throws AnalyzerException
+    {
+        if (!isSubTypeOf(value, expected)) {
+            throw new AnalyzerException("Incompatible return type",
+                    expected,
+                    value);
+        }
     }
 
     protected boolean isArrayValue(final Value value) {

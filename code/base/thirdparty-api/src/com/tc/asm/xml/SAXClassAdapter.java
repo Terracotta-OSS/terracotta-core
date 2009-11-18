@@ -29,14 +29,13 @@
  */
 package com.tc.asm.xml;
 
-import org.xml.sax.ContentHandler;
-import org.xml.sax.helpers.AttributesImpl;
-
 import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.helpers.AttributesImpl;
 
 /**
  * A {@link com.tc.asm.ClassVisitor ClassVisitor} that generates SAX 2.0

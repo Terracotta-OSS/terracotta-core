@@ -101,9 +101,9 @@ public class ClassWriter implements ClassVisitor {
     static final int FIELDORMETH_INSN = 6;
 
     /**
-     * The type of the INVOKEINTERFACE instruction.
+     * The type of the INVOKEINTERFACE/INVOKEDYNAMIC instruction.
      */
-    static final int ITFMETH_INSN = 7;
+    static final int ITFDYNMETH_INSN = 7;
 
     /**
      * The type of instructions with a 2 bytes bytecode offset label.
@@ -447,7 +447,7 @@ public class ClassWriter implements ClassVisitor {
         String s = "AAAAAAAAAAAAAAAABCKLLDDDDDEEEEEEEEEEEEEEEEEEEEAAAAAAAADD"
                 + "DDDEEEEEEEEEEEEEEEEEEEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
                 + "AAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAIIIIIIIIIIIIIIIIDNOAA"
-                + "AAAAGGGGGGGHAFBFAAFFAAQPIIJJIIIIIIIIIIIIIIIIII";
+                + "AAAAGGGGGGGHHFBFAAFFAAQPIIJJIIIIIIIIIIIIIIIIII";
         for (i = 0; i < b.length; ++i) {
             b[i] = (byte) (s.charAt(i) - 'A');
         }
@@ -487,7 +487,8 @@ public class ClassWriter implements ClassVisitor {
         // for (i = Constants.GETSTATIC; i <= Constants.INVOKESTATIC; ++i) {
         // b[i] = FIELDORMETH_INSN;
         // }
-        // b[Constants.INVOKEINTERFACE] = ITFMETH_INSN;
+        // b[Constants.INVOKEINTERFACE] = ITFDYNMETH_INSN;
+        // b[Constants.INVOKEDYNAMIC] = ITFDYNMETH_INSN;
         //
         // // LABEL(W)_INSN instructions
         // for (i = Constants.IFEQ; i <= Constants.JSR; ++i) {
@@ -1151,6 +1152,18 @@ public class ClassWriter implements ClassVisitor {
      * @return the index of a new or already existing name and type item.
      */
     public int newNameType(final String name, final String desc) {
+        return newNameTypeItem(name, desc).index;
+    }
+    
+    /**
+     * Adds a name and type to the constant pool of the class being build. Does
+     * nothing if the constant pool already contains a similar item.
+     *
+     * @param name a name.
+     * @param desc a type descriptor.
+     * @return a new or already existing name and type item.
+     */
+    Item newNameTypeItem(final String name, final String desc) {
         key2.set(NAME_TYPE, name, desc, null);
         Item result = get(key2);
         if (result == null) {
@@ -1158,7 +1171,7 @@ public class ClassWriter implements ClassVisitor {
             result = new Item(index++, key2);
             put(result);
         }
-        return result.index;
+        return result;
     }
 
     /**
@@ -1296,7 +1309,7 @@ public class ClassWriter implements ClassVisitor {
      */
     private Item get(final Item key) {
         Item i = items[key.hashCode % items.length];
-        while (i != null && !key.isEqualTo(i)) {
+        while (i != null && (i.type != key.type || !key.isEqualTo(i))) {
             i = i.next;
         }
         return i;

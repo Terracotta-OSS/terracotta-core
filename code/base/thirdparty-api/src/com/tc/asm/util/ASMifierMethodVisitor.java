@@ -30,8 +30,8 @@
 package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.Label;
 import com.tc.asm.MethodVisitor;
+import com.tc.asm.Label;
 import com.tc.asm.Opcodes;
 
 import java.util.HashMap;

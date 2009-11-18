@@ -30,25 +30,35 @@
 package com.tc.asm.util;
 
 import com.tc.asm.AnnotationVisitor;
-import com.tc.asm.Attribute;
 import com.tc.asm.Label;
 import com.tc.asm.MethodAdapter;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.Attribute;
 import com.tc.asm.Type;
+import com.tc.asm.tree.MethodNode;
+import com.tc.asm.tree.analysis.Analyzer;
+import com.tc.asm.tree.analysis.BasicVerifier;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A {@link MethodAdapter} that checks that its methods are properly used. More
- * precisely this code adapter checks each instruction individually (i.e., each
- * visit method checks some preconditions based <i>only</i> on its arguments -
- * such as the fact that the given opcode is correct for a given visit method),
- * but does <i>not</i> check the <i>sequence</i> of instructions. For example,
- * in a method whose signature is <tt>void m ()</tt>, the invalid instruction
- * IRETURN, or the invalid sequence IADD L2I will <i>not</i> be detected by
- * this code adapter.
+ * precisely this method adapter checks each instruction individually, i.e.,
+ * each visit method checks some preconditions based <i>only</i> on its
+ * arguments - such as the fact that the given opcode is correct for a given
+ * visit method. This adapter can also perform some basic data flow checks (more
+ * precisely those that can be performed without the full class hierarchy - see
+ * {@link com.tc.asm.tree.analysis.BasicVerifier}). For instance in a
+ * method whose signature is <tt>void m ()</tt>, the invalid instruction
+ * IRETURN, or the invalid sequence IADD L2I will be detected if the data flow
+ * checks are enabled. These checks are enabled by using the {@link 
+ * CheckMethodAdapter(int,String,String,MethodVisitor,Map)} constructor. They
+ * are not performed if any other constructor is used.
  * 
  * @author Eric Bruneton
  */
@@ -79,12 +89,17 @@ public class CheckMethodAdapter extends MethodAdapter {
      * Code of the visit method to be used for each opcode.
      */
     private static final int[] TYPE;
+    
+    /**
+     * The Label.status field.
+     */
+    private static Field labelStatusField;
 
     static {
         String s = "BBBBBBBBBBBBBBBBCCIAADDDDDAAAAAAAAAAAAAAAAAAAABBBBBBBBDD"
                 + "DDDAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
                 + "BBBBBBBBBBBBBBBBBBBJBBBBBBBBBBBBBBBBBBBBHHHHHHHHHHHHHHHHD"
-                + "KLBBBBBBFFFFGGGGAECEBBEEBBAMHHAA";
+                + "KLBBBBBBFFFFGGGGGECEBBEEBBAMHHAA";
         TYPE = new int[s.length()];
         for (int i = 0; i < TYPE.length; ++i) {
             TYPE[i] = s.charAt(i) - 'A' - 1;
@@ -280,7 +295,7 @@ public class CheckMethodAdapter extends MethodAdapter {
     // 5, //INVOKESPECIAL
     // 5, //INVOKESTATIC
     // 5, //INVOKEINTERFACE
-    // -1, //UNUSED
+    // 5, //INVOKEDYNAMIC
     // 3, //NEW
     // 1, //NEWARRAY
     // 3, //ANEWARRAY
@@ -304,15 +319,66 @@ public class CheckMethodAdapter extends MethodAdapter {
     // }
 
     /**
-     * Constructs a new {@link CheckMethodAdapter} object.
+     * Constructs a new {@link CheckMethodAdapter} object. This method adapter
+     * will not perform any data flow check (see {@link 
+     * CheckMethodAdapter(int,String,String,MethodVisitor,Map)}).
      * 
-     * @param cv the code visitor to which this adapter must delegate calls.
+     * @param mv the method visitor to which this adapter must delegate calls.
      */
-    public CheckMethodAdapter(final MethodVisitor cv) {
-        super(cv);
-        this.labels = new HashMap();
+    public CheckMethodAdapter(final MethodVisitor mv) {
+        this(mv, new HashMap());
     }
 
+    /**
+     * Constructs a new {@link CheckMethodAdapter} object. This method adapter
+     * will not perform any data flow check (see {@link 
+     * CheckMethodAdapter(int,String,String,MethodVisitor,Map)}).
+     * 
+     * @param mv the method visitor to which this adapter must delegate calls.
+     * @param labels a map of already visited labels (in other methods).
+     */
+    public CheckMethodAdapter(final MethodVisitor mv, final Map labels) {
+        super(mv);
+        this.labels = labels;
+    }
+
+    /**
+     * Constructs a new {@link CheckMethodAdapter} object. This method adapter
+     * will perform basic data flow checks. For instance in a method whose
+     * signature is <tt>void m ()</tt>, the invalid instruction IRETURN, or
+     * the invalid sequence IADD L2I will be detected.
+     * 
+     * @param access the method's access flags.
+     * @param name the method's name.
+     * @param desc the method's descriptor (see {@link Type Type}).
+     * @param mv the method visitor to which this adapter must delegate calls.
+     * @param labels a map of already visited labels (in other methods).
+     */
+    public CheckMethodAdapter(
+        final int access,
+        final String name,
+        final String desc,
+        final MethodVisitor mv,
+        final Map labels)
+    {
+        this(new MethodNode(access, name, desc, null, null) {
+            public void visitEnd() {
+                Analyzer a = new Analyzer(new BasicVerifier());
+                try {
+                    a.analyze("dummy", this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw, true);
+                    CheckClassAdapter.printAnalyzerResult(this, a, pw);
+                    pw.close();
+                    throw new RuntimeException(e.getMessage() + ' ' + sw.toString());
+                }
+                accept(mv);
+            }
+        }, labels);
+    }
+    
     public AnnotationVisitor visitAnnotation(
         final String desc,
         final boolean visible)
@@ -490,6 +556,9 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkMethodIdentifier(name, "name");
         checkInternalName(owner, "owner");
         checkMethodDesc(desc);
+        if (opcode == Opcodes.INVOKEDYNAMIC && owner != Opcodes.INVOKEDYNAMIC_OWNER) {
+            throw new IllegalArgumentException("INVOKEDYNAMIC cannot be used with another owner than INVOKEDYNAMIC_OWNER");
+        }
         mv.visitMethodInsn(opcode, owner, name, desc);
     }
 
@@ -498,6 +567,7 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkEndCode();
         checkOpcode(opcode, 6);
         checkLabel(label, false, "label");
+        checkNonDebugLabel(label);
         mv.visitJumpInsn(opcode, label);
     }
 
@@ -542,11 +612,13 @@ public class CheckMethodAdapter extends MethodAdapter {
                     + " must be greater than or equal to min = " + min);
         }
         checkLabel(dflt, false, "default label");
+        checkNonDebugLabel(dflt);
         if (labels == null || labels.length != max - min + 1) {
             throw new IllegalArgumentException("There must be max - min + 1 labels");
         }
         for (int i = 0; i < labels.length; ++i) {
             checkLabel(labels[i], false, "label at index " + i);
+            checkNonDebugLabel(labels[i]);
         }
         mv.visitTableSwitchInsn(min, max, dflt, labels);
     }
@@ -559,11 +631,13 @@ public class CheckMethodAdapter extends MethodAdapter {
         checkEndCode();
         checkStartCode();
         checkLabel(dflt, false, "default label");
+        checkNonDebugLabel(dflt);
         if (keys == null || labels == null || keys.length != labels.length) {
             throw new IllegalArgumentException("There must be the same number of keys and labels");
         }
         for (int i = 0; i < labels.length; ++i) {
             checkLabel(labels[i], false, "label at index " + i);
+            checkNonDebugLabel(labels[i]);
         }
         mv.visitLookupSwitchInsn(dflt, keys, labels);
     }
@@ -595,6 +669,15 @@ public class CheckMethodAdapter extends MethodAdapter {
     {
         checkStartCode();
         checkEndCode();
+        checkLabel(start, false, "start label");
+        checkLabel(end, false, "end label");
+        checkLabel(handler, false, "handler label");
+        checkNonDebugLabel(start);
+        checkNonDebugLabel(end);
+        checkNonDebugLabel(handler);
+        if (labels.get(start) != null || labels.get(end) != null || labels.get(handler) != null) {
+            throw new IllegalStateException("Try catch blocks must be visited before their labels");
+        }
         if (type != null) {
             checkInternalName(type, "type");
         }
@@ -1323,6 +1406,53 @@ public class CheckMethodAdapter extends MethodAdapter {
         if (checkVisited && labels.get(label) == null) {
             throw new IllegalArgumentException("Invalid " + msg
                     + " (must be visited first)");
+        }
+    }
+
+    /**
+     * Checks that the given lavel is not a label used only for debug purposes.
+     * 
+     * @param label the label to be checked.
+     */
+    private static void checkNonDebugLabel(final Label label) {
+        Field f = getLabelStatusField();
+        int status = 0;
+        try {
+            status = f == null ? 0 : ((Integer) f.get(label)).intValue();
+        } catch (IllegalAccessException e) { throw new Error("Internal error"); }
+        if ((status & 0x01) != 0) {
+            throw new IllegalArgumentException("Labels used for debug info cannot be reused for control flow");
+        }
+    }
+    
+    /**
+     * Returns the Field object corresponding to the Label.status field.
+     * 
+     * @return the Field object corresponding to the Label.status field.
+     */
+    private static Field getLabelStatusField() {
+        if (labelStatusField == null) {
+            labelStatusField = getLabelField("a");
+            if (labelStatusField == null) {
+                labelStatusField = getLabelField("status");
+            }
+        }
+        return labelStatusField;
+    }
+    
+    /**
+     * Returns the field of the Label class whose name is given.
+     * 
+     * @param name a field name.
+     * @return the field of the Label class whose name is given, or null.
+     */
+    private static Field getLabelField(final String name) {
+        try {
+            Field f = Label.class.getDeclaredField(name);
+            f.setAccessible(true);
+            return f;
+        } catch (NoSuchFieldException e) {
+            return null;
         }
     }
 }

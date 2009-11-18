@@ -64,6 +64,11 @@ public class SimpleVerifier extends BasicVerifier {
     private final boolean isInterface;
 
     /**
+     * The loader to use for referenced classes.
+     */
+    private ClassLoader loader = getClass().getClassLoader();
+
+    /**
      * Constructs a new {@link SimpleVerifier}.
      */
     public SimpleVerifier() {
@@ -106,6 +111,17 @@ public class SimpleVerifier extends BasicVerifier {
         this.currentSuperClass = currentSuperClass;
         this.currentClassInterfaces = currentClassInterfaces;
         this.isInterface = isInterface;
+    }
+
+    /**
+     * Set the <code>ClassLoader</code> which will be used to load referenced
+     * classes. This is useful if you are verifying multiple interdependent
+     * classes.
+     * 
+     * @param loader a <code>ClassLoader</code> to use
+     */
+    public void setClassLoader(final ClassLoader loader) {
+        this.loader = loader;
     }
 
     public Value newValue(final Type type) {
@@ -274,9 +290,11 @@ public class SimpleVerifier extends BasicVerifier {
     protected Class getClass(final Type t) {
         try {
             if (t.getSort() == Type.ARRAY) {
-                return Class.forName(t.getDescriptor().replace('/', '.'));
+                return Class.forName(t.getDescriptor().replace('/', '.'),
+                        false,
+                        loader);
             }
-            return Class.forName(t.getClassName());
+            return Class.forName(t.getClassName(), false, loader);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e.toString());
         }

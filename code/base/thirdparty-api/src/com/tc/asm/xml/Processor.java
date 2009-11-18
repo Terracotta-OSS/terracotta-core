@@ -54,6 +54,7 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamSource;
 
+import com.tc.asm.ClassReader;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -64,8 +65,6 @@ import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
-
-import com.tc.asm.ClassReader;
 
 /**
  * Processor is a command line tool that can be used for bytecode waving

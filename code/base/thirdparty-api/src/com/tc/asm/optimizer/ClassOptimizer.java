@@ -120,7 +120,7 @@ public class ClassOptimizer extends RemappingClassAdapter {
             {
                 return null;
             }
-            if ("org/objectweb/asm".equals(pkgName) && s.equals(name)) {
+            if ("com/tc/asm".equals(pkgName) && s.equals(name)) {
                 System.out.println("INFO: " + s + " could be renamed");
             }
             super.visitField(access, name, desc, null, value);
@@ -146,7 +146,7 @@ public class ClassOptimizer extends RemappingClassAdapter {
             return null;
         }
         if ((access & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED)) == 0) {
-            if ("org/objectweb/asm".equals(pkgName) && !name.startsWith("<")
+            if ("com/tc/asm".equals(pkgName) && !name.startsWith("<")
                     && s.equals(name))
             {
                 System.out.println("INFO: " + s + " could be renamed");

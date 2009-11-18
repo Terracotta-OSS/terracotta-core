@@ -61,10 +61,11 @@ public class MethodInsnNode extends AbstractInsnNode {
      * Constructs a new {@link MethodInsnNode}.
      * 
      * @param opcode the opcode of the type instruction to be constructed. This
-     *        opcode must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC or
-     *        INVOKEINTERFACE.
+     *        opcode must be INVOKEVIRTUAL, INVOKESPECIAL, INVOKESTATIC,
+     *        INVOKEINTERFACE or INVOKEDYNAMIC.
      * @param owner the internal name of the method's owner class (see
-     *        {@link com.tc.asm.Type#getInternalName() getInternalName}).
+     *        {@link com.tc.asm.Type#getInternalName() getInternalName})
+     *        or {@link com.tc.asm.Opcodes#INVOKEDYNAMIC_OWNER}.
      * @param name the method's name.
      * @param desc the method's descriptor (see {@link com.tc.asm.Type}).
      */

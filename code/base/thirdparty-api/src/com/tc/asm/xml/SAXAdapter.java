@@ -29,11 +29,10 @@
  */
 package com.tc.asm.xml;
 
+import com.tc.asm.Attribute;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
-import com.tc.asm.Attribute;
 
 /**
  * SAXAdapter

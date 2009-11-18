@@ -50,7 +50,7 @@ import com.tc.asm.Opcodes;
  * <tt>Hello</tt> class is the following: <p> <blockquote>
  * 
  * <pre>
- * import org.objectweb.asm.*;
+ * import com.tc.asm.*;
  *
  * public class HelloDump implements Opcodes {
  *
@@ -224,8 +224,8 @@ public class ASMifierClassVisitor extends ASMifierAbstractVisitor implements
             simpleName = name.substring(n + 1);
         }
         text.add("import java.util.*;\n");
-        text.add("import org.objectweb.asm.*;\n");
-        text.add("import org.objectweb.asm.attrs.*;\n");
+        text.add("import com.tc.asm.*;\n");
+        text.add("import com.tc.asm.attrs.*;\n");
         text.add("public class " + simpleName + "Dump implements Opcodes {\n\n");
         text.add("public static byte[] dump () throws Exception {\n\n");
         text.add("ClassWriter cw = new ClassWriter(0);\n");

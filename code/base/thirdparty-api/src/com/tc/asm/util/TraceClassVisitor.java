@@ -36,9 +36,9 @@ import com.tc.asm.AnnotationVisitor;
 import com.tc.asm.Attribute;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
-import com.tc.asm.FieldVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.asm.FieldVisitor;
 import com.tc.asm.signature.SignatureReader;
 
 /**

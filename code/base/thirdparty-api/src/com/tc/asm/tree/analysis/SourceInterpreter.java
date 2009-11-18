@@ -48,6 +48,9 @@ import com.tc.asm.tree.MethodInsnNode;
 public class SourceInterpreter implements Opcodes, Interpreter {
 
     public Value newValue(final Type type) {
+        if (type == Type.VOID_TYPE) {
+            return null;
+        }
         return new SourceValue(type == null ? 1 : type.getSize());
     }
 
@@ -150,6 +153,13 @@ public class SourceInterpreter implements Opcodes, Interpreter {
             size = Type.getReturnType(((MethodInsnNode) insn).desc).getSize();
         }
         return new SourceValue(size, insn);
+    }
+
+    public void returnOperation(
+        final AbstractInsnNode insn,
+        final Value value,
+        final Value expected)
+    {
     }
 
     public Value merge(final Value v, final Value w) {
