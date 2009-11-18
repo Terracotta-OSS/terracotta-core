@@ -49,6 +49,8 @@ public interface TCServer {
   int getDSOListenPort();
 
   int getDSOGroupPort();
+  
+  void waitUntilShutdown();
 
   void dump();
 }

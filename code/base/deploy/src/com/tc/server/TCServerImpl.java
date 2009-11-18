@@ -109,6 +109,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private final L2TVSConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy             connectionPolicy;
+  private boolean                              shutdown                                     = false;
 
   /**
    * This should only be used for tests.
@@ -130,6 +131,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
     if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
+      notifyShutdown();
       System.exit(1);
     }
   }
@@ -235,6 +237,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (canShutdown()) {
       this.state.setState(StateManager.STOP_STATE);
       consoleLogger.info("Server exiting...");
+      notifyShutdown();
       Runtime.getRuntime().exit(0);
     } else {
       logger.warn("Server in incorrect state (" + this.state.getState() + ") to be shutdown.");
@@ -634,6 +637,25 @@ public class TCServerImpl extends SEDA implements TCServer {
   public void startBeanShell(final int port) {
     if (this.dsoServer != null) {
       this.dsoServer.startBeanShell(port);
+    }
+  }
+
+  private void notifyShutdown() {
+    synchronized(this) {
+      shutdown = true;
+      notifyAll();
+    }
+  }
+
+  public void waitUntilShutdown() {
+    synchronized (this) {
+      while (!shutdown) {
+        try {
+          wait();
+        } catch (InterruptedException e) {
+          throw new AssertionError(e);
+        }
+      }
     }
   }
 }

@@ -29,6 +29,8 @@ public class TCServerMain {
       TCServer server = serverFactory.createServer(factory.createL2TVSConfigurationSetupManager(null), threadGroup);
       server.start();
 
+      server.waitUntilShutdown();
+
     } catch (Throwable t) {
       throwableHandler.handleThrowable(Thread.currentThread(), t);
     }
