@@ -38,6 +38,7 @@ import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
+import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -54,7 +55,7 @@ public interface DSOClientBuilder {
                                                     final ConnectionPolicy connectionPolicy, int workerCommThreads,
                                                     final HealthCheckerConfig hcConfig);
 
-  TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch);
+  TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, UUID id);
 
   ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr);
 

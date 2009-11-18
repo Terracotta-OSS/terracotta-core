@@ -12,8 +12,8 @@ import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
 import com.tc.net.protocol.tcm.MessageChannel;
-import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
@@ -29,19 +29,22 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
 
   private TunnelingMessageConnection messageConnection;
 
+  private final UUID                 uuid;
+
   private boolean                    acceptOk;
 
-  private Object                     jmxReadyLock;
+  private final Object               jmxReadyLock;
 
-  private SetOnceFlag                localJmxServerReady;
+  private final SetOnceFlag          localJmxServerReady;
 
   private boolean                    transportConnected;
 
   private boolean                    sentReadyMessage;
 
-  public TunnelingEventHandler(final MessageChannel channel) {
+  public TunnelingEventHandler(final MessageChannel channel, final UUID uuid) {
     this.channel = channel;
     this.channel.addListener(this);
+    this.uuid = uuid;
     acceptOk = false;
     jmxReadyLock = new Object();
     localJmxServerReady = new SetOnceFlag();
@@ -49,6 +52,15 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
     sentReadyMessage = false;
   }
 
+  public MessageChannel getMessageChannel() {
+    return channel;
+  }
+
+  public UUID getUUID() {
+    return uuid;
+  }
+
+  @Override
   public void handleEvent(final EventContext context) {
     final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
     if (messageEnvelope.getCloseConnection()) {
@@ -145,7 +157,8 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
     // deadlock (CDV-132)
     if (send) {
       logger.info("Client JMX server ready; sending notification to L2 server");
-      TCMessage readyMessage = channel.createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
+      L1JmxReady readyMessage = (L1JmxReady) channel.createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
+      readyMessage.initialize(uuid);
       readyMessage.send();
     }
 

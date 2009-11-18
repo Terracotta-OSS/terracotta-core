@@ -6,10 +6,12 @@ package com.tc.management;
 
 import com.tc.management.beans.MBeanNames;
 import com.tc.net.TCSocketAddress;
+import com.tc.util.UUID;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -143,14 +145,36 @@ public abstract class TerracottaManagement {
         .append(remotePort);
   }
 
-  public static ObjectName addNodeInfo(final ObjectName objName, final TCSocketAddress addr)
+  public static ObjectName addNodeInfo(ObjectName objName, final TCSocketAddress addr)
       throws MalformedObjectNameException {
-    if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) { return objName; }
+    if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) {
+      Hashtable kpl = objName.getKeyPropertyList();
+      kpl.remove(MBeanKeys.MBEAN_NODE);
+      objName = ObjectName.getInstance(objName.getDomain(), kpl);
+    }
     StringBuffer sb = new StringBuffer(objName.getCanonicalName());
     if (objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
       sb.append(COMMA).append(NODE_PREFIX);
     }
     addNodeInfo(sb, addr);
+    return new ObjectName(sb.toString());
+  }
+
+  private static void addNodeInfo(final StringBuffer objName, final UUID id) {
+    objName.append(COMMA).append(MBeanKeys.MBEAN_NODE).append(EQUALS).append(id);
+  }
+
+  public static ObjectName addNodeInfo(ObjectName objName, final UUID id) throws MalformedObjectNameException {
+    if (objName.getKeyProperty(MBeanKeys.MBEAN_NODE) != null) {
+      Hashtable kpl = objName.getKeyPropertyList();
+      kpl.remove(MBeanKeys.MBEAN_NODE);
+      objName = ObjectName.getInstance(objName.getDomain(), kpl);
+    }
+    StringBuffer sb = new StringBuffer(objName.getCanonicalName());
+    if (objName.getKeyProperty(NODE_PREFIX_KEY) == null) {
+      sb.append(COMMA).append(NODE_PREFIX);
+    }
+    addNodeInfo(sb, id);
     return new ObjectName(sb.toString());
   }
 
@@ -165,10 +189,11 @@ public abstract class TerracottaManagement {
     return null;
   }
 
-  public static final QueryExp matchAllTerracottaMBeans() {
+  public static final QueryExp matchAllTerracottaMBeans(UUID id) {
     try {
-      return Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*"), new ObjectName(MBeanDomain.INTERNAL + ":*")),
-                      new ObjectName(MBeanDomain.EHCACHE + ":*"));
+      return Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
+                               new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id)),
+                      new ObjectName(MBeanDomain.EHCACHE + ":*,node=" + id));
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }

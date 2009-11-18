@@ -41,7 +41,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Determine whether this class is physically instrumented
-   *
+   * 
    * @param clazz Class
    * @return True if physically instrumented
    */
@@ -64,7 +64,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Look up or create a new root object
-   *
+   * 
    * @param name Root name
    * @param object Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -73,7 +73,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Look up or create a new root object. Objects faulted in to arbitrary depth.
-   *
+   * 
    * @param name Root name
    * @param obj Root object to use if none exists yet
    * @return The root object actually used, may or may not == object
@@ -82,7 +82,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Create or replace root, typically used for replaceable roots.
-   *
+   * 
    * @param rootName Root name
    * @param object Root object
    * @return Root object used
@@ -91,7 +91,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Look up object by ID, faulting into the JVM if necessary
-   *
+   * 
    * @param id Object identifier
    * @return The actual object
    */
@@ -100,7 +100,7 @@ public interface Manager extends TerracottaLocking {
   /**
    * Prefetch object by ID, faulting into the JVM if necessary, Async lookup and will not cause ObjectNotFoundException
    * like lookupObject. Non-existent objects are ignored by the server.
-   *
+   * 
    * @param id Object identifier
    */
   public void preFetchObject(ObjectID id);
@@ -108,7 +108,7 @@ public interface Manager extends TerracottaLocking {
   /**
    * Look up object by ID, faulting into the JVM if necessary, This method also passes the parent Object context so that
    * more intelligent prefetching is possible at the L2.
-   *
+   * 
    * @param id Object identifier of the object we are looking up
    * @param parentContext Object identifier of the parent object
    * @return The actual object
@@ -118,7 +118,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Find managed object, which may be null
-   *
+   * 
    * @param obj The object instance
    * @return The TCObject
    */
@@ -126,7 +126,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Find or create new TCObject
-   *
+   * 
    * @param obj The object instance
    * @return The TCObject
    */
@@ -140,7 +140,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Perform invoke on logical managed object
-   *
+   * 
    * @param object The object
    * @param methodName The method to call
    * @param params The parameters to the method
@@ -149,7 +149,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Perform invoke on logical managed object in lock
-   *
+   * 
    * @param object The object
    * @param lockObject The lock object
    * @param methodName The method to call
@@ -159,7 +159,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Perform distributed method call
-   *
+   * 
    * @param receiver The receiver object
    * @param method The method to call
    * @param params The parameter values
@@ -174,7 +174,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Lookup root by name
-   *
+   * 
    * @param name Name of root
    * @return Root object
    */
@@ -182,7 +182,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Check whether current context has write access
-   *
+   * 
    * @param context Context object
    * @throws com.tc.object.util.ReadOnlyException If in read-only transaction
    */
@@ -197,28 +197,28 @@ public interface Manager extends TerracottaLocking {
   public int calculateDsoHashCode(Object obj);
 
   /**
-   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type},
-   * e.g., Class, Integer, etc.
+   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}, e.g., Class, Integer,
+   *         etc.
    */
   public boolean isLiteralInstance(Object obj);
 
   /**
    * Check whether an object is managed
-   *
+   * 
    * @param object Instance
    * @return True if managed
    */
   public boolean isManaged(Object object);
 
   /**
-   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type}
-   * and is suitable for cluster-wide locking,
+   * @return true if obj is an instance of a {@link com.tc.object.LiteralValues literal type} and is suitable for
+   *         cluster-wide locking,
    */
   public boolean isLiteralAutolock(final Object o);
-  
+
   /**
    * Check whether an object is shared
-   *
+   * 
    * @param obj Instance
    * @return True if shared
    */
@@ -226,14 +226,14 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Check whether dso MonitorExist is required
-   *
+   * 
    * @return True if required
    */
   public boolean isDsoMonitorEntered(Object obj);
 
   /**
    * Retrieve the customer change applicator that was registered for a particular class.
-   *
+   * 
    * @param clazz The class for which the custom change application has to be returned
    * @return the instance of the custom change applicator; or {@code null} if no custom applicator was registered for
    *         this class
@@ -242,7 +242,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Check whether object is logically instrumented
-   *
+   * 
    * @param object Instance
    * @return True if logically instrumented
    */
@@ -250,7 +250,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Check whether field is a root
-   *
+   * 
    * @param field Field
    * @return True if root
    */
@@ -258,14 +258,21 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Get JVM Client identifier
-   *
+   * 
    * @return Client identifier
    */
   public String getClientID();
 
   /**
+   * Get unique Client identifier
+   * 
+   * @return unique Client identifier
+   */
+  public String getUUID();
+
+  /**
    * Get the named logger
-   *
+   * 
    * @param loggerName Logger name
    * @return The logger
    */
@@ -293,7 +300,7 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Returns true if the field represented by the offset is a portable field, i.e., not static and not dso transient
-   *
+   * 
    * @param pojo Object
    * @param fieldOffset The index
    * @return true if the field is portable and false otherwise
@@ -308,8 +315,9 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Register a named classloader with Terracotta.
-   * @param webAppName corresponds to the name of a web-application in the TC config, or null
-   * if the classloader being registered is not associated with a web application.
+   * 
+   * @param webAppName corresponds to the name of a web-application in the TC config, or null if the classloader being
+   *        registered is not associated with a web application.
    */
   public void registerNamedLoader(NamedClassLoader loader, String webAppName);
 
@@ -320,18 +328,17 @@ public interface Manager extends TerracottaLocking {
 
   /**
    * Retrieves the DSO cluster instance.
-   *
+   * 
    * @return the DSO cluster instance for this manager
    */
   public DsoCluster getDsoCluster();
 
   /**
    * Retrieves the MBean server that's used by this Terracotta client
-   *
+   * 
    * @return the MBean server for this client
    */
   public MBeanServer getMBeanServer();
-
 
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(String name);
 
@@ -339,18 +346,16 @@ public interface Manager extends TerracottaLocking {
    * Used by instrumented code to perform a clustered <code>monitorenter</code>.
    */
   public void monitorEnter(LockID lock, LockLevel level);
-  
+
   /**
    * Used by instrumented code to perform a clustered <code>monitorexit</code>.
    * <p>
    * Implementations of this method should <em>prevent propagation of all
-   * <code>Throwable</code> instances</em>.  Instead <code>Throwable</code>
-   * instances are logged and the client VM is then terminated.  If you don't
-   * want this behavior then don't call this method.
+   * <code>Throwable</code> instances</em>. Instead <code>Throwable</code> instances are logged and the client VM is
+   * then terminated. If you don't want this behavior then don't call this method.
    * <p>
-   * This behavior is there to ensure that exceptions thrown during transaction
-   * commit or clustered unlocking do not cause the thread to enter an infinite
-   * loop.
+   * This behavior is there to ensure that exceptions thrown during transaction commit or clustered unlocking do not
+   * cause the thread to enter an infinite loop.
    * 
    * @see <a href="http://jira.terracotta.org/jira/browse/DEV-113">DEV-113</a>
    */

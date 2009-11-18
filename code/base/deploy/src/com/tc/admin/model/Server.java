@@ -22,7 +22,9 @@ import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
+import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -1090,6 +1092,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     try {
       return clusterModel.lookupFacade(rootBean.getObjectID(), ConnectionContext.DSO_SMALL_BATCH_SIZE);
     } catch (Exception e) {
+      e.printStackTrace();
       return null;
     }
   }
@@ -1322,9 +1325,89 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
+  public Object safeGetFieldValue(ManagedObjectFacade mof, String fieldName) {
+    String className = mof.getClassName();
+    try {
+      if (!mof.isList() && !mof.isMap() && !mof.isSet() && fieldName.indexOf('.') == -1) {
+        fieldName = className + "." + fieldName;
+      }
+      Object o = mof.getFieldValue(fieldName);
+      if (o instanceof ObjectID) {
+        return lookupFacade((ObjectID) o, Integer.MAX_VALUE);
+      } else {
+        return o;
+      }
+    } catch (Exception e) {
+      System.err.println(className + ": " + Arrays.asList(mof.getFields()));
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public ManagedObjectFacade DCM_translate(ManagedObjectFacade mof, int limit) {
+    ManagedObjectFacade mapFacade = (ManagedObjectFacade) safeGetFieldValue(mof, "map");
+    if (mapFacade == null) { return mof; }
+    mapFacade = (ManagedObjectFacade) safeGetFieldValue(mapFacade, "storeList");
+    if (mapFacade == null) { return mof; }
+    List<MapEntryFacade> list = new ArrayList<MapEntryFacade>();
+    int trueSize = 0;
+    boolean haveLimit = false;
+    for (String fieldName : mapFacade.getFields()) {
+      ManagedObjectFacade field = (ManagedObjectFacade) safeGetFieldValue(mapFacade, fieldName);
+      String[] fields = field.getFields();
+      if (fields.length > 0) {
+        trueSize += fields.length;
+        if (!haveLimit) {
+          for (int i = 0; i < fields.length; i++) {
+            list.add((MapEntryFacade) safeGetFieldValue(field, fields[i]));
+            if (list.size() >= limit) {
+              haveLimit = true;
+            }
+          }
+        }
+      }
+    }
+    MapEntryFacade[] mefa = list.toArray(new MapEntryFacade[0]);
+    return LogicalManagedObjectFacade.createMapInstance(mof.getObjectId(), mof.getClassName(), mefa, trueSize);
+  }
+
+  public ManagedObjectFacade ClusteredStore_translate(ManagedObjectFacade mof, int limit) {
+    ManagedObjectFacade mapFacade = (ManagedObjectFacade) safeGetFieldValue(mof, "backend");
+    if (mapFacade == null) { return mof; }
+    mapFacade = (ManagedObjectFacade) safeGetFieldValue(mapFacade,
+                                                        "org.terracotta.cache.impl.DistributedCacheImpl.data");
+    if (mapFacade == null) { return mof; }
+    List<MapEntryFacade> list = new ArrayList<MapEntryFacade>();
+    String[] fields = mapFacade.getFields();
+    int trueSize = mapFacade.getTrueObjectSize();
+    for (String fieldName : fields) {
+      list.add((MapEntryFacade) safeGetFieldValue(mapFacade, fieldName));
+      if (list.size() >= limit) {
+        break;
+      }
+    }
+    MapEntryFacade[] mefa = list.toArray(new MapEntryFacade[0]);
+    return LogicalManagedObjectFacade.createMapInstance(mof.getObjectId(), mof.getClassName(), mefa, trueSize);
+  }
+
+  private static boolean showRaw = false;
+
   public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
     DSOMBean theDsoBean = getDSOBean();
-    return theDsoBean != null ? theDsoBean.lookupFacade(objectID, limit) : null;
+    ManagedObjectFacade mof = theDsoBean != null ? theDsoBean.lookupFacade(objectID, limit) : null;
+    if (!showRaw) {
+      if (mof != null) {
+        if ("org.terracotta.collections.ConcurrentDistributedMap".equals(mof.getClassName())) {
+          mof = DCM_translate(mof, limit);
+        }
+      }
+      if (mof != null) {
+        if ("org.terracotta.modules.ehcache.store.ClusteredStore".equals(mof.getClassName())) {
+          mof = ClusteredStore_translate(mof, limit);
+        }
+      }
+    }
+    return mof;
   }
 
   private static final DSOClassInfo[] EMPTY_CLASSINFO_ARRAY = {};

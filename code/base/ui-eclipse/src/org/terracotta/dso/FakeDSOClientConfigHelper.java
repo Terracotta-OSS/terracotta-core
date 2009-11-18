@@ -41,6 +41,7 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
+import com.tc.util.UUID;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -511,6 +512,10 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   }
 
   public URL getBundleURL(Bundle bundle) {
+    return null;
+  }
+
+  public UUID getUUID() {
     return null;
   }
 

@@ -90,7 +90,7 @@ public class ManagerImpl implements Manager {
   private ClientLockManager                        lockManager;
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
-  
+
   private final SerializationUtil                  serializer    = new SerializationUtil();
   private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(serializer);
 
@@ -180,6 +180,10 @@ public class ManagerImpl implements Manager {
     return Long.toString(this.dso.getChannel().getClientIDProvider().getClientID().toLong());
   }
 
+  public String getUUID() {
+    return config.getUUID().toString();
+  }
+
   private void resolveClasses() {
     // See LKC-2323 -- A number of Manager methods can be entered from the internals of URLClassLoader (specifically
     // sun.misc.URLClassPath.getLoader()) and can cause deadlocks. Making sure these methods are invoked once, thus
@@ -201,8 +205,8 @@ public class ManagerImpl implements Manager {
       }
     };
     lookupExistingOrNull(o);
-    //lock(new StringLockID("test"), LockLevel.WRITE);
-    //unlock(new StringLockID("test"), LockLevel.WRITE);
+    // lock(new StringLockID("test"), LockLevel.WRITE);
+    // unlock(new StringLockID("test"), LockLevel.WRITE);
     logicalInvoke(new FakeManageableObject(), SerializationUtil.CLEAR_SIGNATURE, new Object[] {});
   }
 
@@ -721,7 +725,7 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       lockManager.lock(lock, level);
       txManager.begin(lock, level);
-      
+
       if (runtimeLogger.getLockDebug()) {
         runtimeLogger.lockAcquired(lock, level);
       }
@@ -732,7 +736,7 @@ public class ManagerImpl implements Manager {
     if (clusteredLockingEnabled(lock)) {
       lockManager.lockInterruptibly(lock, level);
       txManager.begin(lock, level);
-      
+
       if (runtimeLogger.getLockDebug()) {
         runtimeLogger.lockAcquired(lock, level);
       }
@@ -848,7 +852,8 @@ public class ManagerImpl implements Manager {
   }
 
   private boolean clusteredLockingEnabled(LockID lock) {
-    return !((lock instanceof UnclusteredLockID) || txManager.isTransactionLoggingDisabled() || txManager.isObjectCreationInProgress());
+    return !((lock instanceof UnclusteredLockID) || txManager.isTransactionLoggingDisabled() || txManager
+        .isObjectCreationInProgress());
   }
 
   public boolean isLockedByCurrentThread(LockLevel level) {
@@ -863,7 +868,7 @@ public class ManagerImpl implements Manager {
     try {
       unlock(lock, level);
     } catch (IllegalMonitorStateException e) {
-      ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());      
+      ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
       ExceptionWrapper wrapper = new ExceptionWrapperImpl();
       logger.fatal(wrapper.wrap(formatter.format(UNLOCK_SHARE_LOCK_ERROR)), e);
       System.exit(-1);
@@ -874,13 +879,13 @@ public class ManagerImpl implements Manager {
       System.exit(-1);
     }
   }
-  
-  private static final String UNLOCK_SHARE_LOCK_ERROR = "An attempt was just made to unlock a clustered lock that was not locked.  "
-    + "This was attempted on exit from a Java synchronized block.  This is highly likely to be due to the calling code locking on an "
-    + "object, adding it to the clustered heap, and then attempting to unlock it.  The client JVM will now be terminated to prevent "
-    + "the calling thread from entering an infinite loop.";
-  
+
+  private static final String UNLOCK_SHARE_LOCK_ERROR      = "An attempt was just made to unlock a clustered lock that was not locked.  "
+                                                             + "This was attempted on exit from a Java synchronized block.  This is highly likely to be due to the calling code locking on an "
+                                                             + "object, adding it to the clustered heap, and then attempting to unlock it.  The client JVM will now be terminated to prevent "
+                                                             + "the calling thread from entering an infinite loop.";
+
   private static final String IMMINENT_INFINITE_LOOP_ERROR = "An exception/error was just thrown from an application thread while attempting "
-    + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
-    + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
+                                                             + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
+                                                             + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 }

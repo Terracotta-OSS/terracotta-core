@@ -6,10 +6,12 @@ package com.tc.statistics;
 
 import com.tc.config.schema.NewStatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.util.UUID;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
 /**
@@ -18,21 +20,21 @@ import javax.management.NotCompliantMBeanException;
 public interface StatisticsAgentSubSystem {
   /**
    * Indicates whether the sub-system is active.
-   *
+   * 
    * @return {@code true} when the sub-system is active; or {@code false} otherwise
    */
   public boolean isActive();
 
   /**
    * Returns the {@link StatisticsRetrievalRegistry} that is used by this agent sub-system.
-   *
+   * 
    * @return the requested retrieval registry
    */
   public StatisticsRetrievalRegistry getStatisticsRetrievalRegistry();
 
   /**
    * Returns the {@link AgentStatisticsManager} that is used by this agent sub-system.
-   *
+   * 
    * @return the requested manager
    */
   public AgentStatisticsManager getStatisticsManager();
@@ -44,7 +46,7 @@ public interface StatisticsAgentSubSystem {
 
   /**
    * Sets up the system based on the Terracotta configuration
-   *
+   * 
    * @return {@code true} if the statistics agent was setup successfully; or {@code false} otherwise
    */
   public boolean setup(StatisticsSystemType type, NewStatisticsConfig config);
@@ -57,6 +59,9 @@ public interface StatisticsAgentSubSystem {
 
   public void registerMBeans(MBeanServer server) throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException;
+
+  void registerMBeans(final MBeanServer server, UUID uuid) throws MBeanRegistrationException,
+      NotCompliantMBeanException, InstanceAlreadyExistsException, MalformedObjectNameException;
 
   public void unregisterMBeans(MBeanServer server) throws MBeanRegistrationException;
 

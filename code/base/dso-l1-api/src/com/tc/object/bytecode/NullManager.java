@@ -25,6 +25,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import java.lang.reflect.Field;
 
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 /**
  * Null implementation of the manager.
@@ -40,7 +41,7 @@ public final class NullManager implements Manager {
 
   /**
    * Get instance of the null manager
-   *
+   * 
    * @return NullManager
    */
   public static Manager getInstance() {
@@ -327,5 +328,13 @@ public final class NullManager implements Manager {
 
   public void monitorExit(LockID lock, LockLevel level) {
     //
+  }
+
+  public void registerMBean(Object bean, ObjectName name) {
+    /**/
+  }
+
+  public String getUUID() {
+    return null;
   }
 }

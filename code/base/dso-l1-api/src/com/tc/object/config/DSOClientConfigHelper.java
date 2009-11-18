@@ -23,6 +23,7 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
+import com.tc.util.UUID;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -305,4 +306,13 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void setBundleURLs(Map<Bundle, URL> bundleURLs);
 
   URL getBundleURL(Bundle bundle);
+
+  /**
+   * Returns a unique identifier for this helper, which is exposed to clients via Manager and ManagerUtil. This id
+   * should be used when registering MBeans as the value for the ObjectName property <i>node</i>. This id is passed to
+   * the ClientConnectEventHandler and is used to filter the set of beans to be tunneled to the server's MBeanServer.
+   * 
+   * @return {@code UUID}
+   */
+  UUID getUUID();
 }

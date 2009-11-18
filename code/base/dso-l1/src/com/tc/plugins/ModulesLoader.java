@@ -41,6 +41,7 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
+import com.tc.util.UUID;
 import com.tc.util.VendorVmSignature;
 import com.tc.util.VendorVmSignatureException;
 import com.terracottatech.config.DsoApplication;
@@ -106,11 +107,11 @@ public class ModulesLoader {
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
                                  final boolean forBootJar) throws Exception {
-    initModules(configHelper, classProvider, forBootJar, Collections.EMPTY_LIST);
+    initModules(configHelper, classProvider, forBootJar, Collections.EMPTY_LIST, null);
   }
 
   public static void initModules(final DSOClientConfigHelper configHelper, final ClassProvider classProvider,
-                                 final boolean forBootJar, Collection<Repository> addlRepos) throws Exception {
+                                 final boolean forBootJar, Collection<Repository> addlRepos, UUID id) throws Exception {
     if (forBootJar) {
       System.setProperty(TC_BOOTJAR_CREATION, Boolean.TRUE.toString());
     }
@@ -124,7 +125,7 @@ public class ModulesLoader {
 
       try {
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar, addlRepos);
+        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar, addlRepos, id);
         if (!forBootJar) {
           getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
           getModulesMBeanSpecs(osgiRuntime, configHelper);
@@ -152,14 +153,14 @@ public class ModulesLoader {
   }
 
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar)
+                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar, UUID id)
       throws BundleException {
-    initModules(osgiRuntime, configHelper, classProvider, modules, forBootJar, Collections.EMPTY_LIST);
+    initModules(osgiRuntime, configHelper, classProvider, modules, forBootJar, Collections.EMPTY_LIST, id);
   }
 
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                           final ClassProvider classProvider, final Module[] modules, final boolean forBootJar,
-                          Collection<Repository> addlRepos) throws BundleException {
+                          Collection<Repository> addlRepos, final UUID id) throws BundleException {
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
@@ -198,7 +199,7 @@ public class ModulesLoader {
             Dictionary headers = bundle.getHeaders();
             if (headers.get("Presentation-Factory") != null) {
               logger.info("Installing TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'");
-              installTIMByteProvider(bundle, bundleURL);
+              installTIMByteProvider(bundle, bundleURL, id);
             }
           }
           printModuleBuildInfo(bundle);
@@ -211,7 +212,7 @@ public class ModulesLoader {
 
   }
 
-  private static void installTIMByteProvider(final Bundle bundle, final URL bundleURL) {
+  private static void installTIMByteProvider(final Bundle bundle, final URL bundleURL, final UUID id) {
     try {
       MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
       Dictionary headers = bundle.getHeaders();
@@ -224,7 +225,8 @@ public class ModulesLoader {
       } else {
         prefix = "org.terracotta:type=Loader,feature=";
       }
-      ObjectName loader = new ObjectName(prefix + feature);
+      String suffix = id != null ? ",node=" + id : "";
+      ObjectName loader = new ObjectName(prefix + feature + suffix);
       if (!mbs.isRegistered(loader)) {
         mbs.registerMBean(new StandardMBean(new TIMByteProvider(bundleURL), TIMByteProviderMBean.class), loader);
       }

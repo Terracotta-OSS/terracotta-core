@@ -68,6 +68,7 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.UUID;
 import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
@@ -112,6 +113,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final DSOClientConfigHelperLogger                  helperLogger;
 
   private final L1TVSConfigurationSetupManager               configSetupManager;
+  private final UUID                                         id;
 
   private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
   private final Map                                          webAppNameToAppGroup               = new ConcurrentHashMap();
@@ -217,6 +219,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     this.hasBootJar = hasBootJar;
     this.portability = new PortabilityImpl(this);
     this.configSetupManager = configSetupManager;
+    this.id = UUID.getUUID();
     helperLogger = new DSOClientConfigHelperLogger(logger);
     // this.classInfoFactory = new ClassInfoFactory();
     this.expressionHelper = new ExpressionHelper();
@@ -2095,6 +2098,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public URL getBundleURL(Bundle bundle) {
     return this.bundleURLs.get(bundle);
+  }
+
+  public UUID getUUID() {
+    return id;
   }
 
   private static class Resource {

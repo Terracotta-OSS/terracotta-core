@@ -42,6 +42,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
         .indexOf(expectedText) >= 0);
   }
 
+  @Override
   protected boolean cleanTempDir() {
     return false;
   }
@@ -60,7 +61,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
     try {
       Modules modules = configHelper.getModulesForInitialization();
       EmbeddedOSGiRuntime osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false, configHelper
+          .getUUID());
       Assert.fail("Should get exception on missing bundle");
 
     } catch (BundleException e) {
@@ -100,7 +102,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       try {
         Modules modules = configHelper.getModulesForInitialization();
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false,
+                                  configHelper.getUUID());
         Assert.fail("Should get exception on invalid bundle");
 
       } catch (BundleException e) {
@@ -174,7 +177,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       configHelper.addRepository(repo);
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false, configHelper
+          .getUUID());
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, null);
     }
@@ -206,7 +210,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       try {
         Modules modules = configHelper.getModulesForInitialization();
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false,
+                                  configHelper.getUUID());
         Assert.fail("Should get exception on invalid bundle");
 
       } catch (BundleException e) {
@@ -219,7 +224,7 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
     }
   }
-  
+
   public void testModuleInMultipleRepo() throws Exception {
     String multipleRepoGroupId = "org.terracotta.modules";
     String multipleRepoArtifactId = "multiplerepomodule";
@@ -250,7 +255,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false, configHelper
+          .getUUID());
 
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1, generatedJar2 });
@@ -281,7 +287,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       try {
         Modules modules = configHelper.getModulesForInitialization();
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false,
+                                  configHelper.getUUID());
         Assert.fail("Should get exception on invalid config");
       } catch (BundleException e) {
         checkErrorMessageContainsText(e, badGroupId);
@@ -324,7 +331,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       try {
         Modules modules = configHelper.getModulesForInitialization();
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+        ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false,
+                                  configHelper.getUUID());
         Assert.fail("Should get exception on invalid config");
       } catch (BundleException e) {
         checkErrorMessageContainsText(e.getCause(),
@@ -359,7 +367,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
 
       Modules modules = configHelper.getModulesForInitialization();
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), false, configHelper
+          .getUUID());
 
       // should find and load the module without error
 

@@ -172,7 +172,7 @@ public class DSOContextImpl implements DSOContext {
     checkForProperlyInstrumentedBaseClasses();
 
     try {
-      ModulesLoader.initModules(configHelper, classProvider, false, repos);
+      ModulesLoader.initModules(configHelper, classProvider, false, repos, configHelper.getUUID());
       configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {

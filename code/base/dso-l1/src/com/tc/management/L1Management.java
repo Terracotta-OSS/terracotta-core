@@ -39,6 +39,7 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
@@ -46,7 +47,6 @@ import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
 
 public final class L1Management extends TerracottaManagement {
-
   private static final TCLogger          logger = TCLogging.getLogger(L1Management.class);
 
   private final SetOnceFlag              started;
@@ -180,7 +180,7 @@ public final class L1Management extends TerracottaManagement {
   }
 
   private void attemptToRegister(final boolean createDedicatedMBeanServer) throws InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException {
+      MBeanRegistrationException, NotCompliantMBeanException, MalformedObjectNameException {
     synchronized (mBeanServerLock) {
       if (mBeanServer == null) {
         if (createDedicatedMBeanServer) {
@@ -195,25 +195,31 @@ public final class L1Management extends TerracottaManagement {
       }
     }
 
-    mBeanServer.registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
-    mBeanServer.registerMBean(httpSessionsMonitor, L1MBeanNames.HTTP_SESSIONS_PUBLIC);
-    mBeanServer.registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
+    registerMBean(l1DumpBean, MBeanNames.L1DUMPER_INTERNAL);
+    registerMBean(httpSessionsMonitor, L1MBeanNames.HTTP_SESSIONS_PUBLIC);
+    registerMBean(clusterBean, L1MBeanNames.CLUSTER_BEAN_PUBLIC);
     if (statisticsAgentSubSystem.isActive()) {
-      statisticsAgentSubSystem.registerMBeans(mBeanServer);
+      statisticsAgentSubSystem.registerMBeans(mBeanServer, tunnelingHandler.getUUID());
     }
-    mBeanServer.registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
-    mBeanServer.registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
-    mBeanServer.registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
-    mBeanServer.registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
+    registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
+    registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
+    registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
+    registerMBean(runtimeLoggingBean, L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
     if (mbeanSpecs != null) {
       for (MBeanSpec spec : mbeanSpecs) {
         for (Map.Entry<ObjectName, Object> bean : spec.getMBeans().entrySet()) {
-          mBeanServer.registerMBean(bean.getValue(), bean.getKey());
+          registerMBean(bean.getValue(), bean.getKey());
         }
       }
     }
   }
-  
+
+  private void registerMBean(Object bean, ObjectName name) throws InstanceAlreadyExistsException,
+      MBeanRegistrationException, NotCompliantMBeanException, MalformedObjectNameException {
+    ObjectName modifiedName = TerracottaManagement.addNodeInfo(name, tunnelingHandler.getUUID());
+    mBeanServer.registerMBean(bean, modifiedName);
+  }
+
   public MBeanServer getMBeanServer() {
     return mBeanServer;
   }
@@ -253,5 +259,4 @@ public final class L1Management extends TerracottaManagement {
   private MBeanServer getPlatformDefaultMBeanServer() {
     return ManagementFactory.getPlatformMBeanServer();
   }
-
 }

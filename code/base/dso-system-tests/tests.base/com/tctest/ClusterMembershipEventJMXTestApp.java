@@ -4,6 +4,8 @@
  */
 package com.tctest;
 
+import com.tc.exception.ExceptionHelperImpl;
+import com.tc.exception.RuntimeExceptionHelper;
 import com.tc.management.exposed.TerracottaClusterMBean;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -71,6 +73,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
   private void runTest() throws Throwable {
     TerracottaClusterMBean cluster = (TerracottaClusterMBean) MBeanServerInvocationHandler
         .newProxyInstance(server, clusterBean, TerracottaClusterMBean.class, false);
+    ExceptionHelperImpl helper = new ExceptionHelperImpl();
+    helper.addHelper(new RuntimeExceptionHelper());
 
     try {
       cluster.getNodeId();
@@ -78,7 +82,8 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     } catch (UnsupportedOperationException e) {
       // expected
     } catch (RuntimeMBeanException e) {
-      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+      e.printStackTrace();
+      Assert.assertTrue(helper.getUltimateCause(e) instanceof UnsupportedOperationException);
     }
 
     try {
@@ -87,7 +92,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     } catch (UnsupportedOperationException e) {
       // expected
     } catch (RuntimeMBeanException e) {
-      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+      Assert.assertTrue(helper.getUltimateCause(e) instanceof UnsupportedOperationException);
     }
 
     try {
@@ -96,7 +101,7 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     } catch (UnsupportedOperationException e) {
       // expected
     } catch (RuntimeMBeanException e) {
-      Assert.assertTrue(e.getCause() instanceof UnsupportedOperationException);
+      Assert.assertTrue(helper.getUltimateCause(e) instanceof UnsupportedOperationException);
     }
 
     // Disabling entire test since JMX event notifications have been deprecated
@@ -117,11 +122,14 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
     if (servers.size() == 0) { throw new RuntimeException("No bean server found!"); }
     echo("Mbean Servers found: " + servers.size());
 
-    // our *star* bean for memebership events
-    clusterBean = new ObjectName("org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean");
+    // our *star* bean for membership events
+    ObjectName on = new ObjectName("org.terracotta:type=Terracotta Cluster,name=Terracotta Cluster Bean,*");
     for (int i = 0; i < servers.size(); i++) {
-      if (((MBeanServer) servers.get(i)).isRegistered(clusterBean)) {
-        server = (MBeanServer) servers.get(i);
+      MBeanServer mbeanServer = (MBeanServer) servers.get(i);
+      Set<ObjectName> onSet = mbeanServer.queryNames(on, null);
+      if (onSet.size() > 0) {
+        server = mbeanServer;
+        clusterBean = onSet.iterator().next();
         break;
       }
     }
@@ -171,8 +179,9 @@ public class ClusterMembershipEventJMXTestApp extends AbstractTransparentApp imp
 
     // now that we have the clusterBean, add listener for membership events
     try {
+      echo("server=" + server + ", clusterBean=" + clusterBean);
       server.addNotificationListener(clusterBean, this, null, clusterBean);
-      Assert.fail("Expected UnsupportedOperationException");
+      // Assert.fail("Expected UnsupportedOperationException");
     } catch (UnsupportedOperationException e) {
       // expected
     }
