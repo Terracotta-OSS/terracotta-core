@@ -640,15 +640,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private void notifyShutdown() {
-    synchronized(this) {
+  private synchronized void notifyShutdown() {
       shutdown = true;
       notifyAll();
-    }
   }
 
-  public void waitUntilShutdown() {
-    synchronized (this) {
+  public synchronized void waitUntilShutdown() {
       while (!shutdown) {
         try {
           wait();
@@ -656,6 +653,5 @@ public class TCServerImpl extends SEDA implements TCServer {
           throw new AssertionError(e);
         }
       }
-    }
   }
 }
