@@ -529,7 +529,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     // Create the SEDA stages
     Stage lockResponse = stageManager.createStage(ClientConfigurationContext.LOCK_RESPONSE_STAGE,
-                                                  new LockResponseHandler(sessionManager), 1, maxSize);
+                                                  new LockResponseHandler(sessionManager),
+                                                  this.channel.getGroupIDs().length, 1, maxSize);
     Stage receiveRootID = stageManager.createStage(ClientConfigurationContext.RECEIVE_ROOT_ID_STAGE,
                                                    new ReceiveRootIDHandler(), 1, maxSize);
     Stage receiveObject = stageManager.createStage(ClientConfigurationContext.RECEIVE_OBJECT_STAGE,
