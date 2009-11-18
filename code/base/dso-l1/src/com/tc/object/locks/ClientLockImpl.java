@@ -9,6 +9,7 @@ import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
 import com.tc.object.locks.LockStateNode.PendingLockHold;
+import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.util.SynchronizedSinglyLinkedList;
 
@@ -31,7 +32,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   
   private static final boolean        DEBUG         = false;
   private static final Timer          LOCK_TIMER    = new Timer("ClientLockImpl Timer", true);
-  protected static final int          BLOCKING_LOCK = Integer.MIN_VALUE;
+  private static final int            BLOCKING_LOCK = Integer.MIN_VALUE;
   
   private final LockID                lock;
   
@@ -441,7 +442,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (DEBUG) System.err.println(ManagerUtil.getClientID() + " : " + lock + "[" + System.identityHashCode(this) + "] : server refusing lock request " + level);
     PendingLockHold acquire;
     synchronized (this) {
-      acquire = getQueuedAcquire(thread, level);    
+      acquire = getQueuedAcquire(thread, level);
       if (acquire != null) {
         acquire.refused();
       }
@@ -753,7 +754,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Conventional acquire queued - uses a LockSupport based queue object.
    */
   private void acquireQueued(RemoteLockManager remote, ThreadID thread, LockLevel level) throws GarbageLockException {
-    final PendingLockHold node = new PendingLockHold(thread, level, -1);
+    final PendingLockHold node = new PendingLockHold(thread, level);
     addLast(node);
     acquireQueued(remote, thread, level, node);
   }
@@ -804,7 +805,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * Just like acquireQueued but throws InterruptedException if unparked by interrupt rather then saving the interrupt state
    */
   private void acquireQueuedInterruptibly(RemoteLockManager remote, ThreadID thread, LockLevel level) throws InterruptedException, GarbageLockException {
-    final PendingLockHold node = new PendingLockHold(thread, level, -1);
+    final PendingLockHold node = new PendingLockHold(thread, level);
     addLast(node);
     try {
       for (;;) {
@@ -844,7 +845,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    */
   private boolean acquireQueuedTimeout(RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout) throws InterruptedException, GarbageLockException {
     long lastTime = System.currentTimeMillis();
-    final PendingLockHold node = new PendingLockHold(thread, level, timeout);
+    final PendingTryLockHold node = new PendingTryLockHold(thread, level, timeout);
     addLast(node);
     try {
       while (!node.isRefused()) {

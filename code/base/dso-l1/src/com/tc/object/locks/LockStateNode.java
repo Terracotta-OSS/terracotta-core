@@ -141,18 +141,17 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
   static class PendingLockHold extends LockStateNode {
     private final LockLevel  level;
     private final Thread     javaThread;
-    private final long       waitTime;
-    private volatile boolean responded = false;
-    private volatile boolean awarded   = false;
     private volatile boolean delegates = true;
+    
+    volatile boolean responded = false;
+    volatile boolean awarded   = false;
     
     private volatile String delegationMethod = "Not Delegated";
     
-    PendingLockHold(ThreadID owner, LockLevel level, long timeout) {
+    PendingLockHold(ThreadID owner, LockLevel level) {
       super(owner);
       this.javaThread = Thread.currentThread();
       this.level = level;
-      this.waitTime = timeout;
     }
     
     LockLevel getLockLevel() {
@@ -163,18 +162,9 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return javaThread;
     }
     
-    long getTimeout() {
-      return waitTime;
-    }
-    
     void park() {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
       LockSupport.park();
-    }
-    
-    void park(long timeout) {
-      Assert.assertEquals(getJavaThread(), Thread.currentThread());
-      LockSupport.parkNanos(timeout * 1000000L);
     }
     
     void unpark() {
@@ -190,8 +180,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     }
     
     void refused() {
-      awarded = false;
-      responded = true;
+      //no-op
     }
 
     void awarded() {
@@ -200,7 +189,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     }
     
     boolean isRefused() {
-      return responded && !awarded;
+      return false;
     }
 
     boolean isAwarded() {
@@ -209,12 +198,11 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner()) && getLockLevel().equals(newHold.getLockLevel())) {
-        if (responded) {
-          if (awarded) {
-            return LockAcquireResult.SUCCESS;
-          } else {
-            return LockAcquireResult.FAILURE;
-          }
+        if (isAwarded()) {
+          return LockAcquireResult.SUCCESS;
+        }
+        if (isRefused()) {
+          return LockAcquireResult.FAILURE;
         }
       }
       return LockAcquireResult.UNKNOWN;
@@ -246,19 +234,58 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
         case READ:
-          if (getTimeout() < 0) {
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_READ);
-          } else {
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_READ, getTimeout());
-          }
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_READ);
         case WRITE:
-          if (getTimeout() < 0) {
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_WRITE);
-          } else {
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
-          }
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_WRITE);
       }
       throw new AssertionError();
+    }
+  }
+  
+  static class PendingTryLockHold extends PendingLockHold {
+    
+    private final long       waitTime;
+    
+    PendingTryLockHold(ThreadID owner, LockLevel level, long timeout) {
+      super(owner, level);
+      this.waitTime = timeout;
+    }
+
+    long getTimeout() {
+      return waitTime;
+    }
+    
+    @Override
+    boolean isRefused() {
+      return responded && !awarded;
+    }
+
+    @Override
+    void refused() {
+      awarded = false;
+      responded = true;
+    }
+
+    @Override
+    void park(long timeout) {
+      Assert.assertEquals(getJavaThread(), Thread.currentThread());
+      LockSupport.parkNanos(timeout * 1000000L);
+    }
+    
+    @Override
+    ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
+      switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+        case READ:
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_READ, getTimeout());
+        case WRITE:
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
+      }
+      throw new AssertionError();
+    }
+
+    @Override
+    public String toString() {
+      return super.toString() + ", timeout=" + getTimeout();
     }
   }
   
@@ -267,8 +294,8 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     private final Object waitObject;
     private boolean      unparked = false;
     
-    MonitorBasedPendingLockHold(ThreadID owner, LockLevel level, Object waitObject, long timeout) {
-      super(owner, level, timeout);
+    MonitorBasedPendingLockHold(ThreadID owner, LockLevel level, Object waitObject) {
+      super(owner, level);
       if (waitObject == null) {
         this.waitObject = this;
       } else {
@@ -291,15 +318,6 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
-    /**
-     * MonitorBasedQueuedLockAcquires are only used to reacquire locks after waiting
-     *  - they should always park indefinitely
-     */
-    @Override
-    void park(long timeout) {
-      throw new AssertionError();
-    }
-    
     @Override
     void unpark() {
       synchronized (waitObject) {
@@ -332,7 +350,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       
       this.reacquires = new Stack<PendingLockHold>();
       for (LockHold hold : holds) {
-        reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), this.waitObject, ClientLockImpl.BLOCKING_LOCK));
+        reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), this.waitObject));
       }
       
       this.waitTime = timeout;
