@@ -21,6 +21,7 @@ import com.tc.object.config.LockDefinition;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
@@ -34,7 +35,7 @@ import java.util.Set;
  */
 public class TransparencyClassAdapter extends ClassAdapterBase {
   private static final TCLogger            logger             = TCLogging.getLogger(TransparencyClassAdapter.class);
-  private static final boolean             useFastFinalFields = TCPropertiesImpl.getProperties().getBoolean("instrumentation.finalField.fastRead");
+  private static final boolean             useFastFinalFields = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.INSTRUMENTATION_FINAL_FIELD_FAST_READ);
   
   private final Set                        doNotInstrument = new HashSet();
   private final PhysicalClassAdapterLogger physicalClassLogger;
