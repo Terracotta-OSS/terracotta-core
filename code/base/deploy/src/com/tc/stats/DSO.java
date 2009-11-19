@@ -420,6 +420,10 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return objMgr.getLiveObjectCount();
   }
 
+  public int getCachedObjectCount() {
+    return objMgr.getCachedObjectCount();
+  }
+  
   public long getLastCollectionGarbageCount() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;

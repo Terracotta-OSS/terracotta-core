@@ -630,6 +630,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public int getLiveObjectCount() {
     return this.objectStore.getObjectCount();
   }
+  
+  //Note: Not synchronized, opting for performance over accuracy.
+  public int getCachedObjectCount() {
+    return references_size();
+  }
 
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     synchronized (this) {

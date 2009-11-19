@@ -30,4 +30,6 @@ public interface ObjectManagerMBean {
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) throws NoSuchObjectException;
 
   int getLiveObjectCount();
+  
+  int getCachedObjectCount();
 }
