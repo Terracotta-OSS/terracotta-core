@@ -772,4 +772,11 @@ public interface TCPropertiesConsts {
   public static final String   PRODUCTKEY_URL                                                = "productkey.url";
   public static final String   PRODUCTKEY_PATH                                               = "productkey.path";
 
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Instrumentation Settings
+   * instrumentation.finalField.fastRead         - Enable/disable `dirty' reading of final fields
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   INSTRUMENTATION_FINAL_FIELD_FAST_READ                         = "instrumentation.finalField.fastRead";
 }
