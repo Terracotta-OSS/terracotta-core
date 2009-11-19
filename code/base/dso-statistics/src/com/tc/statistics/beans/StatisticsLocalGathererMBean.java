@@ -43,12 +43,14 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
 
   public StatisticData[] captureStatistic(String name);
 
+  public StatisticData[] retrieveStatisticData(String name);
+
   public void startCapturing();
 
   public void stopCapturing();
 
   public boolean isCapturing();
-  
+
   public void setGlobalParam(String key, Object value);
 
   public Object getGlobalParam(String key);
@@ -60,8 +62,8 @@ public interface StatisticsLocalGathererMBean extends TerracottaMBean {
   public void clearStatistics(String sessionId);
 
   public void clearAllStatistics();
-  
+
   public void setUsername(String username);
-  
+
   public void setPassword(String password);
 }
