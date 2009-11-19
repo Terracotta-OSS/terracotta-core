@@ -1344,7 +1344,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public ManagedObjectFacade DCM_translate(ManagedObjectFacade mof, int limit) {
+  public ManagedObjectFacade CDM_translate(ManagedObjectFacade mof, int limit) {
     ManagedObjectFacade mapFacade = (ManagedObjectFacade) safeGetFieldValue(mof, "map");
     if (mapFacade == null) { return mof; }
     mapFacade = (ManagedObjectFacade) safeGetFieldValue(mapFacade, "storeList");
@@ -1390,6 +1390,19 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return LogicalManagedObjectFacade.createMapInstance(mof.getObjectId(), mof.getClassName(), mefa, trueSize);
   }
 
+  public ManagedObjectFacade CDS_translate(ManagedObjectFacade mof, int limit) {
+    ManagedObjectFacade mapFacade = (ManagedObjectFacade) safeGetFieldValue(mof, "map");
+    if (mapFacade == null) { return mof; }
+    int trueSize = mapFacade.getTrueObjectSize();
+    List<Object> list = new ArrayList<Object>();
+    for (String fieldName : mapFacade.getFields()) {
+      MapEntryFacade field = (MapEntryFacade) safeGetFieldValue(mapFacade, fieldName);
+      list.add(field.getKey());
+    }
+    Object[] mofa = list.toArray(new Object[0]);
+    return LogicalManagedObjectFacade.createSetInstance(mof.getObjectId(), mof.getClassName(), mofa, trueSize);
+  }
+
   private static boolean showRaw = false;
 
   public ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException {
@@ -1398,12 +1411,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (!showRaw) {
       if (mof != null) {
         if ("org.terracotta.collections.ConcurrentDistributedMap".equals(mof.getClassName())) {
-          mof = DCM_translate(mof, limit);
-        }
-      }
-      if (mof != null) {
-        if ("org.terracotta.modules.ehcache.store.ClusteredStore".equals(mof.getClassName())) {
+          mof = CDM_translate(mof, limit);
+        } else if ("org.terracotta.modules.ehcache.store.ClusteredStore".equals(mof.getClassName())) {
           mof = ClusteredStore_translate(mof, limit);
+        } else if ("org.terracotta.collections.ConcurrentDistributedSet".equals(mof.getClassName())) {
+          mof = CDS_translate(mof, limit);
         }
       }
     }
