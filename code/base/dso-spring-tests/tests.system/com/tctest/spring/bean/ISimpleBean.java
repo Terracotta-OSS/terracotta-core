@@ -3,9 +3,11 @@
  */
 package com.tctest.spring.bean;
 
+import java.util.UUID;
+
 public interface ISimpleBean {
 
-  public long getSharedRefId();
+  public UUID getSharedRefId();
   
   public ISimpleBean getSharedRef();
 
@@ -35,7 +37,7 @@ public interface ISimpleBean {
 
   public int getHashCode();
 
-  public long getId();
+  public UUID getId();
 
   public long getSharedId();
 

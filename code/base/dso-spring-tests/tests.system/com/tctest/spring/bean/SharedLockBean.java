@@ -4,20 +4,20 @@
  */
 package com.tctest.spring.bean;
 
-import com.tc.aspectwerkz.proxy.Uuid;
+import java.util.UUID;
 
 public class SharedLockBean implements ISharedLock {
   // shared variables
   private int                        val             = 0;
-  private Long                       firstHolder     = null;
+  private UUID                       firstHolder     = null;
 
   // variables not shared
   private volatile transient boolean release         = false;
   private volatile transient boolean holdsSharedLock = false;
   private final transient Object     localLock       = new Object();
-  private final transient long       localID         = System.identityHashCode(this) + Uuid.newUuid();
+  private final transient UUID       localID         = UUID.randomUUID();
 
-  public long getLocalID() {
+  public UUID getLocalID() {
     return localID;
   }
 
@@ -27,13 +27,13 @@ public class SharedLockBean implements ISharedLock {
         holdsSharedLock = true;
 
         if (firstHolder == null) {
-          firstHolder = new Long(localID);
+          firstHolder = new UUID(localID.getMostSignificantBits(), localID.getLeastSignificantBits());
 
           while (!release) {
             sleep(100);
           }
 
-        } else if (firstHolder.equals(new Long(localID))) {
+        } else if (firstHolder.equals(localID)) {
           //
           throw new AssertionError("firstholder was me!");
         }
@@ -52,7 +52,7 @@ public class SharedLockBean implements ISharedLock {
     release = true;
   }
 
-  public Long getFirstHolder() {
+  public UUID getFirstHolder() {
     synchronized (firstHolder) {
       return firstHolder;
     }
@@ -83,7 +83,7 @@ public class SharedLockBean implements ISharedLock {
   public boolean isFirstHolder() {
     synchronized (localLock) {
       if (firstHolder == null) { return false; }
-      return firstHolder.longValue() == localID;
+      return firstHolder.equals(localID);
     }
   }
 }

@@ -11,14 +11,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.support.AbstractApplicationContext;
 
-import com.tc.aspectwerkz.proxy.Uuid;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class LifeCycleBean implements InitializingBean, ApplicationContextAware, BeanNameAware, DisposableBean,
     ILifeCycle {
-  private transient long               mSystemId;
+  private transient UUID               mSystemId;
 
   private List                         mProp;
 
@@ -27,10 +26,10 @@ public class LifeCycleBean implements InitializingBean, ApplicationContextAware,
   private transient String             mBeanName          = null;
 
   public LifeCycleBean() {
-    mSystemId = System.identityHashCode(this) + Uuid.newUuid();
+    mSystemId = UUID.randomUUID();
   }
 
-  public long getSystemId() {
+  public UUID getSystemId() {
     return mSystemId;
   }
 

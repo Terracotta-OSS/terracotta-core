@@ -4,9 +4,11 @@
  */
 package com.tctest.spring.bean;
 
+import java.util.UUID;
+
 public interface ISharedLock {
 
-  public long getLocalID();
+  public UUID getLocalID();
 
   public void unlockedMutate();
 
@@ -14,7 +16,7 @@ public interface ISharedLock {
 
   public void release();
 
-  public Long getFirstHolder();
+  public UUID getFirstHolder();
 
   public boolean isFirstHolder();
 

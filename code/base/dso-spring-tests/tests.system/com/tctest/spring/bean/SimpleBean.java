@@ -5,10 +5,10 @@ package com.tctest.spring.bean;
 
 import org.springframework.beans.factory.BeanNameAware;
 
-import com.tc.aspectwerkz.proxy.Uuid;
+import java.util.UUID;
 
 public class SimpleBean implements ISimpleBean, BeanNameAware {
-  private transient long id                    = System.identityHashCode(this) + Uuid.newUuid();
+  private transient UUID id                    = UUID.randomUUID();
   
   private transient long timeStamp             = System.currentTimeMillis();
   private long sharedId                        = 0;
@@ -83,7 +83,7 @@ public class SimpleBean implements ISimpleBean, BeanNameAware {
     return hashCode();
   }
   
-  synchronized public long getId() {
+  synchronized public UUID getId() {
     return id;
   }
 
@@ -103,8 +103,8 @@ public class SimpleBean implements ISimpleBean, BeanNameAware {
     this.dsoTransientRef = dsoTransientRef;
   }
 
-  synchronized public long getSharedRefId() {
-    return this.sharedRef == null ? -1 : sharedRef.getId();
+  synchronized public UUID getSharedRefId() {
+    return this.sharedRef == null ? new UUID(0, -1) : sharedRef.getId();
   }
     
   synchronized public ISimpleBean getSharedRef() {

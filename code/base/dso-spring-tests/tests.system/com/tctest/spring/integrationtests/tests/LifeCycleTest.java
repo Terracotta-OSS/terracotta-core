@@ -11,6 +11,7 @@ import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import junit.framework.Test;
 
@@ -44,18 +45,18 @@ public class LifeCycleTest extends AbstractTwoServerDeploymentTest {
   public void test() throws Exception {
     logger.debug("testing bean life cycle");
 
-    long systemId1 = mLifeCycleBean1.getSystemId();
-    long systemId2 = mLifeCycleBean2.getSystemId();
+    UUID systemId1 = mLifeCycleBean1.getSystemId();
+    UUID systemId2 = mLifeCycleBean2.getSystemId();
 
-    assertTrue("Transient properties also share the same value.", systemId1 != systemId2);
+    assertFalse("Transient properties also share the same value.", systemId1.equals(systemId2));
 
     List prop1 = mLifeCycleBean1.getProp();
     List prop2 = mLifeCycleBean2.getProp();
 
     // property might be referenced by other beans
     assertEquals(prop1, prop2);
-    assertTrue(prop1.contains("" + systemId1));
-    assertTrue(prop1.contains("" + systemId2));
+    assertTrue(prop1.contains(systemId1));
+    assertTrue(prop1.contains(systemId2));
 
     List records1 = mLifeCycleBean1.getInvocationRecords();
     List records2 = mLifeCycleBean2.getInvocationRecords();

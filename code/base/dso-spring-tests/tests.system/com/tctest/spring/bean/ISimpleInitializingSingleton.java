@@ -3,13 +3,15 @@
  */
 package com.tctest.spring.bean;
 
+import java.util.UUID;
+
 public interface ISimpleInitializingSingleton {
 
   String getName();
 
-  long getId();
+  UUID getId();
 
-  long getInnerId();
+  UUID getInnerId();
   
   boolean isTheSameInstance();
 

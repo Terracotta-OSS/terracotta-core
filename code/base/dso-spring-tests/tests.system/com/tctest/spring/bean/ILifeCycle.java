@@ -4,9 +4,10 @@
 package com.tctest.spring.bean;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ILifeCycle {
-  public long getSystemId();
+  public UUID getSystemId();
   public void closeAppCtx();
   public List getInvocationRecords();
   public List getProp();

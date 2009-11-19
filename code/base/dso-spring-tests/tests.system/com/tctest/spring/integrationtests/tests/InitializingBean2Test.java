@@ -9,6 +9,8 @@ import com.tctest.spring.bean.ISimpleInitializingSingleton;
 import com.tctest.spring.bean.SimpleInitializingSingleton;
 import com.tctest.spring.integrationtests.SpringTwoServerTestSetup;
 
+import java.util.UUID;
+
 import junit.framework.Test;
 
 /**
@@ -42,10 +44,10 @@ public class InitializingBean2Test extends AbstractTwoServerDeploymentTest {
     assertEquals("Pre-condition check failed.", SimpleInitializingSingleton.ME, singleton1.getName());    // instantiate bean in node1
     assertEquals("Pre-condition check failed.", SimpleInitializingSingleton.ME, singleton1.getName());    // instantiate bean in node1
     
-    long id1 = singleton1.getId();
-    long id2 = singleton2.getId();
-    long innerId1 = singleton1.getInnerId();
-    long innerId2 = singleton2.getInnerId();
+    UUID id1 = singleton1.getId();
+    UUID id2 = singleton2.getId();
+    UUID innerId1 = singleton1.getInnerId();
+    UUID innerId2 = singleton2.getInnerId();
     
     // check initialization in node 1
     assertEquals(id1, innerId1);

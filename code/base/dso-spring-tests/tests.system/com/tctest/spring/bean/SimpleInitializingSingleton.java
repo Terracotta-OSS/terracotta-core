@@ -6,11 +6,11 @@ package com.tctest.spring.bean;
 
 import org.springframework.beans.factory.InitializingBean;
 
-import com.tc.aspectwerkz.proxy.Uuid;
+import java.util.UUID;
 
 public class SimpleInitializingSingleton implements InitializingBean, ISimpleInitializingSingleton {
   public static final String                 ME = "me";
-  private transient long                     id = System.identityHashCode(this) + Uuid.newUuid();
+  private transient UUID                     id = UUID.randomUUID();
 
   public static ISimpleInitializingSingleton afterPropertiesSetThis;
   private String                             name;
@@ -24,11 +24,11 @@ public class SimpleInitializingSingleton implements InitializingBean, ISimpleIni
     return name;
   }
 
-  public long getId() {
+  public UUID getId() {
     return id;
   }
 
-  public long getInnerId() {
+  public UUID getInnerId() {
     return afterPropertiesSetThis.getId();
   }
 
