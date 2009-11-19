@@ -42,6 +42,7 @@ public class SerializationUtil {
   public final static int         PUT_IF_ABSENT                    = 26;
   public final static int         REMOVE_IF_VALUE_EQUAL            = 27;
   public final static int         URL_SET                          = 28;
+  
 
   public final static String      PUSH_SIGNATURE                   = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                    = "pop()java/lang/Object;";
@@ -50,6 +51,8 @@ public class SerializationUtil {
   public final static String      ADD_ELEMENT_SIGNATURE            = "addElement(Ljava/lang/Object;)V";
   public final static String      ADD_ALL_AT_SIGNATURE             = "addAll(ILjava/util/Collection;)Z";
   public final static String      ADD_SIGNATURE                    = "add(Ljava/lang/Object;)Z";
+  public final static String      ADD_IF_ABSENT_SIGNATURE          = "addIfAbsent(Ljava/lang/Object;)Z";
+  public final static String      ADD_ALL_ABSENT_SIGNATURE         = "addAllAbsent(Ljava/util/Collection;)I";
   public final static String      ADD_ALL_SIGNATURE                = "addAll(Ljava/util/Collection;)Z";
   public final static String      ADD_LAST_SIGNATURE               = "addLast(Ljava/lang/Object;)V";
   public final static String      ADD_FIRST_SIGNATURE              = "addFirst(Ljava/lang/Object;)V";
@@ -68,6 +71,7 @@ public class SerializationUtil {
   public final static String      REMOVE_ELEMENT_AT_SIGNATURE      = "removeElementAt(I)V";
   public final static String      REMOVE_ALL_ELEMENTS_SIGNATURE    = "removeAllElements()V";
   public final static String      REMOVE_ALL_SIGNATURE             = "removeAll(Ljava/util/Collection;)Z";
+  public final static String      RETAIN_ALL_SIGNATURE             = "retainAll(Ljava/util/Collection;)Z";
   public final static String      ITERATOR_SIGNATURE               = "iterator()Ljava/util/Iterator;";
   public final static String      TROVE_REMOVE_AT_SIGNATURE        = "removeAt(I)V";
   public final static String      REMOVE_FIRST_SIGNATURE           = "removeFirst()Ljava/lang/Object;";

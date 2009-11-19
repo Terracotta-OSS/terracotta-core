@@ -74,6 +74,7 @@ goto tc_set_dso_boot_jar__1_0
 
 :GETTEMPNAME
 set TMPFILE=%TMP%\boot-jar-path-%RANDOM%-%TIME:~6,5%.tmp
+set TMPFILE="%TMPFILE:"=%"
 if exist "%TMPFILE%" GOTO :GETTEMPNAME
 
 :error

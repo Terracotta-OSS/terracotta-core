@@ -74,6 +74,7 @@ import com.tc.object.bytecode.ChangeClassNameHierarchyAdapter;
 import com.tc.object.bytecode.ChangeClassNameRootAdapter;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.CopyOnWriteArrayListAdapter;
 import com.tc.object.bytecode.DataOutputStreamAdapter;
 import com.tc.object.bytecode.DuplicateMethodAdapter;
 import com.tc.object.bytecode.HashMapClassAdapter;
@@ -545,7 +546,7 @@ public class BootJarTool {
       loadTerracottaClass(IBatisAccessPlanInstance.class.getName());
       loadTerracottaClass(HibernateProxyInstance.class.getName());
 
-      //Locking System Classes
+      // Locking System Classes
       loadTerracottaClass(com.tc.object.locks.LockID.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockID.LockIDType.class.getName());
       loadTerracottaClass(com.tc.object.locks.UnclusteredLockID.class.getName());
@@ -553,7 +554,7 @@ public class BootJarTool {
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName() + "$1");
       loadTerracottaClass(com.tc.object.locks.TerracottaLocking.class.getName());
       loadTerracottaClass(com.tc.io.TCSerializable.class.getName());
-      
+
       addManagementClasses();
 
       addRuntimeClasses();
@@ -2169,6 +2170,27 @@ public class BootJarTool {
     }
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     addSerializationInstrumentedCode(spec);
+
+    spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList",
+                                             "com.tc.object.applicator.ListApplicator");
+
+    spec.addAlwaysLogSpec(SerializationUtil.ADD_AT_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.ADD_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_SIGNATURE);
+    spec.addMethodAdapter(SerializationUtil.ADD_IF_ABSENT_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.AddIfAbsentAdaptor());
+    spec.addMethodAdapter(SerializationUtil.ADD_ALL_ABSENT_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.AddAllAbsentAdaptor());
+    spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAdaptor());
+    spec.addMethodAdapter(SerializationUtil.REMOVE_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAllAdaptor());
+    spec.addMethodAdapter(SerializationUtil.RETAIN_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RetainAllAdaptor());
+    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
+    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
+
+    spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
   }
 
   private final void addSerializationInstrumentedCode(final TransparencyClassSpec spec) {

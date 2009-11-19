@@ -725,6 +725,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
       spec.markPreInstrumented();
+      
+      spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList", "com.tc.object.applicator.ListApplicator");
 
       addAbstractSynchronizerSpec();
     }

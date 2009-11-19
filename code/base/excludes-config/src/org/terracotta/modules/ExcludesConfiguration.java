@@ -63,7 +63,6 @@ public class ExcludesConfiguration
       configHelper.addPermanentExcludePattern("java.util.concurrent.ConcurrentLinkedQueue*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListMap*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.ConcurrentSkipListSet*");
-      configHelper.addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArrayList*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.CopyOnWriteArraySet*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.CountDownLatch*");
       configHelper.addPermanentExcludePattern("java.util.concurrent.DelayQueue*");
