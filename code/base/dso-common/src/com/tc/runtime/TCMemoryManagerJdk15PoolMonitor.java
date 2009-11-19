@@ -22,14 +22,15 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
   // this pool is used when jdk is run with -client option
   private static final String          TENURED_GEN_NAME        = "TENURED GEN";
   private static final String          IBMJDK_TENURED_GEN_NAME = "Java heap";
+  private static final String          JROCKETJDK_OLD_GEN_NAME = "Old Space";
 
   private final MemoryPoolMXBean       oldGenBean;
   private final GarbageCollectorMXBean oldGenCollectorBean;
 
   public TCMemoryManagerJdk15PoolMonitor() {
     super();
-    oldGenBean = getOldGenMemoryPoolBean();
-    oldGenCollectorBean = getOldGenCollectorBean();
+    this.oldGenBean = getOldGenMemoryPoolBean();
+    this.oldGenCollectorBean = getOldGenCollectorBean();
   }
 
   private MemoryPoolMXBean getOldGenMemoryPoolBean() {
@@ -54,8 +55,8 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
       GarbageCollectorMXBean gc = (GarbageCollectorMXBean) i.next();
       String[] managedPools = gc.getMemoryPoolNames();
       if (gc.isValid() && managedPools != null) {
-        for (int j = 0; j < managedPools.length; j++) {
-          if (isOldGen(managedPools[j])) { return gc; }
+        for (String managedPool : managedPools) {
+          if (isOldGen(managedPool)) { return gc; }
         }
         gcs2Pools.put(gc.getName(), Arrays.asList(managedPools));
       }
@@ -66,18 +67,22 @@ class TCMemoryManagerJdk15PoolMonitor extends TCMemoryManagerJdk15Basic {
   private boolean isOldGen(String name) {
     if (Vm.isIBM()) {
       return (name.indexOf(IBMJDK_TENURED_GEN_NAME) > -1);
+    } else if (Vm.isJRockit()) {
+      return (name.indexOf(JROCKETJDK_OLD_GEN_NAME) > -1);
     } else {
       return (name.toUpperCase().indexOf(OLD_GEN_NAME) > -1 || name.toUpperCase().indexOf(TENURED_GEN_NAME) > -1);
     }
   }
 
+  @Override
   public boolean isMemoryPoolMonitoringSupported() {
     return true;
   }
 
+  @Override
   public MemoryUsage getOldGenUsage() {
-    java.lang.management.MemoryUsage oldGenUsage = oldGenBean.getUsage();
-    return new Jdk15MemoryUsage(oldGenUsage, oldGenBean.getName(), oldGenCollectorBean.getCollectionCount(),
-                                oldGenCollectorBean.getCollectionTime());
+    java.lang.management.MemoryUsage oldGenUsage = this.oldGenBean.getUsage();
+    return new Jdk15MemoryUsage(oldGenUsage, this.oldGenBean.getName(), this.oldGenCollectorBean.getCollectionCount(),
+                                this.oldGenCollectorBean.getCollectionTime());
   }
 }
