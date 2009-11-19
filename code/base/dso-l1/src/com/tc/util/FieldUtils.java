@@ -6,7 +6,6 @@ package com.tc.util;
 
 import sun.reflect.FieldAccessor;
 
-import com.tc.asm.Type;
 import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.Manageable;
@@ -53,7 +52,7 @@ public class FieldUtils {
   }
 
   public static boolean setBoolean(Object obj, boolean value, Field field) throws IllegalAccessException {
-    if (Type.getType(field.getType()).getSort() != Type.BOOLEAN) {
+    if (!Boolean.TYPE.equals(field.getType())) {
       throwIllegalArgumentException(field.getType().getName());
     }
 
@@ -61,18 +60,17 @@ public class FieldUtils {
   }
 
   public static boolean setFloat(Object obj, float value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.FLOAT:
-        return set(obj, new Float(value), field);
-      default:
-        return setDouble(obj, value, field);
+    if (Float.TYPE.equals(fieldType)) {
+      return set(obj, new Float(value), field);
+    } else {
+      return setDouble(obj, value, field);
     }
   }
 
   public static boolean setDouble(Object obj, double value, Field field) throws IllegalAccessException {
-    if (Type.getType(field.getType()).getSort() != Type.DOUBLE) {
+    if (!Double.TYPE.equals(field.getType())) {
       throwIllegalArgumentException(field.getType().getName());
     }
 
@@ -80,58 +78,53 @@ public class FieldUtils {
   }
 
   public static boolean setChar(Object obj, char value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.CHAR:
-        return set(obj, new Character(value), field);
-      default:
-        return setInt(obj, value, field);
-    }
+    if (Character.TYPE.equals(fieldType)) {
+      return set(obj, new Character(value), field);
+    } else {
+      return setInt(obj, value, field);
+    }    
   }
 
   public static boolean setByte(Object obj, byte value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.BYTE:
-        return set(obj, new Byte(value), field);
-      default:
-        return setShort(obj, value, field);
-    }
+    if (Byte.TYPE.equals(fieldType)) {
+      return set(obj, new Byte(value), field);
+    } else {
+      return setShort(obj, value, field);
+    }    
   }
 
   public static boolean setShort(Object obj, short value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.SHORT:
-        return set(obj, new Short(value), field);
-      default:
-        return setInt(obj, value, field);
-    }
+    if (Short.TYPE.equals(fieldType)) {
+      return set(obj, new Short(value), field);
+    } else {
+      return setInt(obj, value, field);
+    }    
   }
 
   public static boolean setInt(Object obj, int value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.INT:
-        return set(obj, new Integer(value), field);
-      default:
-        return setLong(obj, value, field);
-    }
+    if (Integer.TYPE.equals(fieldType)) {
+      return set(obj, new Integer(value), field);
+    } else {
+      return setLong(obj, value, field);
+    }    
   }
 
   public static boolean setLong(Object obj, long value, Field field) throws IllegalAccessException {
-    Type fieldType = Type.getType(field.getType());
+    Class<?> fieldType = field.getType();
 
-    switch (fieldType.getSort()) {
-      case Type.LONG:
-        return set(obj, new Long(value), field);
-      default:
-        return setFloat(obj, value, field);
-    }
+    if (Long.TYPE.equals(fieldType)) {
+      return set(obj, new Long(value), field);
+    } else {
+      return setFloat(obj, value, field);
+    }    
   }
 
   /*
