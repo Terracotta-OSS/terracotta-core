@@ -37,7 +37,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
   public void testClassAutolocksIgnored() throws Exception {
     ClientObjectManager objMgr = new ObjMgr();
     ClientLockManager lockMgr = new LockMgr();
-    
+
     Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, this.configHelper(), null);
 
     LockID classLock = manager.generateLockIdentifier(getClass());
@@ -48,27 +48,27 @@ public class ManagerImplTest extends BaseDSOTestCase {
   private static class LockMgr implements ClientLockManager {
 
     public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
-      throw new ImplementMe();      
+      throw new ImplementMe();
     }
 
     public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
       throw new ImplementMe();
-      
+
     }
 
     public void notified(LockID lock, ThreadID thread) {
       throw new ImplementMe();
-      
+
     }
 
     public void recall(LockID lock, ServerLockLevel level, int lease) {
       throw new ImplementMe();
-      
+
     }
 
     public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
       throw new ImplementMe();
-      
+
     }
 
     public LockID generateLockIdentifier(String str) {
@@ -121,7 +121,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public Notify notifyAll(LockID lock, Object waitObject) {
       throw new ImplementMe();
-      
+
     }
 
     public boolean tryLock(LockID lock, LockLevel level) {
@@ -170,12 +170,12 @@ public class ManagerImplTest extends BaseDSOTestCase {
 
     public void pinLock(LockID lock) {
       throw new ImplementMe();
-      
+
     }
 
     public void unpinLock(LockID lock) {
       throw new ImplementMe();
-      
+
     }
 
     public boolean isLockedByCurrentThread(LockLevel level) {
@@ -280,19 +280,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public TCObject lookupOrShare(final Object pojo) {
-      throw new ImplementMe();
-    }
-
     public boolean isCreationInProgress() {
-      throw new ImplementMe();
-    }
-
-    public void addPendingCreateObjectsToTransaction() {
-      throw new ImplementMe();
-    }
-
-    public boolean hasPendingCreateObjects() {
       throw new ImplementMe();
     }
 

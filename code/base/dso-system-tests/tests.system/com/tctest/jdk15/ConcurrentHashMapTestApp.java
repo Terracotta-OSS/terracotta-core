@@ -90,8 +90,7 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
       Assert.assertFalse(ManagerUtil.isManaged(segmentsArray));
 
       // The table array in Segment is not a shared object
-      for (int i = 0; i < segmentsArray.length; i++) {
-        Object segment = segmentsArray[i];
+      for (Object segment : segmentsArray) {
         Assert.assertTrue(ManagerUtil.isManaged(segment));
         Field f = segment.getClass().getDeclaredField("table");
         f.setAccessible(true);
@@ -125,19 +124,6 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
       // Share it (a side effect of which should be to rehash)
       map.put("key", unshared);
-    }
-  }
-
-  void testObjectKeys(ConcurrentHashMap map, boolean validate) throws Exception {
-    if (validate) {
-      for (Object key : map.keySet()) {
-        Assert.assertEquals("value", map.get(key));
-      }
-    } else {
-      for (int i = 0; i < 250; i++) {
-        Object key = new Object();
-        map.put(key, "value");
-      }
     }
   }
 
@@ -471,13 +457,13 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
   void testEntrySetClear(ConcurrentHashMap map, boolean validate) throws Exception {
     Map toPut = new HashMap();
-    DataKey key1 = new DataKey(1);
-    DataKey key2 = new DataKey(2);
-    DataKey key3 = new DataKey(3);
+    HashKey key1 = new HashKey(1);
+    HashKey key2 = new HashKey(2);
+    HashKey key3 = new HashKey(3);
 
-    DataValue value1 = new DataValue(10);
-    DataValue value2 = new DataValue(20);
-    DataValue value3 = new DataValue(30);
+    HashValue value1 = new HashValue(10);
+    HashValue value2 = new HashValue(20);
+    HashValue value3 = new HashValue(30);
     toPut.put(key1, value1);
     toPut.put(key2, value2);
     toPut.put(key3, value3);
@@ -1472,6 +1458,49 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
     }
   }
 
+  private static final boolean ALLOW_IDENTITY_KEYS = false;
+
+  void testKeysWithoutHashCode(ConcurrentHashMap map, boolean validate) throws Exception {
+    // If this test method starts failing, it might mean that we're supporting
+    // identity keys again and testObjectKeys() should be re-enabled
+
+    if (validate) {
+      Object o = map.get("o");
+      Assert.assertNotNull(o);
+      Assert.assertEquals("o", map.get(o));
+      Assert.assertEquals("class", map.get(getClass()));
+    } else {
+      // a literal key should work
+      map.put(getClass(), "class");
+
+      try {
+        map.put(new Object(), "foo");
+        throw new AssertionError();
+      } catch (UnsupportedOperationException e) {
+        // expected since key is not shared and does not override hashCode()
+      }
+
+      Object o = new Object();
+      map.put("o", o); // share the object
+      map.put(o, "o"); // use it as a key now (should work since it is shared)
+    }
+  }
+
+  void testObjectKeys(ConcurrentHashMap map, boolean validate) throws Exception {
+    if (!ALLOW_IDENTITY_KEYS) return;
+
+    if (validate) {
+      for (Object key : map.keySet()) {
+        Assert.assertEquals("value", map.get(key));
+      }
+    } else {
+      for (int i = 0; i < 250; i++) {
+        Object key = new Object();
+        map.put(key, "value");
+      }
+    }
+  }
+
   void assertSingleHashMapping(Object expectedKey, Object expectedValue, Map map) {
     Assert.assertEquals(1, map.size());
     Assert.assertEquals(expectedValue, map.get(expectedKey));
@@ -1479,8 +1508,8 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
   void assertMappingsEqual(Object[] expect, Map map) {
     Assert.assertEquals(expect.length, map.size());
-    for (int i = 0; i < expect.length; i++) {
-      Entry entry = (Entry) expect[i];
+    for (Object element : expect) {
+      Entry entry = (Entry) element;
       Object val = map.get(entry.getKey());
       Assert.assertEquals(entry.getValue(), val);
     }
@@ -1488,8 +1517,8 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
 
   void assertCollectionsEqual(Object[] expect, Collection collection) {
     Assert.assertEquals(expect.length, collection.size());
-    for (int i = 0; i < expect.length; i++) {
-      Assert.assertTrue(collection.contains(expect[i]));
+    for (Object element : expect) {
+      Assert.assertTrue(collection.contains(element));
     }
   }
 
@@ -1685,4 +1714,5 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
       return super.toString() + ", i: " + i;
     }
   }
+
 }

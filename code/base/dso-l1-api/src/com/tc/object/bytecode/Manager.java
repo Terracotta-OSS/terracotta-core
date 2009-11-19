@@ -133,12 +133,6 @@ public interface Manager extends TerracottaLocking {
   public TCObject lookupOrCreate(Object obj);
 
   /**
-   * @param pojo Object instance
-   * @return TCObject for pojo
-   */
-  public TCObject shareObjectIfNecessary(Object pojo);
-
-  /**
    * Perform invoke on logical managed object
    * 
    * @param object The object

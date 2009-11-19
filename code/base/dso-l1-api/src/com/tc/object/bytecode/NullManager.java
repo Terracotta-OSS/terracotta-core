@@ -108,7 +108,7 @@ public final class NullManager implements Manager {
   public boolean isLiteralAutolock(Object o) {
     return false;
   }
-  
+
   public final int calculateDsoHashCode(final Object object) {
     return 0;
   }
@@ -131,10 +131,6 @@ public final class NullManager implements Manager {
 
   public final void logicalInvokeWithTransaction(final Object object, final Object lockObject, final String methodName,
                                                  final Object[] params) {
-    throw new UnsupportedOperationException();
-  }
-
-  public final TCObject shareObjectIfNecessary(final Object pojo) {
     throw new UnsupportedOperationException();
   }
 

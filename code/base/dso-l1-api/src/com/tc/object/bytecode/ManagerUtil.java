@@ -302,14 +302,6 @@ public class ManagerUtil {
   }
 
   /**
-   * @param pojo Object instance
-   * @return TCObject for pojo
-   */
-  public static TCObject shareObjectIfNecessary(final Object pojo) {
-    return getManager().shareObjectIfNecessary(pojo);
-  }
-
-  /**
    * Perform invoke on logical managed object
    * 
    * @param object The object

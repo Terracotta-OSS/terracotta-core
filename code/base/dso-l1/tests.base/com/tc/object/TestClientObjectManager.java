@@ -170,19 +170,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public TCObject lookupOrShare(final Object pojo) {
-    throw new ImplementMe();
-  }
-
   public boolean isCreationInProgress() {
-    return false;
-  }
-
-  public void addPendingCreateObjectsToTransaction() {
-    // do nothing
-  }
-
-  public boolean hasPendingCreateObjects() {
     return false;
   }
 

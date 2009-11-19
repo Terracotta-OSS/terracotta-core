@@ -144,15 +144,6 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
   public TCObject lookupOrCreate(Object obj);
 
   /**
-   * Find the managed object for this instance or share. This method is (exclusively?) used when implementing
-   * ConcurrentHashMap sharing.
-   * 
-   * @param obj Instance
-   * @return Should never be null, but might be object representing null TCObject.
-   */
-  public TCObject lookupOrShare(Object pojo);
-
-  /**
    * Find identifier for existing instance
    * 
    * @param obj Object instance
@@ -279,18 +270,6 @@ public interface ClientObjectManager extends DumpHandler, PrettyPrintable {
    * @return True if creation in progress
    */
   public boolean isCreationInProgress();
-
-  /**
-   * Add all pending create object actions (created during traversals) to the current transaction.
-   */
-  public void addPendingCreateObjectsToTransaction();
-
-  /**
-   * Check whether there are any currently pending create objects
-   * 
-   * @return True if any pending
-   */
-  public boolean hasPendingCreateObjects();
 
   /**
    * Create or replace a root value, typically used for replacable roots.

@@ -123,9 +123,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final RuntimeLogger                  runtimeLogger;
   private final NonPortableEventContextFactory appEventContextFactory;
 
-  private final Collection                     pendingCreateTCObjects       = new ArrayList();
-  private final Collection                     pendingCreatePojos           = new ArrayList();
-
   private final Portability                    portability;
   private final DSOClientMessageChannel        channel;
   private final ToggleableReferenceManager     referenceManager;
@@ -303,11 +300,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookup(pojo);
   }
 
-  private TCObject share(final Object pojo, final NonPortableEventContext context) {
-    traverse(pojo, context, new SharedObjectsAction());
-    return basicLookup(pojo);
-  }
-
   public void shutdown() {
     synchronized (this.shutdownLock) {
       if (this.reaper != null) {
@@ -338,20 +330,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private TCObject lookupOrCreate(final Object pojo, final NonPortableEventContext context) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
     return lookupOrCreateIfNecesary(pojo, context);
-  }
-
-  public TCObject lookupOrShare(final Object pojo) {
-    if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
-    return lookupOrShareIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo));
-  }
-
-  private TCObject lookupOrShareIfNecesary(final Object pojo, final NonPortableEventContext context) {
-    Assert.assertNotNull(pojo);
-    TCObject obj = basicLookup(pojo);
-    if (obj == null || obj.isNew()) {
-      obj = share(pojo, context);
-    }
-    return obj;
   }
 
   private TCObject lookupOrCreateIfNecesary(final Object pojo, final NonPortableEventContext context) {
@@ -1036,7 +1014,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.referenceManager.getOrCreateFor(peer);
   }
 
-  private abstract class BaseAction implements TraversalAction, PostCreateMethodGatherer {
+  private class AddManagedObjectAction implements TraversalAction, PostCreateMethodGatherer {
     private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
     public final void visit(List objects) {
@@ -1048,32 +1026,15 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           Assert.assertNull(prev);
         }
       }
-      basicVisit(objects);
-    }
 
-    protected abstract void basicVisit(List objects);
-
-    public final Map<Object, List<Method>> getPostCreateMethods() {
-      return this.toCall;
-    }
-  }
-
-  private class AddManagedObjectAction extends BaseAction {
-
-    @Override
-    protected void basicVisit(final List objects) {
       List tcObjects = basicCreateIfNecessary(objects);
       for (Iterator i = tcObjects.iterator(); i.hasNext();) {
         ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
       }
     }
-  }
 
-  private class SharedObjectsAction extends BaseAction {
-
-    @Override
-    protected void basicVisit(final List objects) {
-      basicShareObjectsIfNecessary(objects);
+    public final Map<Object, List<Method>> getPostCreateMethods() {
+      return this.toCall;
     }
   }
 
@@ -1117,41 +1078,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       tcObjects.add(basicCreateIfNecessary(i.next()));
     }
     return tcObjects;
-  }
-
-  private TCObject basicShareObjectIfNecessary(final Object pojo) {
-    TCObject obj = null;
-
-    if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo), pojo, pojo
-          .getClass(), true);
-      this.pendingCreateTCObjects.add(obj);
-      this.pendingCreatePojos.add(pojo);
-      basicAddLocal(obj, false);
-    }
-    return obj;
-  }
-
-  private synchronized List basicShareObjectsIfNecessary(final List pojos) {
-    waitUntilRunning();
-    List tcObjects = new ArrayList(pojos.size());
-    for (Iterator i = pojos.iterator(); i.hasNext();) {
-      tcObjects.add(basicShareObjectIfNecessary(i.next()));
-    }
-    return tcObjects;
-  }
-
-  public synchronized void addPendingCreateObjectsToTransaction() {
-    for (Iterator i = this.pendingCreateTCObjects.iterator(); i.hasNext();) {
-      TCObject tcObject = (TCObject) i.next();
-      this.txManager.createObject(tcObject);
-    }
-    this.pendingCreateTCObjects.clear();
-    this.pendingCreatePojos.clear();
-  }
-
-  public synchronized boolean hasPendingCreateObjects() {
-    return !this.pendingCreateTCObjects.isEmpty();
   }
 
   private ObjectID nextObjectID(final ClientTransaction txn, final Object pojo) {

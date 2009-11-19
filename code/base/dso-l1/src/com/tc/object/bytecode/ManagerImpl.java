@@ -54,7 +54,6 @@ import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.text.ConsoleParagraphFormatter;
 import com.tc.text.StringFormatter;
-import com.tc.util.Assert;
 import com.tc.util.Util;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.runtime.Vm;
@@ -384,20 +383,6 @@ public class ManagerImpl implements Manager {
     return dsoMonitorEntered;
   }
 
-  public TCObject shareObjectIfNecessary(final Object pojo) {
-    TCObject tobj = lookupExistingOrNull(pojo);
-    if (tobj != null) { return tobj; }
-
-    try {
-      return this.objectManager.lookupOrShare(pojo);
-    } catch (Throwable t) {
-      Util.printLogAndRethrowError(t, logger);
-
-      // shouldn't get here
-      throw new AssertionError();
-    }
-  }
-
   public TCObject lookupOrCreate(final Object obj) {
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
     return this.objectManager.lookupOrCreate(obj);
@@ -462,16 +447,22 @@ public class ManagerImpl implements Manager {
   }
 
   public int calculateDsoHashCode(final Object obj) {
+    if (obj == null) throw new NullPointerException();
+
     if (LiteralValues.isLiteralInstance(obj)) {
       // isLiteralInstance() returns false for array types, so we don't need recursion here.
       return LiteralValues.calculateDsoHashCode(obj);
     }
     if (overridesHashCode(obj)) { return obj.hashCode(); }
-    // obj does not have a stable hashCode(); share it and use hash code of its ObjectID
-    TCObject tcobject = shareObjectIfNecessary(obj);
+
+    // obj does not have a stable hashCode(); only if it is already a shared object will we use it's OID as the hashCode
+    TCObject tcobject = lookupExistingOrNull(obj);
     if (tcobject != null) { return tcobject.getObjectID().hashCode(); }
-    // A not-shareable, not-literal object? Hmm, seems we shouldn't get here.
-    throw Assert.failure("Cannot calculate stable DSO hash code for an object that is not literal and not shareable");
+
+    throw new UnsupportedOperationException(
+                                            "Object of type ["
+                                                + obj.getClass()
+                                                + "] does not override hashCode() and is not (yet) a clustered object and thus cannot be used in a clustered hash data structure (eg. ConcrrentHashMap). Please implement hashCode()/equals() on this type and/or share this object before use in this context");
   }
 
   public boolean isLiteralInstance(final Object obj) {
