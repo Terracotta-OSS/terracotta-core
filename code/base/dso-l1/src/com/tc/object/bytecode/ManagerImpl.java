@@ -462,7 +462,7 @@ public class ManagerImpl implements Manager {
     throw new UnsupportedOperationException(
                                             "Object of type ["
                                                 + obj.getClass()
-                                                + "] does not override hashCode() and is not (yet) a clustered object and thus cannot be used in a clustered hash data structure (eg. ConcrrentHashMap). Please implement hashCode()/equals() on this type and/or share this object before use in this context");
+                                                + "] does not override hashCode() and is not (yet) a clustered object and thus cannot be used in a clustered hash data structure (eg. ConcurrentHashMap). Please implement hashCode()/equals() on this type and/or share this object before use in this context");
   }
 
   public boolean isLiteralInstance(final Object obj) {
