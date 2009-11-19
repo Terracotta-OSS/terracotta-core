@@ -727,7 +727,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       spec.markPreInstrumented();
       
       spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList", "com.tc.object.applicator.ListApplicator");
-
+      spec.setCallConstructorOnLoad(true);
+      spec.markPreInstrumented();
+      
       addAbstractSynchronizerSpec();
     }
   }

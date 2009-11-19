@@ -7,7 +7,6 @@ package org.terracotta.modules;
 import org.osgi.framework.BundleContext;
 import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
-import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.runtime.Vm;
 
@@ -59,9 +58,9 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
       // addJavaUtilConcurrentHashMapSpec();
       // addLogicalAdaptedLinkedBlockingQueueSpec();
       addJavaUtilConcurrentFutureTaskSpec();
-      
+
       addJavaUtilConcurrentCopyOnWriteArrayListSpec();
-      
+
       // ---------------------------------------------------------------------
       // SECTION ENDS
       // ---------------------------------------------------------------------
@@ -76,29 +75,20 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
     getOrCreateSpec("java.util.concurrent.FutureTask");
     getOrCreateSpec("java.util.concurrent.Executors$RunnableAdapter");
   }
-  
+
   private void addJavaUtilConcurrentCopyOnWriteArrayListSpec() {
     TransparencyClassSpec spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList");
     spec.setHonorVolatile(true);
     if (Vm.isJDK15()) {
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.add*(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.remove*(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.copyIn(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.set(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.removeRange(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.addIfAbsent(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.retainAll(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.clear(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
-      configHelper.addAutolock("* java.util.concurrent.CopyOnWriteArrayList.subList(..)",
-                               ConfigLockLevel.AUTO_SYNCHRONIZED_WRITE);
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.add*(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.remove*(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.copyIn(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.set(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.removeRange(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.addIfAbsent(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.retainAll(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.clear(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.subList(..)");
     }
   }
 }

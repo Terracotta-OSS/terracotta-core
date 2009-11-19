@@ -63,17 +63,17 @@ public class GenericListTestApp extends GenericTransparentApp {
   @Override
   protected void setupTestObject(String testName) {
     List lists = new ArrayList();
-    // lists.add(new LinkedList());
-    // lists.add(new ArrayList());
-    // lists.add(new Vector());
-    // lists.add(new Stack());
-    // lists.add(new MyArrayList());
-    // lists.add(new MyArrayList5());
-    // lists.add(new MyArrayList6());
-    // lists.add(new MyLinkedList());
-    // lists.add(new MyVector());
-    // lists.add(new MyStack());
-    // lists.add(new MyAbstractListSubclass());
+    lists.add(new LinkedList());
+    lists.add(new ArrayList());
+    lists.add(new Vector());
+    lists.add(new Stack());
+    lists.add(new MyArrayList());
+    lists.add(new MyArrayList5());
+    lists.add(new MyArrayList6());
+    lists.add(new MyLinkedList());
+    lists.add(new MyVector());
+    lists.add(new MyStack());
+    lists.add(new MyAbstractListSubclass());
     lists.add(new CopyOnWriteArrayList());
 
     sharedMap.put("lists", lists);
