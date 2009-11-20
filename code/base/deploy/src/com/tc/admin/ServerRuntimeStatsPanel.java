@@ -11,6 +11,7 @@ import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FLUSH_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_TRANSACTION_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_USED_MEMORY;
 import static com.tc.admin.model.IServer.POLLED_ATTR_CACHE_MISS_RATE;
+import static com.tc.admin.model.IServer.POLLED_ATTR_FLUSHED_RATE;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -50,6 +51,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private TimeSeries               faultRateSeries;
   private TimeSeries               txnRateSeries;
   private TimeSeries               cacheMissRateSeries;
+  private TimeSeries               flushedRateSeries;
 
   private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays.asList(POLLED_ATTR_CPU_USAGE,
                                                                                     POLLED_ATTR_USED_MEMORY,
@@ -57,7 +59,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
                                                                                     POLLED_ATTR_OBJECT_FLUSH_RATE,
                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
                                                                                     POLLED_ATTR_TRANSACTION_RATE,
-                                                                                    POLLED_ATTR_CACHE_MISS_RATE));
+                                                                                    POLLED_ATTR_CACHE_MISS_RATE,
+                                                                                    POLLED_ATTR_FLUSHED_RATE));
 
   public ServerRuntimeStatsPanel(ApplicationContext appContext, IServer server) {
     super(appContext);
@@ -129,6 +132,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       updateSeries(faultRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE));
       updateSeries(txnRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE));
       updateSeries(cacheMissRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE));
+      updateSeries(flushedRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_FLUSHED_RATE));
     }
   }
 
@@ -151,7 +155,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     setupMemoryPanel(chartsPanel);
     setupCpuPanel(chartsPanel);
     setupTxnRatePanel(chartsPanel);
-    setupCacheMissRatePanel(chartsPanel);
+    setupCacheManagerPanel(chartsPanel);
     setupFlushRatePanel(chartsPanel);
     setupFaultRatePanel(chartsPanel);
   }
@@ -183,13 +187,15 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     txnRatePanel.setToolTipText(appContext.getString("server.stats.transaction.rate.tip"));
   }
 
-  private void setupCacheMissRatePanel(XContainer parent) {
-    cacheMissRateSeries = createTimeSeries("");
-    ChartPanel cacheMissRatePanel = createChartPanel(createChart(cacheMissRateSeries, false));
+  private void setupCacheManagerPanel(XContainer parent) {
+    cacheMissRateSeries = createTimeSeries("Cache Miss Rate");
+    flushedRateSeries = createTimeSeries("Disk Flushed Rate");
+    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { cacheMissRateSeries,
+        flushedRateSeries }, true));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
-    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.cache.miss.rate")));
-    cacheMissRatePanel.setToolTipText(appContext.getString("server.stats.cache.miss.rate.tip"));
+    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.cache-manager")));
+    cacheMissRatePanel.setToolTipText(appContext.getString("server.stats.cache-manager.tip"));
   }
 
   private void setupMemoryPanel(XContainer parent) {
@@ -289,6 +295,10 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     if (cacheMissRateSeries != null) {
       list.add(cacheMissRateSeries);
       cacheMissRateSeries = null;
+    }
+    if (flushedRateSeries != null) {
+      list.add(flushedRateSeries);
+      flushedRateSeries = null;
     }
 
     Iterator<TimeSeries> iter = list.iterator();

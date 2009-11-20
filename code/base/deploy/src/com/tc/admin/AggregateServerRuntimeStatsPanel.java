@@ -10,13 +10,16 @@ import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FAULT_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FLUSH_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_TRANSACTION_RATE;
 import static com.tc.admin.model.IServer.POLLED_ATTR_BROADCAST_RATE;
+import static com.tc.admin.model.IServer.POLLED_ATTR_CACHED_OBJECT_COUNT;
 import static com.tc.admin.model.IServer.POLLED_ATTR_CACHE_MISS_RATE;
+import static com.tc.admin.model.IServer.POLLED_ATTR_FLUSHED_RATE;
 import static com.tc.admin.model.IServer.POLLED_ATTR_LOCK_RECALL_RATE;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.ui.Layer;
 
@@ -47,15 +50,17 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private IClusterModel            clusterModel;
   private ClusterListener          clusterListener;
 
-  private TimeSeries               flushRateSeries;
-  private TimeSeries               faultRateSeries;
+  private TimeSeries               clientFlushRateSeries;
+  private TimeSeries               clientFaultRateSeries;
   private TimeSeries               txnRateSeries;
   private TimeSeries               cacheMissRateSeries;
+  private TimeSeries               diskFlushedRateSeries;
   private XYPlot                   liveObjectCountPlot;
   private DGCIntervalMarker        currentDGCMarker;
-  private String                   liveObjectCountTitlePattern;
-  private TitledBorder             liveObjectCountTitle;
+  private String                   objectManagerTitlePattern;
+  private TitledBorder             objectManagerTitle;
   private TimeSeries               liveObjectCountSeries;
+  private TimeSeries               cachedObjectCountSeries;
   private TimeSeries               lockRecallRateSeries;
   private TimeSeries               broadcastRateSeries;
 
@@ -63,9 +68,11 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
                                                                                     POLLED_ATTR_TRANSACTION_RATE,
                                                                                     POLLED_ATTR_CACHE_MISS_RATE,
+                                                                                    POLLED_ATTR_FLUSHED_RATE,
                                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT,
                                                                                     POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                                    POLLED_ATTR_BROADCAST_RATE));
+                                                                                    POLLED_ATTR_BROADCAST_RATE,
+                                                                                    POLLED_ATTR_CACHED_OBJECT_COUNT));
 
   public AggregateServerRuntimeStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -166,7 +173,9 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       long fault = 0;
       long txn = 0;
       long cacheMiss = 0;
+      long diskFlushedRate = 0;
       long liveObjectCount = 0;
+      long cachedObjectCount = 0;
       long lockRecallRate = 0;
       long broadcastRate = 0;
       Number n;
@@ -194,6 +203,12 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHE_MISS_RATE);
           if (n != null) {
+            if (diskFlushedRate >= 0) diskFlushedRate += n.longValue();
+          } else {
+            diskFlushedRate = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_FLUSHED_RATE);
+          if (n != null) {
             if (cacheMiss >= 0) cacheMiss += n.longValue();
           } else {
             cacheMiss = -1;
@@ -203,6 +218,12 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
             if (liveObjectCount >= 0) liveObjectCount += n.longValue();
           } else {
             liveObjectCount = -1;
+          }
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHED_OBJECT_COUNT);
+          if (n != null) {
+            if (cachedObjectCount >= 0) cachedObjectCount += n.longValue();
+          } else {
+            cachedObjectCount = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
           if (n != null) {
@@ -219,13 +240,18 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
         }
       }
 
-      if (flush != -1) updateSeries(flushRateSeries, Long.valueOf(flush));
-      if (fault != -1) updateSeries(faultRateSeries, Long.valueOf(fault));
+      if (flush != -1) updateSeries(clientFlushRateSeries, Long.valueOf(flush));
+      if (fault != -1) updateSeries(clientFaultRateSeries, Long.valueOf(fault));
       if (txn != -1) updateSeries(txnRateSeries, Long.valueOf(txn));
       if (cacheMiss != -1) updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
+      if (diskFlushedRate != -1) updateSeries(diskFlushedRateSeries, Long.valueOf(cacheMiss));
       if (liveObjectCount != -1) {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
-        liveObjectCountTitle.setTitle(MessageFormat.format(liveObjectCountTitlePattern, liveObjectCount));
+        objectManagerTitle
+            .setTitle(MessageFormat.format(objectManagerTitlePattern, cachedObjectCount, liveObjectCount));
+      }
+      if (cachedObjectCount != -1) {
+        updateSeries(cachedObjectCountSeries, Long.valueOf(cachedObjectCount));
       }
       if (lockRecallRate != -1) updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
       if (broadcastRate != -1) updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
@@ -236,24 +262,27 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   protected synchronized void setup(XContainer chartsPanel) {
     chartsPanel.setLayout(new GridLayout(0, 2));
     setupTxnRatePanel(chartsPanel);
-    setupCacheMissRatePanel(chartsPanel);
+    setupCacheManagerPanel(chartsPanel);
     setupFlushRatePanel(chartsPanel);
     setupFaultRatePanel(chartsPanel);
-    setupLiveObjectCountPanel(chartsPanel);
+    setupObjectManagerPanel(chartsPanel);
     setupLockRecallRatePanel(chartsPanel);
   }
 
-  private void setupLiveObjectCountPanel(XContainer parent) {
-    liveObjectCountSeries = createTimeSeries("LiveObjectCount");
-    JFreeChart chart = createChart(liveObjectCountSeries, false);
+  private void setupObjectManagerPanel(XContainer parent) {
+    liveObjectCountSeries = createTimeSeries("Live Object Count");
+    cachedObjectCountSeries = createTimeSeries("Cached Object Count");
+    JFreeChart chart = createChart(new TimeSeries[] { cachedObjectCountSeries, liveObjectCountSeries }, true);
     ChartPanel liveObjectCountPanel = createChartPanel(chart);
     parent.add(liveObjectCountPanel);
     liveObjectCountPanel.setPreferredSize(fDefaultGraphSize);
-    liveObjectCountTitlePattern = appContext.getString("dso.client.liveObjectCount") + " ({0})";
-    liveObjectCountTitle = BorderFactory.createTitledBorder("Live Object Count");
-    liveObjectCountPanel.setBorder(liveObjectCountTitle);
-    liveObjectCountPanel.setToolTipText("Total instance count");
+    objectManagerTitlePattern = appContext.getString("dso.cluster.objectManager") + " (caching {0} of {1} instances)";
+    objectManagerTitle = BorderFactory.createTitledBorder("Object Manager");
+    liveObjectCountPanel.setBorder(objectManagerTitle);
+    liveObjectCountPanel.setToolTipText("Total/Cached instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
+    XYAreaRenderer areaRenderer2 = new XYAreaRenderer();
+    liveObjectCountPlot.setRenderer(0, areaRenderer2);
   }
 
   private void setupLockRecallRatePanel(XContainer parent) {
@@ -271,8 +300,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void setupFlushRatePanel(XContainer parent) {
-    flushRateSeries = createTimeSeries("");
-    ChartPanel flushRatePanel = createChartPanel(createChart(flushRateSeries, false));
+    clientFlushRateSeries = createTimeSeries("");
+    ChartPanel flushRatePanel = createChartPanel(createChart(clientFlushRateSeries, false));
     parent.add(flushRatePanel);
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
     flushRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.flush.rate")));
@@ -280,8 +309,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void setupFaultRatePanel(XContainer parent) {
-    faultRateSeries = createTimeSeries("");
-    ChartPanel faultRatePanel = createChartPanel(createChart(faultRateSeries, false));
+    clientFaultRateSeries = createTimeSeries("");
+    ChartPanel faultRatePanel = createChartPanel(createChart(clientFaultRateSeries, false));
     parent.add(faultRatePanel);
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
     faultRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.fault.rate")));
@@ -297,13 +326,15 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     txnRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.transaction.rate.tip"));
   }
 
-  private void setupCacheMissRatePanel(XContainer parent) {
-    cacheMissRateSeries = createTimeSeries("");
-    ChartPanel cacheMissRatePanel = createChartPanel(createChart(cacheMissRateSeries, false));
+  private void setupCacheManagerPanel(XContainer parent) {
+    cacheMissRateSeries = createTimeSeries("Cache Miss Rate");
+    diskFlushedRateSeries = createTimeSeries("Disk Flushed Rate");
+    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { cacheMissRateSeries,
+        diskFlushedRateSeries }, true));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
-    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.cache.miss.rate")));
-    cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache.miss.rate.tip"));
+    cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.cache-manager")));
+    cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache-manager.tip"));
   }
 
   public void statusUpdate(GCStats gcStats) {
@@ -332,13 +363,13 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
   private void clearAllTimeSeries() {
     ArrayList<TimeSeries> list = new ArrayList<TimeSeries>();
-    if (flushRateSeries != null) {
-      list.add(flushRateSeries);
-      flushRateSeries = null;
+    if (clientFlushRateSeries != null) {
+      list.add(clientFlushRateSeries);
+      clientFlushRateSeries = null;
     }
-    if (faultRateSeries != null) {
-      list.add(faultRateSeries);
-      faultRateSeries = null;
+    if (clientFaultRateSeries != null) {
+      list.add(clientFaultRateSeries);
+      clientFaultRateSeries = null;
     }
     if (txnRateSeries != null) {
       list.add(txnRateSeries);
@@ -348,9 +379,17 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       list.add(cacheMissRateSeries);
       cacheMissRateSeries = null;
     }
+    if (diskFlushedRateSeries != null) {
+      list.add(diskFlushedRateSeries);
+      diskFlushedRateSeries = null;
+    }
     if (liveObjectCountSeries != null) {
       list.add(liveObjectCountSeries);
       liveObjectCountSeries = null;
+    }
+    if (cachedObjectCountSeries != null) {
+      list.add(cachedObjectCountSeries);
+      cachedObjectCountSeries = null;
     }
     if (lockRecallRateSeries != null) {
       list.add(lockRecallRateSeries);

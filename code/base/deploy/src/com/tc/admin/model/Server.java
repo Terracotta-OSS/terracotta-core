@@ -125,6 +125,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
                                                                                               POLLED_ATTR_TRANSACTION_RATE);
   private static final PolledAttribute    PA_CACHE_MISS_RATE            = new PolledAttribute(L2MBeanNames.DSO,
                                                                                               POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_FLUSHED_RATE               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_FLUSHED_RATE);
   private static final PolledAttribute    PA_LIVE_OBJECT_COUNT          = new PolledAttribute(L2MBeanNames.DSO,
                                                                                               POLLED_ATTR_LIVE_OBJECT_COUNT);
   private static final PolledAttribute    PA_LOCK_RECALL_RATE           = new PolledAttribute(L2MBeanNames.DSO,
@@ -135,6 +137,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
                                                                                               POLLED_ATTR_TRANSACTION_SIZE_RATE);
   private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT = new PolledAttribute(L2MBeanNames.DSO,
                                                                                               POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+  private static final PolledAttribute    PA_CACHED_OBJECT_COUNT        = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                              POLLED_ATTR_CACHED_OBJECT_COUNT);
 
   public Server(IClusterModel clusterModel) {
     this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
@@ -237,11 +241,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_OBJECT_FAULT_RATE);
     registerPolledAttribute(PA_TRANSACTION_RATE);
     registerPolledAttribute(PA_CACHE_MISS_RATE);
+    registerPolledAttribute(PA_FLUSHED_RATE);
     registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
     registerPolledAttribute(PA_LOCK_RECALL_RATE);
     registerPolledAttribute(PA_BROADCAST_RATE);
     registerPolledAttribute(PA_TRANSACTION_SIZE_RATE);
     registerPolledAttribute(PA_PENDING_TRANSACTIONS_COUNT);
+    registerPolledAttribute(PA_CACHED_OBJECT_COUNT);
   }
 
   private synchronized void filterReadySet() {
