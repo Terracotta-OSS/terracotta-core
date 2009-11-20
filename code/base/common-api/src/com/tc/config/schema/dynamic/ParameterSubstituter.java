@@ -41,7 +41,10 @@ public class ParameterSubstituter {
             break;
             
           case 'h':
-            value = getHostname();
+            value = getHostName();
+            break;
+          case 'c':
+            value = getCanonicalHostName();
             break;
 
           case 'i':
@@ -148,9 +151,17 @@ public class ParameterSubstituter {
     return format.format(new Date(System.currentTimeMillis()));
   }
   
-  public static String getHostname() {
+  public static String getCanonicalHostName() {
     try {
       return InetAddress.getLocalHost().getCanonicalHostName();
+    } catch (UnknownHostException uhe) {
+      throw new RuntimeException(uhe);
+    }
+  }
+  
+  public static String getHostName() {
+    try {
+      return InetAddress.getLocalHost().getHostName();
     } catch (UnknownHostException uhe) {
       throw new RuntimeException(uhe);
     }
