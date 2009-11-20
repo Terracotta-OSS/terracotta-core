@@ -33,10 +33,12 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   static final String    PROP_LOCK_STATS_ENABLED                = "lockStatsEnabled";
 
   static final String    POLLED_ATTR_CACHE_MISS_RATE            = "CacheMissRate";
+  static final String    POLLED_ATTR_FLUSHED_RATE               = "FlushedRate";
   static final String    POLLED_ATTR_LOCK_RECALL_RATE           = "GlobalLockRecallRate";
   static final String    POLLED_ATTR_BROADCAST_RATE             = "BroadcastRate";
   static final String    POLLED_ATTR_TRANSACTION_SIZE_RATE      = "TransactionSizeRate";
   static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT = "PendingTransactionsCount";
+  static final String    POLLED_ATTR_CACHED_OBJECT_COUNT        = "CachedObjectCount";
 
   IClusterModel getClusterModel();
 
