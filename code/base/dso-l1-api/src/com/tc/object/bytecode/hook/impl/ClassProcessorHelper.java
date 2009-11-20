@@ -596,8 +596,9 @@ public class ClassProcessorHelper {
            || className.endsWith("_AWFactory")// TODO AVF refactor
            || className.endsWith(TransformationConstants.JOIN_POINT_CLASS_SUFFIX)
            || className.startsWith("com.tc.aspectwerkz.") || className.startsWith("com.tc.asm.")
-           || className.startsWith("com.tc.jrexx.") || className.startsWith("org.dom4j.")
-           || className.startsWith("org.xml.sax.") || className.startsWith("javax.xml.parsers.")
+           || className.startsWith("com.tc.backport175.") || className.startsWith("com.tc.jrexx.")
+           || className.startsWith("org.dom4j.") || className.startsWith("org.xml.sax.")
+           || className.startsWith("javax.xml.parsers.")
            || className.startsWith("sun.reflect.Generated"); // issue on J2SE 5 reflection - AW-245
   }
 
