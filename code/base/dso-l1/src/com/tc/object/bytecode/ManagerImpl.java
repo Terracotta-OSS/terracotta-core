@@ -459,10 +459,10 @@ public class ManagerImpl implements Manager {
     TCObject tcobject = lookupExistingOrNull(obj);
     if (tcobject != null) { return tcobject.getObjectID().hashCode(); }
 
-    throw new UnsupportedOperationException(
-                                            "Object of type ["
-                                                + obj.getClass()
-                                                + "] does not override hashCode() and is not (yet) a clustered object and thus cannot be used in a clustered hash data structure (eg. ConcurrentHashMap). Please implement hashCode()/equals() on this type and/or share this object before use in this context");
+    throw new IllegalArgumentException(
+                                       "A cluster-wide stable hash code could not be calculated for the supplied object of type ["
+                                           + obj.getClass()
+                                           + "]. A cluster-wide stable hash code can only be calculated for instances that are already clustered, or for instances of types that override hashCode() with an implementation based purely on non cluster-transient state.");
   }
 
   public boolean isLiteralInstance(final Object obj) {

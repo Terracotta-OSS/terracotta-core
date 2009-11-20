@@ -1476,7 +1476,7 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
       try {
         map.put(new Object(), "foo");
         throw new AssertionError();
-      } catch (UnsupportedOperationException e) {
+      } catch (IllegalArgumentException e) {
         // expected since key is not shared and does not override hashCode()
       }
 
@@ -1487,7 +1487,10 @@ public class ConcurrentHashMapTestApp extends GenericTransparentApp {
   }
 
   void testObjectKeys(ConcurrentHashMap map, boolean validate) throws Exception {
-    if (!ALLOW_IDENTITY_KEYS) return;
+    if (!ALLOW_IDENTITY_KEYS) {
+      Banner.warnBanner("TEST CASE DISABLED SINCE UN-SHARED IDENITY KEYS ARE DISALLOWED");
+      return;
+    }
 
     if (validate) {
       for (Object key : map.keySet()) {

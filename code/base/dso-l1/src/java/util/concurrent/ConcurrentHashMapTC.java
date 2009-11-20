@@ -58,7 +58,15 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
     int i;
 
     if (__tc_isManaged()) {
-      i = ManagerUtil.calculateDsoHashCode(obj);
+      try {
+        i = ManagerUtil.calculateDsoHashCode(obj);
+      } catch (IllegalArgumentException iae) {
+        //
+        throw new IllegalArgumentException(
+                                           "An object of type ["
+                                               + obj.getClass()
+                                               + "] was added to a clustered ConcurrentHashMap but the object does not override hashCode() and was not previously added to clustered state before being added to the map. Please implement hashCode() and equals() on this type and/or share this object by referring to it from clustered state before adding it to this data structure.");
+      }
     } else {
       i = obj.hashCode();
     }
