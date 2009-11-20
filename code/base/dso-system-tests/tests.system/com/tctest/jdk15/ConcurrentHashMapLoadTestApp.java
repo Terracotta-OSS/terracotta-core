@@ -200,7 +200,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       Assert.assertNull(((Manageable) val1).__tc_managed());
       Assert.assertNull(((Manageable) val2).__tc_managed());
 
-      mapRoot.put(key1, val1);
+      mapRoot.put(share(key1), val1);
       Assert.assertNotNull(((Manageable) key1).__tc_managed());
       Assert.assertNotNull(((Manageable) val1).__tc_managed());
 
@@ -263,7 +263,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       Assert.assertNull(((Manageable) val1).__tc_managed());
       Assert.assertNull(((Manageable) val2).__tc_managed());
 
-      mapRoot.put(key1, val1);
+      mapRoot.put(share(key1), val1);
 
       Assert.assertNotNull(((Manageable) key1).__tc_managed());
       Assert.assertNotNull(((Manageable) val1).__tc_managed());
@@ -275,6 +275,13 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
     }
 
     barrier.await();
+  }
+
+  private DataKey share(DataKey key) {
+    // This wierdness is to make this test work with the new restriction that
+    // keys w/o hashCode() override must be shared before they are used as keys
+    mapRoot.put("__SHARE KEY__", key);
+    return key;
   }
 
   private void testRemove(int index) throws Exception {
@@ -290,7 +297,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       Assert.assertNull(((Manageable) val1).__tc_managed());
       Assert.assertNull(((Manageable) val2).__tc_managed());
 
-      mapRoot.put(key1, val1);
+      mapRoot.put(share(key1), val1);
 
       Assert.assertNotNull(((Manageable) key1).__tc_managed());
       Assert.assertNotNull(((Manageable) val1).__tc_managed());
@@ -316,7 +323,7 @@ public class ConcurrentHashMapLoadTestApp extends AbstractTransparentApp {
       Assert.assertNull(((Manageable) val1).__tc_managed());
       Assert.assertNull(((Manageable) val2).__tc_managed());
 
-      mapRoot.put(key1, val1);
+      mapRoot.put(share(key1), val1);
 
       Assert.assertNotNull(((Manageable) key1).__tc_managed());
       Assert.assertNotNull(((Manageable) val1).__tc_managed());
