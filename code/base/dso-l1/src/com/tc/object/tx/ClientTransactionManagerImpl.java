@@ -30,7 +30,7 @@ import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.Banner;
-import com.tc.text.LogWriter;
+import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
@@ -673,7 +673,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter();
+    DumpLoggerWriter writer = new DumpLoggerWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.visit(this);

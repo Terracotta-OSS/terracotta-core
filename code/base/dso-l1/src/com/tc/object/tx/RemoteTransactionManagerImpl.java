@@ -20,7 +20,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.text.LogWriter;
+import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
@@ -512,7 +512,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter();
+    DumpLoggerWriter writer = new DumpLoggerWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);

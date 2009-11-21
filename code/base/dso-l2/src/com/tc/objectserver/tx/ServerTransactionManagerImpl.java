@@ -34,7 +34,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.stats.counter.Counter;
-import com.tc.text.LogWriter;
+import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
@@ -136,7 +136,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter();
+    DumpLoggerWriter writer = new DumpLoggerWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);

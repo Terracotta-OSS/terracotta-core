@@ -38,7 +38,7 @@ import java.util.Map.Entry;
 
 /**
  * Factory class for obtaining TCLogger instances.
- *
+ * 
  * @author teck
  */
 public class TCLogging {
@@ -58,6 +58,7 @@ public class TCLogging {
   private static final String       CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
 
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
+  public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
 
   private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
   private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
@@ -67,6 +68,7 @@ public class TCLogging {
   private static final String       LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
 
   private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
+  public static final String        DUMP_PATTERN                       = "[dump] %m%n";
   private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
   // This next pattern is used when we're *only* logging to the console.
   private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
@@ -323,7 +325,7 @@ public class TCLogging {
     synchronized (TCLogging.class) {
       try {
         TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(LOGGING_PROPERTIES_SECTION);
-        newFileAppender = new RollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
+        newFileAppender = new TCRollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
         newFileAppender.setName("file appender");
         int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);
         newFileAppender.setMaxFileSize(maxLogFileSize + "MB");
@@ -359,6 +361,20 @@ public class TCLogging {
 
     getConsoleLogger().info("Log file: '" + logFilePath + "'.");
     writeSystemProperties();
+  }
+
+  public static TCLogger getDumpLogger() {
+    TCLoggerImpl loggerTemp = new TCLoggerImpl(DUMP_LOGGER_NAME);
+
+    boolean isDev = developmentConfiguration();
+    
+    if (isDev) {
+      loggerTemp.getLogger().setAdditivity(false);
+      ConsoleAppender consoleAppenderTemp = new ConsoleAppender(new PatternLayout(DUMP_PATTERN));
+      loggerTemp.getLogger().addAppender(consoleAppenderTemp);
+    }
+
+    return loggerTemp;
   }
 
   static {

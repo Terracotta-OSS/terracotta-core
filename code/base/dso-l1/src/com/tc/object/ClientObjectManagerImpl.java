@@ -45,7 +45,7 @@ import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
-import com.tc.text.LogWriter;
+import com.tc.text.DumpLoggerWriter;
 import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrintable;
@@ -1218,7 +1218,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   public void dumpToLogger() {
-    LogWriter writer = new LogWriter();
+    DumpLoggerWriter writer = new DumpLoggerWriter();
     PrintWriter pw = new PrintWriter(writer);
     PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
     prettyPrinter.autoflush(false);

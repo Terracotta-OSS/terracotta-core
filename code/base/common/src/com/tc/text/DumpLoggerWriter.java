@@ -9,12 +9,8 @@ import com.tc.logging.TCLogging;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class LogWriter extends StringWriter {
-  private static TCLogger logger = TCLogging.getLogger(LogWriter.class);
-
-  public LogWriter() {
-    //
-  }
+public class DumpLoggerWriter extends StringWriter {
+  private static TCLogger logger = TCLogging.getDumpLogger();
   
   @Override
   public void flush() {
