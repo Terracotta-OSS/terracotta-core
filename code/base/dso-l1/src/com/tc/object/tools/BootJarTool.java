@@ -458,6 +458,9 @@ public class BootJarTool {
       if (Vm.isJDK15Compliant()) {
         loadTerracottaClass("com.tc.util.concurrent.locks.TCLock");
       }
+      if (Vm.isJDK16Compliant()) {
+        loadTerracottaClass("com.tc.util.concurrent.locks.CopyOnWriteArrayListLock");
+      }
       loadTerracottaClass(com.tc.util.Stack.class.getName());
       loadTerracottaClass(TCObjectNotSharableException.class.getName());
       loadTerracottaClass(TCObjectNotFoundException.class.getName());
@@ -1653,11 +1656,16 @@ public class BootJarTool {
 
     spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList",
                                              "com.tc.object.applicator.ListApplicator");
-
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.ADD_ALL_SIGNATURE);
+    spec.addMethodAdapter(SerializationUtil.ADD_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAdaptor());
+    spec.addMethodAdapter(SerializationUtil.ADD_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAtAdaptor());
+    spec.addMethodAdapter(SerializationUtil.ADD_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAllAdaptor());
+    spec.addMethodAdapter(SerializationUtil.ADD_ALL_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.AddAllAtAdaptor());
+    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR1_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
+    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR2_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
+    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.CONSTRUCTOR3_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.Jdk16LockAdaptor());
     spec.addMethodAdapter(SerializationUtil.ADD_IF_ABSENT_SIGNATURE,
                           new CopyOnWriteArrayListAdapter.AddIfAbsentAdaptor());
     spec.addMethodAdapter(SerializationUtil.ADD_ALL_ABSENT_SIGNATURE,
@@ -1665,12 +1673,15 @@ public class BootJarTool {
     spec.addMethodAdapter(SerializationUtil.REMOVE_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAdaptor());
     spec.addMethodAdapter(SerializationUtil.REMOVE_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAllAdaptor());
     spec.addMethodAdapter(SerializationUtil.RETAIN_ALL_SIGNATURE, new CopyOnWriteArrayListAdapter.RetainAllAdaptor());
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_AT_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.REMOVE_RANGE_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.SET_SIGNATURE);
-    spec.addAlwaysLogSpec(SerializationUtil.CLEAR_SIGNATURE);
-
+    spec.addMethodAdapter(SerializationUtil.REMOVE_AT_SIGNATURE, new CopyOnWriteArrayListAdapter.RemoveAtAdaptor());
+    spec.addMethodAdapter(SerializationUtil.REMOVE_RANGE_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.RemoveRangeAdaptor());
+    spec.addMethodAdapter(SerializationUtil.SET_SIGNATURE, new CopyOnWriteArrayListAdapter.SetAdaptor());
+    spec.addMethodAdapter(SerializationUtil.CLEAR_SIGNATURE, new CopyOnWriteArrayListAdapter.ClearAdaptor());
+    spec.addMethodAdapter(CopyOnWriteArrayListAdapter.RESET_LOCK_SIGNATURE,
+                          new CopyOnWriteArrayListAdapter.ResetLockAdaptor());
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
+    addSerializationInstrumentedCode(spec);
   }
 
   private final void addSerializationInstrumentedCode(final TransparencyClassSpec spec) {

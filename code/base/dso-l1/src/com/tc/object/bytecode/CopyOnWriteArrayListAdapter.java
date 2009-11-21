@@ -12,6 +12,331 @@ import com.tc.asm.Opcodes;
 import com.tc.util.runtime.Vm;
 
 public class CopyOnWriteArrayListAdapter {
+  public static final String CONSTRUCTOR1_SIGNATURE = "__INIT__()V";
+  public static final String CONSTRUCTOR2_SIGNATURE = "__INIT__(Ljava/util/Collection;)V";
+  public static final String CONSTRUCTOR3_SIGNATURE = "__INIT__([Ljava/lang/Object;)V";
+  public static final String RESET_LOCK_SIGNATURE   = "resetLock()V";
+
+  public static class Jdk16LockAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new LockAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class LockAdapter extends MethodAdapter implements Opcodes {
+
+    public LockAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      if (Vm.isJDK16Compliant()) {
+        if (opcode == PUTFIELD && "lock".equals(name)) {
+          mv.visitVarInsn(ALOAD, 0);
+          mv.visitTypeInsn(NEW, "com/tc/util/concurrent/locks/CopyOnWriteArrayListLock");
+          mv.visitInsn(DUP);
+          mv.visitVarInsn(ALOAD, 0);
+          mv.visitMethodInsn(INVOKESPECIAL, "com/tc/util/concurrent/locks/CopyOnWriteArrayListLock", "<init>",
+                             "(Ljava/util/concurrent/CopyOnWriteArrayList;)V");
+        }
+      }
+      super.visitFieldInsn(opcode, owner, name, desc);
+    }
+  }
+
+  public static class AddAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new AddMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class AddMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public AddMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("add(Ljava/lang/Object;)Z");
+      mv.visitInsn(ICONST_1);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class AddAtAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new AddAtMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class AddAtMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public AddAtMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("add(ILjava/lang/Object;)V");
+      mv.visitInsn(ICONST_2);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 1);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_1);
+      mv.visitVarInsn(ALOAD, 2);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class SetAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new SetMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class SetMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public SetMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("set(ILjava/lang/Object;)Ljava/lang/Object;");
+      mv.visitInsn(ICONST_2);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 1);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_1);
+      mv.visitVarInsn(ALOAD, 2);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class AddAllAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new AddAllMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class AddAllMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public AddAllMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("addAll(Ljava/util/Collection;)Z");
+      mv.visitInsn(ICONST_1);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitVarInsn(ALOAD, 1);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class AddAllAtAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new AddAllAtMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class AddAllAtMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public AddAllAtMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("addAll(ILjava/util/Collection;)Z");
+      mv.visitInsn(ICONST_2);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 1);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_1);
+      mv.visitVarInsn(ALOAD, 2);
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
 
   public static class AddIfAbsentAdaptor extends AbstractMethodAdapter {
 
@@ -199,7 +524,6 @@ public class CopyOnWriteArrayListAdapter {
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-      super.visitMethodInsn(opcode, owner, name, desc);
       if (Vm.isJDK16Compliant()) {
         if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
           mv.visitVarInsn(ALOAD, 0);
@@ -216,6 +540,175 @@ public class CopyOnWriteArrayListAdapter {
                              "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
         }
       }
+      super.visitMethodInsn(opcode, owner, name, desc);
+    }
+  }
+
+  public static class RemoveAtAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new RemoveAtMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class RemoveAtMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public RemoveAtMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("remove(I)Ljava/lang/Object;");
+      mv.visitInsn(ICONST_1);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 1);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class RemoveRangeAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new RemoveRangeMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class RemoveRangeMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public RemoveRangeMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("removeRange(II)V");
+      mv.visitInsn(ICONST_2);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 1);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitInsn(DUP);
+      mv.visitInsn(ICONST_1);
+      mv.visitTypeInsn(NEW, "java/lang/Integer");
+      mv.visitInsn(DUP);
+      mv.visitVarInsn(ILOAD, 2);
+      mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Integer", "<init>", "(I)V");
+      mv.visitInsn(AASTORE);
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
+    }
+  }
+
+  public static class ClearAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = visitOriginal(cv);
+      return new ClearMethodAdapter(mv);
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
+    }
+  }
+
+  private static class ClearMethodAdapter extends MethodAdapter implements Opcodes {
+
+    public ClearMethodAdapter(MethodVisitor mv) {
+      super(mv);
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      super.visitFieldInsn(opcode, owner, name, desc);
+      if (Vm.isJDK15()) {
+        if (opcode == PUTFIELD && "array".equals(name)) {
+          doVisit();
+        }
+      }
+    }
+
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if (Vm.isJDK16Compliant()) {
+        if ("setArray".equals(name) && "([Ljava/lang/Object;)V".equals(desc)) {
+          doVisit();
+        }
+      }
+    }
+
+    private void doVisit() {
+      mv.visitVarInsn(ALOAD, 0);
+      mv.visitLdcInsn("clear()V");
+      mv.visitInsn(ICONST_0);
+      mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+      mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "logicalInvoke",
+                         "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;)V");
     }
   }
 
@@ -587,7 +1080,7 @@ public class CopyOnWriteArrayListAdapter {
       MethodVisitor mv = cv
           .visitMethod(this.access, this.methodName, this.description, this.signature, this.exceptions);
       if (Vm.isJDK15()) {
-      adaptRetainAllJdk15(mv);
+        adaptRetainAllJdk15(mv);
       } else if (Vm.isJDK16Compliant()) {
         adaptRetainAllJdk16Compliant(mv);
       }
@@ -935,6 +1428,39 @@ public class CopyOnWriteArrayListAdapter {
       mv.visitLocalVariable("newArray", "[Ljava/lang/Object;", null, l16, l20, 7);
       mv.visitMaxs(5, 9);
       mv.visitEnd();
+    }
+  }
+
+  public static class ResetLockAdaptor extends AbstractMethodAdapter {
+
+    public MethodVisitor adapt(ClassVisitor cv) {
+      MethodVisitor mv = cv
+          .visitMethod(this.access, this.methodName, this.description, this.signature, this.exceptions);
+      if (Vm.isJDK16Compliant()) {
+        mv.visitCode();
+        mv.visitFieldInsn(GETSTATIC, "java/util/concurrent/CopyOnWriteArrayList", "unsafe", "Lsun/misc/Unsafe;");
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETSTATIC, "java/util/concurrent/CopyOnWriteArrayList", "lockOffset", "J");
+
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitTypeInsn(NEW, "com/tc/util/concurrent/locks/CopyOnWriteArrayListLock");
+        mv.visitInsn(DUP);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitMethodInsn(INVOKESPECIAL, "com/tc/util/concurrent/locks/CopyOnWriteArrayListLock", "<init>",
+                           "(Ljava/util/concurrent/CopyOnWriteArrayList;)V");
+
+        mv.visitMethodInsn(INVOKEVIRTUAL, "sun/misc/Unsafe", "putObjectVolatile",
+                           "(Ljava/lang/Object;JLjava/lang/Object;)V");
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(6, 1);
+        mv.visitEnd();
+      }
+      return null;
+    }
+
+    @Override
+    public boolean doesOriginalNeedAdapting() {
+      return false;
     }
   }
 }

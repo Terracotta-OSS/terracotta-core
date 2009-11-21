@@ -80,7 +80,7 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
-                            new Byte(ManagedObjectState.COPY_ON_WRITE_ARRAY_LIST_TYPE));
+                            new Byte(ManagedObjectState.LIST_TYPE));
 
   }
 
@@ -183,9 +183,6 @@ public class ManagedObjectStateFactory {
             .createPersistentMap(oid));
       case ManagedObjectState.TDC_SERIALIZED_ENTRY:
         return new TDCSerializedEntryManagedObjectState(classID);
-      case ManagedObjectState.COPY_ON_WRITE_ARRAY_LIST_TYPE:
-        return new COWArrayListManagedObjectState(classID);
-
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
@@ -280,8 +277,6 @@ public class ManagedObjectStateFactory {
           return ConcurrentDistributedMapManagedObjectState.readFrom(in);
         case ManagedObjectState.TDC_SERIALIZED_ENTRY:
           return TDCSerializedEntryManagedObjectState.readFrom(in);
-        case ManagedObjectState.COPY_ON_WRITE_ARRAY_LIST_TYPE:
-          return COWArrayListManagedObjectState.readFrom(in);
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }

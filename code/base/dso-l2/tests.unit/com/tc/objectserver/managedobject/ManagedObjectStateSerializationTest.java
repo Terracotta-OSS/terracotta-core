@@ -82,9 +82,6 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.TDC_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
             break;
-          case ManagedObjectState.COPY_ON_WRITE_ARRAY_LIST_TYPE:
-            // XXX: filler - to be removed
-            break;
           default:
             throw new AssertionError("Type " + type
                                      + " does not have a test case in ManagedObjectStateSerializationTest.");
