@@ -1442,7 +1442,6 @@ public class CopyOnWriteArrayListAdapter {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETSTATIC, "java/util/concurrent/CopyOnWriteArrayList", "lockOffset", "J");
 
-        mv.visitVarInsn(ALOAD, 0);
         mv.visitTypeInsn(NEW, "com/tc/util/concurrent/locks/CopyOnWriteArrayListLock");
         mv.visitInsn(DUP);
         mv.visitVarInsn(ALOAD, 0);
@@ -1454,8 +1453,9 @@ public class CopyOnWriteArrayListAdapter {
         mv.visitInsn(RETURN);
         mv.visitMaxs(6, 1);
         mv.visitEnd();
+        return null;
       }
-      return null;
+      return mv;
     }
 
     @Override
