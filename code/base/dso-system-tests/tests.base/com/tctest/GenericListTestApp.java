@@ -646,11 +646,12 @@ public class GenericListTestApp extends GenericTransparentApp {
     if (validate) {
       assertListsEqual(Arrays.asList(new Object[] { E("first element", v), E("third element", v) }), list);
     } else {
-      list.add(E("first element", v));
-      list.add(E("second element", v));
-      list.add(E("third element", v));
-      list.add(E("fourth element", v));
-
+      synchronized (list) {
+        list.add(E("first element", v));
+        list.add(E("second element", v));
+        list.add(E("third element", v));
+        list.add(E("fourth element", v));
+      }
       List retainList = new ArrayList(2);
       retainList.add(E("first element", v));
       retainList.add(E("third element", v));
