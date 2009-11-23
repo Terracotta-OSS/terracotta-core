@@ -15,6 +15,7 @@ public interface NodeID extends TCSerializable, Comparable {
   public static final byte CLIENT_NODE_TYPE = 0x01;
   public static final byte SERVER_NODE_TYPE = 0x02;
   public static final byte GROUP_NODE_TYPE  = 0x03;
+  public static final byte STRIPE_NODE_TYPE = 0x04;
 
   // /////////////////////////////////////////////////////////////////////////////////////////////////////
   // XXX:: NOTE::

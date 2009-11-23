@@ -47,7 +47,7 @@ public class SleepycatPersistor implements Persistor {
   private final PersistenceTransactionProvider persistenceTransactionProvider;
   private final DBEnvironment                  env;
   private final SleepycatCollectionFactory     sleepycatCollectionFactory;
-  private final PersistentMapStore             clusterStateStore;
+  private final PersistentMapStore             persistentStateStore;
 
   private SleepycatCollectionsPersistor        sleepycatCollectionsPersistor;
 
@@ -107,7 +107,7 @@ public class SleepycatPersistor implements Persistor {
                                                              SleepycatSequenceKeys.TRANSACTION_SEQUENCE_DB_NAME, 1, env
                                                                  .getGlobalSequenceDatabase());
     this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
-    this.clusterStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
+    this.persistentStateStore = new SleepycatMapStore(this.persistenceTransactionProvider, logger, env
         .getClusterStateStoreDatabase());
   }
 
@@ -201,8 +201,8 @@ public class SleepycatPersistor implements Persistor {
     return this.sleepycatCollectionFactory;
   }
 
-  public PersistentMapStore getClusterStateStore() {
-    return clusterStateStore;
+  public PersistentMapStore getPersistentStateStore() {
+    return persistentStateStore;
   }
 
   public void close() {

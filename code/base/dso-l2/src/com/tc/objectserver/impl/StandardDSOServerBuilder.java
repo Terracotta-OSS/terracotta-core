@@ -7,15 +7,25 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.config.HaConfig;
+import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.ha.L2HACoordinator;
+import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogger;
+import com.tc.net.GroupID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.SingleNodeGroupManager;
+import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
+import com.tc.net.protocol.tcm.ChannelManager;
+import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
@@ -44,9 +54,13 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import java.util.List;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
+  private final HaConfig haConfig;
+  private final GroupID  thisGroupID;
 
-  public StandardDSOServerBuilder(TCLogger logger) {
+  public StandardDSOServerBuilder(HaConfig haConfig, TCLogger logger) {
     logger.info("Standard DSO Server created");
+    this.haConfig = haConfig;
+    this.thisGroupID = this.haConfig.getThisGroup().getGroupId();
   }
 
   public GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
@@ -63,7 +77,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public GroupManager createGroupCommManager(boolean networkedHA, L2TVSConfigurationSetupManager configManager,
-                                             StageManager stageManager, ServerID serverNodeID, Sink httpSink) {
+                                             StageManager stageManager, ServerID serverNodeID, Sink httpSink,
+                                             StripeIDStateManager stripeStateManager,
+                                             ServerGlobalTransactionManager gtxm) {
     if (networkedHA) {
       return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink);
     } else {
@@ -99,7 +115,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                      ServerGlobalTransactionManager gtxm,
                                                                      ServerClientHandshakeManager clientHandshakeManager,
                                                                      ServerClusterMetaDataManager clusterMetaDataManager,
-                                                                     DSOGlobalServerStats serverStats) {
+                                                                     DSOGlobalServerStats serverStats,
+                                                                     ConnectionIDFactory connectionIdFactory,
+                                                                     int maxStageSize,
+                                                                     ChannelManager genericChannelManager) {
     return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, objStore, lockMgr, channelManager,
                                               clientStateMgr, txnMgr, txnObjectMgr, clientHandshakeManager,
                                               channelStats, coordinator,
@@ -131,6 +150,18 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
 
   public void initializeContext(ConfigurationContext context) {
     // Nothing to initialize here
+  }
+
+  public L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
+                                             StageManager stageManager, GroupManager groupCommsManager,
+                                             PersistentMapStore persistentMapStore, ObjectManager objectManager,
+                                             ServerTransactionManager transactionManager,
+                                             ServerGlobalTransactionManager gtxm,
+                                             WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfigure,
+                                             MessageRecycler recycler, StripeIDStateManager stripeStateManager) {
+    return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
+                               objectManager, transactionManager, gtxm, weightGeneratorFactory, haConfigure, recycler,
+                               thisGroupID, stripeStateManager);
   }
 
 }

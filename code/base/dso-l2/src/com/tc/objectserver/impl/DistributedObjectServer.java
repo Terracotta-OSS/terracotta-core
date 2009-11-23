@@ -31,8 +31,8 @@ import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.io.TCRandomFileAccessImpl;
 import com.tc.l2.api.L2Coordinator;
-import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.L2HADisabledCooridinator;
+import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
 import com.tc.l2.state.StateManager;
@@ -67,6 +67,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
+import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOOEventHandler;
@@ -339,6 +340,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
   private GroupManager                           groupCommManager;
   private Stage                                  hydrateStage;
+  private StripeIDStateManager                   stripeIDStateManager;
 
   // used by a test
   public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager,
@@ -373,7 +375,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger) {
     Assert.assertEquals(config.isActiveActive(), false);
-    return new StandardDSOServerBuilder(tcLogger);
+    return new StandardDSOServerBuilder(config, tcLogger);
   }
 
   protected DSOServerBuilder getServerBuilder() {
@@ -578,16 +580,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
         .addCallbackOnExitExceptionHandler(CleanDirtyDatabaseException.class,
                                            new CallbackDirtyDatabaseExceptionAdapter(logger, consoleLogger,
                                                                                      this.persistor
-                                                                                         .getClusterStateStore()));
+                                                                                         .getPersistentStateStore()));
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapDirtyDbServerNodeException.class,
                                            new CallbackZapDirtyDbExceptionAdapter(logger, consoleLogger, this.persistor
-                                               .getClusterStateStore()));
+                                               .getPersistentStateStore()));
     this.threadGroup
         .addCallbackOnExitExceptionHandler(ZapServerNodeException.class,
                                            new CallbackZapServerNodeExceptionAdapter(logger, consoleLogger,
                                                                                      this.persistor
-                                                                                         .getClusterStateStore()));
+                                                                                         .getPersistentStateStore()));
 
     persistenceTransactionProvider = this.persistor.getPersistenceTransactionProvider();
     PersistenceTransactionProvider transactionStorePTP;
@@ -734,11 +736,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                 true, this.connectionIdFactory, this.httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
+    stripeIDStateManager = new StripeIDStateManagerImpl(haConfig, this.persistor.getPersistentStateStore());
 
     ProductInfo pInfo = ProductInfo.getInstance();
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(this.l1Listener.getChannelManager(),
-                                                                 this.communicationsManager.getConnectionManager(),
-                                                                 pInfo.version());
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(haConfig.getThisGroup().getGroupId(), this.l1Listener
+        .getChannelManager(), this.communicationsManager.getConnectionManager(), pInfo.version(), stripeIDStateManager);
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
 
@@ -939,7 +941,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     this.groupCommManager = this.serverBuilder.createGroupCommManager(networkedHA, this.configSetupManager,
                                                                       stageManager, this.thisServerNodeID,
-                                                                      this.httpSink);
+                                                                      this.httpSink, stripeIDStateManager, gtxm);
 
     // initialize the garbage collector
     GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
@@ -971,9 +973,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                                                  this.transactionManager,
                                                                                                  host, serverPort);
       logger.info("L2 Networked HA Enabled ");
-      this.l2Coordinator = new L2HACoordinator(consoleLogger, this, stageManager, this.groupCommManager, this.persistor
-          .getClusterStateStore(), this.objectManager, this.transactionManager, gtxm, weightGeneratorFactory,
-                                               this.configSetupManager.haConfig(), recycler);
+      this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
+                                                                    this.groupCommManager, this.persistor
+                                                                        .getPersistentStateStore(), this.objectManager,
+                                                                    this.transactionManager, gtxm,
+                                                                    weightGeneratorFactory, this.configSetupManager
+                                                                        .haConfig(), recycler, stripeIDStateManager);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -988,7 +993,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                                        channelStats, this.l2Coordinator,
                                                                        transactionBatchManager, gtxm,
                                                                        clientHandshakeManager, clusterMetaDataManager,
-                                                                       serverStats);
+                                                                       serverStats, connectionIdFactory, maxStageSize,
+                                                                       this.l1Listener.getChannelManager());
     toInit.add(this.serverBuilder);
 
     stageManager.startAll(this.context, toInit);

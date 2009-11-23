@@ -205,7 +205,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ClientTransactionManager                   txManager;
   private CommunicationsManager                      communicationsManager;
   private RemoteTransactionManager                   rtxManager;
-  private ClientHandshakeManagerImpl                 clientHandshakeManager;
+  private ClientHandshakeManager                     clientHandshakeManager;
   private ClusterMetaDataManager                     clusterMetaDataManager;
   private CacheManager                               cacheManager;
   private L1Management                               l1Management;
@@ -585,16 +585,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
     clientHandshakeCallbacks.add(teh);
     ProductInfo pInfo = ProductInfo.getInstance();
-    this.clientHandshakeManager = new ClientHandshakeManagerImpl(
-                                                                 new ClientIDLogger(
-                                                                                    this.channel.getClientIDProvider(),
-                                                                                    TCLogging
-                                                                                        .getLogger(ClientHandshakeManagerImpl.class)),
-                                                                 this.channel, this.channel
-                                                                     .getClientHandshakeMessageFactory(), pauseStage
-                                                                     .getSink(), sessionManager, this.dsoCluster, pInfo
-                                                                     .version(), Collections
-                                                                     .unmodifiableCollection(clientHandshakeCallbacks));
+    this.clientHandshakeManager = dsoClientBuilder
+        .createClientHandshakeManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
+            .getLogger(ClientHandshakeManagerImpl.class)), this.channel, this.channel
+            .getClientHandshakeMessageFactory(), pauseStage.getSink(), sessionManager, this.dsoCluster,
+                                      pInfo.version(), Collections.unmodifiableCollection(clientHandshakeCallbacks));
     this.channel.addListener(this.clientHandshakeManager);
 
     ClientConfigurationContext cc = new ClientConfigurationContext(stageManager, this.lockManager, remoteObjectManager,

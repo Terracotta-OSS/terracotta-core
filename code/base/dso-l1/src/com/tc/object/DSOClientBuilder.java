@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
@@ -18,6 +19,8 @@ import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
@@ -25,6 +28,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -42,6 +46,9 @@ import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
+import com.tcclient.cluster.DsoClusterInternal;
+
+import java.util.Collection;
 
 public interface DSOClientBuilder {
 
@@ -106,5 +113,11 @@ public interface DSOClientBuilder {
   ObjectIDProvider createObjectIdProvider(BatchSequence[] sequences, ClientIDProvider clientIDProvider);
 
   BatchSequenceReceiver getBatchReceiver(BatchSequence[] sequences);
+
+  ClientHandshakeManager createClientHandshakeManager(final TCLogger logger, final DSOClientMessageChannel channel,
+                                                      final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
+                                                      final SessionManager sessionManager,
+                                                      final DsoClusterInternal dsoCluster, final String clientVersion,
+                                                      final Collection<ClientHandshakeCallback> callbacks);
 
 }

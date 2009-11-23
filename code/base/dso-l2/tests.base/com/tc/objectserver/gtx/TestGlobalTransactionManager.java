@@ -30,7 +30,7 @@ public final class TestGlobalTransactionManager implements ServerGlobalTransacti
   }
 
   public GlobalTransactionID getLowGlobalTransactionIDWatermark() {
-    return null;
+    return GlobalTransactionID.NULL_ID;
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {

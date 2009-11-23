@@ -9,10 +9,12 @@ import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
+import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.tcm.ChannelManagerEventListener;
@@ -35,29 +37,34 @@ import java.util.Set;
  * clients and hides the channel to client ID mapping from the rest of the world.
  */
 public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManagerMBean {
-  private static final TCLogger     logger         = TCLogging.getLogger(DSOChannelManager.class);
+  private static final TCLogger      logger         = TCLogging.getLogger(DSOChannelManager.class);
 
-  private final CopyOnWriteArrayMap activeChannels = new CopyOnWriteArrayMap(
-                                                                             new CopyOnWriteArrayMap.TypedArrayFactory() {
+  private final CopyOnWriteArrayMap  activeChannels = new CopyOnWriteArrayMap(
+                                                                              new CopyOnWriteArrayMap.TypedArrayFactory() {
 
-                                                                               public Object[] createTypedArray(
-                                                                                                                final int size) {
-                                                                                 return new MessageChannel[size];
-                                                                               }
+                                                                                public Object[] createTypedArray(
+                                                                                                                 final int size) {
+                                                                                  return new MessageChannel[size];
+                                                                                }
 
-                                                                             });
-  private final List                eventListeners = new CopyOnWriteArrayList();
+                                                                              });
+  private final List                 eventListeners = new CopyOnWriteArrayList();
 
-  private final ChannelManager      genericChannelManager;
-  private final TCConnectionManager connectionManager;
-  private final String              serverVersion;
+  private final GroupID              thisGroupID;
+  private final ChannelManager       genericChannelManager;
+  private final TCConnectionManager  connectionManager;
+  private final String               serverVersion;
+  private final StripeIDStateManager stripeIDStateManager;
 
-  public DSOChannelManagerImpl(final ChannelManager genericChannelManager, final TCConnectionManager connectionManager,
-                               final String serverVersion) {
+  public DSOChannelManagerImpl(final GroupID groupID, final ChannelManager genericChannelManager,
+                               final TCConnectionManager connectionManager, final String serverVersion,
+                               final StripeIDStateManager stripeIDStateManager) {
+    this.thisGroupID = groupID;
     this.genericChannelManager = genericChannelManager;
     this.genericChannelManager.addEventListener(new GenericChannelEventListener());
     this.serverVersion = serverVersion;
     this.connectionManager = connectionManager;
+    this.stripeIDStateManager = stripeIDStateManager;
   }
 
   public MessageChannel getActiveChannel(final NodeID id) throws NoSuchChannelException {
@@ -112,9 +119,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     ArrayList activeChannelConnections = new ArrayList(connections.length);
     Set activeConnectionAddresses = getActiveChannelRemoteAddress();
     for (TCConnection connection : connections) {
-      if(activeConnectionAddresses.contains(connection.getRemoteAddress())) {
-      activeChannelConnections.add(connection); 
-    }
+      if (activeConnectionAddresses.contains(connection.getRemoteAddress())) {
+        activeChannelConnections.add(connection);
+      }
     }
     return (TCConnection[]) activeChannelConnections.toArray(new TCConnection[activeChannelConnections.size()]);
   }
@@ -136,7 +143,9 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       MessageChannel channel = ackMsg.getChannel();
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
-        ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion);
+        ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion, this.thisGroupID,
+                          this.stripeIDStateManager.getStripeID(this.thisGroupID), this.stripeIDStateManager
+                              .getStripeIDMap(true));
         ackMsg.send();
       }
       fireChannelCreatedEvent(channel);

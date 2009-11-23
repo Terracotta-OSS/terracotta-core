@@ -7,6 +7,8 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.StripeID;
+import com.tc.util.UUID;
 
 import java.util.HashSet;
 
@@ -24,6 +26,8 @@ public class NodeIDTest extends TestCase {
     NodeID n2 = new ServerID("node2", b2);
     NodeID n3 = new ServerID("node3", b3);
     NodeID n4 = new ServerID("node4", b4);
+    NodeID n5 = new StripeID(UUID.getUUID().toString());
+    NodeID n6 = new StripeID(UUID.getUUID().toString());
     
     assertFalse(n1.equals(n2));
     assertTrue(n1.equals(n1));
@@ -33,16 +37,23 @@ public class NodeIDTest extends TestCase {
     assertTrue(n4.equals(n4));
     assertFalse(n3.equals(n4));
     assertTrue(n2.equals(n2));
+    assertTrue(n5.equals(n5));
+    assertFalse(n5.equals(n4));
+    assertFalse(n5.equals(n6));
     
     HashSet set = new HashSet();
     assertTrue(set.add(n1));
     assertTrue(set.add(n2));
     assertTrue(set.add(n3));
     assertTrue(set.add(n4));
+    assertTrue(set.add(n5));
+    assertTrue(set.add(n6));
     assertFalse(set.add(n1));
     assertFalse(set.add(n2));
     assertFalse(set.add(n3));
     assertFalse(set.add(n4));
+    assertFalse(set.add(n5));
+    assertFalse(set.add(n6));
     
     
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
@@ -58,6 +69,12 @@ public class NodeIDTest extends TestCase {
     serializer = new NodeIDSerializer(n4);
     serializer.serializeTo(bo);
     System.err.println("Written : " + n4);
+    serializer = new NodeIDSerializer(n5);
+    serializer.serializeTo(bo);
+    System.err.println("Written : " + n5);
+    serializer = new NodeIDSerializer(n6);
+    serializer.serializeTo(bo);
+    System.err.println("Written : " + n6);
     serializer = new NodeIDSerializer(ServerID.NULL_ID);
     serializer.serializeTo(bo);
     System.err.println("Written : " + ServerID.NULL_ID);
@@ -87,8 +104,17 @@ public class NodeIDTest extends TestCase {
     serializer.deserializeFrom(bi);
     NodeID r5 = serializer.getNodeID();
     System.err.println("Read : " + r5);
-    assertEquals(ServerID.NULL_ID, r5);
-
+    assertEquals(n5, r5);
+    serializer = new NodeIDSerializer();
+    serializer.deserializeFrom(bi);
+    NodeID r6 = serializer.getNodeID();
+    System.err.println("Read : " + r6);
+    assertEquals(n6, r6);
+    serializer = new NodeIDSerializer();
+    serializer.deserializeFrom(bi);
+    NodeID r7 = serializer.getNodeID();
+    System.err.println("Read : " + r7);
+    assertEquals(ServerID.NULL_ID, r7);
 
   }
 }

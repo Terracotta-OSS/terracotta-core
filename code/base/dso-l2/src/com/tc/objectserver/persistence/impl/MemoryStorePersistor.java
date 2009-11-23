@@ -30,7 +30,7 @@ public class MemoryStorePersistor implements Persistor {
   private final StringIndex                     stringIndex;
   private final ManagedObjectPersistor          managedObjectPersistor;
   private final ClassPersistor                  clazzPersistor;
-  private final PersistentMapStore              clusterStateStore;
+  private final PersistentMapStore              persistentStateStore;
   private final TransactionPersistor            transactionPerisistor;
   private final MutableSequence                 mutableSequence;
   private final PersistenceTransactionProvider  persistenceTransactionProvider;
@@ -72,7 +72,7 @@ public class MemoryStorePersistor implements Persistor {
     this.mutableSequence = new InMemorySequenceProvider();
     MemoryDataStoreClient clusterStateDB = new MemoryDataStoreClient(CLUSTER_STATE_STORE, memoryStoreHost,
                                                                      memoryStorePort);
-    this.clusterStateStore = new MemoryStorePersistentMapStore(clusterStateDB);
+    this.persistentStateStore = new MemoryStorePersistentMapStore(clusterStateDB);
   }
 
   public void close() {
@@ -111,8 +111,8 @@ public class MemoryStorePersistor implements Persistor {
     return this.memoryStoreCollectionFactory;
   }
 
-  public PersistentMapStore getClusterStateStore() {
-    return clusterStateStore;
+  public PersistentMapStore getPersistentStateStore() {
+    return persistentStateStore;
   }
 
 }

@@ -7,31 +7,36 @@ package com.tc.l2.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.ha.ClusterState;
+import com.tc.net.GroupID;
+import com.tc.net.StripeID;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.GroupToStripeMapSerializer;
 import com.tc.net.groups.MessageID;
 import com.tc.net.protocol.transport.ConnectionID;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class ClusterStateMessage extends AbstractGroupMessage {
 
-  public static final int OBJECT_ID                    = 0x00;
-  public static final int NEW_CONNECTION_CREATED       = 0x01;
-  public static final int CONNECTION_DESTROYED         = 0x02;
-  public static final int GLOBAL_TRANSACTION_ID        = 0x03;
-  public static final int COMPLETE_STATE               = 0xF0;
-  public static final int OPERATION_FAILED_SPLIT_BRAIN = 0xFE;
-  public static final int OPERATION_SUCCESS            = 0xFF;
+  public static final int        OBJECT_ID                    = 0x00;
+  public static final int        NEW_CONNECTION_CREATED       = 0x01;
+  public static final int        CONNECTION_DESTROYED         = 0x02;
+  public static final int        GLOBAL_TRANSACTION_ID        = 0x03;
+  public static final int        COMPLETE_STATE               = 0xF0;
+  public static final int        OPERATION_FAILED_SPLIT_BRAIN = 0xFE;
+  public static final int        OPERATION_SUCCESS            = 0xFF;
 
-  private long            nextAvailableObjectID;
-  private long            nextAvailableGID;
-  private String          clusterID;
-  private ConnectionID    connectionID;
-  private long            nextAvailableChannelID;
-  private Set             connectionIDs;
+  private long                   nextAvailableObjectID;
+  private long                   nextAvailableGID;
+  private String                 clusterID;
+  private ConnectionID           connectionID;
+  private long                   nextAvailableChannelID;
+  private Set                    connectionIDs;
+  private Map<GroupID, StripeID> stripeIDMap;
 
   // To make serialization happy
   public ClusterStateMessage() {
@@ -50,7 +55,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     super(type);
     this.connectionID = connID;
   }
-  
+
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     switch (getType()) {
       case OBJECT_ID:
@@ -73,6 +78,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (int i = 0; i < size; i++) {
           connectionIDs.add(readConnectionID(in));
         }
+        GroupToStripeMapSerializer serializer = new GroupToStripeMapSerializer();
+        serializer.deserializeFrom(in);
+        stripeIDMap = serializer.getMap();
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -104,6 +112,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
           ConnectionID conn = (ConnectionID) i.next();
           writeConnectionID(conn, out);
         }
+        new GroupToStripeMapSerializer(stripeIDMap).serializeTo(out);
         break;
       case OPERATION_FAILED_SPLIT_BRAIN:
       case OPERATION_SUCCESS:
@@ -150,8 +159,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableObjectID = state.getNextAvailableObjectID();
         nextAvailableGID = state.getNextAvailableGlobalTxnID();
         nextAvailableChannelID = state.getNextAvailableChannelID();
-        clusterID = state.getClusterID();
+        clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
+        stripeIDMap = state.getStripeIDMap();
         break;
       default:
         throw new AssertionError("Wrong Type : " + getType());
@@ -167,13 +177,16 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         break;
       case COMPLETE_STATE:
-        state.setClusterID(clusterID);
+        state.setStripeID(clusterID);
         state.setNextAvailableObjectID(nextAvailableObjectID);
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
           ConnectionID conn = (ConnectionID) i.next();
           state.addNewConnection(conn);
+        }
+        for (GroupID gid : stripeIDMap.keySet()) {
+          state.addToStripeIDMap(gid, stripeIDMap.get(gid));
         }
         break;
       case NEW_CONNECTION_CREATED:

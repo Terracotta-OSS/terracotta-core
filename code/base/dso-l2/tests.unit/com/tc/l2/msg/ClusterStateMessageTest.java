@@ -8,6 +8,9 @@ import com.tc.async.impl.MockSink;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.ha.ClusterState;
+import com.tc.net.GroupID;
+import com.tc.net.groups.DummyStripeIDStateManager;
+import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -46,18 +49,21 @@ public class ClusterStateMessageTest extends TestCase {
 
   private void resetClusterState(int clusterState) {
     Persistor persistor = new InMemoryPersistor();
-    PersistentMapStore clusterStateStore = persistor.getClusterStateStore();
+    PersistentMapStore clusterStateStore = persistor.getPersistentStateStore();
     ObjectIDSequence oidSequence = new PersistentManagedObjectStore(new TestManagedObjectPersistor(new HashMap()),
                                                                     new MockSink());
     ConnectionIDFactory connectionIdFactory = new ConnectionIDFactoryImpl(persistor.getClientStatePersistor());
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());
+    StripeIDStateManager stripeIDStateManager = new DummyStripeIDStateManager();
     if (clusterState == CLUSTER_STATE_1) {
-      clusterState_1 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider);
-      clusterState_1.setClusterID("foobar");
+      clusterState_1 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider,
+                                        new GroupID(1), stripeIDStateManager);
+      clusterState_1.setStripeID("foobar");
     } else {
-      clusterState_2 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider);
-      clusterState_2.setClusterID("foobar");
+      clusterState_2 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider,
+                                        new GroupID(1), stripeIDStateManager);
+      clusterState_2.setStripeID("foobar");
     }
   }
 
@@ -84,7 +90,7 @@ public class ClusterStateMessageTest extends TestCase {
       assertEquals(((ConnectionID) iter.next()).getID(), ((ConnectionID) iter1.next()).getID());
     }
 
-    assertEquals(cs.getClusterID(), cs1.getClusterID());
+    assertEquals(cs.getStripeID(), cs1.getStripeID());
   }
 
   private ClusterStateMessage writeAndRead(ClusterStateMessage csm) throws Exception {

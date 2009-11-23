@@ -5,9 +5,10 @@
 package com.tc.object.handshakemanager;
 
 import com.tc.net.NodeID;
+import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 
-public interface ClientHandshakeManager {
+public interface ClientHandshakeManager extends ChannelEventListener {
 
   public void initiateHandshake(NodeID remoteNode);
 
@@ -20,6 +21,6 @@ public interface ClientHandshakeManager {
   public boolean serverIsPersistent();
 
   public void waitForHandshake();
-  
+
   public void shutdown();
 }

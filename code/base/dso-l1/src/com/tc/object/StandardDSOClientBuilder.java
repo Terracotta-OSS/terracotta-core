@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.async.api.Sink;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
@@ -26,6 +27,9 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
+import com.tc.object.handshakemanager.ClientHandshakeCallback;
+import com.tc.object.handshakemanager.ClientHandshakeManager;
+import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDClientHandshakeRequester;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
@@ -37,6 +41,7 @@ import com.tc.object.locks.ClientLockManagerImpl;
 import com.tc.object.locks.RemoteLockManager;
 import com.tc.object.locks.RemoteLockManagerImpl;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
@@ -60,6 +65,9 @@ import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
+import com.tcclient.cluster.DsoClusterInternal;
+
+import java.util.Collection;
 
 public class StandardDSOClientBuilder implements DSOClientBuilder {
 
@@ -198,4 +206,14 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     Assert.assertTrue(sequences.length == 1);
     return sequences[0];
   }
+
+  public ClientHandshakeManager createClientHandshakeManager(TCLogger logger, DSOClientMessageChannel channel,
+                                                             ClientHandshakeMessageFactory chmf, Sink pauseSink,
+                                                             SessionManager sessionManager,
+                                                             DsoClusterInternal dsoCluster, String clientVersion,
+                                                             Collection<ClientHandshakeCallback> callbacks) {
+    return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, dsoCluster, clientVersion,
+                                          callbacks);
+  }
+
 }

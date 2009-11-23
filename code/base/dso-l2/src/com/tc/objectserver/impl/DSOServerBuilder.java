@@ -6,13 +6,21 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
+import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
+import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.logging.TCLogger;
 import com.tc.management.beans.TCDumper;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.StripeIDStateManager;
+import com.tc.net.protocol.tcm.ChannelManager;
+import com.tc.net.protocol.transport.ConnectionIDFactory;
+import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
+import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
@@ -49,7 +57,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
 
   GroupManager createGroupCommManager(boolean networkedHA, L2TVSConfigurationSetupManager configManager,
-                                      StageManager stageManager, ServerID serverNodeID, Sink httpSink);
+                                      StageManager stageManager, ServerID serverNodeID, Sink httpSink,
+                                      StripeIDStateManager stripeStateManager, ServerGlobalTransactionManager gtxm);
 
   GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
                                           ObjectManager objectMgr, ClientStateManager stateManager,
@@ -71,10 +80,18 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                               ServerGlobalTransactionManager gtxm,
                                                               ServerClientHandshakeManager clientHandshakeManager,
                                                               ServerClusterMetaDataManager clusterMetaDataManager,
-                                                              DSOGlobalServerStats serverStats);
+                                                              DSOGlobalServerStats serverStats,
+                                                              ConnectionIDFactory connectionIdFactory,
+                                                              int maxStageSize, ChannelManager genericChannelManager);
 
   GroupManager getClusterGroupCommManager();
 
   GCStatsEventPublisher getLocalDGCStatsEventPublisher();
 
+  L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
+                                      StageManager stageManager, GroupManager groupCommsManager,
+                                      PersistentMapStore persistentMapStore, ObjectManager objectManager,
+                                      ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
+                                      WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfig,
+                                      MessageRecycler recycler, StripeIDStateManager stripeStateManager);
 }

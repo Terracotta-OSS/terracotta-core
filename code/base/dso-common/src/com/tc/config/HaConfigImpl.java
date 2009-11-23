@@ -122,7 +122,9 @@ public class HaConfigImpl implements HaConfig {
       for (int i = 0; i < l2Names.length; i++) {
         try {
           NewL2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Names[i]);
-          allClusterNodes.add(makeNode(l2));
+          Node node = makeNode(l2);
+          allClusterNodes.add(node);
+          addNodeToGroup(node, l2Names[i]);
         } catch (ConfigurationSetupException e) {
           throw new RuntimeException("Error getting l2 config for: " + l2Names[i], e);
         }

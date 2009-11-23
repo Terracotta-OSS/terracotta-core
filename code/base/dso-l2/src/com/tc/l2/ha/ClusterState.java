@@ -4,10 +4,16 @@
  */
 package com.tc.l2.ha;
 
+import static com.tc.l2.ha.ClusterStateDBKeyNames.CLUSTER_ID_KEY;
+import static com.tc.l2.ha.ClusterStateDBKeyNames.L2_STATE_KEY;
+
 import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.GroupID;
+import com.tc.net.StripeID;
+import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -15,38 +21,43 @@ import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.State;
+import com.tc.util.UUID;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ClusterState {
 
   private static final TCLogger                     logger               = TCLogging.getLogger(ClusterState.class);
 
-  private static final String                       L2_STATE_KEY         = "CLUSTER_STATE::L2_STATE_KEY";
-  private static final String                       CLUSTER_ID_KEY       = "CLUSTER_STATE::CLUSTER_ID_KEY";
-
-  private final PersistentMapStore                  clusterStateStore;
+  private final PersistentMapStore                  persistentStateStore;
   private final ObjectIDSequence                    oidSequence;
   private final ConnectionIDFactory                 connectionIdFactory;
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
+  private final GroupID                             thisGroupID;
+  private final StripeIDStateManager                stripeIDStateManager;
 
   private final Set                                 connections          = new HashSet();
   private long                                      nextAvailObjectID    = -1;
   private long                                      nextAvailChannelID   = -1;
   private long                                      nextAvailGlobalTxnID = -1;
   private State                                     currentState;
-  private String                                    clusterID;
+  private StripeID                                  stripeID;
 
-  public ClusterState(PersistentMapStore clusterStateStore, ObjectIDSequence oidSequence,
-                      ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider) {
-    this.clusterStateStore = clusterStateStore;
+  public ClusterState(PersistentMapStore persistentStateStore, ObjectIDSequence oidSequence,
+                      ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider,
+                      GroupID thisGroupID, StripeIDStateManager stripeIDStateManager) {
+    this.persistentStateStore = persistentStateStore;
     this.oidSequence = oidSequence;
     this.connectionIdFactory = connectionIdFactory;
     this.gidSequenceProvider = gidSequenceProvider;
-    this.clusterID = clusterStateStore.get(CLUSTER_ID_KEY);
-    validateStartupState(clusterStateStore.get(L2_STATE_KEY));
+    this.thisGroupID = thisGroupID;
+    this.stripeIDStateManager = stripeIDStateManager;
+    String sid = persistentStateStore.get(CLUSTER_ID_KEY);
+    this.stripeID = (sid != null) ? new StripeID(sid) : StripeID.NULL_ID;
+    validateStartupState(persistentStateStore.get(L2_STATE_KEY));
   }
 
   private void validateStartupState(String stateStr) {
@@ -121,25 +132,32 @@ public class ClusterState {
   }
 
   private void syncConnectionIDs() {
-    Assert.assertNotNull(clusterID);
-    connectionIdFactory.init(clusterID, nextAvailChannelID, connections);
+    Assert.assertNotNull(stripeID);
+    connectionIdFactory.init(stripeID.getName(), nextAvailChannelID, connections);
   }
 
-  public String getClusterID() {
-    return clusterID;
+  public StripeID getStripeID() {
+    return stripeID;
   }
 
-  public void setClusterID(String uid) {
-    if (clusterID != null && !clusterID.equals(uid)) {
-      logger.error("Cluster ID doesnt match !! Mine : " + clusterID + " Active sent clusterID as : " + uid);
-      throw new ClusterIDMissmatchException(clusterID ,  uid);
+  public boolean isStripeIDNull() {
+    return stripeID.isNull();
+  }
+
+  public void setStripeID(String uid) {
+    if (!isStripeIDNull() && !stripeID.getName().equals(uid)) {
+      logger.error("StripeID doesnt match !! Mine : " + stripeID + " Active sent clusterID as : " + uid);
+      throw new ClusterIDMissmatchException(stripeID.getName(), uid);
     }
-    clusterID = uid;
-    synchClusterIDToDB();
+    stripeID = new StripeID(uid);
+    syncStripeIDToDB();
+
+    // notify stripeIDStateManager
+    stripeIDStateManager.verifyOrSaveStripeID(thisGroupID, stripeID, true);
   }
 
-  private void synchClusterIDToDB() {
-    clusterStateStore.put(CLUSTER_ID_KEY, clusterID);
+  private void syncStripeIDToDB() {
+    persistentStateStore.put(CLUSTER_ID_KEY, stripeID.getName());
   }
 
   private void syncOIDSequence() {
@@ -164,7 +182,7 @@ public class ClusterState {
   }
 
   private void syncCurrentStateToDB() {
-    clusterStateStore.put(L2_STATE_KEY, currentState.getName());
+    persistentStateStore.put(L2_STATE_KEY, currentState.getName());
   }
 
   public void addNewConnection(ConnectionID connID) {
@@ -184,8 +202,25 @@ public class ClusterState {
   public Set getAllConnections() {
     return new HashSet(connections);
   }
-  
+
   public static final String getL2StateKey() {
     return L2_STATE_KEY;
   }
+
+  public void generateStripeIDIfNeeded() {
+    if (isStripeIDNull()) {
+      // This is the first time an L2 goes active in the cluster of L2s. Generate a new stripeID. this will stick.
+      setStripeID(UUID.getUUID().toString());
+    }
+    syncInternal();
+  }
+
+  public Map<GroupID, StripeID> getStripeIDMap() {
+    return stripeIDStateManager.getStripeIDMap(false);
+  }
+
+  public void addToStripeIDMap(GroupID gid, StripeID sid) {
+    stripeIDStateManager.verifyOrSaveStripeID(gid, sid, true);
+  }
+
 }

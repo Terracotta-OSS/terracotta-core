@@ -66,6 +66,7 @@ public final class TCMessageType {
   public static final int           TYPE_KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE  = 51;
   public static final int           TYPE_NODE_META_DATA_MESSAGE                     = 52;
   public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE            = 53;
+  public static final int           TYPE_STRIPE_ID_MAP_MESSAGE                      = 54;
 
   public static final TCMessageType PING_MESSAGE                                    = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                    = new TCMessageType();
@@ -106,6 +107,7 @@ public final class TCMessageType {
   public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE       = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_MESSAGE                          = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_RESPONSE_MESSAGE                 = new TCMessageType();
+  public static final TCMessageType STRIPE_ID_MAP_MESSAGE                           = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);

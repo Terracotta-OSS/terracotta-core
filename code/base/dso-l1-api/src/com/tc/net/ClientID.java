@@ -11,6 +11,9 @@ import com.tc.net.protocol.tcm.ChannelID;
 import java.io.IOException;
 import java.io.Serializable;
 
+/*
+ * dev-console needs java serialization, Serializable, of ClientID.
+ */
 public class ClientID implements NodeID, Serializable {
   private static final int     NULL_NUMBER = -1;
 

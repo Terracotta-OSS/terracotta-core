@@ -28,6 +28,11 @@ public class NodeIDSerializationTest extends TestCase {
     NodeID n6 = dupBySerialization(n5);
     assertTrue(n5.equals(n6));
     assertTrue(n6 instanceof ClientID);
+    
+    NodeID n7 = new StripeID(UUID.getUUID().toString());
+    NodeID n8 = dupBySerialization(n7);
+    assertTrue(n7.equals(n8));
+    assertTrue(n8 instanceof StripeID);
   }
 
   private NodeID dupBySerialization(NodeID orig) throws Exception {
@@ -58,6 +63,11 @@ public class NodeIDSerializationTest extends TestCase {
     NodeID n6 = dupByTCSerializable(n5);
     assertTrue(n5.equals(n6));
     assertTrue(n6 instanceof ClientID);
+    
+    NodeID n7 = new StripeID(UUID.getUUID().toString());
+    NodeID n8 = dupByTCSerializable(n7);
+    assertTrue(n7.equals(n8));
+    assertTrue(n8 instanceof StripeID);
   }
 
   private NodeID dupByTCSerializable(NodeID orig) throws Exception {

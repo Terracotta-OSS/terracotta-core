@@ -11,6 +11,7 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.net.StripeID;
 
 import java.io.IOException;
 
@@ -43,6 +44,8 @@ public class NodeIDSerializer implements TCSerializable {
         return new ServerID();
       case NodeID.GROUP_NODE_TYPE:
         return new GroupID();
+      case NodeID.STRIPE_NODE_TYPE:
+        return new StripeID();
       default:
         throw new AssertionError("Unknown type : " + type);
     }

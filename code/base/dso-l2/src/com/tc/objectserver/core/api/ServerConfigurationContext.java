@@ -75,6 +75,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
   public static final String AA_OBJECT_REQUEST_LOOKUP_STAGE                     = "aa_object_request_lookup_stage";
+  public static final String AA_CLOSE_CHANNEL_STAGE                             = "aa_close_channel_stage";
 
   public L2Coordinator getL2Coordinator();
 

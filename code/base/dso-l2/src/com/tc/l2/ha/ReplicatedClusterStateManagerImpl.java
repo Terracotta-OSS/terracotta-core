@@ -24,7 +24,6 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.util.Assert;
-import com.tc.util.UUID;
 
 import java.util.Iterator;
 
@@ -45,30 +44,20 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
                                            Sink channelLifeCycleSink) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
-    state = clusterState;
+    this.state = clusterState;
     this.channelLifeCycleSink = channelLifeCycleSink;
     groupManager.registerForMessages(ClusterStateMessage.class, this);
     factory.registerForConnectionIDEvents(this);
   }
 
   public synchronized void goActiveAndSyncState() {
-    generateClusterIDIfNeeded();
-
-    // Sync state to internal DB
-    state.syncInternal();
+    state.generateStripeIDIfNeeded();
 
     // Sync state to external passive servers
     publishToAll(ClusterStateMessageFactory.createClusterStateMessage(state));
 
     isActive = true;
     notifyAll();
-  }
-
-  private void generateClusterIDIfNeeded() {
-    if (state.getClusterID() == null) {
-      // This is the first time an L2 goes active in the cluster of L2s. Generate a new clusterID. this will stick.
-      state.setClusterID(UUID.getUUID().toString());
-    }
   }
 
   public synchronized void publishClusterState(NodeID nodeID) throws GroupException {

@@ -8,7 +8,9 @@ import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.StripeID;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -436,7 +438,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
 
     public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       ClientHandshakeAckMessage ackMsg = newClientHandshakeAckMessage(clientID);
-      ackMsg.initialize(persistent, getAllClientIDsString(), clientID, this.serverVersion);
+      ackMsg.initialize(persistent, getAllClientIDsString(), clientID, this.serverVersion, null, null, null);
       ackMsg.send();
     }
 
@@ -482,7 +484,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     }
 
     public void initialize(final boolean isPersistent, final Set<ClientID> allNodes, final ClientID thisNodeID,
-                           final String sv) {
+                           final String sv, GroupID thisGroup, StripeID stripeID, Map<GroupID, StripeID> sidMap) {
       this.persistent = isPersistent;
       this.serverVersion = sv;
     }
@@ -507,6 +509,18 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     @Override
     public NodeID getSourceNodeID() {
       return this.clientID;
+    }
+
+    public GroupID getGroupID() {
+      throw new ImplementMe();
+    }
+
+    public StripeID getStripeID() {
+      throw new ImplementMe();
+    }
+
+    public Map<GroupID, StripeID> getStripeIDMap() {
+      throw new ImplementMe();
     }
 
   }

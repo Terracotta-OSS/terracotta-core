@@ -23,7 +23,7 @@ public class InMemoryPersistor implements Persistor {
   private final StringIndex                    stringIndex;
   private final ClassPersistor                 clazzPersistor;
   private final PersistentCollectionFactory    persistentCollectionFactory;
-  private final PersistentMapStore             clusterStateStore;
+  private final PersistentMapStore             persistentStateStore;
 
   public InMemoryPersistor() {
     this.persistenceTransactionProvider = new NullPersistenceTransactionProvider();
@@ -31,7 +31,7 @@ public class InMemoryPersistor implements Persistor {
     this.stringIndex = new StringIndexImpl(new NullStringIndexPersistor());
     this.clazzPersistor = new InMemoryClassPersistor();
     this.persistentCollectionFactory = new InMemoryCollectionFactory();
-    this.clusterStateStore = new InMemoryPersistentMapStore();
+    this.persistentStateStore = new InMemoryPersistentMapStore();
 
   }
 
@@ -71,8 +71,8 @@ public class InMemoryPersistor implements Persistor {
     return persistentCollectionFactory;
   }
 
-  public PersistentMapStore getClusterStateStore() {
-    return clusterStateStore;
+  public PersistentMapStore getPersistentStateStore() {
+    return persistentStateStore;
   }
 
 }
