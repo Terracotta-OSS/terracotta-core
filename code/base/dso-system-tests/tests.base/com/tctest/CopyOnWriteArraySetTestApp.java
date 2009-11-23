@@ -11,17 +11,13 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 
-import gnu.trove.THashSet;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
@@ -33,11 +29,13 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
     super(appId, cfg, listenerProvider, Set.class, 2);
   }
 
+  @Override
   protected Object getTestObject(String testName) {
     List sets = (List) sharedMap.get("sets");
     return sets.iterator();
   }
 
+  @Override
   protected void setupTestObject(String testName) {
     List sets = new ArrayList();
     sets.add(new CopyOnWriteArraySet());
@@ -358,27 +356,9 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
   // }
   // }
 
-  private Object getMySubclassArray(Set set) {
-    if (set instanceof MyLinkedHashSet) { return sharedMap.get("arrayforMyLinkedHashSet"); }
-    if (set instanceof MyHashSet) { return sharedMap.get("arrayforMyHashSet"); }
-    if (set instanceof MyTHashSet) { return sharedMap.get("arrayforMyTHashSet"); }
-    if (set instanceof MyTreeSet) { return sharedMap.get("arrayforMyTreeSet"); }
-    return null;
-  }
-
   private Object[] getArray(Set set) {
-    Object o = getMySubclassArray(set);
-    if (o != null) { return (Object[]) o; }
+    return (Object[]) sharedMap.get("arrayforCopyOnWriteArraySet");
 
-    if (set instanceof CopyOnWriteArraySet) { return (Object[]) sharedMap.get("arrayforCopyOnWriteArraySet"); }
-
-    return null;
-  }
-
-  private static void assertEmptyObjectArray(Object[] array) {
-    for (int i = 0; i < array.length; i++) {
-      Assert.assertNull(array[i]);
-    }
   }
 
   private static void assertEmptySet(Set set) {
@@ -425,30 +405,6 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
     config.addReadAutolock("* " + testClass + "*.testReadOnlyAdd(..)");
   }
 
-  private static class MyHashSet extends HashSet {
-    public MyHashSet() {
-      super();
-    }
-  }
-
-  private static class MyLinkedHashSet extends LinkedHashSet {
-    public MyLinkedHashSet() {
-      super();
-    }
-  }
-
-  private static class MyTHashSet extends THashSet {
-    public MyTHashSet() {
-      super();
-    }
-  }
-
-  private static class MyTreeSet extends TreeSet {
-    public MyTreeSet(Comparator comparator) {
-      super(comparator);
-    }
-  }
-
   private static class Foo implements Comparable {
     private final String value;
 
@@ -460,10 +416,12 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
       this.value = value;
     }
 
+    @Override
     public int hashCode() {
       return value.hashCode();
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (obj instanceof Foo) { return value.equals(((Foo) obj).value); }
       return false;

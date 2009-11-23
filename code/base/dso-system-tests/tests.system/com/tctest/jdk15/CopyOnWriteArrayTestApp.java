@@ -14,17 +14,11 @@ import com.tctest.GenericTransparentApp;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
-import java.util.Stack;
-import java.util.Vector;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
@@ -66,12 +60,6 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
     lists.add(new CopyOnWriteArrayList());
 
     sharedMap.put("lists", lists);
-    sharedMap.put("arrayforArrayList", new Object[2]);
-    sharedMap.put("arrayforAbstractListSubclass", new Object[2]);
-    sharedMap.put("arrayforMyArrayList", new Object[2]);
-    sharedMap.put("arrayforMyArrayList5", new Object[2]);
-    sharedMap.put("arrayforMyArrayList6", new Object[2]);
-    sharedMap.put("arrayforMyAbstractListSubclass", new Object[2]);
     sharedMap.put("arrayforCOWArrayList", new Object[2]);
   }
 
@@ -227,9 +215,9 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
       assertSingleElement(list, E("new", v));
     } else {
       list.add(E("orig", v));
-      //System.out.println("list content before set: " + list);
+      // System.out.println("list content before set: " + list);
       list.set(0, E("new", v));
-      //System.out.println("list content after set: " + list);
+      // System.out.println("list content after set: " + list);
     }
   }
 
@@ -453,7 +441,7 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
   // Iterator testing methods.
   void testIteratorRemove(List list, boolean validate, int v) {
     if (validate) {
-      assertListsEqual(Arrays.asList(E("first", v), E("second", v) ), list);
+      assertListsEqual(Arrays.asList(E("first", v), E("second", v)), list);
     } else {
       list.add(E("first", v));
       list.add(E("second", v));
@@ -472,42 +460,16 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
   void testAddNonPortableObject(List list, boolean validate, int v) {
     if (!validate) {
       try {
-        list.add(new MyArrayList2());
-        throw new AssertionError("Should have thrown a TCNonPortableObjectError.");
-      } catch (TCNonPortableObjectError e) {
-        // expected
-      }
-      try {
-        list.add(new MyArrayList3());
+        list.add(new Thread());
         throw new AssertionError("Should have thrown a TCNonPortableObjectError.");
       } catch (TCNonPortableObjectError e) {
         // expected
       }
     }
-  }
-
-  private Object getMySubclassArray(List list) {
-    if (list instanceof MyArrayList6) { return sharedMap.get("arrayforMyArrayList6"); }
-    if (list instanceof MyArrayList5) { return sharedMap.get("arrayforMyArrayList5"); }
-    if (list instanceof MyArrayList) { return sharedMap.get("arrayforMyArrayList"); }
-    if (list instanceof MyAbstractListSubclass) { return sharedMap.get("arrayforMyAbstractListSubclass"); }
-    return null;
   }
 
   private Object[] getArray(List list) {
-    Object o = getMySubclassArray(list);
-    if (o != null) { return (Object[]) o; }
-
-    if (list instanceof LinkedList) { return (Object[]) sharedMap.get("arrayforLinkedList"); }
-    if (list instanceof ArrayList) { return (Object[]) sharedMap.get("arrayforArrayList"); }
-    if (list instanceof Stack) { // need to check instanceof Stack first before checking instance of Vector
-      // as Stack is a subclass of Vector.
-      return (Object[]) sharedMap.get("arrayforStack");
-    }
-    if (list instanceof Vector) { return (Object[]) sharedMap.get("arrayforVector"); }
-    if (list instanceof MyAbstractListSubclass) { return (Object[]) sharedMap.get("arrayforAbstractListSubclass"); }
-    if (list instanceof CopyOnWriteArrayList) { return (Object[]) sharedMap.get("arrayforCOWArrayList"); }
-    return null;
+    return (Object[]) sharedMap.get("arrayforCOWArrayList");
   }
 
   private static void assertEmptyList(List list) {
@@ -572,103 +534,6 @@ public class CopyOnWriteArrayTestApp extends GenericTransparentApp {
       Assert.assertEquals(obj, i.next());
     }
     Assert.assertEquals(1, count);
-
-  }
-
-  private static class MyArrayList extends ArrayList {
-    public MyArrayList() {
-      super();
-    }
-  }
-
-  private static class MyArrayList2 extends ArrayList {
-    // This variable is relevant to the test, it affects how this type is instrumented
-    @SuppressWarnings("unused")
-    private Vector vector;
-
-    @Override
-    protected void removeRange(int fromIndex, int toIndex) {
-      super.removeRange(fromIndex, toIndex);
-    }
-
-  }
-
-  private static class MyArrayList3 extends ArrayList {
-    // This variable is relevant to the test, it affects how this type is instrumented
-    @SuppressWarnings("unused")
-    private Vector vector;
-
-    // This method (the mere precense of it) is relevant to the test, it affects how the type is instrumented
-    @SuppressWarnings("unused")
-    public void removeRangeLocal(int fromIndex, int toIndex) {
-      super.removeRange(fromIndex, toIndex);
-    }
-
-  }
-
-  private static class MyArrayList4 extends ArrayList {
-    //
-  }
-
-  private static class MyArrayList5 extends MyArrayList4 {
-    //
-  }
-
-  private static class MyArrayList6 extends ArrayList {
-
-    // This variable is relevant to the test, it affects how this type is instrumented
-    @SuppressWarnings("unused")
-    int i = 3;
-
-    MyArrayList6() {
-      Set s = new HashSet();
-      s.add("test");
-      new ArrayList(s);
-      if (size() != 0) { throw new AssertionError(); }
-    }
-
-    // This constructor might be relevant to the test case, leave it here
-    @SuppressWarnings("unused")
-    MyArrayList6(Set s1) {
-      super(s1);
-      Set s = new HashSet();
-      s.add("test");
-      ArrayList l = new ArrayList(s);
-      if (size() != 0) { throw new AssertionError(l.size()); }
-    }
-  }
-
-
-  private static class MyAbstractListSubclass extends AbstractList {
-    // This is in here to make sure that a subclass of AbstractList is sharable in DSO, not that this is a good/proper
-    // List implementation ;-)
-
-    private final ArrayList data = new ArrayList();
-
-    @Override
-    public void add(int index, Object element) {
-      data.add(index, element);
-    }
-
-    @Override
-    public Object set(int index, Object element) {
-      return data.set(index, element);
-    }
-
-    @Override
-    public Object get(int index) {
-      return data.get(index);
-    }
-
-    @Override
-    public int size() {
-      return data.size();
-    }
-
-    @Override
-    public Object remove(int index) {
-      return data.remove(index);
-    }
 
   }
 
