@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.locks;
 
-import com.tc.async.api.EventContext;
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -13,7 +13,7 @@ import com.tc.util.Assert;
 
 import java.util.Collection;
 
-public class LockResponseContext implements EventContext {
+public class LockResponseContext implements MultiThreadedEventContext {
 
   private static final int                                  LOCK_NO_LEASE     = 0;
 
@@ -135,5 +135,9 @@ public class LockResponseContext implements EventContext {
       default:
         return "UNKNOWN";
     }
+  }
+
+  public Object getKey() {
+    return nodeID;
   }
 }

@@ -665,7 +665,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
     SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
     SampledCounter objectFlushedRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-       ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate, objectFlushedRate);
+    ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate,
+                                                                    objectFlushedRate);
     SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
     SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
     SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
@@ -749,7 +750,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     // Creating a stage here so that the sink can be passed
     Stage respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-                                                        new RespondToRequestLockHandler(), 1, maxStageSize);
+                                                        new RespondToRequestLockHandler(), numCommWorkers, 1,
+                                                        maxStageSize);
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
     this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener((LockManagerImpl) this.lockManager);
 
@@ -845,7 +847,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
                              maxStageSize);
     Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
-                                                 new RequestLockUnLockHandler(), 1, maxStageSize);
+                                                 new RequestLockUnLockHandler(), numCommWorkers, 1, maxStageSize);
     ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                   transactionBatchManager,
                                                                                   channelManager, this.haConfig);

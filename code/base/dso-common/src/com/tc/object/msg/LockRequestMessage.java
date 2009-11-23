@@ -4,6 +4,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCSerializable;
@@ -30,7 +31,7 @@ import java.util.Set;
  * 
  * @author steve
  */
-public class LockRequestMessage extends DSOMessageBase {
+public class LockRequestMessage extends DSOMessageBase implements MultiThreadedEventContext {
 
   private final static byte LOCK_ID      = 1;
   private final static byte LOCK_LEVEL   = 2;
@@ -220,6 +221,10 @@ public class LockRequestMessage extends DSOMessageBase {
     this.threadID = id;
     this.requestType = reqType;
     this.waitMillis = millis;
+  }
+
+  public Object getKey() {
+    return this.getSourceNodeID();
   }
 
 }
