@@ -60,6 +60,7 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
       addJavaUtilConcurrentFutureTaskSpec();
 
       addJavaUtilConcurrentCopyOnWriteArrayListSpec();
+      addJavaUtilConcurrentCopyOnWriteArraySetSpec();
 
       // ---------------------------------------------------------------------
       // SECTION ENDS
@@ -89,6 +90,16 @@ public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorMod
       configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.retainAll(..)");
       configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.clear(..)");
       configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArrayList.subList(..)");
+    }
+  }
+
+  private void addJavaUtilConcurrentCopyOnWriteArraySetSpec() {
+    getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
+    if (Vm.isJDK15()) {
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArraySet.add*(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArraySet.remove*(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArraySet.retainAll(..)");
+      configHelper.addWriteAutolock("* java.util.concurrent.CopyOnWriteArraySet.clear(..)");
     }
   }
 }

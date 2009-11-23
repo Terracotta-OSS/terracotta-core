@@ -4,12 +4,9 @@
  */
 package com.tctest;
 
-import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
-
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
-import com.tc.object.config.spec.CyclicBarrierSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
@@ -22,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CyclicBarrier;
 
 public abstract class GenericTransparentApp extends AbstractErrorCatchingTransparentApp {
 
@@ -44,7 +42,8 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
     this(appId, cfg, listenerProvider, type, 1);
   }
 
-  public GenericTransparentApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type, int variants) {
+  public GenericTransparentApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider, Class type,
+                               int variants) {
     super(appId, cfg, listenerProvider);
 
     final int count = getParticipantCount();
@@ -70,7 +69,7 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
   }
 
   public void runTest() throws Throwable {
-    int num = barrier.barrier();
+    int num = barrier.await();
     mutator = (num == 0);
 
     if (mutator) {
@@ -90,7 +89,7 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
       String name = (String) i.next();
 
       for (int variant = 1; variant <= variants; variant++) {
-        barrier.barrier();
+        barrier.await();
 
         if (exit.shouldExit()) { return; }
 
@@ -100,7 +99,7 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
           exit.toggle();
           throw t;
         } finally {
-          barrier2.barrier();
+          barrier2.await();
         }
 
         if (exit.shouldExit()) { return; }
@@ -124,10 +123,10 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
           exit.toggle();
           throw t;
         } finally {
-          barrier.barrier();
+          barrier.await();
 
           if (!exit.shouldExit()) {
-            barrier2.barrier();
+            barrier2.await();
           }
         }
 
@@ -230,8 +229,6 @@ public abstract class GenericTransparentApp extends AbstractErrorCatchingTranspa
 
     String methodExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(methodExpression);
-
-    new CyclicBarrierSpec().visit(visitor, config);
   }
 
   private static class Exit {

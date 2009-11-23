@@ -1682,6 +1682,9 @@ public class BootJarTool {
                           new CopyOnWriteArrayListAdapter.ResetLockAdaptor());
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     addSerializationInstrumentedCode(spec);
+    
+    spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
+    addSerializationInstrumentedCode(spec);
   }
 
   private final void addSerializationInstrumentedCode(final TransparencyClassSpec spec) {
