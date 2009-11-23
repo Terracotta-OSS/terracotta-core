@@ -286,16 +286,8 @@ public class SerialVersionUIDAdder extends ClassAdapter {
      * the class file in favor of the access bits InnerClass attribute.
      */
     public void visitInnerClass(final String aname, final String outerName, final String innerName, final int attr_access) {
-        if (outerName != null && innerName != null && name != null) {
-            int len = name.length();
-            int ilen = innerName.length();
-            int olen = outerName.length();
-            if (len == olen + 1 + ilen 
-                    && this.name.startsWith(outerName) && this.name.endsWith(innerName) 
-                    && this.name.charAt(olen) == '$') 
-            {
-                this.access = attr_access; 
-            }
+        if ((name != null) && name.equals(aname)) {
+            this.access = attr_access; 
         }
         super.visitInnerClass(aname, outerName, innerName, attr_access);
     }
