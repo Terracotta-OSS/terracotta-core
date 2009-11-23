@@ -125,7 +125,6 @@ import com.tc.object.net.DSOChannelManagerImpl;
 import com.tc.object.net.DSOChannelManagerMBean;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
-import com.tc.object.session.SessionProvider;
 import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerMBean;
@@ -499,7 +498,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     StageManager stageManager = this.seda.getStageManager();
     SessionManager sessionManager = new NullSessionManager();
-    SessionProvider sessionProvider = (SessionProvider) sessionManager;
 
     EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;
@@ -731,7 +729,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/" + serverPort);
 
-    this.l1Listener = this.communicationsManager.createListener(sessionProvider, new TCSocketAddress(bind, serverPort),
+    this.l1Listener = this.communicationsManager.createListener(sessionManager, new TCSocketAddress(bind, serverPort),
                                                                 true, this.connectionIdFactory, this.httpSink);
 
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
