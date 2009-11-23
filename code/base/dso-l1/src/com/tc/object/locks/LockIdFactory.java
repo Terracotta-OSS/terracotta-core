@@ -17,14 +17,16 @@ public class LockIdFactory {
   public LockID generateLockIdentifier(Object obj) {
     if (obj instanceof String) {
       return generateLockIdentifier((String) obj);
-    } else if (mgr.isLiteralAutolock(obj)) {
-      return new DsoLiteralLockID(mgr, obj);
     } else {
       TCObject tco = mgr.lookupExistingOrNull(obj);
-      if ((tco == null) || tco.autoLockingDisabled()) {
-        return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
+      if (tco != null) {
+        if (tco.autoLockingDisabled()) {
+          return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
+        } else {
+          return new DsoLockID(tco.getObjectID());
+        }
       } else {
-        return new DsoLockID(tco.getObjectID());
+        return DsoLiteralLockID.createLockID(mgr, obj);
       }
     }
   }

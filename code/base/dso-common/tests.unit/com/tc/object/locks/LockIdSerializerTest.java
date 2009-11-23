@@ -7,7 +7,9 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.object.LiteralValues;
 import com.tc.object.ObjectID;
+import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.LoaderDescription;
@@ -65,33 +67,47 @@ public class LockIdSerializerTest extends TestCase {
     literalLockTest(MyEnum.A);
     
     literalLockTest(MyEnum.class.getClassLoader());
+    
     try {
       literalLockTest("bad string!");
-      Assert.fail();
+      throw new IllegalStateException();
     } catch (AssertionError e) {
       // expected
     }
     
+    unclusteredLockTest(Object.class);
     try {
       literalLockTest(Object.class);
-      Assert.fail();
+      throw new IllegalStateException();
     } catch (AssertionError e) {
       // expected
     }
-    
+
+    unclusteredLockTest(new ObjectID(42));
     try {
       literalLockTest(new ObjectID(42));
-      Assert.fail();
+      throw new IllegalStateException();
     } catch (AssertionError e) {
       // expected
     }
-    
 
+    unclusteredLockTest(new ClassLoader() { /**/ });
+    try {
+      literalLockTest(new ClassLoader() { /**/ });
+      throw new IllegalStateException();
+    } catch (AssertionError e) {
+      // expected
+    }
   }
 
   public void literalLockTest(Object literal) {
-    DsoLiteralLockID lock = new DsoLiteralLockID(manager, literal);
+    LockID lock = DsoLiteralLockID.createLockID(manager, literal);
     Assert.assertEquals(lock, passThrough(lock));
+  }
+
+  public void unclusteredLockTest(Object literal) {
+    LockID lock = DsoLiteralLockID.createLockID(manager, literal);
+    Assert.assertEquals(UnclusteredLockID.class, lock.getClass());
   }
   
   private LockID passThrough(LockID in) {
@@ -142,17 +158,30 @@ public class LockIdSerializerTest extends TestCase {
     }
 
     public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
-      Assert.assertEquals(CLASS_LOADER, loader);
-      return LOADER_DESC;
+      if (CLASS_LOADER.equals(loader)) {
+        return LOADER_DESC;
+      } else {
+        return null;
+      }
     }
 
     public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
       throw new AssertionError();
     }
 
+    /*
+     * Copied from ManagerImpl
+     */
+    public boolean isLiteralAutolock(final Object o) {
+      if (o instanceof Manageable) { return false; }
+      return (!(o instanceof Class)) && (!(o instanceof ObjectID)) && LiteralValues.isLiteralInstance(o);
+    }
+    
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if ("getClassProvider".equals(method.getName())) {
         return this;
+      } else if ("isLiteralAutolock".equals(method.getName())) {
+        return isLiteralAutolock(args[0]);
       } else {
         throw new AssertionError("Cannot handle " + method);
       }

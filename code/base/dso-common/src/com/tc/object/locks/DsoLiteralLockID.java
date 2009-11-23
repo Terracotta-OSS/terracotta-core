@@ -11,6 +11,7 @@ import com.tc.object.dna.impl.ClassInstance;
 import com.tc.object.dna.impl.ClassLoaderInstance;
 import com.tc.object.dna.impl.EnumInstance;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
+import com.tc.object.loaders.LoaderDescription;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -33,8 +34,8 @@ public class DsoLiteralLockID implements LockID {
     // please tc serialization
   }
   
-  public DsoLiteralLockID(Manager mgr, Object literal) {
-    this.literal = translateLiteral(mgr, literal);
+  private DsoLiteralLockID(Object literal) {
+    this.literal = literal;
   }
   
   public String asString() {
@@ -207,20 +208,43 @@ public class DsoLiteralLockID implements LockID {
     }
   }
   
-  private static Object translateLiteral(Manager mgr, Object literal) {
+  public static LockID createLockID(Manager mgr, Object literal) {
+    Object translatedLiteral = translateLiteral(mgr, literal);
+    if (translatedLiteral == null) {
+      return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
+    } else {
+      return new DsoLiteralLockID(translatedLiteral);
+    }
+  }
+  
+  private static Object translateLiteral(Manager mgr, Object literal) throws IllegalArgumentException {
+    if (!mgr.isLiteralAutolock(literal)) {
+      return null;
+    }
+    
     LiteralValues type = LiteralValues.valueFor(literal);
     switch (type) {
       case ENUM:
         Class clazz = literal.getClass();
-        String loaderDefinition = mgr.getClassProvider().getLoaderDescriptionFor(clazz).toDelimitedString();
-        ClassInstance classInstance = new ClassInstance(new UTF8ByteDataHolder(clazz.getName()),
-                                                        new UTF8ByteDataHolder(loaderDefinition));
-        return new EnumInstance(classInstance, new UTF8ByteDataHolder(((Enum) literal).name()));
+        LoaderDescription classLoader = mgr.getClassProvider().getLoaderDescriptionFor(clazz);
+        if (classLoader == null) {
+          return null;
+        } else {
+          String loaderDefinition = classLoader.toDelimitedString();
+          ClassInstance classInstance = new ClassInstance(new UTF8ByteDataHolder(clazz.getName()),
+                                                          new UTF8ByteDataHolder(loaderDefinition));
+          return new EnumInstance(classInstance, new UTF8ByteDataHolder(((Enum) literal).name()));
+        }
       case JAVA_LANG_CLASSLOADER:
-        String definition = mgr.getClassProvider().getLoaderDescriptionFor((ClassLoader) literal).toDelimitedString();
-        return new ClassLoaderInstance(new UTF8ByteDataHolder(definition));
+        LoaderDescription loaderDesc = mgr.getClassProvider().getLoaderDescriptionFor((ClassLoader) literal);
+        if (loaderDesc == null) {
+          return null;
+        } else {
+          String definition = loaderDesc.toDelimitedString();
+          return new ClassLoaderInstance(new UTF8ByteDataHolder(definition));
+        }
       default:
         return literal;
     }
-  }
+  }  
 }

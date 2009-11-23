@@ -735,7 +735,7 @@ public class ManagerImpl implements Manager {
   }
 
   public Notify notify(LockID lock, Object waitObject) {
-    if (!(lock instanceof UnclusteredLockID)) {
+    if (clusteredLockingEnabled(lock)) {
       txManager.notify(lockManager.notify(lock, waitObject));
     } else {
       waitObject.notify();
@@ -744,7 +744,7 @@ public class ManagerImpl implements Manager {
   }
 
   public Notify notifyAll(LockID lock, Object waitObject) {
-    if (!(lock instanceof UnclusteredLockID)) {
+    if (clusteredLockingEnabled(lock)) {
       txManager.notify(lockManager.notifyAll(lock, waitObject));
     } else {
       waitObject.notifyAll();
@@ -795,7 +795,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void wait(LockID lock, Object waitObject) throws InterruptedException {
-    if (!(lock instanceof UnclusteredLockID)) {
+    if (clusteredLockingEnabled(lock)) {
       try {
         txManager.commit(lock, LockLevel.WRITE);
       } catch (UnlockedSharedObjectException e) {
@@ -813,7 +813,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException {
-    if (!(lock instanceof UnclusteredLockID)) {
+    if (clusteredLockingEnabled(lock)) {
       try {
         txManager.commit(lock, LockLevel.WRITE);
       } catch (UnlockedSharedObjectException e) {
@@ -843,8 +843,8 @@ public class ManagerImpl implements Manager {
   }
 
   private boolean clusteredLockingEnabled(LockID lock) {
-    return !((lock instanceof UnclusteredLockID) || txManager.isTransactionLoggingDisabled() || txManager
-        .isObjectCreationInProgress());
+    return !((lock instanceof UnclusteredLockID) ||
+        txManager.isTransactionLoggingDisabled() || txManager.isObjectCreationInProgress());
   }
 
   public boolean isLockedByCurrentThread(LockLevel level) {
