@@ -343,8 +343,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     }
   }
 
-  private void loadCollection(PersistenceTransaction tx, ManagedObject mo) throws IOException, ClassNotFoundException,
-      TCDatabaseException {
+  private void loadCollection(PersistenceTransaction tx, ManagedObject mo) throws TCDatabaseException {
     ManagedObjectState state = mo.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       try {
@@ -416,8 +415,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   // logger.info("Deletes count:" + deleteCounter + " delete state count:" + deletePersistentStateCounter
   // + " usedTime(ns): " + deleteTime);
 
-  private int basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws IOException,
-      TCDatabaseException {
+  private int basicSaveCollection(PersistenceTransaction tx, ManagedObject managedObject) throws TCDatabaseException {
     ManagedObjectState state = managedObject.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
       try {

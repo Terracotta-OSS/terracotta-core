@@ -23,22 +23,27 @@ public class SleepycatPersistableSet extends AbstractSet implements PersistableC
     map = new SleepycatPersistableMap(id);
   }
 
+  @Override
   public boolean add(Object obj) {
     return map.put(obj, VALUE) == null;
   }
 
+  @Override
   public void clear() {
     map.clear();
   }
 
+  @Override
   public boolean contains(Object obj) {
     return map.containsKey(obj);
   }
 
+  @Override
   public boolean isEmpty() {
     return map.isEmpty();
   }
 
+  @Override
   public boolean retainAll(Collection c) {
     int initialSize = size();
     ArrayList list = new ArrayList();
@@ -51,6 +56,7 @@ public class SleepycatPersistableSet extends AbstractSet implements PersistableC
     return size() != initialSize;
   }
 
+  @Override
   public Iterator iterator() {
     return map.keySet().iterator();
   }
@@ -63,18 +69,22 @@ public class SleepycatPersistableSet extends AbstractSet implements PersistableC
     return modified;
   }
 
+  @Override
   public boolean remove(Object obj) {
     return map.remove(obj) != null;
   }
 
+  @Override
   public int size() {
     return map.size();
   }
 
+  @Override
   public Object[] toArray() {
     return map.keySet().toArray();
   }
 
+  @Override
   public Object[] toArray(Object[] objArr) {
     return map.keySet().toArray(objArr);
   }
@@ -84,8 +94,8 @@ public class SleepycatPersistableSet extends AbstractSet implements PersistableC
     return map.commit(persistor, tx, db);
   }
 
-  public void load(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db) throws IOException,
-      ClassNotFoundException, TCDatabaseException {
+  public void load(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+      throws TCDatabaseException {
     map.load(persistor, tx, db);
   }
 }
