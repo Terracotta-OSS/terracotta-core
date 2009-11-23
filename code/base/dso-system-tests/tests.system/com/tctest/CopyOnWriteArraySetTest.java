@@ -3,14 +3,9 @@
  */
 package com.tctest;
 
-import java.util.Date;
 
 public class CopyOnWriteArraySetTest extends TransparentTestBase {
   private static final int NODE_COUNT = 3;
-
-  public CopyOnWriteArraySetTest() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
-  }
   
   protected void setUp() throws Exception {
     super.setUp();

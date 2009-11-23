@@ -6,7 +6,6 @@ package com.tctest;
 
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.util.ReadOnlyException;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
@@ -212,150 +211,6 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
     }
   }
 
-  // ReadOnly testing methods.
-  void testReadOnlyAdd(Set set, boolean validate, int v) {
-    if (validate) {
-      assertEmptySet(set);
-    } else {
-      try {
-        set.add(E("first element", v));
-        throw new AssertionError("Should have thrown a ReadOnlyException");
-      } catch (ReadOnlyException e) {
-        // Excepted
-      }
-    }
-  }
-
-  // void testReadOnlyAddAll(Set set, boolean validate, int v) {
-  // if (validate) {
-  // assertEmptySet(set);
-  // } else {
-  // Set toAdd = new HashSet();
-  // toAdd.add(E("first element", v));
-  // toAdd.add(E("second element", v));
-  // try {
-  // set.addAll(toAdd);
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException r) {
-  // // Expected
-  // }
-  // }
-  // }
-
-  // // Setting up for the ReadOnly test for remove.
-  // void testSetUpRemove(Set set, boolean validate, int v) {
-  // if (validate) {
-  // assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
-  // } else {
-  // set.add(E("January", v));
-  // set.add(E("February", v));
-  // tryReadOnlyRemove(set, v);
-  // }
-  // }
-  //
-  // // tryReadOnlyRemove() goes hand in hand with testSetUpRemove().
-  // private void tryReadOnlyRemove(Set set, int v) {
-  // try {
-  // set.remove(E("February", v));
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException t) {
-  // // expected
-  // }
-  // }
-  //
-  // // Setting up for the ReadOnly test for clear.
-  // void testSetUpClear(Set set, boolean validate, int v) {
-  // if (validate) {
-  // assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
-  // } else {
-  // set.add(E("January", v));
-  // set.add(E("February", v));
-  // tryReadOnlyClear(set);
-  // }
-  // }
-  //
-  // // tryReadOnlyClear() goes hand in hand with testSetUpClear().
-  // private void tryReadOnlyClear(Set set) {
-  // try {
-  // set.clear();
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException t) {
-  // // Excepted
-  // }
-  // }
-  //
-  // // Setting up for the ReadOnly test for toArray.
-  // void testSetUpToArray(Set set, boolean validate, int v) {
-  // if (validate) {
-  // Object[] array = getArray(set);
-  // assertEmptyObjectArray(array);
-  // } else {
-  // set.add(E("January", v));
-  // set.add(E("February", v));
-  // tryReadOnlyToArray(set);
-  // }
-  // }
-  //
-  // // tryReadOnlyToArray() goes hand in hand with testSetUpToArray().
-  // void tryReadOnlyToArray(Set set) {
-  // Object[] array = getArray(set);
-  // synchronized (array) {
-  // try {
-  // Object[] returnArray = set.toArray(array);
-  // Assert.assertTrue(returnArray == array);
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException t) {
-  // // Excepted
-  // }
-  // }
-  // }
-  //
-  // // Setting up for the ReadOnly test for RetainAll.
-  // void testSetUpRetainAll(Set set, boolean validate, int v) {
-  // if (validate) {
-  // assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
-  // } else {
-  // set.add(E("January", v));
-  // set.add(E("February", v));
-  // tryReadOnlyRetainAll(set, v);
-  // }
-  // }
-  //
-  // // tryReadOnlyRetainAll() goes hand in hand with testSetUpRetainAll().
-  // void tryReadOnlyRetainAll(Set set, int v) {
-  // Set toRetain = new HashSet();
-  // toRetain.add(E("January", v));
-  // try {
-  // set.retainAll(toRetain);
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException t) {
-  // // expected
-  // }
-  // }
-  //
-  // // Setting up for the ReadOnly test for RemoveAll.
-  // void testSetUpRemoveAll(Set set, boolean validate, int v) {
-  // if (validate) {
-  // assertSetsEqual(Arrays.asList(new Object[] { E("January", v), E("February", v) }), set);
-  // } else {
-  // set.add(E("January", v));
-  // set.add(E("February", v));
-  // tryReadOnlyRemoveAll(set, v);
-  // }
-  // }
-  //
-  // // tryReadOnlyRemoveAll() goes hand in hand with testSetUpRemoveAll().
-  // void tryReadOnlyRemoveAll(Set set, int v) {
-  // Set toRemove = new HashSet();
-  // toRemove.add(E("January", v));
-  // try {
-  // set.removeAll(toRemove);
-  // throw new AssertionError("Should have thrown a ReadOnlyException");
-  // } catch (ReadOnlyException t) {
-  // // Excepted
-  // }
-  // }
-
   private Object[] getArray(Set set) {
     return (Object[]) sharedMap.get("arrayforCopyOnWriteArraySet");
 
@@ -400,9 +255,6 @@ public class CopyOnWriteArraySetTestApp extends GenericTransparentApp {
     config.getOrCreateSpec(testClass);
     String toArrayMethodExpression = "* " + testClass + "*.*ToArray*(..)";
     config.addWriteAutolock(toArrayMethodExpression);
-    String readOnlyMethodExpression = "* " + testClass + "*.*ReadOnly*(..)";
-    config.addReadAutolock(readOnlyMethodExpression);
-    config.addReadAutolock("* " + testClass + "*.testReadOnlyAdd(..)");
   }
 
   private static class Foo implements Comparable {
