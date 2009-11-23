@@ -5,8 +5,8 @@ package com.tc.object.session;
 
 import com.tc.net.NodeID;
 
-public interface SessionManager {
-  
+public interface SessionManager extends SessionProvider {
+
   public boolean isCurrentSession(NodeID nid, SessionID sessionID);
 
   /**
