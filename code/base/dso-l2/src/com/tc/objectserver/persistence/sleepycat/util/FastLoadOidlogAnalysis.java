@@ -9,11 +9,11 @@ import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
+import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.util.Conversion;
 import com.tc.util.OidLongArray;
 
@@ -48,7 +48,7 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
     this.dbc.setReadOnly(true);
   }
 
-  public void report() throws DatabaseException {
+  public void report() {
     List dbs = env.getDatabaseNames();
 
     log(" ");
@@ -134,7 +134,7 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
       return databaseName;
     }
 
-    public void analyze(Database db) throws DatabaseException {
+    public void analyze(Database db) {
       CursorConfig config = new CursorConfig();
       Cursor c = db.openCursor(null, config);
       DatabaseEntry key = new DatabaseEntry();
@@ -143,14 +143,14 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
         while (OperationStatus.SUCCESS.equals(c.getNext(key, value, LockMode.DEFAULT))) {
           record(key.getData(), value.getData());
         }
-      } catch (DatabaseException e) {
+      } catch (TCDatabaseException e) {
         log("Bad database " + db.getDatabaseName() + " " + e);
       } finally {
         c.close();
       }
     }
 
-    abstract public void record(byte[] key, byte[] value) throws DatabaseException;
+    abstract public void record(byte[] key, byte[] value) throws TCDatabaseException;
 
     abstract public void report();
 
@@ -188,10 +188,10 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
       return (key[OidLongArray.BYTES_PER_LONG] == 0);
     }
 
-    public void record(byte[] key, byte[] value) throws DatabaseException {
+    public void record(byte[] key, byte[] value) throws TCDatabaseException {
 
       // key must be a long and a byte
-      if ((OidLongArray.BYTES_PER_LONG + 1) != key.length) { throw new DatabaseException("Wrong key size"); }
+      if ((OidLongArray.BYTES_PER_LONG + 1) != key.length) { throw new TCDatabaseException("Wrong key size"); }
 
       if (isAddOper(key)) {
         ++addCount;
@@ -204,7 +204,7 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
         hasStartSeq = true;
       } else {
         endSequence = Conversion.bytes2Long(key);
-        if (endSequence <= startSequence) { throw new DatabaseException("Wrong order of sequence"); }
+        if (endSequence <= startSequence) { throw new TCDatabaseException("Wrong order of sequence"); }
       }
     }
 
@@ -240,10 +240,10 @@ public class FastLoadOidlogAnalysis extends BaseUtility {
       return totalBitsOn;
     }
 
-    public void record(byte[] key, byte[] value) throws DatabaseException {
+    public void record(byte[] key, byte[] value) throws TCDatabaseException {
       // sanity check, key must be a long, value must be a long array
-      if (OidLongArray.BYTES_PER_LONG != key.length) { throw new DatabaseException("Wrong key size!"); }
-      if (0 != (value.length % OidLongArray.BYTES_PER_LONG)) { throw new DatabaseException("Wrong value size!"); }
+      if (OidLongArray.BYTES_PER_LONG != key.length) { throw new TCDatabaseException("Wrong key size!"); }
+      if (0 != (value.length % OidLongArray.BYTES_PER_LONG)) { throw new TCDatabaseException("Wrong value size!"); }
 
       ++totalRecord;
       // check on bits

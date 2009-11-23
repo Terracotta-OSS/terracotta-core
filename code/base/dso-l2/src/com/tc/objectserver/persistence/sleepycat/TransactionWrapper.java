@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Transaction;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 
@@ -26,7 +25,7 @@ class TransactionWrapper implements PersistenceTransaction {
   public void commit() {
     if (tx != null) try {
       tx.commit();
-    } catch (DatabaseException e) {
+    } catch (Exception e) {
       throw new DBException(e);
     }
   }

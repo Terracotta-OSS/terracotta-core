@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.sleepycat;
 
@@ -7,7 +8,6 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
@@ -47,7 +47,7 @@ class ClassPersistorImpl extends SleepycatPersistorBase implements ClassPersisto
         // Formatting
         throw new DBException("Unable to store class Bytes: " + clazzId);
       }
-    } catch (DatabaseException t) {
+    } catch (Exception t) {
       abortOnError(tx);
       t.printStackTrace();
       throw new DBException(t);
@@ -68,11 +68,11 @@ class ClassPersistorImpl extends SleepycatPersistorBase implements ClassPersisto
         throw new DBException("Unable to retrieve class Bytes: " + clazzId);
       }
       return value.getData();
-    } catch (DatabaseException t) {
+    } catch (Exception t) {
       abortOnError(tx);
       t.printStackTrace();
       throw new DBException(t);
-    }
+    } 
   }
 
   public Map retrieveAllClasses() {
@@ -89,7 +89,7 @@ class ClassPersistorImpl extends SleepycatPersistorBase implements ClassPersisto
       }
       cursor.close();
       tx.commit();
-    } catch (DatabaseException e) {
+    } catch (Exception e) {
       abortOnError(cursor, tx);
       e.printStackTrace();
       throw new DBException(e);

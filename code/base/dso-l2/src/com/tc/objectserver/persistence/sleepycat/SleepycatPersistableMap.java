@@ -8,7 +8,6 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
@@ -122,7 +121,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
   }
 
   public int commit(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
-      throws IOException, DatabaseException {
+      throws IOException, TCDatabaseException {
     // long t1 = System.currentTimeMillis();
     // StringBuffer sb = new StringBuffer("Time to commit : ");
 
@@ -157,7 +156,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
   }
 
   private int basicRemove(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
-      throws IOException, DatabaseException {
+      throws IOException, TCDatabaseException {
     int written = 0;
     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
@@ -167,11 +166,15 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
         DatabaseEntry key = new DatabaseEntry();
         key.setData(persistor.serialize(id, k));
         written += key.getSize();
-        OperationStatus status = db.delete(persistor.pt2nt(tx), key);
-        if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
-          // make the formatter happy
-          throw new DBException("Unable to remove Map Entry for object id: " + id + ", status: " + status + ", key: "
-                                + key);
+        try {
+          OperationStatus status = db.delete(persistor.pt2nt(tx), key);
+          if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
+            // make the formatter happy
+            throw new DBException("Unable to remove Map Entry for object id: " + id + ", status: " + status + ", key: "
+                                  + key);
+          }
+        } catch (Exception t) {
+          throw new TCDatabaseException(t.getMessage());
         }
         i.remove();
       }
@@ -181,7 +184,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
   }
 
   private int basicPut(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
-      throws IOException, DatabaseException {
+      throws IOException, TCDatabaseException {
     int written = 0;
     for (Iterator i = delta.entrySet().iterator(); i.hasNext();) {
       Map.Entry e = (Entry) i.next();
@@ -193,16 +196,20 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
       value.setData(persistor.serialize(v));
       written += value.getSize();
       written += key.getSize();
-      OperationStatus status = db.put(persistor.pt2nt(tx), key, value);
-      if (!OperationStatus.SUCCESS.equals(status)) { throw new DBException("Unable to update Map table : " + id
-                                                                           + " status : " + status); }
+      try {
+        OperationStatus status = db.put(persistor.pt2nt(tx), key, value);
+        if (!OperationStatus.SUCCESS.equals(status)) { throw new DBException("Unable to update Map table : " + id
+                                                                             + " status : " + status); }
+      } catch (Exception t) {
+        throw new TCDatabaseException(t.getMessage());
+      }
       map.put(k, v);
     }
     return written;
   }
 
   private int basicClear(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
-      throws DatabaseException {
+      throws TCDatabaseException {
     // XXX::Sleepycat has the most inefficent way to delete objects. Another way would be to delete all records
     // explicitly.
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
@@ -214,17 +221,21 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     key.setData(idb);
     DatabaseEntry value = new DatabaseEntry();
     value.setPartial(0, 0, true);
-    if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-      do {
-        if (partialMatch(idb, key.getData())) {
-          written += key.getSize();
-          c.delete();
-        } else {
-          break;
-        }
-      } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+    try {
+      if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+        do {
+          if (partialMatch(idb, key.getData())) {
+            written += key.getSize();
+            c.delete();
+          } else {
+            break;
+          }
+        } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+      }
+      c.close();
+    } catch (Exception t) {
+      throw new TCDatabaseException(t.getMessage());
     }
-    c.close();
     return written;
   }
 
@@ -273,8 +284,8 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
            + ", removeCount = " + removeCount + " }";
   }
 
-  public void load(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db) throws IOException,
-      ClassNotFoundException, DatabaseException {
+  public void load(SleepycatCollectionsPersistor persistor, PersistenceTransaction tx, Database db)
+      throws TCDatabaseException {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
     // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
     Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
@@ -282,20 +293,24 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     DatabaseEntry key = new DatabaseEntry();
     key.setData(idb);
     DatabaseEntry value = new DatabaseEntry();
-    if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-      do {
-        if (false) System.err.println("MapDB " + toString(key) + " , " + toString(value));
-        if (partialMatch(idb, key.getData())) {
-          Object mkey = persistor.deserialize(idb.length, key.getData());
-          Object mvalue = persistor.deserialize(value.getData());
-          map.put(mkey, mvalue);
-          // System.err.println("map.put() = " + mkey + " , " + mvalue);
-        } else {
-          break;
-        }
-      } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+    try {
+      if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+        do {
+          if (false) System.err.println("MapDB " + toString(key) + " , " + toString(value));
+          if (partialMatch(idb, key.getData())) {
+            Object mkey = persistor.deserialize(idb.length, key.getData());
+            Object mvalue = persistor.deserialize(value.getData());
+            map.put(mkey, mvalue);
+            // System.err.println("map.put() = " + mkey + " , " + mvalue);
+          } else {
+            break;
+          }
+        } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+      }
+      c.close();
+    } catch (Exception t) {
+      throw new TCDatabaseException(t.getMessage());
     }
-    c.close();
   }
 
   private String toString(DatabaseEntry entry) {

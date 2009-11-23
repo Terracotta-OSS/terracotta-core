@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat;
 
-import com.sleepycat.je.DatabaseException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -196,7 +195,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     equals(Arrays.asList(s1.toArray()), Arrays.asList(s2.toArray()));
   }
 
-  private void addMoreMaps(ManagedObjectState state) throws IOException, DatabaseException {
+  private void addMoreMaps(ManagedObjectState state) throws IOException, TCDatabaseException {
     for (int j = 20; j < 40; j++) {
       ObjectID id = new ObjectID(j);
       SleepycatPersistableMap sMap = (SleepycatPersistableMap) collectionsFactory.createPersistentMap(id);

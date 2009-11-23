@@ -8,7 +8,6 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.logging.TCLogger;
@@ -31,22 +30,22 @@ import com.tc.util.sequence.MutableSequence;
 import java.util.Set;
 
 public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implements ObjectIDManager {
-  private static final TCLogger                logger                = TCLogging
-                                                                         .getTestingLogger(FastObjectIDManagerImpl.class);
-  private final static int                     SEQUENCE_BATCH_SIZE   = 50000;
-  private final static int                     MINIMUM_WAIT_TIME     = 1000;
-  private final byte                           PERSIST_COLL          = (byte) 1;
-  private final byte                           NOT_PERSIST_COLL      = (byte) 0;
-  private final byte                           ADD_OBJECT_ID         = (byte) 0;
-  private final byte                           DEL_OBJECT_ID         = (byte) 1;
+  private static final TCLogger                logger              = TCLogging
+                                                                       .getTestingLogger(FastObjectIDManagerImpl.class);
+  private final static int                     SEQUENCE_BATCH_SIZE = 50000;
+  private final static int                     MINIMUM_WAIT_TIME   = 1000;
+  private final byte                           PERSIST_COLL        = (byte) 1;
+  private final byte                           NOT_PERSIST_COLL    = (byte) 0;
+  private final byte                           ADD_OBJECT_ID       = (byte) 0;
+  private final byte                           DEL_OBJECT_ID       = (byte) 1;
   // property
   private final int                            checkpointMaxLimit;
   private final int                            checkpointMaxSleep;
   private final int                            longsPerDiskEntry;
   private final int                            longsPerStateEntry;
   private final boolean                        isMeasurePerf;
-  private final Object                         checkpointLock     = new Object();
-  private final Object                         objectIDUpdateLock = new Object();
+  private final Object                         checkpointLock      = new Object();
+  private final Object                         objectIDUpdateLock  = new Object();
 
   private final Database                       objectOidStoreDB;
   private final Database                       mapsOidStoreDB;
@@ -147,16 +146,21 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
   /*
    * Log the change of an ObjectID, added or deleted. Later, flush to BitsArray OidDB by checkpoint thread.
    */
-  private OperationStatus logObjectID(PersistenceTransaction tx, byte[] oids, boolean isAdd) throws DatabaseException {
+  private OperationStatus logObjectID(PersistenceTransaction tx, byte[] oids, boolean isAdd) throws TCDatabaseException {
     DatabaseEntry key = new DatabaseEntry();
     key.setData(makeLogKey(isAdd));
     DatabaseEntry value = new DatabaseEntry();
     value.setData(oids);
-    OperationStatus rtn = this.oidStoreLogDB.putNoOverwrite(pt2nt(tx), key, value);
+    OperationStatus rtn;
+    try {
+      rtn = this.oidStoreLogDB.putNoOverwrite(pt2nt(tx), key, value);
+    } catch (Exception t) {
+      throw new TCDatabaseException(t.getMessage());
+    }
     return (rtn);
   }
 
-  private OperationStatus logAddObjectID(PersistenceTransaction tx, ManagedObject mo) throws DatabaseException {
+  private OperationStatus logAddObjectID(PersistenceTransaction tx, ManagedObject mo) throws TCDatabaseException {
     OperationStatus status = logObjectID(tx, makeLogValue(mo), true);
     return (status);
   }
@@ -218,8 +222,8 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
               break;
             }
           }
-        } catch (DatabaseException e) {
-          throw e;
+        } catch (Exception e) {
+          throw new TCDatabaseException(e.getMessage());
         } finally {
           if (cursor != null) cursor.close();
           cursor = null;
@@ -229,7 +233,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
 
         tx.commit();
         logger.debug("Checkpoint updated " + changes + " objectIDs");
-      } catch (DatabaseException e) {
+      } catch (TCDatabaseException e) {
         logger.error("Error ojectID checkpoint: " + e);
         abortOnError(tx);
       }
@@ -397,7 +401,7 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     }
   }
 
-  public OperationStatus put(PersistenceTransaction tx, ManagedObject mo) throws DatabaseException {
+  public OperationStatus put(PersistenceTransaction tx, ManagedObject mo) throws TCDatabaseException {
     return (logAddObjectID(tx, mo));
   }
 
@@ -421,8 +425,8 @@ public final class FastObjectIDManagerImpl extends SleepycatPersistorBase implem
     }
     try {
       status = logObjectID(tx, oids, isAdd);
-    } catch (DatabaseException de) {
-      throw new TCDatabaseException(de);
+    } catch (Exception de) {
+      throw new TCDatabaseException(de.getMessage());
     }
     return (status);
   }

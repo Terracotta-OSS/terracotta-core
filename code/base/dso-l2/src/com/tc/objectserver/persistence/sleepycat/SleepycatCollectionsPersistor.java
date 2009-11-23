@@ -8,7 +8,6 @@ import com.sleepycat.je.Cursor;
 import com.sleepycat.je.CursorConfig;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseEntry;
-import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.io.serializer.DSOSerializerPolicy;
@@ -48,7 +47,8 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     this.oo = new TCObjectOutputStream(bao);
   }
 
-  public int saveCollections(PersistenceTransaction tx, ManagedObjectState state) throws IOException, DatabaseException {
+  public int saveCollections(PersistenceTransaction tx, ManagedObjectState state) throws IOException,
+      TCDatabaseException {
     PersistableObjectState persistabeState = (PersistableObjectState) state;
     PersistableCollection collection = persistabeState.getPersistentCollection();
     return collection.commit(this, tx, database);
@@ -72,7 +72,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
   }
 
   public void loadCollectionsToManagedState(PersistenceTransaction tx, ObjectID id, ManagedObjectState state)
-      throws IOException, ClassNotFoundException, DatabaseException {
+      throws IOException, ClassNotFoundException, TCDatabaseException {
     assert PersistentCollectionsUtil.isPersistableCollectionType(state.getType());
 
     PersistableObjectState persistableState = (PersistableObjectState) state;
@@ -98,9 +98,9 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
    * This method is slightly dubious in that it assumes that the ObjectID is the first 8 bytes of the Key in the entire
    * collections database.(which is true, but that logic is spread elsewhere)
    * 
-   * @throws DatabaseException
+   * @throws TCDatabaseException
    */
-  public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws DatabaseException {
+  public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws TCDatabaseException {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
     // need this to avoid deadlocks between commit thread and DGC thread. Hence READ_COMMITTED
     Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_COMMITTED);
@@ -111,15 +111,19 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
       key.setData(idb);
       DatabaseEntry value = new DatabaseEntry();
       value.setPartial(0, 0, true);
-      if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-        do {
-          if (partialMatch(idb, key.getData())) {
-            found = true;
-            c.delete();
-          } else {
-            break;
-          }
-        } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+      try {
+        if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+          do {
+            if (partialMatch(idb, key.getData())) {
+              found = true;
+              c.delete();
+            } else {
+              break;
+            }
+          } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+        }
+      } catch (Exception t) {
+        throw new TCDatabaseException(t.getMessage());
       }
       return found;
     } finally {
