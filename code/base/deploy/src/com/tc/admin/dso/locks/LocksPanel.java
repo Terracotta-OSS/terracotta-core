@@ -144,8 +144,8 @@ public class LocksPanel extends XContainer implements PropertyChangeListener {
     gbc.gridx++;
     topPanel.add(fTraceDepthSpinner = new XSpinner(), gbc);
     fLastTraceDepth = Math.max(0, fLastTraceDepth);
-    fTraceDepthSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(fLastTraceDepth), Integer.valueOf(0), null,
-                                                       Integer.valueOf(1)));
+    fTraceDepthSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(fLastTraceDepth), Integer.valueOf(0), Integer
+        .valueOf(999), Integer.valueOf(1)));
     fTraceDepthSpinner.addFocusListener(new TraceDepthSpinnerFocusListener());
     fTraceDepthChangeTimer = new Timer(1000, new TraceDepthChangeTimerHandler());
     fTraceDepthChangeTimer.setRepeats(false);
