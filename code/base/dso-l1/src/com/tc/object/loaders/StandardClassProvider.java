@@ -13,6 +13,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -229,6 +230,23 @@ public class StandardClassProvider implements ClassProvider {
             }
           }
           if (exactlyOne) { return firstChild; }
+
+          // there might not be an observable parent/child relationship. If there is exactly one loader in the app-grpip
+          // that is not a "standard" loader, select it
+          Set<String> copy = new HashSet<String>(appGroupLoaders);
+          for (Iterator<String> iter = copy.iterator(); iter.hasNext();) {
+            String name = iter.next();
+            if (name.startsWith(Namespace.STANDARD_NAMESPACE)) {
+              iter.remove();
+            }
+          }
+          if (copy.size() == 1) {
+            loader = lookupLoaderByName(copy.iterator().next());
+            if (loader == REMOVED) {
+              continue;
+            }
+            return loader;
+          }
         }
       }
 
