@@ -35,6 +35,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.loaders.StandardClassProvider;
 import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.DsoLockID;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIdFactory;
 import com.tc.object.locks.LockLevel;
@@ -735,7 +736,7 @@ public class ManagerImpl implements Manager {
   }
 
   public Notify notify(LockID lock, Object waitObject) {
-    if (clusteredLockingEnabled(lock)) {
+    if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       txManager.notify(lockManager.notify(lock, waitObject));
     } else {
       waitObject.notify();
@@ -744,7 +745,7 @@ public class ManagerImpl implements Manager {
   }
 
   public Notify notifyAll(LockID lock, Object waitObject) {
-    if (clusteredLockingEnabled(lock)) {
+    if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       txManager.notify(lockManager.notifyAll(lock, waitObject));
     } else {
       waitObject.notifyAll();
@@ -795,7 +796,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void wait(LockID lock, Object waitObject) throws InterruptedException {
-    if (clusteredLockingEnabled(lock)) {
+    if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         txManager.commit(lock, LockLevel.WRITE);
       } catch (UnlockedSharedObjectException e) {
@@ -813,7 +814,7 @@ public class ManagerImpl implements Manager {
   }
 
   public void wait(LockID lock, Object waitObject, long timeout) throws InterruptedException {
-    if (clusteredLockingEnabled(lock)) {
+    if (clusteredLockingEnabled(lock) && (lock instanceof DsoLockID)) {
       try {
         txManager.commit(lock, LockLevel.WRITE);
       } catch (UnlockedSharedObjectException e) {

@@ -34,7 +34,7 @@ public class DsoLiteralLockID implements LockID {
     // please tc serialization
   }
   
-  public DsoLiteralLockID(Manager mgr, Object literal) {
+  public DsoLiteralLockID(Manager mgr, Object literal) throws IllegalArgumentException {
     this.literal = translateLiteral(mgr, literal);
   }
   
@@ -213,7 +213,7 @@ public class DsoLiteralLockID implements LockID {
     switch (type) {
       case ENUM:
         Class clazz = literal.getClass();
-        LoaderDescription classLoader = mgr.getClassProvider().getLoaderDescriptionFor(clazz);
+        LoaderDescription classLoader = getLoaderDescription(mgr, clazz.getClassLoader());
         if (classLoader == null) {
           throw new IllegalArgumentException();
         } else {
@@ -223,7 +223,7 @@ public class DsoLiteralLockID implements LockID {
           return new EnumInstance(classInstance, new UTF8ByteDataHolder(((Enum) literal).name()));
         }
       case JAVA_LANG_CLASSLOADER:
-        LoaderDescription loaderDesc = mgr.getClassProvider().getLoaderDescriptionFor((ClassLoader) literal);
+        LoaderDescription loaderDesc = getLoaderDescription(mgr, (ClassLoader) literal);
         if (loaderDesc == null) {
           throw new IllegalArgumentException();
         } else {
@@ -234,4 +234,12 @@ public class DsoLiteralLockID implements LockID {
         return literal;
     }
   }  
+  
+  private static LoaderDescription getLoaderDescription(Manager mgr, ClassLoader loader) throws IllegalArgumentException {
+    try {
+      return mgr.getClassProvider().getLoaderDescriptionFor(loader);
+    } catch (RuntimeException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
 }
