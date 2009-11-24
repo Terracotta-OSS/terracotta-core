@@ -18,6 +18,7 @@ import static com.tc.admin.model.IServer.POLLED_ATTR_LOCK_RECALL_RATE;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.data.time.TimeSeries;
@@ -201,13 +202,13 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
           } else {
             txn = -1;
           }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHE_MISS_RATE);
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_FLUSHED_RATE);
           if (n != null) {
             if (diskFlushedRate >= 0) diskFlushedRate += n.longValue();
           } else {
             diskFlushedRate = -1;
           }
-          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_FLUSHED_RATE);
+          n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHE_MISS_RATE);
           if (n != null) {
             if (cacheMiss >= 0) cacheMiss += n.longValue();
           } else {
@@ -244,7 +245,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       if (fault != -1) updateSeries(clientFaultRateSeries, Long.valueOf(fault));
       if (txn != -1) updateSeries(txnRateSeries, Long.valueOf(txn));
       if (cacheMiss != -1) updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
-      if (diskFlushedRate != -1) updateSeries(diskFlushedRateSeries, Long.valueOf(cacheMiss));
+      if (diskFlushedRate != -1) updateSeries(diskFlushedRateSeries, Long.valueOf(diskFlushedRate));
       if (liveObjectCount != -1) {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
         objectManagerTitle
@@ -281,7 +282,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     liveObjectCountPanel.setBorder(objectManagerTitle);
     liveObjectCountPanel.setToolTipText("Total/Cached instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
-    XYAreaRenderer areaRenderer2 = new XYAreaRenderer();
+    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA, StandardXYToolTipGenerator
+        .getTimeSeriesInstance(), null);
     liveObjectCountPlot.setRenderer(0, areaRenderer2);
   }
 
@@ -351,7 +353,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     public void run() {
       if (currentDGCMarker == null) {
         currentDGCMarker = new DGCIntervalMarker(gcStats);
-        liveObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.BACKGROUND);
+        liveObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.FOREGROUND);
       } else {
         currentDGCMarker.setGCStats(gcStats);
       }

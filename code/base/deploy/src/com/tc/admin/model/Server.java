@@ -1339,7 +1339,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
       Object o = mof.getFieldValue(fieldName);
       if (o instanceof ObjectID) {
-        return lookupFacade((ObjectID) o, Integer.MAX_VALUE);
+        return clusterModel.lookupFacade((ObjectID) o, Integer.MAX_VALUE);
       } else {
         return o;
       }
