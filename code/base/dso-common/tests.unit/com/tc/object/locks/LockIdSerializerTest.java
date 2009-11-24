@@ -75,7 +75,6 @@ public class LockIdSerializerTest extends TestCase {
       // expected
     }
     
-    unclusteredLockTest(Object.class);
     try {
       literalLockTest(Object.class);
       throw new IllegalStateException();
@@ -83,7 +82,6 @@ public class LockIdSerializerTest extends TestCase {
       // expected
     }
 
-    unclusteredLockTest(new ObjectID(42));
     try {
       literalLockTest(new ObjectID(42));
       throw new IllegalStateException();
@@ -92,22 +90,20 @@ public class LockIdSerializerTest extends TestCase {
     }
 
     unclusteredLockTest(new ClassLoader() { /**/ });
-    try {
-      literalLockTest(new ClassLoader() { /**/ });
-      throw new IllegalStateException();
-    } catch (AssertionError e) {
-      // expected
-    }
   }
 
   public void literalLockTest(Object literal) {
-    LockID lock = DsoLiteralLockID.createLockID(manager, literal);
+    DsoLiteralLockID lock = new DsoLiteralLockID(manager, literal);
     Assert.assertEquals(lock, passThrough(lock));
   }
 
   public void unclusteredLockTest(Object literal) {
-    LockID lock = DsoLiteralLockID.createLockID(manager, literal);
-    Assert.assertEquals(UnclusteredLockID.class, lock.getClass());
+    try {
+      new DsoLiteralLockID(manager, literal);
+      Assert.fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   private LockID passThrough(LockID in) {
