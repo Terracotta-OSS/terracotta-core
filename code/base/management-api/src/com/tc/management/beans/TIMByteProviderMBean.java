@@ -10,5 +10,5 @@ public interface TIMByteProviderMBean {
 
   public byte[] getResourceAsByteArray(String name) throws IOException;
 
-  public byte[] getModuleBytes() throws IOException;
+  public byte[] getModuleBytes() throws Exception;
 }

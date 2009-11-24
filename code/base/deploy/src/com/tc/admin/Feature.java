@@ -34,6 +34,18 @@ public class Feature {
     return loader;
   }
 
+  public boolean isReady() {
+    return loader.isReady();
+  }
+
+  public boolean hasError() {
+    return loader.hasError();
+  }
+
+  public Throwable getError() {
+    return loader.getError();
+  }
+
   public String getManifestEntry(String key) {
     Iterator<TIMByteProviderMBean> iter = loader.byteProviders();
     String value;

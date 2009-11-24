@@ -5,6 +5,7 @@ package com.tc.admin;
 
 import org.terracotta.modules.configuration.PresentationFactory;
 
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.management.beans.TIMByteProviderMBean;
 
 import java.io.File;
@@ -28,14 +29,14 @@ public class FeatureClassLoader extends URLClassLoader {
   private final Map<ObjectName, TIMByteProviderMBean> byteProviderMap;
   private final Feature                               feature;
   private URL                                         moduleLocation;
+  private boolean                                     loadingModule = false;
+  private Throwable                                   error;
 
   FeatureClassLoader(Feature feature) {
     super(new URL[] {}, FeatureClassLoader.class.getClassLoader());
     this.byteProviderMap = new LinkedHashMap<ObjectName, TIMByteProviderMBean>();
     this.feature = feature;
   }
-
-  private boolean loadingModule = false;
 
   public void addTIMByteProvider(ObjectName objName, TIMByteProviderMBean byteProvider) {
     byteProviderMap.put(objName, byteProvider);
@@ -98,7 +99,7 @@ public class FeatureClassLoader extends URLClassLoader {
     return super.loadClass(name, resolve);
   }
 
-  protected byte[] loadModuleBytes() throws IOException {
+  protected byte[] loadModuleBytes() throws Exception {
     byte[] result = null;
     Iterator<TIMByteProviderMBean> iter = byteProviders();
     while (iter.hasNext()) {
@@ -134,6 +135,18 @@ public class FeatureClassLoader extends URLClassLoader {
     }
   }
 
+  private synchronized void setError(Throwable error) {
+    this.error = error;
+  }
+
+  public synchronized Throwable getError() {
+    return error;
+  }
+
+  public synchronized boolean hasError() {
+    return error != null;
+  }
+
   private void loadModule() {
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     final Future<URL> future = executorService.submit(new ModuleLoaderFuture());
@@ -141,14 +154,20 @@ public class FeatureClassLoader extends URLClassLoader {
       @Override
       public void run() {
         try {
-          addURL(moduleLocation = future.get());
+          synchronized (this) {
+            addURL(moduleLocation = future.get());
+          }
         } catch (Exception e) {
-          e.printStackTrace();
+          setError(ExceptionHelper.getRootCause(e));
         } finally {
           loadingModule = false;
         }
       }
     }.start();
+  }
+
+  public synchronized boolean isReady() {
+    return moduleLocation != null;
   }
 
   private class ModuleLoaderFuture implements Callable<URL> {

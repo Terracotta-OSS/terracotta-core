@@ -48,13 +48,15 @@ public class TIMByteProvider implements TIMByteProviderMBean {
     return null;
   }
 
-  public byte[] getModuleBytes() throws IOException {
+  public byte[] getModuleBytes() throws Exception {
     InputStream is = null;
 
     try {
       return IOUtils.toByteArray(is = url.openStream());
     } finally {
-      IOUtils.closeQuietly(is);
+      if (is != null) {
+        IOUtils.closeQuietly(is);
+      }
     }
   }
 }
