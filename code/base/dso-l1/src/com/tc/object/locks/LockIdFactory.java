@@ -25,8 +25,14 @@ public class LockIdFactory {
         } else {
           return new DsoLockID(tco.getObjectID());
         }
+      } else if (mgr.isLiteralAutolock(obj)) {
+        try {
+          return new DsoLiteralLockID(mgr, obj);
+        } catch (IllegalArgumentException e) {
+          return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
+        }
       } else {
-        return DsoLiteralLockID.createLockID(mgr, obj);
+        return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
       }
     }
   }

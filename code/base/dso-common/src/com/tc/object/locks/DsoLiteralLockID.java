@@ -34,8 +34,8 @@ public class DsoLiteralLockID implements LockID {
     // please tc serialization
   }
   
-  private DsoLiteralLockID(Object literal) {
-    this.literal = literal;
+  public DsoLiteralLockID(Manager mgr, Object literal) {
+    this.literal = translateLiteral(mgr, literal);
   }
   
   public String asString() {
@@ -208,27 +208,14 @@ public class DsoLiteralLockID implements LockID {
     }
   }
   
-  public static LockID createLockID(Manager mgr, Object literal) {
-    Object translatedLiteral = translateLiteral(mgr, literal);
-    if (translatedLiteral == null) {
-      return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
-    } else {
-      return new DsoLiteralLockID(translatedLiteral);
-    }
-  }
-  
   private static Object translateLiteral(Manager mgr, Object literal) throws IllegalArgumentException {
-    if (!mgr.isLiteralAutolock(literal)) {
-      return null;
-    }
-    
     LiteralValues type = LiteralValues.valueFor(literal);
     switch (type) {
       case ENUM:
         Class clazz = literal.getClass();
         LoaderDescription classLoader = mgr.getClassProvider().getLoaderDescriptionFor(clazz);
         if (classLoader == null) {
-          return null;
+          throw new IllegalArgumentException();
         } else {
           String loaderDefinition = classLoader.toDelimitedString();
           ClassInstance classInstance = new ClassInstance(new UTF8ByteDataHolder(clazz.getName()),
@@ -238,7 +225,7 @@ public class DsoLiteralLockID implements LockID {
       case JAVA_LANG_CLASSLOADER:
         LoaderDescription loaderDesc = mgr.getClassProvider().getLoaderDescriptionFor((ClassLoader) literal);
         if (loaderDesc == null) {
-          return null;
+          throw new IllegalArgumentException();
         } else {
           String definition = loaderDesc.toDelimitedString();
           return new ClassLoaderInstance(new UTF8ByteDataHolder(definition));
