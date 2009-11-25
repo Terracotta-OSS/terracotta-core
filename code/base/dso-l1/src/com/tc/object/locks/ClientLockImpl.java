@@ -991,6 +991,14 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   public synchronized void initializeHandshake(ClientID client, ClientHandshakeMessage message) {
     Collection<ClientServerExchangeLockContext> contexts = getFilteredStateSnapshot(client, true);
 
+    for (LockStateNode node : this) {
+      if (node instanceof PendingLockHold) {
+        //these nodes have now contacted the server
+        ((PendingLockHold) node).delegated();
+        ((PendingLockHold) node).setDelegationMethod("Attached To Handshake Message...");
+      }
+    }
+    
     for (ClientServerExchangeLockContext c : contexts) {
       message.addLockContext(c);
     }
