@@ -39,6 +39,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements PropertyChangeListener {
@@ -166,33 +167,50 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
           }
         }
 
-        if (flush != -1) {
-          updateSeries(flushRateSeries, Long.valueOf(flush));
-        }
-        if (fault != -1) {
-          updateSeries(faultRateSeries, Long.valueOf(fault));
-        }
-        if (txn != -1) {
-          updateSeries(txnRateSeries, Long.valueOf(txn));
-        }
-        if (pendingTxn != -1) {
-          updateSeries(pendingTxnsSeries, Long.valueOf(pendingTxn));
-        }
+        final long theFlushRate = flush;
+        final long theFaultRate = fault;
+        final long theTxnRate = txn;
+        final long thePendingTxnRate = pendingTxn;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            updateAllDSOSeries(theFlushRate, theFaultRate, theTxnRate, thePendingTxnRate);
+          }
+        });
       }
     }
   }
 
-  private synchronized void handleSysStats(PolledAttributesResult result) {
-    IClient theClient = getClient();
-    if (theClient != null) {
-      updateSeries(memoryMaxSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY));
-      updateSeries(memoryUsedSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY));
-
-      if (cpuTimeSeries != null) {
-        StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theClient, POLLED_ATTR_CPU_USAGE);
-        handleCpuUsage(cpuTimeSeries, cpuUsageData);
-      }
+  private void updateAllDSOSeries(long flush, long fault, long txn, long pendingTxn) {
+    if (flush != -1) {
+      updateSeries(flushRateSeries, Long.valueOf(flush));
     }
+    if (fault != -1) {
+      updateSeries(faultRateSeries, Long.valueOf(fault));
+    }
+    if (txn != -1) {
+      updateSeries(txnRateSeries, Long.valueOf(txn));
+    }
+    if (pendingTxn != -1) {
+      updateSeries(pendingTxnsSeries, Long.valueOf(pendingTxn));
+    }
+  }
+
+  private synchronized void handleSysStats(final PolledAttributesResult result) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        IClient theClient = getClient();
+        if (theClient != null) {
+          updateSeries(memoryMaxSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY));
+          updateSeries(memoryUsedSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY));
+
+          if (cpuTimeSeries != null) {
+            StatisticData[] cpuUsageData = (StatisticData[]) result
+                .getPolledAttribute(theClient, POLLED_ATTR_CPU_USAGE);
+            handleCpuUsage(cpuTimeSeries, cpuUsageData);
+          }
+        }
+      }
+    });
   }
 
   @Override
