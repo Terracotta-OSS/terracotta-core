@@ -41,7 +41,9 @@ public class LockTimer {
   private void scheduleQueuedTasks() {
     for (Iterator<TaskImpl> tasks = taskQueue.iterator(); tasks.hasNext();) {
       TaskImpl task = tasks.next();
-      timer.schedule(task, task.getScheduleDelay());
+      long timeDelay = task.getScheduleDelay() - (System.currentTimeMillis() - task.scheduledAt());
+      timeDelay = timeDelay < 0 ? 0 : timeDelay;
+      timer.schedule(task, timeDelay);
     }
   }
 
@@ -72,15 +74,21 @@ public class LockTimer {
     private final TimerCallback    callback;
     private final LockTimerContext callbackObject;
     private final long             scheduleDelayInMillis;
+    private final long             scheduledAt;
 
     TaskImpl(TimerCallback callback, long timeInMillis, LockTimerContext callbackObject) {
       this.callback = callback;
       this.callbackObject = callbackObject;
       this.scheduleDelayInMillis = timeInMillis;
+      this.scheduledAt = System.currentTimeMillis();
     }
 
     public long getScheduleDelay() {
       return scheduleDelayInMillis;
+    }
+
+    public long scheduledAt() {
+      return scheduledAt;
     }
 
     public void run() {
