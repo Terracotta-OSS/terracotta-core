@@ -19,6 +19,7 @@ import com.tc.serverdbbackuprunner.ServerDBBackupRunner;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
@@ -267,6 +268,9 @@ public class ServerDBBackupTestApp extends AbstractTransparentApp {
       FileUtils.copyDirectory(new File(copyFrom + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME), new File(dbHome));
 
       System.out.println("File copied from " + copyFrom + " to " + dbHome);
+
+      ThreadUtil.reallySleep(20 * 100);
+
       serverControl.start();
     } catch (Exception e) {
       e.printStackTrace();
