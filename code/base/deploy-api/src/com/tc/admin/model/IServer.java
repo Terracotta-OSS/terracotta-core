@@ -40,8 +40,6 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT = "PendingTransactionsCount";
   static final String    POLLED_ATTR_CACHED_OBJECT_COUNT        = "CachedObjectCount";
 
-  IClusterModel getClusterModel();
-
   boolean isActiveCoordinator();
 
   boolean isAutoConnect();

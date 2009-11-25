@@ -20,6 +20,8 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
   static final String POLLED_ATTR_TRANSACTION_RATE  = "TransactionRate";
   static final String POLLED_ATTR_LIVE_OBJECT_COUNT = "LiveObjectCount";
 
+  IClusterModel getClusterModel();
+
   String getProductVersion();
 
   String getProductPatchLevel();
