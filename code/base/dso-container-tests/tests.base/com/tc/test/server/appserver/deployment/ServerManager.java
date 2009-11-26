@@ -199,6 +199,15 @@ public class ServerManager {
     addServerToStop(appServer);
     return appServer;
   }
+  
+  public WebApplicationServer makeWebApplicationServerNoDso() throws Exception {
+    GenericServer.setDsoEnabled(false);
+    int i = ServerManager.appServerIndex++;
+    WebApplicationServer appServer = new GenericServer(config, factory, installation, null, i, tempDir);
+    addServerToStop(appServer);
+    return appServer;
+
+  }
 
   public FileSystemPath getTcConfigFile(String tcConfigPath) {
     URL url = getClass().getResource(tcConfigPath);

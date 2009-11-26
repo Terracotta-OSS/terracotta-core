@@ -533,6 +533,12 @@ public class WARBuilder implements DeploymentBuilder {
     resources.add(new ResourceDefinition(srcDir, includes, prefix, null));
     return this;
   }
+  
+  public DeploymentBuilder addFileAsResource(File file, String prefix) {
+    File srcDir = file.getParentFile();
+    resources.add(new ResourceDefinition(srcDir, file.getName(), prefix, null));
+    return this;
+  }
 
   private File extractResourceIfNeeded(FileSystemPath path, String location, String includes) {
     final File rv;
@@ -542,7 +548,8 @@ public class WARBuilder implements DeploymentBuilder {
       try {
         jarFile = new JarFile(path.getFile());
         String dir = location.startsWith("/") ? location.substring(1) : location;
-        ZipEntry entry = jarFile.getEntry(dir + "/" + includes);
+        dir = dir != null ? (dir.trim().equals("") ? "" : dir + "/") : "";  
+        ZipEntry entry = jarFile.getEntry(dir + includes);
 
         File tmpParent = new File(tmpResourcePath.getFile(), dir);
         tmpParent.mkdirs();

@@ -4,6 +4,7 @@
 
 package com.tc.test.server.appserver.deployment;
 
+import java.io.File;
 import java.util.Map;
 
 public interface DeploymentBuilder {
@@ -13,6 +14,7 @@ public interface DeploymentBuilder {
   public DeploymentBuilder addDirectoryContainingResource(String resource);
   public DeploymentBuilder addResource(String location, String includes, String prefix);
   public DeploymentBuilder addResourceFullpath(String location, String includes, String fullpath);
+  public DeploymentBuilder addFileAsResource(File file, String fullpath);
 
   public DeploymentBuilder addContextParameter(String name, String value);
   public DeploymentBuilder addSessionConfig(String name, String value);
