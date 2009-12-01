@@ -13,7 +13,7 @@ Getting Started
 
 For use-case specific information on getting started with Terracotta, refer to 
 the Terracotta website at 
-http://www.terracotta.org/kit/reflector?kitID=3.3&pageID=GettingStarted
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=GettingStarted
 
 
 Join the Terracotta Community
@@ -47,7 +47,7 @@ examples and information:
    cluster, including the Terracotta Developer Console (dev-console.sh or 
    dev-console.bat), which provides deep visibility and diagnostics. Scripts are 
    documented at 
-   http://www.terracotta.org/kit/reflector?kitID=3.3&pageID=ToolsOverview
+   http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=ToolsOverview
  
 Help and additional information is available on the web at the following URLs:
 
