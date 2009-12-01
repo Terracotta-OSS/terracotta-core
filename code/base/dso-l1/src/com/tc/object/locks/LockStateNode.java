@@ -175,7 +175,10 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return delegates;
     }
 
-    void delegated() {
+    void delegated(String method) {
+      if (delegates) {
+        delegationMethod = method;        
+      }
       delegates = false;
     }
     
@@ -222,10 +225,6 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return (5 * super.hashCode()) ^ (7 * level.hashCode());
     }
         
-    void setDelegationMethod(String method) {
-      delegationMethod = method;
-    }
-    
     public String toString() {
       return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded() + ", refused=" + isRefused() + ", " + delegationMethod;
     }

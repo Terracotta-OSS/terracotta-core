@@ -512,11 +512,50 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   /*
    * Try to acquire the lock (optionally with delegation to the server)
    */
-  private LockAcquireResult tryAcquire(boolean useServer, RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout, @Deprecated PendingLockHold node) throws GarbageLockException {
-    if (useServer) {
-      return tryAcquireUsingServer(remote, thread, level, timeout, node);
+  private LockAcquireResult tryAcquire(RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout, PendingLockHold node) throws GarbageLockException {
+    // try to do things locally first...
+    LockAcquireResult result = tryAcquireLocally(thread, level);
+    if (result.isKnownResult()) {
+      return result;
     } else {
-      return tryAcquireLocally(thread, level);
+      synchronized (this) {
+        if (!node.canDelegate()) {
+          // no server delegation - just return local result
+          return result;
+        } else {
+          // delegate to server
+          ServerLockLevel requestLevel = ServerLockLevel.fromClientLockLevel(level);        
+          greediness = greediness.requested(requestLevel);      
+          if (greediness.isFree()) {
+            switch ((int) timeout) {
+              case ClientLockImpl.BLOCKING_LOCK:
+                remote.lock(lock, thread, requestLevel);
+                node.delegated("Called remote.lock(...)...");
+                break;
+              default:
+                remote.tryLock(lock, thread, requestLevel, timeout);
+                node.delegated("Called remote.tryLock(...)...");
+                break;
+            }
+            return LockAcquireResult.USED_SERVER;
+          } else if (greediness.isRecalled()) {
+            //drop through to trigger recall
+          } else {
+            node.delegated("Waiting For Recall...");
+            return LockAcquireResult.USED_SERVER;
+          }
+        }
+      }
+      
+      remote.flush(lock);
+
+      synchronized (this) {
+        if (greediness.isRecalled() && canRecallNow()) {
+          greediness = recallCommit(remote);
+        }
+        node.delegated("Waiting For Recall...");
+        return LockAcquireResult.USED_SERVER;
+      }
     }
   }
   
@@ -568,53 +607,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     
     return LockAcquireResult.UNKNOWN;
   }
-  
-  /*
-   * Try to acquire the lock and delegate to the server if necessary
-   */
-  private LockAcquireResult tryAcquireUsingServer(RemoteLockManager remote, ThreadID thread, LockLevel level, long timeout, PendingLockHold node) throws GarbageLockException {
-    // try to do things locally first...
-    LockAcquireResult result = tryAcquireLocally(thread, level);
-    if (result.isKnownResult()) {
-      return result;
-    } else {
-      // if local calls for delegation then fire into the server.
-      ServerLockLevel requestLevel = ServerLockLevel.fromClientLockLevel(level);
-      
-      synchronized (this) {
-        greediness = greediness.requested(requestLevel);      
-        if (greediness.isFree()) {
-          switch ((int) timeout) {
-            case ClientLockImpl.BLOCKING_LOCK:
-              node.setDelegationMethod("Called remote.lock(...)...");
-              remote.lock(lock, thread, requestLevel);
-              break;
-            default:
-              node.setDelegationMethod("Called remote.tryLock(...)...");
-              remote.tryLock(lock, thread, requestLevel, timeout);
-              break;
-          }
-          return LockAcquireResult.USED_SERVER;
-        } else if (greediness.isRecalled()) {
-          //drop through to trigger recall
-        } else {
-          node.setDelegationMethod("Waiting For Recall...");
-          return LockAcquireResult.USED_SERVER;
-        }
-      }
-      
-      remote.flush(lock);
-
-      synchronized (this) {
-        node.setDelegationMethod("Waiting For Recall...");
-        if (greediness.isRecalled() && canRecallNow()) {
-          greediness = recallCommit(remote);
-        }
-        return LockAcquireResult.USED_SERVER;
-      }
-    }
-    
- }
   
   /*
    * Unlock and return true if acquires might now succeed.
@@ -733,11 +725,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     try {
       for (;;) {
         // try to acquire before sleeping
-        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, BLOCKING_LOCK, node);
-        if (result.usedServer()) {
-          // we contacted server - disable delegation to prevent multiple messages
-          node.delegated();
-        }
+        LockAcquireResult result = tryAcquire(remote, thread, level, BLOCKING_LOCK, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
         }
@@ -775,10 +763,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     addLast(node);
     try {
       for (;;) {
-        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, BLOCKING_LOCK, node);
-        if (result.usedServer()) {
-          node.delegated();
-        }
+        LockAcquireResult result = tryAcquire(remote, thread, level, BLOCKING_LOCK, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
         }
@@ -815,10 +800,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     addLast(node);
     try {
       while (!node.isRefused()) {
-        LockAcquireResult result = tryAcquire(node.canDelegate(), remote, thread, level, timeout, node);
-        if (result.usedServer()) {
-          node.delegated();
-        }
+        LockAcquireResult result = tryAcquire(remote, thread, level, timeout, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
         }
@@ -949,8 +931,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       for (LockStateNode node : this) {
         if (node instanceof PendingLockHold) {
           //these nodes have now contacted the server
-          ((PendingLockHold) node).delegated();
-          ((PendingLockHold) node).setDelegationMethod("Attached To Recall Commit Message...");
+          ((PendingLockHold) node).delegated("Attached To Recall Commit Message...");
         }
       }
       
@@ -994,8 +975,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     for (LockStateNode node : this) {
       if (node instanceof PendingLockHold) {
         //these nodes have now contacted the server
-        ((PendingLockHold) node).delegated();
-        ((PendingLockHold) node).setDelegationMethod("Attached To Handshake Message...");
+        ((PendingLockHold) node).delegated("Attached To Handshake Message...");
       }
     }
     
