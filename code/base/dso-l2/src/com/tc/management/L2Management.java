@@ -335,7 +335,7 @@ public class L2Management extends TerracottaManagement {
     }
 
     public void setCallback(SynchroCallback cb) {
-      conn.setCallback(new SynchroCallbackWrapper(queue, cb));
+      conn.setCallback(new SynchroCallbackWrapper(queue, cb, getConnectionId()));
     }
   }
 
@@ -343,10 +343,12 @@ public class L2Management extends TerracottaManagement {
 
     private final SynchroCallback callback;
     private final Sink            remoteEventsSink;
+    private final String          connectionId;
 
-    public SynchroCallbackWrapper(Sink remoteEventsSink, SynchroCallback cb) {
+    public SynchroCallbackWrapper(Sink remoteEventsSink, SynchroCallback cb, String connectionId) {
       this.remoteEventsSink = remoteEventsSink;
       this.callback = cb;
+      this.connectionId = connectionId;
     }
 
     public void connectionException(Exception ie) {
@@ -355,6 +357,18 @@ public class L2Management extends TerracottaManagement {
 
     public Message execute(Message request) {
       if (request instanceof MBeanServerRequestMessage) {
+        // log shutdown call
+        MBeanServerRequestMessage msrm = (MBeanServerRequestMessage) request;
+        Object params[] = msrm.getParams();
+        if (params.length > 1 && params[1] != null && params[1].equals("shutdown")) {
+          StringBuffer buf = new StringBuffer();
+          buf.append("JMX shutdown request connectionId:" + connectionId + " execute methodId: " + msrm.getMethodId()
+                     + " params:");
+          for (Object o : params) {
+            buf.append(" " + o);
+          }
+          logger.info(buf);
+        }
         TCFuture future = new TCFuture();
         remoteEventsSink.add(new CallbackExecuteContext(Thread.currentThread().getContextClassLoader(), callback,
                                                         request, future));
