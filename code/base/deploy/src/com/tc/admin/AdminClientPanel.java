@@ -591,6 +591,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   public void handleQuit() {
     if (testWarnMonitoringActivity()) {
+      storePreferences();
       Runtime.getRuntime().exit(0);
     }
   }

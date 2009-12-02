@@ -5,6 +5,7 @@
 package com.tc.admin.common;
 
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
@@ -265,11 +266,18 @@ public class XTable extends JTable {
 
   public void setSelectedRows(int[] rows) {
     int rowCount = getRowCount();
-
     for (int i = 0; i < rows.length; i++) {
       if (rows[i] < rowCount) {
         setRowSelectionInterval(rows[i], rows[i]);
       }
+    }
+  }
+
+  public void setSelectedRow(int row) {
+    setSelectedRows(new int[] { row });
+    Rectangle cellRect = getCellRect(row, 0, true);
+    if (cellRect != null) {
+      scrollRectToVisible(cellRect);
     }
   }
 }

@@ -7,14 +7,18 @@ package com.tc.admin.dso;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
-import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.AxisChangeEvent;
+import org.jfree.chart.event.AxisChangeListener;
+import org.jfree.chart.plot.IntervalMarker;
+import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYBarRenderer;
-import org.jfree.data.RangeType;
+import org.jfree.data.Range;
 import org.jfree.data.time.FixedMillisecond;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
-import org.jfree.data.xy.IntervalXYDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.ui.Layer;
 
 import com.tc.admin.AbstractClusterListener;
 import com.tc.admin.common.ApplicationContext;
@@ -47,8 +51,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.concurrent.Callable;
 
+import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -64,8 +73,15 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   private JPopupMenu         popupMenu;
   private RunGCAction        gcAction;
   private boolean            inited;
-  private final TimeSeries   dgcTimeSeries;
-  private final TimeSeries   releasedObjectsSeries;
+  private final ChartPanel   chartPanel;
+  private JPopupMenu         fChartPopupMenu;
+  private TimeSeries         liveObjectCountSeries;
+  private XYPlot             liveObjectCountPlot;
+  private DGCIntervalMarker  currentDGCMarker;
+  private DomainZoomListener fDomainZoomListener;
+  private boolean            fHandlingAxisChange;
+  private boolean            fZoomed;
+  private AbstractAction     fRestoreDefaultRangeAction;
 
   public GCStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -109,34 +125,20 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     table.add(popupMenu);
     table.addMouseListener(new TableMouseHandler());
 
-    String dgcTimeSeriesName = appContext.getString("dso.gcstats.graph.elapsedTime");
-    dgcTimeSeries = new TimeSeries(dgcTimeSeriesName, Second.class);
-    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", dgcTimeSeriesName + " (s.)",
-                                                       new TimeSeries[] { dgcTimeSeries }, true);
-    XYPlot plot = (XYPlot) chart.getPlot();
-    DateAxis axis = (DateAxis) plot.getDomainAxis();
-    axis.setFixedAutoRange(0.0);
-    releasedObjectsSeries = new TimeSeries(appContext.getString("dso.gcstats.graph.freedObjectCount"), Second.class);
-    IntervalXYDataset dataset = DemoChartFactory.createTimeSeriesDataset(releasedObjectsSeries);
-    plot.setDataset(1, dataset);
-    XYBarRenderer xyBarRenderer = new XYBarRenderer();
-    plot.setRenderer(1, xyBarRenderer);
-    xyBarRenderer.setShadowVisible(false);
-    NumberAxis garbageCountAxis = new NumberAxis(releasedObjectsSeries.getKey().toString());
-    plot.setRangeAxis(1, garbageCountAxis);
-    garbageCountAxis.setRangeType(RangeType.POSITIVE);
-    garbageCountAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_TICKS);
-    garbageCountAxis.setAutoRangeMinimumSize(1000.0);
-    NumberAxis elapsedTimeAxis = (NumberAxis) plot.getRangeAxis();
-    elapsedTimeAxis.setAutoRangeMinimumSize(10);
-    elapsedTimeAxis.setStandardTickUnits(DemoChartFactory.DEFAULT_INTEGER_TICKS);
-    elapsedTimeAxis.setLabelFont(garbageCountAxis.getLabelFont());
+    liveObjectCountSeries = new TimeSeries(appContext.getString("live.object.count"), Second.class);
+    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", appContext.getString("live.object.count"),
+                                                       new TimeSeries[] { liveObjectCountSeries }, false);
+    liveObjectCountPlot = (XYPlot) chart.getPlot();
+    chartPanel = BaseRuntimeStatsPanel.createChartPanel(chart);
+    chartPanel.setDomainZoomable(true);
+    chartPanel.setRangeZoomable(false);
+    chart.getXYPlot().getDomainAxis().addChangeListener(getDomainZoomListener());
+    chartPanel.setPopupMenu(getChartPopupMenu());
+    chartPanel.setToolTipText(appContext.getString("dgc.tip"));
 
-    plot.mapDatasetToRangeAxis(1, 1);
-
-    ChartPanel chartPanel = BaseRuntimeStatsPanel.createChartPanel(chart);
     chartPanel.setMinimumSize(new Dimension(0, 0));
     chartPanel.setPreferredSize(new Dimension(0, 200));
+    chartPanel.addMouseListener(new ChartMouseHandler());
 
     XSplitPane splitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, gcStatsPanel, chartPanel);
     splitter.setDefaultDividerLocation(0.65);
@@ -288,13 +290,36 @@ public class GCStatsPanel extends XContainer implements DGCListener {
         model.setGCStats(stats);
         for (GCStats stat : stats) {
           if (stat.getElapsedTime() != -1) {
-            FixedMillisecond t = new FixedMillisecond(stat.getStartTime());
-            dgcTimeSeries.addOrUpdate(t, stat.getElapsedTime() / 1000d);
-            releasedObjectsSeries.addOrUpdate(t, stat.getActualGarbageCount());
+            addDGCEvent(stat);
           }
         }
+        setRange();
       }
       gcAction.setEnabled(true);
+    }
+  }
+
+  private void setRange() {
+    DateAxis dateAxis = (DateAxis) liveObjectCountPlot.getDomainAxis();
+    GCStatsTableModel model = (GCStatsTableModel) table.getModel();
+    long lower = model.getLastStartTime();
+    long upper = model.getFirstEndTime();
+    if (lower < upper) {
+      dateAxis.setRange(lower, upper);
+    } else {
+      System.err.println("upper=" + new Date(upper) + " lower=" + new Date(lower));
+    }
+  }
+
+  private void updateCurrentDGCMarker(GCStats gcStats) {
+    if (currentDGCMarker == null) {
+      currentDGCMarker = new DGCIntervalMarker(gcStats);
+      liveObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.FOREGROUND);
+    } else {
+      currentDGCMarker.setGCStats(gcStats);
+    }
+    if (gcStats.getElapsedTime() != -1) {
+      currentDGCMarker = null;
     }
   }
 
@@ -346,13 +371,19 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       if (theClusterModel == null) { return; }
 
       gcAction.setEnabled(gcStats.getElapsedTime() != -1);
-      ((GCStatsTableModel) table.getModel()).addGCStats(gcStats);
+      GCStatsTableModel model = (GCStatsTableModel) table.getModel();
+      model.addGCStats(gcStats);
       if (gcAction.isEnabled()) {
-        FixedMillisecond t = new FixedMillisecond(gcStats.getStartTime());
-        dgcTimeSeries.addOrUpdate(t, gcStats.getElapsedTime() / 1000d);
-        releasedObjectsSeries.addOrUpdate(t, gcStats.getActualGarbageCount());
+        addDGCEvent(gcStats);
+        setRange();
       }
     }
+  }
+
+  private void addDGCEvent(GCStats stats) {
+    FixedMillisecond t = new FixedMillisecond(stats.getStartTime() + stats.getElapsedTime());
+    liveObjectCountSeries.addOrUpdate(t, stats.getBeginObjectCount() - stats.getActualGarbageCount());
+    updateCurrentDGCMarker(stats);
   }
 
   private class RunGCWorker extends BasicWorker<Void> {
@@ -388,6 +419,138 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     appContext.execute(new RunGCWorker());
   }
 
+  private JPopupMenu getChartPopupMenu() {
+    if (fChartPopupMenu == null) {
+      fChartPopupMenu = new JPopupMenu("Chart:");
+      fChartPopupMenu.add(fRestoreDefaultRangeAction = new RestoreDefaultRangeAction());
+    }
+    return fChartPopupMenu;
+  }
+
+  private DomainZoomListener getDomainZoomListener() {
+    if (fDomainZoomListener == null) fDomainZoomListener = new DomainZoomListener();
+    return fDomainZoomListener;
+  }
+
+  private class DomainZoomListener implements AxisChangeListener {
+    public void axisChanged(AxisChangeEvent ace) {
+      if (fHandlingAxisChange) return;
+      fHandlingAxisChange = true;
+      DateAxis srcAxis = (DateAxis) ace.getAxis();
+      Range domainRange = srcAxis.getRange();
+      ValueAxis domainAxis = liveObjectCountPlot.getDomainAxis();
+      if (!domainAxis.equals(srcAxis)) {
+        domainAxis.setRange(domainRange);
+      }
+      ValueAxis rangeAxis = liveObjectCountPlot.getRangeAxis();
+      if (rangeAxis != null) {
+        Range valueRange = iterateXYRangeBounds(liveObjectCountPlot.getDataset(), domainRange);
+        if (valueRange != null) {
+          valueRange = Range.expand(valueRange, 0.0d, 0.05d);
+          rangeAxis.setRange(valueRange);
+        }
+      }
+      fHandlingAxisChange = false;
+      setZoomed(true);
+    }
+
+    /**
+     * Iterates over the data item of the xy dataset to find the range bounds wrt domainRange.
+     * 
+     * @param dataset the dataset (<code>null</code> not permitted).
+     * @param domainRange the domain range (<code>null</code> not permitted).
+     * @return The range (possibly <code>null</code>).
+     */
+    public Range iterateXYRangeBounds(XYDataset dataset, Range domainRange) {
+      double minimum = Double.POSITIVE_INFINITY;
+      double maximum = Double.NEGATIVE_INFINITY;
+      int seriesCount = dataset.getSeriesCount();
+      for (int series = 0; series < seriesCount; series++) {
+        int itemCount = dataset.getItemCount(series);
+        for (int item = 0; item < itemCount; item++) {
+          double xvalue = dataset.getXValue(series, item);
+          if (domainRange.contains(xvalue)) {
+            double lvalue = dataset.getYValue(series, item);
+            double uvalue = lvalue;
+            if (!Double.isNaN(lvalue)) {
+              minimum = Math.min(minimum, lvalue);
+            }
+            if (!Double.isNaN(uvalue)) {
+              maximum = Math.max(maximum, uvalue);
+            }
+          }
+        }
+      }
+      if (minimum == Double.POSITIVE_INFINITY) {
+        return null;
+      } else {
+        return new Range(minimum, maximum);
+      }
+    }
+  }
+
+  private void setZoomed(boolean zoomed) {
+    fZoomed = zoomed;
+    fRestoreDefaultRangeAction.setEnabled(zoomed);
+  }
+
+  private boolean isZoomed() {
+    return fZoomed;
+  }
+
+  class RestoreDefaultRangeAction extends AbstractAction {
+    RestoreDefaultRangeAction() {
+      super("Restore default range");
+      putValue(SMALL_ICON, new ImageIcon(getClass().getResource("/com/tc/admin/icons/arrow_undo.png")));
+      setEnabled(isZoomed());
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      DateAxis dateAxis = ((DateAxis) liveObjectCountPlot.getDomainAxis());
+      dateAxis.removeChangeListener(getDomainZoomListener());
+      setRange();
+      dateAxis.addChangeListener(getDomainZoomListener());
+      chartPanel.restoreAutoRangeBounds();
+      setZoomed(false);
+    }
+  }
+
+  private class ChartMouseHandler extends MouseAdapter {
+    @Override
+    public void mouseClicked(MouseEvent me) {
+      Collection<?> domainMarkers = new HashSet();
+      Collection<?> fgDomainMarkers = liveObjectCountPlot.getDomainMarkers(Layer.FOREGROUND);
+      if (fgDomainMarkers != null) {
+        domainMarkers.addAll(new HashSet(fgDomainMarkers));
+      }
+      Collection<?> bgDomainMarkers = liveObjectCountPlot.getDomainMarkers(Layer.BACKGROUND);
+      if (bgDomainMarkers != null) {
+        domainMarkers.addAll(new HashSet(bgDomainMarkers));
+      }
+      if (domainMarkers.size() > 0) {
+        PlotRenderingInfo info = chartPanel.getChartRenderingInfo().getPlotInfo();
+        Insets insets = getInsets();
+        double x = (me.getX() - insets.left) / chartPanel.getScaleX();
+        double xx = liveObjectCountPlot.getDomainAxis().java2DToValue(x, info.getDataArea(),
+                                                                      liveObjectCountPlot.getDomainAxisEdge());
+        Iterator<?> domainMarkerIter = domainMarkers.iterator();
+        while (domainMarkerIter.hasNext()) {
+          IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
+          if (marker instanceof DGCIntervalMarker) {
+            if (xx >= marker.getStartValue() && xx <= marker.getEndValue()) {
+              DGCIntervalMarker dgcIntervalMarker = (DGCIntervalMarker) marker;
+              GCStats gcStats = dgcIntervalMarker.getGCStats();
+              GCStatsTableModel model = (GCStatsTableModel) table.getModel();
+              int row = model.iterationRow(gcStats.getIteration());
+              table.setSelectedRow(row);
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
   @Override
   public void tearDown() {
     clusterModel.removePropertyChangeListener(clusterListener);
@@ -400,6 +563,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     super.tearDown();
 
+    liveObjectCountSeries.clear();
+
     synchronized (this) {
       appContext = null;
       clusterModel = null;
@@ -407,6 +572,9 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       table = null;
       popupMenu = null;
       gcAction = null;
+      liveObjectCountSeries = null;
+      liveObjectCountPlot = null;
+      currentDGCMarker = null;
     }
   }
 }

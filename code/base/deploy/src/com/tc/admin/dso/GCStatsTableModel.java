@@ -37,7 +37,39 @@ public class GCStatsTableModel extends XObjectTableModel {
     set(wrappers);
   }
 
-  private int iterationRow(int iteration) {
+  public long getFirstStartTime() {
+    int rowCount = getRowCount();
+    return rowCount > 0 ? ((GCStatsWrapper) getObjectAt(0)).getStartTime() : System.currentTimeMillis();
+  }
+
+  public long getFirstEndTime() {
+    int rowCount = getRowCount();
+    if (rowCount > 0) {
+      GCStatsWrapper wrapper = (GCStatsWrapper) getObjectAt(0);
+      long elapsed = wrapper.getElapsedTime();
+      return elapsed != -1 ? wrapper.getStartTime() + elapsed : -1;
+    } else {
+      return System.currentTimeMillis();
+    }
+  }
+
+  public long getLastStartTime() {
+    int rowCount = getRowCount();
+    return rowCount > 0 ? ((GCStatsWrapper) getObjectAt(rowCount - 1)).getStartTime() : System.currentTimeMillis();
+  }
+
+  public long getLastEndTime() {
+    int rowCount = getRowCount();
+    if (rowCount > 0) {
+      GCStatsWrapper wrapper = (GCStatsWrapper) getObjectAt(rowCount - 1);
+      long elapsed = wrapper.getElapsedTime();
+      return elapsed != -1 ? wrapper.getStartTime() + elapsed : -1;
+    } else {
+      return System.currentTimeMillis();
+    }
+  }
+
+  public int iterationRow(int iteration) {
     int rowCount = getRowCount();
     for (int i = 0; i < rowCount; i++) {
       GCStatsWrapper wrapper = (GCStatsWrapper) getObjectAt(i);

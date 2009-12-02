@@ -35,6 +35,7 @@ import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.objectserver.api.GCStats;
 
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -277,14 +278,17 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     ChartPanel liveObjectCountPanel = createChartPanel(chart);
     parent.add(liveObjectCountPanel);
     liveObjectCountPanel.setPreferredSize(fDefaultGraphSize);
-    objectManagerTitlePattern = appContext.getString("dso.cluster.objectManager") + " (caching {0} of {1} instances)";
-    objectManagerTitle = BorderFactory.createTitledBorder("Object Manager");
+    String liveObjectCountLabel = appContext.getString("live.object.count");
+    objectManagerTitlePattern = liveObjectCountLabel + " (caching {0} of {1} instances)";
+    objectManagerTitle = BorderFactory.createTitledBorder(liveObjectCountLabel);
     liveObjectCountPanel.setBorder(objectManagerTitle);
     liveObjectCountPanel.setToolTipText("Total/Cached instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
     XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA, StandardXYToolTipGenerator
         .getTimeSeriesInstance(), null);
-    liveObjectCountPlot.setRenderer(0, areaRenderer2);
+    liveObjectCountPlot.setRenderer(areaRenderer2);
+    areaRenderer2.setSeriesPaint(0, Color.blue);
+    areaRenderer2.setSeriesPaint(1, Color.red);
   }
 
   private void setupLockRecallRatePanel(XContainer parent) {
@@ -329,8 +333,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void setupCacheManagerPanel(XContainer parent) {
-    cacheMissRateSeries = createTimeSeries("Cache Miss Rate");
-    diskFlushedRateSeries = createTimeSeries("Disk Flushed Rate");
+    cacheMissRateSeries = createTimeSeries(appContext.getString("dso.cache.miss.rate"));
+    diskFlushedRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
     ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { cacheMissRateSeries,
         diskFlushedRateSeries }, true));
     parent.add(cacheMissRatePanel);
