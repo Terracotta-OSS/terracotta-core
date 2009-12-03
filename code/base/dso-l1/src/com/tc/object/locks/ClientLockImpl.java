@@ -21,15 +21,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.Timer;
-import java.util.TimerTask;
 
 class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> implements ClientLock {
   
   private static final Set<LockLevel> WRITE_LEVELS  = EnumSet.of(LockLevel.WRITE, LockLevel.SYNCHRONOUS_WRITE);  
   private static final Set<LockLevel> READ_LEVELS   = EnumSet.of(LockLevel.READ);  
   
-  private static final Timer          LOCK_TIMER    = new Timer("ClientLockImpl Timer", true);
   private static final int            BLOCKING_LOCK = Integer.MIN_VALUE;
   
   private final LockID                lock;
@@ -369,14 +366,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
     }
 
-    //this is a slight hack to avoiding deadlocking the stage thread
     if (waiter != null) {
-      final LockWaiter unpark = waiter;
-      LOCK_TIMER.schedule(new TimerTask() {
-        @Override public void run() {
-          unpark.unpark();
-        }
-      }, 0);
+      waiter.unpark();
     }
   }
 

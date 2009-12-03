@@ -9,12 +9,17 @@ import com.tc.util.Assert;
 import com.tc.util.SinglyLinkedList;
 
 import java.util.Stack;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.locks.LockSupport;
 
 abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNode> {
-  private final ThreadID owner;
+
+  private static final Timer LOCK_TIMER    = new Timer("LockStateNode Timer", true);
   
-  private LockStateNode  next;
+  private final ThreadID     owner;
+  
+  private LockStateNode      next;
 
   LockStateNode(ThreadID owner) {
     this.owner = owner;
@@ -231,11 +236,20 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
-      switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
-        case READ:
-          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_READ);
-        case WRITE:
-          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_WRITE);
+      if (isAwarded()) {
+        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+          case READ:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
+          case WRITE:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+        }
+      } else {
+        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+          case READ:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_READ);
+          case WRITE:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.PENDING_WRITE);
+        }
       }
       throw new AssertionError();
     }
@@ -273,11 +287,20 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
-      switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
-        case READ:
-          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_READ, getTimeout());
-        case WRITE:
-          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
+      if (isAwarded()) {
+        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+          case READ:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
+          case WRITE:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+        }
+      } else {
+        switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
+          case READ:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_READ, getTimeout());
+          case WRITE:
+            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
+        }
       }
       throw new AssertionError();
     }
@@ -319,10 +342,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     void unpark() {
-      synchronized (waitObject) {
-        unparked = true;
-        waitObject.notifyAll();
-      }
+      //this is a slight hack to avoiding blocking the stage thread
+      LOCK_TIMER.schedule(new TimerTask() {
+        @Override public void run() {
+          synchronized (waitObject) {
+            unparked = true;
+            waitObject.notifyAll();
+          }
+        }
+      }, 0);
     }
     
     @Override
@@ -383,10 +411,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     }
     
     void unpark() {
-      synchronized (waitObject) {
-        notified = true;
-        waitObject.notifyAll();
-      }
+      //this is a slight hack to avoiding blocking the stage thread
+      LOCK_TIMER.schedule(new TimerTask() {
+        @Override public void run() {
+          synchronized (waitObject) {
+            notified = true;
+            waitObject.notifyAll();
+          }
+        }
+      }, 0);
     }
     
     public boolean equals(Object o) {
