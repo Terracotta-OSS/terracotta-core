@@ -18,7 +18,7 @@ public class ClientTableModel extends XObjectTableModel {
   private static final String[] FIELDS  = { "Host", "Port", "ChannelID", "LiveObjectCount" };
 
   private static final String[] HEADERS = { "dso.client.host", "dso.client.port", "dso.client.clientID",
-      "dso.client.liveObjectCount"     };
+      "live.object.count"              };
 
   public ClientTableModel(ApplicationContext appContext) {
     super(ClientWrapper.class, FIELDS, appContext.getMessages(HEADERS));
