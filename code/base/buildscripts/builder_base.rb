@@ -320,8 +320,7 @@ class TerracottaBuilder
   end
 
   def tim_get_index_cache
-    require 'tmpdir'
-    File.join(Dir.tmpdir, 'tcbuild-tim-get')
+    File.join("build", 'tcbuild-tim-get')
   end
 
   def delete_tim_get_index_cache
