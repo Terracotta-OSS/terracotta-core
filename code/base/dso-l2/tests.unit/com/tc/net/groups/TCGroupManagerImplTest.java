@@ -205,7 +205,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
     Thread.sleep(2000);
 
     assertEquals(0, joinedMemberSize(groups[0]));
-    assertEquals(0, joinedMemberSize(groups[1]));
+    // in very rare case, a member may be existing for very short time
+    if (joinedMemberSize(groups[1]) != 0) {
+      Thread.sleep(500);
+      assertEquals(0, joinedMemberSize(groups[1]));
+    }
 
     tearGroups();
   }
