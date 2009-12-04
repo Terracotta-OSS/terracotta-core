@@ -342,15 +342,10 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     void unpark() {
-      //this is a slight hack to avoiding blocking the stage thread
-      LOCK_TIMER.schedule(new TimerTask() {
-        @Override public void run() {
-          synchronized (waitObject) {
-            unparked = true;
-            waitObject.notifyAll();
-          }
-        }
-      }, 0);
+      synchronized (waitObject) {
+        unparked = true;
+        waitObject.notifyAll();
+      }
     }
     
     @Override

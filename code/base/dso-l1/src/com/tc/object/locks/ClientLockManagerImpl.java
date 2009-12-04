@@ -483,9 +483,14 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
-    Object old = inFlightLockQueries.put(requestor, contexts);
-    synchronized (old) {
-      old.notifyAll();
+    stateGuard.readLock().lock();
+    try {
+      Object old = inFlightLockQueries.put(requestor, contexts);
+      synchronized (old) {
+        old.notifyAll();
+      }
+    } finally {
+      stateGuard.readLock().unlock();
     }
   }
   
