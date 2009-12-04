@@ -306,8 +306,6 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     long upper = model.getFirstEndTime();
     if (lower < upper) {
       dateAxis.setRange(lower, upper);
-    } else {
-      System.err.println("upper=" + new Date(upper) + " lower=" + new Date(lower));
     }
   }
 
