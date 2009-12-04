@@ -89,7 +89,7 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
     if (value instanceof ManagedObjectFacade) {
       ManagedObjectFacade mof = (ManagedObjectFacade) value;
       ObjectID oid = mof.getObjectId();
-      label += " [@" + oid.getObjectID() + ", gid=" + oid.getGroupID() + "]";
+      label += " [@" + oid.getMaskedObjectID() + ", gid=" + oid.getGroupID() + "]";
     }
   }
 

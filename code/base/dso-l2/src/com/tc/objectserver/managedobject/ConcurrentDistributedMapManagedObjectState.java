@@ -70,7 +70,7 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
   @Override
   protected void basicWriteTo(ObjectOutput out) throws IOException {
     out.writeInt(dsoLockType);
-    out.writeLong(lockStrategy.getObjectID());
+    out.writeLong(lockStrategy.toLong());
   }
 
   @Override

@@ -46,7 +46,7 @@ public class ObjectIDTest extends TestCase {
     ObjectID nullID = ObjectID.NULL_ID;
     System.err.println("Null Id : " + nullID);
     System.err.println("Gid Is : " + nullID.getGroupID());
-    System.err.println("OID Is : " + nullID.getObjectID());
+    System.err.println("OID Is : " + nullID.getMaskedObjectID());
     System.err.println("Null hex is : " + Conversion.bytesToHex(Conversion.long2Bytes(nullID.toLong())));
   }
 
@@ -98,7 +98,7 @@ public class ObjectIDTest extends TestCase {
     ObjectID id = new ObjectID(oid, gid);
     // System.err.println(gid + "," + oid + " : " + id);
     assertEquals(gid, id.getGroupID());
-    assertEquals(oid, id.getObjectID());
+    assertEquals(oid, id.getMaskedObjectID());
     ObjectID clone = new ObjectID(id.toLong());
     assertIdentity(id, clone);
     assertFalse(ObjectID.NULL_ID.equals(id));

@@ -66,7 +66,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     return (int) gid;
   }
 
-  public long getObjectID() {
+  public long getMaskedObjectID() {
     long oid = toLong() & 0x00FFFFFFFFFFFFFFL;
     assert oid <= MAX_ID && oid >= 0;
     return oid;
@@ -75,7 +75,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
   @Override
   public String toString() {
     if (getGroupID() == 0 || toLong() == -1) { return super.toString(); }
-    return getIdentifierType() + "=" + "[" + getGroupID() + ":" + getObjectID() + "]";
+    return getIdentifierType() + "=" + "[" + getGroupID() + ":" + getMaskedObjectID() + "]";
   }
 
 }
