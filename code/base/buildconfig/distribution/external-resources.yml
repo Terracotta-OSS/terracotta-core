@@ -5,24 +5,25 @@ default_repos:
   - http://www.terracotta.org/download/reflector/maven2
 
 artifacts:
+# begin EHCACHE
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 1.7.1-SNAPSHOT
+    version: 1.7.2-SNAPSHOT
     destination: distributed-cache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 1.7.1-SNAPSHOT
+    version: 1.7.2-SNAPSHOT
     destination: distributed-cache
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 1.7.1-SNAPSHOT
+    version: 1.7.2-SNAPSHOT
     destination: distributed-cache
     
   - maven_artifact: false
@@ -44,4 +45,12 @@ artifacts:
     name: ehcache.xsd
     destination: distributed-cache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xsd
-  
+# end EHCACHE
+
+# begin QUARTZ
+  - maven_artifact: true
+    groupId: org.quartz-scheduler
+    artifactId: quartz
+    version: 1.7.0-SNAPSHOT
+    destination: quartz
+# end QUARTZ

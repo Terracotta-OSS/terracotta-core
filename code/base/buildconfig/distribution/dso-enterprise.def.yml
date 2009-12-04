@@ -132,6 +132,8 @@ postscripts:
         - tim-jetty-6.1
         - terracotta-hibernate-cache-ee
         - ehcache-terracotta-ee
+        - quartz-terracotta-ee
+        
   - extract-hibernate-cache-reference:
       args:
         - dest: hibernate

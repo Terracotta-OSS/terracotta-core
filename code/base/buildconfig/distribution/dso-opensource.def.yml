@@ -149,6 +149,7 @@ postscripts:
         - tim-jetty-6.1
         - terracotta-hibernate-cache
         - ehcache-terracotta
+        - quartz-terracotta
         
   - extract-hibernate-cache-reference:
       args:
