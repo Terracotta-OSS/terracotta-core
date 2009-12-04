@@ -52,7 +52,7 @@ artifacts:
   - maven_artifact: false
     name: ehcache.xml
     destination: distributed-cache
-    url: http://svn.terracotta.org/svn/ehcache/trunk/terracotta/src/main/config/ehcache.xml
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/src/main/config/ehcache.xml
     
   - maven_artifact: false
     name: ehcache.xsd
