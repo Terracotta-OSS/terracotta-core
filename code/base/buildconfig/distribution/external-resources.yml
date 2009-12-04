@@ -3,6 +3,7 @@ default_repos:
   - http://kong/maven2
   - http://forge-dev/repo
   - http://www.terracotta.org/download/reflector/maven2
+  - http://repo1.maven.org/maven2
 
 artifacts:
 # begin EHCACHE
@@ -25,7 +26,19 @@ artifacts:
     classifier: sources
     version: 1.7.2-SNAPSHOT
     destination: distributed-cache
-    
+
+  - maven_artifact: true
+    groupId: org.slf4j
+    artifactId: slf4j-api
+    version: 1.5.8
+    destination: distributed-cache
+
+  - maven_artifact: true
+    groupId: org.slf4j
+    artifactId: slf4j-jdk14
+    version: 1.5.8
+    destination: distributed-cache
+
   - maven_artifact: false
     name: RELEASE_NOTES.txt
     destination: distributed-cache
