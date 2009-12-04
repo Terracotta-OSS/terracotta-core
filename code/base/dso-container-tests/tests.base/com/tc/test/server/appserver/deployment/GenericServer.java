@@ -130,6 +130,8 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
       case AppServerInfo.TOMCAT:
       case AppServerInfo.JBOSS:
         parameters.appendJvmArgs("-Djvmroute=" + serverInstanceName);
+        parameters.appendJvmArgs("-XX:MaxPermSize=128m");
+        parameters.appendJvmArgs("-Xms128m -Xmx192m");
         break;
       case AppServerInfo.WEBLOGIC:
         // bumped up because ContainerHibernateTest was failing with WL 9
