@@ -157,7 +157,6 @@ class TerracottaBuilder
     option_parser.on('--no-demo') { @no_demo = true }
     option_parser.on('--no-schema') { @no_schema = true }
     option_parser.on('--no-jre') { @no_jre = true }
-    option_parser.on('--no-ehcache') { @no_ehcache = true }
     option_parser.on('--no-external-resrouces') { @no_external_resrouces = true }
     option_parser.on('--no-no') do 
       @no_ivy = true

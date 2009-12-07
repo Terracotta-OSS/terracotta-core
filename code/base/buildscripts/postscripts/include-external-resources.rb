@@ -15,7 +15,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def postscript(ant, build_environment, product_directory, *args)
     return if @no_demo
     return if @no_external_resources
-    return if @no_ehcache
 
     args.each do |resource_def|
       assemble_external_resource(resource_def)
