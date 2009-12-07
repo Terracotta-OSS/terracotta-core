@@ -23,6 +23,5 @@ public class TunnelingMessageConnectionWrapper extends TunnelingMessageConnectio
     
     JMXAttributeContext attributeContext = new JMXAttributeContext(this.channel, outboundMessage);
     jmAttributeProcessor.add(attributeContext);
-    new Exception().printStackTrace();
   }
 }
