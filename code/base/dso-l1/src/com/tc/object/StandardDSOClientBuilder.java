@@ -103,7 +103,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                            final DSOClientMessageChannel dsoChannel,
                                                            final int faultCount, final SessionManager sessionManager) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
+    Assert.assertNotNull(defaultGroups);
+    Assert.assertEquals(1, defaultGroups.length);
     return new RemoteObjectManagerImpl(defaultGroups[0], logger, dsoChannel.getRequestRootMessageFactory(), dsoChannel
         .getRequestManagedObjectMessageFactory(), faultCount, sessionManager);
   }
@@ -115,7 +116,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final KeysForOrphanedValuesMessageFactory kfovFactory,
                                                              final NodeMetaDataMessageFactory nmdmFactory) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
+    Assert.assertNotNull(defaultGroups);
+    Assert.assertEquals(1, defaultGroups.length);
+    
     return new ClusterMetaDataManagerImpl(defaultGroups[0], encoding, threadIDManager, nwoFactory, kfovFactory,
                                           nmdmFactory);
   }
@@ -145,7 +148,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                              final ClientGlobalTransactionManager gtxManager,
                                              final ClientLockManagerConfig config) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
+    Assert.assertNotNull(defaultGroups);
+    Assert.assertEquals(1, defaultGroups.length);
     RemoteLockManager remoteManager = new RemoteLockManagerImpl(dsoChannel.getClientIDProvider(), defaultGroups[0],
                                                                 lockRequestMessageFactory, gtxManager, lockStatManager);
     return new ClientLockManagerImpl(clientIDLogger, sessionManager, remoteManager, threadManager, config,
@@ -168,7 +172,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                  final SampledRateCounter transactionSizeCounter,
                                                                  final SampledRateCounter transactionsPerBatchCounter) {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
-    assert defaultGroups != null && defaultGroups.length == 1;
+    Assert.assertNotNull(defaultGroups);
+    Assert.assertEquals(1, defaultGroups.length);
     TransactionBatchFactory txBatchFactory = new TransactionBatchWriterFactory(dsoChannel
         .getCommitTransactionMessageFactory(), encoding, foldingConfig);
     return new RemoteTransactionManagerImpl(

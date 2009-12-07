@@ -4,6 +4,8 @@
  */
 package com.tc.admin.model;
 
+import com.tc.util.Assert;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
@@ -53,7 +55,7 @@ public abstract class BaseClusterNode implements IClusterNode {
 
   public synchronized void addPolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
                                          PolledAttributeListener listener) {
-    assert attributeSet != null;
+    Assert.assertNotNull(attributeSet);
 
     Iterator<String> attributeIter = attributeSet.iterator();
     while (attributeIter.hasNext()) {

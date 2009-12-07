@@ -32,6 +32,7 @@ import com.tc.statistics.config.StatisticsConfig;
 import com.tc.stats.DSOClassInfo;
 import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
+import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
@@ -1104,11 +1105,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void assertActiveCoordinator() {
-    boolean isActiveCoord = isActiveCoordinator();
-    if (!isActiveCoord) {
+    boolean activeCoordinator = isActiveCoordinator();
+    if (!activeCoordinator) {
       Thread.dumpStack();
     }
-    assert isActiveCoord;
+    Assert.assertTrue(activeCoordinator);
   }
 
   public boolean isActiveCoordinator() {

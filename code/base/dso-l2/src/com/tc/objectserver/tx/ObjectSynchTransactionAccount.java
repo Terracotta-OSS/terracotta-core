@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
    * measures.
    */
   public synchronized void addWaitee(NodeID waitee, TransactionID requestID) {
-    assert waitee.getNodeType() == NodeID.SERVER_NODE_TYPE;
+    Assert.assertEquals(NodeID.SERVER_NODE_TYPE, waitee.getNodeType());
     Set waitees = getOrCreate(requestID);
     waitees.add(waitee);
   }
@@ -81,7 +82,7 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
   }
 
   public synchronized boolean removeWaitee(NodeID waitee, TransactionID requestID) {
-    assert waitee.getNodeType() == NodeID.SERVER_NODE_TYPE;
+    Assert.assertEquals(NodeID.SERVER_NODE_TYPE, waitee.getNodeType());
     Set waiteesSet = (Set) txn2Waitees.get(requestID);
     if (waiteesSet == null) { return true; }
     waiteesSet.remove(waitee);

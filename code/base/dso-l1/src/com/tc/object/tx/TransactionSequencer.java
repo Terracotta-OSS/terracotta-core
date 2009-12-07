@@ -14,6 +14,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 import com.tc.util.Util;
@@ -133,7 +134,7 @@ public class TransactionSequencer {
     if (!txn.isConcurrent() && !folded) {
       // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
       TransactionID tid = txn.getTransactionID();
-      assert !tid.isNull();
+      Assert.assertFalse(tid.isNull());
       this.lockAccounting.add(tid, txn.getAllLockIDs());
     }
 

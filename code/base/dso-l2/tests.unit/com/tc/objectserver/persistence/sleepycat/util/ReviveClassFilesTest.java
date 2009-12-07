@@ -11,6 +11,7 @@ import com.tc.objectserver.managedobject.bytecode.PhysicalStateClassLoader;
 import com.tc.objectserver.persistence.sleepycat.AbstractDBUtilsTestBase;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.persistence.sleepycat.util.ReviveClassFiles;
+import com.tc.util.Assert;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,7 +34,7 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
     String[] files = classOutputDir.list();
     Arrays.sort(files);
     for (int j = 1; j < files.length; j++) {
-      assert (files[j].contains("Sample" + j));
+      Assert.assertTrue(files[j].contains("Sample" + j));
     }
 
     PhysicalStateClassLoader loader = new PhysicalStateClassLoader();

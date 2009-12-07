@@ -73,7 +73,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
 
   public void loadCollectionsToManagedState(PersistenceTransaction tx, ObjectID id, ManagedObjectState state)
       throws IOException, ClassNotFoundException, TCDatabaseException {
-    assert PersistentCollectionsUtil.isPersistableCollectionType(state.getType());
+    Assert.assertTrue(PersistentCollectionsUtil.isPersistableCollectionType(state.getType()));
 
     PersistableObjectState persistableState = (PersistableObjectState) state;
     Assert.assertNull(persistableState.getPersistentCollection());

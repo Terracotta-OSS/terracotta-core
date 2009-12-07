@@ -138,7 +138,9 @@ public class BasicTcObject extends AbstractTcObject implements IBasicObject {
 
   public IObject getField(int index) {
     int fieldCount = getFieldCount();
-    assert (index >= 0 && index < fieldCount);
+    if(!(index >= 0 && index < fieldCount)) {
+      throw new AssertionError("index not between 0 and " + fieldCount + ", value was = " + index);
+    }
 
     if (fields == null) {
       fields = new IObject[fieldCount];

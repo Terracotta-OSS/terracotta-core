@@ -21,6 +21,7 @@ import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.Util;
 import com.tcclient.cluster.DsoClusterInternal;
@@ -288,22 +289,31 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
 
   private synchronized void changeToPaused(final NodeID node) {
     Object old = this.groupStates.put(node, PAUSED);
-    assert old != PAUSED;
+   
+    if(old == PAUSED) {
+      throw new AssertionError("old value was already equal PAUSED");
+    }
     this.disconnected++;
-    assert this.disconnected <= this.groupIDs.length;
+    
+    if(!(this.disconnected <= this.groupIDs.length)) {
+      throw new AssertionError("disconnected count was greater then number of groups ( " + this.groupIDs.length + " ) , " +
+      		" disconnected = " + this.disconnected );
+    }
     notifyAll();
   }
 
   private synchronized void changeToStarting(final NodeID node) {
     Object old = this.groupStates.put(node, STARTING);
-    assert old == PAUSED;
+    Assert.assertEquals(old, PAUSED);
   }
 
   private synchronized void changeToRunning(final NodeID node) {
     Object old = this.groupStates.put(node, RUNNING);
-    assert old == STARTING;
+    Assert.assertEquals(old, STARTING);
     this.disconnected--;
-    assert this.disconnected >= 0;
+    if(this.disconnected < 0) {
+      throw new AssertionError("disconnected count is less than zero, disconnected = " + this.disconnected);
+    }
     notifyAll();
   }
 

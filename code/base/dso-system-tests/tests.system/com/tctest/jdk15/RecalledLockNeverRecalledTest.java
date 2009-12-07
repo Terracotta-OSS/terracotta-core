@@ -17,6 +17,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.ServerCrashingAppBase;
 import com.tctest.ServerCrashingTestBase;
@@ -82,7 +83,7 @@ public class RecalledLockNeverRecalledTest extends ServerCrashingTestBase {
 
     protected void runTest() throws Throwable {
       long gcTime = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_LOCKMANAGER_TIMEOUT_INTERVAL);
-      assert gcTime == 5000;
+      Assert.assertEquals(5000, gcTime);
       int index = barrier.await();
       switch (index) {
         case 0:

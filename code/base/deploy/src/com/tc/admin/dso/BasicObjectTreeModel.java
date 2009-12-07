@@ -11,6 +11,7 @@ import com.tc.admin.model.IBasicObject;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IObject;
 import com.tc.object.ObjectID;
+import com.tc.util.Assert;
 
 public class BasicObjectTreeModel extends XTreeModel {
   private final IAdminClientContext adminClientContext;
@@ -35,7 +36,7 @@ public class BasicObjectTreeModel extends XTreeModel {
   }
 
   private static boolean isResidentOnClient(IClient client, IObject object) {
-    assert client != null;
+    Assert.assertNotNull(client);
     while (object != null) {
       ObjectID oid = object.getObjectID();
       if (oid != null) { return client.isResident(oid); }
