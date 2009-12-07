@@ -30,7 +30,7 @@ public class ClientProvider implements JMXConnectorProvider {
     }
     final Map terracottaEnvironment = initialEnvironment != null ? new HashMap(initialEnvironment) : new HashMap();
     final MessageChannel channel = (MessageChannel) terracottaEnvironment.remove(JMX_MESSAGE_CHANNEL);
-    final TunnelingMessageConnection tmc = new TunnelingMessageConnection(channel, false);
+    final TunnelingMessageConnectionWrapper tmc = new TunnelingMessageConnectionWrapper(channel, false);
     final Map channelIdToMsgConnection = (Map) terracottaEnvironment.remove(CONNECTION_LIST);
 
     TunnelingMessageConnection prev = (TunnelingMessageConnection) channelIdToMsgConnection.put(channel.getChannelID(),
