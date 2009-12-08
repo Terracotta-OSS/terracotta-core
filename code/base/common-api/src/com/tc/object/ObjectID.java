@@ -62,7 +62,8 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     long oid = toLong();
     long gid = oid & 0xFF00000000000000L;
     gid = gid >>> 56;
-    if((gid < 0 && gid > 254)) {
+    if((gid < 0 || gid > 254)) {
+      System.err.println("gid is not between 0 and 254, the value was = " + gid);
       throw new AssertionError("gid is not between 0 and 254, the value was = " + gid);
     }
     return (int) gid;
