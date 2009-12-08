@@ -26,12 +26,13 @@ public abstract class AbstractStandaloneOneServerDeploymentTest extends Abstract
     this.server0 = server0;
   }
 
+  @Override
   protected boolean shouldKillAppServersEachRun() {
     return false;
   }
 
   public static abstract class StandaloneOneServerTestSetup extends ServerTestSetup {
-    private Log                    logger = LogFactory.getLog(getClass());
+    private final Log              logger = LogFactory.getLog(getClass());
 
     private final Class            testClass;
     private final String           context;
@@ -60,6 +61,11 @@ public abstract class AbstractStandaloneOneServerDeploymentTest extends Abstract
       this.start = start;
     }
 
+    protected void configureTcConfig(TcConfigBuilder clientConfig) {
+      // override this method to modify tc-config.xml
+    }
+
+    @Override
     protected void setUp() throws Exception {
       if (shouldDisable()) return;
       super.setUp();
@@ -71,7 +77,7 @@ public abstract class AbstractStandaloneOneServerDeploymentTest extends Abstract
         long l2 = System.currentTimeMillis();
         logger.info("### WAR build " + (l2 - l1) / 1000f + " at " + deployment.getFileSystemPath());
 
-        // configureTcConfig(tcConfigBuilder);
+        configureTcConfig(tcConfigBuilder);
         server0 = createServer(deployment);
 
         TestSuite suite = (TestSuite) getTest();
