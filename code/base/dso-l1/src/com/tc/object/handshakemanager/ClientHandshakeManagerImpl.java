@@ -295,7 +295,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
     this.disconnected++;
     
-    if(!(this.disconnected <= this.groupIDs.length)) {
+    if(this.disconnected > this.groupIDs.length) {
       throw new AssertionError("disconnected count was greater then number of groups ( " + this.groupIDs.length + " ) , " +
       		" disconnected = " + this.disconnected );
     }

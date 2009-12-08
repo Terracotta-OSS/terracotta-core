@@ -33,8 +33,8 @@ public class ReviveClassFilesTest extends AbstractDBUtilsTestBase {
     reviveClassFiles.reviveClassesFiles();
     String[] files = classOutputDir.list();
     Arrays.sort(files);
-    for (int j = 1; j < files.length; j++) {
-      Assert.assertTrue(files[j].contains("Sample" + j));
+    for (int j = 0; j < files.length; j++) {
+      Assert.assertTrue(files[j].contains("idx" + (j + 1)));
     }
 
     PhysicalStateClassLoader loader = new PhysicalStateClassLoader();

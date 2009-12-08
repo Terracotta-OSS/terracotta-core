@@ -20,7 +20,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
 
   // Only the last 7 bytes are used for object id, the 1st byte represent group id.
   // This still holds about 72 trillion object (72057594037927935) and 128 groups
-  public final static long     MAX_ID  = ((long) 1) << 56 - 1;
+  public final static long     MAX_ID  = 0x00FFFFFFFFFFFFFFL;
 
   /**
    * Create an ObjectID with the specified ID
@@ -62,7 +62,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     long oid = toLong();
     long gid = oid & 0xFF00000000000000L;
     gid = gid >>> 56;
-    if(!(gid >= 0 && gid <= 254)) {
+    if((gid < 0 && gid > 254)) {
       throw new AssertionError("gid is not between 0 and 254, the value was = " + gid);
     }
     return (int) gid;
@@ -70,7 +70,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
 
   public long getMaskedObjectID() {
     long oid = toLong() & 0x00FFFFFFFFFFFFFFL;
-    if(!(oid <= MAX_ID && oid >= 0)) {
+    if((oid > MAX_ID || oid < 0)) {
       throw new AssertionError("oid is not between 0 and " + MAX_ID + ", the value was = " + oid);
     }
     return oid;
@@ -78,7 +78,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
 
   @Override
   public String toString() {
-    if (getGroupID() == 0 || toLong() == -1) { return super.toString(); }
+    if (toLong() == -1 || getGroupID() == 0) { return super.toString(); }
     return getIdentifierType() + "=" + "[" + getGroupID() + ":" + getMaskedObjectID() + "]";
   }
 
