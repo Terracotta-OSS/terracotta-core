@@ -1,4 +1,4 @@
-Terracotta 3.1.1 - Simple Scale for Enterprise Java
+Terracotta Trunk/3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
 ===================================================
 
 Release Notes: http://www.terracotta.org/web/display/docs/Release+Notes
@@ -8,5 +8,5 @@ Mailing Lists: http://lists.terracotta.org
 Support:       http://www.terracotta.org/web/display/enterprise/Support
 
 ----
-Copyright (c) 2009, Terracotta, Inc.
+All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved. 
 http://www.terracotta.org
