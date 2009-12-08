@@ -34,7 +34,7 @@ goto tc_set_dso_boot_jar__1_0
  :tc_set_dso_boot_jar__1_0
    call :GETTEMPNAME
    %TC_JAVACMD% -cp %TC_JAR% com.tc.object.tools.BootJarSignature >%TMPFILE%
-   for /F %%i in (%TMPFILE%) do @set DSO_BOOT_JAR_NAME=%%i
+   set /p DSO_BOOT_JAR_NAME= < %TMPFILE%
    del %TMPFILE%
    set __BOOT_JAR_SIG_EXIT_CODE=%errorlevel%
    if %ERRORLEVEL% NEQ 0 goto tc_set_dso_boot_jar__1_0_1
@@ -73,7 +73,7 @@ goto tc_set_dso_boot_jar__1_0
      goto return
 
 :GETTEMPNAME
-set TMPFILE=%TMP%\boot-jar-path-%RANDOM%-%TIME:~6,5%.tmp
+set TMPFILE=%TMP%\boot-jar-path-%RANDOM%-%TIME:~9,2%.tmp
 set TMPFILE="%TMPFILE:"=%"
 if exist "%TMPFILE%" GOTO :GETTEMPNAME
 
