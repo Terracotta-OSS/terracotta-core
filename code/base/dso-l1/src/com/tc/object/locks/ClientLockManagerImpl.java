@@ -598,12 +598,14 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
   
   private boolean paused() {
-    stateGuard.readLock().lock();
-    try {
-      return state == State.PAUSED;
-    } finally {
-      stateGuard.readLock().unlock();
-    }
+    /*
+     * I would like to wrap this read in a stateGuard read lock but due to the current RRWL instrumentation
+     * forcing RRWL instances to use a fair policy and the associated "bug" in fair RRWL in JDK 1.5 I have
+     * to prevent reentrant acquires of the read lock. (CDV-1434)
+     * <p>
+     * Its okay though since this is private and all callers have already read locked.
+     */
+    return state == State.PAUSED;
   }
   
   static enum State {
