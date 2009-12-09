@@ -20,7 +20,7 @@ import com.tc.util.concurrent.SetOnceFlag;
  */
 public class AbstractTCNetworkMessage implements TCNetworkMessage {
   protected static final TCLogger logger                = TCLogging.getLogger(TCNetworkMessage.class);
-  private static final int        MESSAGE_DUMP_MAXBYTES = 64 * 1024;
+  private static final int        MESSAGE_DUMP_MAXBYTES = 4 * 1024;
 
   protected AbstractTCNetworkMessage(TCNetworkHeader header, boolean seal) {
     this(header, null, null, seal);
