@@ -486,7 +486,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   private TransactionAccount getOrCreateObjectSyncTransactionAccount(NodeID localID) {
     synchronized (this.transactionAccounts) {
-      Assert.assertEquals(ACTIVE_MODE, this.state);
+      if(this.state != ACTIVE_MODE) {
+        throw new AssertionError("ServerTransactionManager is not in ACTIVE_MODE, the current state = " + this.state );
+      }
       TransactionAccount ta = (TransactionAccount) this.transactionAccounts.get(localID);
       if (ta == null) {
         this.transactionAccounts.put(localID, (ta = new ObjectSynchTransactionAccount(localID)));
