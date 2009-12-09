@@ -43,10 +43,10 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
   }
 
   private static long getObjectID(long oid, int gid) {
-    if (gid < 0 || gid > 254 || oid < 0 || oid > MAX_ID) throw new AssertionError(
-                                                                                  "Currently only supports upto 255 Groups and "
-                                                                                      + MAX_ID + " objects : " + gid
-                                                                                      + "," + oid);
+    if (gid < 0 || gid > 254 || oid < 0 || oid > MAX_ID) { throw new AssertionError(
+                                                                                    "Currently only supports upto 255 Groups and "
+                                                                                        + MAX_ID + " objects : " + gid
+                                                                                        + "," + oid); }
     long gidLong = (long) gid & 0xFF;
     gidLong = gidLong << 56;
     oid = gidLong | oid;
@@ -59,20 +59,19 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
   }
 
   public int getGroupID() {
+    if (isNull()) { return 0; } // Null ObjectIDs are mapped to Group 0
     long oid = toLong();
     long gid = oid & 0xFF00000000000000L;
     gid = gid >>> 56;
-    if((gid < 0 || gid > 254)) {
-      throw new AssertionError("gid is not between 0 and 254, the value was = " + gid);
-    }
+    if ((gid < 0 || gid > 254)) { throw new AssertionError("gid is not between 0 and 254, the value was = " + gid); }
     return (int) gid;
   }
 
   public long getMaskedObjectID() {
+    if (isNull()) { throw new AssertionError("Can't call getMaskedObjectID() on NULL ID"); }
     long oid = toLong() & 0x00FFFFFFFFFFFFFFL;
-    if((oid > MAX_ID || oid < 0)) {
-      throw new AssertionError("oid is not between 0 and " + MAX_ID + ", the value was = " + oid);
-    }
+    if ((oid > MAX_ID || oid < 0)) { throw new AssertionError("oid is not between 0 and " + MAX_ID
+                                                              + ", the value was = " + oid); }
     return oid;
   }
 
