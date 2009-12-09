@@ -293,7 +293,10 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     if(old == PAUSED) {
       throw new AssertionError("old value was already equal PAUSED");
     }
-    this.disconnected++;
+    
+    if(old == RUNNING) {
+      this.disconnected++;
+    }
     
     if(this.disconnected > this.groupIDs.length) {
       throw new AssertionError("disconnected count was greater then number of groups ( " + this.groupIDs.length + " ) , " +
