@@ -63,15 +63,16 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
     long oid = toLong();
     long gid = oid & 0xFF00000000000000L;
     gid = gid >>> 56;
-    if ((gid < 0 || gid > 254)) { throw new AssertionError("gid is not between 0 and 254, the value was = " + gid); }
+    if ((gid < 0 || gid > 254)) { throw new AssertionError("Group ID is not between 0 and 254, the value was = " + gid
+                                                           + " id = " + toLong()); }
     return (int) gid;
   }
 
   public long getMaskedObjectID() {
     if (isNull()) { throw new AssertionError("Can't call getMaskedObjectID() on NULL ID"); }
     long oid = toLong() & 0x00FFFFFFFFFFFFFFL;
-    if ((oid > MAX_ID || oid < 0)) { throw new AssertionError("oid is not between 0 and " + MAX_ID
-                                                              + ", the value was = " + oid); }
+    if ((oid > MAX_ID || oid < 0)) { throw new AssertionError("Oid is not between 0 and " + MAX_ID
+                                                              + ", the value was = " + oid + " id = " + toLong()); }
     return oid;
   }
 
