@@ -24,8 +24,6 @@ import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterModelElement;
-import com.tc.admin.model.IServer;
-import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
@@ -124,6 +122,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
     }
   }
 
+  // TODO: this is broken wrt AA as only the active coordinator will be used.
+
   private synchronized void handleDSOStats(PolledAttributesResult result) {
     IClusterModel theClusterModel = client.getClusterModel();
     if (theClusterModel != null) {
@@ -137,34 +137,29 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
         long pendingTxn = 0;
         Number n;
 
-        for (IServerGroup group : theClusterModel.getServerGroups()) {
-          IServer theServer = group.getActiveServer();
-          if (theServer.isReady()) {
-            n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-            if (n != null) {
-              if (flush >= 0) flush += n.longValue();
-            } else {
-              flush = -1;
-            }
-            n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-            if (n != null) {
-              if (fault >= 0) fault += n.longValue();
-            } else {
-              fault = -1;
-            }
-            n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE);
-            if (n != null) {
-              if (txn >= 0) txn += n.longValue();
-            } else {
-              txn = -1;
-            }
-            n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-            if (n != null) {
-              if (pendingTxn >= 0) pendingTxn += n.longValue();
-            } else {
-              pendingTxn = -1;
-            }
-          }
+        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_OBJECT_FLUSH_RATE);
+        if (n != null) {
+          if (flush >= 0) flush += n.longValue();
+        } else {
+          flush = -1;
+        }
+        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_OBJECT_FAULT_RATE);
+        if (n != null) {
+          if (fault >= 0) fault += n.longValue();
+        } else {
+          fault = -1;
+        }
+        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+        if (n != null) {
+          if (pendingTxn >= 0) pendingTxn += n.longValue();
+        } else {
+          pendingTxn = -1;
+        }
+        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_TRANSACTION_RATE);
+        if (n != null) {
+          if (txn >= 0) txn += n.longValue();
+        } else {
+          txn = -1;
         }
 
         final long theFlushRate = flush;
