@@ -585,7 +585,7 @@ public class ObjectRequestManagerTest extends TestCase {
     ObjectIDSet oidSet = new ObjectIDSet();
 
     for (int i = 0; i < len; i++) {
-      oidSet.add(new ObjectID(ran.nextInt()));
+      oidSet.add(new ObjectID(ran.nextInt(Integer.MAX_VALUE)));
     }
     return oidSet;
   }
