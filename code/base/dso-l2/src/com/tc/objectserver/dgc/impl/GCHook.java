@@ -18,6 +18,8 @@ public interface GCHook {
 
   public ObjectIDSet getRootObjectIDs(ObjectIDSet candidateIDs);
 
+  public int getLiveObjectCount();
+
   public GarbageCollectionInfo createGCInfo(GarbageCollectionID id);
 
   public String getDescription();

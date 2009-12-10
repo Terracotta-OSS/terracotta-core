@@ -163,7 +163,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     out.indent().print("pending: ").visit(this.pending).flush();
     out.indent().print("objectStore: ").duplicateAndIndent().visit(this.objectStore).flush();
     out.indent().print("stateManager: ").duplicateAndIndent().visit(this.stateManager).flush();
-    
+
     try {
 
       StringBuffer rootBuff = new StringBuffer();
@@ -174,11 +174,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         }
       }
       out.indent().print("roots: " + rootBuff.toString()).println().flush();
-      
+
     } catch (Throwable t) {
       logger.error("exception printing roots in ObjectManagerImpl", t);
     }
-    
+
     return out;
   }
 
@@ -630,8 +630,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public int getLiveObjectCount() {
     return this.objectStore.getObjectCount();
   }
-  
-  //Note: Not synchronized, opting for performance over accuracy.
+
+  // Note: Not synchronized, opting for performance over accuracy.
   public int getCachedObjectCount() {
     return references_size();
   }
@@ -895,9 +895,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     int evicted = (toFlush.size() + removed.size());
-    
+
     stats.flushed(evicted);
-    
+
     // Let DGC work for us
     removed = null;
     removalCandidates = null;

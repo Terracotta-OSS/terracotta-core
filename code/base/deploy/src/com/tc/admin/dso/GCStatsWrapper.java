@@ -49,6 +49,10 @@ public class GCStatsWrapper implements GCStats, Comparable {
     return gcStats.getBeginObjectCount();
   }
 
+  public long getEndObjectCount() {
+    return gcStats.getEndObjectCount();
+  }
+
   public long getPausedStageTime() {
     return gcStats.getPausedStageTime();
   }

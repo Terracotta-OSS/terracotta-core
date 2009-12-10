@@ -201,6 +201,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     gcInfo.setDeleteStageTime(elapsed);
     long endMillis = System.currentTimeMillis();
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+    gcInfo.setEndObjectCount(managed.size());
 
     gcPublisher.fireGCCompletedEvent(gcInfo);
 
@@ -258,9 +259,12 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
       return new ObjectIDSet(refs);
     }
   }
-  
+
   public String getObjectTypeFromID(ObjectID id, boolean cacheOnly) {
     return null;
   }
 
+  public int getLiveObjectCount() {
+    return managed.size();
+  }
 }

@@ -23,6 +23,7 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
   private long                              pauseStageTime        = NOT_INITIALIZED;
   private long                              deleteStageTime       = NOT_INITIALIZED;
   private long                              elapsedTime           = NOT_INITIALIZED;
+  private long                              endObjectCount        = NOT_INITIALIZED;
   private long                              totalMarkCycleTime    = NOT_INITIALIZED;
   private long                              candidateGarbageCount = NOT_INITIALIZED;
   private long                              actualGarbageCount    = NOT_INITIALIZED;
@@ -93,6 +94,14 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
 
   public long getBeginObjectCount() {
     return this.beginObjectCount;
+  }
+
+  public void setEndObjectCount(long count) {
+    this.endObjectCount = count;
+  }
+
+  public long getEndObjectCount() {
+    return this.endObjectCount;
   }
 
   public void setMarkStageTime(long time) {
@@ -180,6 +189,9 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
     if (this.beginObjectCount != NOT_INITIALIZED) {
       gcInfo.append(" begin object count = " + this.beginObjectCount);
     }
+    if (this.endObjectCount != NOT_INITIALIZED) {
+      gcInfo.append(" end object count = " + this.endObjectCount);
+    }
     if (this.markStageTime != NOT_INITIALIZED) {
       gcInfo.append(" markStageTime = " + this.markStageTime);
     }
@@ -221,9 +233,10 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
     if (obj instanceof GarbageCollectionInfo) {
       GarbageCollectionInfo other = (GarbageCollectionInfo) obj;
       return (this.gcID.equals(other.gcID) && this.fullGC == other.fullGC && this.startTime == other.startTime
-              && this.beginObjectCount == other.beginObjectCount && this.markStageTime == other.markStageTime
-              && this.pauseStageTime == other.pauseStageTime && this.deleteStageTime == other.deleteStageTime
-              && this.elapsedTime == other.elapsedTime && this.totalMarkCycleTime == other.totalMarkCycleTime
+              && this.beginObjectCount == other.beginObjectCount && this.endObjectCount == other.endObjectCount
+              && this.markStageTime == other.markStageTime && this.pauseStageTime == other.pauseStageTime
+              && this.deleteStageTime == other.deleteStageTime && this.elapsedTime == other.elapsedTime
+              && this.totalMarkCycleTime == other.totalMarkCycleTime
               && this.candidateGarbageCount == other.candidateGarbageCount
               && this.preRescueCount == other.preRescueCount && this.rescue1Count == other.rescue1Count
               && this.rescue1Time == other.rescue1Time && this.rescue2Time == other.rescue2Time);
@@ -239,6 +252,7 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
     this.fullGC = serialInput.readBoolean();
     this.startTime = serialInput.readLong();
     this.beginObjectCount = serialInput.readLong();
+    this.endObjectCount = serialInput.readLong();
     this.markStageTime = serialInput.readLong();
     this.pauseStageTime = serialInput.readLong();
     this.deleteStageTime = serialInput.readLong();
@@ -259,6 +273,7 @@ public class GarbageCollectionInfo implements Cloneable, TCSerializable {
     serialOutput.writeBoolean(this.fullGC);
     serialOutput.writeLong(this.startTime);
     serialOutput.writeLong(this.beginObjectCount);
+    serialOutput.writeLong(this.endObjectCount);
     serialOutput.writeLong(this.markStageTime);
     serialOutput.writeLong(this.pauseStageTime);
     serialOutput.writeLong(this.deleteStageTime);

@@ -57,6 +57,7 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -74,8 +75,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   private boolean            inited;
   private final ChartPanel   chartPanel;
   private JPopupMenu         fChartPopupMenu;
-  private TimeSeries         liveObjectCountSeries;
-  private XYPlot             liveObjectCountPlot;
+  private TimeSeries         endObjectCountSeries;
+  private XYPlot             endObjectCountPlot;
   private DGCIntervalMarker  currentDGCMarker;
   private DomainZoomListener fDomainZoomListener;
   private boolean            fHandlingAxisChange;
@@ -124,16 +125,16 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     table.add(popupMenu);
     table.addMouseListener(new TableMouseHandler());
 
-    liveObjectCountSeries = new TimeSeries(appContext.getString("live.object.count"), Second.class);
-    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", appContext.getString("live.object.count"),
-                                                       new TimeSeries[] { liveObjectCountSeries }, false);
-    liveObjectCountPlot = (XYPlot) chart.getPlot();
+    endObjectCountSeries = new TimeSeries(appContext.getString("end.object.count"), Second.class);
+    JFreeChart chart = DemoChartFactory.getXYLineChart("", "", "", new TimeSeries[] { endObjectCountSeries }, false);
+    endObjectCountPlot = (XYPlot) chart.getPlot();
     chartPanel = BaseRuntimeStatsPanel.createChartPanel(chart);
     chartPanel.setDomainZoomable(true);
     chartPanel.setRangeZoomable(false);
     chart.getXYPlot().getDomainAxis().addChangeListener(getDomainZoomListener());
     chartPanel.setPopupMenu(getChartPopupMenu());
     chartPanel.setToolTipText(appContext.getString("dgc.tip"));
+    chartPanel.setBorder(BorderFactory.createTitledBorder(appContext.getString("end.object.count")));
 
     chartPanel.setMinimumSize(new Dimension(0, 0));
     chartPanel.setPreferredSize(new Dimension(0, 200));
@@ -299,7 +300,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   }
 
   private void setRange() {
-    DateAxis dateAxis = (DateAxis) liveObjectCountPlot.getDomainAxis();
+    DateAxis dateAxis = (DateAxis) endObjectCountPlot.getDomainAxis();
     GCStatsTableModel model = (GCStatsTableModel) table.getModel();
     long lower = model.getLastStartTime();
     long upper = model.getFirstEndTime();
@@ -311,7 +312,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   private void updateCurrentDGCMarker(GCStats gcStats) {
     if (currentDGCMarker == null) {
       currentDGCMarker = new DGCIntervalMarker(gcStats);
-      liveObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.FOREGROUND);
+      endObjectCountPlot.addDomainMarker(currentDGCMarker, Layer.FOREGROUND);
     } else {
       currentDGCMarker.setGCStats(gcStats);
     }
@@ -379,7 +380,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
   private void addDGCEvent(GCStats stats) {
     FixedMillisecond t = new FixedMillisecond(stats.getStartTime() + stats.getElapsedTime());
-    liveObjectCountSeries.addOrUpdate(t, stats.getBeginObjectCount() - stats.getActualGarbageCount());
+    endObjectCountSeries.addOrUpdate(t, stats.getEndObjectCount());
     updateCurrentDGCMarker(stats);
   }
 
@@ -435,13 +436,13 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       fHandlingAxisChange = true;
       DateAxis srcAxis = (DateAxis) ace.getAxis();
       Range domainRange = srcAxis.getRange();
-      ValueAxis domainAxis = liveObjectCountPlot.getDomainAxis();
+      ValueAxis domainAxis = endObjectCountPlot.getDomainAxis();
       if (!domainAxis.equals(srcAxis)) {
         domainAxis.setRange(domainRange);
       }
-      ValueAxis rangeAxis = liveObjectCountPlot.getRangeAxis();
+      ValueAxis rangeAxis = endObjectCountPlot.getRangeAxis();
       if (rangeAxis != null) {
-        Range valueRange = iterateXYRangeBounds(liveObjectCountPlot.getDataset(), domainRange);
+        Range valueRange = iterateXYRangeBounds(endObjectCountPlot.getDataset(), domainRange);
         if (valueRange != null) {
           valueRange = Range.expand(valueRange, 0.0d, 0.05d);
           rangeAxis.setRange(valueRange);
@@ -503,7 +504,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
 
     public void actionPerformed(ActionEvent ae) {
-      DateAxis dateAxis = ((DateAxis) liveObjectCountPlot.getDomainAxis());
+      DateAxis dateAxis = ((DateAxis) endObjectCountPlot.getDomainAxis());
       dateAxis.removeChangeListener(getDomainZoomListener());
       setRange();
       dateAxis.addChangeListener(getDomainZoomListener());
@@ -516,11 +517,11 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     @Override
     public void mouseClicked(MouseEvent me) {
       Collection<?> domainMarkers = new HashSet();
-      Collection<?> fgDomainMarkers = liveObjectCountPlot.getDomainMarkers(Layer.FOREGROUND);
+      Collection<?> fgDomainMarkers = endObjectCountPlot.getDomainMarkers(Layer.FOREGROUND);
       if (fgDomainMarkers != null) {
         domainMarkers.addAll(new HashSet(fgDomainMarkers));
       }
-      Collection<?> bgDomainMarkers = liveObjectCountPlot.getDomainMarkers(Layer.BACKGROUND);
+      Collection<?> bgDomainMarkers = endObjectCountPlot.getDomainMarkers(Layer.BACKGROUND);
       if (bgDomainMarkers != null) {
         domainMarkers.addAll(new HashSet(bgDomainMarkers));
       }
@@ -528,8 +529,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
         PlotRenderingInfo info = chartPanel.getChartRenderingInfo().getPlotInfo();
         Insets insets = getInsets();
         double x = (me.getX() - insets.left) / chartPanel.getScaleX();
-        double xx = liveObjectCountPlot.getDomainAxis().java2DToValue(x, info.getDataArea(),
-                                                                      liveObjectCountPlot.getDomainAxisEdge());
+        double xx = endObjectCountPlot.getDomainAxis().java2DToValue(x, info.getDataArea(),
+                                                                     endObjectCountPlot.getDomainAxisEdge());
         Iterator<?> domainMarkerIter = domainMarkers.iterator();
         while (domainMarkerIter.hasNext()) {
           IntervalMarker marker = (IntervalMarker) domainMarkerIter.next();
@@ -560,7 +561,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
 
     super.tearDown();
 
-    liveObjectCountSeries.clear();
+    endObjectCountSeries.clear();
 
     synchronized (this) {
       appContext = null;
@@ -569,8 +570,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       table = null;
       popupMenu = null;
       gcAction = null;
-      liveObjectCountSeries = null;
-      liveObjectCountPlot = null;
+      endObjectCountSeries = null;
+      endObjectCountPlot = null;
       currentDGCMarker = null;
     }
   }

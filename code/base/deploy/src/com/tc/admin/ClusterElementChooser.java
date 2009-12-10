@@ -79,7 +79,7 @@ public abstract class ClusterElementChooser extends TreeComboBox {
 
   protected abstract XTreeNode[] createTopLevelNodes();
 
-  private void setupTreeModel() {
+  protected void setupTreeModel() {
     XRootNode root = (XRootNode) treeModel.getRoot();
     for (XTreeNode child : createTopLevelNodes()) {
       root.addChild(child);

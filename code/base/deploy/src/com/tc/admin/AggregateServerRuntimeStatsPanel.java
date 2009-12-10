@@ -55,8 +55,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private TimeSeries               clientFlushRateSeries;
   private TimeSeries               clientFaultRateSeries;
   private TimeSeries               txnRateSeries;
-  private TimeSeries               cacheMissRateSeries;
-  private TimeSeries               diskFlushedRateSeries;
+  private TimeSeries               diskFaultRateSeries;
+  private TimeSeries               diskFlushRateSeries;
   private XYPlot                   liveObjectCountPlot;
   private DGCIntervalMarker        currentDGCMarker;
   private String                   objectManagerTitlePattern;
@@ -245,8 +245,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       if (flush != -1) updateSeries(clientFlushRateSeries, Long.valueOf(flush));
       if (fault != -1) updateSeries(clientFaultRateSeries, Long.valueOf(fault));
       if (txn != -1) updateSeries(txnRateSeries, Long.valueOf(txn));
-      if (cacheMiss != -1) updateSeries(cacheMissRateSeries, Long.valueOf(cacheMiss));
-      if (diskFlushedRate != -1) updateSeries(diskFlushedRateSeries, Long.valueOf(diskFlushedRate));
+      if (cacheMiss != -1) updateSeries(diskFaultRateSeries, Long.valueOf(cacheMiss));
+      if (diskFlushedRate != -1) updateSeries(diskFlushRateSeries, Long.valueOf(diskFlushedRate));
       if (liveObjectCount != -1) {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
         objectManagerTitle
@@ -333,10 +333,10 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private void setupCacheManagerPanel(XContainer parent) {
-    cacheMissRateSeries = createTimeSeries(appContext.getString("dso.cache.miss.rate"));
-    diskFlushedRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
-    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { cacheMissRateSeries,
-        diskFlushedRateSeries }, true));
+    diskFaultRateSeries = createTimeSeries(appContext.getString("dso.disk.fault.rate"));
+    diskFlushRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
+    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { diskFaultRateSeries,
+        diskFlushRateSeries }, true));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
     cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.cache-manager")));
@@ -381,13 +381,13 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       list.add(txnRateSeries);
       txnRateSeries = null;
     }
-    if (cacheMissRateSeries != null) {
-      list.add(cacheMissRateSeries);
-      cacheMissRateSeries = null;
+    if (diskFaultRateSeries != null) {
+      list.add(diskFaultRateSeries);
+      diskFaultRateSeries = null;
     }
-    if (diskFlushedRateSeries != null) {
-      list.add(diskFlushedRateSeries);
-      diskFlushedRateSeries = null;
+    if (diskFlushRateSeries != null) {
+      list.add(diskFlushRateSeries);
+      diskFlushRateSeries = null;
     }
     if (liveObjectCountSeries != null) {
       list.add(liveObjectCountSeries);

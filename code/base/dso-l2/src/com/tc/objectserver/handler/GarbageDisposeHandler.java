@@ -39,16 +39,16 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     this.publisher = publisher;
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     GCResultContext gcResult = (GCResultContext) context;
     GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
-    
-      
+
     publisher.fireGCDeleteEvent(gcInfo);
     long start = System.currentTimeMillis();
     SortedSet sortedGarbage = gcResult.getGCedObjectIDs();
     gcInfo.setActualGarbageCount(sortedGarbage.size());
-    
+
     if (sortedGarbage.size() <= deleteBatchSize) {
       removeFromStore(sortedGarbage);
     } else {
@@ -65,11 +65,11 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
       }
     }
     long elapsed = System.currentTimeMillis() - start;
-    gcInfo.setDeleteStageTime(elapsed); 
+    gcInfo.setDeleteStageTime(elapsed);
     long endMillis = System.currentTimeMillis();
     gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+    gcInfo.setEndObjectCount(managedObjectPersistor.getObjectCount());
     publisher.fireGCCompletedEvent(gcInfo);
-   
   }
 
   private void removeFromStore(SortedSet<ObjectID> sortedGarbage) {

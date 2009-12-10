@@ -21,6 +21,7 @@ public class GCStatsImpl implements GCStats, Serializable {
   private final long                    startTime;
   private long                          elapsedTime           = NOT_INITIALIZED;
   private long                          beginObjectCount      = NOT_INITIALIZED;
+  private long                          endObjectCount        = NOT_INITIALIZED;
   private long                          candidateGarbageCount = NOT_INITIALIZED;
   private long                          actualGarbageCount    = NOT_INITIALIZED;
   private long                          markStageTime         = NOT_INITIALIZED;
@@ -75,6 +76,10 @@ public class GCStatsImpl implements GCStats, Serializable {
     return this.beginObjectCount;
   }
 
+  public synchronized long getEndObjectCount() {
+    return this.endObjectCount;
+  }
+
   public synchronized long getCandidateGarbageCount() {
     return this.candidateGarbageCount;
   }
@@ -109,6 +114,10 @@ public class GCStatsImpl implements GCStats, Serializable {
 
   public synchronized void setBeginObjectCount(long count) {
     this.beginObjectCount = count;
+  }
+
+  public synchronized void setEndObjectCount(long count) {
+    this.endObjectCount = count;
   }
 
   public synchronized void setCandidateGarbageCount(long count) {
@@ -149,8 +158,9 @@ public class GCStatsImpl implements GCStats, Serializable {
            + " ] : startTime = " + formatAsDate(this.startTime) + "; elapsedTime = " + formatTime(this.elapsedTime)
            + "; markStageTime = " + formatTime(markStageTime) + "; pausedStageTime = "
            + formatTime(this.pausedStageTime) + "; deleteStageTime = " + formatTime(this.deleteStageTime)
-           + "; beginObjectCount = " + this.beginObjectCount + "; candidateGarbageCount = "
-           + this.candidateGarbageCount + "; actualGarbageCount = " + this.actualGarbageCount;
+           + "; beginObjectCount = " + this.beginObjectCount + "; endObjectCount = " + this.endObjectCount
+           + "; candidateGarbageCount = " + this.candidateGarbageCount + "; actualGarbageCount = "
+           + this.actualGarbageCount;
   }
 
 }

@@ -30,4 +30,8 @@ public abstract class AbstractGCHook implements GCHook {
   public void waitUntilReadyToGC() {
     this.objectManager.waitUntilReadyToGC();
   }
+
+  public int getLiveObjectCount() {
+    return this.objectManager.getLiveObjectCount();
+  }
 }

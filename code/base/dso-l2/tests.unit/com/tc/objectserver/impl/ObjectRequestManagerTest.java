@@ -939,6 +939,10 @@ public class ObjectRequestManagerTest extends TestCase {
     public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
       throw new NotImplementedException(TestObjectManager.class);
     }
+
+    public int getLiveObjectCount() {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
   }
 
   private static class TestMessageChannel implements MessageChannel {

@@ -105,6 +105,8 @@ public interface ObjectManager extends ManagedObjectProvider {
    */
   public void waitUntilReadyToGC();
 
+  public int getLiveObjectCount();
+
   /**
    * Called by DGC thread (in object manager)
    * 

@@ -240,9 +240,12 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   public ObjectIDSet getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
     throw new ImplementMe();
   }
-  
+
   public String getObjectTypeFromID(ObjectID id) {
     return "";
   }
 
+  public int getLiveObjectCount() {
+    return 0;
+  }
 }

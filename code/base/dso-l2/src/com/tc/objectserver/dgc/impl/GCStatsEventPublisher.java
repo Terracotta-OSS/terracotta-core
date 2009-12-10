@@ -76,6 +76,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     GCStatsImpl gcStats = getGCStats(info);
+    gcStats.setEndObjectCount(info.getEndObjectCount());
     gcStats.setCompleteState();
     fireGCStatsEvent(gcStats);
   }
@@ -100,6 +101,7 @@ public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter 
     gcStats.setElapsedTime(info.getElapsedTime());
     gcStats.setMarkStageTime(info.getMarkStageTime());
     gcStats.setPausedStageTime(info.getPausedStageTime());
+    gcStats.setEndObjectCount(info.getEndObjectCount());
     return gcStats;
   }
 

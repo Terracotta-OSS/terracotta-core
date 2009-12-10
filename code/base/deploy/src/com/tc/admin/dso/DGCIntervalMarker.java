@@ -83,6 +83,9 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
     if (dgcInfo.getDeleteStageTime() != -1) {
       buildRow(sb, "delete stage time (ms.)", numFormat.format(dgcInfo.getDeleteStageTime()));
     }
+    if (dgcInfo.getEndObjectCount() != -1) {
+      buildRow(sb, "end object count", numFormat.format(dgcInfo.getEndObjectCount()));
+    }
     sb.append("</table></html>");
     fToolTip = sb.toString();
   }

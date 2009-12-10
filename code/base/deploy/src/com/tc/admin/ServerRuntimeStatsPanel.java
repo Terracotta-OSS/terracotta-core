@@ -50,8 +50,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private TimeSeries               flushRateSeries;
   private TimeSeries               faultRateSeries;
   private TimeSeries               txnRateSeries;
-  private TimeSeries               cacheMissRateSeries;
-  private TimeSeries               flushedRateSeries;
+  private TimeSeries               diskFaultRateSeries;
+  private TimeSeries               diskFlushRateSeries;
 
   private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays.asList(POLLED_ATTR_CPU_USAGE,
                                                                                     POLLED_ATTR_USED_MEMORY,
@@ -131,8 +131,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       updateSeries(flushRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE));
       updateSeries(faultRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE));
       updateSeries(txnRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE));
-      updateSeries(cacheMissRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE));
-      updateSeries(flushedRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_FLUSHED_RATE));
+      updateSeries(diskFaultRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE));
+      updateSeries(diskFlushRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_FLUSHED_RATE));
     }
   }
 
@@ -188,10 +188,10 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   private void setupCacheManagerPanel(XContainer parent) {
-    cacheMissRateSeries = createTimeSeries("Cache Miss Rate");
-    flushedRateSeries = createTimeSeries("Disk Flushed Rate");
-    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { cacheMissRateSeries,
-        flushedRateSeries }, true));
+    diskFaultRateSeries = createTimeSeries(appContext.getString("dso.disk.fault.rate"));
+    diskFlushRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
+    ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { diskFaultRateSeries,
+        diskFlushRateSeries }, true));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
     cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.cache-manager")));
@@ -292,13 +292,13 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       list.add(txnRateSeries);
       txnRateSeries = null;
     }
-    if (cacheMissRateSeries != null) {
-      list.add(cacheMissRateSeries);
-      cacheMissRateSeries = null;
+    if (diskFaultRateSeries != null) {
+      list.add(diskFaultRateSeries);
+      diskFaultRateSeries = null;
     }
-    if (flushedRateSeries != null) {
-      list.add(flushedRateSeries);
-      flushedRateSeries = null;
+    if (diskFlushRateSeries != null) {
+      list.add(diskFlushRateSeries);
+      diskFlushRateSeries = null;
     }
 
     Iterator<TimeSeries> iter = list.iterator();

@@ -80,7 +80,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     setName(clusterModel.getName());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isConnected()) {
+    if (clusterModel.isReady()) {
       addNodePanels();
     }
   }
@@ -93,6 +93,18 @@ public class ClusterLog extends XContainer implements ActionListener {
     @Override
     protected XTreeNode[] createTopLevelNodes() {
       return new XTreeNode[] { new ServerGroupsNode(appContext, clusterModel) };
+    }
+
+    @Override
+    protected void setupTreeModel() {
+      super.setupTreeModel();
+      if (!inited) {
+        addNodePanels();
+      }
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        setSelectedPath(activeCoord.toString());
+      }
     }
 
     @Override
@@ -119,13 +131,13 @@ public class ClusterLog extends XContainer implements ActionListener {
     }
 
     @Override
-    protected void handleConnected() {
+    protected void handleReady() {
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (!inited && theClusterModel.isConnected()) {
+      if (!inited && theClusterModel.isReady()) {
         addNodePanels();
-      } else if (inited && !theClusterModel.isConnected()) {
+      } else if (inited && !theClusterModel.isReady()) {
         reset();
       }
     }
@@ -136,7 +148,12 @@ public class ClusterLog extends XContainer implements ActionListener {
       if (theClusterModel == null) { return; }
 
       if (newActive != null) {
-        elementChooser.setSelectedPath(newActive.toString());
+        if (!inited) {
+          addNodePanels();
+        }
+        if (elementChooser != null) {
+          elementChooser.setSelectedPath(newActive.toString());
+        }
       }
     }
   }
@@ -157,9 +174,11 @@ public class ClusterLog extends XContainer implements ActionListener {
         pagedView.addPage(createServerLog(server));
       }
     }
-    IServer activeCoord = clusterModel.getActiveCoordinator();
-    if (activeCoord != null) {
-      elementChooser.setSelectedPath(activeCoord.toString());
+    if (elementChooser != null) {
+      IServer activeCoord = clusterModel.getActiveCoordinator();
+      if (activeCoord != null) {
+        elementChooser.setSelectedPath(activeCoord.toString());
+      }
     }
     inited = true;
   }

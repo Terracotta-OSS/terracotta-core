@@ -12,12 +12,12 @@ import java.util.Arrays;
 
 public class GCStatsTableModel extends XObjectTableModel {
   private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "BeginObjectCount",
-      "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime", "ElapsedTime" };
+      "PausedStageTime", "MarkStageTime", "ActualGarbageCount", "DeleteStageTime", "ElapsedTime", "EndObjectCount" };
 
   private final String[]        HEADERS  = { "dso.gcstats.iteration", "dso.gcstats.type", "dso.gcstats.status",
       "dso.gcstats.startTime", "dso.gcstats.beginObjectCount", "dso.gcstats.pausedStageTime",
       "dso.gcstats.markStageTime", "dso.gcstats.actualGarbageCount", "dso.gcstats.deleteStageTime",
-      "dso.gcstats.elapsedTime"         };
+      "dso.gcstats.elapsedTime", "dso.gcstats.endObjectCount" };
 
   private static final int      MAX_SIZE = 1500;
 

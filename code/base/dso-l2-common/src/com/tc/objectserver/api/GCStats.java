@@ -28,6 +28,8 @@ public interface GCStats {
 
   long getBeginObjectCount();
 
+  long getEndObjectCount();
+
   long getCandidateGarbageCount();
 
   long getActualGarbageCount();
