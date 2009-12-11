@@ -233,15 +233,15 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   }
 
   public long getTransactionRate() {
-    return txnRate.getValue();
+    return txnRate.getMostRecentSample().getCounterValue();
   }
 
   public long getObjectFaultRate() {
-    return faultRate.getValue();
+    return faultRate.getMostRecentSample().getCounterValue();
   }
 
   public long getObjectFlushRate() {
-    return flushRate.getValue();
+    return flushRate.getMostRecentSample().getCounterValue();
   }
 
   public long getPendingTransactionsCount() {

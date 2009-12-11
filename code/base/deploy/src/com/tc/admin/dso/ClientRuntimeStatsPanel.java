@@ -23,32 +23,30 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
-import com.tc.admin.model.IClusterModelElement;
+import com.tc.admin.model.IServer;
+import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
 import java.awt.GridLayout;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
-public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements PropertyChangeListener {
+public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private IClient                  client;
-
   private TimeSeries               memoryMaxSeries;
   private TimeSeries               memoryUsedSeries;
-
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
-
   private TimeSeries               flushRateSeries;
   private TimeSeries               faultRateSeries;
   private TimeSeries               txnRateSeries;
@@ -67,21 +65,10 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
     this.client = client;
     setup(chartsPanel);
     setName(client.toString());
-    client.addPropertyChangeListener(this);
   }
 
   private synchronized IClient getClient() {
     return client;
-  }
-
-  public void propertyChange(PropertyChangeEvent evt) {
-    String prop = evt.getPropertyName();
-    if (prop.equals(IClusterModelElement.PROP_READY)) {
-      Boolean isReady = (Boolean) evt.getNewValue();
-      if (isReady.booleanValue() && isMonitoringRuntimeStats()) {
-        addPolledAttributeListener();
-      }
-    }
   }
 
   private void addPolledAttributeListener() {
@@ -101,7 +88,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
   @Override
   public void startMonitoringRuntimeStats() {
     IClient theClient = getClient();
-    if (theClient != null && theClient.isReady()) {
+    if (theClient != null) {
       addPolledAttributeListener();
     }
     super.startMonitoringRuntimeStats();
@@ -122,13 +109,11 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
     }
   }
 
-  // TODO: this is broken wrt AA as only the active coordinator will be used.
-
   private synchronized void handleDSOStats(PolledAttributesResult result) {
-    IClusterModel theClusterModel = client.getClusterModel();
-    if (theClusterModel != null) {
-      IClient theClient = getClient();
-      if (theClient != null) {
+    IClient theClient = getClient();
+    if (theClient != null) {
+      IClusterModel theClusterModel = client.getClusterModel();
+      if (theClusterModel != null) {
         tmpDate.setTime(System.currentTimeMillis());
 
         long flush = 0;
@@ -137,29 +122,39 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
         long pendingTxn = 0;
         Number n;
 
-        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_OBJECT_FLUSH_RATE);
-        if (n != null) {
-          if (flush >= 0) flush += n.longValue();
-        } else {
-          flush = -1;
-        }
-        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_OBJECT_FAULT_RATE);
-        if (n != null) {
-          if (fault >= 0) fault += n.longValue();
-        } else {
-          fault = -1;
-        }
-        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-        if (n != null) {
-          if (pendingTxn >= 0) pendingTxn += n.longValue();
-        } else {
-          pendingTxn = -1;
-        }
-        n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_TRANSACTION_RATE);
-        if (n != null) {
-          if (txn >= 0) txn += n.longValue();
-        } else {
-          txn = -1;
+        for (IServerGroup group : theClusterModel.getServerGroups()) {
+          for (IServer server : group.getMembers()) {
+            if (server.isStarted()) {
+              Map<ObjectName, Map<String, Object>> nodeMap = result.getAttributeMap(server);
+              Map<String, Object> map = nodeMap != null ? nodeMap.get(theClient.getBeanName()) : null;
+              if (map != null) {
+                n = (Number) map.get(POLLED_ATTR_TRANSACTION_RATE);
+                if (n != null) {
+                  if (txn >= 0) txn += n.longValue();
+                } else {
+                  txn = -1;
+                }
+                n = (Number) map.get(POLLED_ATTR_OBJECT_FLUSH_RATE);
+                if (n != null) {
+                  if (flush >= 0) flush += n.longValue();
+                } else {
+                  flush = -1;
+                }
+                n = (Number) map.get(POLLED_ATTR_OBJECT_FAULT_RATE);
+                if (n != null) {
+                  if (fault >= 0) fault += n.longValue();
+                } else {
+                  fault = -1;
+                }
+                n = (Number) map.get(POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+                if (n != null) {
+                  if (pendingTxn >= 0) pendingTxn += n.longValue();
+                } else {
+                  pendingTxn = -1;
+                }
+              }
+            }
+          }
         }
 
         final long theFlushRate = flush;
@@ -359,7 +354,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel implements Pr
 
   @Override
   public synchronized void tearDown() {
-    client.removePropertyChangeListener(this);
+    stopMonitoringRuntimeStats();
     client = null;
 
     super.tearDown();

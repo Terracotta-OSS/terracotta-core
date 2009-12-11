@@ -24,6 +24,7 @@ import com.tc.admin.model.IServerGroup;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -185,7 +186,11 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (!tornDown.get()) {
-          pagedView.remove(pagedView.getPage(client.toString()));
+          ClientRuntimeStatsPanel panel = (ClientRuntimeStatsPanel) pagedView.getPage(client.toString());
+          if (panel != null) {
+            pagedView.remove(panel);
+            panel.tearDown();
+          }
         }
       }
     });
@@ -201,8 +206,17 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     }
   }
 
-  private void addNodePanels() {
+  private void clearPagedView() {
+    for (Component comp : pagedView.getComponents()) {
+      if (comp instanceof BaseRuntimeStatsPanel) {
+        ((BaseRuntimeStatsPanel) comp).tearDown();
+      }
+    }
     pagedView.removeAll();
+  }
+
+  private void addNodePanels() {
+    clearPagedView();
     pagedView.addPage(createAggregateServerStatsPanel());
     for (IServerGroup group : clusterModel.getServerGroups()) {
       for (IServer server : group.getMembers()) {
@@ -254,6 +268,8 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
     pagedView.removePropertyChangeListener(this);
     elementChooser.removeActionListener(this);
+
+    clearPagedView();
 
     synchronized (this) {
       adminClientContext = null;

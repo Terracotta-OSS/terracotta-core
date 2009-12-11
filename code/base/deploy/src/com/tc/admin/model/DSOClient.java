@@ -6,6 +6,7 @@ package com.tc.admin.model;
 
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
+import com.tc.admin.model.IClusterModel.PollScope;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
@@ -56,6 +57,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     clientId = delegate.getClientID();
     remoteAddress = delegate.getRemoteAddress();
 
+    initPolledAttributes();
     testSetupTunneledBeans();
   }
 
@@ -172,6 +174,12 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_TRANSACTION_RATE));
     registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
     registerPolledAttribute(new PolledAttribute(getBeanName(), POLLED_ATTR_LIVE_OBJECT_COUNT));
+  }
+
+  @Override
+  public synchronized void addPolledAttributeListener(String name, PolledAttributeListener listener) {
+    super.addPolledAttributeListener(name, listener);
+    clusterModel.addPolledAttributeListener(PollScope.CLIENTS, name, listener);
   }
 
   private void setReady(boolean ready) {

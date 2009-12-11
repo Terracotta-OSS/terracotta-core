@@ -189,7 +189,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (IServerGroup.PROP_ACTIVE_SERVER.equals(prop)) {
-      if (isActiveCoordinator() && isReady()) {
+      if (isGroupLeader() && isReady()) {
         try {
           setupFromDSOBean();
         } catch (Exception e) {
@@ -297,7 +297,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
     if (theDsoBean == null) { return; }
 
-    if (isActiveCoordinator()) {
+    if (isGroupLeader()) {
       synchronized (Server.this) {
         clients.clear();
         clientMap.clear();
@@ -924,6 +924,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       oldReady = isReady();
       this.ready = ready;
     }
+    if (ready && oldReady != ready) {
+      try {
+        setupFromDSOBean();
+      } catch (Exception e) {
+        /**/
+      }
+    }
     firePropertyChange(PROP_READY, oldReady, ready);
   }
 
@@ -994,9 +1001,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         DSOClient client = (DSOClient) evt.getSource();
         boolean wasAdded = false;
         synchronized (Server.this) {
-          if (client.isReady() && !clients.contains(client)) {
+          if (client.isReady()) {
             client.removePropertyChangeListener(this);
-            clients.add(client);
+            if (!clients.contains(client)) {
+              clients.add(client);
+            }
             wasAdded = true;
           }
         }
@@ -1008,14 +1017,16 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private synchronized DSOClient addClient(ObjectName clientBeanName) {
-    assertActiveCoordinator();
+    assertGroupLeader();
 
     DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel);
+    client.addPropertyChangeListener(clientChangeListener);
+    clients.add(client);
+    // Don't notify the client's existence until it's ready
     if (client.isReady()) {
-      clients.add(client);
+      client.removePropertyChangeListener(clientChangeListener);
     } else {
       pendingClients.add(client);
-      client.addPropertyChangeListener(clientChangeListener);
     }
     clientMap.put(clientBeanName, client);
 
@@ -1038,7 +1049,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       ObjectName clientObjectName = (ObjectName) notification.getSource();
       DSOClient client = null;
       synchronized (Server.this) {
-        if (isActiveCoordinator() && !haveClient(clientObjectName)) {
+        if (isGroupLeader() && !haveClient(clientObjectName)) {
           client = addClient(clientObjectName);
         }
       }
@@ -1049,7 +1060,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       ObjectName clientObjectName = (ObjectName) notification.getSource();
       DSOClient client = null;
       synchronized (Server.this) {
-        if (isActiveCoordinator() && haveClient(clientObjectName)) {
+        if (isGroupLeader() && haveClient(clientObjectName)) {
           client = removeClient(clientObjectName);
         }
       }
@@ -1118,6 +1129,20 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return false;
   }
 
+  private void assertGroupLeader() {
+    boolean isGroupLeader = isGroupLeader();
+    if (!isGroupLeader) {
+      Thread.dumpStack();
+    }
+    Assert.assertTrue(isGroupLeader);
+  }
+
+  public boolean isGroupLeader() {
+    IServerGroup group = getServerGroup();
+    if (group != null) { return this.equals(group.getActiveServer()); }
+    return false;
+  }
+
   private synchronized IBasicObject addRoot(ObjectName rootBeanName) {
     assertActiveCoordinator();
 
@@ -1148,7 +1173,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         beanRegistered(mbsn.getMBeanName());
       }
     } else if (DSOMBean.CLIENT_ATTACHED.equals(type) || DSOMBean.CLIENT_DETACHED.equals(type)) {
-      if (isActiveCoordinator()) {
+      if (isGroupLeader()) {
         clientNotification(notification, handback);
       }
     } else if (DSOMBean.ROOT_ADDED.equals(type)) {

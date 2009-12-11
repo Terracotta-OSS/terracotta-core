@@ -1,5 +1,5 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * erve All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
 package com.tc.admin.model;
@@ -346,7 +346,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
 
     public Collection<NodePollResult> call() throws Exception {
-      if (server.isActiveCoordinator()) {
+      if (server.isReady()) {
         List<ClientPollResult> cprList = new ArrayList<ClientPollResult>();
         for (IClient client : server.getClients()) {
           Map<ObjectName, Set<String>> clientAttrMap = client.getPolledAttributes();
@@ -370,7 +370,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
             Iterator<ObjectName> onIter = cpr.objectNames.iterator();
             while (onIter.hasNext()) {
               ObjectName on = onIter.next();
-              Map<String, Object> onAttrMap = combinedResultMap.remove(on);
+              Map<String, Object> onAttrMap = combinedResultMap.get(on);
               if (onAttrMap != null) {
                 cpr.attributeMap.put(on, onAttrMap);
               }
@@ -453,7 +453,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
               if (server.isActive()) {
                 mergeScopePolledAttributes(server, attributeMap, PollScope.ACTIVE_SERVERS);
               }
-              if (server.isActiveCoordinator() || !attributeMap.isEmpty()) {
+              if (server.isReady() || !attributeMap.isEmpty()) {
                 tasks.add(new NodePollWorker(server, attributeMap));
               }
             }
