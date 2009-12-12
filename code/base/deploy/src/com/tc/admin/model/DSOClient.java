@@ -149,7 +149,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     } else if (type.startsWith("tc.logging.")) {
       Boolean newValue = Boolean.valueOf(notification.getMessage());
       Boolean oldValue = Boolean.valueOf(!newValue.booleanValue());
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, type, newValue, oldValue);
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, type, oldValue, newValue);
       propertyChangeSupport.firePropertyChange(pce);
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;

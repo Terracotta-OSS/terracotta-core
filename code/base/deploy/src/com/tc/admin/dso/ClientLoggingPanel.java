@@ -327,7 +327,7 @@ public class ClientLoggingPanel extends XContainer implements NotificationListen
         public Void call() throws Exception {
           Class beanClass = loggingBean.getClass();
           Method setter = beanClass.getMethod("set" + attrName, new Class[] { Boolean.TYPE });
-          setter.invoke(loggingBean, new Object[] { Boolean.valueOf(enabled) });
+          setter.invoke(loggingBean, Boolean.valueOf(enabled));
           return null;
         }
       });
