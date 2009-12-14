@@ -288,7 +288,9 @@ public class InterruptTestApp extends AbstractTransparentApp {
     }
     barrier.barrier();
     
-    Assert.assertEquals(20, sharedData.getData());
+    synchronized (lockObject) {
+      Assert.assertEquals(20, sharedData.getData());
+    }
     
     barrier.barrier();
   }
