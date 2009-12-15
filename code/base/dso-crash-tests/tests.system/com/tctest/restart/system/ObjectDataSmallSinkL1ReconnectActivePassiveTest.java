@@ -20,7 +20,7 @@ import java.util.ArrayList;
 public class ObjectDataSmallSinkL1ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase implements TestConfigurator {
 
   private int    clientCount    = 6;
-  private String smallL2Sink    = "50";
+  private String smallL2Sink    = "-1";
   private String smallSendQueue = "50";
 
   public ObjectDataSmallSinkL1ReconnectActivePassiveTest() {
