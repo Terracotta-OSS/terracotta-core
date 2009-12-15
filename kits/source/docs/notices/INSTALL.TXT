@@ -1,4 +1,4 @@
-Terracotta 3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
+Terracotta 3.2 - Simple Scale for Enterprise Java
 ===================================================
 
 These simplified installation instructions are intended for quick platform 
@@ -6,7 +6,7 @@ deployments such as those performed by operations staff.
 
 For more information on installing and configuring Terracotta for specific use
 cases, see
-http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=GettingStarted
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=Documentation
 
 
 Preparing to Run a Terracotta Cluster
@@ -71,17 +71,55 @@ Then start all clients with the following flag:
 Clients started this way obtain their configuration from the specified server 
 (see Starting Terracotta, below).
 
-See http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=
-AboutConfigurationFiles for more information on how 
-Terracotta configuration is propagated.
+See http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=AboutConfigurationFiles 
+for more information on how Terracotta configuration is propagated.
+
+Using a License Key
+-------------------
+If you received a file called product.key from Terracotta, save it to your 
+Terracotta installation's root directory and start or restart Terracotta. 
+(For express installations, see below). This file contains the license 
+key, or product key, that must be loaded to activate your non-OSS version of 
+Terracotta.
+
+Note the following:
+
+* The name of the product-key file should not be changed.
+* Each Terracotta client and server instance in your cluster requires a copy of 
+  the product-key file.
+* The number of Terracotta clients that can run simultaneously in the cluster is
+  fixed by the product key and cannot be changed without obtaining a new product
+  key.
+* Trial product keys expire after a trial period. See the file product.key for 
+  the limitations on the key you have. Expiration warnings are issued both to 
+  logs and standard output to allow enough time to contact Terracotta for an 
+  extension.
+* EXPRESS INSTALLATIONS: If you are using an express installation, such as for
+  distributed Ehcache, you must set one of the following properties for your 
+  application, depending on the location of product.key.
+
+   1. If product.key is in the Terracotta installation directory:
+
+      -Dtc.install-root=/path/to/terracotta/installation
+
+   2. If product.key is in a different location:
+
+      -Dcom.tc.productkey.path=/path/to/product.key
+
+   3. If you are using a Terracotta configuration file (tc-config.xml by 
+      default), product.key can be specified in that file by adding the 
+      following to the beginning of the configuration:
+
+      <tc-properties>
+           <property name="productkey.path" value="/path/to/product.key" />
+      </tc-properties> 
 
 
 Starting Terracotta
 -------------------
 The startup script for Terracotta servers is start-tc-server.sh (UNIX/Linux) or
 start-tc-server.bat (Microsoft Windows). If you have configured more than one
-Terracotta server, start a specific server by referring to its name with the -n
-flag
+Terracotta server, start a specific server by referring to its name with the -n flag.
 
 For example, to start a server you named "myServer" from the Terracotta home
 directory and using a specific configuration file, enter the following:
@@ -95,9 +133,11 @@ For Microsoft Windows, enter the following:
 
 More Information
 ----------------
-You'll find a number of helpful guides in the documentation section of the 
-Terracotta website (http://www.terracotta.org/web/display/orgsite/Documentation)
+You'll find a number of helpful guides in the documentation section 
+(http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=Documentation).
+
 
 ----
 All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved. 
 http://www.terracotta.org
+

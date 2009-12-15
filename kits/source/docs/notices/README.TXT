@@ -1,8 +1,10 @@
-Terracotta 3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
+Terracotta 3.2 - Simple Scale for Enterprise Java
 ===================================================
 
 Terracotta offers powerful solutions for scaling Java applications and 
-accelerating their performance.
+accelerating their performance. Some of these solutions are found in this kit,
+including Ehcache (/distributed-cache), Terracotta for Hibernate (/hibernate),
+and Terracotta Job Store for Quartz (/quartz).
 
 This document helps you find the information needed to implement these 
 solutions for your use case.
@@ -11,9 +13,11 @@ solutions for your use case.
 Getting Started
 ---------------
 
-For use-case specific information on getting started with Terracotta, refer to 
-the Terracotta website at 
-http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=GettingStarted
+For more information on getting started with Terracotta, begin with the 
+Terracotta website at http://www.terracotta.org.
+
+To locate Terracotta documentation, see 
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=Documentation
 
 
 Join the Terracotta Community
@@ -25,20 +29,21 @@ Enjoy the following benefits by signing up for a Terracotta account:
    -> Submit JIRA reports
    -> Vote on bugs to be fixed, or features for the next release 
 
-Sign up at http://www.terracotta.org/web/display/orgsite/Sign-up
+Sign up at http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=Register
 
 
 Resources
 ---------
 The latest release notes are available on the web at 
-http://www.terracotta.org/web/display/docs/Release+Notes
+http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=ReleaseNotes
 
 The following directories under the Terracotta home directory contain useful 
 examples and information:
 
  - docs: tc-config-reference.xml, an annotated Terracotta configuration file;
    HTML files that link to online documentation; Javadoc.
- - config-examples: Example use-case-specific Terracotta configuration files.
+ - config-examples: Example Terracotta configuration files for specific use 
+   cases.
  - tools: Scripts for running the sample POJO and sessions applications
    are in the samples directory.
  - samples: Sample applications that demonstrate the Terracotta platform,
@@ -46,15 +51,17 @@ examples and information:
  - bin: Scripts for administering, monitoring, and maintaining a Terracotta
    cluster, including the Terracotta Developer Console (dev-console.sh or 
    dev-console.bat), which provides deep visibility and diagnostics. Scripts are 
-   documented at 
-   http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=ToolsOverview
+   documented in the Tools Catalog 
+   (http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=ToolsOverview)
  
 Help and additional information is available on the web at the following URLs:
 
- - Documentation: http://www.terracotta.org/web/display/orgsite/Documentation 
+ - Product Documentation: 
+    http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=ProductDocumentation 
  - Forums:        http://forums.terracotta.org
  - Mailing Lists: http://lists.terracotta.org
- - Services:      http://www.terracotta.org/web/display/enterprise/Support
+ - Services:      
+    http://www.terracotta.org/kit/reflector?kitID=3.2&pageID=SupportServices
 
      
 Java Virtual Machine
@@ -68,3 +75,4 @@ uses by setting the JAVA_HOME environment variable.
 ----
 All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved. 
 http://www.terracotta.org
+
