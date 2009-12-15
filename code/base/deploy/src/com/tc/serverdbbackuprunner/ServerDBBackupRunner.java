@@ -57,14 +57,14 @@ public class ServerDBBackupRunner {
     }
 
     String username = null;
+    String password = null;
     if (commandLineBuilder.hasOption('u')) {
       username = commandLineBuilder.getOptionValue('u');
-    }
-    String password = null;
-    if (commandLineBuilder.hasOption('w')) {
-      password = commandLineBuilder.getOptionValue('w');
-    } else {
-      password = CommandLineBuilder.readPassword();
+      if (commandLineBuilder.hasOption('w')) {
+        password = commandLineBuilder.getOptionValue('w');
+      } else {
+        password = CommandLineBuilder.readPassword();
+      }
     }
 
     String path = null;
