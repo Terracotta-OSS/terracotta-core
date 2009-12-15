@@ -66,6 +66,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.net.Socket;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -193,8 +194,6 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
   private static final String            L2_STARTUP_TRIGGER          = "Terracotta Server instance has started up";
   private static final int               SERVER1_PORT                = 9081;
   private static final int               SERVER2_PORT                = 9082;
-  private static final String            HELP_DOC                    = TC_INSTALL_DIR + FS + "docs" + FS
-                                                                       + "TerracottaSessionsQuickStart.html";
 
   private static final Cursor            LINK_CURSOR                 = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   private static final Cursor            STANDARD_CURSOR             = Cursor.getDefaultCursor();
@@ -799,7 +798,10 @@ public class SessionIntegratorFrame extends XFrame implements PropertyChangeList
 
   private void showHelp() {
     try {
-      openPage("file://" + StringUtils.replace(HELP_DOC, FS, "/"));
+      String kitID = ProductInfo.getInstance().kitID();
+      String loc = MessageFormat.format("http://www.terracotta.org/kit/reflector?kitID={0}&pageID=SessionsQuickStart",
+                                        kitID);
+      openPage(loc);
     } catch (Exception e) {
       configHelper.openError(getBundleString("show.help.error"), e);
     }
