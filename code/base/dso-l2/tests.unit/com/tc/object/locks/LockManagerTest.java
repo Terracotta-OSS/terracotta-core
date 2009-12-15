@@ -130,7 +130,7 @@ public class LockManagerTest extends TestCase {
       ClientServerExchangeLockContext context = new ClientServerExchangeLockContext(lockID1, nid1, tx1, State.WAITER,
                                                                                     waitTime);
       contexts.add(context);
-      context = new ClientServerExchangeLockContext(lockID1, nid1, tx2, State.WAITER, waitTime);
+      context = new ClientServerExchangeLockContext(lockID1, nid1, tx2, State.WAITER, waitTime * 2);
       contexts.add(context);
       lockManager.reestablishState(nid1, contexts);
       lockManager.start();
