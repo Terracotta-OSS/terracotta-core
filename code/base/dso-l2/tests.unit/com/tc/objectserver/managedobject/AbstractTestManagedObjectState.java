@@ -53,7 +53,11 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
   }
 
   protected ManagedObjectState createManagedObjectState(String className, TestDNACursor cursor) throws Exception {
-    ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), ObjectID.NULL_ID,
+    return createManagedObjectState(className, cursor, ObjectID.NULL_ID);
+  }
+  
+  protected ManagedObjectState createManagedObjectState(String className, TestDNACursor cursor, ObjectID parentID) throws Exception {
+    ManagedObjectState state = ManagedObjectStateFactory.getInstance().createState(new ObjectID(1), parentID,
                                                                                    className, loaderDesc, cursor);
     return state;
   }

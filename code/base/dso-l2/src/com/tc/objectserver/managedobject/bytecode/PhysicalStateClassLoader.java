@@ -219,11 +219,16 @@ public class PhysicalStateClassLoader extends ClassLoader implements Opcodes {
   private void createHasNoReferencesMethod(ClassWriter cw, String classNameSlash, ClassSpec cs,
                                            String superClassNameSlash, Collection<FieldType> fields) {
     MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "hasNoReferences", "()Z", null, null);
+
     boolean hasNoReferences = true;
-    for (FieldType fieldType : fields) {
-      if (fieldType.canBeReferenced()) {
-        hasNoReferences = false;
-        break;
+    if (cs.generateParentIdStorage()) {
+      hasNoReferences = false;
+    } else {
+      for (FieldType fieldType : fields) {
+        if (fieldType.canBeReferenced()) {
+          hasNoReferences = false;
+          break;
+        }
       }
     }
     if (hasNoReferences) {

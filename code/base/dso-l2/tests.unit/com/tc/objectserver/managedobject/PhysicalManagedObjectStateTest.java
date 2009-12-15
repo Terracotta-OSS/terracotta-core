@@ -43,13 +43,39 @@ public class PhysicalManagedObjectStateTest extends AbstractTestManagedObjectSta
     cursor.addPhysicalAction("field2", new Integer(2003), false);
     cursor.addPhysicalAction("field3", new Integer(33), false);
 
-
     
     ManagedObjectState state = createManagedObjectState(className, cursor);
     System.out.println("state: " + state);
     assertTrue(state.hasNoReferences());
   }
+  
+  public void testObjectPhysicalHasNoReferencesInnerClass() throws Exception {
+    String className = "com.tc.objectserver.managedobject.PhysicalManagedObjectStateTest";
+    TestDNACursor cursor = new TestDNACursor();
 
+    cursor.addPhysicalAction("field1", new Integer(2002), false);
+    cursor.addPhysicalAction("field2", new Integer(2003), false);
+    cursor.addPhysicalAction("field3", new Integer(33), false);
+
+    
+    ManagedObjectState state = createManagedObjectState(className, cursor, new ObjectID(2));
+    System.out.println("state: " + state);
+    assertFalse(state.hasNoReferences());
+  }
+  
+  public void testObjectPhysicalHasNoReferencesNoInnerClass() throws Exception {
+    String className = "com.tc.objectserver.managedobject.PhysicalManagedObjectStateTest";
+    TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addPhysicalAction("field1", new Integer(2002), false);
+    cursor.addPhysicalAction("field2", new Integer(2003), false);
+    cursor.addPhysicalAction("field3", new Integer(33), false);
+
+    
+    ManagedObjectState state = createManagedObjectState(className, cursor, ObjectID.NULL_ID);
+    System.out.println("state: " + state);
+    assertTrue(state.hasNoReferences());
+  }
 
   
 }
