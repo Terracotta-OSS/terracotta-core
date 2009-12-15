@@ -665,10 +665,21 @@ public class ClassProcessorHelper {
     private int              state           = NOT_INITIALIZED;
 
     final synchronized boolean attemptInit() {
-      if ((state == NOT_INITIALIZED) && systemLoaderInitialized) {
+      if ((state == NOT_INITIALIZED) && systemLoaderInitialized && !creatingPlatformMBeanServer()) {
         state = INITIALIZING;
         return true;
       }
+      return false;
+    }
+
+    private static boolean creatingPlatformMBeanServer() {
+      // quick and mildly dirty fix for CDV-1415
+      StackTraceElement[] stack = new Throwable().getStackTrace();
+      for (StackTraceElement frame : stack) {
+        if (frame.getClassName().equals("java.lang.management.ManagementFactory")
+            && frame.getMethodName().equals("getPlatformMBeanServer")) { return true; }
+      }
+
       return false;
     }
 
