@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ import java.util.Map;
  */
 public class ClientTransactionImpl extends AbstractClientTransaction {
   private final RuntimeLogger runtimeLogger;
-  private final Map           objectChanges = new HashMap();
+  private final Map           objectChanges = new LinkedHashMap();
 
   private Map                 newRoots;
   private List                notifies;
@@ -64,6 +65,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     return this.objectChanges;
   }
 
+  @Override
   protected void basicLiteralValueChanged(TCObject source, Object newValue, Object oldValue) {
     if (runtimeLogger.getFieldChangeDebug()) {
       runtimeLogger.literalValueChanged(source, newValue);
@@ -75,6 +77,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     addReferenced(newValue);
   }
 
+  @Override
   protected void basicFieldChanged(TCObject source, String classname, String fieldname, Object newValue, int index) {
     if (runtimeLogger.getFieldChangeDebug()) {
       runtimeLogger.fieldChanged(source, classname, fieldname, newValue, index);
@@ -83,6 +86,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     getOrCreateChangeBuffer(source).fieldChanged(classname, fieldname, newValue, index);
   }
 
+  @Override
   protected void basicArrayChanged(TCObject source, int startPos, Object array, int length) {
     if (runtimeLogger.getArrayChangeDebug()) {
       runtimeLogger.arrayChanged(source, startPos, array);
@@ -91,14 +95,17 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     getOrCreateChangeBuffer(source).arrayChanged(startPos, array, length);
   }
 
+  @Override
   protected void basicLogicalInvoke(TCObject source, int method, Object[] parameters) {
     getOrCreateChangeBuffer(source).logicalInvoke(method, parameters);
   }
 
+  @Override
   protected void basicCreate(TCObject object) {
     getOrCreateChangeBuffer(object);
   }
 
+  @Override
   protected void basicCreateRoot(String name, ObjectID root) {
     if (newRoots == null) {
       newRoots = new HashMap();
@@ -139,8 +146,9 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     }
   }
 
+  @Override
   public String toString() {
-    return "ClientTransactionImpl@"+ System.identityHashCode(this) +" [ " + getTransactionID() + " ]";
+    return "ClientTransactionImpl@" + System.identityHashCode(this) + " [ " + getTransactionID() + " ]";
   }
 
   public int getNotifiesCount() {
@@ -157,6 +165,5 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
   public List getDmiDescriptors() {
     return dmis == null ? Collections.EMPTY_LIST : dmis;
   }
-
 
 }
