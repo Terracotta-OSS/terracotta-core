@@ -82,6 +82,9 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
           case ManagedObjectState.TDC_SERIALIZED_ENTRY:
             testTcHibernateSerializedEntry();
             break;
+          case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
+            testTcHibernateCustomSerializedEntry();
+            break;
           default:
             throw new AssertionError("Type " + type
                                      + " does not have a test case in ManagedObjectStateSerializationTest.");
@@ -104,6 +107,21 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
     serializationValidation(state, cursor, ManagedObjectState.TDC_SERIALIZED_ENTRY);
   }
 
+  public void testTcHibernateCustomSerializedEntry() throws Exception {
+    String className = TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY;
+    TestDNACursor cursor = new TestDNACursor();
+
+    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.CREATE_TIME_FIELD, new Integer(1), false);
+    cursor.addPhysicalAction(TDCSerializedEntryManagedObjectState.LAST_ACCESS_TIME_FIELD, new Integer(2), false);
+    cursor.addEntireArray(new byte[] { 1, 2, 3, 4 });
+    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTI_FIELD, new Integer(3), false);
+    cursor.addPhysicalAction(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_TTL_FIELD, new Integer(4), false);
+    
+    ManagedObjectState state = applyValidation(className, cursor);
+
+    serializationValidation(state, cursor, ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY);
+  }
+  
   public void testProxy() throws Exception {
     String CLASSLOADER_FIELD_NAME = "java.lang.reflect.Proxy.loader";
     String INTERFACES_FIELD_NAME = "java.lang.reflect.Proxy.interfaces";

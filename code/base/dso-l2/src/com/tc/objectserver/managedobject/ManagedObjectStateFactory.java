@@ -79,6 +79,8 @@ public class ManagedObjectStateFactory {
     // XXX: hack to support Hibernate cache entry type
     classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
+    classNameToStateMap.put(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY,
+                            new Byte(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
                             new Byte(ManagedObjectState.LIST_TYPE));
 
@@ -183,6 +185,8 @@ public class ManagedObjectStateFactory {
             .createPersistentMap(oid));
       case ManagedObjectState.TDC_SERIALIZED_ENTRY:
         return new TDCSerializedEntryManagedObjectState(classID);
+      case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
+        return new TDCCustomLifespanSerializedEntryManagedObjectState(classID);        
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
@@ -277,6 +281,8 @@ public class ManagedObjectStateFactory {
           return ConcurrentDistributedMapManagedObjectState.readFrom(in);
         case ManagedObjectState.TDC_SERIALIZED_ENTRY:
           return TDCSerializedEntryManagedObjectState.readFrom(in);
+        case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
+          return TDCCustomLifespanSerializedEntryManagedObjectState.readFrom(in);
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }

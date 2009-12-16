@@ -70,28 +70,32 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
           logger.error("received array of type " + type + " -- ignoring it");
         }
       } else {
-        Object val = pa.getObject();
-        String field = pa.getFieldName();
-        // last access time is the only field that should be updated, check it first
-        if (LAST_ACCESS_TIME_FIELD.equals(field)) {
-          if (val instanceof Integer) {
-            lastAccessedTime = ((Integer) val).intValue();
-          } else {
-            logInvalidType(LAST_ACCESS_TIME_FIELD, val);
-          }
-        } else if (CREATE_TIME_FIELD.equals(field)) {
-          if (val instanceof Integer) {
-            createTime = ((Integer) val).intValue();
-          } else {
-            logInvalidType(CREATE_TIME_FIELD, val);
-          }
-        } else {
-          logger.error("recieved data for field named [" + field + "] -- ignoring it");
-        }
+        physicalActionApply(pa);
       }
     }
   }
 
+  protected void physicalActionApply(PhysicalAction pa) {
+    Object val = pa.getObject();
+    String field = pa.getFieldName();
+    // last access time is the only field that should be updated, check it first
+    if (LAST_ACCESS_TIME_FIELD.equals(field)) {
+      if (val instanceof Integer) {
+        lastAccessedTime = ((Integer) val).intValue();
+      } else {
+        logInvalidType(LAST_ACCESS_TIME_FIELD, val);
+      }
+    } else if (CREATE_TIME_FIELD.equals(field)) {
+      if (val instanceof Integer) {
+        createTime = ((Integer) val).intValue();
+      } else {
+        logInvalidType(CREATE_TIME_FIELD, val);
+      }
+    } else {
+      logger.error("recieved data for field named [" + field + "] -- ignoring it");
+    }
+  }
+  
   /**
    * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
    * represented by this state object will never have any reference to other objects. false : The Managed object
@@ -102,7 +106,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return true;
   }
 
-  private static void logInvalidType(final String field, final Object val) {
+  protected static void logInvalidType(final String field, final Object val) {
     logger.error("recieved invalid type (" + safeTypeName(val) + "] for " + field + " field -- ignoring it");
   }
 
@@ -112,14 +116,17 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   }
 
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
-    // The byte[] value field is not shown in the admin console
-    Map data = new HashMap();
-    data.put(CREATE_TIME_FIELD, Integer.valueOf(createTime));
-    data.put(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
-
-    return new PhysicalManagedObjectFacade(objectID, null, className, data, false, DNA.NULL_ARRAY_SIZE, false);
+    Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
+    return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
+  protected Map<String, Object> addFacadeFields(Map<String, Object> fields) {
+    // The byte[] value field is not shown in the admin console
+    fields.put(CREATE_TIME_FIELD, Integer.valueOf(createTime));
+    fields.put(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
+    return fields;
+  }
+  
   public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
     writer.addEntireArray(value);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(createTime));
@@ -156,17 +163,19 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
 
   static TDCSerializedEntryManagedObjectState readFrom(final ObjectInput in) throws IOException {
     TDCSerializedEntryManagedObjectState state = new TDCSerializedEntryManagedObjectState(in.readLong());
-
-    state.createTime = in.readInt();
-    state.lastAccessedTime = in.readInt();
+    state.readFromInternal(in);
+    return state;
+  }
+  
+  protected void readFromInternal(final ObjectInput in) throws IOException {
+    this.createTime = in.readInt();
+    this.lastAccessedTime = in.readInt();
 
     int length = in.readInt();
     if (length >= 0) {
       byte[] data = new byte[length];
       in.read(data, 0, length);
-      state.value = data;
+      this.value = data;
     }
-
-    return state;
   }
 }
