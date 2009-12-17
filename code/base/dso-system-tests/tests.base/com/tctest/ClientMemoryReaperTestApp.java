@@ -10,6 +10,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 import com.tctest.restart.system.ObjectDataTestApp;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -121,7 +122,11 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
                                + "Currently Max Memory is " + max_memory);
     }
     log("Max memory is " + max_memory);
-    transient_mem_blocks_size = (int) ((max_memory * 50) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
+    if(Os.isSolaris() || Os.isWindows()) {
+      transient_mem_blocks_size = (int) ((max_memory * 25) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
+    } else {
+      transient_mem_blocks_size = (int) ((max_memory * 50) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
+    }
     log("Transient memory block size is " + transient_mem_blocks_size);
   }
 

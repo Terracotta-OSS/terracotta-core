@@ -43,7 +43,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     // set client instance according to available free memory
     long freemem = Runtime.getRuntime().freeMemory();
     int app_count;
-    if (Os.isSolaris() || freemem < LOW_FREE_MEMORY) {
+    if (Os.isSolaris() || Os.isWindows() || freemem < LOW_FREE_MEMORY) {
       app_count = LOW_APP_NODES;
     } else if (freemem < MIDDLE_FREE_MEMORY) {
       app_count = MIDDLE_APP_NODES;
