@@ -16,6 +16,7 @@ public class StripeIDMismatchGroupMessage extends AbstractGroupMessage {
   public static final int ERROR_NOT_CLUSTER_MEMBER = 1;
   public static final int ERROR_MISMATCH_STRIPEID  = 2;
   public static final int ERROR_MISMATCH_GROUPID   = 3;
+  public static final int MISMATCH_TEMPORARY       = 4;
 
   private int             errorType;
   private String          reason;
