@@ -123,7 +123,7 @@ public class ClientMemoryReaperTestApp extends AbstractErrorCatchingTransparentA
     }
     log("Max memory is " + max_memory);
     if(Os.isSolaris() || Os.isWindows()) {
-      transient_mem_blocks_size = (int) ((max_memory * 25) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
+      transient_mem_blocks_size = (int) ((max_memory * 25) / (512 * 1024)); // 25KB for 512MB, so for max_memory ?
     } else {
       transient_mem_blocks_size = (int) ((max_memory * 50) / (512 * 1024)); // 50KB for 512MB, so for max_memory ?
     }
