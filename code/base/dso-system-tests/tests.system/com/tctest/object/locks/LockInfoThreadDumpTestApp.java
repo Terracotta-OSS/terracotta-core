@@ -20,6 +20,7 @@ import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.concurrent.CyclicBarrier;
 
 import javax.management.MBeanServerConnection;
@@ -95,6 +96,7 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
     }
 
     ThreadUtil.reallySleep(2000);
+    waitForMBeanReady(l1Info, 60);
     String threadDump = l1Info.takeThreadDump(System.currentTimeMillis());
     ThreadUtil.reallySleep(2000);
 
@@ -104,6 +106,19 @@ public class LockInfoThreadDumpTestApp extends AbstractTransparentApp {
         .indexOf("WAITING TO LOCK: [") >= 0);
 
     System.out.println("XXX DONE");
+  }
+
+  // wait till mbean ready
+  private void waitForMBeanReady(L1InfoMBean bean, int maxWaitSec) {
+    while (maxWaitSec-- >= 0) {
+      try {
+        bean.getVersion();
+        break;
+      } catch (UndeclaredThrowableException e) {
+        if (maxWaitSec == 0) throw e;
+        ThreadUtil.reallySleep(1000);
+      }
+    }
   }
 
   private L1InfoMBean getL1InfoBean(int clientID) {
