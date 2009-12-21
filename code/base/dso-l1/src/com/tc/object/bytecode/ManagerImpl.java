@@ -662,6 +662,10 @@ public class ManagerImpl implements Manager {
     return this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry().getActionInstance(name);
   }
 
+  public SessionConfiguration getSessionConfiguration(String appName) {
+    return config.getSessionConfiguration(appName);
+  }
+
   private static class FakeManageableObject implements Manageable {
 
     public boolean __tc_isManaged() {
@@ -880,4 +884,5 @@ public class ManagerImpl implements Manager {
   private static final String IMMINENT_INFINITE_LOOP_ERROR = "An exception/error was just thrown from an application thread while attempting "
                                                              + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
                                                              + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
+
 }

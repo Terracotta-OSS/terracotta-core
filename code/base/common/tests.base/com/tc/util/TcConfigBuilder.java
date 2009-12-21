@@ -271,45 +271,61 @@ public class TcConfigBuilder {
    * Adds web-application with default values for synchronous-write (false) and session-locking (true)
    */
   public void addWebApplication(String appName) {
-    addWebApplication(appName, false, true);
+    addWebApplication(appName, null, null, null);
   }
 
   /**
    * Adds web-application with default value for synchronous-write (false) and session-locking = true
    */
   public void addWebApplicationWithSessionLocking(String appName) {
-    addWebApplication(appName, false, true);
+    addWebApplication(appName, null, true, null);
   }
 
   /**
    * Adds web-application with default value for synchronous-write (false) and session-locking = false
    */
   public void addWebApplicationWithoutSessionLocking(String appName) {
-    addWebApplication(appName, false, false);
+    addWebApplication(appName, null, false, null);
   }
 
   /**
    * Adds web-application with synchronous-write = true and default value for session-locking (true)
    */
   public void addWebApplicationWithSynchronousWrite(String appName) {
-    addWebApplication(appName, true, true);
+    addWebApplication(appName, true, null, null);
   }
 
   /**
    * Adds web-application with synchronous-write = false and default value for session-locking (true)
    */
   public void addWebApplicationWithoutSynchronousWrite(String appName) {
-    addWebApplication(appName, false, true);
+    addWebApplication(appName, false, null, null);
   }
 
-  public void addWebApplication(String appName, boolean synchWrite, boolean sessionLocking) {
+  /**
+   * Adds web-application with specified serialization setting
+   */
+  public void addWebApplicationSerialized(String appName, boolean serialized) {
+    addWebApplication(appName, null, null, serialized);
+  }
+
+  public void addWebApplication(String appName, Boolean synchWrite, Boolean sessionLocking, Boolean serialization) {
     ensureWebApplications();
     WebApplication wa = tcConfig.getApplication().getDso().getWebApplications().insertNewWebApplication(0);
     wa.setStringValue(appName);
-    if (synchWrite) {
+
+    // null means to not set the attributed at all (falls back to schema defaults)
+    if (synchWrite != null) {
       wa.setSynchronousWrite(synchWrite);
     }
-    wa.setSessionLocking(sessionLocking);
+
+    if (sessionLocking != null) {
+      wa.setSessionLocking(sessionLocking);
+    }
+
+    if (serialization != null) {
+      wa.setSerialization(serialization);
+    }
   }
 
   public void randomizePorts() {

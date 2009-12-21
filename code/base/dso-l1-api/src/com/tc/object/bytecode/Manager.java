@@ -354,4 +354,11 @@ public interface Manager extends TerracottaLocking {
    * @see <a href="http://jira.terracotta.org/jira/browse/DEV-113">DEV-113</a>
    */
   public void monitorExit(LockID lock, LockLevel level);
+
+  /**
+   * Get the configuration for the given application name (ie. context path)
+   * 
+   * @return null if the given app is not configured for clustering
+   */
+  public SessionConfiguration getSessionConfiguration(String appName);
 }

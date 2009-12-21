@@ -333,4 +333,8 @@ public final class NullManager implements Manager {
   public String getUUID() {
     return null;
   }
+
+  public SessionConfiguration getSessionConfiguration(String appName) {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -252,6 +252,7 @@
       <xs:extension base="xs:token">
         <xs:attribute name="synchronous-write" type="xs:boolean" use="optional" default="false" />
         <xs:attribute name="session-locking" type="xs:boolean" use="optional" default="true" />
+        <xs:attribute name="serialization" type="xs:boolean" use="optional" default="false" />
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>

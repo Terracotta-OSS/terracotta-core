@@ -1125,17 +1125,12 @@ public class ManagerUtil {
   }
 
   /**
-   * Get session lock type for the specified app (usually WRITE or SYNCHRONOUS_WRITE)
+   * Get the configuration for the given application name (ie. context path)
    * 
-   * @param appName Web app name
-   * @return Lock type
+   * @return null if the given app is not configured for clustering
    */
-  public static int getSessionLockType(final String appName) {
-    return ClassProcessorHelper.getSessionLockType(appName);
-  }
-
-  public static boolean isApplicationSessionLocked(final String appName) {
-    return ClassProcessorHelper.isApplicationSessionLocked(appName);
+  public static SessionConfiguration getSessionConfiguration(String appName) {
+    return getManager().getSessionConfiguration(appName);
   }
 
   /**

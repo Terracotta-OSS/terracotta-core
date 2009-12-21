@@ -13,6 +13,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.license.Capability;
 import com.tc.license.LicenseCheck;
 import com.tc.logging.TCLogger;
+import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.config.schema.ExcludedInstrumentedClass;
 import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
@@ -118,16 +119,24 @@ public class ConfigLoader {
     }
   }
 
-  private void addWebApplication(final WebApplication webApplication) {
+  private void addWebApplication(final WebApplication webApp) {
     LicenseCheck.checkCapability(Capability.SESSIONS);
 
-    config.addApplicationName(webApplication.getStringValue());
-    if (webApplication.getSynchronousWrite()) {
-      config.addSynchronousWriteApplication(webApplication.getStringValue());
+    int lockType = webApp.getSynchronousWrite() ? com.tc.object.locks.LockLevel.SYNCHRONOUS_WRITE.toInt()
+        : com.tc.object.locks.LockLevel.WRITE.toInt();
+
+    final boolean sessionLocking;
+
+    if (webApp.isSetSessionLocking()) {
+      // if explicitly set, then use the configured value
+      sessionLocking = webApp.getSessionLocking();
+    } else {
+      // otherwise serialization mode determines the locking
+      sessionLocking = !webApp.getSerialization();
     }
-    if (webApplication.getSessionLocking()) {
-      config.addSessionLockedApplication(webApplication.getStringValue());
-    }
+
+    config.addWebApplication(webApp.getStringValue(), new SessionConfiguration(lockType, sessionLocking, webApp
+        .getSerialization()));
   }
 
   private void addWebApplications(final WebApplications webApplicationsList) {

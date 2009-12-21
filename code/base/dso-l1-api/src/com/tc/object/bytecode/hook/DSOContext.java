@@ -23,14 +23,6 @@ public interface DSOContext extends ClassProcessor, ClassFileTransformer {
   public Manager getManager();
 
   /**
-   * Get type of locks used by sessions
-   * 
-   * @param appName Web app anem
-   * @return Lock type
-   */
-  public int getSessionLockType(String appName);
-
-  /**
    * Get url to class file
    * 
    * @param className Class name
@@ -39,10 +31,5 @@ public interface DSOContext extends ClassProcessor, ClassFileTransformer {
    * @return URL to class itself
    */
   public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources);
-
-  /**
-   * Returns true is web-application is configured for session-locking
-   */
-  public boolean isApplicationSessionLocked(String appName);
 
 }

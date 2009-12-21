@@ -38,7 +38,7 @@ import java.util.logging.LogManager;
 public class ClassProcessorHelper {
 
   /** Name reserved for apps running as root web app in a container */
-  public static final String       ROOT_WEB_APP_NAME         = "ROOT";
+  private static final String      ROOT_WEB_APP_NAME         = "ROOT";
 
   // Directory where Terracotta jars (and dependencies) can be found
   private static final String      TC_INSTALL_ROOT_SYSPROP   = "tc.install-root";
@@ -423,25 +423,6 @@ public class ClassProcessorHelper {
   }
 
   /**
-   * Check whether this web app is using DSO sessions
-   * 
-   * @param appName Web app name
-   * @return True if DSO sessions enabled
-   */
-  public static boolean isDSOSessions(String appName) {
-
-    appName = ("/".equals(appName)) ? ROOT_WEB_APP_NAME : appName;
-    try {
-      Method m = getContextMethod("isDSOSessions", new Class[] { String.class });
-      boolean rv = ((Boolean) m.invoke(null, new Object[] { appName })).booleanValue();
-      return rv;
-    } catch (Throwable t) {
-      handleError(t);
-      throw new AssertionError(); // shouldn't get here
-    }
-  }
-
-  /**
    * WARNING: Used by test framework only
    * 
    * @param loader Loader
@@ -600,20 +581,6 @@ public class ClassProcessorHelper {
            || className.startsWith("org.dom4j.") || className.startsWith("org.xml.sax.")
            || className.startsWith("javax.xml.parsers.")
            || className.startsWith("sun.reflect.Generated"); // issue on J2SE 5 reflection - AW-245
-  }
-
-  /**
-   * Get type of lock used by sessions
-   * 
-   * @param appName Web app context
-   * @return Lock type
-   */
-  public static int getSessionLockType(String appName) {
-    return globalContext.getSessionLockType(appName);
-  }
-
-  public static boolean isApplicationSessionLocked(String appName) {
-    return globalContext.isApplicationSessionLocked(appName);
   }
 
   private static void traceNamedLoader(final NamedClassLoader ncl) {

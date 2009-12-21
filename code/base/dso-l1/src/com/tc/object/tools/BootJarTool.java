@@ -110,6 +110,7 @@ import com.tc.object.bytecode.NullTCObject;
 import com.tc.object.bytecode.OverridesHashCode;
 import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
+import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
@@ -493,6 +494,7 @@ public class BootJarTool {
       loadTerracottaClass(NullManager.class.getName());
       loadTerracottaClass(NullTCLogger.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName());
+      loadTerracottaClass(SessionConfiguration.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
       loadTerracottaClass(TCObject.class.getName());
       loadTerracottaClass(ToggleableStrongReference.class.getName());
@@ -1682,7 +1684,7 @@ public class BootJarTool {
                           new CopyOnWriteArrayListAdapter.ResetLockAdaptor());
     spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
     addSerializationInstrumentedCode(spec);
-    
+
     spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
     addSerializationInstrumentedCode(spec);
   }

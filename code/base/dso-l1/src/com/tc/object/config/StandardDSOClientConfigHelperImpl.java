@@ -47,10 +47,12 @@ import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.JavaUtilConcurrentLocksAQSAdapter;
 import com.tc.object.bytecode.OverridesHashCodeAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
+import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.THashMapAdapter;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
+import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
@@ -60,7 +62,6 @@ import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.locks.LockLevel;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
@@ -96,6 +97,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -124,11 +126,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                                                                     .synchronizedSet(new HashSet());
   private final Map<String, String>                          injectedFields                     = new ConcurrentHashMap<String, String>();
 
-  private final Set                                          applicationNames                   = Collections
-                                                                                                    .synchronizedSet(new HashSet());
-  private final List                                         synchronousWriteApplications       = new ArrayList();
-  private final Set                                          sessionLockedApplications          = Collections
-                                                                                                    .synchronizedSet(new HashSet());
+  private final Map<String, SessionConfiguration>            webApplications                    = Collections
+                                                                                                    .synchronizedMap(new HashMap());
+
   private final CompoundExpressionMatcher                    permanentExcludesMatcher;
   private final CompoundExpressionMatcher                    nonportablesMatcher;
   private final List                                         autoLockExcludes                   = new CopyOnWriteArrayList();
@@ -258,8 +258,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     ConfigLoader loader = new ConfigLoader(this, logger);
     loader.loadDsoConfig((DsoApplication) appConfig.getBean());
 
-    logger.debug("web-applications: " + this.applicationNames);
-    logger.debug("synchronous-write web-applications: " + this.synchronousWriteApplications);
+    logger.debug("web-applications: " + this.webApplications);
     logger.debug("roots: " + this.roots);
     logger.debug("locks: " + this.locks);
     logger.debug("distributed-methods: " + this.distributedMethods);
@@ -725,15 +724,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       spec.setPreCreateMethod("validateInUnLockState");
       spec.setCallConstructorOnLoad(true);
       spec.markPreInstrumented();
-      
+
       spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArrayList", "com.tc.object.applicator.ListApplicator");
       spec.setCallConstructorOnLoad(true);
       spec.markPreInstrumented();
-      
+
       spec = getOrCreateSpec("java.util.concurrent.CopyOnWriteArraySet");
       spec.setCallConstructorOnLoad(true);
       spec.markPreInstrumented();
-      
+
       addAbstractSynchronizerSpec();
     }
   }
@@ -1256,7 +1255,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public void validateSessionConfig() {
-    if (this.applicationNames.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
+    if (this.webApplications.size() > 0 && !isCapabilityEnabled(TimCapability.SESSIONS)) {
       consoleLogger
           .warn("One or more web applications are listed in the Terracotta configuration file, but no container TIMs have been loaded.\n"
                 + "See http://www.terracotta.org/tim-warning for more information. ");
@@ -1399,19 +1398,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                    + nclAppGroup);
     }
     return nclAppGroup;
-  }
-
-  public boolean isDSOSessions(final String name) {
-    for (Iterator it = applicationNames.iterator(); it.hasNext();) {
-      String appName = (String) it.next();
-      if (matchesWildCard(appName, name)) {
-        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + appName + "]");
-        return true;
-      }
-    }
-
-    logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
-    return false;
   }
 
   private boolean matchesWildCard(final String regex, final String input) {
@@ -1575,7 +1561,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
    * if (spec == null) return null; return spec.getChangeApplicatorClassName(); }
    */
 
-  public boolean hasSpec(final String className) {
+  private boolean hasSpec(final String className) {
     return getSpec(className) != null;
   }
 
@@ -1751,10 +1737,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return spec.getLogicalExtendingClassName();
   }
 
-  public void addApplicationName(final String name) {
-    applicationNames.add(name);
-  }
-
   public void addToAppGroup(final String appGroup, final String[] namedClassloaders, final String[] webAppNames) {
     if (namedClassloaders != null) {
       for (String namedClassloader : namedClassloaders) {
@@ -1775,14 +1757,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         }
       }
     }
-  }
-
-  public void addSynchronousWriteApplication(final String name) {
-    this.synchronousWriteApplications.add(name);
-  }
-
-  public void addSessionLockedApplication(final String name) {
-    this.sessionLockedApplications.add(name);
   }
 
   public void addUserDefinedBootSpec(final String className, final TransparencyClassSpec spec) {
@@ -1844,20 +1818,23 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public int getSessionLockType(final String appName) {
-    for (Iterator iter = synchronousWriteApplications.iterator(); iter.hasNext();) {
-      String webApp = (String) iter.next();
-      if (webApp.equals(appName)) { return LockLevel.SYNCHRONOUS_WRITE.toInt(); }
-    }
-    return LockLevel.WRITE.toInt();
+  public void addWebApplication(String pattern, SessionConfiguration config) {
+    this.webApplications.put(pattern, config);
   }
 
-  public boolean isApplicationSessionLocked(final String appName) {
-    for (Iterator it = sessionLockedApplications.iterator(); it.hasNext();) {
-      String name = (String) it.next();
-      if (matchesWildCard(name, appName)) return true;
+  public SessionConfiguration getSessionConfiguration(String name) {
+    name = ClassProcessorHelper.computeAppName(name);
+
+    for (Entry<String, SessionConfiguration> entry : webApplications.entrySet()) {
+      String pattern = entry.getKey();
+      if (matchesWildCard(pattern, name)) {
+        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + pattern + "]");
+        return entry.getValue();
+      }
     }
-    return false;
+
+    logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
+    return null;
   }
 
   public static InputStream getPropertiesFromL2Stream(final ConnectionInfo[] connectInfo, final String message,

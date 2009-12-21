@@ -16,6 +16,7 @@ import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
+import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
@@ -119,8 +120,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   DistributedMethodSpec getDmiSpec(MemberInfo memberInfo);
 
   TransparencyClassSpec getSpec(String className);
-
-  boolean isDSOSessions(String name);
 
   /**
    * Examine the app-groups part of the config to determine an appGroup name given the specified loader description. If
@@ -234,12 +233,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   void addUserDefinedBootSpec(String className, TransparencyClassSpec spec);
 
-  void addApplicationName(String name);
-
-  void addSynchronousWriteApplication(String name);
-
-  void addSessionLockedApplication(String name);
-
   void addInstrumentationDescriptor(InstrumentedClass classDesc);
 
   Modules getModulesForInitialization();
@@ -271,8 +264,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    */
   void addCustomAdapter(String name, ClassAdapterFactory adapterFactory);
 
-  int getSessionLockType(String appName);
-
   Class getTCPeerClass(Class clazz);
 
   ClassReplacementMapping getClassReplacementMapping();
@@ -290,11 +281,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   public void validateGroupInfo() throws ConfigurationSetupException;
 
   boolean useResolveLockWhenClearing(Class clazz);
-
-  /**
-   * Returns true if the web-application is configured for session-locking
-   */
-  boolean isApplicationSessionLocked(String appName);
 
   /**
    * Add class adapters based on configuration that are present on the class
@@ -315,4 +301,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    * @return {@code UUID}
    */
   UUID getUUID();
+
+  SessionConfiguration getSessionConfiguration(String appName);
+
+  void addWebApplication(String pattern, SessionConfiguration config);
 }

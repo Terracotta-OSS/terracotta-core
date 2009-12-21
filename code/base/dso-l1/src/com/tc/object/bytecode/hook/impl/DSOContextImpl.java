@@ -156,10 +156,6 @@ public class DSOContextImpl implements DSOContext {
     return new DSOContextImpl(configHelper, manager.getClassProvider(), manager, repos);
   }
 
-  public static boolean isDSOSessions(String appName) throws ConfigurationSetupException {
-    return getGlobalConfigHelper().isDSOSessions(appName);
-  }
-
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
                          Collection<Repository> repos) {
     Assert.assertNotNull(configHelper);
@@ -313,14 +309,6 @@ public class DSOContextImpl implements DSOContext {
     throw new TCTimeoutException("We tried for " + (int) ((System.currentTimeMillis() - startTime) / 1000)
                                  + " seconds, but couldn't fetch system configuration mode from the L2 " + "at '"
                                  + theURL + "'. Is the L2 running?");
-  }
-
-  public int getSessionLockType(String appName) {
-    return configHelper.getSessionLockType(appName);
-  }
-
-  public boolean isApplicationSessionLocked(String appName) {
-    return configHelper.isApplicationSessionLocked(appName);
   }
 
   public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources) {
