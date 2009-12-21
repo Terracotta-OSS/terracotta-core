@@ -268,15 +268,22 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
         if (TerracottaManagement.matchAllTerracottaMBeans(id).apply(objName)) {
           if (beanNames.add(modifiedObjName)) {
-            MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName);
-            l2MBeanServer.registerMBean(mirror, modifiedObjName);
+            try {
+              MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName);
+              l2MBeanServer.registerMBean(mirror, modifiedObjName);
+            } catch (Throwable t) {
+              beanNames.remove(modifiedObjName);
+              if (t instanceof Error) throw (Error) t;
+              if (t instanceof Exception) throw (Exception) t;
+              throw new RuntimeException(t);
+            }
             logger.info("Tunneled MBean '" + modifiedObjName + "'");
           }
         } else {
           logger.info("Ignoring bean '" + objName + "'");
         }
       } catch (Exception e) {
-        logger.warn("Unable to register DSO client bean[" + objName + "]", e);
+        logger.warn("Unable to register DSO client bean[" + objName + "] due to " + e.getMessage());
       }
     }
 
