@@ -83,12 +83,14 @@ public class ManagedObjectStateFactory {
                             new Byte(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
                             new Byte(ManagedObjectState.LIST_TYPE));
+    // XXX: Hack for express tim-async
+    classNameToStateMap.put("org.terracotta.modules.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
 
   }
 
-  private ManagedObjectStateFactory(ManagedObjectChangeListenerProvider listenerProvider, StringIndex stringIndex,
-                                    PhysicalManagedObjectStateFactory physicalMOFactory,
-                                    PersistentCollectionFactory factory) {
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, final StringIndex stringIndex,
+                                    final PhysicalManagedObjectStateFactory physicalMOFactory,
+                                    final PersistentCollectionFactory factory) {
     this.listenerProvider = listenerProvider;
     this.stringIndex = stringIndex;
     this.physicalMOFactory = physicalMOFactory;
@@ -99,8 +101,8 @@ public class ManagedObjectStateFactory {
    * @see comments above
    */
   public static synchronized ManagedObjectStateFactory createInstance(
-                                                                      ManagedObjectChangeListenerProvider listenerProvider,
-                                                                      Persistor persistor) {
+                                                                      final ManagedObjectChangeListenerProvider listenerProvider,
+                                                                      final Persistor persistor) {
     if (singleton != null && !disableAssertions) {
       // not good !!
       throw new AssertionError("This class is singleton. It is not to be instanciated more than once. " + singleton);
@@ -112,12 +114,12 @@ public class ManagedObjectStateFactory {
   }
 
   // This is provided only for testing
-  public static synchronized void disableSingleton(boolean b) {
+  public static synchronized void disableSingleton(final boolean b) {
     disableAssertions = b;
   }
 
   // This is provided only for testing
-  public static synchronized void setInstance(ManagedObjectStateFactory factory) {
+  public static synchronized void setInstance(final ManagedObjectStateFactory factory) {
     Assert.assertNotNull(factory);
     singleton = factory;
   }
@@ -139,8 +141,8 @@ public class ManagedObjectStateFactory {
     return this.listenerProvider.getListener();
   }
 
-  public ManagedObjectState createState(ObjectID oid, ObjectID parentID, String className, String loaderDesc,
-                                        DNACursor cursor) {
+  public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className, final String loaderDesc,
+                                        final DNACursor cursor) {
     byte type = getStateObjectTypeFor(className);
 
     if (type == ManagedObjectState.LITERAL_TYPE) { return new LiteralTypesManagedObjectState(); }
@@ -186,17 +188,17 @@ public class ManagedObjectStateFactory {
       case ManagedObjectState.TDC_SERIALIZED_ENTRY:
         return new TDCSerializedEntryManagedObjectState(classID);
       case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
-        return new TDCCustomLifespanSerializedEntryManagedObjectState(classID);        
+        return new TDCCustomLifespanSerializedEntryManagedObjectState(classID);
     }
     // Unreachable
     throw new AssertionError("Type : " + type + " is unknown !");
   }
 
-  private long getClassID(String className, String loaderDesc) {
+  private long getClassID(final String className, final String loaderDesc) {
     return getStringIndex().getOrCreateIndexFor(loaderDesc + Namespace.getClassNameAndLoaderSeparator() + className);
   }
 
-  public String getClassName(long classID) {
+  public String getClassName(final long classID) {
     String s = null;
     try {
       String separator = Namespace.getClassNameAndLoaderSeparator();
@@ -208,7 +210,7 @@ public class ManagedObjectStateFactory {
     }
   }
 
-  public String getLoaderDescription(long classID) {
+  public String getLoaderDescription(final long classID) {
     String s = null;
     try {
       String separator = Namespace.getClassNameAndLoaderSeparator();
@@ -237,11 +239,11 @@ public class ManagedObjectStateFactory {
     return ManagedObjectState.PHYSICAL_TYPE;
   }
 
-  public PhysicalManagedObjectState createPhysicalState(ObjectID parentID, int classId) throws ClassNotFoundException {
+  public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId) throws ClassNotFoundException {
     return this.physicalMOFactory.create(parentID, classId);
   }
 
-  public ManagedObjectState readManagedObjectStateFrom(ObjectInput in, byte type) {
+  public ManagedObjectState readManagedObjectStateFrom(final ObjectInput in, final byte type) {
     try {
       switch (type) {
         case ManagedObjectState.PHYSICAL_TYPE:
@@ -294,8 +296,8 @@ public class ManagedObjectStateFactory {
     }
   }
 
-  public ManagedObjectState recreateState(ObjectID id, ObjectID pid, String className, String loaderDesc,
-                                          DNACursor cursor, ManagedObjectState oldState) {
+  public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className, final String loaderDesc,
+                                          final DNACursor cursor, final ManagedObjectState oldState) {
     Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
     final long classID = getClassID(className, loaderDesc);
     return this.physicalMOFactory.recreate(classID, pid, className, loaderDesc, cursor,
