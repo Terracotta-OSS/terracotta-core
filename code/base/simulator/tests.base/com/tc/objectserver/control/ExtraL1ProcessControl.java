@@ -40,10 +40,12 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     setJVMArgs();
   }
 
+  @Override
   public File getJavaHome() {
     return javaHome;
   }
 
+  @Override
   protected LinkedJavaProcess createLinkedJavaProcess() {
     LinkedJavaProcess out = super.createLinkedJavaProcess();
     out.setDirectory(this.directory);
@@ -76,19 +78,27 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
     return tcClassPathFile.toURI().toString();
   }
 
+  @Override
   protected String getMainClassName() {
     return mainClass.getName();
   }
 
+  @Override
   protected String[] getMainClassArguments() {
     return mainArgs;
   }
 
+  @Override
   public boolean isRunning() {
-    // TODO:: comeback
-    return true;
+    try {
+      process.exitValue();
+      return false;
+    } catch (IllegalThreadStateException e) {
+      return true;
+    }
   }
 
+  @Override
   public void attemptShutdown() throws Exception {
     // TODO:: comeback
     process.destroy();

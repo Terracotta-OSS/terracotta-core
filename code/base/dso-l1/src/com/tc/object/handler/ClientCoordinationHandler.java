@@ -7,28 +7,18 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.EventHandlerException;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
-import com.tc.object.msg.ClusterMembershipMessage;
-import com.tcclient.cluster.DsoClusterInternal;
 
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private ClientHandshakeManager   handshakeManager;
-  private final DsoClusterInternal dsoCluster;
-
-  public ClientCoordinationHandler(final DsoClusterInternal dsoCluster) {
-    this.dsoCluster = dsoCluster;
-  }
 
   @Override
-  public void handleEvent(final EventContext context) throws EventHandlerException {
-    if (context instanceof ClusterMembershipMessage) {
-      handleClusterMembershipMessage((ClusterMembershipMessage) context);
-    } else if (context instanceof ClientHandshakeAckMessage) {
+  public void handleEvent(final EventContext context) {
+     if (context instanceof ClientHandshakeAckMessage) {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
     } else if (context instanceof PauseContext) {
       handlePauseContext((PauseContext) context);
@@ -47,16 +37,6 @@ public class ClientCoordinationHandler extends AbstractEventHandler {
 
   private void handleClientHandshakeAckMessage(final ClientHandshakeAckMessage handshakeAck) {
     handshakeManager.acknowledgeHandshake(handshakeAck);
-  }
-
-  private void handleClusterMembershipMessage(final ClusterMembershipMessage cmm) throws EventHandlerException {
-    if (cmm.isNodeConnectedEvent()) {
-      dsoCluster.fireNodeJoined(cmm.getNodeId());
-    } else if (cmm.isNodeDisconnectedEvent()) {
-      dsoCluster.fireNodeLeft(cmm.getNodeId());
-    } else {
-      throw new EventHandlerException("Unknown event type: " + cmm);
-    }
   }
 
   @Override
