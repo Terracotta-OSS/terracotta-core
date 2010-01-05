@@ -73,12 +73,12 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassReplacement(String originalClassName, String replacementClassName, URL url,
-                                  ClassReplacementTest test) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL url,
+                                  final ClassReplacementTest test) {
     /**/
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader, final boolean publicApi) {
     /**/
   }
 
@@ -475,11 +475,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public void setBundleURLs(Map<Bundle, URL> bundleURLs) {
+  public void setBundleURLs(final Map<Bundle, URL> bundleURLs) {
     //
   }
 
-  public URL getBundleURL(Bundle bundle) {
+  public URL getBundleURL(final Bundle bundle) {
     return null;
   }
 
@@ -487,11 +487,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public SessionConfiguration getSessionConfiguration(String appName) {
+  public SessionConfiguration getSessionConfiguration(final String appName) {
     return null;
   }
 
-  public void addWebApplication(String pattern, SessionConfiguration config) {
+  public void addWebApplication(final String pattern, final SessionConfiguration config) {
     //
   }
 

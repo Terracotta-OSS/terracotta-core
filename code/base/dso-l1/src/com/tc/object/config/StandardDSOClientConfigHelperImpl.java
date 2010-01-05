@@ -157,14 +157,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   * 
+   *
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -834,8 +834,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public void addClassReplacement(String originalClassName, String replacementClassName, URL replacementResource,
-                                  ClassReplacementTest test) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL replacementResource,
+                                  final ClassReplacementTest test) {
     this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource, test);
   }
 
@@ -848,8 +848,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return classReplacements;
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly) {
-    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly));
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly, final boolean publicApi) {
+    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly, publicApi));
     // CDV-1053: don't call URL.equals() which can block
     if ((prev != null) && (!prev.getResource().toString().equals(resource.toString()))) {
       // we want to know if modules more than one module is trying to export the same class
@@ -1818,7 +1818,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public void addWebApplication(String pattern, SessionConfiguration config) {
+  public void addWebApplication(final String pattern, final SessionConfiguration config) {
     this.webApplications.put(pattern, config);
   }
 
@@ -2077,11 +2077,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.hasBootJar;
   }
 
-  public void setBundleURLs(Map<Bundle, URL> bundleURLs) {
+  public void setBundleURLs(final Map<Bundle, URL> bundleURLs) {
     this.bundleURLs = Collections.unmodifiableMap(new ConcurrentHashMap<Bundle, URL>(bundleURLs));
   }
 
-  public URL getBundleURL(Bundle bundle) {
+  public URL getBundleURL(final Bundle bundle) {
     return this.bundleURLs.get(bundle);
   }
 
@@ -2093,10 +2093,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     private final URL     resource;
     private final boolean targetSystemLoaderOnly;
+    private final boolean publicApi;
 
-    Resource(final URL resource, final boolean targetSystemLoaderOnly) {
+    Resource(final URL resource, final boolean targetSystemLoaderOnly, final boolean publicApi) {
       this.resource = resource;
       this.targetSystemLoaderOnly = targetSystemLoaderOnly;
+      this.publicApi = publicApi;
     }
 
     URL getResource() {
@@ -2105,6 +2107,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     boolean isTargetSystemLoaderOnly() {
       return targetSystemLoaderOnly;
+    }
+
+    boolean isPublicApi() {
+      return publicApi;
     }
 
     @Override

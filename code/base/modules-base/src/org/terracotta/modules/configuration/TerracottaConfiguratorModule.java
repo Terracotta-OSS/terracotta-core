@@ -78,12 +78,12 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
   }
 
   protected final void addClassReplacement(final Bundle bundle, final String originalClassName,
-                                           final String replacementClassName, ClassReplacementTest test) {
+                                           final String replacementClassName, final ClassReplacementTest test) {
     URL resource = getBundleResourceURL(bundle, ByteCodeUtil.classNameToFileName(replacementClassName));
     configHelper.addClassReplacement(originalClassName, replacementClassName, resource, test);
   }
 
-  private URL getBundleResourceURL(Bundle bundle, String resourceName) {
+  private URL getBundleResourceURL(final Bundle bundle, final String resourceName) {
     URL bundleURL = configHelper.getBundleURL(bundle);
     if (bundleURL == null) { throw new RuntimeException(bundle.getLocation() + " was not loaded with this config"); }
 
@@ -111,14 +111,24 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * java.lang.ClassLoader.loadClassInternal(). Specifically if the loadClass() method is directly being invoked from
    * code someplace, the class export will not function. Code that does a "new <exported class name>", or that uses
    * java.lang.Class.forName(..) will work though
-   * 
+   *
    * @param classname the bundle class name to export
-   * @param targetSystemLoaderOnly True if only the systen classloader should have visibility to this exported class
+   * @param targetSystemLoaderOnly True if only the system classloader should have visibility to this exported class
+   * @param publicApi True if the exported class is public API that is intended to be used by user code
    */
   protected final void addExportedBundleClass(final Bundle bundle, final String classname,
-                                              final boolean targetSystemLoaderOnly) {
+                                              final boolean targetSystemLoaderOnly, final boolean publicApi) {
     URL url = getBundleResourceURL(bundle, ByteCodeUtil.classNameToFileName(classname));
-    configHelper.addClassResource(classname, url, targetSystemLoaderOnly);
+    configHelper.addClassResource(classname, url, targetSystemLoaderOnly, publicApi);
+  }
+
+  protected final void addExportedBundleClass(final Bundle bundle, final String classname,
+                                              final boolean targetSystemLoaderOnly) {
+    addExportedBundleClass(bundle, classname, targetSystemLoaderOnly, false);
+  }
+
+  protected final void addPublicApiBundleClass(final Bundle bundle, final String classname) {
+    addExportedBundleClass(bundle, classname, false, true);
   }
 
   protected final void addExportedBundleClass(final Bundle bundle, final String classname) {
@@ -131,7 +141,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
    * The export will only work for class loads that pass through java.lang.ClassLoader.loadClassInternal(). Specifically
    * if the loadClass() method is directly being invoked from code someplace, the class export will not function. Code
    * that does a "new <exported class name>", or that uses java.lang.Class.forName(..) will work though
-   * 
+   *
    * @param classname the tc.jar class name to export
    */
   protected final void addExportedTcJarClass(final String classname) {
@@ -141,7 +151,7 @@ public abstract class TerracottaConfiguratorModule implements BundleActivator {
 
     if (resource == null) { throw new RuntimeException("Exported TC jar class " + classname + " does not exist."); }
 
-    configHelper.addClassResource(classname, resource, false);
+    configHelper.addClassResource(classname, resource, false, false);
   }
 
   protected TransparencyClassSpec getOrCreateSpec(final String expr, final boolean markAsPreInstrumented) {
