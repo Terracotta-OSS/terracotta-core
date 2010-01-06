@@ -23,12 +23,14 @@ import java.util.Properties;
  */
 public class StandardAppServerParameters implements AppServerParameters {
 
-  private final Map        wars      = new HashMap();
-  private final Collection sars      = new ArrayList();
-  private final String     instanceName;
-  private final Properties props;
-  private String           jvmArgs   = "";
-  private String           classpath = "";
+  private final Map                         wars             = new HashMap();
+  private final Collection                  sars             = new ArrayList();
+  private final Collection<ValveDefinition> valves           = new ArrayList();
+  private final Collection<String>          tomcatServerJars = new ArrayList();
+  private final String                      instanceName;
+  private final Properties                  props;
+  private String                            jvmArgs          = "";
+  private String                            classpath        = "";
 
   public StandardAppServerParameters(String instanceName, Properties props) {
     this.instanceName = instanceName;
@@ -48,6 +50,14 @@ public class StandardAppServerParameters implements AppServerParameters {
     sars.add(sar);
   }
 
+  public final void addValve(ValveDefinition def) {
+    valves.add(def);
+  }
+
+  public final void addTomcatServerJar(String jar) {
+    tomcatServerJars.add(jar);
+  }
+
   public final String jvmArgs() {
     return jvmArgs;
   }
@@ -60,7 +70,7 @@ public class StandardAppServerParameters implements AppServerParameters {
     return classpath;
   }
 
-  protected final void appendClasspath(String classpathVar) {
+  public final void appendClasspath(String classpathVar) {
     this.classpath += classpathVar + " ";
   }
 
@@ -123,4 +133,11 @@ public class StandardAppServerParameters implements AppServerParameters {
     return sars;
   }
 
+  public Collection<ValveDefinition> valves() {
+    return valves;
+  }
+
+  public Collection<String> tomcatServerJars() {
+    return tomcatServerJars;
+  }
 }

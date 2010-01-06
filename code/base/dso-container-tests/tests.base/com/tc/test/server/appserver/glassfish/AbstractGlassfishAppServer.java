@@ -24,6 +24,7 @@ import com.tc.test.server.ServerResult;
 import com.tc.test.server.appserver.AbstractAppServer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.AppServerResult;
+import com.tc.test.server.appserver.ValveDefinition;
 import com.tc.test.server.appserver.deployment.DeploymentBuilder;
 import com.tc.test.server.appserver.deployment.WARBuilder;
 import com.tc.test.server.util.AppServerUtil;
@@ -569,6 +570,14 @@ public abstract class AbstractGlassfishAppServer extends AbstractAppServer {
 
     public Map wars() {
       return delegate.wars();
+    }
+
+    public Collection<ValveDefinition> valves() {
+      return delegate.valves();
+    }
+
+    public Collection<String> tomcatServerJars() {
+      return delegate.tomcatServerJars();
     }
 
   }

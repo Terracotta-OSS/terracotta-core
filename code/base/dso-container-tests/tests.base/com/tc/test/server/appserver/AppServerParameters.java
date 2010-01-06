@@ -23,4 +23,8 @@ public interface AppServerParameters extends ServerParameters {
   String instanceName();
 
   Collection sars(); // jboss only
+
+  Collection<ValveDefinition> valves(); // tomcat + variants
+
+  Collection<String> tomcatServerJars(); // plain tomcat only
 }
