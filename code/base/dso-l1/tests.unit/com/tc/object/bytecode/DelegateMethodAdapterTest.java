@@ -9,7 +9,6 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassReader;
 import com.tc.asm.ClassWriter;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -26,10 +25,6 @@ public class DelegateMethodAdapterTest extends TestCase {
     reader.accept(adapter, ClassReader.SKIP_FRAMES);
 
     byte[] adapted = writer.toByteArray();
-    FileOutputStream out = new FileOutputStream("C:/uh.class");
-    out.write(adapted);
-    out.close();
-
     Class adaptedWrapper = loader.defineClass(Wrapper.class.getName(), adapted);
 
     Base delegate = new Base();
@@ -127,8 +122,10 @@ public class DelegateMethodAdapterTest extends TestCase {
   public static class Wrapper extends Base {
 
     static {
+      // the presence of a <clinit> tripped up the first version of the adapter
+
+      // there has to be something in here so the compiler will actually produce this method in the class
       System.err.println("<clinit>");
-      // the precence of a <clinit> tripped up the first version of the adapter
     }
 
     @SuppressWarnings("unused")
