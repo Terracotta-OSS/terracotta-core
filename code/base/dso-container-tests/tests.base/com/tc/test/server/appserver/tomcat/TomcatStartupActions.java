@@ -9,6 +9,7 @@ import org.codehaus.cargo.container.InstalledLocalContainer;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.ValveDefinition;
 import com.tc.util.ReplaceLine;
+import com.tc.util.runtime.Os;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +44,7 @@ public class TomcatStartupActions {
         String jarsCsv = "";
         String[] jars = tomcatServerJars.toArray(new String[] {});
         for (int i = 0; i < jars.length; i++) {
-          jarsCsv += jars[i].replace('\\', '/');
+          jarsCsv += "file:" + (Os.isWindows() ? "/" : "") + jars[i].replace('\\', '/');
           if (i < jars.length - 1) {
             jarsCsv += ",";
           }

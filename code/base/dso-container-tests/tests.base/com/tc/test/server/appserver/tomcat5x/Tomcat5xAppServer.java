@@ -10,6 +10,7 @@ import org.codehaus.cargo.container.configuration.LocalConfiguration;
 import org.codehaus.cargo.container.property.GeneralPropertySet;
 import org.codehaus.cargo.container.tomcat.Tomcat5xInstalledLocalContainer;
 
+import com.tc.test.AppServerInfo;
 import com.tc.test.server.appserver.AppServerParameters;
 import com.tc.test.server.appserver.cargo.CargoAppServer;
 import com.tc.test.server.appserver.tomcat.TomcatStartupActions;
@@ -20,8 +21,11 @@ import com.tc.test.server.util.AppServerUtil;
  */
 public final class Tomcat5xAppServer extends CargoAppServer {
 
+  private final AppServerInfo appServerInfo;
+
   public Tomcat5xAppServer(Tomcat5xAppServerInstallation installation) {
     super(installation);
+    appServerInfo = installation.appServerInfo();
   }
 
   @Override
@@ -31,7 +35,7 @@ public final class Tomcat5xAppServer extends CargoAppServer {
 
   @Override
   protected InstalledLocalContainer container(LocalConfiguration config, AppServerParameters params) {
-    return new TCTomcat5xInstalledLocalContainer(config, params);
+    return new TCTomcat5xInstalledLocalContainer(config, params, appServerInfo);
   }
 
   @Override
@@ -42,16 +46,20 @@ public final class Tomcat5xAppServer extends CargoAppServer {
   private static class TCTomcat5xInstalledLocalContainer extends Tomcat5xInstalledLocalContainer {
 
     private final AppServerParameters params;
+    private final AppServerInfo       appServerInfo;
 
-    public TCTomcat5xInstalledLocalContainer(LocalConfiguration config, AppServerParameters params) {
+    public TCTomcat5xInstalledLocalContainer(LocalConfiguration config, AppServerParameters params,
+                                             AppServerInfo appServerInfo) {
       super(config);
       this.params = params;
+      this.appServerInfo = appServerInfo;
     }
 
     @Override
     protected void setState(State state) {
       if (state.isStarting()) {
-        TomcatStartupActions.modifyConfig(params, this, 60);
+        int line = appServerInfo.getMinor().startsWith("0.") ? 45 : 60;
+        TomcatStartupActions.modifyConfig(params, this, line);
       }
 
       super.setState(state);
