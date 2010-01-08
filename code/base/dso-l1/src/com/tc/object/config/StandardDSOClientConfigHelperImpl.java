@@ -157,14 +157,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   /**
    * A map of class names to TransparencyClassSpec
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          userDefinedBootSpecs               = new HashMap();
 
   /**
    * A map of class names to TransparencyClassSpec for individual classes
-   *
+   * 
    * @GuardedBy {@link #specLock}
    */
   private final Map                                          classSpecs                         = new HashMap();
@@ -834,8 +834,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public void addClassReplacement(final String originalClassName, final String replacementClassName, final URL replacementResource,
-                                  final ClassReplacementTest test) {
+  public void addClassReplacement(final String originalClassName, final String replacementClassName,
+                                  final URL replacementResource, final ClassReplacementTest test) {
     this.classReplacements.addMapping(originalClassName, replacementClassName, replacementResource, test);
   }
 
@@ -848,7 +848,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return classReplacements;
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly, final boolean publicApi) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly,
+                               final boolean publicApi) {
     Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly, publicApi));
     // CDV-1053: don't call URL.equals() which can block
     if ((prev != null) && (!prev.getResource().toString().equals(resource.toString()))) {
@@ -2109,6 +2110,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       return targetSystemLoaderOnly;
     }
 
+    @SuppressWarnings("unused")
     boolean isPublicApi() {
       return publicApi;
     }
