@@ -26,6 +26,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -426,6 +427,11 @@ public class WARBuilder implements DeploymentBuilder {
     pw.println("  <filter>");
     pw.println("    <filter-name>" + definition.name + "</filter-name>");
     pw.println("    <filter-class>" + definition.filterClass.getName() + "</filter-class>");
+    if (!definition.dispatchers.isEmpty()) {
+      for (Dispatcher dispatcher : definition.dispatchers) {
+        pw.println("    <dispatcher>" + dispatcher + "</dispatcher>");
+      }
+    }
 
     if (definition.initParameters != null) {
       for (Iterator it = definition.initParameters.entrySet().iterator(); it.hasNext();) {
@@ -533,7 +539,7 @@ public class WARBuilder implements DeploymentBuilder {
     resources.add(new ResourceDefinition(srcDir, includes, prefix, null));
     return this;
   }
-  
+
   public DeploymentBuilder addFileAsResource(File file, String prefix) {
     File srcDir = file.getParentFile();
     resources.add(new ResourceDefinition(srcDir, file.getName(), prefix, null));
@@ -548,7 +554,7 @@ public class WARBuilder implements DeploymentBuilder {
       try {
         jarFile = new JarFile(path.getFile());
         String dir = location.startsWith("/") ? location.substring(1) : location;
-        dir = dir != null ? (dir.trim().equals("") ? "" : dir + "/") : "";  
+        dir = dir != null ? (dir.trim().equals("") ? "" : dir + "/") : "";
         ZipEntry entry = jarFile.getEntry(dir + includes);
 
         File tmpParent = new File(tmpResourcePath.getFile(), dir);
@@ -629,7 +635,12 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
   public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params) {
-    filters.add(new FilterDefinition(name, mapping, filterClass, params));
+    return addFilter(name, mapping, filterClass, params, null);
+  }
+
+  public DeploymentBuilder addFilter(String name, String mapping, Class filterClass, Map params,
+                                     Set<Dispatcher> dispatchers) {
+    filters.add(new FilterDefinition(name, mapping, filterClass, params, dispatchers));
     return this;
   }
 
@@ -745,16 +756,24 @@ public class WARBuilder implements DeploymentBuilder {
   }
 
   private static class FilterDefinition {
-    public final String name;
-    public final String mapping;
-    public final Class  filterClass;
-    public final Map    initParameters;
+    public final String          name;
+    public final String          mapping;
+    public final Class           filterClass;
+    public final Map             initParameters;
+    public final Set<Dispatcher> dispatchers;
 
-    public FilterDefinition(String name, String mapping, Class filterClass, Map initParameters) {
+    public FilterDefinition(String name, String mapping, Class filterClass, Map initParameters,
+                            Set<Dispatcher> dispatchers) {
       this.name = name;
       this.mapping = mapping;
       this.filterClass = filterClass;
       this.initParameters = initParameters;
+      this.dispatchers = dispatchers == null ? Collections.EMPTY_SET : dispatchers;
     }
   }
+
+  public enum Dispatcher {
+    ERROR, INCLUDE, FORWARD, REQUEST;
+  }
+
 }
