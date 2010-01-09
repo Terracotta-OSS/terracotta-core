@@ -312,6 +312,13 @@ public class WARBuilder implements DeploymentBuilder {
         pw.println("  <filter-mapping>");
         pw.println("    <filter-name>" + definition.name + "</filter-name>");
         pw.println("    <url-pattern>" + definition.mapping + "</url-pattern>");
+
+        if (!definition.dispatchers.isEmpty()) {
+          for (Dispatcher dispatcher : definition.dispatchers) {
+            pw.println("    <dispatcher>" + dispatcher + "</dispatcher>");
+          }
+        }
+
         pw.println("  </filter-mapping>");
       }
 
@@ -427,11 +434,6 @@ public class WARBuilder implements DeploymentBuilder {
     pw.println("  <filter>");
     pw.println("    <filter-name>" + definition.name + "</filter-name>");
     pw.println("    <filter-class>" + definition.filterClass.getName() + "</filter-class>");
-    if (!definition.dispatchers.isEmpty()) {
-      for (Dispatcher dispatcher : definition.dispatchers) {
-        pw.println("    <dispatcher>" + dispatcher + "</dispatcher>");
-      }
-    }
 
     if (definition.initParameters != null) {
       for (Iterator it = definition.initParameters.entrySet().iterator(); it.hasNext();) {
