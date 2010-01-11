@@ -830,15 +830,23 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
          There is an attribute "session-locking" in web-application which is 
          optional and true by default. By default, locking is implicitly 
          provided and auto-locking is not required when modifying/mutating
-         shared objects in the session.
-         When session-locking=false, applications need to properly synchronize 
-         and auto-lock before mutating shared data, though methods in HttpSession 
-         like setAttribute(), setMaxInactiveInterval() will still have implicit 
-         locking.
+         shared objects in the session. When session-locking=false, applications
+         need to properly synchronize and auto-lock before mutating shared data, 
+         though methods in HttpSession like setAttribute(), setMaxInactiveInterval()
+         will still have implicit locking.
+
+         The "serialization" attribute controls whether objects placed into
+         session will serialized or not. If session are not serialized, they
+         need to be instrumented and appropriately locked if mutable (see 
+         <instrumented-classes> and <locks> sections). Enabling serialization
+         changes the default for "session-locking" (above) to false since the
+         clustered session attributes will not themselves be clustered objects
+         The default value is false
       -->
       <web-applications>
         <web-application>petstore</web-application>
         <web-application session-locking="false">billing_app</web-application>
+        <web-application serialization="true">serialized_app</web-application>
         <web-application>ROOT</web-application>
       </web-applications>
 
