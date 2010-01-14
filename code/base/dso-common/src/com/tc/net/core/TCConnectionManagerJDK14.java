@@ -98,17 +98,21 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
     }
   }
 
-  // DEV-1858
+  /**
+   * Connection is active if and only if it is Transport Established and the idle time is less than the HC max idle
+   * time.
+   */
   public TCConnection[] getAllActiveConnections() {
     synchronized (connections) {
       ArrayList activeConnections = new ArrayList();
       long maxIdleTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(healthCheckerConfig, false);
       for (Iterator i = connections.iterator(); i.hasNext();) {
         TCConnection conn = (TCConnection) i.next();
-        if (conn.getIdleTime() < maxIdleTime) {
+        if ((conn.getIdleTime() < maxIdleTime) && conn.isTransportEstablished()) {
           activeConnections.add(conn);
         } else {
-          logger.info(conn + "  is not active. Max allowed Idle time:" + maxIdleTime);
+          logger.info(conn + "  is not active; Max allowed Idle time:" + maxIdleTime + "; Transport Established: "
+                      + conn.isTransportEstablished());
         }
       }
       logger.info("Active connections : " + activeConnections.size() + " out of " + connections.size());

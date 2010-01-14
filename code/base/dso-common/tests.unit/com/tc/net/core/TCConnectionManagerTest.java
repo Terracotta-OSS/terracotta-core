@@ -109,6 +109,14 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(3, conns.length);
     assertTrue(Arrays.asList(conns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
 
+    conn1.connect(lsnr.getBindSocketAddress(), 5000);
+    conn2.connect(lsnr.getBindSocketAddress(), 5000);
+    conn3.connect(lsnr.getBindSocketAddress(), 5000);
+
+    conn1.setTransportEstablished();
+    conn2.setTransportEstablished();
+    conn3.setTransportEstablished();
+
     TCConnection activeConns[] = clientConnMgr.getAllActiveConnections();
     assertEquals(3, activeConns.length);
     assertTrue(Arrays.asList(activeConns).containsAll(Arrays.asList(new Object[] { conn1, conn2, conn3 })));
@@ -120,17 +128,21 @@ public class TCConnectionManagerTest extends TestCase {
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(2, clientConnMgr.getAllConnections().length);
-    assertEquals(2, clientConnMgr.getAllActiveConnections().length);
 
     conn1.connect(lsnr.getBindSocketAddress(), 5000);
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
-
-    assertEquals(2, clientConnMgr.getAllConnections().length);
+    conn1.setTransportEstablished();
+    conn2.setTransportEstablished();
     assertEquals(2, clientConnMgr.getAllActiveConnections().length);
 
     while (serverConnMgr.getAllConnections().length < 2) {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
+    }
+
+    conns = serverConnMgr.getAllConnections();
+    for (TCConnection conn : conns) {
+      conn.setTransportEstablished();
     }
     assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
@@ -167,14 +179,23 @@ public class TCConnectionManagerTest extends TestCase {
     TCConnection conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     TCConnection conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
 
-    assertEquals(2, clientConnMgr.getAllActiveConnections().length);
     conn1.connect(lsnr.getBindSocketAddress(), 3000);
     conn2.connect(lsnr.getBindSocketAddress(), 3000);
+
+    conn1.setTransportEstablished();
+    conn2.setTransportEstablished();
+    assertEquals(2, clientConnMgr.getAllActiveConnections().length);
 
     while (serverConnMgr.getAllConnections().length < 2) {
       System.out.println("waiting for clients");
       ThreadUtil.reallySleep(500);
     }
+
+    TCConnection[] conns = serverConnMgr.getAllConnections();
+    for (TCConnection conn : conns) {
+      conn.setTransportEstablished();
+    }
+
     assertEquals(2, serverConnMgr.getAllActiveConnections().length);
 
     long sleepTime = ConnectionHealthCheckerUtil.getMaxIdleTimeForAlive(hcConfig, false) + 2000 /* buffer sleep time */;

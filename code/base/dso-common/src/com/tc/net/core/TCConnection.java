@@ -122,4 +122,11 @@ public interface TCConnection extends NetworkMessageSink {
    * Fair distribution of worker comm threads
    */
   public void addWeight(int addWeightBy);
+
+  /**
+   * After TC Transport handshake, a connection is said to be Transport Established
+   */
+  public void setTransportEstablished();
+
+  public boolean isTransportEstablished();
 }

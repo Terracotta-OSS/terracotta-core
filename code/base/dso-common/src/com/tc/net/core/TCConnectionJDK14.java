@@ -39,6 +39,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * JDK14 (nio) implementation of TCConnection
@@ -47,30 +48,31 @@ import java.util.List;
  */
 final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
 
-  private static final long              NO_CONNECT_TIME     = -1L;
-  private static final TCLogger          logger              = TCLogging.getLogger(TCConnection.class);
-  private static final long              WARN_THRESHOLD      = 0x400000L;                                       // 4MB
+  private static final long              NO_CONNECT_TIME      = -1L;
+  private static final TCLogger          logger               = TCLogging.getLogger(TCConnection.class);
+  private static final long              WARN_THRESHOLD       = 0x400000L;                                       // 4MB
 
-  private final LinkedList               writeContexts       = new LinkedList();
+  private final LinkedList               writeContexts        = new LinkedList();
   private CoreNIOServices                commNIOServiceThread;
 
   private final TCConnectionManagerJDK14 parent;
-  private final TCConnectionEventCaller  eventCaller         = new TCConnectionEventCaller(logger);
-  private final SynchronizedLong         lastDataWriteTime   = new SynchronizedLong(System.currentTimeMillis());
-  private final SynchronizedLong         lastDataReceiveTime = new SynchronizedLong(System.currentTimeMillis());
-  private final SynchronizedLong         connectTime         = new SynchronizedLong(NO_CONNECT_TIME);
-  private final List                     eventListeners      = new CopyOnWriteArrayList();
+  private final TCConnectionEventCaller  eventCaller          = new TCConnectionEventCaller(logger);
+  private final SynchronizedLong         lastDataWriteTime    = new SynchronizedLong(System.currentTimeMillis());
+  private final SynchronizedLong         lastDataReceiveTime  = new SynchronizedLong(System.currentTimeMillis());
+  private final SynchronizedLong         connectTime          = new SynchronizedLong(NO_CONNECT_TIME);
+  private final List                     eventListeners       = new CopyOnWriteArrayList();
   private final TCProtocolAdaptor        protocolAdaptor;
-  private final SynchronizedBoolean      isSocketEndpoint    = new SynchronizedBoolean(false);
-  private final SetOnceFlag              closed              = new SetOnceFlag();
-  private final SynchronizedBoolean      connected           = new SynchronizedBoolean(false);
-  private final SetOnceRef               localSocketAddress  = new SetOnceRef();
-  private final SetOnceRef               remoteSocketAddress = new SetOnceRef();
+  private final SynchronizedBoolean      isSocketEndpoint     = new SynchronizedBoolean(false);
+  private final SetOnceFlag              closed               = new SetOnceFlag();
+  private final SynchronizedBoolean      connected            = new SynchronizedBoolean(false);
+  private final SetOnceRef               localSocketAddress   = new SetOnceRef();
+  private final SetOnceRef               remoteSocketAddress  = new SetOnceRef();
   private final SocketParams             socketParams;
-  private final SynchronizedLong         totalRead           = new SynchronizedLong(0);
-  private final SynchronizedLong         totalWrite          = new SynchronizedLong(0);
+  private final SynchronizedLong         totalRead            = new SynchronizedLong(0);
+  private final SynchronizedLong         totalWrite           = new SynchronizedLong(0);
 
   private volatile SocketChannel         channel;
+  private AtomicBoolean                  transportEstablished = new AtomicBoolean(false);
 
   // for creating unconnected client connections
   TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
@@ -105,6 +107,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   private void closeImpl(Runnable callback) {
     Assert.assertTrue(closed.isSet());
+    this.transportEstablished.set(false);
     try {
       if (channel != null) {
         commNIOServiceThread.cleanupChannel(channel, callback);
@@ -642,6 +645,14 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   public void addWeight(int addWeightBy) {
     this.commNIOServiceThread.addWeight(this, addWeightBy, channel);
+  }
+
+  public void setTransportEstablished() {
+    this.transportEstablished.set(true);
+  }
+
+  public boolean isTransportEstablished() {
+    return this.transportEstablished.get();
   }
 
 }

@@ -127,4 +127,11 @@ public class MockTCConnection implements TCConnection {
     //
   }
 
+  public void setTransportEstablished() {
+    //
+  }
+
+  public boolean isTransportEstablished() {
+    return false;
+  }
 }
