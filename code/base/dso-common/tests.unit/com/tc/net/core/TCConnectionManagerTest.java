@@ -125,10 +125,14 @@ public class TCConnectionManagerTest extends TestCase {
     assertEquals(0, clientConnMgr.getAllConnections().length);
     assertEquals(0, clientConnMgr.getAllActiveConnections().length);
 
+    while (serverConnMgr.getAllConnections().length > 0) {
+      System.out.println("Waiting for server conn close");
+      ThreadUtil.reallySleep(500);
+    }
+
     conn1 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     conn2 = clientConnMgr.createConnection(new NullProtocolAdaptor());
     assertEquals(2, clientConnMgr.getAllConnections().length);
-
     conn1.connect(lsnr.getBindSocketAddress(), 5000);
     conn2.connect(lsnr.getBindSocketAddress(), 5000);
     conn1.setTransportEstablished();
@@ -139,8 +143,10 @@ public class TCConnectionManagerTest extends TestCase {
       System.out.println("Waiting for client conns");
       ThreadUtil.reallySleep(500);
     }
-
+    
     conns = serverConnMgr.getAllConnections();
+    assertEquals(2, conns.length);
+    
     for (TCConnection conn : conns) {
       conn.setTransportEstablished();
     }
