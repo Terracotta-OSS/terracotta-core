@@ -26,11 +26,13 @@ import java.util.Map;
 public class TestRemoteLockManager implements RemoteLockManager {
   public final LockResponder          LOOPBACK_LOCK_RESPONDER = new LoopbackLockResponder();
   public final LockResponder          NULL_LOCK_RESPONDER     = new LockResponder() {
-                                                                public void respondToLockRequest(LockID lock, ThreadID thread, ServerLockLevel level) {
+                                                                public void respondToLockRequest(LockID lock,
+                                                                                                 ThreadID thread,
+                                                                                                 ServerLockLevel level) {
                                                                   return;
                                                                 }
                                                               };
-  private volatile ClientLockManager           lockManager;
+  private volatile ClientLockManager  lockManager;
   private Map                         locks                   = new HashMap();
   private int                         lockRequests            = 0;
   private int                         unlockRequests          = 0;
@@ -208,5 +210,9 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   public ClientID getClientID() {
     return ClientID.NULL_ID;
+  }
+
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+    flush(lock);
   }
 }

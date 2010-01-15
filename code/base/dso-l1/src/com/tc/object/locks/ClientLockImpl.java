@@ -626,13 +626,20 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         throw new IllegalMonitorStateException();
       }
       
+      if (!unlock.getLockLevel().isSyncWrite() && !flushOnUnlock(unlock)) {
+        return release(remote, unlock);
+      }
+    }
+    
+    if (unlock.getLockLevel().isSyncWrite()) {
+      // wait for the server to receive all transactions for this lock
+      remote.waitForServerToReceiveTxnsForThisLock(lock);    
       if (!flushOnUnlock(unlock)) {
         return release(remote, unlock);
       }
     }
-
-    remote.flush(lock);
     
+    remote.flush(lock);
     return release(remote, unlock);
   }
 
@@ -668,10 +675,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
   }
   
   private synchronized boolean flushOnUnlock(LockHold unlock) {
-    if (unlock.getLockLevel().flushOnUnlock()) {
-      return true;
-    }
-    
     if (!greediness.flushOnUnlock()) {
       return false;
     }
@@ -694,7 +697,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     
     for (LockStateNode s : this) {
       if (s instanceof LockHold && s.getOwner().equals(thread)) {
-        if (((LockHold) s).getLockLevel().flushOnUnlock()) return true;
+        if (((LockHold) s).getLockLevel().isSyncWrite()) return true;
       }
     }
     return false;

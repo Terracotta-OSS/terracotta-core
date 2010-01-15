@@ -74,6 +74,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private short                                 outstandingWriteCount  = 0;
   private int                                   bytesWritten           = 0;
   private int                                   numTxns                = 0;
+  private boolean                               containsSyncWriteTxn   = false;
 
   public TransactionBatchWriter(GroupID groupID, TxnBatchID batchID, ObjectStringSerializer serializer,
                                 DNAEncoding encoding, CommitTransactionMessageFactory commitTransactionMessageFactory,
@@ -316,6 +317,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                              TransactionIDGenerator tidGenerator) {
     this.numTxns++;
+    
+    if(txn.getLockType().equals(TxnType.SYNC_WRITE)) {
+      this.containsSyncWriteTxn = true;
+    }
 
     removeEmptyDeltaDna(txn);
 
@@ -353,6 +358,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   protected void writeHeader(TCByteBufferOutputStream out) {
     out.writeLong(this.batchID.toLong());
     out.writeInt(this.transactionData.size());
+    out.writeBoolean(containsSyncWriteTxn);
   }
 
   private TCByteBufferOutputStream newOutputStream() {

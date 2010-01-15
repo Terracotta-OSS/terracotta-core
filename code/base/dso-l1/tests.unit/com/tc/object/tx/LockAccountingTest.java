@@ -65,10 +65,10 @@ public class LockAccountingTest extends TestCase {
     tx4locks.add(lockID4);
     lock4Txs.add(txID4);
     
-    la.add(txID1, tx1locks);
-    la.add(txID2, tx2locks);
-    la.add(txID3, tx3locks);
-    la.add(txID4, tx4locks);
+    la.add(txID1, tx1locks, false);
+    la.add(txID2, tx2locks, false);
+    la.add(txID3, tx3locks, false);
+    la.add(txID4, tx4locks, false);
 
     verifyGetTransactionsFor();
     

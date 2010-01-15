@@ -230,6 +230,51 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     Util.selfInterruptIfNeeded(isInterrupted);
   }
 
+  public void waitForServerToReceiveTxnsForThisLock(LockID lockId) {
+    // wait for transactions to get acked here from the server
+    final long start = System.currentTimeMillis();
+    long lastPrinted = 0;
+    boolean isInterrupted = false;
+    Collection c;
+    synchronized (this.lock) {
+      while ((!(c = this.lockAccounting.getSyncWriteTransactionsFor(lockId)).isEmpty())) {
+        try {
+          this.lock.wait(FLUSH_WAIT_INTERVAL);
+          long now = System.currentTimeMillis();
+          if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
+            this.logger.info("Sync Write for " + lockId + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
+                             + " sec. Took : " + (now - start) + " ms. # Transactions not yet Acked = " + c.size()
+                             + "\n");
+            lastPrinted = now;
+          }
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
+      }
+    }
+
+    Util.selfInterruptIfNeeded(isInterrupted);
+  }
+
+  /**
+   * This method will be called when the server receives a batch. This should ideally be called only when a batch
+   * contains a sync write transaction.
+   */
+  public void batchReceived(TxnBatchID batchId) {
+    // This batch id was received by the server
+    // so notify the locks waiting for this transaction
+    Collection txns = batchAccounting.getTransactionIdsFor(batchId);
+    Iterator iter = txns.iterator();
+    while (iter.hasNext()) {
+      TransactionID txId = (TransactionID) iter.next();
+      lockAccounting.transactionRecvdByServer(txId);
+    }
+
+    synchronized (lock) {
+      lock.notifyAll();
+    }
+  }
+
   /* This does not block unlike flush() */
   public boolean isTransactionsForLockFlushed(final LockID lockID, final LockFlushCallback callback) {
     synchronized (this.lock) {
@@ -271,8 +316,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       if (isStoppingOrStopped()) {
         // Send now if stop is requested
         sendBatches(true, "commit() : Stop initiated.");
-      }
-      else {
+      } else {
         waitUntilRunning();
         sendBatches(false);
       }

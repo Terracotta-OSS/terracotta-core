@@ -220,7 +220,6 @@ public class ClientLockManagerTest extends TCTestCase {
     lockManager.unlock(lockID_1, LockLevel.READ);
     assertEquals(2, rmtLockManager.getFlushCount());
     lockManager.unlock(lockID_1, LockLevel.WRITE);
-    assertEquals(3, rmtLockManager.getFlushCount());
 
     rmtLockManager.resetFlushCount();
     rmtLockManager.makeLocksGreedy();

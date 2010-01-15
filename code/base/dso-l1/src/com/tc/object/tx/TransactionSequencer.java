@@ -136,7 +136,8 @@ public class TransactionSequencer {
       if(tid.isNull()) {
         throw new AssertionError("Transaction id is null");
       }
-      this.lockAccounting.add(tid, txn.getAllLockIDs());
+      boolean isSyncWrite = txn.getLockType().equals(TxnType.SYNC_WRITE);
+      this.lockAccounting.add(tid, txn.getAllLockIDs(), isSyncWrite);
     }
 
     if (this.currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {

@@ -37,7 +37,10 @@ import java.util.Map;
 
 public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
-  private static final TCLogger                        logger = TCLogging.getLogger(TransactionBatchReaderImpl.class);
+  private static final TCLogger                        logger      = TCLogging
+                                                                       .getLogger(TransactionBatchReaderImpl.class);
+
+  private static final int                             HEADER_SIZE = 13;
 
   private final TCByteBufferInputStream                in;
   private final TxnBatchID                             batchID;
@@ -46,8 +49,9 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
   private int                                          txnToRead;
   private final ObjectStringSerializer                 serializer;
   private final ServerTransactionFactory               txnFactory;
-  private final LinkedHashMap<TransactionID, MarkInfo> marks  = new LinkedHashMap<TransactionID, MarkInfo>();
+  private final LinkedHashMap<TransactionID, MarkInfo> marks       = new LinkedHashMap<TransactionID, MarkInfo>();
   private final TCByteBuffer[]                         data;
+  private final boolean                                containsSyncWriteTransaction;
 
   public TransactionBatchReaderImpl(TCByteBuffer[] data, NodeID nodeID, ObjectStringSerializer serializer,
                                     ServerTransactionFactory txnFactory, DSOGlobalServerStats globalSeverStats)
@@ -60,16 +64,22 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.numTxns = this.in.readInt();
     this.txnToRead = this.numTxns;
     this.serializer = serializer;
+    this.containsSyncWriteTransaction = this.in.readBoolean();
     Assert.assertNotNull(globalSeverStats);
     Assert.assertNotNull(globalSeverStats.getTransactionSizeCounter());
     // transactionSize = Sum of Size of transactions / number of transactions
     globalSeverStats.getTransactionSizeCounter().increment(this.in.getTotalLength(), this.numTxns);
   }
 
+  public boolean containsSyncWriteTransaction() {
+    return containsSyncWriteTransaction;
+  }
+
   private TCByteBuffer[] getHeaderBuffers(int txnsCount) {
-    TCByteBufferOutputStream tos = new TCByteBufferOutputStream(12, false);
+    TCByteBufferOutputStream tos = new TCByteBufferOutputStream(HEADER_SIZE, false);
     tos.writeLong(this.batchID.toLong());
     tos.writeInt(txnsCount);
+    tos.writeBoolean(containsSyncWriteTransaction);
     return tos.toArray();
   }
 

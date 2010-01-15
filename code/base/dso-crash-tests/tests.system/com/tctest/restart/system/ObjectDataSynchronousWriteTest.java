@@ -40,7 +40,7 @@ public class ObjectDataSynchronousWriteTest extends ActivePassiveTransparentTest
 
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
-    setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
+    setupManager.setServerCrashMode(MultipleServersCrashMode.RANDOM_SERVER_CRASH);
     setupManager.setServerCrashWaitTimeInSec(30);
     // leaving this as a disk-based active-passive test just so we have one
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.DISK);

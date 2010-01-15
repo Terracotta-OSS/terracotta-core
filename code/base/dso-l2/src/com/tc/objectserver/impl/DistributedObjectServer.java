@@ -120,6 +120,7 @@ import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
 import com.tc.object.msg.RequestRootResponseMessage;
+import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerImpl;
@@ -168,6 +169,7 @@ import com.tc.objectserver.handler.RequestRootHandler;
 import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
+import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
 import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handler.TransactionLowWaterMarkHandler;
@@ -761,8 +763,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
+
+    // create a stage which will send an ack to the clients that they have received a particular batch
+    Stage syncWriteTxnRecvdAckStage = stageManager.createStage(ServerConfigurationContext.SYNC_WRITE_TXN_RECVD_STAGE,
+                                                               new SyncWriteTransactionReceivedHandler(channelManager), 4,
+                                                               maxStageSize);
     TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler,
-                                                                                          txnFilter);
+                                                                                          txnFilter,
+                                                                                          syncWriteTxnRecvdAckStage
+                                                                                              .getSink());
     toInit.add(transactionBatchManager);
 
     TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
@@ -1112,6 +1121,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE,
                                     NodeMetaDataResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
+                                    SyncWriteTransactionReceivedMessage.class);
   }
 
   protected TCLogger getLogger() {

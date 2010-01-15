@@ -40,6 +40,11 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     globalTxManager.flush(lock);
   }
 
+
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+    globalTxManager.waitForServerToReceiveTxnsForThisLock(lock);
+  }
+  
   public void interrupt(LockID lock, ThreadID thread) {
     LockRequestMessage msg = createMessage();
     msg.initializeInterruptWait(lock, thread);

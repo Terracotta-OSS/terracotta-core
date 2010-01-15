@@ -30,6 +30,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String RESPOND_TO_OBJECT_REQUEST_STAGE                    = "respond_to_request_stage";
   public final static String MANAGED_OBJECT_REQUEST_STAGE                       = "managed_object_request_stage";
   public final static String PROCESS_TRANSACTION_STAGE                          = "process_transaction_stage";
+  public final static String SYNC_WRITE_TXN_RECVD_STAGE                         = "sync_write_transaction_recvd_stage";
   public final static String TRANSACTION_LOOKUP_STAGE                           = "transaction_lookup_stage";
   public final static String RESPOND_TO_LOCK_REQUEST_STAGE                      = "respond_to_lock_request_stage";
   public final static String REQUEST_LOCK_STAGE                                 = "request_lock_stage";

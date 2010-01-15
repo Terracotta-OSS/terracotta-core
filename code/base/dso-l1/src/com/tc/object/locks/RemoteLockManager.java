@@ -25,4 +25,6 @@ public interface RemoteLockManager {
   public boolean isTransactionsForLockFlushed(LockID lock, LockFlushCallback callback);
 
   public void query(LockID lock, ThreadID thread);
+
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock);
 }

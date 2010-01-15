@@ -150,4 +150,8 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   public ClientID getClientID() {
     return ClientID.NULL_ID;
   }
+
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+    //
+  }
 }

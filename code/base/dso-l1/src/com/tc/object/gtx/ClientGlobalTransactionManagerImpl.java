@@ -95,8 +95,11 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     remoteTransactionManager.flush(lockID);
   }
 
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+    remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
+  }
+  
   public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
     return remoteTransactionManager.isTransactionsForLockFlushed(lockID, callback);
   }
-
 }

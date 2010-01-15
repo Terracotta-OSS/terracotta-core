@@ -120,8 +120,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     switch (lockLevel) {
       case CONCURRENT:
         return TxnType.CONCURRENT;
-      case WRITE:
       case SYNCHRONOUS_WRITE:
+        return TxnType.SYNC_WRITE;
+      case WRITE:
         return TxnType.NORMAL;
       default:
         return null;
@@ -131,8 +132,9 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
   public void notify(Notify notify) throws UnlockedSharedObjectException {
     final ClientTransaction currentTxn = getTransactionOrNull();
 
-    if (currentTxn == null || currentTxn.getEffectiveType() != TxnType.NORMAL) { throw new IllegalMonitorStateException(
-                                                                                                                        getIllegalMonitorStateExceptionMessage()); }
+    if (currentTxn == null
+        || (currentTxn.getEffectiveType() != TxnType.NORMAL && currentTxn.getEffectiveType() != TxnType.SYNC_WRITE)) { throw new IllegalMonitorStateException(
+                                                                                                                                                              getIllegalMonitorStateExceptionMessage()); }
 
     currentTxn.addNotify(notify);
   }

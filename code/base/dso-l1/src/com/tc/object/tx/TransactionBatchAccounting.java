@@ -8,6 +8,7 @@ import gnu.trove.TLinkable;
 import gnu.trove.TLinkedList;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -44,6 +45,15 @@ public class TransactionBatchAccounting {
         highWaterMark = txID;
       }
     }
+  }
+
+  public synchronized Collection getTransactionIdsFor(TxnBatchID batchID) {
+    Iterator iter = batches.iterator();
+    while (iter.hasNext()) {
+      BatchDescriptor bd = (BatchDescriptor) iter.next();
+      if (bd.getId().equals(batchID)) { return new HashSet(bd.getTransactions()); }
+    }
+    return Collections.EMPTY_SET;
   }
 
   public synchronized TxnBatchID getBatchByTransactionID(TransactionID txID) {
@@ -141,6 +151,14 @@ public class TransactionBatchAccounting {
 
     public void setPrevious(TLinkable linkable) {
       previous = linkable;
+    }
+
+    public Collection getTransactions() {
+      return transactionIDs;
+    }
+
+    public TxnBatchID getId() {
+      return batchID;
     }
   }
 

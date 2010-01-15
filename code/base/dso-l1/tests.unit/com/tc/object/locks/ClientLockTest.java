@@ -934,5 +934,9 @@ public class ClientLockTest extends TestCase {
         }
       });
     }
+
+    public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+      //
+    }
   }
 }

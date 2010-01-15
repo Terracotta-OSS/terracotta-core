@@ -42,4 +42,8 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
                             NodeID remoteGroupID) {
     throw new ImplementMe();
   }
+
+  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+    throw new ImplementMe();
+  }
 }

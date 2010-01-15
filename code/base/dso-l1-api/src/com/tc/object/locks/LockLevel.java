@@ -32,7 +32,7 @@ public enum LockLevel {
     }
   }
   
-  public boolean flushOnUnlock() {
+  public boolean isSyncWrite() {
     return SYNCHRONOUS_WRITE.equals(this);
   }
   

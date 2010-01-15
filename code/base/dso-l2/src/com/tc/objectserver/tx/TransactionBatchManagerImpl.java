@@ -12,6 +12,7 @@ import com.tc.l2.ha.TransactionBatchListener;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
@@ -20,6 +21,7 @@ import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.objectserver.context.SyncWriteTransactionReceivedContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.util.Assert;
@@ -51,12 +53,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private ServerGlobalTransactionManager       gtxm;
   private DSOChannelManager                    dsoChannelManager;
   private final List<TransactionBatchListener> txnListeners = new CopyOnWriteArrayList<TransactionBatchListener>();
+  private final Sink                           syncWriteTxnRecvdSink;
 
   public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
-                                     TransactionFilter txnFilter) {
+                                     TransactionFilter txnFilter, Sink syncWriteTxnRecvdSink) {
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = recycler;
     this.filter = txnFilter;
+    this.syncWriteTxnRecvdSink = syncWriteTxnRecvdSink;
   }
 
   public void initializeContext(ConfigurationContext context) {
@@ -77,6 +81,10 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     try {
       final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(ctm);
 
+      if (reader.containsSyncWriteTransaction()) {
+        syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(), (ClientID) ctm
+            .getSourceNodeID()));
+      }
       ServerTransaction txn;
 
       // Transactions should maintain order.
