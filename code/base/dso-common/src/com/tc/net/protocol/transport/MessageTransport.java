@@ -4,7 +4,6 @@
  */
 package com.tc.net.protocol.transport;
 
-import com.tc.net.TCSocketAddress;
 import com.tc.net.core.TCConnection;
 import com.tc.net.protocol.IllegalReconnectException;
 import com.tc.net.protocol.NetworkLayer;
@@ -32,10 +31,6 @@ public interface MessageTransport extends NetworkLayer {
   public void receiveTransportMessage(WireProtocolMessage message);
 
   public void sendToConnection(TCNetworkMessage message);
-
-  public TCSocketAddress getRemoteAddress();
-
-  public TCSocketAddress getLocalAddress();
 
   public void setAllowConnectionReplace(boolean allow);
 
