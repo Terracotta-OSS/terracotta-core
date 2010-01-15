@@ -10,21 +10,21 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 1.7.2-SNAPSHOT
+    version: 1.8.0-SNAPSHOT
     destination: ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 1.7.2-SNAPSHOT
+    version: 1.8.0-SNAPSHOT
     destination: ehcache
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 1.7.2-SNAPSHOT
+    version: 1.8.0-SNAPSHOT
     destination: ehcache
     
   - maven_artifact: true
