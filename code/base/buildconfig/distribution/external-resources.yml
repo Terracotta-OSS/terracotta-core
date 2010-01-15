@@ -11,52 +11,52 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     version: 1.7.2-SNAPSHOT
-    destination: distributed-cache
+    destination: ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
     version: 1.7.2-SNAPSHOT
-    destination: distributed-cache
+    destination: ehcache
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
     version: 1.7.2-SNAPSHOT
-    destination: distributed-cache
+    destination: ehcache
     
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-api
     version: 1.5.8
-    destination: distributed-cache
+    destination: ehcache
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
     version: 1.5.8
-    destination: distributed-cache    
+    destination: ehcache    
     
   - maven_artifact: false
     name: RELEASE_NOTES.txt
-    destination: distributed-cache
+    destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/RELEASE_NOTES.txt
     
   - maven_artifact: false
     name: EHCACHE_CORE_LICENSE.txt
-    destination: distributed-cache
+    destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE_CORE_LICENSE.txt  
 
   - maven_artifact: false
     name: ehcache.xml
-    destination: distributed-cache
+    destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/src/main/config/ehcache.xml
     
   - maven_artifact: false
     name: ehcache.xsd
-    destination: distributed-cache
+    destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xsd
 # end EHCACHE
 
