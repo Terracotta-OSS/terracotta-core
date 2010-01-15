@@ -132,6 +132,7 @@ postscripts:
         - tim-jetty-6.1
         - ehcache-terracotta-ee
         - quartz-terracotta-ee
+        - terracotta-session-ee
            
   - inject-forge-tims:
       args:
