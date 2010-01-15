@@ -124,7 +124,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getCacheMissRate() {
     return getStats().getCacheMissRate();
   }
-  
+
   public long getFlushedRate() {
     return getStats().getFlushedRate();
   }
@@ -423,7 +423,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public int getCachedObjectCount() {
     return objMgr.getCachedObjectCount();
   }
-  
+
   public long getLastCollectionGarbageCount() {
     GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
@@ -559,16 +559,20 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private class SimpleInvokeTask implements Callable<SimpleInvokeResult> {
     private final ObjectName objectName;
     private final String     operation;
+    private final Object[]   arguments;
+    private final String[]   signatures;
 
-    SimpleInvokeTask(ObjectName objectName, String operation) {
+    SimpleInvokeTask(ObjectName objectName, String operation, Object[] arguments, String[] signatures) {
       this.objectName = objectName;
       this.operation = operation;
+      this.arguments = arguments;
+      this.signatures = signatures;
     }
 
     public SimpleInvokeResult call() {
       Object result;
       try {
-        result = mbeanServer.invoke(objectName, operation, SIMPLE_INVOKE_PARAMS, SIMPLE_INVOKE_SIG);
+        result = mbeanServer.invoke(objectName, operation, arguments, signatures);
       } catch (Exception e) {
         result = e;
       }
@@ -577,11 +581,16 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit) {
+    return invoke(onSet, operation, timeout, unit, SIMPLE_INVOKE_PARAMS, SIMPLE_INVOKE_SIG);
+  }
+
+  public Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit,
+                                        Object[] args, String[] sigs) {
     Map<ObjectName, Object> result = new HashMap<ObjectName, Object>();
     List<Callable<SimpleInvokeResult>> tasks = new ArrayList<Callable<SimpleInvokeResult>>();
     Iterator<ObjectName> onIter = onSet.iterator();
     while (onIter.hasNext()) {
-      tasks.add(new SimpleInvokeTask(onIter.next(), operation));
+      tasks.add(new SimpleInvokeTask(onIter.next(), operation, args, sigs));
     }
     try {
       List<Future<SimpleInvokeResult>> results = pool.invokeAll(tasks, timeout, unit);

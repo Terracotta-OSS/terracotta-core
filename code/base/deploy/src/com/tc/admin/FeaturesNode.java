@@ -173,6 +173,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         feature.getFeatureClassLoader().removeTIMByteProvider(on);
         if (feature.getFeatureClassLoader().getTIMByteProviderCount() == 0) {
           tearDownFeature(feature);
+          activeFeatureMap.remove(feature.getSymbolicName());
         }
         return true;
       }
@@ -181,7 +182,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   private void tearDownFeature(Feature feature) {
-    activeFeatureMap.remove(feature.getSymbolicName());
     FeatureNode node = nodeMap.remove(feature);
     if (node != null) {
       removeChild(node);

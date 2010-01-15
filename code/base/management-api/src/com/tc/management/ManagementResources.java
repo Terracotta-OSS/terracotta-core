@@ -30,6 +30,10 @@ class ManagementResources {
     return resources.getString("domain.ehcache");
   }
 
+  String getEhCacheHibernateMBeanDomain() {
+    return resources.getString("domain.ehcache.hibernate");
+  }
+
   String getNodeNameSystemProperty() {
     return resources.getString("system-property.node-name");
   }

@@ -171,6 +171,9 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit);
 
+  Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit, Object[] args,
+                                 String[] sigs);
+
   int getLiveObjectCount();
 
   boolean isDBBackupSupported();

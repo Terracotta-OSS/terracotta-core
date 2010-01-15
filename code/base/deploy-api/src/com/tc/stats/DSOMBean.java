@@ -61,11 +61,14 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
   int getLiveObjectCount();
 
   int getCachedObjectCount();
-  
+
   boolean isResident(NodeID node, ObjectID oid);
 
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                        TimeUnit unit);
 
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit);
+
+  Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit, Object[] args,
+                                 String[] sigs);
 }
