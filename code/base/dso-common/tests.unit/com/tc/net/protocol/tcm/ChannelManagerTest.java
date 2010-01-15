@@ -4,19 +4,36 @@
  */
 package com.tc.net.protocol.tcm;
 
+import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
+
+import com.tc.async.api.Stage;
+import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.ImplementMe;
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
+import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkLayer;
+import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.TCNetworkMessage;
+import com.tc.net.protocol.delivery.OOOEventHandler;
+import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
+import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.NullSessionManager;
+import com.tc.properties.L1ReconnectConfigImpl;
+import com.tc.properties.ReconnectConfig;
+import com.tc.properties.TCPropertiesImpl;
+import com.tc.util.Assert;
+import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
@@ -163,6 +180,105 @@ public class ChannelManagerTest extends TestCase {
     }
   }
 
+  public void testChannelRemoteAddressAcrossReconnect() throws Exception {
+    StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
+    final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+    final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
+    ReconnectConfig reconnectCoinfig = new L1ReconnectConfigImpl(true, 30000, 5000, 16, 32);
+    NetworkStackHarnessFactory networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+                                                                                              new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                                              oooSendStage.getSink(),
+                                                                                              oooReceiveStage.getSink(),
+                                                                                              reconnectCoinfig);
+
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(),
+                                                                      new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                          .getProperties()
+                                                                          .getPropertiesFor("l1.healthcheck.l2"),
+                                                                                                  "Test Client HC"));
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(),
+                                                                      new HealthCheckerConfigImpl(TCPropertiesImpl
+                                                                          .getProperties()
+                                                                          .getPropertiesFor("l2.healthcheck.l1"),
+                                                                                                  "Test Server HC"));
+    try {
+      NetworkListener lsnr = serverComms.createListener(sessionManager,
+                                                        new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), false,
+                                                        new DefaultConnectionIdFactory());
+      lsnr.start(new HashSet());
+      ChannelManager serverChannelManager = lsnr.getChannelManager();
+      assertEquals(0, serverChannelManager.getChannels().length);
+
+      ClientMessageChannel clientChannel;
+      clientChannel = clientComms
+          .createClientChannel(
+                               sessionManager,
+                               0,
+                               TCSocketAddress.LOOPBACK_IP,
+                               lsnr.getBindPort(),
+                               3000,
+                               new ConnectionAddressProvider(
+                                                             new ConnectionInfo[] { new ConnectionInfo(
+                                                                                                       "localhost",
+                                                                                                       lsnr
+                                                                                                           .getBindPort()) }));
+      clientChannel.open();
+
+      while (!clientChannel.isConnected()) {
+        System.out.println("XXX waiting for client connect");
+        ThreadUtil.reallySleep(1000);
+      }
+
+      while (!serverChannelManager.getChannels()[0].isConnected()) {
+        System.out.println("XXX 1waiting for server to accept client fully");
+        ThreadUtil.reallySleep(1000);
+      }
+
+      TCSocketAddress serverLocalAddress1 = serverChannelManager.getChannels()[0].getLocalAddress();
+      TCSocketAddress serverRemoteAddress1 = serverChannelManager.getChannels()[0].getRemoteAddress();
+      TCSocketAddress clientLocalAddress1 = clientChannel.getLocalAddress();
+      TCSocketAddress clientRemoteAddress1 = clientChannel.getRemoteAddress();
+
+      System.out.println("XXX 1Server Address : " + serverLocalAddress1 + " / " + serverRemoteAddress1);
+      System.out.println("XXX 1Client Address : " + clientLocalAddress1 + " / " + clientRemoteAddress1);
+
+      serverComms.getConnectionManager().closeAllConnections(5000);
+
+      ThreadUtil.reallySleep(10000);
+      while (!serverChannelManager.getChannels()[0].isConnected()) {
+        System.out.println("XXX 2waiting for server to accept client fully");
+        ThreadUtil.reallySleep(1000);
+      }
+
+      TCSocketAddress serverLocalAddress2 = serverChannelManager.getChannels()[0].getLocalAddress();
+      TCSocketAddress serverRemoteAddress2 = serverChannelManager.getChannels()[0].getRemoteAddress();
+      TCSocketAddress clientLocalAddress2 = clientChannel.getLocalAddress();
+      TCSocketAddress clientRemoteAddress2 = clientChannel.getRemoteAddress();
+
+      System.out.println("XXX 2Server Address : " + serverLocalAddress2 + " / " + serverRemoteAddress2);
+      System.out.println("XXX 2Client Address : " + clientLocalAddress2 + " / " + clientRemoteAddress2);
+
+      Assert.assertEquals(serverLocalAddress1, serverLocalAddress2);
+      Assert.eval(!serverRemoteAddress1.equals(serverRemoteAddress2));
+
+      Assert.eval(!clientLocalAddress1.equals(clientLocalAddress2));
+      Assert.assertEquals(clientRemoteAddress1, clientRemoteAddress2);
+
+    } finally {
+      try {
+        clientComms.shutdown();
+      } finally {
+        serverComms.shutdown();
+      }
+    }
+
+  }
+
   static class Events implements ChannelManagerEventListener {
     Set channels = new HashSet();
 
@@ -215,6 +331,14 @@ public class ChannelManagerTest extends TestCase {
     }
 
     public NetworkLayer getReceiveLayer() {
+      throw new ImplementMe();
+    }
+
+    public TCSocketAddress getLocalAddress() {
+      throw new ImplementMe();
+    }
+
+    public TCSocketAddress getRemoteAddress() {
       throw new ImplementMe();
     }
   }
