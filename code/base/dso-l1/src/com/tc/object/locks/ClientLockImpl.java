@@ -634,12 +634,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (unlock.getLockLevel().isSyncWrite()) {
       // wait for the server to receive all transactions for this lock
       remote.waitForServerToReceiveTxnsForThisLock(lock);    
-      if (!flushOnUnlock(unlock)) {
-        return release(remote, unlock);
-      }
     }
-    
-    remote.flush(lock);
+   
+    if (flushOnUnlock(unlock)) { 
+       remote.flush(lock);
+    }
     return release(remote, unlock);
   }
 
