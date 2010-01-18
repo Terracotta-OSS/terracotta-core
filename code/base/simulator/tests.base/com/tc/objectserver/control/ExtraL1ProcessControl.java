@@ -94,6 +94,7 @@ public class ExtraL1ProcessControl extends ExtraProcessServerControl {
       process.exitValue();
       return false;
     } catch (IllegalThreadStateException e) {
+      System.out.println("Expected " + e.getMessage());
       return true;
     }
   }
