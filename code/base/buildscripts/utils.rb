@@ -162,10 +162,17 @@ def download_external(default_repos, dest_dir, artifact)
       dest_file = artifact['maven_artifact'] == true ? File.join(dest, File.basename(url)) : File.join(dest, artifact['name'])
       ant.get(:src => url, :dest => dest_file, :verbose => true)
       # check if we need to untar a .tar.gz file
-      if artifact['explode'] == true && dest_file =~ /tar.gz$/
-        ant.untar(:src => dest_file, :dest => File.dirname(dest_file), :compression => "gzip")
-        # delete the .tar.gz file after explosion
-        FileUtils.rm dest_file
+      if dest_file =~ /tar.gz$/
+        root_folder = File.join(dest, File.basename(dest_file, ".tar.gz"))
+        if artifact['explode'] == true
+          ant.untar(:src => dest_file, :dest => dest, :compression => "gzip")  
+          FileUtils.rm dest_file
+        end
+        if artifact['remove_root_folder'] == true
+          ant.move(:todir => dest) do
+            ant.fileset(:dir => root_folder)
+          end
+        end
       end
       success = true
       break
