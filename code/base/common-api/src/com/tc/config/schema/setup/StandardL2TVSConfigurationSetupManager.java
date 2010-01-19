@@ -327,7 +327,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         }
       } else {
         for (int i = 0; i < l2Array.length; ++i) {
-          if (this.name.trim().equalsIgnoreCase(l2Array[i].getName().trim())) { return l2Array[i]; }
+          if (this.name.trim().equals(l2Array[i].getName().trim())) { return l2Array[i]; }
         }
       }
 
