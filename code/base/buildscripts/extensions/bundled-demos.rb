@@ -49,7 +49,9 @@ module BundledDemos
               ant_script = @static_resources.ant_script
               result = %x[#{ant_script}]
               puts "#{result}"
-              fail("Error running ant in #{Dir.getwd}") unless $? == 0
+              if result =~ /BUILD FAILED/
+                fail("Error running ant in #{Dir.getwd}")
+              end
             end
           rescue AntBuildScriptError => error
             fail "There was a problem compiling the demo `#{name}/#{entry}';\n#{error.message}"

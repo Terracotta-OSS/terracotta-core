@@ -13,11 +13,12 @@ bundled_demos:
         - sharededitor
         - sharedqueue
   - sessions:
-      install_directory: samples/sessions
+      install_directory: sessions/samples
       manifest:
         - cart
-        - tasklist
-        - townsend
+        # commented out until these two samples converted to express
+        #- tasklist
+        #- townsend
 bundled_vendors:
    - jetty-6.1.15:
        install_directory: vendors/jetty-6.1.15
@@ -170,7 +171,7 @@ postscripts:
   - make-srcdocs:
       args:
         - samples/pojo
-        - samples/sessions
+        - sessions/samples
   - maven-deploy:
       args:
         - artifact_count: 11

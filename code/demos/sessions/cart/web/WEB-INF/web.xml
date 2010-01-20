@@ -21,6 +21,27 @@
 -->
 
 <web-app>
+    <filter>
+      <filter-name>terracotta-filter</filter-name>
+   
+      <filter-class>org.terracotta.session.TerracottaJetty61xSessionFilter</filter-class>
+      
+      <init-param>
+        <param-name>tcConfigUrl</param-name>
+        <param-value>localhost:9510</param-value>
+      </init-param>
+    </filter>
+    
+    <filter-mapping>
+      <filter-name>terracotta-filter</filter-name>
+      <url-pattern>/*</url-pattern>
+      <dispatcher>ERROR</dispatcher>
+      <dispatcher>INCLUDE</dispatcher>
+      <dispatcher>FORWARD</dispatcher>
+      <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
+    
     <display-name>Cart</display-name>
     <description>Terracotta Sessions Demonstration WebApp</description>
 
