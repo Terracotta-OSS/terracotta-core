@@ -141,7 +141,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     dist_maven('OPENSOURCE')
     fail("api_dir is not set") unless @config_source['api_dir']
     dest = FilePath.new(@config_source['api_dir'], @build_environment.api_version).ensure_directory
-    src = FilePath.new(product_directory, "docs", "javadoc")
+    src = FilePath.new(product_directory, "platform", "docs", "javadoc")
     fail("API src folder doesn't exist!") unless src.exist?
     puts "Copy api javadoc from #{src.to_s} to #{dest.to_s}"
     FileUtils.cp_r(src.to_s, dest.to_s)
