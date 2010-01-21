@@ -461,7 +461,7 @@ public class LockTest extends TestCase {
   public void testNotifyAll() throws Exception {
     LockHelper helper = lockMgr.getHelper();
     AbstractServerLock lock = createLockWithIndefiniteWaits(100);
-    
+
     assertEquals(0, getHoldersCount(lock));
     assertEquals(100, getWaitersCount(lock));
     assertEquals(0, lock.getNoOfPendingRequests());
@@ -484,7 +484,7 @@ public class LockTest extends TestCase {
   public void testNotify() throws Exception {
     LockHelper helper = lockMgr.getHelper();
     AbstractServerLock lock = createLockWithIndefiniteWaits(3);
-    
+
     assertEquals(0, getHoldersCount(lock));
     assertEquals(3, getWaitersCount(lock));
     assertEquals(0, lock.getNoOfPendingRequests());
@@ -517,6 +517,29 @@ public class LockTest extends TestCase {
     assertEquals(1, getHoldersCount(lock));
     assertEquals(0, getWaitersCount(lock));
     assertEquals(2, lock.getNoOfPendingRequests());
+  }
+
+  public void testTimedTryLockAndCrashClient() throws Exception {
+    ClientID cid1 = new ClientID(1);
+    ClientID cid2 = new ClientID(2);
+    ThreadID thread1 = new ThreadID(1);
+    lockMgr.start();
+    LockHelper helper = lockMgr.getHelper();
+
+    AbstractServerLock lock = (AbstractServerLock) helper.getLockStore().checkOut(new StringLockID("timmy"));
+
+    lock.lock(cid1, thread1, ServerLockLevel.WRITE, helper);
+    assertEquals(1, getHoldersCount(lock));
+    assertEquals(0, getWaitersCount(lock));
+    assertFalse(lock.hasPendingRequests());
+
+    lock.tryLock(cid2, thread1, ServerLockLevel.WRITE, 10000, helper);
+    assertEquals(1, getHoldersCount(lock));
+    assertTrue(lock.hasPendingRequests());
+
+    // DEV-3671: clearing of the locks should not throw any exception
+    lockMgr.clearAllLocksFor(cid2);
+    lockMgr.clearAllLocksFor(cid1);
   }
 
   private ClientID getUniqueClientID() {
