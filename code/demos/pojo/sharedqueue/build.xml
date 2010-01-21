@@ -9,10 +9,10 @@
 <project name="sharedqueue" default="build" basedir=".">
   <property name="src.dir" location="src"/>
   <property name="build.dir" location="classes"/>
-  <property name="api.jar" value="../../../lib/terracotta-api-@api.version@.jar"/>
-  <property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
-  <property name="jetty.jar" value="${basedir}/../../../lib/jetty-6.1.8.jar"/>
-  <property name="jetty-util.jar" value="${basedir}/../../../lib/jetty-util-6.1.8.jar"/>
+  <property name="api.jar" value="../../../../lib/terracotta-api-@api.version@.jar"/>
+  <property name="servlet.jar" value="${basedir}/../../../../lib/servlet-api-2.5-6.1.8.jar"/>
+  <property name="jetty.jar" value="${basedir}/../../../../lib/jetty-6.1.8.jar"/>
+  <property name="jetty-util.jar" value="${basedir}/../../../../lib/jetty-util-6.1.8.jar"/>
   
   <target name="init">
     <mkdir dir="${build.dir}"/>

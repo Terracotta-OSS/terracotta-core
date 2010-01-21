@@ -4,7 +4,7 @@ kit_name_pattern: terracotta-version
 root_directory: terracotta-version
 bundled_demos:
   - pojo:
-      install_directory: samples/pojo
+      install_directory: platform/samples/pojo
       manifest:
         - chatter
         - coordination
@@ -170,7 +170,7 @@ postscripts:
         - schema
   - make-srcdocs:
       args:
-        - samples/pojo
+        - platform/samples/pojo
         - sessions/samples
   - maven-deploy:
       args:
