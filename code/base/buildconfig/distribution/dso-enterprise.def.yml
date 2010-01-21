@@ -100,7 +100,7 @@ bundled_components:
         - ent-dso-l2
 bundled_modules:
   - core:
-      install_directory: modules
+      install_directory: platform/modules
       manifest:
         - clustered-surefire-2.3
         - excludes-config
