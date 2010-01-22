@@ -197,4 +197,11 @@ public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
    * @returns the current open transaction for the calling thread, null if no open transaction
    */
   public ClientTransaction getCurrentTransaction();
+  
+  /**
+   * Used by BulkLoad to wait for all current transactions completed 
+   * 
+   */
+  public void waitForAllCurrentTransactionsToComplete();
+
 }

@@ -4,6 +4,9 @@
  */
 package com.tc.object.tx;
 
+import EDU.oswego.cs.dl.util.concurrent.Latch;
+
+import com.tc.exception.TCRuntimeException;
 import com.tc.object.locks.LockID;
 
 import java.util.Collection;
@@ -13,15 +16,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LockAccounting {
 
-  private final Map<TransactionID, Set<LockID>> tx2Locks       = new HashMap();
-  private final Map<LockID, Set<TransactionID>> lock2Txs       = new HashMap();
+  private final CopyOnWriteArrayList<TxnRemovedListener> listeners      = new CopyOnWriteArrayList<TxnRemovedListener>();
+  private final Map<TransactionID, Set<LockID>>          tx2Locks       = new HashMap();
+  private final Map<LockID, Set<TransactionID>>          lock2Txs       = new HashMap();
 
   // for sync write
-  private final Map<LockID, Set<TransactionID>> syncLock2Txs   = new HashMap();
-  private final Map<TransactionID, Set<LockID>> syncTxns2Locks = new HashMap();
+  private final Map<LockID, Set<TransactionID>>          syncLock2Txs   = new HashMap();
+  private final Map<TransactionID, Set<LockID>>          syncTxns2Locks = new HashMap();
 
   public synchronized Object dump() {
     return "LockAccounting:\ntx2Locks=" + tx2Locks + "\nlock2Txs=" + lock2Txs + "/LockAccounting";
@@ -99,7 +104,7 @@ public class LockAccounting {
     Set completedLockIDs = null;
     Set lockIDs = getSetFor(txID, tx2Locks);
     if (lockIDs != null) {
-      // this may be null if there are phantom acknowledgements caused by server restart.
+      // this may be null if there are phantom acknowledgments caused by server restart.
       for (Iterator i = lockIDs.iterator(); i.hasNext();) {
         LockID lid = (LockID) i.next();
         Set txIDs = getOrCreateSetFor(lid, lock2Txs);
@@ -113,7 +118,7 @@ public class LockAccounting {
         }
       }
     }
-    tx2Locks.remove(txID);
+    removeTxn(txID);
     return (completedLockIDs == null ? Collections.EMPTY_SET : completedLockIDs);
   }
 
@@ -132,6 +137,55 @@ public class LockAccounting {
       m.put(key, rv);
     }
     return rv;
+  }
+
+  private void removeTxn(TransactionID txnID) {
+    tx2Locks.remove(txnID);
+    notifyTxnRemoved(txnID);
+  }
+
+  private void notifyTxnRemoved(TransactionID txnID) {
+    for (TxnRemovedListener l : listeners) {
+      l.txnRemoved(txnID);
+    }
+  }
+
+  public void waitAllCurrentTxnCompleted() {
+    TxnRemovedListener listener;
+    Latch latch = new Latch();
+    synchronized (this) {
+      Set currentTxnSet = new HashSet(tx2Locks.keySet());
+      listener = new TxnRemovedListener(currentTxnSet, latch);
+      listeners.add(listener);
+    }
+    try {
+      latch.acquire();
+    } catch (InterruptedException e) {
+      throw new TCRuntimeException(e);
+    } finally {
+      listeners.remove(listener);
+    }
+  }
+
+  private static class TxnRemovedListener {
+    private final Set<TransactionID> txnSet;
+    private final Latch              latch;
+
+    TxnRemovedListener(Set<TransactionID> txnSet, Latch latch) {
+      this.txnSet = txnSet;
+      this.latch = latch;
+      if (txnSet.size() == 0) allTxnCompleted();
+    }
+
+    void txnRemoved(TransactionID txnID) {
+      this.txnSet.remove(txnID);
+      if (txnSet.size() == 0) allTxnCompleted();
+    }
+
+    void allTxnCompleted() {
+      this.latch.release();
+    }
+
   }
 
 }

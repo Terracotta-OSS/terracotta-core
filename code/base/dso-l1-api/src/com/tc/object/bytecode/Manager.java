@@ -361,4 +361,11 @@ public interface Manager extends TerracottaLocking {
    * @return null if the given app is not configured for clustering
    */
   public SessionConfiguration getSessionConfiguration(String appName);
+  
+  /**
+   * Used by BulkLoad to wait for all current transactions completed 
+   * 
+   */
+  public void waitForAllCurrentTransactionsToComplete();
+  
 }

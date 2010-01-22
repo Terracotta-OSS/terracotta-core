@@ -337,4 +337,8 @@ public final class NullManager implements Manager {
   public SessionConfiguration getSessionConfiguration(String appName) {
     throw new UnsupportedOperationException();
   }
+
+  public void waitForAllCurrentTransactionsToComplete() {
+    throw new UnsupportedOperationException();
+  }
 }

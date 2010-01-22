@@ -29,19 +29,20 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ClientLockManagerImpl implements ClientLockManager, ClientLockManagerTestMethods, PrettyPrintable {
-  private static final WaitListener NULL_LISTENER = new WaitListener() {
-    public void handleWaitEvent() {
-      //
-    }
-  };
+  private static final WaitListener               NULL_LISTENER       = new WaitListener() {
+                                                                        public void handleWaitEvent() {
+                                                                          //
+                                                                        }
+                                                                      };
 
-  private final Timer                             gcTimer = new Timer("ClientLockManager LockGC", true);
-  private final Timer                             lockLeaseTimer = new Timer("ClientLockManager Lock Lease Timer", true);
+  private final Timer                             gcTimer             = new Timer("ClientLockManager LockGC", true);
+  private final Timer                             lockLeaseTimer      = new Timer("ClientLockManager Lock Lease Timer",
+                                                                                  true);
   private final ConcurrentMap<LockID, ClientLock> locks;
-  private final ReentrantReadWriteLock            stateGuard = new ReentrantReadWriteLock();
-  private final Condition                         runningCondition = stateGuard.writeLock().newCondition();
-  private State                                   state = State.RUNNING;
-  
+  private final ReentrantReadWriteLock            stateGuard          = new ReentrantReadWriteLock();
+  private final Condition                         runningCondition    = stateGuard.writeLock().newCondition();
+  private State                                   state               = State.RUNNING;
+
   private final RemoteLockManager                 remoteManager;
   private final ThreadIDManager                   threadManager;
   private final SessionManager                    sessionManager;
@@ -51,45 +52,45 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   @Deprecated
   private final ClientLockStatManager             statManager;
-  
-  public ClientLockManagerImpl(TCLogger logger, SessionManager sessionManager, RemoteLockManager remoteManager, ThreadIDManager threadManager, ClientLockManagerConfig config, ClientLockStatManager statManager) {
+
+  public ClientLockManagerImpl(TCLogger logger, SessionManager sessionManager, RemoteLockManager remoteManager,
+                               ThreadIDManager threadManager, ClientLockManagerConfig config,
+                               ClientLockStatManager statManager) {
     this.logger = logger;
     this.remoteManager = remoteManager;
     this.threadManager = threadManager;
     this.sessionManager = sessionManager;
-    
+
     this.statManager = statManager;
     locks = new ConcurrentHashMap<LockID, ClientLock>(config.getStripedCount());
     long gcPeriod = Math.max(config.getTimeoutInterval(), 100);
     gcTimer.schedule(new LockGcTimerTask(), gcPeriod, gcPeriod);
   }
-  
+
   private ClientLock getOrCreateClientLockState(LockID lock) {
     ClientLock lockState = locks.get(lock);
     if (lockState == null) {
       lockState = new ClientLockImpl(lock);
       ClientLock racer = locks.putIfAbsent(lock, lockState);
-      if (racer != null) {
-        return racer;
-      }
+      if (racer != null) { return racer; }
     }
 
     return lockState;
   }
-  
+
   private ClientLock getClientLockState(LockID lock) {
     return locks.get(lock);
   }
-  
+
   /***********************************/
   /* BEGIN TerracottaLocking METHODS */
   /***********************************/
-  
+
   public void lock(LockID lock, LockLevel level) {
     waitUntilRunning();
 
     fireLockAttempted(lock);
-    
+
     while (true) {
       ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -101,7 +102,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         logger.info("Hitting garbage lock state during lock on " + lock);
       }
     }
-    
+
     fireLockSucceeded(lock);
   }
 
@@ -109,7 +110,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
 
     fireLockAttempted(lock);
-    
+
     while (true) {
       ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -131,7 +132,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
 
     fireLockAttempted(lock);
-    
+
     while (true) {
       ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -153,7 +154,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
 
     fireLockAttempted(lock);
-    
+
     while (true) {
       ClientLock lockState = getOrCreateClientLockState(lock);
       try {
@@ -173,7 +174,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
     ClientLock lockState = getOrCreateClientLockState(lock);
     lockState.unlock(remoteManager, threadManager.getThreadID(), level);
-    
+
     fireUnlock(lock);
   }
 
@@ -211,30 +212,25 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     waitUntilRunning();
     ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
-      if (lockState.isLocked(level)) {
-        return true;
-      }
+      if (lockState.isLocked(level)) { return true; }
     }
-  
+
     for (ClientServerExchangeLockContext cselc : queryLock(lock)) {
       if (remoteManager.getClientID().equals(cselc.getNodeID())) {
         continue;
       }
-      
+
       switch (cselc.getState()) {
-        default: continue;
-        
+        default:
+          continue;
+
         case GREEDY_HOLDER_READ:
         case HOLDER_READ:
-          if (level == LockLevel.READ) {
-            return true;
-          }
+          if (level == LockLevel.READ) { return true; }
           break;
         case GREEDY_HOLDER_WRITE:
         case HOLDER_WRITE:
-          if ((level == LockLevel.WRITE) || (level == LockLevel.SYNCHRONOUS_WRITE)) {
-            return true;
-          }
+          if ((level == LockLevel.WRITE) || (level == LockLevel.SYNCHRONOUS_WRITE)) { return true; }
           break;
       }
     }
@@ -246,7 +242,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     ClientLock lockState = getClientLockState(lock);
     if (lockState == null) {
       return false;
-    } else{
+    } else {
       return lockState.isLockedBy(threadManager.getThreadID(), level);
     }
   }
@@ -254,9 +250,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public boolean isLockedByCurrentThread(LockLevel level) {
     ThreadID thread = threadManager.getThreadID();
     for (ClientLock lockState : locks.values()) {
-      if (lockState.isLockedBy(thread, level)) {
-        return true;
-      }
+      if (lockState.isLockedBy(thread, level)) { return true; }
     }
     return false;
   }
@@ -273,18 +267,18 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   public int globalHoldCount(LockID lock, LockLevel level) {
     waitUntilRunning();
-    
+
     int holdCount = 0;
     ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
       holdCount += lockState.holdCount(level);
     }
-    
+
     for (ClientServerExchangeLockContext cselc : queryLock(lock)) {
       if (remoteManager.getClientID().equals(cselc.getNodeID())) {
         continue;
       }
-      
+
       switch (cselc.getState()) {
         case GREEDY_HOLDER_READ:
         case HOLDER_READ:
@@ -306,7 +300,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   public int globalPendingCount(LockID lock) {
     waitUntilRunning();
-    
+
     int pendingCount = 0;
     ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
@@ -315,32 +309,32 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
     for (ClientServerExchangeLockContext cselc : queryLock(lock)) {
       switch (cselc.getState()) {
-        default: continue;
+        default:
+          continue;
         case PENDING_READ:
         case PENDING_WRITE:
           pendingCount++;
       }
     }
-    
+
     return pendingCount;
   }
 
   public int globalWaitingCount(LockID lock) {
     waitUntilRunning();
-    
+
     int waiterCount = 0;
     for (ClientServerExchangeLockContext cselc : queryLock(lock)) {
       switch (cselc.getState()) {
-        default: continue;
+        default:
+          continue;
         case WAITER:
           waiterCount++;
       }
     }
 
-    if (waiterCount > 0) {
-      return waiterCount;
-    }
-    
+    if (waiterCount > 0) { return waiterCount; }
+
     ClientLock lockState = getClientLockState(lock);
     if (lockState != null) {
       return lockState.waitingCount();
@@ -350,15 +344,19 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   public void pinLock(LockID lock) {
-    ClientLock lockState = getOrCreateClientLockState(lock);
-    lockState.pinLock();
+    ClientLock lockState = getClientLockState(lock);
+    if (lockState != null) {
+      lockState.pinLock();
+    }
   }
 
   public void unpinLock(LockID lock) {
-    ClientLock lockState = getOrCreateClientLockState(lock);
-    lockState.unpinLock();
+    ClientLock lockState = getClientLockState(lock);
+    if (lockState != null) {
+      lockState.unpinLock();
+    }
   }
-  
+
   public LockID generateLockIdentifier(String str) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
@@ -372,7 +370,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   /***********************************/
-  /* END  TerracottaLocking METHODS  */
+  /* END TerracottaLocking METHODS */
   /***********************************/
 
   /***********************************/
@@ -383,11 +381,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     stateGuard.readLock().lock();
     try {
       if (paused() || !sessionManager.isCurrentSession(node, session)) {
-        logger.warn("Ignoring lock award from a dead server :" + session + ", " + sessionManager + " : "
-                         + lock + " " + thread + " " + level + " state = " + state);
+        logger.warn("Ignoring lock award from a dead server :" + session + ", " + sessionManager + " : " + lock + " "
+                    + thread + " " + level + " state = " + state);
         return;
       }
-      
+
       if (ThreadID.VM_ID.equals(thread)) {
         while (true) {
           ClientLock lockState = getOrCreateClientLockState(lock);
@@ -444,7 +442,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
         logger.warn("Ignoring recall request from dead server : " + lock + ", interestedLevel : " + level);
         return;
       }
-      
+
       ClientLock lockState = getClientLockState(lock);
       if (lockState != null) {
         if (lockState.recall(remoteManager, level, lease)) {
@@ -466,12 +464,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     stateGuard.readLock().lock();
     try {
       if (paused() || !sessionManager.isCurrentSession(node, session)) {
-        logger.warn("Ignoring lock refuse from a dead server :" + session + ", " + sessionManager + " : "
-                         + lock + " " + thread + " " + level + " state = " + state);
+        logger.warn("Ignoring lock refuse from a dead server :" + session + ", " + sessionManager + " : " + lock + " "
+                    + thread + " " + level + " state = " + state);
         return;
       }
       fireRefused(lock);
-      
+
       ClientLock lockState = getClientLockState(lock);
       if (lockState != null) {
         lockState.refuse(thread, level);
@@ -493,13 +491,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       stateGuard.readLock().unlock();
     }
   }
-  
+
   /***********************************/
-  /* END  ClientLockManager METHODS  */
+  /* END ClientLockManager METHODS */
   /***********************************/
-  
+
   /***********************************/
-  /* BEGIN Stupid Wait Test METHODS  */
+  /* BEGIN Stupid Wait Test METHODS */
   /***********************************/
 
   public void wait(LockID lock, WaitListener listener, Object waitObject) throws InterruptedException {
@@ -515,11 +513,11 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   /***********************************/
-  /* END  Stupid Wait Test METHODS   */
+  /* END Stupid Wait Test METHODS */
   /***********************************/
 
   /***********************************/
-  /*  BEGIN ClientHandshake METHODS  */
+  /* BEGIN ClientHandshake METHODS */
   /***********************************/
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
@@ -566,20 +564,19 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
     resubmitInFlightLockQueries();
   }
-  
+
   /***********************************/
-  /*   END ClientHandshake METHODS   */
+  /* END ClientHandshake METHODS */
   /***********************************/
 
   private void waitUntilRunning() {
     stateGuard.readLock().lock();
     try {
-      if (state == State.RUNNING)
-        return;
+      if (state == State.RUNNING) return;
     } finally {
       stateGuard.readLock().unlock();
     }
-    
+
     boolean interrupted = false;
     stateGuard.writeLock().lock();
     try {
@@ -593,27 +590,26 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     } finally {
       stateGuard.writeLock().unlock();
     }
-    
+
     Util.selfInterruptIfNeeded(interrupted);
   }
-  
+
   private boolean paused() {
     /*
-     * I would like to wrap this read in a stateGuard read lock but due to the current RRWL instrumentation
-     * forcing RRWL instances to use a fair policy and the associated "bug" in fair RRWL in JDK 1.5 I have
-     * to prevent reentrant acquires of the read lock. (CDV-1434)
-     * <p>
-     * Its okay though since this is private and all callers have already read locked.
+     * I would like to wrap this read in a stateGuard read lock but due to the current RRWL instrumentation forcing RRWL
+     * instances to use a fair policy and the associated "bug" in fair RRWL in JDK 1.5 I have to prevent reentrant
+     * acquires of the read lock. (CDV-1434) <p> Its okay though since this is private and all callers have already read
+     * locked.
      */
     return state == State.PAUSED;
   }
-  
+
   static enum State {
     RUNNING {
       State unpause() {
         throw new AssertionError("unpause is an invalid state transition for " + this);
       }
-      
+
       State pause() {
         return PAUSED;
       }
@@ -621,72 +617,72 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
-      
+
       State shutdown() {
         return SHUTDOWN;
       }
     },
-    
+
     STARTING {
       State unpause() {
         return RUNNING;
       }
-      
+
       State pause() {
         return PAUSED;
       }
-      
+
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
-      
+
       State shutdown() {
         return SHUTDOWN;
       }
     },
-    
+
     PAUSED {
       State unpause() {
         throw new AssertionError("unpause is an invalid state transition for " + this);
       }
-      
+
       State pause() {
         throw new AssertionError("pause is an invalid state transition for " + this);
       }
-      
+
       State initialize() {
         return STARTING;
       }
-      
+
       State shutdown() {
         return SHUTDOWN;
       }
     },
-    
+
     SHUTDOWN {
       State pause() {
         return SHUTDOWN;
       }
-      
+
       State unpause() {
         return SHUTDOWN;
       }
-      
+
       State initialize() {
         return SHUTDOWN;
       }
-      
+
       State shutdown() {
         return SHUTDOWN;
-      }      
+      }
     };
 
     abstract State pause();
-    
+
     abstract State unpause();
-    
+
     abstract State initialize();
-    
+
     abstract State shutdown();
   }
 
@@ -698,7 +694,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     prettyPrinter.visit(this);
     writer.flush();
   }
-  
+
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print("ClientLockManagerImpl [" + locks.size() + " locks]").flush();
     for (ClientLock lock : locks.values()) {
@@ -714,13 +710,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
     return contexts;
   }
-  
+
   private Collection<ClientServerExchangeLockContext> queryLock(LockID lock) {
     ThreadID current = threadManager.getThreadID();
 
     inFlightLockQueries.put(current, lock);
     remoteManager.query(lock, threadManager.getThreadID());
-    
+
     while (true) {
       synchronized (lock) {
         Object data = inFlightLockQueries.get(current);
@@ -736,7 +732,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       }
     }
   }
-  
+
   private void resubmitInFlightLockQueries() {
     for (Entry<ThreadID, Object> query : inFlightLockQueries.entrySet()) {
       if (query.getValue() instanceof LockID) {
@@ -752,14 +748,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       for (Entry<LockID, ClientLock> entry : locks.entrySet()) {
         stateGuard.readLock().lock();
         try {
-          if (state != State.RUNNING) {
-            return;
-          }
+          if (state != State.RUNNING) { return; }
 
           LockID lock = entry.getKey();
           ClientLock lockState = entry.getValue();
           if (lockState == null) continue;
-          
+
           if (lockState.tryMarkAsGarbage(remoteManager) && locks.remove(lock, lockState)) {
             gcCount++;
           }
@@ -784,21 +778,21 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       statManager.recordLockRequested(lock, threadManager.getThreadID(), "", pendingCount);
     }
   }
-  
+
   @Deprecated
   private void fireLockSucceeded(LockID lock) {
     if (statManager.isEnabled()) {
       statManager.recordLockAwarded(lock, threadManager.getThreadID());
     }
   }
-  
+
   @Deprecated
   private void fireUnlock(LockID lock) {
     if (statManager.isEnabled()) {
       statManager.recordLockReleased(lock, threadManager.getThreadID());
     }
   }
-  
+
   @Deprecated
   private void fireRefused(LockID lock) {
     if (statManager.isEnabled()) {

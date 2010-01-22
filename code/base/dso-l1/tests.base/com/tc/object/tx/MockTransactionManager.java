@@ -207,4 +207,8 @@ public class MockTransactionManager implements ClientTransactionManager {
   public ClientTransaction getCurrentTransaction() {
     throw new ImplementMe();
   }
+
+  public void waitForAllCurrentTransactionsToComplete() {
+    throw new ImplementMe();
+  }
 }

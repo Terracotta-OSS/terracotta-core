@@ -885,4 +885,8 @@ public class ManagerImpl implements Manager {
                                                              + "to commit a transaction and unlock the associated lock.  The unlock was called on exiting a Java synchronized block.  In order "
                                                              + "to prevent the calling thread from entering an infinite loop the client JVM will now be terminated.";
 
+  public void waitForAllCurrentTransactionsToComplete() {
+    txManager.waitForAllCurrentTransactionsToComplete();
+  }
+
 }

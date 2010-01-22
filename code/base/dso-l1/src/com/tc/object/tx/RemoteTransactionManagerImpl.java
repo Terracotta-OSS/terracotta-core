@@ -470,6 +470,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     fireLockFlushCallbacks(callbacks);
     return tb;
   }
+  
+  public void waitForAllCurrentTransactionsToComplete() {
+      lockAccounting.waitAllCurrentTxnCompleted();
+  }
 
   private TransactionID getCompletedTransactionIDLowWaterMark() {
     synchronized (this.lock) {

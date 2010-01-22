@@ -695,4 +695,8 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
                                                + "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:"
                                                + "\nhttp://terracotta.org/kit/troubleshooting ";
 
+  public void waitForAllCurrentTransactionsToComplete() {
+    remoteTxManager.waitForAllCurrentTransactionsToComplete();
+  }
+
 }

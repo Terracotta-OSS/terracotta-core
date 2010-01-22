@@ -81,6 +81,10 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void dumpToLogger() {
     //
   }
+  
+  public void waitForAllCurrentTransactionsToComplete() {
+    //
+  }
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
     throw new ImplementMe();
