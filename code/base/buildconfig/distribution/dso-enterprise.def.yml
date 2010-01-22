@@ -32,11 +32,11 @@ bundled_components:
           - disclaimer
           - license
           - INSTALL
+        guides:
+          - TerracottaQuickStart
   - shared-base:
       documentations:
         install_directory: docs
-        guides:
-          - TerracottaQuickStart
         references:
           - tc-config-reference
   - common:
