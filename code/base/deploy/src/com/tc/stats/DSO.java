@@ -506,6 +506,18 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
+  public void setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) {
+    Iterator<ObjectName> onIter = onSet.iterator();
+    Attribute attribute = new Attribute(attrName, attrValue);
+    while (onIter.hasNext()) {
+      try {
+        mbeanServer.setAttribute(onIter.next(), attribute);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                               TimeUnit unit) {
     Map<ObjectName, Map<String, Object>> result = new HashMap<ObjectName, Map<String, Object>>();

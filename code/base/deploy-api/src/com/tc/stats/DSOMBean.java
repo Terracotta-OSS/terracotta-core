@@ -64,6 +64,8 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
 
   boolean isResident(NodeID node, ObjectID oid);
 
+  void setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);
+
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                        TimeUnit unit);
 

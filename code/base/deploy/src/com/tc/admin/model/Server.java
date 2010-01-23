@@ -2062,6 +2062,26 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return sb.toString();
   }
 
+  public void setAttribute(ObjectName on, String attrName, Object attrValue) throws Exception {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      cc.setAttribute(on, attrName, attrValue);
+    }
+  }
+
+  public void setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) throws Exception {
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean != null && isReady()) {
+      theDsoBean.setAttribute(onSet, attrName, attrValue);
+    }
+  }
+
+  public Object getAttribute(ObjectName on, String attrName) throws Exception {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) { return cc.getAttribute(on, attrName); }
+    return null;
+  }
+
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                               TimeUnit unit) {
     DSOMBean theDsoBean = getDSOBean();

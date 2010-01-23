@@ -12,6 +12,7 @@ import java.io.IOException;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
+import javax.management.InvalidAttributeValueException;
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
@@ -97,6 +98,14 @@ public class ConnectionContext {
   public Object getAttribute(ObjectName bean, String attrName) throws MBeanException, AttributeNotFoundException,
       InstanceNotFoundException, ReflectionException, IOException {
     return mbsc != null ? mbeanHelper.getAttribute(mbsc, bean, attrName) : null;
+  }
+
+  public void setAttribute(ObjectName bean, String attrName, Object value) throws MBeanException,
+      AttributeNotFoundException, InstanceNotFoundException, ReflectionException, IOException,
+      InvalidAttributeValueException {
+    if (mbsc != null) {
+      mbeanHelper.setAttribute(mbsc, bean, attrName, value);
+    }
   }
 
   public String getStringAttribute(ObjectName bean, String attrName) throws MBeanException, AttributeNotFoundException,
