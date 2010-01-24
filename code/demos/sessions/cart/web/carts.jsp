@@ -18,11 +18,20 @@ final String contextPath=request.getContextPath();
   limitations under the License.
 -->
 
-<jsp:useBean id="cart" scope="session" class="demo.cart.DummyCart" />
+<%
+   demo.cart.DummyCart cart = (demo.cart.DummyCart)session.getAttribute("cart");
+   if (cart == null) {
+     cart = new demo.cart.DummyCart();
+   }  
+%>
 
 <jsp:setProperty name="cart" property="*" />
 <%
   cart.processRequest(request);
+
+  // session attribute must be set on every request for
+  // data to be updated in the cluster
+  session.setAttribute("cart", cart);
 %>
 
 <head><title>carts</title></head>
