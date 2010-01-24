@@ -5,24 +5,46 @@
 package com.tc.test.server.appserver.jboss_common;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 import com.tc.test.AppServerInfo;
 import com.tc.util.PortChooser;
 import com.tc.util.ReplaceLine;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
 public class JBossHelper {
-  public static void startupActions(File serverDir, Collection sars, AppServerInfo appServerInfo) throws IOException {
+  public static void startupActions(File serverDir, Collection sars, AppServerInfo appServerInfo,
+                                    Collection<String> tomcatServerJars) throws IOException {
     if (appServerInfo.getMajor().equals("5") && appServerInfo.getMinor().startsWith("1")) {
       writePortsConfigJBoss51x(new PortChooser(), serverDir, appServerInfo);
     } else {
       writePortsConfig(new PortChooser(), new File(serverDir, "conf/cargo-binding.xml"), appServerInfo);
+    }
+
+    // add server_xxx lib dir to classpath
+    int classPathLine = findFirstLine(new File(serverDir, "conf/jboss-service.xml"), "^.*<classpath .*$");
+    String serverLib = new File(serverDir, "lib").getAbsolutePath().replace('\\', '/');
+    ReplaceLine.Token[] tokens = new ReplaceLine.Token[] { new ReplaceLine.Token(
+                                                                                 classPathLine,
+                                                                                 "<classpath",
+                                                                                 "<classpath codebase=\"file:/"
+                                                                                     + serverLib
+                                                                                     + "\" archives=\"*\"/>\n    <classpath") };
+    ReplaceLine.parseFile(tokens, new File(serverDir, "conf/jboss-service.xml"));
+
+    File dest = new File(serverLib);
+    dest.mkdirs();
+    for (String jar : tomcatServerJars) {
+      FileUtils.copyFileToDirectory(new File(jar), dest);
     }
 
     for (Iterator i = sars.iterator(); i.hasNext();) {
@@ -30,6 +52,25 @@ public class JBossHelper {
       File deploy = new File(serverDir, "deploy");
       FileUtils.copyFileToDirectory(sarFile, deploy);
     }
+  }
+
+  private static int findFirstLine(File file, String pattern) throws IOException {
+    BufferedReader reader = null;
+
+    try {
+      int lineNum = 0;
+      reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+
+      String line;
+      while ((line = reader.readLine()) != null) {
+        lineNum++;
+        if (line.matches(pattern)) { return lineNum; }
+      }
+    } finally {
+      IOUtils.closeQuietly(reader);
+    }
+
+    throw new RuntimeException("pattern [" + pattern + "] not found in " + file);
   }
 
   private static void writePortsConfigJBoss51x(PortChooser pc, File serverDir, AppServerInfo appServerInfo)
