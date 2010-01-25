@@ -86,7 +86,7 @@ public class Resolver {
   private void injectDefaultRepositories() throws MissingDefaultRepositoryException {
     final String installRoot = System.getProperty("tc.install-root");
     if (installRoot != null) {
-      final File defaultRepository = new File(installRoot, "modules");
+      final File defaultRepository = new File(installRoot, "platform" + File.separator + "modules");
       if (resolveRepositoryLocation(defaultRepository.getPath()) == null) {
         final String msg = "The default TIM repository does not exist.";
         throw new MissingDefaultRepositoryException(msg, defaultRepository);
