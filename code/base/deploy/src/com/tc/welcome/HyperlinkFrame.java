@@ -143,7 +143,8 @@ public abstract class HyperlinkFrame extends XFrame implements HyperlinkListener
 
   protected File getSamplesDir() {
     if (samplesDir == null) {
-      samplesDir = new File(getInstallRoot(), "samples");
+      File platformDir = new File(getInstallRoot(), "platform");
+      samplesDir = new File(platformDir, "samples");
     }
     return samplesDir;
   }

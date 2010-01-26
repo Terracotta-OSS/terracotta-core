@@ -20,7 +20,7 @@ rem  TC_JAVA_OPTS: Java options needed to activate DSO
 rem
 
 setlocal
-set TC_INSTALL_DIR=%~d0%~p0..\..\..
+set TC_INSTALL_DIR=%~d0%~p0..\..\..\..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 cd %~d0%~p0

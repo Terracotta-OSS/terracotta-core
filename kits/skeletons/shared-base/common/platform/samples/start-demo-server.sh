@@ -12,4 +12,4 @@ if test "$#" != "0"; then
 fi
 
 cd "`dirname $0`"
-exec ../bin/start-tc-server.sh
+exec ../../bin/start-tc-server.sh

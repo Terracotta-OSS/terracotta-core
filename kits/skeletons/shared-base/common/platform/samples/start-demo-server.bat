@@ -5,7 +5,7 @@ rem All content copyright Terracotta, Inc., unless otherwise indicated. All righ
 if not "x%1"=="x" goto show_usage
 
 cd "%~d0%~p0"
-start "Terracotta Demo Server" "..\bin\start-tc-server.bat"
+start "Terracotta Demo Server" "..\..\bin\start-tc-server.bat"
 goto :done
 
 :show_usage

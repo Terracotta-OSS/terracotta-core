@@ -21,7 +21,7 @@
 #
 
 CWD=`dirname "$0"`
-TC_INSTALL_DIR=${CWD}/../../..
+TC_INSTALL_DIR=${CWD}/../../../..
 ARGS=$*
 TC_CONFIG_PATH="${CWD}/tc-config.xml"
 set -- -q
