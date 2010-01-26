@@ -3,8 +3,8 @@ Terracotta 3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
 
 Terracotta offers powerful solutions for scaling Java applications and 
 accelerating their performance. Some of these solutions are found in this kit,
-including Ehcache (/distributed-cache), Terracotta for Hibernate (/hibernate),
-and Terracotta Job Store for Quartz (/quartz).
+including Ehcache (/ehcache), Terracotta for Hibernate (/ehcache),
+Terracotta Job Store for Quartz (/quartz) and Terracotta for Web Sessions (/sessions).
 
 This document helps you find the information needed to implement these 
 solutions for your use case.
