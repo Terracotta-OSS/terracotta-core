@@ -62,9 +62,9 @@ artifacts:
 
 # begin QUARTZ
   - maven_artifact: false
-    name: quartz-1.7.1-SNAPSHOT.tar.gz
+    name: quartz-1.7.1.tar.gz
     destination: quartz 
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/nightly/quartz/quartz-1.7.1-SNAPSHOT.tar.gz
+    url: http://download.terracotta.org/nightly/quartz/quartz-1.7.1.tar.gz
 # end QUARTZ
