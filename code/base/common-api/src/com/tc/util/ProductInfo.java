@@ -31,7 +31,7 @@ public final class ProductInfo {
   private static final ResourceBundleHelper bundleHelper                 = new ResourceBundleHelper(ProductInfo.class);
 
   private static final String               DATE_FORMAT                  = "yyyyMMdd-HHmmss";
-  private static final Pattern              KITIDPATTERN                 = Pattern.compile("(\\d+\\.\\d+).*");
+  private static final Pattern              KITIDPATTERN                 = Pattern.compile("(\\d+\\.\\d+.\\d+).*");
   private static final String               BUILD_DATA_RESOURCE_NAME     = "/build-data.txt";
   private static final String               PATCH_DATA_RESOURCE_NAME     = "/patch-data.txt";
 
@@ -126,7 +126,11 @@ public final class ProductInfo {
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
 
     Matcher matcher = KITIDPATTERN.matcher(mavenVersion);
-    kitID = matcher.matches() ? matcher.group(1) : UNKNOWN_VALUE;
+    if (!matcher.matches()) {
+      throw new AssertionError("Can't parse kitID from: " + mavenVersion);
+    } else {
+      kitID = matcher.group(1);
+    }
   }
 
   static Date parseTimestamp(String timestampString) throws java.text.ParseException {
