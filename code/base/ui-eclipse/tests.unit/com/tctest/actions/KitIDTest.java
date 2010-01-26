@@ -15,6 +15,6 @@ import junit.framework.TestCase;
 public class KitIDTest extends TestCase {
   public void testKitID() throws Exception {
     System.out.println("kitID: " + ProductInfo.getInstance().kitID());
-    assertTrue(ProductInfo.getInstance().kitID().matches("\\d+\\.\\d+"));
+    assertTrue(ProductInfo.getInstance().kitID().matches("\\d+\\.\\d+\\d+"));
   }
 }

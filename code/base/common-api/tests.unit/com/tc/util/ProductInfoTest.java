@@ -77,7 +77,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals("Opensource", info.edition());
     assertTrue(info.isOpenSource());
     assertFalse(info.isEnterprise());
-    assertEquals("1.2", info.kitID());
+    assertEquals("1.2.3", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
@@ -107,7 +107,7 @@ public class ProductInfoTest extends TestCase {
     assertEquals("Enterprise", info.edition());
     assertTrue(info.isEnterprise());
     assertFalse(info.isOpenSource());
-    assertEquals("1.2", info.kitID());
+    assertEquals("1.2.3", info.kitID());
     assertEquals("Unlimited development", info.license());
     assertEquals("1.2.3-SNAPSHOT", info.mavenArtifactsVersion());
     assertEquals("Terracotta", info.moniker());
