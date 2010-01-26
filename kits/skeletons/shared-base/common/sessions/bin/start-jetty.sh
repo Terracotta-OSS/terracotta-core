@@ -19,24 +19,10 @@ fi
 
 root=`dirname $0`/..
 root=`cd $root && pwd`
-warfile=Cart.war
-jetty_work_dir=$root/../jetty6.1/$jetty_instance
-jetty_home=$root/../../../vendors/jetty-6.1.15
+jetty_work_dir=$root/jetty6.1/$jetty_instance
+jetty_home=$root/../../vendors/jetty-6.1.15
 start_jar=$jetty_home/start.jar
 stop_port=$((jetty_instance + 2))
-
-cd $root
-
-#Checking if $warfile has been deployed...
-if [ -f $jetty_work_dir/webapps/$warfile ]; then
-  echo "$warfile has been deployed"
-else
-  echo "$warfile has not been deployed. Deploying it now..."
-  bin/deploy.sh
-  if [ $? -ne 0 ]; then
-    exit 1
-  fi
-fi
 
 cd $jetty_work_dir
 if $cygwin; then

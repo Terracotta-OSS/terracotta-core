@@ -10,7 +10,7 @@ import java.util.Iterator;
  * DataKeeper keeps track of the current state of the user's list.  All 
  * modifications to the user's list are made by calling DataKeeper's methods.
  */
-public class DataKeeper {
+public class DataKeeper implements java.io.Serializable {
 	
     private final int MAX_NUM = 5;
 	private ArrayList userList;

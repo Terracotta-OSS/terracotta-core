@@ -5,7 +5,7 @@
   All rights reserved.
 
 -->
-<project name="Townsend" default="deploy" basedir=".">
+<project name="Townsend" default="war" basedir=".">
 	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
 	<condition property="is.live" value="true">
 		<available file="${bundled.server.home}" type="dir"/>
@@ -27,8 +27,10 @@
 
 	<path id="build.classpath">
 		<pathelement location="${servlet.jar}"/>
-		<pathelement location="${lib.dir}/struts.jar"/>
 		<pathelement path="${build.dir}"/>
+    <fileset dir="${lib.dir}">
+      <include name="*.jar" />
+    </fileset>
 	</path>
 
 	<target name="init">

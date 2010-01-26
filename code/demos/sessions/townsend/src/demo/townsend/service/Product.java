@@ -3,7 +3,7 @@
 */
 package demo.townsend.service;
 
-public class Product {
+public class Product implements java.io.Serializable {
 
     private final String id;
     private final int quantity;

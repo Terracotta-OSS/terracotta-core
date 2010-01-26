@@ -6,15 +6,23 @@
 
 -->
 
-<project name="Cart" default="compile" basedir=".">
-
+<project name="Cart" default="war" basedir=".">
+	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
+	<condition property="is.live" value="true">
+		<available file="${bundled.server.home}" type="dir"/>
+	</condition>
+	
 	<property environment="env"/>
+	<condition property="webserver.home" value="${bundled.server.home}" else="${env.JETTY_HOME}">
+		<istrue value="${is.live}"/>
+	</condition>
 	
 	<property name="warfile"     value="Cart.war"/>
 	<property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
 	<property name="src.dir"     value="src"/>
 	<property name="web.dir"     value="web"/>
 	<property name="build.dir"   value="classes"/>
+	<property name="dist.dir"    value="dist"/>
 
 	<path id="build.classpath">
 		<pathelement location="${servlet.jar}"/>
@@ -24,17 +32,44 @@
 	<target name="init">
 		<tstamp/>
 		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${dist.dir}"/>
 	</target>
 
 	<target name="clean">
 		<delete dir="${build.dir}"/>
 	</target>
 
+	<target name="clean.all" depends="clean">
+		<delete dir="${dist.dir}"/>
+	</target>
+
 	<target name="compile" depends="init">
-    <javac destdir="${build.dir}" deprecation="on" target="1.5" source="1.5">
+    <javac destdir="${build.dir}" deprecation="on" target="1.4" source="1.4">
       <classpath refid="build.classpath"/>
       <src path="${src.dir}"/>
 		</javac>
 	</target>
 
+	<target name="war" depends="compile">
+		<war destfile="${dist.dir}/${warfile}" webxml="${web.dir}/WEB-INF/web.xml" duplicate="preserve">
+			<fileset dir="${web.dir}" >
+				<exclude name="**/web.xml"/>
+			</fileset>
+			<fileset dir="${src.dir}"/>
+			<classes dir="${build.dir}"/>
+		</war>
+	</target>
+
+	<target name="deploy" depends="clean.all, war, deploy.to.webserver, deploy.to.sandbox"/>
+
+	<target name="deploy.to.webserver" unless="is.live">
+		<property name="webserver.deploy" value="${webserver.home}/webapps"/>
+		<copy file="${dist.dir}/${warfile}" todir="${webserver.deploy}" verbose="true"/>
+	</target>
+
+	<target name="deploy.to.sandbox" if="is.live">
+		<property name="sandbox.home" value="${basedir}/../../../tools/sessions/configurator-sandbox"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9081/webapps" verbose="true"/>
+		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9082/webapps" verbose="true"/>
+	</target>
 </project>

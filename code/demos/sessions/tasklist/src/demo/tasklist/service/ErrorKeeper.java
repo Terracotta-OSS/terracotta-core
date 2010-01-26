@@ -3,7 +3,7 @@
 */
 package demo.tasklist.service;
 
-public class ErrorKeeper {
+public class ErrorKeeper implements java.io.Serializable {
   private String errorMsg;
   
   public ErrorKeeper(String error) {

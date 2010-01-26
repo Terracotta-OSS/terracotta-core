@@ -49,7 +49,7 @@ module BundledDemos
               ant_script = @static_resources.ant_script
               result = %x[#{ant_script}]
               puts "#{result}"
-              if result =~ /BUILD FAILED/
+              unless result =~ /BUILD SUCCESSFUL/
                 fail("Error running ant in #{Dir.getwd}")
               end
             end

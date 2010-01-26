@@ -10,6 +10,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - Install TIMs from the Forge into the kit using the tim-get tool.
   def postscript(ant, build_environment, product_directory, *args)
     return if @no_demo
+    return if @no_tims
 
     args.each do |tim|
       puts("***** Installing #{tim}")
