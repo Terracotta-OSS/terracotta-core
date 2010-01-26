@@ -36,7 +36,7 @@ public class JBossHelper {
     ReplaceLine.Token[] tokens = new ReplaceLine.Token[] { new ReplaceLine.Token(
                                                                                  classPathLine,
                                                                                  "<classpath",
-                                                                                 "<classpath codebase=\"file:/"
+                                                                                 "<classpath codebase=\"file://"
                                                                                      + serverLib
                                                                                      + "\" archives=\"*\"/>\n    <classpath") };
     ReplaceLine.parseFile(tokens, new File(serverDir, "conf/jboss-service.xml"));
