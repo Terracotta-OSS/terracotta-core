@@ -193,12 +193,6 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return read;
   }
 
-  public int doWrite(GatheringByteChannel gbc) {
-    int written = doWriteInternal(gbc);
-    totalWrite.add(written);
-    return written;
-  }
-
   private int doReadInternal(ScatteringByteChannel sbc) {
     final boolean debug = logger.isDebugEnabled();
     final TCByteBuffer[] readBuffers = getReadBuffers();
@@ -261,15 +255,14 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return bytesRead;
   }
 
-  public int doWriteInternal(GatheringByteChannel gbc) {
+  public void doWrite(GatheringByteChannel gbc) {
     final boolean debug = logger.isDebugEnabled();
-    int totalBytesWritten = 0;
 
     // get a copy of the current write contexts. Since we call out to event/error handlers in the write
     // loop below, we don't want to be holding the lock on the writeContexts queue
     final WriteContext contextsToWrite[];
     synchronized (writeContexts) {
-      if (closed.isSet()) { return totalBytesWritten; }
+      if (closed.isSet()) { return; }
       contextsToWrite = (WriteContext[]) writeContexts.toArray(new WriteContext[writeContexts.size()]);
     }
 
@@ -306,7 +299,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       }
 
       if (debug) logger.debug("Wrote " + bytesWritten + " bytes on connection " + channel.toString());
-      totalBytesWritten += bytesWritten;
+      totalWrite.add(bytesWritten);
 
       if (context.done()) {
         contextsToRemove++;
@@ -319,7 +312,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     }
 
     synchronized (writeContexts) {
-      if (closed.isSet()) { return totalBytesWritten; }
+      if (closed.isSet()) { return; }
 
       for (int i = 0; i < contextsToRemove; i++) {
         writeContexts.removeFirst();
@@ -329,7 +322,6 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         commNIOServiceThread.removeWriteInterest(this, channel);
       }
     }
-    return totalBytesWritten;
   }
 
   static private long bytesRemaining(ByteBuffer[] buffers) {

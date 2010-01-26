@@ -30,27 +30,17 @@ class TCCommJDK14 implements TCComm {
       logger.info("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
-    
+
     this.commThread = new CoreNIOServices(name + ":" + commThreadName, workerCommMgr, socketParams);
   }
 
-  protected int getClientCountForWorkerComm(int workerCommId) {
+  public int getClientCountForWorkerComm(int workerCommId) {
     if (workerCommMgr != null) { return workerCommMgr.getClientCountForWorkerComm(workerCommId); }
     return 0;
   }
 
-  protected CoreNIOServices getWorkerComm(int workerCommId) {
-    if (workerCommMgr != null) { return workerCommMgr.getWorkerComm(workerCommId); }
-    return null;
-  }
-
-  protected long getTotalbytesReadByWorkerComm(int workerCommId) {
-    if (workerCommMgr != null) { return workerCommMgr.getTotalBytesReadByWorkerComm(workerCommId); }
-    return 0;
-  }
-
-  protected long getTotalbytesWrittenByWorkerComm(int workerCommId) {
-    if (workerCommMgr != null) { return workerCommMgr.getTotalBytesWrittenByWorkerComm(workerCommId); }
+  public long getTotalbytesReadByWorkerComm(int workerCommId) {
+    if (workerCommMgr != null) { return workerCommMgr.getBytesReadByWorkerComm(workerCommId); }
     return 0;
   }
 
@@ -100,5 +90,5 @@ class TCCommJDK14 implements TCComm {
   public CoreNIOServices nioServiceThreadForNewListener() {
     return commThread;
   }
-  
+
 }
