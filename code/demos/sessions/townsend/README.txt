@@ -9,6 +9,6 @@ NOTE: Windows users please use the equivalent Batch scripts
      
 2. Run start-demo.sh script
 
-3. Access Cart demo at 
+3. Access Townsend demo at 
   -- http://localhost:9081/Townsend
   -- http://localhost:9082/Townsend

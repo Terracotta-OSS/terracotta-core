@@ -9,6 +9,6 @@ NOTE: Windows users please use the equivalent Batch scripts
      
 2. Run start-demo.sh script
 
-3. Access Cart demo at 
+3. Access Task List demo at 
   -- http://localhost:9081/DepartmentTaskList
   -- http://localhost:9082/DepartmentTaskList

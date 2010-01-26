@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * DataKeeper keeps track of the current state of the task list.  All 
  * modifications to the task list are made by calling DataKeeper's methods.
  */
-public class DataKeeper {
+public class DataKeeper implements java.io.Serializable {
 	
 	private ArrayList userList;
 	
