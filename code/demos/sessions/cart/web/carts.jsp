@@ -18,12 +18,7 @@ final String contextPath=request.getContextPath();
   limitations under the License.
 -->
 
-<%
-   demo.cart.DummyCart cart = (demo.cart.DummyCart)session.getAttribute("cart");
-   if (cart == null) {
-     cart = new demo.cart.DummyCart();
-   }  
-%>
+<jsp:useBean id="cart" scope="session" class="demo.cart.DummyCart" />
 
 <jsp:setProperty name="cart" property="*" />
 <%
