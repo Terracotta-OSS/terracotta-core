@@ -100,20 +100,12 @@ public class TCWorkerCommManager {
     }
   }
 
-  protected synchronized CoreNIOServices getWorkerComm(int workerCommId) {
-    return this.workerCommThreads[workerCommId];
-  }
-
-  protected synchronized int getClientCountForWorkerComm(int workerCommId) {
+  public synchronized int getClientCountForWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getWeight();
   }
 
-  protected synchronized long getTotalBytesReadByWorkerComm(int workerCommId) {
+  public synchronized long getBytesReadByWorkerComm(int workerCommId) {
     return this.workerCommThreads[workerCommId].getTotalBytesRead();
-  }
-
-  protected synchronized long getTotalBytesWrittenByWorkerComm(int workerCommId) {
-    return this.workerCommThreads[workerCommId].getTotalBytesWritten();
   }
 
 }

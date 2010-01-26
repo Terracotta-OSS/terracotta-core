@@ -95,7 +95,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     super.setUp();
   }
 
-  public void testReaderandWriterCommThread() throws Exception {
+  public void testBasic() throws Exception {
     // comms manager with 4 worker comms
     CommunicationsManager commsMgr = new CommunicationsManagerImpl("Server-TestCommsMgr", new NullMessageMonitor(),
                                                                    new TransportNetworkStackHarnessFactory(),
@@ -125,19 +125,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(1));
     Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(2));
     Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getClientCountForWorkerComm(3));
-
-    for (int i = 0; i < 4; i++) {
-      CoreNIOServices workerI = ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWorkerComm(i);
-      Assert.eval(workerI.getReaderComm().getTotalBytesRead() > 0);
-      Assert.eval(workerI.getReaderComm().getTotalBytesWritten() <= 0);
-
-      Assert.eval(workerI.getWriterComm().getTotalBytesRead() <= 0);
-      Assert.eval(workerI.getWriterComm().getTotalBytesWritten() > 0);
-
-      Assert.eval(workerI.getTotalBytesRead() > 0);
-      Assert.eval(workerI.getTotalBytesWritten() > 0);
-
-    }
 
     listener.stop(5000);
   }
