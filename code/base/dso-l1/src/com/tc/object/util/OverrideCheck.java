@@ -15,8 +15,10 @@ import java.util.Set;
 public class OverrideCheck {
 
   public static void check(Class parent, Class subClass) {
-    Set superMethods = methodsFor(parent);
-    Set subMethods = methodsFor(subClass);
+    boolean excludeSuper = parent.isAssignableFrom(subClass);
+
+    Set superMethods = methodsFor(parent, false);
+    Set subMethods = methodsFor(subClass, excludeSuper);
 
     List missing = new ArrayList();
 
@@ -32,15 +34,13 @@ public class OverrideCheck {
     if (!missing.isEmpty()) { throw new RuntimeException("Missing overrides:\n" + missing); }
   }
 
-  private static Set methodsFor(Class c) {
+  private static Set methodsFor(Class c, boolean excludeSuper) {
     Set set = new HashSet();
 
     while (c != null && c != Object.class) {
       Method[] methods = c.isInterface() ? c.getMethods() : c.getDeclaredMethods();
 
-      for (int i = 0; i < methods.length; i++) {
-        Method m = methods[i];
-
+      for (Method m : methods) {
         int access = m.getModifiers();
 
         if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
@@ -62,6 +62,9 @@ public class OverrideCheck {
         set.add(sig.toString());
 
       }
+
+      if (excludeSuper) { return set; }
+
       c = c.getSuperclass();
     }
 
