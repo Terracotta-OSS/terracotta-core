@@ -10,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 import com.tc.test.AppServerInfo;
 import com.tc.util.PortChooser;
 import com.tc.util.ReplaceLine;
+import com.tc.util.runtime.Os;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,12 +32,15 @@ public class JBossHelper {
     }
 
     // add server_xxx lib dir to classpath
+    String slashes = Os.isWindows() ? "/" : "//";
+
     int classPathLine = findFirstLine(new File(serverDir, "conf/jboss-service.xml"), "^.*<classpath .*$");
     String serverLib = new File(serverDir, "lib").getAbsolutePath().replace('\\', '/');
     ReplaceLine.Token[] tokens = new ReplaceLine.Token[] { new ReplaceLine.Token(
                                                                                  classPathLine,
                                                                                  "<classpath",
-                                                                                 "<classpath codebase=\"file://"
+                                                                                 "<classpath codebase=\"file:"
+                                                                                     + slashes
                                                                                      + serverLib
                                                                                      + "\" archives=\"*\"/>\n    <classpath") };
     ReplaceLine.parseFile(tokens, new File(serverDir, "conf/jboss-service.xml"));
