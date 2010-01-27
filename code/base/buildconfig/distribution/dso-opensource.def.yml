@@ -112,7 +112,6 @@ bundled_components:
         - tim-get-tool:
             kit-resources:
               - tim-get.properties
-        - ui-configurator
 bundled_modules:
   - core:
       install_directory: platform/modules

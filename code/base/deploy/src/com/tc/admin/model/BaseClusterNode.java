@@ -54,7 +54,7 @@ public abstract class BaseClusterNode implements IClusterNode {
   }
 
   public synchronized void addPolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
-                                         PolledAttributeListener listener) {
+                                                      PolledAttributeListener listener) {
     Assert.assertNotNull(attributeSet);
 
     Iterator<String> attributeIter = attributeSet.iterator();
@@ -92,13 +92,14 @@ public abstract class BaseClusterNode implements IClusterNode {
     }
   }
 
-  public synchronized void removePolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener) {
+  public synchronized void removePolledAttributeListener(PolledAttribute polledAttribute,
+                                                         PolledAttributeListener listener) {
     removePolledAttributeListener(polledAttribute.getObjectName(), Collections
         .singleton(polledAttribute.getAttribute()), listener);
   }
 
   public synchronized void removePolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
-                                            PolledAttributeListener listener) {
+                                                         PolledAttributeListener listener) {
     if (attributeSet != null && listener != null) {
       Iterator<String> attributeIter = attributeSet.iterator();
       while (attributeIter.hasNext()) {
@@ -107,11 +108,11 @@ public abstract class BaseClusterNode implements IClusterNode {
         EventListenerList attributeListenerList = polledAttributeListenerMap.get(polledAttribute);
         if (attributeListenerList != null) {
           attributeListenerList.remove(PolledAttributeListener.class, listener);
-        }
-        if (attributeListenerList.getListenerCount() == 0) {
-          polledAttributeListenerMap.remove(polledAttribute);
-          Set<String> sourceAttrSet = polledAttributeSourceMap.get(objectName);
-          sourceAttrSet.remove(attribute);
+          if (attributeListenerList.getListenerCount() == 0) {
+            polledAttributeListenerMap.remove(polledAttribute);
+            Set<String> sourceAttrSet = polledAttributeSourceMap.get(objectName);
+            sourceAttrSet.remove(attribute);
+          }
         }
       }
     }
