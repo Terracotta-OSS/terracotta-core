@@ -4,6 +4,8 @@
  */
 package com.tc.object.util;
 
+import com.tc.object.bytecode.ByteCodeUtil;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -44,6 +46,10 @@ public class OverrideCheck {
         int access = m.getModifiers();
 
         if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
+          continue;
+        }
+
+        if (m.getName().startsWith(ByteCodeUtil.TC_METHOD_PREFIX)) {
           continue;
         }
 
