@@ -126,11 +126,7 @@ public final class ProductInfo {
     this.patchBranch = getPatchProperty(properties, BUILD_DATA_BRANCH_KEY, UNKNOWN_VALUE);
 
     Matcher matcher = KITIDPATTERN.matcher(mavenVersion);
-    if (!matcher.matches()) {
-      throw new AssertionError("Can't parse kitID from: " + mavenVersion);
-    } else {
-      kitID = matcher.group(1);
-    }
+    kitID = matcher.matches() ? matcher.group(1) : UNKNOWN_VALUE;
   }
 
   static Date parseTimestamp(String timestampString) throws java.text.ParseException {
