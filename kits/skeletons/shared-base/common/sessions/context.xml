@@ -1,0 +1,3 @@
+<Context>
+  <Valve className="org.terracotta.session.TerracottaTomcat60xSessionValve" tcConfigUrl="localhost:9510"/>
+</Context>
