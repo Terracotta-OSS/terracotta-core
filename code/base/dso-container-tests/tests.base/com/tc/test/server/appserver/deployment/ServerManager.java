@@ -166,6 +166,14 @@ public class ServerManager {
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
+
+    if (!Vm.isIBM()) {
+      dsoServer.getJvmArgs().add("-verbose:gc");
+      dsoServer.getJvmArgs().add("-XX:+PrintGCDetails");
+      dsoServer.getJvmArgs().add("-XX:+PrintGCTimeStamps");
+      dsoServer.getJvmArgs().add("-Xloggc:" + new File(workDir, "dso-server-gc.log").getAbsolutePath());
+    }
+
     dsoServer.getJvmArgs().add("-Xmx128m");
 
     for (Iterator iterator = jvmArgs.iterator(); iterator.hasNext();) {
@@ -199,7 +207,7 @@ public class ServerManager {
     addServerToStop(appServer);
     return appServer;
   }
-  
+
   public WebApplicationServer makeWebApplicationServerNoDso() throws Exception {
     GenericServer.setDsoEnabled(false);
     int i = ServerManager.appServerIndex++;
@@ -287,8 +295,7 @@ public class ServerManager {
           } else {
             throw new RuntimeException("unexpected version: " + info);
           }
-        }
-        else if (major.equals("4")) {
+        } else if (major.equals("4")) {
           if (minor.startsWith("0.")) {
             aCopy.addModule(TIMUtil.JBOSS_4_0, resolveContainerTIM(TIMUtil.JBOSS_4_0));
           } else if (minor.startsWith("2.")) {
