@@ -15,8 +15,12 @@ public class XButton extends JButton {
   public XButton(String label) {
     super(label);
   }
-  
+
   public XButton(String label, Icon icon) {
     super(label, icon);
   }
+
+  public XButton(Icon icon) {
+    super(icon);
   }
+}
