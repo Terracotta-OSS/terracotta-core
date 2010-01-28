@@ -424,6 +424,9 @@ public interface TCPropertiesConsts {
   public static final String   L1_TRANSACTIONMANAGER_FOLDING_DEBUG                           = "l1.transactionmanager.folding.debug";
   public static final String   L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT                    = "l1.transactionmanager.timeoutForAckOnExit";
 
+  public static final String   TC_TRANSPORT_HANDSHAKE_TIMEOUT                                     = "tc.transport.handshake.timeout";
+  public static final String   TC_CONFIG_SOURCEGET_TIMEOUT                                        = "tc.config.getFromSource.timeout";
+
   /*********************************************************************************************************************
    * <code>
    * Section: L1 Connect Properties

@@ -11,6 +11,7 @@ import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
+import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressIterator;
@@ -81,19 +82,20 @@ public class ClientConnectionEstablisher {
    * 
    * @throws TCTimeoutException
    * @throws IOException
-   * @throws TCTimeoutException
+   * @throws CommStackMismatchException
    * @throws MaxConnectionsExceededException
    */
-  public TCConnection open(ClientMessageTransport cmt) throws TCTimeoutException, IOException {
+  public void open(ClientMessageTransport cmt) throws TCTimeoutException, IOException, MaxConnectionsExceededException,
+      CommStackMismatchException {
     synchronized (this.asyncReconnecting) {
       Assert.eval("Can't call open() while asynch reconnect occurring", !this.asyncReconnecting.get());
-      TCConnection rv = connectTryAllOnce(cmt);
+      connectTryAllOnce(cmt);
       this.allowReconnects.set(true);
-      return rv;
     }
   }
 
-  private TCConnection connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException {
+  private void connectTryAllOnce(ClientMessageTransport cmt) throws TCTimeoutException, IOException,
+      MaxConnectionsExceededException, CommStackMismatchException {
     final ConnectionAddressIterator addresses = this.connAddressProvider.getIterator();
     TCConnection rv = null;
     while (addresses.hasNext()) {
@@ -101,6 +103,7 @@ public class ClientConnectionEstablisher {
       try {
         final TCSocketAddress csa = new TCSocketAddress(connInfo);
         rv = connect(csa, cmt);
+        cmt.openConnection(rv);
         break;
       } catch (TCTimeoutException e) {
         if (!addresses.hasNext()) { throw e; }
@@ -108,7 +111,6 @@ public class ClientConnectionEstablisher {
         if (!addresses.hasNext()) { throw e; }
       }
     }
-    return rv;
   }
 
   /**

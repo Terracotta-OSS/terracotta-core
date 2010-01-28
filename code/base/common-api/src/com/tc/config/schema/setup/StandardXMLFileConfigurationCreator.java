@@ -26,6 +26,8 @@ import com.tc.config.schema.setup.sources.URLConfigurationSource;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -50,12 +52,13 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
   private static final TCLogger   consoleLogger                        = CustomerLogging.getConsoleLogger();
 
-  private static final long       GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                     // five
-  // minutes
-  private static final long       GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = 30 * 1000;                         // thirty
-  // seconds
-  private static final long       MIN_RETRY_TIMEOUT                    = 5 * 1000;                          // five
-  // seconds
+  private static final long       GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;                     // 5 mins
+  private static final long       MIN_RETRY_TIMEOUT                    = 5 * 1000;                          // 5 secs
+  private static final long       GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getLong(
+                                                                                    TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                                    30000);                 // 30 secs
 
   private final String            configurationSpec;
   private final File              defaultDirectory;

@@ -17,6 +17,8 @@ import com.tc.net.protocol.NetworkLayer;
 import com.tc.net.protocol.NetworkStackID;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.TCExceptionResultException;
@@ -29,8 +31,11 @@ import java.util.List;
  * Client implementation of the transport network layer.
  */
 public class ClientMessageTransport extends MessageTransportBase {
-  // it was 2 minutes timeout, reduce to 10 sec
-  public static final long                  TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT = 10000;
+  public static final long                  TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT = TCPropertiesImpl
+                                                                                   .getProperties()
+                                                                                   .getLong(
+                                                                                            TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
+                                                                                            10000);
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened                          = false;
   private TCFuture                          waitForSynAckResult;
@@ -73,28 +78,13 @@ public class ClientMessageTransport extends MessageTransportBase {
     isOpening.set(true);
     synchronized (isOpen) {
       Assert.eval("can't open an already open transport", !isOpen.get());
-      try {
-        wireNewConnection(connectionEstablisher.open(this));
-        HandshakeResult result = handShake();
-        handleHandshakeError(result);
-        sendAck();
-        Assert.eval(!this.connectionId.isNull());
-        isOpen.set(true);
-        NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
-        wasOpened = true;
-        return (nid);
-      } catch (TCTimeoutException e) {
-        // DEV-1320
-        clearConnection();
-        status.reset();
-        throw e;
-      } catch (IOException e) {
-        clearConnection();
-        status.reset();
-        throw e;
-      } finally {
-        isOpening.set(false);
-      }
+      connectionEstablisher.open(this);
+      Assert.eval(!this.connectionId.isNull());
+      isOpen.set(true);
+      NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
+      wasOpened = true;
+      isOpening.set(false);
+      return (nid);
     }
   }
 
@@ -267,6 +257,23 @@ public class ClientMessageTransport extends MessageTransportBase {
     fireTransportConnectedEvent();
   }
 
+  protected void openConnection(TCConnection connection) throws TCTimeoutException, IOException,
+      MaxConnectionsExceededException, CommStackMismatchException {
+    Assert.eval(!isConnected());
+    wireNewConnection(connection);
+    try {
+      handshakeConnection(connection);
+    } catch (TCTimeoutException e) {
+      clearConnection();
+      status.reset();
+      throw e;
+    } catch (IOException e) {
+      clearConnection();
+      status.reset();
+      throw e;
+    }
+  }
+
   void reconnect(TCConnection connection) throws Exception {
 
     // don't do reconnect if open is still going on
@@ -278,17 +285,18 @@ public class ClientMessageTransport extends MessageTransportBase {
     Assert.eval(!isConnected());
     wireNewConnection(connection);
     try {
-      HandshakeResult result = handShake();
-      // DEV-2781 - check for MaxConnectionsExceeded message from server during reconnects
-      if (result.isMaxConnectionsExceeded()) {
-        close();
-        throw new MaxConnectionsExceededException(getMaxConnectionsExceededMessage(result.maxConnections()));
-      }
-      sendAck();
+      handshakeConnection(connection);
     } catch (Exception t) {
       status.reset();
       throw t;
     }
+  }
+
+  private void handshakeConnection(TCConnection connection) throws TCTimeoutException, MaxConnectionsExceededException,
+      IOException, CommStackMismatchException {
+    HandshakeResult result = handShake();
+    handleHandshakeError(result);
+    sendAck();
   }
 
   private String getMaxConnectionsExceededMessage(int maxConnections) {
