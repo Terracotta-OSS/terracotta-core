@@ -66,21 +66,22 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     for (int i = 0; i < numOfClients - 1; i++) {
       clients[i] = createClient(i, numOfClients, configBuilder.getDsoPort(1), configBuilder.getJmxPort(1));
       clients[i].start();
+      clients[i].mergeSTDOUT();
+      clients[i].mergeSTDERR();
     }
     ThreadUtil.reallySleep(20000);
     server_1.stop();
     clients[numOfClients - 1] = createClient(4, 5, configBuilder.getDsoPort(1), configBuilder.getJmxPort(1));
     clients[numOfClients - 1].start();
+    clients[numOfClients - 1].mergeSTDOUT();
+    clients[numOfClients - 1].mergeSTDERR();
 
     waitForClientsToFinish(clients);
   }
 
-  private void waitForClientsToFinish(ExtraL1ProcessControl[] clients) {
+  private void waitForClientsToFinish(ExtraL1ProcessControl[] clients) throws Exception {
     for (int i = 0; i < clients.length; i++) {
-      while (clients[i].isRunning()) {
-        System.out.println("Client " + i + " is still running");
-        ThreadUtil.reallySleep(2000);
-      }
+      clients[i].waitUntilShutdown();
     }
   }
 
