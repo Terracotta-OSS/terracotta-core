@@ -20,6 +20,7 @@ import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.concurrent.ThreadUtil;
@@ -206,6 +207,84 @@ public class MessageChannelTest extends TCTestCase {
       System.err.println("Expected: Connection Error: " + e);
     }
     clientChannel = null;
+  }
+
+  public void testClientSwithOver() throws Exception {
+
+    clientWatcher = new MessageSendAndReceiveWatcher();
+    serverWatcher = new MessageSendAndReceiveWatcher();
+
+    MessageMonitor mm = new NullMessageMonitor();
+    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, new PlainNetworkStackHarnessFactory(),
+                                                new NullConnectionPolicy(), 0);
+    CommunicationsManager serverComms1 = new CommunicationsManagerImpl("TestCommMgr-server-1", mm,
+                                                                       new PlainNetworkStackHarnessFactory(),
+                                                                       new NullConnectionPolicy(), 0);
+    CommunicationsManager serverComms2 = new CommunicationsManagerImpl("TestCommMgr-server-2", mm,
+                                                                       new PlainNetworkStackHarnessFactory(),
+                                                                       new NullConnectionPolicy(), 0);
+
+    NetworkListener lsnr1 = getListener(clientWatcher, serverWatcher, true, serverComms1);
+    NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
+
+    CommunicationsManager clComms = new CommunicationsManagerImpl("TestCommMgr-client", mm,
+                                                                  new PlainNetworkStackHarnessFactory(),
+                                                                  new NullConnectionPolicy(), 0);
+
+    this.clientChannel = createClientMessageChannel(clComms, -1, lsnr1.getBindPort(), new ConnectionInfo[] {
+        new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort()) });
+    this.setUpClientReceiveSink();
+
+    try {
+      clientChannel.open();
+    } catch (TCTimeoutException e) {
+      Assert.eval("This is not suppose to happen", false);
+    }
+    Assert.eval(clientChannel.isConnected());
+  }
+
+  private NetworkListener getListener(final MessageSendAndReceiveWatcher clientWatcher2,
+                                      final MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
+                                      CommunicationsManager serverComms1) throws IOException {
+
+    NetworkListener rv;
+    if (dumbServerSink) {
+      rv = serverComms1.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
+                                       new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
+
+                                         public void putMessage(WireProtocolMessage message) {
+                                           // Thanks for the message.
+                                           // But i don't give you back anything
+                                           // as i am Dumb.
+                                         }
+                                       }
+
+      );
+    } else {
+      rv = serverComms1.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
+                                       new DefaultConnectionIdFactory());
+    }
+
+    rv.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    rv.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
+      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
+        // System.out.println(message);
+
+        PingMessage ping = (PingMessage) message;
+        try {
+          message.hydrate();
+        } catch (Exception e) {
+          setError(e);
+        }
+        clientWatcher2.addMessageReceived(ping);
+
+        PingMessage pong = ping.createResponse();
+        pong.send();
+        serverWatcher2.addMessageSent(pong);
+      }
+    });
+    rv.start(new HashSet());
+    return rv;
   }
 
   public void testAutomaticReconnect() throws Exception {
@@ -420,11 +499,15 @@ public class MessageChannelTest extends TCTestCase {
   }
 
   private ClientMessageChannel createClientMessageChannel(int maxReconnectTries) {
-    ClientMessageChannel ch = clientComms
-        .createClientChannel(new NullSessionManager(), maxReconnectTries, TCSocketAddress.LOOPBACK_IP, lsnr
-            .getBindPort(), WAIT,
-                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr
-                                 .getBindPort()) }));
+    return createClientMessageChannel(clientComms, maxReconnectTries, lsnr.getBindPort(),
+                                      new ConnectionInfo[] { new ConnectionInfo("localhost", lsnr.getBindPort()) });
+  }
+
+  private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries,
+                                                          int lsnrPort, final ConnectionInfo[] connInfo) {
+    ClientMessageChannel ch = clComms.createClientChannel(new NullSessionManager(), maxReconnectTries,
+                                                          TCSocketAddress.LOOPBACK_IP, lsnrPort, WAIT,
+                                                          new ConnectionAddressProvider(connInfo));
     ch.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     return ch;
   }
