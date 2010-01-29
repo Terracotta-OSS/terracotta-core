@@ -32,7 +32,7 @@ if $cygwin; then
 fi
 
 echo "starting Jetty $jetty_instance..."
-$JAVA_HOME/bin/java -Djetty.home=$jetty_home -DSTOP.PORT=$stop_port -DSTOP.KEY=secret\
+$JAVA_HOME/bin/java -Xmx256m -XX:MaxPermSize=128m -Djetty.home=$jetty_home -DSTOP.PORT=$stop_port -DSTOP.KEY=secret\
  -jar $start_jar conf.xml &
 sleep 1
 echo

@@ -6,7 +6,7 @@
 
 -->
 
-<project name="Cart" default="war" basedir=".">
+<project name="Cart" default="compile" basedir=".">
 	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
 	<condition property="is.live" value="true">
 		<available file="${bundled.server.home}" type="dir"/>
@@ -50,26 +50,4 @@
 		</javac>
 	</target>
 
-	<target name="war" depends="compile">
-		<war destfile="${dist.dir}/${warfile}" webxml="${web.dir}/WEB-INF/web.xml" duplicate="preserve">
-			<fileset dir="${web.dir}" >
-				<exclude name="**/web.xml"/>
-			</fileset>
-			<fileset dir="${src.dir}"/>
-			<classes dir="${build.dir}"/>
-		</war>
-	</target>
-
-	<target name="deploy" depends="clean.all, war, deploy.to.webserver, deploy.to.sandbox"/>
-
-	<target name="deploy.to.webserver" unless="is.live">
-		<property name="webserver.deploy" value="${webserver.home}/webapps"/>
-		<copy file="${dist.dir}/${warfile}" todir="${webserver.deploy}" verbose="true"/>
-	</target>
-
-	<target name="deploy.to.sandbox" if="is.live">
-		<property name="sandbox.home" value="${basedir}/../../../tools/sessions/configurator-sandbox"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9081/webapps" verbose="true"/>
-		<copy file="${dist.dir}/${warfile}" todir="${sandbox.home}/jetty6.1/9082/webapps" verbose="true"/>
-	</target>
 </project>

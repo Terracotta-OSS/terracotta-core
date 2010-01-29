@@ -4,9 +4,11 @@
 	<defaultCache maxElementsInMemory="10000" eternal="false"
 		timeToIdleSeconds="120" timeToLiveSeconds="120" maxElementsOnDisk="10000000" />
 
-	<cache name="cameras" maxElementsInMemory="10000" eternal="true"
+	<cache name="catalog" maxElementsInMemory="10000" eternal="true"
 		timeToIdleSeconds="0" timeToLiveSeconds="0" maxElementsOnDisk="10000000">
 		<terracotta />
 	</cache>
+  
+  <terracottaConfig url="localhost:9510"/>
 
 </ehcache>

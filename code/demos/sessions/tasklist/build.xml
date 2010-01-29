@@ -5,7 +5,7 @@
   All rights reserved.
 
 -->
-<project name="DepartmentTaskList" default="war" basedir=".">
+<project name="DepartmentTaskList" default="compile" basedir=".">
 	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
 	<condition property="is.live" value="true">
 		<available file="${bundled.server.home}" type="dir"/>
@@ -51,19 +51,4 @@
 		</javac>
 	</target>
 
-	<target name="war" depends="compile">
-		<war destfile="${dist.dir}/${warfile}" webxml="${web.dir}/WEB-INF/web.xml" duplicate="preserve">
-			<fileset dir="${web.dir}" >
-				<exclude name="**/web.xml"/>
-			</fileset>
-			<fileset dir="${src.dir}"/>
-			<classes dir="${build.dir}"/>
-			<classes dir="${lib.dir}">
-				<include name="*.properties"/>				
-			</classes>
-			<lib dir="${lib.dir}">
-				<include name="*.jar"/>
-			</lib>
-		</war>
-	</target>
 </project>
