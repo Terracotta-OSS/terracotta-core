@@ -229,7 +229,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     waitUntilStarted();
     System.err.println(this.name + " started.");
   }
-  
+
   public void startAndWait(long seconds) throws Exception {
     startWithoutWait();
     waitUntilStarted(seconds);
@@ -295,6 +295,9 @@ public class ExtraProcessServerControl extends ServerControlBase {
       stdoutCopier.join(60 * 1000);
       stderrCopier.join(60 * 1000);
 
+      if (stderrCopier.isAlive() || stdoutCopier.isAlive()) {
+        System.err.println("\n" + "TCStop output: " + stopperLog.toString() + "\n");
+      }
     } finally {
       if (stopperLog != null) {
         stopperOutput = stopperLog.toString();
@@ -405,7 +408,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   public List getJvmArgs() {
     return jvmArgs;
   }
-  
+
   public void dumpServerControl() throws Exception {
     JMXConnector jmxConnector = null;
     try {

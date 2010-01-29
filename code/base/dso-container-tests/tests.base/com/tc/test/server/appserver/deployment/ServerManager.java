@@ -167,7 +167,7 @@ public class ServerManager {
       dsoServer.getJvmArgs().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
-    if (!Vm.isIBM()) {
+    if (!Os.isWindows() && !Vm.isIBM()) {
       dsoServer.getJvmArgs().add("-verbose:gc");
       dsoServer.getJvmArgs().add("-XX:+PrintGCDetails");
       dsoServer.getJvmArgs().add("-XX:+PrintGCTimeStamps");
