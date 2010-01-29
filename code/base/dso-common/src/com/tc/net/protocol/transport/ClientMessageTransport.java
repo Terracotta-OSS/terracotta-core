@@ -69,21 +69,22 @@ public class ClientMessageTransport extends MessageTransportBase {
    * @throws TCTimeoutException
    * @throws MaxConnectionsExceededException
    */
+  @Override
   public NetworkStackID open() throws TCTimeoutException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
     // XXX: This extra boolean flag is dumb, but it's here because the close event can show up
     // while the lock on isOpen is held here. That will cause a deadlock because the close event is thrown on the
     // comms thread which means that the handshake messages can't be sent.
     // The state machine here needs to be rationalized.
-    isOpening.set(true);
-    synchronized (isOpen) {
-      Assert.eval("can't open an already open transport", !isOpen.get());
-      connectionEstablisher.open(this);
+    this.isOpening.set(true);
+    synchronized (this.isOpen) {
+      Assert.eval("can't open an already open transport", !this.isOpen.get());
+      this.connectionEstablisher.open(this);
       Assert.eval(!this.connectionId.isNull());
-      isOpen.set(true);
+      this.isOpen.set(true);
       NetworkStackID nid = new NetworkStackID(this.connectionId.getChannelID());
-      wasOpened = true;
-      isOpening.set(false);
+      this.wasOpened = true;
+      this.isOpening.set(false);
       return (nid);
     }
   }
@@ -112,37 +113,39 @@ public class ClientMessageTransport extends MessageTransportBase {
     this.removeTransportListeners();
     clearConnection();
     this.addTransportListeners(tl);
-    status.reset();
+    this.status.reset();
   }
 
   /**
    * Returns true if the MessageTransport was ever in an open state.
    */
   public boolean wasOpened() {
-    return wasOpened;
+    return this.wasOpened;
   }
 
   public boolean isNotOpen() {
-    return !isOpening.get() && !isOpen.get();
+    return !this.isOpening.get() && !this.isOpen.get();
   }
 
   // TODO :: come back
+  @Override
   public void closeEvent(TCConnectionEvent event) {
-    if (isNotOpen()) return;
+    if (isNotOpen()) { return; }
     super.closeEvent(event);
   }
 
+  @Override
   protected void receiveTransportMessageImpl(WireProtocolMessage message) {
-    synchronized (status) {
-      if (status.isSynSent()) {
+    synchronized (this.status) {
+      if (this.status.isSynSent()) {
         handleSynAck(message);
         message.recycle();
         return;
       }
 
-      if (!status.isEstablished()) {
-        logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource() + "; "
-                    + message);
+      if (!this.status.isEstablished()) {
+        this.logger.warn("Ignoring the message received for an Un-Established Connection; " + message.getSource()
+                         + "; " + message);
         message.recycle();
         return;
       }
@@ -169,10 +172,10 @@ public class ClientMessageTransport extends MessageTransportBase {
                          + errorMessage;
 
           if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0) {
-            logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
+            this.logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
             errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
           } else {
-            logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+            this.logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
             errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT + errorMessage;
           }
           handleHandshakeError(new TransportHandshakeErrorContext(errorMessage + "\n\nPLEASE RECONFIGURE THE STACKS",
@@ -183,9 +186,9 @@ public class ClientMessageTransport extends MessageTransportBase {
         }
       }
 
-      if (!connectionId.isNewConnection()) {
+      if (!this.connectionId.isNewConnection()) {
         // This is a reconnect
-        Assert.eval(connectionId.equals(synAck.getConnectionId()));
+        Assert.eval(this.connectionId.equals(synAck.getConnectionId()));
       }
       if (!synAck.isMaxConnectionsExceeded()) {
         this.connectionId = synAck.getConnectionId();
@@ -222,7 +225,7 @@ public class ClientMessageTransport extends MessageTransportBase {
 
   private SynAckMessage waitForSynAck() throws TCTimeoutException {
     try {
-      SynAckMessage synAck = (SynAckMessage) waitForSynAckResult.get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
+      SynAckMessage synAck = (SynAckMessage) this.waitForSynAckResult.get(TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT);
       return synAck;
     } catch (InterruptedException e) {
       throw new TCRuntimeException(e);
@@ -232,13 +235,14 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void sendSyn() {
-    synchronized (status) {
-      if (status.isEstablished() || status.isSynSent()) { throw new AssertionError(" ERROR !!! " + status); }
-      waitForSynAckResult = new TCFuture(status);
+    synchronized (this.status) {
+      if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
+                                                                                             + this.status); }
+      this.waitForSynAckResult = new TCFuture(this.status);
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
       TransportHandshakeMessage syn = this.messageFactory.createSyn(this.connectionId, getConnection(),
-                                                                    stackLayerFlags, callbackPort);
+                                                                    stackLayerFlags, this.callbackPort);
       // send syn message
       this.sendToConnection(syn);
       this.status.synSent();
@@ -246,9 +250,9 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void sendAck() throws IOException {
-    synchronized (status) {
+    synchronized (this.status) {
       // DEV-1364 : Connection close might have happened
-      if (!status.isSynSent()) throw new IOException();
+      if (!this.status.isSynSent()) { throw new IOException(); }
       TransportHandshakeMessage ack = this.messageFactory.createAck(this.connectionId, getConnection());
       // send ack message
       this.sendToConnection(ack);
@@ -265,11 +269,11 @@ public class ClientMessageTransport extends MessageTransportBase {
       handshakeConnection(connection);
     } catch (TCTimeoutException e) {
       clearConnection();
-      status.reset();
+      this.status.reset();
       throw e;
     } catch (IOException e) {
       clearConnection();
-      status.reset();
+      this.status.reset();
       throw e;
     }
   }
@@ -277,8 +281,8 @@ public class ClientMessageTransport extends MessageTransportBase {
   void reconnect(TCConnection connection) throws Exception {
 
     // don't do reconnect if open is still going on
-    if (!wasOpened) {
-      logger.warn("Transport was opened already. Skip reconnect " + connection);
+    if (!this.wasOpened) {
+      this.logger.warn("Transport was opened already. Skip reconnect " + connection);
       return;
     }
 
@@ -287,7 +291,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     try {
       handshakeConnection(connection);
     } catch (Exception t) {
-      status.reset();
+      this.status.reset();
       throw t;
     }
   }
@@ -304,7 +308,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   TCProtocolAdaptor getProtocolAdapter() {
-    return wireProtocolAdaptorFactory.newWireProtocolAdaptor(new WireProtocolMessageSink() {
+    return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(new WireProtocolMessageSink() {
       public void putMessage(WireProtocolMessage message) {
         receiveTransportMessage(message);
       }
@@ -330,10 +334,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       return this.synAck.getMaxConnections();
     }
 
-    public boolean isMaxConnectionsExceeded() {
-      return this.synAck.isMaxConnectionsExceeded();
-    }
-
     public boolean hasErrorContext() {
       return this.synAck.isMaxConnectionsExceeded() || this.synAck.hasErrorContext();
     }
@@ -349,6 +349,6 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   public ClientConnectionEstablisher getConnectionEstablisher() {
-    return connectionEstablisher;
+    return this.connectionEstablisher;
   }
 }
