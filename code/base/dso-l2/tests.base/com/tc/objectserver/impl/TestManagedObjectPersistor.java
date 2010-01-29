@@ -133,4 +133,8 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return;
   }
 
+  public long currentObjectIDValue() {
+    throw new ImplementMe();
+  }
+
 }

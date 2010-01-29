@@ -80,8 +80,6 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
   }
 
-
-
   public synchronized ObjectIDSet getAllObjectIDs() {
     assertNotInShutdown();
     return new ObjectIDSet(managed.keySet());
@@ -154,5 +152,7 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     return roots;
   }
 
-
+  public long currentObjectIDValue() {
+    return objectIDSequence;
+  }
 }

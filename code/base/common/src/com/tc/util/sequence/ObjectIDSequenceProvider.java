@@ -23,4 +23,8 @@ public class ObjectIDSequenceProvider implements ObjectIDSequence {
     current = startID;
   }
 
+  public long currentObjectIDValue() {
+    return this.current;
+  }
+
 }

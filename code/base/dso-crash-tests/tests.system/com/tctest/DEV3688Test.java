@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,9 +38,9 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
    * Don't change this value
    */
   private static final int NODE_COUNT = 1;
-  
+
   public DEV3688Test() {
-    disableAllUntil(new Date(Long.MAX_VALUE));
+    // disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
   public void doSetUp(TransparentTestIface t) throws Exception {
@@ -113,8 +112,7 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
           activeIndex = manager.getAndUpdateActiveIndex();
           Assert.assertTrue(activeIndex == 1);
 
-          System.out
-              .println("7. Start a new client now and you will see that the server has again given ObjectID=1000");
+          System.out.println("7. Start a new client now and the server should not give ObjectID=1000");
 
           int currentActiveDsoPort = manager.getDsoPorts()[1];
           List jvmArgs = new ArrayList();

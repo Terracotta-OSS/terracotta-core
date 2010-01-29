@@ -27,6 +27,8 @@ public interface ManagedObjectPersistor {
   public ManagedObject loadObjectByID(ObjectID id);
 
   public long nextObjectIDBatch(int batchSize);
+  
+  public long currentObjectIDValue();
 
   public void setNextAvailableObjectID(long startID);
 
@@ -57,5 +59,4 @@ public interface ManagedObjectPersistor {
   public boolean addMapTypeObject(ObjectID id);
 
   public void removeAllMapTypeObject(Collection ids);
-
 }

@@ -70,4 +70,8 @@ public class GlobalTransactionIDBatchRequestHandler extends AbstractEventHandler
       return this.size;
     }
   }
+
+  public long currentGID() {
+    return sequence.current();
+  }
 }

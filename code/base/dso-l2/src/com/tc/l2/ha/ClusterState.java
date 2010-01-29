@@ -58,6 +58,9 @@ public class ClusterState {
     String sid = persistentStateStore.get(CLUSTER_ID_KEY);
     this.stripeID = (sid != null) ? new StripeID(sid) : StripeID.NULL_ID;
     validateStartupState(persistentStateStore.get(L2_STATE_KEY));
+    this.nextAvailObjectID = this.oidSequence.currentObjectIDValue();
+    this.nextAvailGlobalTxnID = this.gidSequenceProvider.currentGID();
+    this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
   }
 
   private void validateStartupState(String stateStr) {

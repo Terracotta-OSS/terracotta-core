@@ -7,6 +7,8 @@ import java.util.Set;
 
 
 public interface ConnectionIDFactory {
+  
+  public long getCurrentConnectionID();
 
   public ConnectionID nextConnectionId();
 

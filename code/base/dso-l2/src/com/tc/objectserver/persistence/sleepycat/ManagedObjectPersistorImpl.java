@@ -192,6 +192,10 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   public long nextObjectIDBatch(int batchSize) {
     return this.objectIDSequence.nextBatch(batchSize);
   }
+  
+  public long currentObjectIDValue() {
+    return this.objectIDSequence.current();
+  }
 
   public void setNextAvailableObjectID(long startID) {
     this.objectIDSequence.setNext(startID);

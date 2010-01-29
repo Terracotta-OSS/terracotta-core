@@ -21,7 +21,7 @@ import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
 class SleepycatSequence extends SleepycatPersistorBase implements MutableSequence {
-  private static final String UID_KEY    = "UIDKEY-3475674589230";
+  private static final String UID_KEY = "UIDKEY-3475674589230";
   private final String        uid;
   private final Database      sequenceDB;
   private final Sequence      sequence;
@@ -116,7 +116,9 @@ class SleepycatSequence extends SleepycatPersistorBase implements MutableSequenc
   }
 
   private synchronized long nextBatchForSequence(long batchSize, Sequence seq) {
-    if (batchSize < 1) throw new AssertionError("Can't increment by a value less than 1.");
+    if (batchSize == 0) {
+      return current();
+    } else if (batchSize < 1) { throw new AssertionError("Can't increment by a value less than 1."); }
     try {
       if (batchSize > Integer.MAX_VALUE) {
         long sequenceNo = seq.get(null, Integer.MAX_VALUE);

@@ -118,4 +118,8 @@ public class ConnectionIDFactoryImpl implements ConnectionIDFactory, DSOChannelM
     fireDestroyedEvent(new ConnectionID(clientID.toLong(), uid));
   }
 
+  public long getCurrentConnectionID() {
+    return connectionIDSequence.current();
+  }
+
 }

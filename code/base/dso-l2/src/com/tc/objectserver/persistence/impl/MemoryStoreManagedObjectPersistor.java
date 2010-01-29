@@ -81,6 +81,10 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   public long nextObjectIDBatch(int batchSize) {
     return objectIDSequence.nextBatch(batchSize);
   }
+  
+  public long currentObjectIDValue() {
+    return objectIDSequence.current();
+  }
 
   public void setNextAvailableObjectID(long startID) {
     objectIDSequence.setNext(startID);

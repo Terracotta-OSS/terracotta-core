@@ -40,4 +40,8 @@ public class DefaultConnectionIdFactory implements ConnectionIDFactory {
     //
   }
 
+  public long getCurrentConnectionID() {
+    return sequence;
+  }
+
 }

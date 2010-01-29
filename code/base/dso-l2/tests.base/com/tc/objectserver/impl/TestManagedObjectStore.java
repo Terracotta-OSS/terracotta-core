@@ -105,4 +105,8 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return null;
   }
 
+  public long currentObjectIDValue() {
+    throw new ImplementMe();
+  }
+
 }

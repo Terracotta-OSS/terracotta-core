@@ -41,6 +41,10 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     long rv = this.objectPersistor.nextObjectIDBatch(batchSize);
     return rv;
   }
+  
+  public long currentObjectIDValue() {
+    return this.objectPersistor.currentObjectIDValue();
+  }
 
   public void setNextAvailableObjectID(long startID) {
     this.objectPersistor.setNextAvailableObjectID(startID);
