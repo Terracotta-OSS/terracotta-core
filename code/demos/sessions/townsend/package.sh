@@ -11,8 +11,28 @@ if [ "$JAVA_HOME" = "" ]; then
 fi
 
 root=`dirname $0`
-cd $root
 tc_install_dir=../../../
+
+cd $root
+
+mkdir -p classes
+
+ehcache_core=`\ls -1   ../../../ehcache/ehcache-core-*.jar | tail -1`
+if [ ! -f $ehcache_core ]; then
+  echo "Couldn't find ehcache-core jar. Do you have a full kit?"
+  exit 1
+fi
+classpath=$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
+if $cygwin; then
+  classpath=`cygpath -w -p $classpath`
+fi
+
+$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/demo/townsend/service/*.java
+if [ $? -ne 0 ]; then 
+  echo "Failed to compile demo. Do you have a full kit with Ehcache core?"
+  exit 1
+fi
+
 mkdir -p dist
 rm -rf dist/*
 cp -r web/* dist
