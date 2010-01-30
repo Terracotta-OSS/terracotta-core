@@ -22,12 +22,16 @@ if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
 fi
-classpath=$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
+classpath=classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
+for jar in web/WEB-INF/lib/*.jar; do
+  classpath=$classpath:$jar
+done
+
 if $cygwin; then
   classpath=`cygpath -w -p $classpath`
 fi
 
-$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/demo/townsend/service/*.java
+$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/demo/townsend/service/*.java src/demo/townsend/common/*.java src/demo/townsend/form/*.java src/demo/townsend/action/*.java
 if [ $? -ne 0 ]; then 
   echo "Failed to compile demo. Do you have a full kit with Ehcache core?"
   exit 1
