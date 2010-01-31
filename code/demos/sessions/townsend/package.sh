@@ -45,7 +45,7 @@ cp images/* dist
 mkdir -p dist/WEB-INF/lib
 
 #packaging echcache-core
-cp $tc_install_dir/ehcache/ehcache-core*.jar dist/WEB-INF/lib
+cp $ehcache_core dist/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package ehcache-core. Do you have a complete kit?"
   exit 1
