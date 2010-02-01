@@ -46,11 +46,19 @@ public class LockStatManagerTest extends TestCase {
   }
 
   private void resetLockManager() {
-    resetLockManager(new GreedyPolicyFactory());
+    resetLockManager(new GreedyPolicyFactory(), false);
   }
 
-  private void resetLockManager(LockFactory factory) {
-    lockStatManager = new L2LockStatisticsManagerImpl();
+  private void resetLockManager(boolean initNullLockManager) {
+    resetLockManager(new GreedyPolicyFactory(), initNullLockManager);
+  }
+
+  private void resetLockManager(LockFactory factory, boolean initNullLockManager) {
+    if (initNullLockManager) {
+      lockStatManager = L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER;
+    } else {
+      lockStatManager = new L2LockStatisticsManagerImpl();
+    }
     if (factory == null) {
       lockManager = new LockManagerImpl(sink, new NullChannelManager());
     } else {
@@ -76,7 +84,7 @@ public class LockStatManagerTest extends TestCase {
   }
 
   public void testLockHeldAggregateDurationWithoutGreedy() {
-    resetLockManager(new NonGreedyLockPolicyFactory());
+    resetLockManager(new NonGreedyLockPolicyFactory(), false);
     try {
       LockID l1 = new StringLockID("1");
       final ClientID cid1 = new ClientID(1);
@@ -188,6 +196,27 @@ public class LockStatManagerTest extends TestCase {
       lockStatManager.setLockStatisticsEnabled(true);
 
       verifyLockStatsManagerStatistics(runningLockRecallCount);
+
+      resetLockManager(true);
+
+      lockManager.lock(l1, cid1, s1, ServerLockLevel.WRITE);
+      assertEquals(0, lockStatManager.getNumberOfLockRequested(l1));
+
+      lockManager.lock(l1, new ClientID(2), s1, ServerLockLevel.WRITE);
+
+      lockManager.unlock(l1, cid1, ThreadID.VM_ID);
+
+      int recallCount = 0;
+      // let the samplecounter collect values
+      ThreadUtil.reallySleep(2000);
+
+      for (TimeStampedCounterValue cv : lockStatManager.getGlobalLockRecallHistory()) {
+        recallCount += cv.getCounterValue();
+      }
+      assertEquals(1, recallCount);
+
+      lockManager.unlock(l1, new ClientID(2), ThreadID.VM_ID);
+
     } catch (Error e) {
       e.printStackTrace();
       throw e;

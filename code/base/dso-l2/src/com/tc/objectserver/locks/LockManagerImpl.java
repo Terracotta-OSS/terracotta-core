@@ -54,7 +54,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   public LockManagerImpl(Sink lockSink, DSOChannelManager channelManager, LockFactory factory) {
     this.lockStore = new LockStore(factory);
     this.channelManager = channelManager;
-    this.lockHelper = new LockHelper(L2LockStatsManager.NULL_LOCK_STATS_MANAGER, lockSink, lockStore, this);
+    this.lockHelper = new LockHelper(L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER, lockSink, lockStore, this);
   }
 
   public void lock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level) {
@@ -255,7 +255,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     if (lockStatsEnabled) {
       lockHelper.setLockStatsManager(manager);
     } else {
-      lockHelper.setLockStatsManager(L2LockStatsManager.NULL_LOCK_STATS_MANAGER);
+      lockHelper.setLockStatsManager(L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER);
     }
   }
 

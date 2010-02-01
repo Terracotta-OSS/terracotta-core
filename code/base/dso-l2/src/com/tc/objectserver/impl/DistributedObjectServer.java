@@ -178,7 +178,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeActionImpl;
-import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
@@ -313,7 +312,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private ObjectRequestManager                   objectRequestManager;
   private TransactionalObjectManager             txnObjectManager;
   private CounterManager                         sampledCounterManager;
-  private LockManager                            lockManager;
+  private LockManagerImpl                        lockManager;
   private ServerManagementContext                managementContext;
   private StartupLock                            startupLock;
   private ClientStateManager                     clientStateManager;
@@ -757,17 +756,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                         new RespondToRequestLockHandler(), numCommWorkers, 1,
                                                         maxStageSize);
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
-    this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener((LockManagerImpl) this.lockManager);
+    this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener(this.lockManager);
 
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter((DumpHandler) this.lockManager));
+    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
 
     // create a stage which will send an ack to the clients that they have received a particular batch
     Stage syncWriteTxnRecvdAckStage = stageManager.createStage(ServerConfigurationContext.SYNC_WRITE_TXN_RECVD_STAGE,
-                                                               new SyncWriteTransactionReceivedHandler(channelManager), 4,
-                                                               maxStageSize);
+                                                               new SyncWriteTransactionReceivedHandler(channelManager),
+                                                               4, maxStageSize);
     TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler,
                                                                                           txnFilter,
                                                                                           syncWriteTxnRecvdAckStage
@@ -1023,7 +1022,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     }
 
     ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(objectManager, objectManager.getObjectStore());
+    // Start lock statistics manager.
     lockStatsManager.start(channelManager, serverStats, objStatsManager);
+    if (lockStatsManager.isLockStatisticsEnabled()) {
+      this.lockManager.setLockStatisticsEnabled(true, lockStatsManager);
+    } else {
+      L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(channelManager, serverStats, objStatsManager);
+    }
 
     CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);

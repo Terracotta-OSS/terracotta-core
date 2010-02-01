@@ -12,15 +12,22 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public interface L2LockStatsManager {
-  public final static L2LockStatsManager NULL_LOCK_STATS_MANAGER = new L2LockStatsManager() {
-    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objManager) {
-      // do nothing
+  public final static L2LockStatsManager UNSYNCHRONIZED_LOCK_STATS_MANAGER = new L2LockStatsManager() {
+    private SampledCounter              globalLockCounter;
+    private SampledCounter              globalLockRecallCounter;
+    
+    public void start(DSOChannelManager dsoChannelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objStatsHelper) {
+      SampledCounter lockCounter = serverStats == null ? null : serverStats.getGlobalLockCounter();
+      this.globalLockCounter = lockCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockCounter;
+      SampledCounter lockRecallCounter = serverStats == null ? null : serverStats.getGlobalLockRecallCounter();
+      this.globalLockRecallCounter = lockRecallCounter == null ? SampledCounter.NULL_SAMPLED_COUNTER : lockRecallCounter;
     }
     
     public void setLockStatisticsConfig(int traceDepth, int gatherInterval) {
@@ -32,7 +39,7 @@ public interface L2LockStatsManager {
     }
     
     public void recordLockAwarded(LockID lockID, NodeID nodeID, ThreadID threadID, boolean isGreedy, long lockAwardTimestamp) {
-      // do nothing
+      globalLockCounter.increment();
     }
     
     public void recordLockReleased(LockID lockID, NodeID nodeID, ThreadID threadID) {
@@ -88,7 +95,7 @@ public interface L2LockStatsManager {
     }
 
     public void recordLockHopRequested(LockID lockID) {
-      //
+      globalLockRecallCounter.increment();
     }
     
     public Collection<LockSpec> getLockSpecs() {
@@ -96,7 +103,7 @@ public interface L2LockStatsManager {
     }
     
     public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
-      return null;
+      return globalLockRecallCounter.getAllSampleValues();
     }
   };
   
