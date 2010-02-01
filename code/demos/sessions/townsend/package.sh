@@ -17,7 +17,7 @@ cd $root
 
 mkdir -p classes
 
-ehcache_core=`\ls -1   ../../../ehcache/ehcache-core-*.jar | tail -1`
+ehcache_core=`\ls -1 ../../../ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
 if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
