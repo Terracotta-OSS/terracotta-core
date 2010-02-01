@@ -12,7 +12,7 @@ shortcuts:
     applications: "no"
     startMenu: "no"
     initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.ico
     iconIndex: "0"
   unix:
     target: $INSTALL_PATH/bin/dev-console.sh
@@ -20,7 +20,7 @@ shortcuts:
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Terracotta Documentation
   target: "http://www.terracotta.org/web/display/docs/Home"
   description: View the Terracotta documentation online
@@ -31,7 +31,7 @@ shortcuts:
     applications: "no"
     startMenu: "no"
     initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.ico
     iconIndex: "0"
   unix:
     type: Link
@@ -40,7 +40,7 @@ shortcuts:
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Terracotta Quick Start Guides
   target: "http://www.terracotta.org/web/display/orgsite/Tutorials"
   description: View the Terracotta Quick Start Guides online
@@ -51,7 +51,7 @@ shortcuts:
     applications: "no"
     startMenu: "no"
     initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.ico
     iconIndex: "0"
   unix:
     type: Link
@@ -60,7 +60,7 @@ shortcuts:
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Terracotta Forge
   target: "http://forge.terracotta.org/"
   description: Visit the Terracotta Forge
@@ -71,7 +71,7 @@ shortcuts:
     applications: "no"
     startMenu: "no"
     initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.ico
     iconIndex: "0"
   unix:
     type: Link
@@ -80,7 +80,7 @@ shortcuts:
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Terracotta Enterprise
   target: "http://www.terracotta.org/web/display/enterprise/Home"
   description: Terracotta Enterprise
@@ -91,7 +91,7 @@ shortcuts:
     applications: "no"
     startMenu: "no"
     initialState: noShow
-    iconFile: $INSTALL_PATH/icons/logo_small.ico
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.ico
     iconIndex: "0"
   unix:
     type: Link
@@ -100,7 +100,7 @@ shortcuts:
     type: Application
     categories: "Terracotta;Development;"
     encoding: UTF-8
-    iconFile: $INSTALL_PATH/icons/logo_small.png
+    iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Uninstall
   description: Uninstall Terracotta <%= @build_environment.version %>
   target: java
