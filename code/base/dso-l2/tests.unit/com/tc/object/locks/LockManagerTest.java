@@ -12,10 +12,15 @@ import com.tc.net.NodeID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.TestSink;
+import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
+import com.tc.stats.counter.CounterManager;
+import com.tc.stats.counter.CounterManagerImpl;
+import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -51,6 +56,15 @@ public class LockManagerTest extends TestCase {
     if (start) {
       lockManager.start();
     }
+    final CounterManager counterManager = new CounterManagerImpl();
+    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
+    final SampledCounter lockRecallCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+    final SampledCounter lockCounter = (SampledCounter) counterManager.createCounter(sampledCounterConfig);
+
+    DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, null, null, null,
+                                                                        lockRecallCounter, null, null, lockCounter);
+    L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(new NullChannelManager(), serverStats,
+                                                               ObjectStatsManager.NULL_OBJECT_STATS_MANAGER);
   }
 
   @Override
