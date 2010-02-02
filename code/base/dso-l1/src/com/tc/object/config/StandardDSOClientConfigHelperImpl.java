@@ -1829,8 +1829,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     for (Entry<String, SessionConfiguration> entry : webApplications.entrySet()) {
       String pattern = entry.getKey();
       if (matchesWildCard(pattern, name)) {
-        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + pattern + "]");
-        return entry.getValue();
+        SessionConfiguration config = entry.getValue();
+        logger.info("Clustered HTTP sessions IS enabled for [" + name + "]. matched [" + pattern + "] " + config);
+        return config;
       }
     }
 

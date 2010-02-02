@@ -27,4 +27,9 @@ public class SessionConfiguration {
     return sessionLocking;
   }
 
+  @Override
+  public String toString() {
+    return "[lockType=" + lockType + ", sessionLocking=" + sessionLocking + ", serialization=" + serialization + ']';
+  }
+
 }
