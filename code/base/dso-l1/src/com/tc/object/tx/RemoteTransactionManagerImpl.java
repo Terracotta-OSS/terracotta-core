@@ -235,16 +235,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     final long start = System.currentTimeMillis();
     long lastPrinted = 0;
     boolean isInterrupted = false;
-    Collection c;
     synchronized (this.lock) {
-      while ((!(c = this.lockAccounting.getSyncWriteTransactionsFor(lockId)).isEmpty())) {
+      while (!this.lockAccounting.areTransactionsReceivedForThisLockID(lockId)) {
         try {
           this.lock.wait(FLUSH_WAIT_INTERVAL);
           long now = System.currentTimeMillis();
           if ((now - start) > FLUSH_WAIT_INTERVAL && (now - lastPrinted) > FLUSH_WAIT_INTERVAL / 3) {
             this.logger.info("Sync Write for " + lockId + " took longer than: " + (FLUSH_WAIT_INTERVAL / 1000)
-                             + " sec. Took : " + (now - start) + " ms. # Transactions not yet Acked = " + c.size()
-                             + "\n");
+                             + " sec. Took : " + (now - start) + " ms.\n");
             lastPrinted = now;
           }
         } catch (InterruptedException e) {
@@ -260,15 +258,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
    * This method will be called when the server receives a batch. This should ideally be called only when a batch
    * contains a sync write transaction.
    */
-  public void batchReceived(TxnBatchID batchId) {
+  public void batchReceived(TxnBatchID batchId, Set<TransactionID> syncTxnSet, NodeID nid) {
     // This batch id was received by the server
     // so notify the locks waiting for this transaction
-    Collection txns = batchAccounting.getTransactionIdsFor(batchId);
-    Iterator iter = txns.iterator();
-    while (iter.hasNext()) {
-      TransactionID txId = (TransactionID) iter.next();
-      lockAccounting.transactionRecvdByServer(txId);
-    }
+    lockAccounting.transactionRecvdByServer(syncTxnSet);
 
     synchronized (lock) {
       lock.notifyAll();
@@ -470,9 +463,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     fireLockFlushCallbacks(callbacks);
     return tb;
   }
-  
+
   public void waitForAllCurrentTransactionsToComplete() {
-      lockAccounting.waitAllCurrentTxnCompleted();
+    lockAccounting.waitAllCurrentTxnCompleted();
   }
 
   private TransactionID getCompletedTransactionIDLowWaterMark() {

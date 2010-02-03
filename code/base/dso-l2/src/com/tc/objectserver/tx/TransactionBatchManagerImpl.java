@@ -21,6 +21,7 @@ import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.SyncWriteTransactionReceivedContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -81,10 +82,6 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     try {
       final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(ctm);
 
-      if (reader.containsSyncWriteTransaction()) {
-        syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(), (ClientID) ctm
-            .getSourceNodeID()));
-      }
       ServerTransaction txn;
 
       // Transactions should maintain order.
@@ -92,12 +89,21 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       HashSet<ServerTransactionID> txnIDs = new HashSet(reader.getNumberForTxns());
       NodeID nodeID = reader.getNodeID();
       HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
+      HashSet<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
 
       while ((txn = reader.getNextTransaction()) != null) {
         this.sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
         txns.add(txn);
         txnIDs.add(txn.getServerTransactionID());
         newObjectIDs.addAll(txn.getNewObjectIDs());
+        if (txn.getTransactionType().equals(TxnType.SYNC_WRITE)) {
+          syncWriteTxns.add(txn.getTransactionID());
+        }
+      }
+
+      if (reader.containsSyncWriteTransaction()) {
+        syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(), (ClientID) ctm
+            .getSourceNodeID(), syncWriteTxns));
       }
 
       defineBatch(nodeID, txns.size());

@@ -14,6 +14,7 @@ import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public final NoExceptionLinkedQueue isChangeListenerCalls = new NoExceptionLinkedQueue();
@@ -73,7 +74,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void unpause(final NodeID remoteNode, final int disconnected) {
     throw new ImplementMe();
   }
-  
+
   public void shutdown() {
     // NOP
   }
@@ -81,7 +82,7 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void dumpToLogger() {
     //
   }
-  
+
   public void waitForAllCurrentTransactionsToComplete() {
     //
   }
@@ -90,8 +91,8 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     throw new ImplementMe();
   }
 
-  public void batchReceived(TxnBatchID batchId) {
+  public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid) {
     throw new ImplementMe();
-    
+
   }
 }

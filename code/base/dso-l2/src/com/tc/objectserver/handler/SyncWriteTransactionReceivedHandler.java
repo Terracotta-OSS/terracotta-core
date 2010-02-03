@@ -42,7 +42,7 @@ public class SyncWriteTransactionReceivedHandler extends AbstractEventHandler {
     }
     SyncWriteTransactionReceivedMessage message = (SyncWriteTransactionReceivedMessage) channel
         .createMessage(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE);
-    message.initialize(batchId);
+    message.initialize(batchId, syncCxt.getSyncTransactions());
 
     message.send();
   }

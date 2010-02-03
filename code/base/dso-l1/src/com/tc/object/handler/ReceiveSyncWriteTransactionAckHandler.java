@@ -5,6 +5,7 @@ package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
+import com.tc.net.NodeID;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TxnBatchID;
@@ -20,6 +21,7 @@ public class ReceiveSyncWriteTransactionAckHandler extends AbstractEventHandler 
   public void handleEvent(EventContext context) {
     SyncWriteTransactionReceivedMessage msg = (SyncWriteTransactionReceivedMessage) context;
     TxnBatchID batchID = new TxnBatchID(msg.getBatchID());
-    remoteTransactionManager.batchReceived(batchID);
+    NodeID nid = msg.getSourceNodeID();
+    remoteTransactionManager.batchReceived(batchID, msg.getSyncTxnSet(), nid);
   }
 }

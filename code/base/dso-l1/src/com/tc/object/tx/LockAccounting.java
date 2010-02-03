@@ -19,73 +19,151 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LockAccounting {
+  private final CopyOnWriteArrayList<TxnRemovedListener> listeners = new CopyOnWriteArrayList<TxnRemovedListener>();
 
-  private final TxnLocksBookKeeping regularTxnLocks   = new TxnLocksBookKeeping();
-  private final TxnLocksBookKeeping syncWriteTxnLocks = new TxnLocksBookKeeping();
+  private final Map<TransactionIDWrapper, Set<LockID>>   tx2Locks  = new HashMap();
+  private final Map<LockID, Set<TransactionIDWrapper>>   lock2Txs  = new HashMap();
 
-  public Object dump() {
+  public synchronized Object dump() {
     return toString();
   }
 
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("Lock Accounting:\n");
-    builder.append("Regular Lock Accounting ");
-    builder.append(regularTxnLocks.toString());
-    builder.append("\n");
-    builder.append("Sync Write Lock Accounting ");
-    builder.append(syncWriteTxnLocks.toString());
-    builder.append("\n");
+    builder.append("[tx2Locks=" + tx2Locks + ", lock2Txs=" + lock2Txs + "]");
     return builder.toString();
   }
 
-  public void add(TransactionID txID, Collection lockIDs, boolean isSyncWrite) {
-    regularTxnLocks.add(txID, lockIDs);
-    if (isSyncWrite) {
-      syncWriteTxnLocks.add(txID, lockIDs);
+  public synchronized void add(TransactionID txID, Collection lockIDs) {
+    TransactionIDWrapper txIDWrapper = new TransactionIDWrapper(txID);
+    getOrCreateSetFor(txIDWrapper, tx2Locks).addAll(lockIDs);
+    for (Iterator i = lockIDs.iterator(); i.hasNext();) {
+      LockID lid = (LockID) i.next();
+      getOrCreateSetFor(lid, lock2Txs).add(txIDWrapper);
     }
   }
 
-  public Collection getTransactionsFor(LockID lockID) {
-    return regularTxnLocks.getTransactionsFor(lockID);
+  public synchronized Collection getTransactionsFor(LockID lockID) {
+    Set rv = new HashSet();
+    Set<TransactionIDWrapper> toAdd = lock2Txs.get(lockID);
+
+    if (toAdd != null) {
+      for (TransactionIDWrapper txIDWrapper : toAdd) {
+        rv.add(txIDWrapper.getTransactionID());
+      }
+    }
+    return rv;
   }
 
-  public Collection getSyncWriteTransactionsFor(LockID lockID) {
-    return syncWriteTxnLocks.getTransactionsFor(lockID);
+  public synchronized boolean areTransactionsReceivedForThisLockID(LockID lockID) {
+    Set<TransactionIDWrapper> txnsForLockID = lock2Txs.get(lockID);
+
+    if(txnsForLockID == null || txnsForLockID.isEmpty()) {
+      return true;
+    }
+    
+    for (TransactionIDWrapper txIDWrapper : txnsForLockID) {
+      if (!txIDWrapper.isReceived()) { return false; }
+    }
+
+    return true;
   }
 
-  public void transactionRecvdByServer(TransactionID txID) {
-    syncWriteTxnLocks.acknowledge(txID, true);
+  public synchronized void transactionRecvdByServer(Set<TransactionID> txnsRecvd) {
+    Set<TransactionIDWrapper> txnSet = tx2Locks.keySet();
+    
+    if(txnSet == null) {
+      return;
+    }
+
+    for (TransactionIDWrapper txIDWrapper : txnSet) {
+      if (txnsRecvd.contains(txIDWrapper)) {
+        txIDWrapper.received();
+      }
+    }
   }
 
   // This method returns a set of lockIds that has no more transactions to wait for
-  public Set acknowledge(TransactionID txID) {
-    if (syncWriteTxnLocks.containsTransaction(txID)) {
-      transactionRecvdByServer(txID);
+  public synchronized Set acknowledge(TransactionID txID) {
+    Set completedLockIDs = null;
+    TransactionIDWrapper txIDWrapper = new TransactionIDWrapper(txID);
+    Set lockIDs = getSetFor(txIDWrapper, tx2Locks);
+    if (lockIDs != null) {
+      // this may be null if there are phantom acknowledgments caused by server restart.
+      for (Iterator i = lockIDs.iterator(); i.hasNext();) {
+        LockID lid = (LockID) i.next();
+        Set txIDs = getOrCreateSetFor(lid, lock2Txs);
+        if (!txIDs.remove(txIDWrapper)) throw new AssertionError("No lock=>transaction found for " + lid + ", " + txID);
+        if (txIDs.isEmpty()) {
+          lock2Txs.remove(lid);
+          if (completedLockIDs == null) {
+            completedLockIDs = new HashSet();
+          }
+          completedLockIDs.add(lid);
+        }
+      }
     }
-
-    return regularTxnLocks.acknowledge(txID, false);
+    removeTxn(txIDWrapper);
+    return (completedLockIDs == null ? Collections.EMPTY_SET : completedLockIDs);
   }
 
-  public boolean isEmpty() {
-    return regularTxnLocks.isEmpty();
+  private void removeTxn(TransactionIDWrapper txnIDWrapper) {
+    tx2Locks.remove(txnIDWrapper);
+    notifyTxnRemoved(txnIDWrapper);
+  }
+
+  private void notifyTxnRemoved(TransactionIDWrapper txnID) {
+    for (TxnRemovedListener l : listeners) {
+      l.txnRemoved(txnID);
+    }
+  }
+
+  public synchronized boolean isEmpty() {
+    return tx2Locks.isEmpty() && lock2Txs.isEmpty();
   }
 
   public void waitAllCurrentTxnCompleted() {
-    regularTxnLocks.waitAllCurrentTxnCompleted();
+    TxnRemovedListener listener;
+    Latch latch = new Latch();
+    synchronized (this) {
+      Set currentTxnSet = new HashSet(tx2Locks.keySet());
+      listener = new TxnRemovedListener(currentTxnSet, latch);
+      listeners.add(listener);
+    }
+    try {
+      latch.acquire();
+    } catch (InterruptedException e) {
+      throw new TCRuntimeException(e);
+    } finally {
+      listeners.remove(listener);
+    }
+  }
+
+  private static Set getSetFor(Object key, Map m) {
+    return (Set) m.get(key);
+  }
+
+  private static Set getOrCreateSetFor(Object key, Map m) {
+    Set rv = getSetFor(key, m);
+    if (rv == null) {
+      rv = new HashSet();
+      m.put(key, rv);
+    }
+    return rv;
   }
 
   private static class TxnRemovedListener {
-    private final Set<TransactionID> txnSet;
-    private final Latch              latch;
+    private final Set<TransactionIDWrapper> txnSet;
+    private final Latch                     latch;
 
-    TxnRemovedListener(Set<TransactionID> txnSet, Latch latch) {
+    TxnRemovedListener(Set<TransactionIDWrapper> txnSet, Latch latch) {
       this.txnSet = txnSet;
       this.latch = latch;
       if (txnSet.size() == 0) allTxnCompleted();
     }
 
-    void txnRemoved(TransactionID txnID) {
+    void txnRemoved(TransactionIDWrapper txnID) {
       this.txnSet.remove(txnID);
       if (txnSet.size() == 0) allTxnCompleted();
     }
@@ -96,108 +174,44 @@ public class LockAccounting {
 
   }
 
-  private static class TxnLocksBookKeeping {
-    private final CopyOnWriteArrayList<TxnRemovedListener> listeners = new CopyOnWriteArrayList<TxnRemovedListener>();
+  private static class TransactionIDWrapper {
+    private final TransactionID txID;
+    private boolean             isReceived = false;
 
-    private final Map<TransactionID, Set<LockID>>          tx2Locks  = new HashMap();
-    private final Map<LockID, Set<TransactionID>>          lock2Txs  = new HashMap();
-
-    public synchronized void add(TransactionID txID, Collection lockIDs) {
-      getOrCreateSetFor(txID, tx2Locks).addAll(lockIDs);
-      for (Iterator i = lockIDs.iterator(); i.hasNext();) {
-        LockID lid = (LockID) i.next();
-        getOrCreateSetFor(lid, lock2Txs).add(txID);
-      }
+    public TransactionIDWrapper(TransactionID txID) {
+      this.txID = txID;
     }
 
-    // This method returns a set of lockIds that has no more transactions to wait for
-    public synchronized Set acknowledge(TransactionID txID, boolean isTxnRecvdByServerAck) {
-      Set completedLockIDs = null;
-      Set lockIDs = getSetFor(txID, tx2Locks);
-      if (lockIDs != null) {
-        // this may be null if there are phantom acknowledgments caused by server restart.
-        for (Iterator i = lockIDs.iterator(); i.hasNext();) {
-          LockID lid = (LockID) i.next();
-          Set txIDs = getOrCreateSetFor(lid, lock2Txs);
-          boolean removed = txIDs.remove(txID);
-          if (!removed && !isTxnRecvdByServerAck) throw new AssertionError("No lock=>transaction found for " + lid
-                                                                           + ", " + txID);
-          if (txIDs.isEmpty()) {
-            lock2Txs.remove(lid);
-            if (completedLockIDs == null) {
-              completedLockIDs = new HashSet();
-            }
-            completedLockIDs.add(lid);
-          }
-        }
-      }
-      removeTxn(txID);
-      return (completedLockIDs == null ? Collections.EMPTY_SET : completedLockIDs);
+    public TransactionID getTransactionID() {
+      return this.txID;
     }
 
-    public synchronized Collection getTransactionsFor(LockID lockID) {
-      Set rv = new HashSet();
-      Set toAdd = lock2Txs.get(lockID);
-      if (toAdd != null) {
-        rv.addAll(toAdd);
-      }
-      return rv;
+    public void received() {
+      isReceived = true;
     }
 
-    public void waitAllCurrentTxnCompleted() {
-      TxnRemovedListener listener;
-      Latch latch = new Latch();
-      synchronized (this) {
-        Set currentTxnSet = new HashSet(tx2Locks.keySet());
-        listener = new TxnRemovedListener(currentTxnSet, latch);
-        listeners.add(listener);
-      }
-      try {
-        latch.acquire();
-      } catch (InterruptedException e) {
-        throw new TCRuntimeException(e);
-      } finally {
-        listeners.remove(listener);
-      }
+    public boolean isReceived() {
+      return isReceived;
     }
 
-    public synchronized boolean isEmpty() {
-      return tx2Locks.isEmpty() && lock2Txs.isEmpty();
+    @Override
+    public int hashCode() {
+      return txID.hashCode();
     }
 
-    /**
-     * This method is not synchronized
-     */
-    public boolean containsTransaction(TransactionID txID) {
-      return tx2Locks.containsKey(txID);
+    @Override
+    public boolean equals(Object obj) {
+      if (getClass() != obj.getClass()) return false;
+      TransactionIDWrapper other = (TransactionIDWrapper) obj;
+      if (txID == null) {
+        if (other.txID != null) return false;
+      } else if (!txID.equals(other.txID)) return false;
+      return true;
     }
 
-    private static Set getSetFor(Object key, Map m) {
-      return (Set) m.get(key);
-    }
-
-    private static Set getOrCreateSetFor(Object key, Map m) {
-      Set rv = getSetFor(key, m);
-      if (rv == null) {
-        rv = new HashSet();
-        m.put(key, rv);
-      }
-      return rv;
-    }
-
-    private void removeTxn(TransactionID txnID) {
-      tx2Locks.remove(txnID);
-      notifyTxnRemoved(txnID);
-    }
-
-    private void notifyTxnRemoved(TransactionID txnID) {
-      for (TxnRemovedListener l : listeners) {
-        l.txnRemoved(txnID);
-      }
-    }
-
+    @Override
     public String toString() {
-      return "[tx2Locks=" + tx2Locks + ", lock2Txs=" + lock2Txs + "]";
+      return "TransactionIDWrapper [isReceived=" + isReceived + ", txID=" + txID + "]";
     }
   }
 

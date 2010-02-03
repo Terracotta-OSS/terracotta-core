@@ -11,6 +11,8 @@ import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
+import java.util.Set;
+
 /**
  * Client representation of the server transaction manager
  */
@@ -34,8 +36,8 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, DumpH
   public void stopProcessing();
 
   public void waitForAllCurrentTransactionsToComplete();
-  
+
   public void waitForServerToReceiveTxnsForThisLock(LockID lock);
-  
-  public void batchReceived(TxnBatchID batchId);
+
+  public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid);
 }
