@@ -18,6 +18,10 @@ bundled_demos:
         - cart
         - tasklist
         - townsend
+  - ehcache:
+      install_directory: ehcache/samples
+      manifest:
+        - service
 bundled_vendors:
    - jetty-6.1.15:
        install_directory: vendors/jetty-6.1.15
@@ -131,14 +135,6 @@ postscripts:
         - ehcache-terracotta-ee
         - quartz-terracotta-ee
         - terracotta-session-ee
-           
-  - inject-forge-tims:
-      args:
-        - tims: 
-            - tim-apache-struts-1.1
-            - tim-jetty-6.1
-        - dest: 
-            - tools/sessions/configurator-sandbox
   - include-external-resources:
       args:
         - buildconfig/distribution/external-resources.yml            

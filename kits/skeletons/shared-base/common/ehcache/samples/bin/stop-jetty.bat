@@ -18,15 +18,12 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 set root=%~d0%~p0..
 set root="%root:"=%"
 set jetty_work_dir=%root%\jetty6.1\%jetty_instance%
-set install_root=%root%\..\..
-set jetty_home=%install_root%\vendors\jetty-6.1.15
+set jetty_home=%root%\..\..\vendors\jetty-6.1.15
 set start_jar=%jetty_home%\start.jar
 set /a stop_port=jetty_instance + 2
 
 cd %jetty_work_dir%
-echo "starting Jetty %jetty_instance%..."
-start /b "Jetty %jetty_instance%" %JAVA_HOME%\bin\java -Dtc.install-root=%install_root% -Xmx256m -XX:MaxPermSize=128m -Dconfig.home=%jetty_work_dir% -Djetty.home=%jetty_home% -DSTOP.PORT=%stop_port% -DSTOP.KEY=secret -jar %start_jar% conf.xml 
-sleep 1
-echo.
+echo "Stopping Jetty %jetty_instance%..."
+%JAVA_HOME%\bin\java -Djetty.home=%jetty_home% -DSTOP.PORT=%stop_port% -DSTOP.KEY=secret -jar %start_jar% --stop 
 
 endlocal
