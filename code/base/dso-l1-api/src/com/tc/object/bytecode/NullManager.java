@@ -341,4 +341,8 @@ public final class NullManager implements Manager {
   public void waitForAllCurrentTransactionsToComplete() {
     throw new UnsupportedOperationException();
   }
+  
+  public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
+    throw new UnsupportedOperationException();
+  }
 }

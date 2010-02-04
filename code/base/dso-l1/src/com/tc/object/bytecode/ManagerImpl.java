@@ -241,6 +241,12 @@ public class ManagerImpl implements Manager {
     StartupHelper startupHelper = new StartupHelper(group, action);
     startupHelper.startUp();
   }
+  
+  public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
+    if (shutdownManager != null) {
+      shutdownManager.registerBeforeShutdownHook(beforeShutdownHook);
+    }
+  }
 
   public void stop() {
     shutdown(false);

@@ -368,4 +368,9 @@ public interface Manager extends TerracottaLocking {
    */
   public void waitForAllCurrentTransactionsToComplete();
   
+  /**
+   * Registers a hook that will be called before shutting down this client
+   */
+  public void registerBeforeShutdownHook(Runnable beforeShutdownHook);
+  
 }

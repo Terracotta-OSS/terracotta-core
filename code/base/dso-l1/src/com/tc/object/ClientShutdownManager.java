@@ -16,6 +16,9 @@ import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.statistics.StatisticsAgentSubSystem;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ClientShutdownManager {
   private static final TCLogger                    logger = TCLogging.getLogger(ClientShutdownManager.class);
   private final RemoteTransactionManager           rtxManager;
@@ -26,7 +29,8 @@ public class ClientShutdownManager {
   private final ClientHandshakeManager             handshakeManager;
   private final StatisticsAgentSubSystem           statisticsAgentSubSystem;
   private final PreparedComponentsFromL2Connection connectionComponents;
-
+  private final Set<Runnable>                      beforeShutdown = new HashSet<Runnable>();
+ 
   public ClientShutdownManager(ClientObjectManager objectManager, RemoteTransactionManager rtxManager,
                                StageManager stageManager, CommunicationsManager commsManager,
                                DSOClientMessageChannel channel, ClientHandshakeManager handshakeManager,
@@ -41,8 +45,27 @@ public class ClientShutdownManager {
     this.statisticsAgentSubSystem = statisticsAgent;
     this.connectionComponents = connectionComponents;
   }
+  
+  public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
+    synchronized (beforeShutdown) {
+      beforeShutdown.add(beforeShutdownHook);
+    }
+  }
+  
+  private void executeBeforeShutdownHooks() {
+    Runnable[] beforeShutdowns;
+    synchronized (beforeShutdown) {
+      beforeShutdowns = beforeShutdown.toArray(new Runnable[beforeShutdown.size()]);
+    }
+    for (Runnable runnable : beforeShutdowns) {
+      runnable.run();
+    }
+  }
 
   public void execute(boolean fromShutdownHook) {
+    
+    executeBeforeShutdownHooks();
+    
     closeStatisticsAgent();
 
     closeLocalWork();
