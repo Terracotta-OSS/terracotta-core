@@ -21,6 +21,7 @@ public class DataKeeper implements java.io.Serializable {
 	  userList = new ArrayList();
 	}
 	
+  @SuppressWarnings("unchecked") 
 	public void addListItem(Product newProd) {
       for (Iterator iter = userList.iterator(); iter.hasNext();) {
         if (((Product)iter.next()).getId().equals(newProd.getId())) {

@@ -6,6 +6,7 @@
 package demo.townsend.service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
@@ -17,12 +18,10 @@ public class ProductCatalog {
 
    public ProductCatalog() {       
 	   cache = CacheManager.getInstance().getCache("catalog");
-	   if (!cache.isKeyInCache("cameras")) {
-		   initCatalog();
-	   }
    }
    
-   private void initCatalog() {
+   @SuppressWarnings("unchecked") 
+   private List initCatalog() {
 	   ArrayList catalog = new ArrayList();
 	   catalog.add(new Product("0001", 10, "Canon PowerShot A620", "7.1 Megapixel Digital"));
 	   catalog.add(new Product("0002", 24, "Olympus EVOLT E-500", "8.0 Megapixel Digital SLR Camera w/2.5\" LCD & Two Lenses"));
@@ -33,11 +32,15 @@ public class ProductCatalog {
 	   catalog.add(new Product("0007", 4, "Canon PowerShot SD500", "7.1 Megapixel Digital Camera w/3x Optical Zoom"));
 	   catalog.add(new Product("0008", 14, "Casio EX-Z850", "8.0 MegaPixel Camera with 3x Optical Zoom and Super Bright 2.5\" LCD"));
 	   cache.put(new Element("cameras", catalog));
+     return catalog;
    }
    
-   public ArrayList getCatalog() {
+   public List getCatalog() {
       Element cachedCameras = cache.get("cameras");
-      if (cachedCameras == null) throw new RuntimeException("Cameras not found in cache");
-      return (ArrayList)cachedCameras.getValue();
+      if (cachedCameras == null) {
+        return initCatalog();
+      }else {
+        return (List)cachedCameras.getValue();
+      }
    }
 }

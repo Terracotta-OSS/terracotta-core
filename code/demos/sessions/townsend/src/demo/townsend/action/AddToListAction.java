@@ -11,6 +11,7 @@ import demo.townsend.service.DataKeeper;
 import demo.townsend.service.Product;
 import demo.townsend.service.ProductCatalog;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Iterator;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +36,7 @@ public class AddToListAction extends Action {
 
       String newProdId = ((AddToListForm)form).getId();
       Product newProd = null;
-      ArrayList catalog = new ProductCatalog().getCatalog();
+      List catalog = new ProductCatalog().getCatalog();
       for (Iterator iter = catalog.iterator(); iter.hasNext(); ) {
         Product p = (Product) iter.next();
         if (p.getId().equals(newProdId)) {

@@ -10,10 +10,12 @@ if [ "$JAVA_HOME" = "" ]; then
   exit 1
 fi
 
-root=`dirname $0`
+root=`dirname $0`/..
 root=`cd $root && pwd`
 
-bin/stop-jetty.sh 9081
-sleep 1
-bin/stop-jetty.sh 9082
+$root/bin/package.sh
+
+$root/../bin/start-jetty.sh 9081
+sleep 3
+$root/../bin/start-jetty.sh 9082
  

@@ -106,7 +106,7 @@ document.writeln(
 <fieldset class=camera>
    <legend>Product Catalog</legend>
    <%
-   java.util.ArrayList prodDB =  prodCatalog.getCatalog();
+   java.util.List prodDB =  prodCatalog.getCatalog();
    for (java.util.Iterator iter = prodDB.iterator(); iter.hasNext(); ) { 
 	demo.townsend.service.Product prod = (demo.townsend.service.Product)iter.next();%>
       <html:form action="addToList">

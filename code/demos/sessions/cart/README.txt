@@ -5,10 +5,13 @@ How to run this demo
 NOTE: Windows users please use the equivalent Batch scripts
 
 1. Start Terracotta server first
-     <TC_INSTALL_DIR>/bin/start-tc-server.sh
+     ../start-demo-server.sh
      
-2. Run ../start-demos.sh script
+2. Start demo: bin/start-demo.sh
 
 3. Access Cart demo at 
   -- http://localhost:9081/Cart
   -- http://localhost:9082/Cart
+  
+4. Shut down demo:  bin/stop-demo.sh 
+  

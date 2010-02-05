@@ -17,6 +17,7 @@ if  "%jetty_instance%" == "" (
 set JAVA_HOME="%JAVA_HOME:"=%"
 set root=%~d0%~p0..
 set root="%root:"=%"
+
 set jetty_work_dir=%root%\jetty6.1\%jetty_instance%
 set install_root=%root%\..\..
 set jetty_home=%install_root%\vendors\jetty-6.1.15

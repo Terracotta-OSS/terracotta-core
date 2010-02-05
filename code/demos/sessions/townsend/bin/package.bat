@@ -8,9 +8,10 @@ if not defined JAVA_HOME (
 setlocal ENABLEDELAYEDEXPANSION
 
 set JAVA_HOME="%JAVA_HOME:"=%"
-set root=%~d0%~p0
+set root=%~d0%~p0..
 set root="%root:"=%"
-
+set jetty1=%root%\..\jetty6.1\9081\webapps
+set jetty2=%root%\..\jetty6.1\9082\webapps
 cd %root%
 set tc_install_dir=..\..\..
 mkdir classes 2> NUL
@@ -71,8 +72,10 @@ set warname=Townsend.war
 cd dist
 %JAVA_HOME%\bin\jar cf %warname% *
 if %errorlevel% == 0 (
-  echo "%warname% has been created successfully."
-  exit /b 0
+  echo "%warname% has been created successfully. Deploying..."
+  xcopy /y /q %warname% %jetty1% 1> NUL
+  xcopy /y /q %warname% %jetty2% 1> NUL
+  echo "Done."
 ) else (
   echo "Error packaging %warname%"
   exit /b 1
