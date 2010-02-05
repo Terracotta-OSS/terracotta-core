@@ -39,7 +39,7 @@ bundled_components:
           - TerracottaQuickStart
   - shared-base:
       documentations:
-        install_directory: docs
+        install_directory: platform/docs
         references:
           - tc-config-reference
   - common:
