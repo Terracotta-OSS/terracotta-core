@@ -53,7 +53,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private static final long              WARN_THRESHOLD       = 0x400000L;                                       // 4MB
 
   private final LinkedList               writeContexts        = new LinkedList();
-  private CoreNIOServices                commNIOServiceThread;
+  private volatile CoreNIOServices       commWorker;
 
   private final TCConnectionManagerJDK14 parent;
   private final TCConnectionEventCaller  eventCaller          = new TCConnectionEventCaller(logger);
@@ -98,11 +98,11 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     }
 
     this.socketParams = socketParams;
-    this.commNIOServiceThread = nioServiceThread;
+    this.commWorker = nioServiceThread;
   }
 
-  public synchronized void setCommWorker(CoreNIOServices worker) {
-    this.commNIOServiceThread = worker;
+  public void setCommWorker(CoreNIOServices worker) {
+    this.commWorker = worker;
   }
 
   private void closeImpl(Runnable callback) {
@@ -110,7 +110,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     this.transportEstablished.set(false);
     try {
       if (channel != null) {
-        commNIOServiceThread.cleanupChannel(channel, callback);
+        commWorker.cleanupChannel(channel, callback);
       } else {
         callback.run();
       }
@@ -138,8 +138,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         newSocket.socket().connect(inetAddr, timeout);
         break;
       } catch (SocketTimeoutException ste) {
-        Assert.eval(commNIOServiceThread != null);
-        commNIOServiceThread.cleanupChannel(newSocket, null);
+        Assert.eval(commWorker != null);
+        commWorker.cleanupChannel(newSocket, null);
         throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
       } catch (ClosedSelectorException cse) {
         if (NIOWorkarounds.connectWorkaround(cse)) {
@@ -153,8 +153,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     channel = newSocket;
     newSocket.configureBlocking(false);
-    Assert.eval(commNIOServiceThread != null);
-    commNIOServiceThread.requestReadInterest(this, newSocket);
+    Assert.eval(commWorker != null);
+    commWorker.requestReadInterest(this, newSocket);
   }
 
   private SocketChannel createChannel() throws IOException, SocketException {
@@ -165,8 +165,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   private Socket detachImpl() throws IOException {
-    commNIOServiceThread.unregister(channel);
-    channel.configureBlocking(true);
+    commWorker.detach(channel);
     return channel.socket();
   }
 
@@ -181,7 +180,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     channel = newSocket;
 
     if (!rv) {
-      commNIOServiceThread.requestConnectInterest(this, newSocket);
+      commWorker.requestConnectInterest(this, newSocket);
     }
 
     return rv;
@@ -191,6 +190,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     int read = doReadInternal(sbc);
     totalRead.add(read);
     return read;
+  }
+
+  public int doWrite(GatheringByteChannel gbc) {
+    int written = doWriteInternal(gbc);
+    totalWrite.add(written);
+    return written;
   }
 
   private int doReadInternal(ScatteringByteChannel sbc) {
@@ -255,14 +260,15 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return bytesRead;
   }
 
-  public void doWrite(GatheringByteChannel gbc) {
+  public int doWriteInternal(GatheringByteChannel gbc) {
     final boolean debug = logger.isDebugEnabled();
+    int totalBytesWritten = 0;
 
     // get a copy of the current write contexts. Since we call out to event/error handlers in the write
     // loop below, we don't want to be holding the lock on the writeContexts queue
     final WriteContext contextsToWrite[];
     synchronized (writeContexts) {
-      if (closed.isSet()) { return; }
+      if (closed.isSet()) { return totalBytesWritten; }
       contextsToWrite = (WriteContext[]) writeContexts.toArray(new WriteContext[writeContexts.size()]);
     }
 
@@ -299,7 +305,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       }
 
       if (debug) logger.debug("Wrote " + bytesWritten + " bytes on connection " + channel.toString());
-      totalWrite.add(bytesWritten);
+      totalBytesWritten += bytesWritten;
 
       if (context.done()) {
         contextsToRemove++;
@@ -312,16 +318,17 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     }
 
     synchronized (writeContexts) {
-      if (closed.isSet()) { return; }
+      if (closed.isSet()) { return totalBytesWritten; }
 
       for (int i = 0; i < contextsToRemove; i++) {
         writeContexts.removeFirst();
       }
 
       if (writeContexts.isEmpty()) {
-        commNIOServiceThread.removeWriteInterest(this, channel);
+        commWorker.removeWriteInterest(this, channel);
       }
     }
+    return totalBytesWritten;
   }
 
   static private long bytesRemaining(ByteBuffer[] buffers) {
@@ -387,8 +394,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       // for, as well as actually be selected for, write interest immediately
       // after finishConnect(). Only after this selection occurs it is always safe to try
       // to write.
-
-      commNIOServiceThread.requestWriteInterest(this, channel);
+      commWorker.requestWriteInterest(this, channel);
     }
   }
 
@@ -644,7 +650,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   public void addWeight(int addWeightBy) {
-    this.commNIOServiceThread.addWeight(this, addWeightBy, channel);
+    this.commWorker.addWeight(this, addWeightBy, channel);
   }
 
   public void setTransportEstablished() {

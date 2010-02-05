@@ -197,7 +197,6 @@ public class ClientMessageTransport extends MessageTransportBase {
         Assert.eval(!ConnectionID.NULL_ID.equals(this.connectionId));
         Assert.assertNotNull(this.waitForSynAckResult);
       }
-      getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       getConnection().setTransportEstablished();
       this.waitForSynAckResult.set(synAck);
       setRemoteCallbackPort(synAck.getCallbackPort());
@@ -238,6 +237,7 @@ public class ClientMessageTransport extends MessageTransportBase {
     synchronized (this.status) {
       if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
                                                                                              + this.status); }
+      getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       this.waitForSynAckResult = new TCFuture(this.status);
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);

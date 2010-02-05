@@ -13,5 +13,5 @@ import java.nio.channels.GatheringByteChannel;
  * @author teck
  */
 interface TCJDK14ChannelWriter {
-  void doWrite(GatheringByteChannel channel);
+  int doWrite(GatheringByteChannel channel);
 }

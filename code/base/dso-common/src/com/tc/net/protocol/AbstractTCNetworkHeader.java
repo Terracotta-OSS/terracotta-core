@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol;
 
@@ -15,15 +16,15 @@ import java.util.zip.Adler32;
  * @author teck
  */
 public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
-  protected static final int   LENGTH_NOT_AVAIL = -1;
+  protected static final int  LENGTH_NOT_AVAIL = -1;
 
-  private static final byte[]  EMTPY_BYTE_ARRAY = new byte[] {};
-  private static final byte[]  FOUR_ZERO_BYTES  = new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 0 };
+  private static final byte[] EMTPY_BYTE_ARRAY = new byte[] {};
+  private static final byte[] FOUR_ZERO_BYTES  = new byte[] { (byte) 0, (byte) 0, (byte) 0, (byte) 0 };
 
-  protected final int          minLength;
-  protected final int          maxLength;
-  protected TCByteBuffer data;
-  private final boolean        localAllocation;
+  protected final int         minLength;
+  protected final int         maxLength;
+  protected TCByteBuffer      data;
+  private final boolean       localAllocation;
 
   abstract protected void setHeaderLength(short headerLength);
 
@@ -67,12 +68,13 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
 
   public void recycle() {
     Assert.assertTrue(localAllocation);
-    if(data != null) {
+    if (data != null) {
       data.recycle();
       data = null;
-    }
-    else {
+      // System.out.println("XXX RECYC HDR" + Thread.currentThread().getName() + " - " + this.hashCode());
+    } else {
       // data is already null. Probably called recycle twice !!
+      // System.out.println("XXX RECYC HDR DBL " + Thread.currentThread().getName() + " - " + this.hashCode());
       Thread.dumpStack();
     }
   }
