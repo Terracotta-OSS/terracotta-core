@@ -45,6 +45,11 @@ artifacts:
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/RELEASE_NOTES.txt
     
   - maven_artifact: false
+    name: CHANGELOG.txt
+    destination: ehcache
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/CHANGELOG.txt
+    
+  - maven_artifact: false
     name: EHCACHE_CORE_LICENSE.txt
     destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE_CORE_LICENSE.txt  
