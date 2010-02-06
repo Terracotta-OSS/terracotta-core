@@ -12,9 +12,10 @@ public class LicenseDescriptorTest extends TestCase {
   public void testLicensedCapabilities() {
     LicenseDescriptor d = new LicenseDescriptor();
     EnumSet<Capability> capabilities = d.getLicensedCapabilities(LicenseConstants.EX);
-    assertEquals(2, capabilities.size());
+    assertEquals(3, capabilities.size());
     assertTrue(capabilities.contains(Capability.ROOTS));
     assertTrue(capabilities.contains(Capability.SESSIONS));
+    assertTrue(capabilities.contains(Capability.TOC));
 
     capabilities = d.getLicensedCapabilities(LicenseConstants.EX_SESSIONS);
     assertEquals(1, capabilities.size());

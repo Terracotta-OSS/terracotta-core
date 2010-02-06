@@ -4,7 +4,7 @@ License number = 123
 Licensee = Big ole company
 Product = EX
 Max clients = 4
-Capabilities = roots, sessions
+Capabilities = roots, sessions, TOC
 Expiration date = 2009-02-03
 
 ---------------------------- BEGIN SIGNATURE ---------------------------
