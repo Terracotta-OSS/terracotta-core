@@ -63,7 +63,7 @@ public class LicenseFileTest extends TestCase {
     assertEquals(4, license.maxClients());
     assertEquals(new SimpleDateFormat(LicenseConstants.DATE_FORMAT).parse("2009-02-03"), license.expirationDate());
     assertEquals("DIGITIALLY SIGNED", license.getSignature());
-    assertEquals(2, license.capabilities().licensedCapabilitiesCount());
+    assertEquals(3, license.capabilities().licensedCapabilitiesCount());
     assertTrue(license.capabilities().isLicensed(Capability.ROOTS));
     assertTrue(license.capabilities().isLicensed(Capability.SESSIONS));
   }
