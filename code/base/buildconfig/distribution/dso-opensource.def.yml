@@ -37,6 +37,11 @@ bundled_components:
           - INSTALL
         guides:
           - TerracottaQuickStart
+  - express-base:
+      documentations:
+        install_directory: docs
+        references:
+          - tc-config-server-reference
   - shared-base:
       documentations:
         install_directory: platform/docs
