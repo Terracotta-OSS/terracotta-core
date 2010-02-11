@@ -83,6 +83,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     Evictable, DumpHandler, PrettyPrintable {
 
   private static final long                    CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
+  // REFERENCE_MAP_SEG must be power of 2
+  private static final int                     REFERENCE_MAP_SEGS           = 32;
   private static final State                   PAUSED                       = new State("PAUSED");
   private static final State                   RUNNING                      = new State("RUNNING");
   private static final State                   STARTING                     = new State("STARTING");
@@ -101,10 +103,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final Object                         shutdownLock                 = new Object();
   private final Map                            roots                        = new HashMap();
   private final Map                            idToManaged                  = new HashMap();
-  private final Map                            pojoToManaged                = new ReferenceIdentityMap(
-                                                                                                       AbstractReferenceMap.WEAK,
-                                                                                                       AbstractReferenceMap.HARD,
-                                                                                                       true);
+  private final StripedReferenceIdentityMap    pojoToManaged                = new StripedReferenceIdentityMap(
+                                                                                                              REFERENCE_MAP_SEGS);
   private final ClassProvider                  classProvider;
   private final RemoteObjectManager            remoteObjectManager;
   private final EvictionPolicy                 cache;
@@ -896,9 +896,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
 
-    synchronized (this.pojoToManaged) {
-      return (TCObject) this.pojoToManaged.get(obj);
-    }
+    return (TCObject) this.pojoToManaged.get(obj);
   }
 
   private void basicAddLocal(final TCObject obj, final boolean fromLookup) {
@@ -916,18 +914,16 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
           ManagerUtil.register(pojo, obj);
         }
 
-        synchronized (this.pojoToManaged) {
-          if (pojo instanceof Manageable) {
-            Manageable m = (Manageable) pojo;
-            if (m.__tc_managed() == null) {
-              m.__tc_managed(obj);
-            } else {
-              Assert.assertTrue(m.__tc_managed() == obj);
-            }
+        if (pojo instanceof Manageable) {
+          Manageable m = (Manageable) pojo;
+          if (m.__tc_managed() == null) {
+            m.__tc_managed(obj);
           } else {
-            if (!isLiteralPojo(pojo)) {
-              this.pojoToManaged.put(pojo, obj);
-            }
+            Assert.assertTrue(m.__tc_managed() == obj);
+          }
+        } else {
+          if (!isLiteralPojo(pojo)) {
+            this.pojoToManaged.put(pojo, obj);
           }
         }
       }
@@ -1309,6 +1305,73 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private interface PostCreateMethodGatherer {
     Map<Object, List<Method>> getPostCreateMethods();
+  }
+
+  /**
+   * Striping ReferenceIdentityMap for performance
+   */
+  private static class StripedReferenceIdentityMap {
+    private final int                    indexMask;
+    private final ReferenceIdentityMap[] stripes;
+
+    public StripedReferenceIdentityMap(int numberOfStripes) {
+
+      if (Integer.bitCount(numberOfStripes) != 1) { throw new RuntimeException("numberOfStripes must be power of 2 "
+                                                                               + numberOfStripes); }
+
+      this.indexMask = numberOfStripes - 1;
+      stripes = new ReferenceIdentityMap[numberOfStripes];
+      for (int i = 0; i < numberOfStripes; ++i) {
+        stripes[i] = new ReferenceIdentityMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
+      }
+    }
+
+    private ReferenceIdentityMap getStripe(Object key) {
+      int index = hash(key) & this.indexMask;
+      return stripes[index];
+    }
+
+    public Object get(Object key) {
+      ReferenceIdentityMap stripe = getStripe(key);
+      synchronized (stripe) {
+        return stripe.get(key);
+      }
+    }
+
+    public Object put(Object key, Object val) {
+      ReferenceIdentityMap stripe = getStripe(key);
+      synchronized (stripe) {
+        return stripe.put(key, val);
+      }
+    }
+
+    public Object remove(Object key) {
+      ReferenceIdentityMap stripe = getStripe(key);
+      synchronized (stripe) {
+        return stripe.remove(key);
+      }
+    }
+
+    public int size() {
+      int s = 0;
+      for (int i = 0; i <= indexMask; ++i) {
+        ReferenceIdentityMap stripe = stripes[i];
+        synchronized (stripe) {
+          s += stripe.size();
+        }
+      }
+      return s;
+    }
+
+    private int hash(Object key) {
+      int h = key.hashCode();
+      h += ~(h << 9);
+      h ^= (h >>> 14);
+      h += (h << 4);
+      h ^= (h >>> 10);
+      return h;
+    }
+
   }
 
 }
