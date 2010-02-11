@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<ehcache name="theCache">
-
+<ehcache name="ColorCache">
   <defaultCache
       maxElementsInMemory="10000"
       eternal="false"
@@ -13,17 +12,14 @@
       diskPersistent="false"
       diskExpiryThreadIntervalSeconds="120"
       memoryStoreEvictionPolicy="LRU"/>
-
-  <cache name="account-cache"
-         maxElementsInMemory="10000"
-         maxElementsOnDisk="1000"
+  <cache name="colors"
+         maxElementsInMemory="0"
+         maxElementsOnDisk="0"
          eternal="false"
-         timeToIdleSeconds="300"
-         timeToLiveSeconds="600"
+         timeToIdleSeconds="120"
+         timeToLiveSeconds="0"
          memoryStoreEvictionPolicy="LFU">
     <terracotta/>
   </cache>
-
   <terracottaConfig url="localhost:9510"/>
-
 </ehcache>

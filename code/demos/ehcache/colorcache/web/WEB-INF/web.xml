@@ -11,6 +11,6 @@
 -->
 <web-app>
   <display-name>
-    Web Application: org.terracotta.distcache-sample 
+    Web Application: org.terracotta.ColorCache 
   </display-name>
 </web-app>

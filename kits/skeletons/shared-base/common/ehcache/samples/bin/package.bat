@@ -15,7 +15,7 @@ set jetty2=%samples_dir%\jetty6.1\9082\webapps
 
 cd %samples_dir%
 
-for %%d in (service) do (
+for %%d in (colorcache) do (
   call %%d\package.bat
   xcopy /e /y /q %%d\dist\*.war %jetty1% 1> NUL
   xcopy /e /y /q %%d\dist\*.war %jetty2% 1> NUL

@@ -21,7 +21,7 @@ bundled_demos:
   - ehcache:
       install_directory: ehcache/samples
       manifest:
-        - service
+        - colorcache
 bundled_vendors:
    - jetty-6.1.15:
        install_directory: vendors/jetty-6.1.15
@@ -41,7 +41,7 @@ bundled_components:
       documentations:
         install_directory: docs
         references:
-          - tc-config-server-reference
+          - tc-config-express-reference
   - shared-base:
       documentations:
         install_directory: platform/docs

@@ -17,7 +17,7 @@ jetty2=$samples_dir/jetty6.1/9082/webapps
 
 cd "${samples_dir}"
 
-for demo in service; do
+for demo in colorcache; do
   $demo/package.sh
   cp $demo/dist/*.war $jetty1
   cp $demo/dist/*.war $jetty2

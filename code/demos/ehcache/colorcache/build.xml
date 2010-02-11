@@ -6,7 +6,7 @@
 
 -->
 
-<project name="Service" default="init" basedir=".">
+<project name="ColorCache" default="init" basedir=".">
   <property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
   <condition property="is.live" value="true">
     <available file="${bundled.server.home}" type="dir"/>
@@ -17,7 +17,7 @@
     <istrue value="${is.live}"/>
   </condition>
 	
-  <property name="warfile"        value="Service.war"/>
+  <property name="warfile"        value="ColorCache.war"/>
   <property name="servlet.jar"    value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
   <property name="ehcache.jar"    value="${basedir}/web/WEB-INF/lib/ehcache-core-2.0.0-SNAPSHOT.jar"/>
   <property name="slf4j-api.jar"  value="${basedir}/web/WEB-INF/lib/slf4j-api-1.5.8.jar"/>
