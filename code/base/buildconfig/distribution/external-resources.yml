@@ -40,9 +40,9 @@ artifacts:
     destination: ehcache    
     
   - maven_artifact: false
-    name: RELEASE_NOTES.txt
+    name: README.txt
     destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/RELEASE_NOTES.txt
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.txt
     
   - maven_artifact: false
     name: CHANGELOG.txt
