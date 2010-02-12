@@ -13,7 +13,7 @@ All rights reserved.
  fieldset.gallery {float:right; margin-right: 10px}
  td.swatch {width:120px; height:100px; border:1px solid black; text-align:center; padding: 1px 1px 1px 1px; background-clip: padding-box}
  td.cached-swatch {width:16px; height:16px; cursor:pointer; background-clip: border-box}
- p.status {margin-left:16px}
+ p.status {margin-left:16px; font-size: 1.2em; font-family: Verdana, Geneva, sans-serif}
 </style>
 <script type="text/javascript">
   function setStatus(status) {
