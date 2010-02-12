@@ -896,7 +896,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
     if (obj instanceof Manageable) { return ((Manageable) obj).__tc_managed(); }
 
-    return (TCObject) this.pojoToManaged.get(obj);
+    return this.pojoToManaged.get(obj);
   }
 
   private void basicAddLocal(final TCObject obj, final boolean fromLookup) {
@@ -1331,24 +1331,17 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       return stripes[index];
     }
 
-    public Object get(Object key) {
+    public TCObject get(Object key) {
       ReferenceIdentityMap stripe = getStripe(key);
       synchronized (stripe) {
-        return stripe.get(key);
+        return (TCObject) stripe.get(key);
       }
     }
 
-    public Object put(Object key, Object val) {
+    public TCObject put(Object key, TCObject tco) {
       ReferenceIdentityMap stripe = getStripe(key);
       synchronized (stripe) {
-        return stripe.put(key, val);
-      }
-    }
-
-    public Object remove(Object key) {
-      ReferenceIdentityMap stripe = getStripe(key);
-      synchronized (stripe) {
-        return stripe.remove(key);
+        return (TCObject) stripe.put(key, tco);
       }
     }
 
