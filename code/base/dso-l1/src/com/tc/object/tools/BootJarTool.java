@@ -38,6 +38,8 @@ import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
+import com.tc.exception.TCError;
+import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.exception.TCObjectNotSharableException;
@@ -465,6 +467,8 @@ public class BootJarTool {
       loadTerracottaClass(com.tc.util.Stack.class.getName());
       loadTerracottaClass(TCObjectNotSharableException.class.getName());
       loadTerracottaClass(TCObjectNotFoundException.class.getName());
+      loadTerracottaClass(TCNonPortableObjectError.class.getName());
+      loadTerracottaClass(TCError.class.getName());
 
       loadTerracottaClass(THashMapCollectionWrapper.class.getName());
       loadTerracottaClass(THashMapCollectionWrapper.class.getName() + "$IteratorWrapper");
