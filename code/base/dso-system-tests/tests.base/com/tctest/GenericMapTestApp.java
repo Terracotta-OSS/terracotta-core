@@ -1923,6 +1923,100 @@ public class GenericMapTestApp extends GenericTransparentApp {
     }
   }
 
+  void testEntrySetIteratorFaults(Map map, boolean validate, int v) {
+    boolean clearable = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(Clearable.class)) {
+        clearable = true;
+        break;
+      }
+    }
+    if (!clearable) return;
+
+    boolean tcmap = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(TCMap.class)) {
+        tcmap = true;
+        break;
+      }
+    }
+    if (!tcmap) return;
+
+    Clearable clearableMap = (Clearable) map;
+    TCMap tcMap = (TCMap) map;
+    
+    if (validate) {
+      // turn off clearing temporarily to make sure we can observe the value being locally present
+      clearableMap.setEvictionEnabled(false);
+      byte[] array = (byte[]) map.get("byte array");
+      Assert.assertEquals(map.getClass().getName(), 1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      // clear it out and verify
+      clearableMap.setEvictionEnabled(true);
+      ManagerUtil.lookupExistingOrNull(array).clearAccessed();
+      int cleared = clearableMap.__tc_clearReferences(1);
+      Assert.assertEquals(map.getClass().getName(), 1, cleared);
+      Assert.assertEquals(map.getClass().getName(), 0, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      Iterator<Map.Entry> it = map.entrySet().iterator();
+      while (it.hasNext()) {
+        it.next().getValue();
+      }
+      Assert.assertEquals(1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+    } else {
+      synchronized (map) {
+        map.put("byte array", new byte[] {});
+      }
+    }
+  }
+  
+  void testValuesIteratorFaults(Map map, boolean validate, int v) {
+    boolean clearable = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(Clearable.class)) {
+        clearable = true;
+        break;
+      }
+    }
+    if (!clearable) return;
+
+    boolean tcmap = false;
+    for (Class iface : map.getClass().getInterfaces()) {
+      if (iface.equals(TCMap.class)) {
+        tcmap = true;
+        break;
+      }
+    }
+    if (!tcmap) return;
+
+    Clearable clearableMap = (Clearable) map;
+    TCMap tcMap = (TCMap) map;
+    
+    if (validate) {
+      // turn off clearing temporarily to make sure we can observe the value being locally present
+      clearableMap.setEvictionEnabled(false);
+      byte[] array = (byte[]) map.get("byte array");
+      Assert.assertEquals(map.getClass().getName(), 1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      // clear it out and verify
+      clearableMap.setEvictionEnabled(true);
+      ManagerUtil.lookupExistingOrNull(array).clearAccessed();
+      int cleared = clearableMap.__tc_clearReferences(1);
+      Assert.assertEquals(map.getClass().getName(), 1, cleared);
+      Assert.assertEquals(map.getClass().getName(), 0, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+
+      Iterator it = map.values().iterator();
+      while (it.hasNext()) {
+        it.next();
+      }
+      Assert.assertEquals(1, tcMap.__tc_getAllLocalEntriesSnapshot().size());
+    } else {
+      synchronized (map) {
+        map.put("byte array", new byte[] {});
+      }
+    }
+  }
+  
   private boolean canTestSharedArray(Map map) {
     return !(map instanceof HashMap) && !(map instanceof LinkedHashMap) && !(map instanceof Hashtable);
   }

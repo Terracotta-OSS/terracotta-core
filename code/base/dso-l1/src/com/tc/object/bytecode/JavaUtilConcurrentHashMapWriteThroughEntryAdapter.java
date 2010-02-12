@@ -33,6 +33,16 @@ public class JavaUtilConcurrentHashMapWriteThroughEntryAdapter extends ClassAdap
   private void createGetValueMethod() {
     MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "getValue", "()Ljava/lang/Object;", null, null);
     mv.visitCode();
+
+    // get the value form the outer ConcurrentHashMap instance (uses correct locking) - this causes the fault in of the latest value
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitFieldInsn(GETFIELD, "java/util/concurrent/ConcurrentHashMap$WriteThroughEntry", "this$0", "Ljava/util/concurrent/ConcurrentHashMap;");
+    mv.visitVarInsn(ALOAD, 0);
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap$WriteThroughEntry", "getKey", "()Ljava/lang/Object;");
+    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/concurrent/ConcurrentHashMap", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");
+    mv.visitInsn(POP);
+
+    // but we can't trust the get return since it might not be valid for our uses (SUN BUG: 6312056)
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKESPECIAL, "java/util/AbstractMap$SimpleEntry", "getValue", "()Ljava/lang/Object;");
     mv.visitVarInsn(ASTORE, 1);
