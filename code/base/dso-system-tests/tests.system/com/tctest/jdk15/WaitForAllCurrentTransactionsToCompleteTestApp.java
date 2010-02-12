@@ -4,29 +4,39 @@
  */
 package com.tctest.jdk15;
 
+import com.tc.management.JMXConnectorProxy;
+import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractTransparentApp;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
+
 /**
- * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete()
- * to see if screw up anything
+ * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete() to see if screw up anything
  */
 public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTransparentApp {
   private static final int          DEFAULT_NUM_OF_PUT  = 1234;
   private static final int          DEFAULT_NUM_OF_LOOP = 5;
+  public static final String        JMX_PORT            = "jmx-port";
 
   private static final int          CAPACITY            = 2000;
 
   private final LinkedBlockingQueue queue               = new LinkedBlockingQueue(CAPACITY);
+  private final ApplicationConfig   appConfig;
   private final CyclicBarrier       barrier;
 
   private final int                 numOfPut;
@@ -35,6 +45,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
   public WaitForAllCurrentTransactionsToCompleteTestApp(String appId, ApplicationConfig cfg,
                                                         ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
+    this.appConfig = cfg;
     barrier = new CyclicBarrier(getParticipantCount());
 
     numOfPut = DEFAULT_NUM_OF_PUT;
@@ -50,16 +61,17 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
       for (int i = 0; i < numOfLoop; i++) {
         if (index == 0) {
           doPut();
-          waitTxnComplete();
           Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
+          waitTxnComplete();
+          Assert.assertEquals(0, getPendingTransactionsCount());
         }
         barrier.await();
         if (index != 0) {
           doGet();
-          waitTxnComplete();
           Assert.assertTrue(queue.size() < (getParticipantCount() - 1));
+          waitTxnComplete();
+          Assert.assertEquals(0, getPendingTransactionsCount());
         }
-
         barrier.await();
       }
 
@@ -74,6 +86,30 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
     ManagerUtil.waitForAllCurrentTransactionsToComplete();
     System.out.println("XXX Client-" + ManagerUtil.getClientID() + " waitForAllCurrentTransactionsToComplete took "
                        + (System.currentTimeMillis() - now) + "ms");
+  }
+
+  private long getPendingTransactionsCount() {
+    MBeanServerConnection mbsc;
+    JMXConnectorProxy jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
+    try {
+      mbsc = jmxc.getMBeanServerConnection();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+    DSOMBean dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO,
+                                                                                 DSOMBean.class, false);
+    Map<ObjectName, Long> map = dsoMBean.getAllPendingTransactionsCount();
+
+    long l = -1;
+    for (ObjectName o : map.keySet()) {
+      System.out.println("Pending Tranaction count for " + o + " size: " + map.get(o));
+      String cid = o.getKeyProperty("channelID");
+      if (cid.equals(ManagerUtil.getClientID())) {
+        l = map.get(o);
+        System.out.println("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
+      }
+    }
+    return l;
   }
 
   private void doGet() throws Exception {
