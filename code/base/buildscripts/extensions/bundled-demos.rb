@@ -10,6 +10,9 @@ module BundledDemos
     srcdir = FilePath.new(@static_resources.demos_directory, name)
     fail "The source for the named demo set: `#{name}' does not exists in #{@static_resources.demos_directory}" unless File.directory?(srcdir.to_s)
 
+    include_dir = FilePath.new(srcdir, 'include')
+    has_include_dir = include_dir.directory?
+
     wildcard = '/**/*'
     manifest = (spec[:manifest] || []).join("#{wildcard}, ")
     puts :warn, "The demo set: `#{name}' has an empty manifest." if manifest.empty?
@@ -51,6 +54,12 @@ module BundledDemos
               puts "#{result}"
               unless result =~ /BUILD SUCCESSFUL/
                 fail("Error running ant in #{Dir.getwd}")
+              end
+            end
+
+            if has_include_dir
+              ant.copy(:todir => demo_directory) do
+                ant.fileset(:dir => include_dir.to_s)
               end
             end
           rescue AntBuildScriptError => error
