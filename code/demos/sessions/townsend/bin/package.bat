@@ -10,13 +10,13 @@ setlocal ENABLEDELAYEDEXPANSION
 set JAVA_HOME="%JAVA_HOME:"=%"
 set root=%~d0%~p0..
 set root="%root:"=%"
-set jetty1=%root%\..\jetty6.1\9081\webapps
-set jetty2=%root%\..\jetty6.1\9082\webapps
+set jetty1=%root%\jetty6.1\9081\webapps
+set jetty2=%root%\jetty6.1\9082\webapps
 cd %root%
 set tc_install_dir=..\..\..
 mkdir classes 2> NUL
 
-for %%f in (..\..\..\ehcache\ehcache-core*.jar) do (
+for %%f in (%tc_install_dir%\ehcache\ehcache-core*.jar) do (
   set ehcache_core=%%f
 )
 

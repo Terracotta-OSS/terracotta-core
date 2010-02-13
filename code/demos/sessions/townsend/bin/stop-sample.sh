@@ -13,6 +13,6 @@ fi
 root=`dirname $0`/..
 root=`cd $root && pwd`
 
-$root/../bin/stop-jetty.sh 9081
-$root/../bin/stop-jetty.sh 9082
+$root/bin/stop-jetty.sh 9081
+$root/bin/stop-jetty.sh 9082
  

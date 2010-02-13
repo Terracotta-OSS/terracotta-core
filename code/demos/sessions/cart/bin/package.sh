@@ -14,8 +14,8 @@ root=`dirname $0`/..
 root=`cd $root && pwd`
 cd $root
 tc_install_dir=../../../
-jetty1=$root/../jetty6.1/9081/webapps
-jetty2=$root/../jetty6.1/9082/webapps
+jetty1=$root/jetty6.1/9081/webapps
+jetty2=$root/jetty6.1/9082/webapps
 mkdir -p dist
 rm -rf dist/*
 cp -r web/* dist

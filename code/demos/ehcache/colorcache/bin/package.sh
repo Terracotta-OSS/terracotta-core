@@ -13,11 +13,11 @@ fi
 root=`dirname $0`/..
 root=`cd $root && pwd`
 cd $root
-tc_install_dir=../../../
+tc_install_dir=../../..
 
 mkdir -p classes
 
-ehcache_core=`\ls -1 ../../../ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+ehcache_core=`\ls -1 $tc_install_dir/ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
 if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
@@ -75,8 +75,8 @@ fi
 warname=ColorCache.war
 cd dist
 $JAVA_HOME/bin/jar cf $warname *
-jetty1=$root/../jetty6.1/9081/webapps
-jetty2=$root/../jetty6.1/9082/webapps
+jetty1=$root/jetty6.1/9081/webapps
+jetty2=$root/jetty6.1/9082/webapps
 if [ $? -eq 0 ]; then
   echo "$warname has been created successfully. Deploying..."
   cp $warname $jetty1

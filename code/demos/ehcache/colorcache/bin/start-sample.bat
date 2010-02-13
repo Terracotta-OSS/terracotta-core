@@ -9,7 +9,9 @@ cd %root%
 call bin\package.bat
 
 call ..\bin\start-jetty.bat 9081
+echo Go to: http://localhost:9081/ColorCache
 sleep 3
 call ..\bin\start-jetty.bat 9082
+echo Go to: http://localhost:9082/ColorCache
 
 endlocal

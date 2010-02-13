@@ -6,25 +6,20 @@
   All rights reserved.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.terracotta.forge</groupId>
-    <artifactId>forge-parent</artifactId>
-    <version>1.0.17</version>
-  </parent>
 
+  <groupId>org.terracotta.samples.ehcache</groupId>
+  <artifactId>colorcache</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>ColorCache</name>
   <packaging>war</packaging>
-  <groupId>org.terracotta.sample</groupId>
-  <artifactId>distributed-cache-sample</artifactId>
-  <version>1.0.0</version>
-  <name>distributed-cache-sample</name>
-  <description/>
 
   <build>
-    <finalName>${project.artifactId}</finalName>
+    <finalName>${name}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -34,19 +29,25 @@
           <target>1.5</target>
         </configuration>
       </plugin>
+      <plugin>
+        <artifactId>maven-jetty-plugin</artifactId>
+        <version>6.1.15</version>
+        <groupId>org.mortbay.jetty</groupId>
+        <configuration>
+          <contextPath>${name}</contextPath>
+          <scanIntervalSeconds>10</scanIntervalSeconds>
+          <stopKey>STOP</stopKey>
+          <stopPort>9999</stopPort>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
   <dependencies>
     <dependency>
       <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache-core</artifactId>
-      <version>1.7.0</version>
-    </dependency>
-    <dependency>
-      <groupId>net.sf.ehcache</groupId>
-      <artifactId>ehcache-terracotta</artifactId>
-      <version>1.7.0</version>
+      <artifactId>ehcache</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

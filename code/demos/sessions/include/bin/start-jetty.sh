@@ -20,7 +20,7 @@ fi
 root=`dirname $0`/..
 root=`cd $root && pwd`
 jetty_work_dir=$root/jetty6.1/$jetty_instance
-install_root=$root/../..
+install_root=$root/../../..
 jetty_home=$install_root/vendors/jetty-6.1.15
 start_jar=$jetty_home/start.jar
 stop_port=$((jetty_instance + 2))

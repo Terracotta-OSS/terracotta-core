@@ -13,9 +13,6 @@ fi
 root=`dirname $0`/..
 root=`cd $root && pwd`
 
-$root/bin/package.sh
-
-$root/../bin/start-jetty.sh 9081
-sleep 3
-$root/../bin/start-jetty.sh 9082
+$root/bin/stop-jetty.sh 9081
+$root/bin/stop-jetty.sh 9082
  

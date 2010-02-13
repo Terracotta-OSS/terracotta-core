@@ -14,13 +14,13 @@ root=`dirname $0`/..
 root=`cd $root && pwd`
 cd $root
 
-tc_install_dir=../../../
-jetty1=$root/../jetty6.1/9081/webapps
-jetty2=$root/../jetty6.1/9082/webapps
+tc_install_dir=../../..
+jetty1=$root/jetty6.1/9081/webapps
+jetty2=$root/jetty6.1/9082/webapps
 
 mkdir -p classes
 
-ehcache_core=`\ls -1 ../../../ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+ehcache_core=`\ls -1 $tc_install_dir/ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
 if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
