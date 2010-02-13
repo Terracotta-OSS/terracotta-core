@@ -637,9 +637,14 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
               continue;
             }
 
-            if (isReader() && key.isReadable()) {
-              int read = ((TCJDK14ChannelReader) key.attachment()).doRead((ScatteringByteChannel) key.channel());
-              this.bytesRead.add(read);
+            if (isReader() && key.isValid() && key.isReadable()) {
+              int read;
+              TCJDK14ChannelReader reader = (TCJDK14ChannelReader) key.attachment();
+              ScatteringByteChannel channel = (ScatteringByteChannel) key.channel();
+              do {
+                read = reader.doRead(channel);
+                this.bytesRead.add(read);
+              } while ((read != 0) && key.isReadable());
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
