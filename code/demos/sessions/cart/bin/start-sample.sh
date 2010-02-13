@@ -16,11 +16,11 @@ root=`cd $root && pwd`
 $root/bin/package.sh
 
 $root/bin/start-jetty.sh 9081
-echo "http://localhost:9081/Cart"
+echo "Go to: http://localhost:9081/Cart"
 echo
 
 sleep 3
 $root/bin/start-jetty.sh 9082
-echo "http://localhost:9082/Cart"
+echo "Go to: http://localhost:9082/Cart"
 echo
  

@@ -16,11 +16,10 @@ root=`cd $root && pwd`
 $root/bin/package.sh
 
 $root/bin/start-jetty.sh 9081
-echo "Go to: http://localhost:9081/Townsend"
+echo "Go to: http://localhost:9081/Events"
 echo
 
 sleep 3
 $root/bin/start-jetty.sh 9082
-echo "Go to: http://localhost:9082/Townsend"
+echo "Go to: http://localhost:9082/Events"
 echo
- 

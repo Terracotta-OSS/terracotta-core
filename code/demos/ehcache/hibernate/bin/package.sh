@@ -22,7 +22,12 @@ if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
 fi
-classpath=classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
+hibernate_core=`\ls -1 $tc_install_dir/ehcache/hibernate-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+if [ ! -f $hibernate_core ]; then
+  echo "Couldn't find hibernate-core jar. Do you have a full kit?"
+  exit 1
+fi
+classpath=classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core:$hibernate_core
 for jar in web/WEB-INF/lib/*.jar; do
   classpath=$classpath:$jar
 done
@@ -31,7 +36,8 @@ if $cygwin; then
   classpath=`cygpath -w -p $classpath`
 fi
 
-$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/org/terracotta/*.java
+$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/main/java/org/hibernate/tutorial/*.java src/main/java/org/hibernate/tutorial/domain/*.java src/main/java/org/hibernate/tutorial/util/*.java
+ src/main/java/org/hibernate/tutorial/web/*.java
 if [ $? -ne 0 ]; then 
   echo "Failed to compile demo. Do you have a full kit with Ehcache core?"
   exit 1
@@ -39,7 +45,7 @@ fi
 
 mkdir -p target
 rm -rf target/*
-cp -r web/* target
+cp -r src/main/webapp/* target
 cp -r classes target/WEB-INF
 mkdir -p target/WEB-INF/lib
 
@@ -54,6 +60,13 @@ fi
 cp $tc_install_dir/ehcache/ehcache-core*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package ehcache-core. Do you have a complete kit?"
+  exit 1
+fi
+
+#packaging hibernate-core
+cp $tc_install_dir/ehcache/hibernate-core*.jar target/WEB-INF/lib
+if [ $? -ne 0 ]; then
+  echo "Couldn't package hibernate-core. Do you have a complete kit?"
   exit 1
 fi
 

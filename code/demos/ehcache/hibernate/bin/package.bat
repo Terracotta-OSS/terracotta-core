@@ -39,22 +39,22 @@ if not %errorlevel% == 0 (
   exit /b 1
 )
 
-rmdir /q /s target
-mkdir target
-xcopy /e /y /q web target 1> NUL
-mkdir target\WEB-INF\classes 2> NUL
-xcopy /e /y /q classes target\WEB-INF\classes 1> NUL
-mkdir target\WEB-INF\lib 2> NUL
+rmdir /q /s dist
+mkdir dist
+xcopy /e /y /q web dist 1> NUL
+mkdir dist\WEB-INF\classes 2> NUL
+xcopy /e /y /q classes dist\WEB-INF\classes 1> NUL
+mkdir dist\WEB-INF\lib 2> NUL
 
 rem packaging ehcache-terracotta
-xcopy /y /q %tc_install_dir%\ehcache\ehcache-terracotta*.jar target\WEB-INF\lib 1> NUL
+xcopy /y /q %tc_install_dir%\ehcache\ehcache-terracotta*.jar dist\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
   echo "Couldn't package ehcache-terracotta. Do you have a complete kit?"
   exit /b 1
 )
 
 rem packaging ehcache-core
-xcopy /y /q %tc_install_dir%\ehcache\ehcache-core*.jar target\WEB-INF\lib 1> NUL
+xcopy /y /q %tc_install_dir%\ehcache\ehcache-core*.jar dist\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
   echo "Couldn't package ehcache-core. Do you have a complete kit?"
   exit /b 1
@@ -62,7 +62,7 @@ if not %errorlevel% == 0  (
 
 rem create WAR
 set warname=ColorCache.war
-cd target
+cd dist
 %JAVA_HOME%\bin\jar cf %warname% *
 if %errorlevel% == 0 (
   echo "%warname% has been created successfully. Deploying..."

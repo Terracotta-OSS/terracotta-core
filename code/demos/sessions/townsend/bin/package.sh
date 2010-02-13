@@ -40,29 +40,29 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-mkdir -p dist
-rm -rf dist/*
-cp -r web/* dist
-cp -r classes dist/WEB-INF
-cp images/* dist
-mkdir -p dist/WEB-INF/lib
+mkdir -p target
+rm -rf target/*
+cp -r web/* target
+cp -r classes target/WEB-INF
+cp images/* target
+mkdir -p target/WEB-INF/lib
 
 #packaging echcache-core
-cp $ehcache_core dist/WEB-INF/lib
+cp $ehcache_core target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package ehcache-core. Do you have a complete kit?"
   exit 1
 fi
 
 #packaging ehcache-terracotta
-cp $tc_install_dir/ehcache/ehcache-terracotta*.jar dist/WEB-INF/lib
+cp $tc_install_dir/ehcache/ehcache-terracotta*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package ehcache-terracotta. Do you have a complete kit?"
   exit 1
 fi
 
 #packaging terracotta-session
-cp $tc_install_dir/sessions/terracotta-session*.jar dist/WEB-INF/lib
+cp $tc_install_dir/sessions/terracotta-session*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package terracotta-session. Do you have a complete kit?"
   exit 1
@@ -70,7 +70,7 @@ fi
 
 #create WAR
 warname=Townsend.war
-cd dist
+cd target
 $JAVA_HOME/bin/jar cf $warname *
 if [ $? -eq 0 ]; then
   echo "$warname has been created successfully. Deploying..."

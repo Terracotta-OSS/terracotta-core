@@ -16,14 +16,14 @@ cd $root
 tc_install_dir=../../../
 jetty1=$root/jetty6.1/9081/webapps
 jetty2=$root/jetty6.1/9082/webapps
-mkdir -p dist
-rm -rf dist/*
-cp -r web/* dist
-cp -r classes dist/WEB-INF
-mkdir -p dist/WEB-INF/lib
+mkdir -p target
+rm -rf target/*
+cp -r web/* target
+cp -r classes target/WEB-INF
+mkdir -p target/WEB-INF/lib
 
 #packaging terracotta-session
-cp $tc_install_dir/sessions/terracotta-session*.jar dist/WEB-INF/lib
+cp $tc_install_dir/sessions/terracotta-session*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package terracotta-session. Do you have a complete kit?"
   exit 1
@@ -31,7 +31,7 @@ fi
 
 #create WAR
 warname=DepartmentTaskList.war
-cd dist
+cd target
 $JAVA_HOME/bin/jar cf $warname *
 if [ $? -eq 0 ]; then
   echo "$warname has been created successfully. Deploying..."
