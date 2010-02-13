@@ -71,10 +71,8 @@ public abstract class AbstractTCNetworkHeader implements TCNetworkHeader {
     if (data != null) {
       data.recycle();
       data = null;
-      // System.out.println("XXX RECYC HDR" + Thread.currentThread().getName() + " - " + this.hashCode());
     } else {
       // data is already null. Probably called recycle twice !!
-      // System.out.println("XXX RECYC HDR DBL " + Thread.currentThread().getName() + " - " + this.hashCode());
       Thread.dumpStack();
     }
   }

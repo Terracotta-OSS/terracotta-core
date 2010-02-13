@@ -263,9 +263,8 @@ public class AbstractTCNetworkMessage implements TCNetworkMessage {
         entireMessageData[i].recycle();
       }
       entireMessageData = null;
-      // logger.warn("recycle message " + this.hashCode());
     } else {
-      logger.warn("Entire Message is null ! Probably recycle was called twice ! " + this.hashCode());
+      logger.warn("Entire Message is null ! Probably recycle was called twice ! ");
       Thread.dumpStack();
     }
   }
