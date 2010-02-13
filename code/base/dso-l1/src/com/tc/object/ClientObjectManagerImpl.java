@@ -1356,8 +1356,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       return s;
     }
 
+    // this is an identity map - we must use the identityHashCode.
+    // Object.hashCode() <==> Object.equals()
+    // System.identityHashCode() <==> ==
     private int hash(Object key) {
-      int h = key.hashCode();
+      int h = System.identityHashCode(key);
       h += ~(h << 9);
       h ^= (h >>> 14);
       h += (h << 4);
