@@ -234,10 +234,10 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void sendSyn() {
+    getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
     synchronized (this.status) {
       if (this.status.isEstablished() || this.status.isSynSent()) { throw new AssertionError(" ERROR !!! "
                                                                                              + this.status); }
-      getConnection().addWeight(MessageTransport.CONNWEIGHT_TX_HANDSHAKED);
       this.waitForSynAckResult = new TCFuture(this.status);
       // get the stack layer list and pass it in
       short stackLayerFlags = getCommunicationStackFlags(this);
