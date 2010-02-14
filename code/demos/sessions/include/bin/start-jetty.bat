@@ -27,7 +27,6 @@ set /a stop_port=jetty_instance + 2
 cd %jetty_work_dir%
 echo "starting Jetty %jetty_instance%..."
 start /b "Jetty %jetty_instance%" %JAVA_HOME%\bin\java -Dtc.install-root=%install_root% -Xmx256m -XX:MaxPermSize=128m -Dconfig.home=%jetty_work_dir% -Djetty.home=%jetty_home% -DSTOP.PORT=%stop_port% -DSTOP.KEY=secret -jar %start_jar% conf.xml 
-sleep 1
 echo.
 
 endlocal

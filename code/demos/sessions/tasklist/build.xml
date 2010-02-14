@@ -6,49 +6,48 @@
 
 -->
 <project name="DepartmentTaskList" default="compile" basedir=".">
-	<property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
-	<condition property="is.live" value="true">
-		<available file="${bundled.server.home}" type="dir"/>
-	</condition>
-	
-	<property environment="env"/>
-	<condition property="webserver.home" value="${bundled.server.home}" else="${env.JETTY_HOME}">
-		<istrue value="${is.live}"/>
-	</condition>
-	
-	<property name="warfile"     value="DepartmentTaskList.war"/>
-	<property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
-	<property name="src.dir"     value="src"/>
-	<property name="web.dir"     value="web"/>
-	<property name="build.dir"   value="classes"/>
-	<property name="dist.dir"    value="dist"/>
-	<property name="lib.dir"     value="${web.dir}/WEB-INF/lib"/>
+  <property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
+  <condition property="is.live" value="true">
+    <available file="${bundled.server.home}" type="dir"/>
+  </condition>
 
-	<path id="build.classpath">
-		<pathelement location="${servlet.jar}"/>
-		<pathelement location="${lib.dir}/struts.jar"/>
-		<pathelement path="${build.dir}"/>
-	</path>
+  <property environment="env"/>
+  <condition property="webserver.home" value="${bundled.server.home}" else="${env.JETTY_HOME}">
+    <istrue value="${is.live}"/>
+  </condition>
 
-	<target name="init">
-		<tstamp/>
-		<mkdir dir="${build.dir}"/>
-		<mkdir dir="${dist.dir}"/>
-	</target>
+  <property name="warfile"     value="DepartmentTaskList.war"/>
+  <property name="servlet.jar" value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
+  <property name="src.dir"     value="src/main/java"/>
+  <property name="web.dir"     value="src/main/webapp"/>
+  <property name="dist.dir"    value="target"/>
+  <property name="build.dir"   value="${dist.dir}/classes"/>
+  <property name="lib.dir"     value="${web.dir}/WEB-INF/lib"/>
 
-	<target name="clean">
-		<delete dir="${build.dir}"/>
-	</target>
+  <path id="build.classpath">
+    <pathelement location="${servlet.jar}"/>
+    <pathelement location="${lib.dir}/struts.jar"/>
+    <pathelement path="${build.dir}"/>
+  </path>
 
-	<target name="clean.all" depends="clean">
-		<delete dir="${dist.dir}"/>
-	</target>
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${build.dir}"/>
+  </target>
 
-	<target name="compile" depends="init">
-		<javac destdir="${build.dir}" deprecation="on" source="1.4" target="1.4">
-			<classpath refid="build.classpath"/>
-			<src path="${src.dir}"/>
-		</javac>
-	</target>
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+  </target>
 
+  <target name="clean.all" depends="clean">
+    <delete dir="${dist.dir}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <javac destdir="${build.dir}" deprecation="on" source="1.5" target="1.5">
+      <classpath refid="build.classpath"/>
+      <src path="${src.dir}"/>
+    </javac>
+  </target>
 </project>

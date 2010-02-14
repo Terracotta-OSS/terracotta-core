@@ -15,14 +15,14 @@ root=`cd $root && pwd`
 cd $root
 tc_install_dir=../../..
 
-mkdir -p classes
+mkdir -p target/classes
 
 ehcache_core=`\ls -1 $tc_install_dir/ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
 if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
 fi
-classpath=classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
+classpath=target/classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core
 for jar in web/WEB-INF/lib/*.jar; do
   classpath=$classpath:$jar
 done
@@ -31,16 +31,14 @@ if $cygwin; then
   classpath=`cygpath -w -p $classpath`
 fi
 
-$JAVA_HOME/bin/javac -d classes -sourcepath src -cp $classpath src/org/terracotta/*.java
+$JAVA_HOME/bin/javac -d target/classes -sourcepath src/main/java -cp $classpath src/main/java/org/terracotta/*.java
 if [ $? -ne 0 ]; then 
   echo "Failed to compile demo. Do you have a full kit with Ehcache core?"
   exit 1
 fi
 
-mkdir -p target
-rm -rf target/*
-cp -r web/* target
-cp -r classes target/WEB-INF
+cp -r src/main/webapp/* target
+cp -r target/classes target/WEB-INF
 mkdir -p target/WEB-INF/lib
 
 #packaging terracotta-ehcache

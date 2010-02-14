@@ -8,11 +8,12 @@ set root="%root:"=%"
 cd %root%
 call bin\package.bat
 
-call ..\bin\start-jetty.bat 9081
+call bin\start-jetty.bat 9081
 echo Go to: http://localhost:9081/Events
+echo off
 
-sleep 3
-call ..\bin\start-jetty.bat 9082
+call bin\start-jetty.bat 9082
 echo Go to: http://localhost:9082/Events
+echo off
 
 endlocal

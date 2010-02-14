@@ -21,17 +21,12 @@
       <version>3.3.1.GA</version>
     </dependency>
 
-    <dependency>
-      <artifactId>ehcache-core</artifactId>
-      <version>2.0.0-SNAPSHOT</version>
-      <groupId>net.sf.ehcache</groupId>
-    </dependency>
-
     <!-- Because this is a web app, we also have a dependency on the servlet api. -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
       <version>2.5</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- Hibernate uses slf4j for logging, for our purposes here use the simple backend -->
@@ -54,12 +49,16 @@
       <groupId>com.h2database</groupId>
     </dependency>
 
-    <!-- runtime dependencies -->
+    <dependency>
+      <groupId>net.sf.ehcache</groupId>
+      <artifactId>ehcache-core</artifactId>
+      <version>2.0.0-SNAPSHOT</version>
+    </dependency>      
+
     <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>ehcache-terracotta</artifactId>
       <version>2.0.0-SNAPSHOT</version>
-      <scope>runtime</scope>
     </dependency>      
 
     <dependency>

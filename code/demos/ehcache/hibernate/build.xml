@@ -39,8 +39,8 @@
 
   <target name="init">
     <tstamp/>
-    <mkdir dir="${build.dir}"/>
     <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${build.dir}"/>
   </target>
 
   <target name="clean">

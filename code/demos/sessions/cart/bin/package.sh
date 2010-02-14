@@ -16,10 +16,8 @@ cd $root
 tc_install_dir=../../../
 jetty1=$root/jetty6.1/9081/webapps
 jetty2=$root/jetty6.1/9082/webapps
-mkdir -p target
-rm -rf target/*
-cp -r web/* target
-cp -r classes target/WEB-INF
+cp -r src/main/webapp/* target
+cp -r target/classes target/WEB-INF
 mkdir -p target/WEB-INF/lib
 
 #packaging terracotta-session

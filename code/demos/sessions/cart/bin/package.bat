@@ -14,11 +14,9 @@ set jetty1=%root%\jetty6.1\9081\webapps
 set jetty2=%root%\jetty6.1\9082\webapps
 cd %root%
 set tc_install_dir=..\..\..
-rmdir /q /s target
-mkdir target
-xcopy /e /y /q web target 1> NUL
+xcopy /e /y /q src\main\webapp target 1> NUL
 mkdir target\WEB-INF\classes 2> NUL
-xcopy /e /y /q classes target\WEB-INF\classes 1> NUL
+xcopy /e /y /q target\classes target\WEB-INF\classes 1> NUL
 mkdir target\WEB-INF\lib 2> NUL
 
 rem packaging terracotta-session
