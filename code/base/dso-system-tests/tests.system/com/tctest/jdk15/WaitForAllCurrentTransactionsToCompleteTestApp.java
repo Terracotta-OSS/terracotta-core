@@ -69,8 +69,6 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
         if (index != 0) {
           doGet();
           Assert.assertTrue(queue.size() < (getParticipantCount() - 1));
-          waitTxnComplete();
-          Assert.assertEquals(0, getPendingTransactionsCount());
         }
         barrier.await();
       }
