@@ -29,6 +29,7 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.MockTransactionManager;
+import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class ClientObjectManagerTest extends BaseDSOTestCase {
   private ClientObjectManager     mgr;
@@ -546,4 +548,55 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     }
   }
 
+  private static class StupidTestObject implements TransparentAccess {
+    private static final Random rndm = new Random();
+    
+    public StupidTestObject object;
+
+    public void __tc_getallfields(Map map) {
+      throw new ImplementMe();
+      
+    }
+
+    public Object __tc_getmanagedfield(String name) {
+      throw new ImplementMe();
+    }
+
+    public void __tc_setfield(String name, Object value) {
+      if ("object".equals(name)) {
+        this.object = (StupidTestObject) value;
+      }
+    }
+
+    public void __tc_setmanagedfield(String name, Object value) {
+      throw new ImplementMe();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+      return rndm.nextBoolean();
+    }
+    
+    @Override
+    public int hashCode() {
+      return rndm.nextInt();
+    }
+  }
+  
+  public void testSharedObjectWithAbsurdHashCodeEqualsBehavior() throws Exception {
+    this.object = new StupidTestObject();
+    this.objectID = new ObjectID(1);
+    this.tcObject = new MockTCObject(this.objectID, this.object);
+    this.objectFactory.peerObject = this.object;
+    this.objectFactory.tcObject = this.tcObject;
+
+    TestDNA dna = newEmptyDNA();
+    prepareObjectLookupResults(dna);
+
+    TCObject tco = this.mgr.lookup(this.objectID);
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertSame(tco.getObjectID(), this.mgr.lookupExistingObjectID(this.object));
+    }
+  }
 }
