@@ -65,6 +65,30 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
   }
 
+  private static final class RemoteRegistrationFilter implements NotificationFilter {
+    private final UUID uuid;
+
+    private RemoteRegistrationFilter(UUID uuid) {
+      this.uuid = uuid;
+    }
+
+    public boolean isNotificationEnabled(final Notification notification) {
+      if (notification instanceof MBeanServerNotification) {
+        final MBeanServerNotification mbsn = (MBeanServerNotification) notification;
+        if (mbsn.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
+          ObjectName on = mbsn.getMBeanName();
+          try {
+            return TerracottaManagement.matchAllTerracottaMBeans(uuid).apply(on);
+          } catch (Exception e) {
+            logger.warn("Unable to filter remote MBean registration", e);
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+
   private static final class ConnectorClosedListener implements NotificationListener {
     private final ClientBeanBag bag;
 
@@ -154,7 +178,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           // register as a listener before query'ing beans to avoid missing any registrations
           try {
             ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
-            l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(bag), null, null);
+            l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(bag),
+                                                            new RemoteRegistrationFilter(uuid), null);
           } catch (Exception e) {
             logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
                          + " registered after connect-time will be tunneled into the L2");
