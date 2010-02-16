@@ -29,7 +29,7 @@ All rights reserved.
           <td style="text-align: right"><nobr>Time to live:</nobr></td><td><nobr><b><%=request.getParameter("ttl")%></b></nobr></td>
         </tr>
         <tr>
-          <td style="text-align: right"><nobr>Time to invalidation:</nobr></td><td><nobr><b><%=request.getParameter("tti")%></b></nobr></td>
+          <td style="text-align: right"><nobr>Time to idle:</nobr></td><td><nobr><b><%=request.getParameter("tti")%></b></nobr></td>
         </tr>
         <tr>
           <td style="text-align: right"><nobr>Go to:</nobr></td><td><nobr><b><a href="<%=href%>"<b>Server <%=otherServer%></b></a></b></nobr></td>

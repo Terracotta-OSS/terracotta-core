@@ -40,7 +40,6 @@ if not %errorlevel% == 0 (
 )
 
 xcopy /e /y /q src\main\webapp target 1> NUL
-xcopy /e /y /q images target 1> NUL
 mkdir target\WEB-INF\classes 2> NUL
 xcopy /e /y /q target\classes target\WEB-INF\classes 1> NUL
 mkdir target\WEB-INF\lib 2> NUL

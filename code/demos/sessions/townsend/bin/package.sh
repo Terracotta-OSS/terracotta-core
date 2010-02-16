@@ -43,7 +43,6 @@ fi
 
 cp -r src/main/webapp/* target
 cp -r target/classes target/WEB-INF
-cp images/* target
 mkdir -p target/WEB-INF/lib
 
 #packaging echcache-core

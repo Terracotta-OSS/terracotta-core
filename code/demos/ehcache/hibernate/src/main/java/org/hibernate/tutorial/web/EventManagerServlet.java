@@ -106,7 +106,7 @@ public class EventManagerServlet extends HttpServlet {
     String currentServer = request.getRequestURL().indexOf(server1) == -1 ? server2 : server1;
     String otherServer = currentServer == server1 ? server2 : server1;
     String serverColor = currentServer == server1 ? "goldenrod" : "darkseagreen";
-    String summaryMsg = "ColorCache demonstrates sharing a distributed cache between two nodes. Click on the link on the left to switch between nodes. Enter the name of a color e.g. <i>red</i> to request it's RGB code from the backing data store. The first request is slow, as the data isn't yet cached. Try requesting the same color from the other node. You will see that subsequent requests for that color (from either node) are served rapidly from the cache. The cache is also configured to evict unused color elements after a short time. With the Terracotta Developer Console, you can monitor the cache activity and dynamically change it's eviction configuration; see the <i><b>Ehcache</b></i> tab under <i><b>My application</b></i>.";
+    String summaryMsg = "<p>The Events sample demonstrates a standard Hibernate demo configured to use clustered Terracotta Ehcache as the 2nd-level cache.<p>With the Terracotta Developer Console, you can monitor the cache activity and dynamically change it's eviction configuration; see the <i><b>Hibernate</b></i> tab under <i><b>My application</b></i>.";
     String rowStart = "<tr><td style='text-align: right'><nobr>";
     String rowMiddle = "</nobr></td><td><nobr><b>";
     String rowEnd = "</b></nobr></td></tr>";

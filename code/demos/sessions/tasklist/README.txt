@@ -17,7 +17,13 @@ NOTE: Windows users please use the equivalent Batch scripts
 *) To use Maven to run this sample:
 
 mvn tc:start
-mvn jetty:run-war -Djetty.port=9081&
-mvn jetty:run-war -Djetty.port=9082&
+mvn -P9081 jetty:run-war&
+mvn -P9082 jetty:run-war&
+
+*) To use Maven to stop the Terracotta Server and sample clients:
+
+mvn tc:stop
+mvn -P9081 jetty:stop
+mvn -P9082 jetty:stop
 
 You can obtain Maven here: http://maven.apache.org/download.html

@@ -22,12 +22,12 @@ if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
 fi
-hibernate_core=`\ls -1 $tc_install_dir/ehcache/hibernate-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
-if [ ! -f $hibernate_core ]; then
-  echo "Couldn't find hibernate-core jar. Do you have a full kit?"
+hibernate_jar=`\ls -1 $tc_install_dir/ehcache/hibernate*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+if [ ! -f $hibernate_jar ]; then
+  echo "Couldn't find hibernate jar. Do you have a full kit?"
   exit 1
 fi
-classpath=target/classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core:$hibernate_core
+classpath=target/classes:$tc_install_dir/lib/servlet-api-2.5-6.1.8.jar:$ehcache_core:$hibernate_jar
 for jar in src/main/webapp/WEB-INF/lib/*.jar; do
   classpath=$classpath:$jar
 done
@@ -61,10 +61,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-#packaging hibernate-core
-cp $tc_install_dir/ehcache/hibernate-core*.jar target/WEB-INF/lib
+#packaging hibernate
+cp $tc_install_dir/ehcache/hibernate*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
-  echo "Couldn't package hibernate-core. Do you have a complete kit?"
+  echo "Couldn't package hibernate. Do you have a complete kit?"
   exit 1
 fi
 
