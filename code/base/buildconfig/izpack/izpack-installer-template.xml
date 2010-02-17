@@ -36,10 +36,10 @@
    </variables>
 
    <resources>
-      <res id="Installer.image.0" src="../izpack/tech_solutions.gif" />
-      <res id="Installer.image.2" src="../izpack/dev_console.gif" />
-      <res id="Installer.image.4" src="../izpack/training_and_services.gif" />
-      <res id="Installer.image.6" src="../izpack/terracotta_fx.gif" />
+      <res id="Installer.image.0" src="../izpack/Products.png" />
+      <res id="Installer.image.2" src="../izpack/Training-and-Services.png" />
+      <res id="Installer.image.4" src="../izpack/Console.png" />
+      <res id="Installer.image.6" src="../izpack/Start.png" />
       <res id="Heading.image" src="../izpack/logo_rgb_padded.png"/>
       <res id="LicencePanel.licence" src="license.txt" />
       <res id="InfoPanel.info" src="README.TXT" />
