@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
@@ -20,5 +21,5 @@ public interface SyncObjectIdSet extends Set, PrettyPrintable {
    * 
    * @return size if object was successfully added, else return -1.
    */
-  public int addAndGetSize(Object obj);
+  public int addAndGetSize(ObjectID obj);
 }

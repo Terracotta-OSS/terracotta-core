@@ -18,10 +18,7 @@ public class TCCollections {
   
   public static final class EmptyObjectIDSet extends ObjectIDSet {
 
-    public boolean add(Object arg0) {
-      throw new UnsupportedOperationException();
-    }
-
+    @Override
     public boolean add(ObjectID id) {
       throw new UnsupportedOperationException();
     }

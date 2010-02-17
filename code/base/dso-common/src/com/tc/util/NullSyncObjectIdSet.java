@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrinter;
 
 import java.util.AbstractSet;
@@ -58,7 +59,7 @@ public class NullSyncObjectIdSet extends AbstractSet implements SyncObjectIdSet 
     return out;
   }
 
-  public int addAndGetSize(Object obj) {
+  public int addAndGetSize(ObjectID obj) {
     return 0;
   }
 }

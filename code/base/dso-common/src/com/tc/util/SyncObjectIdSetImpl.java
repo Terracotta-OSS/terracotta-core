@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.object.ObjectID;
 import com.tc.text.PrettyPrinter;
 
 import java.util.AbstractSet;
@@ -39,7 +40,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
    * 
    * @return size if object was successfully added, else return -1.
    */
-  public int addAndGetSize(Object obj) {
+  public int addAndGetSize(ObjectID obj) {
     synchronized (this.lock) {
       boolean added = this.set.add(obj);
       if (added) {
@@ -53,7 +54,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   @Override
   public boolean add(Object obj) {
     synchronized (this.lock) {
-      return this.set.add(obj);
+      return this.set.add((ObjectID) obj);
     }
   }
 

@@ -8,29 +8,22 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.OidBitsArrayMap;
-import com.tc.util.OidBitsArrayMapImpl;
+import com.tc.util.ObjectIDSet.ObjectIDSetType;
 
 public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
-  private static final int          FAULTING_OPTIMIZATION = TCPropertiesImpl
+  private static final boolean      FAULTING_OPTIMIZATION = TCPropertiesImpl
                                                               .getProperties()
-                                                              .getInt(
-                                                                      TCPropertiesConsts.L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION);
+                                                              .getBoolean(
+                                                                          TCPropertiesConsts.L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION,
+                                                                          true);
   private final NoReferencesIDStore delegate;
 
   public NoReferencesIDStoreImpl() {
-    if (FAULTING_OPTIMIZATION == 0) {
-      delegate = NoReferencesIDStore.NULL_NO_REFERENCES_ID_STORE;
-    } else if (FAULTING_OPTIMIZATION == 1) {
+    if (FAULTING_OPTIMIZATION) {
       delegate = new OidSetStore();
-    } else if (FAULTING_OPTIMIZATION == 2) {
-      delegate = new OidBitsStore();
-    } else {
-      throw new AssertionError("Incorrect faulting optimization property: " + FAULTING_OPTIMIZATION
-                               + ", Please choose: \n" + "0 - disable faulting optimization \n"
-                               + "1 - enabled with standard implementation (continous oids) \n"
-                               + "2 = enabled with compressed implementation (spare oids) \n");
+    } else  {
+      delegate = NoReferencesIDStore.NULL_NO_REFERENCES_ID_STORE;
     }
   }
 
@@ -48,7 +41,7 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
   public class OidSetStore implements NoReferencesIDStore {
 
-    private ObjectIDSet store = new ObjectIDSet();
+    private final ObjectIDSet store = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
 
     public void addToNoReferences(ManagedObject mo) {
       if (mo.getManagedObjectState().hasNoReferences()) {
@@ -58,26 +51,6 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
     public void clearFromNoReferencesStore(ObjectID id) {
       store.remove(id);
-    }
-
-    public boolean hasNoReferences(ObjectID id) {
-      return store.contains(id);
-    }
-
-  }
-
-  private static class OidBitsStore implements NoReferencesIDStore {
-
-    private OidBitsArrayMap store = new OidBitsArrayMapImpl(8);
-
-    public void addToNoReferences(ManagedObject mo) {
-      if (mo.getManagedObjectState().hasNoReferences()) {
-        this.store.getAndSet(mo.getID());
-      }
-    }
-
-    public void clearFromNoReferencesStore(ObjectID id) {
-      store.getAndClr(id);
     }
 
     public boolean hasNoReferences(ObjectID id) {

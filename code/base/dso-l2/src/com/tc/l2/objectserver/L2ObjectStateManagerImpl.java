@@ -124,7 +124,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private final NodeID             nodeID;
 
-    private Set                      missingOids;
+    private ObjectIDSet              missingOids;
     private Map                      missingRoots;
     private Set                      existingOids;
 
@@ -167,7 +167,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
 
     private void addSomeMissingObjectIDsTo(ObjectIDSet oids, int count) {
-      for (Iterator i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
+      for (Iterator<ObjectID> i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
         // XXX:: This has to be commented because even though ObjectIDSet supports remove() now it is slightly slower
         // than removeAll.
