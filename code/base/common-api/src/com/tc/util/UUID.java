@@ -4,7 +4,7 @@
  */
 package com.tc.util;
 
-public class UUID {
+public class UUID implements java.io.Serializable {
 
   public static final UUID NULL_ID;
   public static final int  SIZE;

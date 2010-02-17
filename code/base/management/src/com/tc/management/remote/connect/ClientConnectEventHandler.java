@@ -182,7 +182,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
                                                             new RemoteRegistrationFilter(uuid), null);
           } catch (Exception e) {
             logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
-                         + " registered after connect-time will be tunneled into the L2");
+                         + " registered after connect-time will be tunneled into the L2", e);
           }
 
           // now that we're listening we can query and let the bean bag deal with the possible concurrency
