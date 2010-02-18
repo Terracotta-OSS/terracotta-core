@@ -550,12 +550,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
   private static class StupidTestObject implements TransparentAccess {
     private static final Random rndm = new Random();
-    
-    public StupidTestObject object;
+
+    @SuppressWarnings("unused")
+    private StupidTestObject    object;
 
     public void __tc_getallfields(Map map) {
       throw new ImplementMe();
-      
+
     }
 
     public Object __tc_getmanagedfield(String name) {
@@ -571,18 +572,18 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public void __tc_setmanagedfield(String name, Object value) {
       throw new ImplementMe();
     }
-    
+
     @Override
     public boolean equals(Object o) {
       return rndm.nextBoolean();
     }
-    
+
     @Override
     public int hashCode() {
       return rndm.nextInt();
     }
   }
-  
+
   public void testSharedObjectWithAbsurdHashCodeEqualsBehavior() throws Exception {
     this.object = new StupidTestObject();
     this.objectID = new ObjectID(1);
