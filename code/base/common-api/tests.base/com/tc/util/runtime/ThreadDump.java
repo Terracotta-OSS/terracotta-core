@@ -67,6 +67,8 @@ public class ThreadDump {
   }
 
   private static void dumpThreadsMany(int iterations, long delay, Set<PID> pids) {
+    System.err.println("Thread dumping PID(s): " + pids);
+
     boolean multiple = pids.size() > 1;
 
     for (int i = 0; i < iterations; i++) {
