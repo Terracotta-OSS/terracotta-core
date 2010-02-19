@@ -4,15 +4,20 @@
  */
 package com.tc.util.runtime;
 
-import com.tc.exception.TCRuntimeException;
+import com.tc.process.Exec;
 import com.tc.process.StreamCollector;
+import com.tc.process.Exec.Result;
 import com.tc.test.TestConfigObject;
+import com.tc.text.Banner;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.exception.ExceptionUtil;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.StringReader;
+import java.lang.management.ManagementFactory;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ThreadDump {
 
@@ -34,87 +39,71 @@ public class ThreadDump {
   }
 
   public static int dumpThreadsMany(int iterations, long delay) {
-    int pid = 0;
-    RuntimeException windowsPidException = null;
+    PID pid = getPID();
+    dumpThreadsMany(iterations, delay, Collections.singleton(pid));
+    return pid.getPid();
+  }
+
+  static PID getPID() {
     try {
-      pid = GetPid.getInstance().getPid();
-    } catch (RuntimeException re) {
-      if (Os.isWindows()) {
-        if (Vm.isIBM()) {
-          windowsPidException = re;
-        } else {
-          throw re;
-        }
-      } else {
-        System.err.println("Got exception trying to get the process ID, stacktrace is below:");
-        ExceptionUtil.dumpFullStackTrace(re, System.err);
-        System.err.flush();
-      }
+      return new PID(GetPid.getInstance().getPid());
+    } catch (Exception e) {
+      e.printStackTrace();
+
+      // Use fallback mechanism
+      return getPIDUsingFallback();
     }
 
+    // unreachable
+  }
+
+  static PID getPIDUsingFallback() {
+    String vmName = ManagementFactory.getRuntimeMXBean().getName();
+    int index = vmName.indexOf('@');
+
+    if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
+
+    return new PID(Integer.parseInt(vmName.substring(0, index)));
+  }
+
+  private static void dumpThreadsMany(int iterations, long delay, Set<PID> pids) {
     for (int i = 0; i < iterations; i++) {
-      boolean doStandardDump = !Vm.isIBM();
-      if (Vm.isIBM()) {
-        try {
-          doIbmDump();
-        } catch (Exception e) {
-          System.err.println("Got an exception while trying to use the native IBM thread"
-                             + " dump facility, using 'standard' method.  Stacktrace is below:");
-          ExceptionUtil.dumpFullStackTrace(e, System.err);
-          System.err.flush();
-          doStandardDump = true;
-        }
-      }
-      if (doStandardDump) {
-        if (pid == 0) {
-          if (Os.isWindows()) {
-            throw new TCRuntimeException("Unable to find my process ID, cannot dump threads", windowsPidException);
-          } else {
-            System.err.println("My PID is not available, sending QUIT signal to process group (PID 0)");
-            System.err.flush();
-          }
-        }
+      for (PID pid : pids) {
         if (Os.isWindows()) {
           doWindowsDump(pid);
         } else {
           doUnixDump(pid);
         }
       }
-      ThreadUtil.reallySleep(delay);
-    }
-
-    return pid;
-  }
-
-  public static void dumpProcessGroup() {
-    if (!Os.isUnix()) { throw new AssertionError("unix only"); }
-    doUnixDump(0);
-  }
-
-  public static void dumpProcessGroupMany(int iterations, long delay) {
-    for (int i = 0; i < iterations; i++) {
-      dumpProcessGroup();
 
       ThreadUtil.reallySleep(delay);
     }
   }
 
-  private static void doUnixDump(int pid) {
+  public static void dumpAllJavaProceses() {
+    dumpAllJavaProceses(1, 0L);
+  }
+
+  public static void dumpAllJavaProceses(int iterations, long delay) {
+    dumpThreadsMany(iterations, delay, findAllJavaPIDs());
+  }
+
+  private static void doUnixDump(PID pid) {
     doSignal(new String[] { "-QUIT" }, pid);
   }
 
-  private static void doWindowsDump(int pid) {
+  private static void doWindowsDump(PID pid) {
     doSignal(new String[] {}, pid);
   }
 
-  private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
-      IllegalArgumentException, IllegalAccessException, InvocationTargetException {
-    final Class ibmDumpClass = Class.forName("com.ibm.jvm.Dump");
-    final Method ibmDumpMethod = ibmDumpClass.getDeclaredMethod("JavaDump", new Class[] {});
-    ibmDumpMethod.invoke(null, new Object[] {});
-  }
+  // private static void doIbmDump() throws ClassNotFoundException, SecurityException, NoSuchMethodException,
+  // IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+  // final Class ibmDumpClass = Class.forName("com.ibm.jvm.Dump");
+  // final Method ibmDumpMethod = ibmDumpClass.getDeclaredMethod("JavaDump", new Class[] {});
+  // ibmDumpMethod.invoke(null, new Object[] {});
+  // }
 
-  private static void doSignal(String[] args, int pid) {
+  private static void doSignal(String[] args, PID pid) {
     File program = SignalProgram.PROGRAM;
 
     try {
@@ -122,7 +111,7 @@ public class ThreadDump {
       cmd[0] = program.getAbsolutePath();
       System.arraycopy(args, 0, cmd, 1, args.length);
 
-      cmd[cmd.length - 1] = Integer.toString(pid);
+      cmd[cmd.length - 1] = pid.toString();
 
       Process p = Runtime.getRuntime().exec(cmd);
       p.getOutputStream().close();
@@ -142,6 +131,109 @@ public class ThreadDump {
       System.out.flush();
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  static Set<PID> findAllJavaPIDs() {
+    if (Os.isWindows()) {
+      return windowsFindAllJavaPIDs();
+    } else {
+      return unixFindAllJavaPIDs();
+    }
+  }
+
+  private static Set<PID> unixFindAllJavaPIDs() {
+    Set<PID> pids = new HashSet<PID>();
+
+    Result result;
+    try {
+      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user,comm" });
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      String stdout = result.getStdout();
+      BufferedReader reader = new BufferedReader(new StringReader(stdout));
+      String line;
+
+      String user = System.getProperty("user.name");
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        String[] tokens = line.split(" +");
+        if (tokens.length != 3) { throw new AssertionError("invalid number of tokens (" + tokens.length + "): " + line); }
+        if (tokens[1].equals(user) && tokens[2].endsWith("java")) {
+          boolean added = pids.add(new PID(Integer.parseInt(tokens[0])));
+          if (!added) {
+            Banner.warnBanner("Found duplicate PID? " + line);
+          }
+        }
+      }
+
+    } catch (Exception e) {
+      throw new RuntimeException(result.toString(), e);
+    }
+
+    return pids;
+  }
+
+  private static Set<PID> windowsFindAllJavaPIDs() {
+    Set<PID> pids = new HashSet<PID>();
+
+    String pvExe = new File(TestConfigObject.getInstance().executableSearchPath(), "pv.exe").getAbsolutePath();
+
+    Result result;
+    try {
+      result = Exec.execute(new String[] { pvExe, "-b", "-q", "java.exe" });
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    try {
+      String stdout = result.getStdout();
+      if (!stdout.contains("No matching processes found")) {
+        BufferedReader reader = new BufferedReader(new StringReader(stdout));
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+          boolean added = pids.add(new PID(Integer.parseInt(line)));
+          if (!added) {
+            Banner.warnBanner("Found duplicate PID? " + line);
+          }
+        }
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(result.toString(), e);
+    }
+
+    return pids;
+  }
+
+  static class PID {
+    private final int pid;
+
+    PID(int pid) {
+      this.pid = pid;
+    }
+
+    int getPid() {
+      return pid;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(pid);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof PID)) { return false; }
+      return ((PID) obj).pid == this.pid;
+    }
+
+    @Override
+    public int hashCode() {
+      return this.pid;
     }
   }
 

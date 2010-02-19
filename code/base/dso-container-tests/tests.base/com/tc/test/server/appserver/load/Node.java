@@ -12,7 +12,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.IntList;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 
 import java.net.URL;
@@ -76,9 +75,7 @@ public class Node implements Runnable {
     for (int i = 0; i < conversations.length; i++) {
       int expect = numRequests[i];
       if (expect == 0) {
-        if (Os.isUnix() && !Os.isMac()) {
-          ThreadDump.dumpProcessGroupMany(3, 500);
-        }
+        ThreadDump.dumpAllJavaProceses(3, 500);
 
         dumpRequestTimes();
 
@@ -87,10 +84,10 @@ public class Node implements Runnable {
 
       WebConversation wc = conversations[i];
 
-      for (int u = 0; u < validateUrls.length; u++) {
-        int actual = getResponseAsInt(wc, validateUrls[u]);
+      for (URL validateUrl : validateUrls) {
+        int actual = getResponseAsInt(wc, validateUrl);
         Assert.assertEquals(getSessionID(wc), expect, actual);
-        logger.info("validated value of " + expect + " for client " + i + " on " + validateUrls[u]);
+        logger.info("validated value of " + expect + " for client " + i + " on " + validateUrl);
         // Recording the request that was just made. This is needed for RequestCountTest.
         numRequests[i]++;
       }

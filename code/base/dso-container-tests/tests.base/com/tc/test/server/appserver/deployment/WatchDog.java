@@ -1,26 +1,26 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.test.server.appserver.deployment;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class WatchDog {
-  protected Log     logger = LogFactory.getLog(getClass());
+  protected Log        logger = LogFactory.getLog(getClass());
 
-  private Thread    threadToWatch;
-  private Timer     timer;
-  private TimerTask timerTask;
-  private TimerTask dumpTask;
+  private final Thread threadToWatch;
+  private final Timer  timer;
+  private TimerTask    timerTask;
+  private TimerTask    dumpTask;
 
-  private int       timeoutInSecs;
+  private final int    timeoutInSecs;
 
   public WatchDog(int timeOutInSecs) {
     timeoutInSecs = timeOutInSecs;
@@ -31,6 +31,7 @@ public class WatchDog {
   public void startWatching() {
     logger.debug("Watching thread");
     timerTask = new TimerTask() {
+      @Override
       public void run() {
         logger.error("Thread timeout..interrupting");
         threadToWatch.interrupt();
@@ -39,10 +40,9 @@ public class WatchDog {
     };
 
     dumpTask = new TimerTask() {
+      @Override
       public void run() {
-        if (Os.isUnix()) {
-          ThreadDump.dumpProcessGroup();
-        }
+        ThreadDump.dumpAllJavaProceses();
       }
     };
 

@@ -8,10 +8,12 @@ import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.StreamCollector;
 import com.tc.test.TCTestCase;
 import com.tc.test.TestConfigObject;
+import com.tc.util.runtime.ThreadDump.PID;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ThreadDumpTest extends TCTestCase {
 
@@ -56,4 +58,19 @@ public class ThreadDumpTest extends TCTestCase {
                || stdout.toLowerCase().indexOf("full thread dump") >= 0);
   }
 
+  public void testPidMechanismsAreSame() {
+    int jniPID = GetPid.getInstance().getPid();
+    int fallback = ThreadDump.getPIDUsingFallback().getPid();
+    assertEquals(jniPID, fallback);
+  }
+
+  public void testFindAllJavaPIDs() {
+    Set<PID> allPIDs = ThreadDump.findAllJavaPIDs();
+    System.err.println("ALL: " + allPIDs);
+
+    PID pid = ThreadDump.getPID();
+    System.err.println("PID: " + pid);
+
+    assertTrue(allPIDs.contains(pid));
+  }
 }
