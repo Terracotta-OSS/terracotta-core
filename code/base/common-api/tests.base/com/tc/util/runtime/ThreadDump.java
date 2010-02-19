@@ -18,6 +18,8 @@ import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ThreadDump {
 
@@ -154,23 +156,41 @@ public class ThreadDump {
 
     Result result;
     try {
-      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user,comm" });
+      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user,command" });
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
     try {
+      Pattern pattern = Pattern.compile("^(\\d+)\\s+(\\S+)\\s+(\\S+)(.*)$");
+
       String stdout = result.getStdout();
       BufferedReader reader = new BufferedReader(new StringReader(stdout));
-      String line;
+      reader.readLine(); // skip header line
 
       String user = System.getProperty("user.name");
+      String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        String[] tokens = line.split(" +");
-        if (tokens.length != 3) { throw new AssertionError("invalid number of tokens (" + tokens.length + "): " + line); }
-        if (tokens[1].equals(user) && tokens[2].endsWith("java")) {
-          boolean added = pids.add(new PID(Integer.parseInt(tokens[0])));
+
+        Matcher matcher = pattern.matcher(line);
+
+        if (!matcher.matches()) {
+          System.err.println("\nNON-MATCH: [" + line + "]\n");
+          continue;
+        }
+
+        String pid = matcher.group(1);
+        String uid = matcher.group(2);
+        String cmd = matcher.group(3);
+        String args = matcher.group(4);
+
+        if (uid.equals(user) && cmd.endsWith("java")) {
+          if (skip(args)) {
+            continue;
+          }
+
+          boolean added = pids.add(new PID(Integer.parseInt(pid)));
           if (!added) {
             Banner.warnBanner("Found duplicate PID? " + line);
           }
@@ -191,19 +211,36 @@ public class ThreadDump {
 
     Result result;
     try {
-      result = Exec.execute(new String[] { pvExe, "-b", "-q", "java.exe" });
+      result = Exec.execute(new String[] { pvExe, "-l", "-q", "java.exe" });
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
     try {
+      Pattern pattern = Pattern.compile("^(\\S+)\\s+(\\d+)\\s+(.*)$");
+
       String stdout = result.getStdout();
       if (!stdout.contains("No matching processes found")) {
         BufferedReader reader = new BufferedReader(new StringReader(stdout));
-        String line;
 
+        String line;
         while ((line = reader.readLine()) != null) {
-          boolean added = pids.add(new PID(Integer.parseInt(line)));
+
+          Matcher matcher = pattern.matcher(line);
+
+          if (!matcher.matches()) {
+            System.err.println("\nNON-MATCH: [" + line + "]\n");
+            continue;
+          }
+
+          String pid = matcher.group(2);
+          String cmd = matcher.group(3);
+
+          if (skip(cmd)) {
+            continue;
+          }
+
+          boolean added = pids.add(new PID(Integer.parseInt(pid)));
           if (!added) {
             Banner.warnBanner("Found duplicate PID? " + line);
           }
@@ -214,6 +251,12 @@ public class ThreadDump {
     }
 
     return pids;
+  }
+
+  private static boolean skip(String cmd) {
+    // try to filter out VMs we don't want to thread dump
+    return cmd.contains("-jar slave.jar") || cmd.contains("hudson.maven.agent.Main")
+           || cmd.contains("cruisecontrol-launcher.jar ") || cmd.contains(" org.jruby.Main ");
   }
 
   static class PID {
