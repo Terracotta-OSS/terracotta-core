@@ -75,7 +75,7 @@ public class Node implements Runnable {
     for (int i = 0; i < conversations.length; i++) {
       int expect = numRequests[i];
       if (expect == 0) {
-        ThreadDump.dumpAllJavaProceses(3, 500);
+        ThreadDump.dumpAllJavaProcesses(3, 500);
 
         dumpRequestTimes();
 

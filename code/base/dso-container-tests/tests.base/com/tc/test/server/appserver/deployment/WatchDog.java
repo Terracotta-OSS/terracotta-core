@@ -42,7 +42,7 @@ public class WatchDog {
     dumpTask = new TimerTask() {
       @Override
       public void run() {
-        ThreadDump.dumpAllJavaProceses();
+        ThreadDump.dumpAllJavaProcesses();
       }
     };
 

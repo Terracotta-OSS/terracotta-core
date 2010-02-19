@@ -555,7 +555,7 @@ public class TCTestCase extends TestCase {
   }
 
   private void doThreadDump() {
-    ThreadDump.dumpAllJavaProceses(numThreadDumps, dumpInterval);
+    ThreadDump.dumpAllJavaProcesses(numThreadDumps, dumpInterval);
   }
 
   /**

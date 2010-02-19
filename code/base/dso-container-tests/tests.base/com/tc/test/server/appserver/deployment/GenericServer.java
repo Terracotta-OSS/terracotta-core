@@ -283,7 +283,7 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
 
   private void dumpThreadsAndRethrow(Exception e) throws Exception {
     try {
-      ThreadDump.dumpAllJavaProceses(3, 1000);
+      ThreadDump.dumpAllJavaProcesses(3, 1000);
     } catch (Throwable t) {
       t.printStackTrace();
     } finally {

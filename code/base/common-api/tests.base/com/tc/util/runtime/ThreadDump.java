@@ -80,11 +80,11 @@ public class ThreadDump {
     }
   }
 
-  public static void dumpAllJavaProceses() {
-    dumpAllJavaProceses(1, 0L);
+  public static void dumpAllJavaProcesses() {
+    dumpAllJavaProcesses(1, 0L);
   }
 
-  public static void dumpAllJavaProceses(int iterations, long delay) {
+  public static void dumpAllJavaProcesses(int iterations, long delay) {
     dumpThreadsMany(iterations, delay, findAllJavaPIDs());
   }
 
