@@ -26,16 +26,16 @@ if not exist %ehcache_core% (
   exit 1
 )
 
-for %%f in (..\..\..\ehcache\hibernate-core*.jar) do (
-  set hibernate_core=%%f
+for %%f in (..\..\..\ehcache\hibernate*.jar) do (
+  set hibernate=%%f
 )
 
-if not exist %hibernate_core% (
-  echo "Couldn't find hibernate-core jar. Do you have a full kit?"
+if not exist %hibernate% (
+  echo "Couldn't find hibernate jar. Do you have a full kit?"
   exit 1
 )
 
-set classpath=target\classes;%tc_install_dir%\lib\servlet-api-2.5-6.1.8.jar;%ehcache_core%;%hibernate_core%
+set classpath=target\classes;%tc_install_dir%\lib\servlet-api-2.5-6.1.8.jar;%ehcache_core%;%hibernate%
 
 for %%f in (src\main\webapp\WEB-INF\lib\*.jar) do (
   set classpath=%classpath%;%%f
@@ -68,10 +68,10 @@ if not %errorlevel% == 0  (
   exit /b 1
 )
 
-rem packaging hibernate-core
-xcopy /y /q %tc_install_dir%\ehcache\hibernate-core*.jar target\WEB-INF\lib 1> NUL
+rem packaging hibernate
+xcopy /y /q %tc_install_dir%\ehcache\hibernate*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package hibernate-core. Do you have a complete kit?"
+  echo "Couldn't package hibernate. Do you have a complete kit?"
   exit /b 1
 )
 
