@@ -67,6 +67,8 @@ public class ThreadDump {
   }
 
   private static void dumpThreadsMany(int iterations, long delay, Set<PID> pids) {
+    boolean multiple = pids.size() > 1;
+
     for (int i = 0; i < iterations; i++) {
       for (PID pid : pids) {
         if (Os.isWindows()) {
@@ -74,8 +76,11 @@ public class ThreadDump {
         } else {
           doUnixDump(pid);
         }
+        if (multiple) {
+          // delay a bit to help prevent overlapped output
+          ThreadUtil.reallySleep(50);
+        }
       }
-
       ThreadUtil.reallySleep(delay);
     }
   }
