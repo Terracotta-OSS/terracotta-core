@@ -256,7 +256,9 @@ public class ThreadDump {
   private static boolean skip(String cmd) {
     // try to filter out VMs we don't want to thread dump
     return cmd.contains("-jar slave.jar") || cmd.contains("hudson.maven.agent.Main")
-           || cmd.contains("cruisecontrol-launcher.jar ") || cmd.contains(" org.jruby.Main ");
+           || cmd.contains("cruisecontrol-launcher.jar ")
+           || (cmd.contains(" org.jruby.Main ") && cmd.contains("build-tc.rb"))
+           || (cmd.contains(" org.codehaus.classworlds.Launcher ") && cmd.contains("-Dmaven.home="));
   }
 
   static class PID {
