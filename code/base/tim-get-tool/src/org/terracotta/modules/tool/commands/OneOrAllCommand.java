@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.Module;
 import org.terracotta.modules.tool.ModuleHelper;
 import org.terracotta.modules.tool.Modules;
+import org.terracotta.modules.tool.exception.ModuleNotFoundException;
 
 import java.util.List;
 
@@ -41,6 +42,7 @@ abstract class OneOrAllCommand extends ModuleOperatorCommand {
     String arglist = StringUtils.join(args.iterator(), " ");
     out.println("No module found matching the arguments specified: " + arglist);
     out.println("Check that you've spelled them correctly or are in the right order.");
+    throw new ModuleNotFoundException(arglist);
   }
 
   protected boolean hasAllOption(CommandLine cli) {

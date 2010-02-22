@@ -18,6 +18,7 @@ import org.terracotta.modules.tool.commands.ListCommand;
 import org.terracotta.modules.tool.commands.UpdateCommand;
 import org.terracotta.modules.tool.commands.UpgradeCommand;
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.exception.ModuleNotFoundException;
 import org.terracotta.modules.tool.exception.RemoteIndexIOException;
 import org.terracotta.modules.tool.util.CommandUtil;
 
@@ -67,10 +68,12 @@ public class TIMGetTool {
       System.out.println("Please make sure you are connected to the internet.");
       System.out.println();
       System.out.flush();
-
+      System.exit(2);
+    } catch (ModuleNotFoundException e) {
+      System.exit(3);
     } catch (Exception e) {
       e.printStackTrace();
-      System.exit(2);
+      System.exit(100);
     }
   }
   
