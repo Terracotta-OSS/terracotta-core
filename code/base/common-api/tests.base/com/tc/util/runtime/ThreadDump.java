@@ -156,7 +156,10 @@ public class ThreadDump {
 
     Result result;
     try {
-      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user,command" });
+      // XXX: We could support better filtering on solaris eventually using either /usr/ucb/ps and/or pargs
+      // XXX: For now though we end up thread dumping all VMs (like we did before)
+      String cmdArg = Os.isSolaris() ? "comm" : "command";
+      result = Exec.execute(new String[] { "/bin/ps", "-eo", "pid,user," + cmdArg });
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
