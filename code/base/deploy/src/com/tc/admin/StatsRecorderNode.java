@@ -13,6 +13,8 @@ import com.tc.admin.model.IServer;
 import java.awt.Component;
 import java.util.Map;
 
+import javax.swing.SwingUtilities;
+
 public class StatsRecorderNode extends ComponentNode implements IClusterStatsListener {
   protected ApplicationContext appContext;
   private IClusterModel        clusterModel;
@@ -33,7 +35,7 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
     clusterModel.addPropertyChangeListener(new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
       IServer activeCoord = getActiveCoordinator();
-      if (activeCoord != null) {
+      if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
         activeCoord.addClusterStatsListener(this);
       }
     }
@@ -67,14 +69,25 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
     }
 
     @Override
+    protected void handleReady() {
+      IClusterModel theClusterModel = getClusterModel();
+      if (theClusterModel == null) { return; }
+
+      if (theClusterModel.isReady()) {
+        IServer activeCoord = theClusterModel.getActiveCoordinator();
+        if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
+          activeCoord.addClusterStatsListener(StatsRecorderNode.this);
+        }
+      }
+    }
+
+    @Override
     public void handleActiveCoordinator(IServer oldActive, IServer newActive) {
       if (oldActive != null) {
         oldActive.removeClusterStatsListener(StatsRecorderNode.this);
       }
-      if (newActive != null) {
-        if (newActive.isClusterStatsSupported()) {
-          newActive.addClusterStatsListener(StatsRecorderNode.this);
-        }
+      if (newActive != null && newActive.isClusterStatsSupported()) {
+        newActive.addClusterStatsListener(StatsRecorderNode.this);
       }
     }
   }
@@ -135,10 +148,18 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
   }
 
   public void sessionStarted(String sessionId) {
-    showRecording(true);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showRecording(true);
+      }
+    });
   }
 
   public void sessionStopped(String sessionId) {
-    showRecording(false);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showRecording(false);
+      }
+    });
   }
 }

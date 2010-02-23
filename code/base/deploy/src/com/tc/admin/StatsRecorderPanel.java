@@ -153,10 +153,10 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
       clusterModel.addServerStateListener(serverListener = new ServerListener());
       if (clusterModel.isReady()) {
         IServer activeCoord = clusterModel.getActiveCoordinator();
-        if (activeCoord != null) {
+        if (activeCoord != null && activeCoord.isClusterStatsSupported()) {
           activeCoord.addClusterStatsListener(this);
+          initiateStatsGathererConnectWorker();
         }
-        initiateStatsGathererConnectWorker();
       } else {
         messageLabel.setText(appContext.getString("cluster.not.ready.msg"));
       }
@@ -237,7 +237,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     gbc.gridx++;
     bottomPanel.add(samplePeriodSpinner = new XSpinner(), gbc);
     samplePeriodSpinner.setModel(new SpinnerNumberModel(Integer.valueOf(DEFAULT_STATS_POLL_PERIOD_SECONDS), Integer
-        .valueOf(1), null, Integer.valueOf(1)));
+        .valueOf(1), Integer.valueOf(999), Integer.valueOf(1)));
     gbc.gridx++;
     gbc.weightx = 1.0;
     gbc.anchor = GridBagConstraints.EAST;
@@ -299,9 +299,11 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         IServer activeCoord = theClusterModel.getActiveCoordinator();
         if (activeCoord != null) {
           messageLabel.setText(appContext.getString("initializing"));
-          initiateStatsGathererConnectWorker();
+          if (activeCoord.isClusterStatsSupported()) {
+            activeCoord.addClusterStatsListener(StatsRecorderPanel.this);
+            initiateStatsGathererConnectWorker();
+          }
           activeCoord.addClientConnectionListener(StatsRecorderPanel.this);
-          activeCoord.addClusterStatsListener(StatsRecorderPanel.this);
         }
       } else {
         removeAll();
@@ -323,11 +325,11 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
       }
 
       if (newActive != null) {
-        if (theClusterModel.isReady()) {
+        if (newActive.isClusterStatsSupported()) {
+          newActive.addClusterStatsListener(StatsRecorderPanel.this);
           initiateStatsGathererConnectWorker();
         }
         newActive.addClientConnectionListener(StatsRecorderPanel.this);
-        newActive.addClusterStatsListener(StatsRecorderPanel.this);
       }
     }
   }

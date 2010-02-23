@@ -566,6 +566,9 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     clusterPanel.activated();
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
+      if (activeCoord.isClusterStatsSupported()) {
+        activeCoord.addClusterStatsListener(ClusterNode.this);
+      }
       activeCoord.addPropertyChangeListener(ClusterNode.this);
     }
   }
@@ -600,11 +603,11 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     return activeCoord != null ? activeCoord.getActivateTime() : -1;
   }
 
-  boolean recordingClusterStats() {
+  synchronized boolean recordingClusterStats() {
     return isRecordingClusterStats;
   }
 
-  boolean isProfilingLocks() {
+  synchronized boolean isProfilingLocks() {
     return isProfilingLocks;
   }
 
@@ -675,12 +678,12 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     monitoringTaskFuture = null;
   }
 
-  public void showRecordingStats(boolean recordingStats) {
+  public synchronized void showRecordingStats(boolean recordingStats) {
     isRecordingClusterStats = recordingStats;
     testStartMonitoringTask();
   }
 
-  public void showProfilingLocks(boolean profilingLocks) {
+  public synchronized void showProfilingLocks(boolean profilingLocks) {
     isProfilingLocks = profilingLocks;
     testStartMonitoringTask();
   }
@@ -780,11 +783,19 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   }
 
   public void sessionStarted(String sessionId) {
-    showRecordingStats(true);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showRecordingStats(true);
+      }
+    });
   }
 
   public void sessionStopped(String sessionId) {
-    showRecordingStats(false);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showRecordingStats(false);
+      }
+    });
   }
 
   public void propertyChange(PropertyChangeEvent evt) {
