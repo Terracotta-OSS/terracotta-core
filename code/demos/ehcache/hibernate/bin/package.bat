@@ -22,17 +22,22 @@ for %%f in (..\..\..\ehcache\ehcache-core*.jar) do (
 )
 
 if not exist %ehcache_core% (
-  echo "Couldn't find ehcache-core jar. Do you have a full kit?"
-  exit 1
+  echo Couldn't find ehcache-core jar. Do you have a full kit?
+  exit /b 1
 )
 
 for %%f in (..\..\..\ehcache\hibernate*.jar) do (
   set hibernate=%%f
 )
 
+if not defined hibernate (
+  echo Couldn't find Hibernate jar. Download from Hibernate website. Check README for details.
+  exit /b 1
+)
+
 if not exist %hibernate% (
-  echo "Couldn't find hibernate jar. Do you have a full kit?"
-  exit 1
+  echo Couldn't find Hibernate jar. Do you have a full kit?
+  exit /b 1
 )
 
 set classpath=target\classes;%tc_install_dir%\lib\servlet-api-2.5-6.1.8.jar;%ehcache_core%;%hibernate%
@@ -44,7 +49,7 @@ for %%f in (src\main\webapp\WEB-INF\lib\*.jar) do (
 %JAVA_HOME%\bin\javac -d target\classes -sourcepath src\main\java -cp %classpath% src\main\java\org\hibernate\tutorial\*.java  src\main\java\org\hibernate\tutorial\domain\*.java  src\main\java\org\hibernate\tutorial\util\*.java  src\main\java\org\hibernate\tutorial\web\*.java
 
 if not %errorlevel% == 0 ( 
-  echo "Failed to compile demo. Do you have a full kit with Ehcache core?"
+  echo Failed to compile demo. Do you have a full kit with Ehcache core?
   exit /b 1
 )
 
@@ -57,35 +62,35 @@ mkdir target\WEB-INF\lib 2> NUL
 rem packaging ehcache-terracotta
 xcopy /y /q %tc_install_dir%\ehcache\ehcache-terracotta*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package ehcache-terracotta. Do you have a complete kit?"
+  echo Couldn't package ehcache-terracotta. Do you have a complete kit?
   exit /b 1
 )
 
 rem packaging ehcache-core
 xcopy /y /q %tc_install_dir%\ehcache\ehcache-core*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package ehcache-core. Do you have a complete kit?"
+  echo Couldn't package ehcache-core. Do you have a complete kit?
   exit /b 1
 )
 
 rem packaging hibernate
 xcopy /y /q %tc_install_dir%\ehcache\hibernate*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package hibernate. Do you have a complete kit?"
+  echo Couldn't package hibernate. Do you have a complete kit?
   exit /b 1
 )
 
 rem packaging slf4j-api
 xcopy /y /q %tc_install_dir%\ehcache\slf4j-api*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package slf4j-api. Do you have a complete kit?"
+  echo Couldn't package slf4j-api. Do you have a complete kit?
   exit /b 1
 )
 
 rem packaging slf4j-jdk14
 xcopy /y /q %tc_install_dir%\ehcache\slf4j-jdk14*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package slf4j-jdk14. Do you have a complete kit?"
+  echo Couldn't package slf4j-jdk14. Do you have a complete kit?
   exit /b 1
 )
 
@@ -94,12 +99,12 @@ set warname=Events.war
 cd target
 %JAVA_HOME%\bin\jar cf %warname% *
 if %errorlevel% == 0 (
-  echo "%warname% has been created successfully. Deploying..."
+  echo %warname% has been created successfully. Deploying...
   xcopy /y /q %warname% %jetty1% 1> NUL
   xcopy /y /q %warname% %jetty2% 1> NUL
-  echo "Done."
+  echo Done.
 ) else (
-  echo "Error packaging %warname%"
+  echo Error packaging %warname%
 )
 
 endlocal

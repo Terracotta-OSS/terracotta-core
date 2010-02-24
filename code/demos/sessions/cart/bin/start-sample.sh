@@ -15,6 +15,10 @@ root=`cd $root && pwd`
 
 $root/bin/package.sh
 
+if [ $? -ne 0 ]; then 
+  exit 1
+fi
+
 $root/bin/start-jetty.sh 9081
 echo "Go to: http://localhost:9081/Cart"
 echo

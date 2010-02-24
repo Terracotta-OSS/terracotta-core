@@ -10,7 +10,7 @@ setlocal
 set jetty_instance=%1
 
 if  "%jetty_instance%" == "" ( 
-  echo "Need to specify which instance of Jetty: 9081 or 9082"
+  echo Need to specify which instance of Jetty: 9081 or 9082
   exit /b 1
 )
 
@@ -23,7 +23,7 @@ set start_jar=%jetty_home%\start.jar
 set /a stop_port=jetty_instance + 2
 
 cd %jetty_work_dir%
-echo "Stopping Jetty %jetty_instance%..."
+echo Stopping Jetty %jetty_instance%...
 %JAVA_HOME%\bin\java -Djetty.home=%jetty_home% -DSTOP.PORT=%stop_port% -DSTOP.KEY=secret -jar %start_jar% --stop 
 
 endlocal

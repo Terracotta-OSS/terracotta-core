@@ -23,6 +23,10 @@ if [ ! -f $ehcache_core ]; then
   exit 1
 fi
 hibernate_jar=`\ls -1 $tc_install_dir/ehcache/hibernate*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+if [ -z $hibernate_jar ]; then
+  echo "Couldn't find hibernate jar. Do you have a full kit?"
+  exit 1
+fi
 if [ ! -f $hibernate_jar ]; then
   echo "Couldn't find hibernate jar. Do you have a full kit?"
   exit 1

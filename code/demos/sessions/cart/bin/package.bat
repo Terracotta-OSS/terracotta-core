@@ -22,7 +22,7 @@ mkdir target\WEB-INF\lib 2> NUL
 rem packaging terracotta-session
 xcopy /y /q %tc_install_dir%\sessions\terracotta-session*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo "Couldn't package terracotta-session. Do you have a complete kit?"
+  echo Couldn't package terracotta-session. Do you have a complete kit?
   exit /b 1
 )
 
@@ -31,12 +31,13 @@ set warname=Cart.war
 cd target
 %JAVA_HOME%\bin\jar cf %warname% *
 if %errorlevel% == 0 (
-  echo "%warname% has been created successfully. Deploying..."
+  echo %warname% has been created successfully. Deploying...
   xcopy /y /q %warname% %jetty1% 1> NUL
   xcopy /y /q %warname% %jetty2% 1> NUL
-  echo "Done."
+  echo Done.
 ) else (
-  echo "Error packaging %warname%"
+  echo Error packaging %warname%
+  exit /b 1
 )
 
 endlocal
