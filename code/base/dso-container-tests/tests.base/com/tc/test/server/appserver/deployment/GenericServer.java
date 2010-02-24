@@ -146,6 +146,11 @@ public class GenericServer extends AbstractStoppable implements WebApplicationSe
         break;
     }
 
+    if (Os.isUnix() && new File("/dev/urandom").exists()) {
+      // prevent hangs reading from /dev/random
+      parameters.appendSysProp("java.security.egd", "file:/dev/./urandom");
+    }
+
     if (TestConfigObject.getInstance().isSpringTest()) {
       LOG.debug("Creating proxy for Spring test...");
       proxyBuilderMap.put(RmiServiceExporter.class, new RMIProxyBuilder());
