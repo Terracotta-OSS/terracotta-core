@@ -6,7 +6,7 @@
 
   <groupId>org.terracotta.samples.ehcache.hibernate</groupId>
   <artifactId>events</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>3.3.0-SNAPSHOT</version>
   <name>Events</name>
   <packaging>war</packaging>
 
