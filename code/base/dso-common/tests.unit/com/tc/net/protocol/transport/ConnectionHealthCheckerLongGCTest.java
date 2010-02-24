@@ -53,15 +53,19 @@ import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
-  CommunicationsManager serverComms;
-  CommunicationsManager clientComms;
-  NetworkListener       serverLsnr;
-  TCLogger              logger    = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
-  TCPProxy              proxy     = null;
-  int                   proxyPort = 0;
+  CommunicationsManager                                   serverComms;
+  CommunicationsManager                                   clientComms;
+  NetworkListener                                         serverLsnr;
+  TCLogger                                                logger       = TCLogging
+                                                                           .getLogger(ConnectionHealthCheckerImpl.class);
+  TCPProxy                                                proxy        = null;
+  int                                                     proxyPort    = 0;
+  private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<ClientMessageChannel>();
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     setUp(serverHCConf, clientHCConf, false);
@@ -69,7 +73,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf, boolean enableReconnect)
       throws Exception {
-    setUp(serverHCConf, clientHCConf, enableReconnect, false);
+    setUp(serverHCConf, clientHCConf, enableReconnect, enableReconnect);
   }
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf, boolean enableReconnect,
@@ -88,7 +92,8 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
-                                                                     new L1ReconnectConfigImpl());
+                                                                     new L1ReconnectConfigImpl(true, 120000, 5000, 16,
+                                                                                               32));
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -147,7 +152,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   ClientMessageChannel createClientMsgCh(CommunicationsManager clientComm) {
     ClientMessageChannel clientMsgCh = clientComm
-        .createClientChannel(new NullSessionManager(), -1, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
+        .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
                              1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }));
 
@@ -165,6 +170,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
         }
       }
     });
+    channelQueue.add(clientMsgCh);
     return clientMsgCh;
   }
 
@@ -246,7 +252,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     /* By Now, the client should have been chucked out */
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
-
+    
   }
 
   public void testL1SocketConnectL2() throws Exception {
@@ -378,7 +384,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     }
   }
 
-  public void testL1SocketConnectTimeoutL2AndL1Reconnect() throws Exception {
+  public void testL1SocketConnectTimeoutL2AndL1NOReconnect() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(4000, 1000, 2, "ClientCommsHC-Test34", true);
     this.setUp(null, null, true);
 
@@ -436,17 +442,10 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     }
 
     proxy.setDelay(0);
-    /*
-     * Client is suppose to start the reconnect immediately after its disconnect. Lets remove the obstacle from the road
-     */
-    count = 0;
-    while (!connHC.isRunning() || (connHC.getTotalConnsUnderMonitor() != 1)) {
-      count++;
-      if (count % 10 == 0) System.out.println("waiting for client to rejoin");
-      ThreadUtil.reallySleep(1000);
-    }
 
-    // let the init socket connect settle down
+    /*
+     * client shouldn't try reconnecting to this server as HC disconnected the connection.
+     */
     long sleepTime = getINITstageScoketConnectResultTime(upgradedHcConfig);
     System.out.println("Sleeping for " + sleepTime);
     ThreadUtil.reallySleep(sleepTime);
@@ -456,8 +455,8 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
      * connection leak. DEV-1963
      */
     try {
-      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 2) {
-        System.out.println("XXX waiting for conn estd count to be 2");
+      while (getNetInfoEstablishedConnectionsCount(serverLsnr.getBindPort()) != 0) {
+        System.out.println("XXX waiting for conn estd count to be 0");
         ThreadUtil.reallySleep(1000);
       }
     } catch (SigarException se) {
@@ -626,8 +625,21 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
   protected void closeCommsMgr() throws Exception {
     if (serverLsnr != null) serverLsnr.stop(1000);
-    if (serverComms != null) serverComms.shutdown();
-    if (clientComms != null) clientComms.shutdown();
+    if (serverComms != null) {
+      serverComms.shutdown();
+    }
+    if (clientComms != null) {
+      clientComms.shutdown();
+    }
+    closeClientMessageChannels();
+  }
+
+  private void closeClientMessageChannels() {
+    Iterator<ClientMessageChannel> i = channelQueue.iterator();
+    while (i.hasNext()) {
+      i.next().close();
+    }
+    channelQueue.clear();
   }
 
   public void tearDown() throws Exception {

@@ -41,15 +41,19 @@ import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
-  CommunicationsManager serverComms;
-  CommunicationsManager clientComms;
-  NetworkListener       serverLsnr;
-  TCLogger              logger    = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
-  TCPProxy              proxy     = null;
-  int                   proxyPort = 0;
+  CommunicationsManager                                   serverComms;
+  CommunicationsManager                                   clientComms;
+  NetworkListener                                         serverLsnr;
+  TCLogger                                                logger       = TCLogging
+                                                                           .getLogger(ConnectionHealthCheckerImpl.class);
+  TCPProxy                                                proxy        = null;
+  int                                                     proxyPort    = 0;
+  private final LinkedBlockingQueue<ClientMessageChannel> channelQueue = new LinkedBlockingQueue<ClientMessageChannel>();
 
   protected void setUp(HealthCheckerConfig serverHCConf, HealthCheckerConfig clientHCConf) throws Exception {
     super.setUp();
@@ -66,7 +70,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
-                                                                     new L1ReconnectConfigImpl());
+                                                                     new L1ReconnectConfigImpl(true, 120000, 5000, 16,
+                                                                                               32));
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
@@ -125,9 +130,8 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
   ClientMessageChannel createClientMsgChProxied(CommunicationsManager clientCommsMgr) {
 
     ClientMessageChannel clientMsgCh = (clientCommsMgr == null ? clientComms : clientCommsMgr)
-        .createClientChannel(new NullSessionManager(), -1 /* Unlimited Tries */, serverLsnr.getBindAddress()
-            .getHostAddress(), proxyPort, 1000,
-                             new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
+        .createClientChannel(new NullSessionManager(), 0, serverLsnr.getBindAddress().getHostAddress(), proxyPort,
+                             1000, new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(serverLsnr
                                  .getBindAddress().getHostAddress(), proxyPort) }));
 
     clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
@@ -256,8 +260,21 @@ public class ConnectionHealthCheckerReconnectTest extends TCTestCase {
 
   protected void closeCommsMgr() throws Exception {
     if (serverLsnr != null) serverLsnr.stop(1000);
-    if (serverComms != null) serverComms.shutdown();
-    if (clientComms != null) clientComms.shutdown();
+    if (serverComms != null) {
+      serverComms.shutdown();
+    }
+    if (clientComms != null) {
+      clientComms.shutdown();
+    }
+    closeClientMessageChannels();
+  }
+
+  private void closeClientMessageChannels() {
+    Iterator<ClientMessageChannel> i = channelQueue.iterator();
+    while (i.hasNext()) {
+      i.next().close();
+    }
+    channelQueue.clear();
   }
 
   public void tearDown() throws Exception {
