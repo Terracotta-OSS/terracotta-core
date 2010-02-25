@@ -16,6 +16,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -107,6 +108,7 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
 
   private class ThreadDumpTreeSelectionListener implements TreeSelectionListener {
     public void valueChanged(TreeSelectionEvent e) {
+      if (tornDown.get()) { return; }
       ThreadDumpTreeNode tdtn = updateSelectedContent();
       lastSelectedThreadDumpTreeNode = tdtn;
       setControlsEnabled(tdtn != null);
@@ -200,6 +202,7 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
   }
 
   public void treeNodesChanged(TreeModelEvent e) {
+    if (tornDown.get()) { return; }
     ClusterThreadDumpEntry tde = (ClusterThreadDumpEntry) e.getTreePath().getPathComponent(1);
     boolean isDone = tde.isDone();
     exportButton.setEnabled(isDone);
@@ -221,8 +224,12 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     /**/
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     threadDumpTreeModel.removeTreeModelListener(this);
 
     super.tearDown();

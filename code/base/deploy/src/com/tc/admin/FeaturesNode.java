@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServerNotification;
 import javax.management.Notification;
@@ -166,6 +167,8 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   protected boolean testUnregisterFeature(ObjectName on) {
+    if (tornDown.get()) { return false; }
+
     if (StringUtils.equals("org.terracotta", on.getDomain()) && StringUtils.equals("Loader", on.getKeyProperty("type"))) {
       String symbolicName = on.getKeyProperty("feature");
       Feature feature = activeFeatureMap.get(symbolicName);
@@ -204,6 +207,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       if (type.equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (tornDown.get()) { return; }
             if (testRegisterFeature(mbsn.getMBeanName())) {
               ensureFeatureNodes();
             }
@@ -212,6 +216,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       } else if (type.equals(MBeanServerNotification.UNREGISTRATION_NOTIFICATION)) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (tornDown.get()) { return; }
             testUnregisterFeature(mbsn.getMBeanName());
           }
         });
@@ -253,11 +258,15 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
    * Generally a node being removed is to be torn down but this node needs to come and go dependent on whether or not it
    * has any children.
    */
-  private boolean noTearDown = false;
+  private boolean             noTearDown = false;
+
+  private final AtomicBoolean tornDown   = new AtomicBoolean(false);
 
   @Override
   public void tearDown() {
     if (noTearDown) { return; }
+
+    if (!tornDown.compareAndSet(false, true)) { return; }
 
     removeMBeanServerDelegateListener();
 
