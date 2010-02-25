@@ -19,7 +19,7 @@
 	
   <property name="warfile"        value="Events.war"/>
   <property name="servlet.jar"    value="${basedir}/../../../lib/servlet-api-2.5-6.1.8.jar"/>
-  <property name="ehcache.jar"    value="${basedir}/src/main/webapp/WEB-INF/lib/ehcache-core-2.0.0-SNAPSHOT.jar"/>
+  <property name="ehcache.jar"    value="${basedir}/src/main/webapp/WEB-INF/lib/ehcache-core-2.0.0.jar"/>
   <property name="hibernate.jar"  value="${basedir}/src/main/webapp/WEB-INF/lib/hibernate-core-3.3.1.GA.jar"/>
   <property name="slf4j-api.jar"  value="${basedir}/src/main/webapp/WEB-INF/lib/slf4j-api-1.5.8.jar"/>
   <property name="slf4j-impl.jar" value="${basedir}/src/main/webapp/WEB-INF/lib/slf4j-jdk14-1.5.8.jar"/>
