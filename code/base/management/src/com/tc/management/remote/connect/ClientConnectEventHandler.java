@@ -313,14 +313,23 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     }
 
     synchronized void unregisterBean(ObjectName name, boolean remove) {
-      if (beanNames.contains(name)) {
+      ObjectName modifiedObjName;
+
+      try {
+        modifiedObjName = TerracottaManagement.addNodeInfo(name, channel.getRemoteAddress());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      if (beanNames.contains(modifiedObjName)) {
         try {
-          l2MBeanServer.unregisterMBean(name);
+          l2MBeanServer.unregisterMBean(modifiedObjName);
+          logger.info("Unregistered Tunneled MBean '" + modifiedObjName + "'");
         } catch (Exception e) {
-          logger.warn("Unable to unregister DSO client bean[" + name + "]", e);
+          logger.warn("Unable to unregister DSO client bean[" + modifiedObjName + "]", e);
         } finally {
           if (remove) {
-            beanNames.remove(name);
+            beanNames.remove(modifiedObjName);
           }
         }
       }
