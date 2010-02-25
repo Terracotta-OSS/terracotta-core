@@ -1,5 +1,6 @@
 package org.hibernate.tutorial.web;
 
+import org.hibernate.Criteria;
 import org.hibernate.tutorial.domain.Event;
 import org.hibernate.tutorial.util.HibernateUtil;
 
@@ -80,7 +81,9 @@ public class EventManagerServlet extends HttpServlet {
   }
 
   private void listEvents(PrintWriter out, SimpleDateFormat dateFormatter) {
-    List result = HibernateUtil.getSessionFactory().getCurrentSession().createCriteria(Event.class).list();
+    Criteria crit = HibernateUtil.getSessionFactory().getCurrentSession().createCriteria(Event.class);
+    crit.setCacheable(true);
+    List result = crit.list();
     if (result.size() > 0) {
       out.println("<h2>Events in database:</h2>");
       out.println("<table border='1'>");

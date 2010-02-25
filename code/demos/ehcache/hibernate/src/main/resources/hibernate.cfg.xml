@@ -5,6 +5,7 @@
 
 <hibernate-configuration>
   <session-factory>
+    <property name="cache.use_query_cache">true</property>
     <property name="cache.region_prefix">Events</property>
     <property name="generate_statistics">true</property>
 		

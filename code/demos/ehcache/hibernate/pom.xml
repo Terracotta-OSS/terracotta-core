@@ -23,7 +23,6 @@
       <version>3.3.1.GA</version>
     </dependency>
 
-    <!-- Because this is a web app, we also have a dependency on the servlet api. -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
@@ -31,14 +30,12 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- Hibernate uses slf4j for logging, for our purposes here use the simple backend -->
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.4.3</version>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.5.2</version>
     </dependency>
 
-    <!-- Hibernate gives you a choice of bytecode providers between cglib and javassist -->
     <dependency>
       <groupId>javassist</groupId>
       <artifactId>javassist</artifactId>
