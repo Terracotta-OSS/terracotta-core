@@ -82,31 +82,39 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     writerComm.cleanupChannel(channel, callback);
   }
 
-  public void detach(final SocketChannel channel) throws IOException {
+  public void detach(final SocketChannel channel) {
     if (isReaderThread()) {
       readerComm.unregister(channel);
     } else {
+      final CountDownLatch latch = new CountDownLatch(1);
       readerComm.addSelectorTask(new Runnable() {
         public void run() {
           readerComm.unregister(channel);
+          latch.countDown();
         }
       });
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     if (isWriterThread()) {
       writerComm.unregister(channel);
-      channel.configureBlocking(true);
     } else {
+      final CountDownLatch latch = new CountDownLatch(1);
       writerComm.addSelectorTask(new Runnable() {
         public void run() {
           writerComm.unregister(channel);
-          try {
-            channel.configureBlocking(true);
-          } catch (IOException e) {
-            logger.info("Channel configure blocking IOException " + e);
-          }
+          latch.countDown();
         }
       });
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

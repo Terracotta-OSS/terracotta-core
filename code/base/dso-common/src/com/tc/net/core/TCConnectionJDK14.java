@@ -166,6 +166,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   private Socket detachImpl() throws IOException {
     commWorker.detach(channel);
+    channel.configureBlocking(true);
     return channel.socket();
   }
 
