@@ -1076,8 +1076,10 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     if (svtClassLoader == null) {
       String tcInstallRoot = System.getProperty("tc.install-root");
       if (tcInstallRoot != null) {
-        String timSvtPath = tcInstallRoot + File.separator + "modules" + File.separator + "org" + File.separator
-                            + "terracotta" + File.separator + "modules" + File.separator + "tim-svt";
+        String timSvtPath = new StringBuilder(tcInstallRoot).append(File.separator).append("platform")
+            .append(File.separator).append("modules").append(File.separator).append("org").append(File.separator)
+            .append("terracotta").append(File.separator).append("modules").append(File.separator).append("tim-svt")
+            .toString();
         File timSvtRoot = new File(timSvtPath);
         if (timSvtRoot.exists()) {
           File[] versions = timSvtRoot.listFiles();
