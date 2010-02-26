@@ -58,10 +58,13 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   }
 
   public void lock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level) {
-    if (!validateAndQueueIfNecessary(lid, cid, tid, level, RequestType.LOCK)) { return; }
+    if (!queueIfNecessary(lid, cid, tid, level, RequestType.LOCK)) { return; }
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.lock(cid, tid, level, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -69,10 +72,13 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   }
 
   public void tryLock(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level, long timeout) {
-    if (!validateAndQueueIfNecessary(lid, cid, tid, level, RequestType.TRY_LOCK, timeout)) { return; }
+    if (!queueIfNecessary(lid, cid, tid, level, RequestType.TRY_LOCK, timeout)) { return; }
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.tryLock(cid, tid, level, timeout, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -85,6 +91,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     // Lock might be removed from the lock store in the call to the unlock
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.unlock(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -96,6 +105,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.queryLock(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -107,6 +119,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.interrupt(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -137,6 +152,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return addNotifiedWaitersTo;
+      }
       return lock.notify(cid, tid, action, addNotifiedWaitersTo, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -148,6 +166,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
+      if(!isClientAlive(cid)) {
+        return;
+      }
       lock.wait(cid, tid, timeout, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -269,27 +290,31 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     }
   }
 
-  private boolean validateAndQueueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
+  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
                                               RequestType type) {
-    return validateAndQueueIfNecessary(lid, cid, tid, level, type, -1);
+    return queueIfNecessary(lid, cid, tid, level, type, -1);
   }
 
-  private boolean validateAndQueueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
+  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
                                               RequestType type, long timeout) {
     statusLock.readLock().lock();
     try {
       if (!isStarted) {
         queueRequest(lid, cid, tid, level, type, timeout);
         return false;
-      } else if (!this.channelManager.isActiveID(cid)) {
-        logger.warn(type + " message received from dead client -- ignoring the message.\n"
-                    + "Message Context: [LockID=" + lid + ", NodeID=" + cid + ", ThreadID=" + tid + "]");
-        return false;
-      }
+      } 
       return true;
     } finally {
       statusLock.readLock().unlock();
     }
+  }
+
+  private boolean isClientAlive(ClientID cid) {
+    if (!this.channelManager.isActiveID(cid)) {
+      logger.warn("Lock Manager ignoring message received from dead client");
+      return false;
+    }
+    return true;
   }
 
   private boolean isValidStateFor(LockID lid, ClientID cid, ThreadID tid, String callType) {
@@ -298,11 +323,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
       if (!isStarted) {
         throw new AssertionError(callType + " message received when lock manager was starting"
                                  + " Message Context: [LockID=" + lid + ", NodeID=" + cid + ", ThreadID=" + tid + "]");
-      } else if (!this.channelManager.isActiveID(cid)) {
-        logger.warn(callType + " message received from dead client -- ignoring the message.\n"
-                    + "Message Context: [LockID=" + lid + ", NodeID=" + cid + ", ThreadID=" + tid + "]");
-        return false;
-      }
+      } 
       return true;
     } finally {
       statusLock.readLock().unlock();
