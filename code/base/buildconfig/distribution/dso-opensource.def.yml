@@ -83,7 +83,6 @@ bundled_components:
             modules:
               - common-api
               - common
-              - dso-container-tests
               - dso-l1
               - dso-system-tests
               - legacy-test-tree
