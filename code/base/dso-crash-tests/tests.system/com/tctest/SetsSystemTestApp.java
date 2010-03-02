@@ -22,11 +22,11 @@ import java.util.TreeSet;
 import java.util.concurrent.CyclicBarrier;
 
 public class SetsSystemTestApp extends AbstractTransparentApp {
-  private ServerControl                 serverControl;
-  private CyclicBarrier                 barrier;
-  private TreeSet<PartialSetNode>       myTreeSet;
-  private LinkedHashSet<PartialSetNode> myLinkedHashSet;
-  private HashSet<PartialSetNode>       myHashSet;
+  private final ServerControl                 serverControl;
+  private final CyclicBarrier                 barrier;
+  private final TreeSet<PartialSetNode>       myTreeSet;
+  private final LinkedHashSet<PartialSetNode> myLinkedHashSet;
+  private final HashSet<PartialSetNode>       myHashSet;
   private final static int              NUMBERS_ADDED = 5000;
 
   public SetsSystemTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
@@ -90,7 +90,7 @@ public class SetsSystemTestApp extends AbstractTransparentApp {
     try {
       System.out.println("Crashing the Server ...");
       serverControl.crash();
-      ThreadUtil.reallySleep(5000);
+      ThreadUtil.reallySleep(10000);
       System.out.println("Re-starting the Server ...");
       serverControl.start();
     } catch (Exception e) {
