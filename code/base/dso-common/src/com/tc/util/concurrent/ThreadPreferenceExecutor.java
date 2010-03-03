@@ -28,7 +28,8 @@ public class ThreadPreferenceExecutor implements Executor {
   private final String                  name;
   private final TCLogger                logger;
 
-  private int                           numThreads = 0;
+  private int                           numberOfActiveThreads = 0;
+  private int                           newThreadCreateCount  = 0;
 
   public ThreadPreferenceExecutor(String name, int maxThreads, long idleTime, TimeUnit unit, TCLogger logger) {
     this(name, maxThreads, idleTime, unit, defaultThreadFactory(name), logger);
@@ -62,22 +63,24 @@ public class ThreadPreferenceExecutor implements Executor {
   }
 
   private synchronized boolean createNewThreadIfPossible(Runnable command) {
-    if (numThreads == maxThreads) { return false; }
-    numThreads++;
+    if (numberOfActiveThreads == maxThreads) { return false; }
+    numberOfActiveThreads++;
+    newThreadCreateCount++;
     Thread newThread = threadFactory.newThread(new WorkerTask(command));
     newThread.start();
-    if (numThreads % 5 == 0) {
-      logger.info(getName() + " thread count : " + numThreads);
+    if (newThreadCreateCount % 5 == 0) {
+      newThreadCreateCount = 0;
+      logger.info(getName() + " thread count : " + numberOfActiveThreads);
     }
     return true;
   }
 
   private synchronized void workerDone() {
-    numThreads--;
+    numberOfActiveThreads--;
   }
 
   public synchronized int getActiveThreadCount() {
-    return numThreads;
+    return numberOfActiveThreads;
   }
 
   private class WorkerTask implements Runnable {

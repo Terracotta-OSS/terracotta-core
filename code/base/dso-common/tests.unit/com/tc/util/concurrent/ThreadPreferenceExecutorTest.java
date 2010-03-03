@@ -4,6 +4,9 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.logging.LogLevel;
+import com.tc.logging.TCAppender;
+import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 import java.util.Collections;
@@ -54,6 +57,66 @@ public class ThreadPreferenceExecutorTest extends TestCase {
 
     // make sure all threads die
     assertEquals(0, exec.getActiveThreadCount());
+  }
+
+  public void testThreadCountLogging() {
+    TCLogger logger = TCLogging.getLogger(ThreadPreferenceExecutorTest.class);
+    LogAppender logAppender = new LogAppender();
+    TCLogging.addAppender(logger.getName(), logAppender);
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 50, 100, TimeUnit.MILLISECONDS, logger);
+    assertEquals(0, exec.getActiveThreadCount());
+
+    final AtomicInteger run = new AtomicInteger();
+
+    Runnable longClient = new Runnable() {
+      public void run() {
+        ThreadUtil.reallySleep(10000);
+        run.incrementAndGet();
+      }
+    };
+
+    Runnable shortClient = new Runnable() {
+      public void run() {
+        run.incrementAndGet();
+      }
+    };
+
+    for (int i = 0; i < 9; i++) {
+      exec.execute(longClient);
+      assertEquals(i + 1, exec.getActiveThreadCount());
+    }
+
+    for (int i = 0; i < 10; i++) {
+      exec.execute(shortClient);
+      ThreadUtil.reallySleep(300);
+      assertEquals(9, exec.getActiveThreadCount());
+    }
+
+    ThreadUtil.reallySleep(10000);
+
+    // make sure all tasks complete
+    assertEquals(19, run.get());
+
+    ThreadUtil.reallySleep(10000);
+
+    // make sure all threads die
+    assertEquals(0, exec.getActiveThreadCount());
+    assertEquals(3, logAppender.getThreadCountLogging());
+  }
+
+  private static class LogAppender implements TCAppender {
+    private int threadCountLogging = 0;
+
+    public synchronized void append(LogLevel level, Object message, Throwable throwable) {
+      if (message.toString().contains("thread count")) {
+        threadCountLogging++;
+      }
+    }
+
+    public synchronized int getThreadCountLogging() {
+      return threadCountLogging;
+    }
+
   }
 
   public void testThreadReuse() {
