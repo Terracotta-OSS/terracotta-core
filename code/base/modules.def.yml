@@ -33,13 +33,6 @@ modules:
         jdk: J2SE-1.5
       dependencies:
         - common-api
-  - reflector-test:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
   - aspectwerkz:
       options:
         jdk: J2SE-1.5
@@ -473,72 +466,13 @@ modules:
         - dso-l1-api
         - modules-base
         - thirdparty-api
-  - dso-container-tests:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-statistics
-        - dso-statistics-api
-        - legacy-test-tree
-        - management
-        - management-api
-        - modules-base
-        - sigarstats
-        - simulator
-        - thirdparty
-        - thirdparty-api
-        - tim-get-tool
-  - dso-spring-tests:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - aspectwerkz
-        - common
-        - common-api
-        - license-common
-        - deploy
-        - deploy-api
-        - dso-common
-        - dso-common-jdk16
-        - dso-container-tests
-        - dso-l1
-        - dso-l1-api
-        - dso-l2
-        - dso-l2-common
-        - dso-statistics
-        - dso-statistics-api
-        - legacy-test-tree
-        - management
-        - management-api
-        - sigarstats
-        - simulator
-        - thirdparty
-        - thirdparty-api
-        - tim-get-tool
+
   - eclipsegen:
       options:
         jdk: J2SE-1.5
 
 # these groups are used by the monkeys to run tests in each module.
 module-groups:
-  reflector:
-    - reflector-test
-  container:
-    - dso-container-tests
-  spring:
-    - dso-spring-tests
   dso1:
     - common
     - thirdparty
