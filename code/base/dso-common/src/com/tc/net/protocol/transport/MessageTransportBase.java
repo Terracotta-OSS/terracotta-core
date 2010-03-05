@@ -50,12 +50,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private volatile ConnectionHealthCheckerContext  healthCheckerContext   = null;
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
-  /**
-   * This is same as status.DISCONNECTED, except this flag is not reset before firing the disconnected event. Needed by
-   * OOO ConnectionWatcher. XXX: status can be sent in the event or set in the MessageTransport. needs cleanup.
-   */
-  private final SynchronizedBoolean                forcedDisconnect       = new SynchronizedBoolean(false);
-
   protected MessageTransportBase(MessageTransportState initialState,
                                  TransportHandshakeErrorHandler handshakeErrorHandler,
                                  TransportHandshakeMessageFactory messageFactory, boolean isOpen, TCLogger logger) {
@@ -139,7 +133,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   }
 
   public void disconnect() {
-    forcedDisconnect.set(true);
     terminate(true);
   }
 
@@ -227,10 +220,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
   }
 
-  public final boolean wasForcedDisconnect() {
-    return forcedDisconnect.get();
-  }
-
   public final void attachNewConnection(TCConnection newConnection) throws IllegalReconnectException {
     synchronized (attachingNewConnection) {
       if ((this.connection != null) && !allowConnectionReplace) { throw new IllegalReconnectException(); }
@@ -301,17 +290,23 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     }
 
     if (isSameConnection) {
+      boolean forcedDisconnect = false;
       synchronized (status) {
         logger.warn("CLOSE EVENT : " + this.connection + ". STATUS : " + status);
         if (status.isEstablished() || status.isDisconnected()) {
+          if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();
         } else {
           logger.warn("closing down connection - " + event);
           return;
         }
       }
-      fireTransportDisconnectedEvent();
-      forcedDisconnect.set(false);
+
+      if (forcedDisconnect) {
+        fireTransportForcedDisconnectEvent();
+      } else {
+        fireTransportDisconnectedEvent();
+      }
     }
   }
 

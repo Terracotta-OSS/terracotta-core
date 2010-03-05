@@ -144,7 +144,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
         OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
         handshakeMode.set(false);
-        if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
+        if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, false);
         channelConnected.set(false);
         resetStack();
         delivery.resume();
@@ -179,7 +179,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       // 1. clear OOO state (drop messages, clear counters, etc)
       // 2. set the new session
       // 3. signal Higher Lever to re-synch
-      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
+      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, false);
       channelConnected.set(false);
       resetStack();
       sessionId = msg.getSessionId();
@@ -241,20 +241,20 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       debugLog("Sending Handshake message...");
       sendMessage(handshake);
     } else {
-      // resue for missing transportDisconnected events
+      // reuse for missing transportDisconnected events
       if (!delivery.isPaused()) {
-        notifyTransportDisconnected(null);
+        notifyTransportDisconnected(null, false);
       }
     }
     reconnectMode.set(false);
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     final boolean restoreConnectionMode = reconnectMode.get();
     debugLog("Transport Disconnected - pausing delivery, restoreConnection = " + restoreConnectionMode);
     this.delivery.pause();
     if (!restoreConnectionMode) {
-      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this);
+      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, forcedDisconnect);
       channelConnected.set(false);
     }
   }
@@ -391,7 +391,8 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void connectionRestoreFailed() {
     debugLog("RestoreConnectionFailed - resetting stack");
     if (channelConnected.get()) {
-      receiveLayer.notifyTransportDisconnected(this);
+      // forcedDisconnect flag is not useful in above layers. defaulting to false
+      receiveLayer.notifyTransportDisconnected(this, false);
       channelConnected.set(false);
     }
     reconnectMode.set(false);

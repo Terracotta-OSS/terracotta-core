@@ -24,9 +24,9 @@ public class ConnectionWatcher implements MessageTransportListener {
     target.notifyTransportClosed(transport);
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     cce.asyncReconnect(cmt);
-    target.notifyTransportDisconnected(transport);
+    target.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
   public void notifyTransportConnectAttempt(MessageTransport transport) {

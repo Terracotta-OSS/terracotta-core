@@ -203,7 +203,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return status;
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     fireTransportDisconnectedEvent();
   }
 

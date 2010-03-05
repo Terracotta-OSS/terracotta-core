@@ -153,7 +153,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   /**
    * A client disconnected.
    */
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     /*
      * Even for temporary disconnects, we need to keep proper accounting. Otherwise, the same client reconnect may fail.
      */

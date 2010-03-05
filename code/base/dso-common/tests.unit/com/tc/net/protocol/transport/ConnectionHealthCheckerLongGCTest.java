@@ -180,7 +180,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     return (config.getPingIdleTimeMillis() + (2 * config.getPingIntervalMillis()));
   }
 
-  public long getMinSleepTimeToStartLongGCTest(HealthCheckerConfig config) {
+  public static long getMinSleepTimeToStartLongGCTest(HealthCheckerConfig config) {
     assertNotNull(config);
     /* Interval time is doubled to give grace period */
     long exact_time = config.getPingIdleTimeMillis() + (config.getPingIntervalMillis() * config.getPingProbes());
@@ -196,7 +196,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     return extraTime + grace_time;
   }
 
-  public long getMinScoketConnectResultTimeAfterSocketConnectStart(HealthCheckerConfig config) {
+  public static long getMinScoketConnectResultTimeAfterSocketConnectStart(HealthCheckerConfig config) {
     assertNotNull(config);
     long extraTime = (config.getSocketConnectTimeout() * config.getPingIntervalMillis());
     long grace_time = config.getPingIntervalMillis();
@@ -252,7 +252,7 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
 
     /* By Now, the client should have been chucked out */
     assertEquals(0, connHC.getTotalConnsUnderMonitor());
-    
+
   }
 
   public void testL1SocketConnectL2() throws Exception {

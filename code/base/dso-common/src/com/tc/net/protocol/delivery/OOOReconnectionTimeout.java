@@ -35,15 +35,20 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     oooLayer.notifyTransportConnectAttempt(transport);
   }
 
-  public synchronized void notifyTransportDisconnected(MessageTransport transport) {
+  public synchronized void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     Assert.assertNull(timer);
-    log(transport, "Transport Disconnected, starting Timer for " + timeoutMillis);
     if (oooLayer.isClosed()) { return; }
-    oooLayer.startRestoringConnection();
-    oooLayer.notifyTransportDisconnected(transport);
-    // start the timer...
-    timer = new Timer("ClientConnectionRestoreTimer", true);
-    timer.schedule(new TimeoutTimerTask(transport, this), timeoutMillis);
+    if (forcedDisconnect) {
+      log(transport, "Transport FORCE Disconnected, skipping opening reconnect window");
+      oooLayer.connectionRestoreFailed();
+    } else {
+      log(transport, "Transport Disconnected, starting Timer for " + timeoutMillis);
+      oooLayer.startRestoringConnection();
+      oooLayer.notifyTransportDisconnected(transport, forcedDisconnect);
+      // start the timer...
+      timer = new Timer("ClientConnectionRestoreTimer", true);
+      timer.schedule(new TimeoutTimerTask(transport, this), timeoutMillis);
+    }
   }
 
   public synchronized void notifyTransportConnected(MessageTransport transport) {

@@ -25,10 +25,10 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
     this.timeoutMillis = timeoutMillis;
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     oooLayer.startRestoringConnection();
-    oooLayer.notifyTransportDisconnected(transport);
-    if (!cmt.wasForcedDisconnect()) {
+    oooLayer.notifyTransportDisconnected(transport, forcedDisconnect);
+    if (!forcedDisconnect) {
       log(transport, "Transport Disconnected, calling asyncRestoreConnection for " + timeoutMillis);
       cce.asyncRestoreConnection(cmt, transport.getRemoteAddress(), this, timeoutMillis);
     } else {
@@ -45,7 +45,8 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
   public void restoreConnectionFailed(MessageTransport transport) {
     log(transport, "Restore Connection Failed");
     oooLayer.connectionRestoreFailed();
-    super.notifyTransportDisconnected(transport);
+    // forcedDisconnect flag is not in above layer. So, defaultingh to false
+    super.notifyTransportDisconnected(transport, false);
   }
 
   private static void log(MessageTransport transport, String msg) {

@@ -6,6 +6,7 @@ package com.tc.net.protocol.transport;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentHashMap;
 
+import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -36,7 +37,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     Assert.eval(healthCheckerConfig.isHealthCheckerEnabled());
     logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class.getName() + ": "
                                  + healthCheckerConfig.getHealthCheckerName());
-
+    logger.setLevel(LogLevelImpl.DEBUG);
     monitorThreadEngine = getHealthMonitorThreadEngine(healthCheckerConfig, connManager, logger);
     monitorThread = new Thread(monitorThreadEngine, "HealthChecker");
     monitorThread.setDaemon(true);
@@ -92,7 +93,7 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     monitorThreadEngine.addConnection(transport);
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     // HealthChecker Ping Thread can anyway determine thru ping probe cycle and remove it
     // from its radar. still lets do it earlier
     if (monitorThreadEngine.removeConnection(transport)) {

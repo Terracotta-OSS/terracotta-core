@@ -17,13 +17,14 @@ import java.util.List;
 
 public abstract class AbstractMessageTransport implements MessageTransport, ConnectionIDProvider {
 
-  private static final int           DISCONNECTED    = 1;
-  private static final int           CONNECTED       = 2;
-  private static final int           CONNECT_ATTEMPT = 3;
-  private static final int           CLOSED          = 4;
+  private static final int           DISCONNECTED      = 1;
+  private static final int           FORCED_DISCONNECT = 2;
+  private static final int           CONNECTED         = 3;
+  private static final int           CONNECT_ATTEMPT   = 4;
+  private static final int           CLOSED            = 5;
 
   protected final ConnectionIdLogger logger;
-  private final List                 listeners       = new CopyOnWriteArrayList();
+  private final List                 listeners         = new CopyOnWriteArrayList();
 
   public AbstractMessageTransport(TCLogger logger) {
     this.logger = new ConnectionIdLogger(this, logger);
@@ -73,6 +74,10 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
   }
 
+  protected final void fireTransportForcedDisconnectEvent() {
+    fireTransportEvent(FORCED_DISCONNECT);
+  }
+
   protected final void fireTransportDisconnectedEvent() {
     fireTransportEvent(DISCONNECTED);
   }
@@ -86,7 +91,10 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
       MessageTransportListener listener = (MessageTransportListener) i.next();
       switch (type) {
         case DISCONNECTED:
-          listener.notifyTransportDisconnected(this);
+          listener.notifyTransportDisconnected(this, false);
+          break;
+        case FORCED_DISCONNECT:
+          listener.notifyTransportDisconnected(this, true);
           break;
         case CONNECTED:
           listener.notifyTransportConnected(this);
@@ -102,8 +110,8 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
       }
     }
   }
-  
-  public short getCommunicationStackFlags(NetworkLayer parentLayer){
+
+  public short getCommunicationStackFlags(NetworkLayer parentLayer) {
     short stackLayerFlags = 0;
     while (parentLayer != null) {
       stackLayerFlags |= parentLayer.getStackLayerFlag();
@@ -111,8 +119,8 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
     return stackLayerFlags;
   }
-  
-  public String getCommunicationStackNames(NetworkLayer parentLayer){
+
+  public String getCommunicationStackNames(NetworkLayer parentLayer) {
     String currentLayer = "";
     while (parentLayer != null) {
       currentLayer += "\n" + parentLayer.getStackLayerName();
@@ -120,7 +128,7 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     }
     return currentLayer;
   }
-  
+
   public void initConnectionID(ConnectionID cid) {
     throw new UnsupportedOperationException();
   }

@@ -141,7 +141,7 @@ public class MockMessageChannel implements MessageChannelInternal {
 
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     throw new ImplementMe();
 
   }

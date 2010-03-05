@@ -107,7 +107,7 @@ public class ServerStackProviderTest extends TCTestCase {
     assertEquals(new Boolean(connectionPolicy.maxConnectionsExceeded), args.getIsMaxConnectionsExceeded());
     assertEquals(new Integer(connectionPolicy.maxConnections), args.getMaxConnections());
 
-    provider.notifyTransportDisconnected(transport);
+    provider.notifyTransportDisconnected(transport, false);
     assertEquals(0, connectionPolicy.clientConnected);
 
     provider.notifyTransportClosed(transport);
@@ -137,7 +137,7 @@ public class ServerStackProviderTest extends TCTestCase {
   private MessageChannelInternal getNewDummyClientChannel(ChannelID clientID) {
     return new MockMessageChannel(clientID) {
       @Override
-      public void notifyTransportDisconnected(MessageTransport transport) {
+      public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
         //
       }
     };
@@ -224,7 +224,7 @@ public class ServerStackProviderTest extends TCTestCase {
     Assert.assertEquals(2, connectionPolicy.clientConnected);
 
     // client1 disconencted
-    provider.notifyTransportDisconnected(serverTxForClietn1);
+    provider.notifyTransportDisconnected(serverTxForClietn1, false);
     Assert.assertEquals(1, connectionPolicy.clientConnected);
 
     // Client5 connected
@@ -249,7 +249,7 @@ public class ServerStackProviderTest extends TCTestCase {
     Assert.assertEquals(2, connectionPolicy.clientConnected);
 
     // client5 disconnected
-    provider.notifyTransportDisconnected(serverTxForClietn5);
+    provider.notifyTransportDisconnected(serverTxForClietn5, false);
     Assert.assertEquals(1, connectionPolicy.clientConnected);
 
     // Client6 connected
@@ -291,7 +291,7 @@ public class ServerStackProviderTest extends TCTestCase {
     assertEquals(0, connectionPolicy.clientConnected);
 
     // send a transport disconnected event
-    provider.notifyTransportDisconnected(transport);
+    provider.notifyTransportDisconnected(transport, false);
 
     // transport disconnect event works only if the same client prev connected
     assertEquals(0, connectionPolicy.clientConnected);

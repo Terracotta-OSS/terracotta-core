@@ -69,7 +69,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
 
     Thread t2 = new Thread(new Runnable() {
       public void run() {
-        mc.notifyTransportDisconnected(null);
+        mc.notifyTransportDisconnected(null, false);
       }
     });
 

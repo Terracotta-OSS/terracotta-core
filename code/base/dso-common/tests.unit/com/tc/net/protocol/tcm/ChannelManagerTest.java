@@ -25,14 +25,18 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
+import com.tc.net.protocol.transport.ConnectionHealthCheckerLongGCTest;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
+import com.tc.net.proxy.TCPProxy;
 import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.PortChooser;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
@@ -107,7 +111,7 @@ public class ChannelManagerTest extends TestCase {
     // Make sure that sending a transport disconnected event to the channel does
     // NOT remove the channel from the
     // channel manager.
-    channel1.notifyTransportDisconnected(null);
+    channel1.notifyTransportDisconnected(null, false);
     assertEquals(channelCount, channelManager.getChannels().length);
     assertFalse(channel1.isClosed());
 
@@ -126,10 +130,10 @@ public class ChannelManagerTest extends TestCase {
   }
 
   public void testTransportDisconnectRemovesChannel() throws Exception {
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor,
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client-1", monitor,
                                                                       new PlainNetworkStackHarnessFactory(),
                                                                       new NullConnectionPolicy(), 0);
-    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor,
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server-1", monitor,
                                                                       new PlainNetworkStackHarnessFactory(),
                                                                       new NullConnectionPolicy(), 0);
     try {
@@ -192,14 +196,14 @@ public class ChannelManagerTest extends TestCase {
                                                                                               oooReceiveStage.getSink(),
                                                                                               reconnectCoinfig);
 
-    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor,
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client-2", monitor,
                                                                       networkStackHarnessFactory,
                                                                       new NullConnectionPolicy(),
                                                                       new HealthCheckerConfigImpl(TCPropertiesImpl
                                                                           .getProperties()
                                                                           .getPropertiesFor("l1.healthcheck.l2"),
                                                                                                   "Test Client HC"));
-    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor,
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server-2", monitor,
                                                                       networkStackHarnessFactory,
                                                                       new NullConnectionPolicy(),
                                                                       new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -277,6 +281,147 @@ public class ChannelManagerTest extends TestCase {
       }
     }
 
+  }
+
+  public void testClientSkipRestoreConnection() throws Exception {
+
+    StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
+    final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+    final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
+    NetworkStackHarnessFactory networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+                                                                                              new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                                              oooSendStage.getSink(),
+                                                                                              oooReceiveStage.getSink(),
+                                                                                              new L1ReconnectConfigImpl(
+                                                                                                                        true,
+                                                                                                                        120000,
+                                                                                                                        5000,
+                                                                                                                        16,
+                                                                                                                        32));
+
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 1000, 3, "Client-HC", false);
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client-3", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(), hcConfig);
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server-3", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(), 0);
+    try {
+      NetworkListener lsnr = serverComms.createListener(sessionManager,
+                                                        new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
+                                                        new DefaultConnectionIdFactory());
+      lsnr.start(new HashSet());
+      ChannelManager channelManager = lsnr.getChannelManager();
+      assertEquals(0, channelManager.getChannels().length);
+
+      int serverPort = lsnr.getBindPort();
+      int proxyPort = new PortChooser().chooseRandomPort();
+      TCPProxy proxy = new TCPProxy(proxyPort, lsnr.getBindAddress(), serverPort, 0, false, null);
+      proxy.start();
+
+      ClientMessageChannel channel;
+      channel = clientComms
+          .createClientChannel(sessionManager, -1, TCSocketAddress.LOOPBACK_IP, proxyPort, 3000,
+                               new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost",
+                                                                                                       proxyPort) }));
+      channel.open();
+
+      while (!channelManager.getChannels()[0].isConnected()) {
+        System.out.println("waiting for server to send final Tx ACK for client connection");
+        ThreadUtil.reallySleep(1000);
+      }
+      assertTrue(channel.isConnected());
+
+      proxy.setDelay(100 * 1000);
+
+      long sleepTime = ConnectionHealthCheckerLongGCTest.getMinSleepTimeToStartLongGCTest(hcConfig)
+                       + ConnectionHealthCheckerLongGCTest
+                           .getMinScoketConnectResultTimeAfterSocketConnectStart(hcConfig);
+
+      System.out.println("XXX sleeping for " + sleepTime);
+      ThreadUtil.reallySleep(sleepTime);
+      proxy.setDelay(0);
+
+      ThreadUtil.reallySleep(15000);
+      assertEquals(false, channel.isConnected());
+      assertEquals(0, channelManager.getChannels().length);
+
+    } finally {
+      clientComms.shutdown();
+      serverComms.shutdown();
+    }
+  }
+
+  public void testServerSkipOpenReconnectWindow() throws Exception {
+
+    StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
+    final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
+    final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
+    NetworkStackHarnessFactory networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
+                                                                                              new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
+                                                                                              oooSendStage.getSink(),
+                                                                                              oooReceiveStage.getSink(),
+                                                                                              new L1ReconnectConfigImpl(
+                                                                                                                        true,
+                                                                                                                        120000,
+                                                                                                                        5000,
+                                                                                                                        16,
+                                                                                                                        32));
+
+    HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(5000, 1000, 3, "Client-HC", false);
+    CommunicationsManager clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client-4", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(), 0);
+    CommunicationsManager serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server-4", monitor,
+                                                                      networkStackHarnessFactory,
+                                                                      new NullConnectionPolicy(), hcConfig);
+    try {
+      NetworkListener lsnr = serverComms.createListener(sessionManager,
+                                                        new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
+                                                        new DefaultConnectionIdFactory());
+      lsnr.start(new HashSet());
+      ChannelManager channelManager = lsnr.getChannelManager();
+      assertEquals(0, channelManager.getChannels().length);
+
+      int serverPort = lsnr.getBindPort();
+      int proxyPort = new PortChooser().chooseRandomPort();
+      TCPProxy proxy = new TCPProxy(proxyPort, lsnr.getBindAddress(), serverPort, 0, false, null);
+      proxy.start();
+
+      ClientMessageChannel channel;
+      channel = clientComms
+          .createClientChannel(sessionManager, -1, TCSocketAddress.LOOPBACK_IP, proxyPort, 3000,
+                               new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo("localhost",
+                                                                                                       proxyPort) }));
+      channel.open();
+
+      while (!channelManager.getChannels()[0].isConnected()) {
+        System.out.println("waiting for server to send final Tx ACK for client connection");
+        ThreadUtil.reallySleep(1000);
+      }
+      assertTrue(channel.isConnected());
+
+      proxy.setDelay(100 * 1000);
+
+      long sleepTime = ConnectionHealthCheckerLongGCTest.getMinSleepTimeToStartLongGCTest(hcConfig)
+                       + ConnectionHealthCheckerLongGCTest
+                           .getMinScoketConnectResultTimeAfterSocketConnectStart(hcConfig);
+
+      System.out.println("XXX sleeping for " + sleepTime);
+      ThreadUtil.reallySleep(sleepTime);
+      proxy.setDelay(0);
+
+      proxy.closeClientConnections(true, false);
+      ThreadUtil.reallySleep(15000);
+      assertEquals(false, channel.isConnected());
+      assertEquals(0, channelManager.getChannels().length);
+
+    } finally {
+      clientComms.shutdown();
+      serverComms.shutdown();
+    }
   }
 
   static class Events implements ChannelManagerEventListener {

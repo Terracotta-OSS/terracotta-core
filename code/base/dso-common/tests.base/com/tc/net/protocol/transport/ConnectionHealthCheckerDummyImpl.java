@@ -34,8 +34,8 @@ public class ConnectionHealthCheckerDummyImpl implements ConnectionHealthChecker
     transportBase.setHealthCheckerContext(context);
   }
 
-  public void notifyTransportDisconnected(MessageTransport transport) {
+  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     // who cares
   }
-  
+
 }
