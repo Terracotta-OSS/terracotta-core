@@ -731,18 +731,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                   + this.channel.channel().getChannelID().toLong());
     }
 
-    if (useOOOLayer) {
-      setReconnectCloseOnExit(this.channel);
-    }
     setLoggerOnExit();
-  }
-
-  private void setReconnectCloseOnExit(final DSOClientMessageChannel channel) {
-    CommonShutDownHook.addShutdownHook(new Runnable() {
-      public void run() {
-        channel.close();
-      }
-    });
   }
 
   private void setLoggerOnExit() {

@@ -72,6 +72,15 @@ public class ClientShutdownManager {
 
     if (!fromShutdownHook) {
       shutdown();
+    } else {
+      // for case of reconnect enabled to send out good bye message at channel close
+      if (channel != null) {
+        try {
+          channel.close();
+        } catch (Throwable t) {
+          logger.error("Error closing channel", t);
+        }
+      }
     }
   }
 
