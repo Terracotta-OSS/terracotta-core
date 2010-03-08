@@ -379,28 +379,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
     Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
-    // case 4: server detecting long gcs and kicking out the clients
-    proxy.setDelay(15 * 1000);
-
-    System.out.println("XXX waiting for HC to kick out the clients those who connected thru proxy ports");
-    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
-      System.out.print(".");
-      ThreadUtil.reallySleep(5000);
-    }
-
-    proxy.setDelay(0);
-
-    System.out.println("XXX waiting for clients reconnect");
-    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 2)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 2)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 2)) {
-      System.out.print(".");
-      ThreadUtil.reallySleep(5000);
-    }
-
-    // case 5: closing all connections from server side
+    // case 4: closing all connections from server side
     System.out.println("XXX closing all client connections");
     commsMgr.getConnectionManager().closeAllConnections(1000);
 
@@ -414,6 +393,25 @@ public class TCWorkerCommManagerTest extends TCTestCase {
       System.out.print(".");
       ThreadUtil.reallySleep(5000);
     }
+
+    // case 5: server detecting long gcs and kicking out the clients
+    proxy.setDelay(15 * 1000);
+
+    System.out.println("XXX waiting for HC to kick out the clients those who connected thru proxy ports");
+    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
+           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
+           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
+      System.out.print(".");
+      ThreadUtil.reallySleep(5000);
+    }
+
+    proxy.setDelay(0);
+
+    ThreadUtil.reallySleep(10000);
+    System.out.println("XXX server after seeing client long GC will not open reconnect window for it");
+    Assert.assertEquals(3, (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
+                           + (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1))
+                           + (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2)));
 
     listener.stop(5000);
   }
