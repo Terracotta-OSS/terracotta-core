@@ -11,6 +11,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
+import com.tc.stats.DSOMBean;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.process.ExternalDsoServer;
@@ -69,7 +70,9 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
       clients[i].mergeSTDOUT();
       clients[i].mergeSTDERR();
     }
-    ThreadUtil.reallySleep(20000);
+    waitForClientsToStart(numOfClients - 1);
+    System.out.println("all clients got connected...");
+    ThreadUtil.reallySleep(5000);
     server_1.stop();
     clients[numOfClients - 1] = createClient(4, 5, configBuilder.getDsoPort(1), configBuilder.getJmxPort(1));
     clients[numOfClients - 1].start();
@@ -77,6 +80,32 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     clients[numOfClients - 1].mergeSTDERR();
 
     waitForClientsToFinish(clients);
+  }
+
+  private void waitForClientsToStart(int numberOfClients) {
+    DSOMBean mbean = null;
+    JMXConnector jmxConnector = null;
+
+    try {
+      jmxConnector = CommandLineBuilder.getJMXConnector(null, null, "localhost", this.jmxPort_1);
+      final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
+      mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DSO, DSOMBean.class, false);
+      while (true) {
+        if (mbean.getClients().length == numberOfClients) break;
+        ThreadUtil.reallySleep(2000);
+      }
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    } finally {
+      if (jmxConnector != null) {
+        try {
+          jmxConnector.close();
+        } catch (Exception e) {
+          System.out.println("Exception while trying to close the JMX connector for port no: " + this.jmxPort_1);
+        }
+      }
+    }
+
   }
 
   private void waitForClientsToFinish(ExtraL1ProcessControl[] clients) throws Exception {
