@@ -4,6 +4,16 @@
 # All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 #
 
+case "$1" in
+  "--help"|"-h"|"-?")
+    echo "Syntax: $0 [-f /path/to/tc-config.xml] [-n server_name]"
+    echo
+    echo "-f : start the server with your own Terracotta configuration instead of the default one"
+    echo "-n : specify which server you want to start when you have more than one servers configured"
+    exit
+    ;;
+esac
+
 # OS specific support.  $var _must_ be set to either true or false.
 cygwin=false
 case "`uname`" in

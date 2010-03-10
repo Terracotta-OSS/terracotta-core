@@ -2,6 +2,20 @@
 
 rem All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 
+if "%1" == "--help" goto :printHelp
+if "%1" == "-h" goto :printHelp
+if "%1" == "-?" goto :printHelp
+goto :start
+
+:printHelp
+echo Syntax: %~n0 [-f /path/to/tc-config.xml] [-n server_name]
+echo.
+echo -f : start the server with your own Terracotta configuration instead of the default one
+echo -n : specify which server you want to start when you have more than one servers configured
+exit /b 0
+
+
+:start
 setlocal
 set TC_INSTALL_DIR=%~d0%~p0..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
