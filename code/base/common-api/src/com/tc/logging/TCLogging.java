@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.StringWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
@@ -502,12 +504,21 @@ public class TCLogging {
           maxKeyLength = Math.max(maxKeyLength, key.length());
         }
       }
-
+      
+      String inputArguments = null;
+      try {
+        RuntimeMXBean mxbean = ManagementFactory.getRuntimeMXBean();
+        inputArguments = mxbean.getInputArguments().toString();
+      } catch (SecurityException se) {
+        inputArguments = "unknown";
+      }
       String nl = System.getProperty("line.separator");
       StringBuffer data = new StringBuffer();
       data.append("All Java System Properties for this Terracotta instance:");
       data.append(nl);
       data.append("========================================================================");
+      data.append(nl);
+      data.append("JVM arguments: " + inputArguments);
       data.append(nl);
 
       String[] sortedKeys = (String[]) keys.toArray(new String[keys.size()]);
