@@ -14,6 +14,7 @@ import com.tc.net.ServerID;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelEventType;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -24,26 +25,27 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
-  private static final TCLogger                    logger          = TCLogging
-                                                                       .getLogger(TCGroupMemberDiscoveryStatic.class);
+  private static final TCLogger                    logger                  = TCLogging
+                                                                               .getLogger(TCGroupMemberDiscoveryStatic.class);
   private final static long                        DISCOVERY_INTERVAL_MS;
   static {
     DISCOVERY_INTERVAL_MS = TCPropertiesImpl.getProperties()
         .getLong(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL);
   }
 
-  private final AtomicBoolean                      running         = new AtomicBoolean(false);
-  private final AtomicBoolean                      stopAttempt     = new AtomicBoolean(false);
-  private final Map<String, DiscoveryStateMachine> nodeStateMap    = Collections
-                                                                       .synchronizedMap(new HashMap<String, DiscoveryStateMachine>());
+  private final AtomicBoolean                      running                 = new AtomicBoolean(false);
+  private final AtomicBoolean                      stopAttempt             = new AtomicBoolean(false);
+  private final Map<String, DiscoveryStateMachine> nodeStateMap            = Collections
+                                                                               .synchronizedMap(new HashMap<String, DiscoveryStateMachine>());
   private final TCGroupManagerImpl                 manager;
   private Node                                     local;
-  private Integer                                  joinedNodes     = 0;
-  private Integer                                  connectingCount = 0;
+  private Integer                                  joinedNodes             = 0;
+  private HashSet<Node>                            nodeThreadConnectingSet = new HashSet<Node>();
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager) {
     this.manager = manager;
@@ -79,9 +81,9 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     if (stateMachine.isMemberInGroup() || stopAttempt.get()) { return; }
 
+    addNodeToConnectingSet(node);
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
-      incConnectingCount();
       manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
       stateMachine.connected();
     } catch (TCTimeoutException e) {
@@ -104,7 +106,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       stateMachine.throwableException();
       stateMachine.loggerWarn("Node:" + node + " not up. Exception occured:" + t.getMessage());
     } finally {
-      decConnectingCount();
+      removeNodeFromConnectingSet(node);
     }
   }
 
@@ -154,22 +156,24 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  private void incConnectingCount() {
+  private void addNodeToConnectingSet(Node node) {
     synchronized (local) {
-      ++connectingCount;
+      Assert.eval(!nodeThreadConnectingSet.contains(node));
+      nodeThreadConnectingSet.add(node);
     }
   }
 
-  private void decConnectingCount() {
+  private void removeNodeFromConnectingSet(Node node) {
     synchronized (local) {
-      --connectingCount;
-      if (connectingCount == 0) local.notifyAll();
+      Assert.eval(nodeThreadConnectingSet.contains(node));
+      nodeThreadConnectingSet.remove(node);
+      if (nodeThreadConnectingSet.size() == 0) local.notifyAll();
     }
   }
 
   private void waitTillNoConnecting(long timeout) {
     synchronized (local) {
-      if (connectingCount > 0) {
+      if (nodeThreadConnectingSet.size() > 0) {
         try {
           local.wait(timeout);
         } catch (InterruptedException e) {
@@ -233,6 +237,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     private int                  badCount;
     private long                 timestamp;
     private long                 previousLogTimeStamp;
+    private MessageChannel       connectedChannel;
 
     public DiscoveryStateMachine(Node node) {
       this.node = node;
@@ -294,7 +299,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       switchToStateFrom(STATE_CONNECTING, STATE_CONNECTED);
     }
 
-    void notifyDisconnected() {
+    private void notifyDisconnected() {
       if (!switchToStateFrom(STATE_CONNECTING, STATE_INIT)) {
         switchToStateFrom(STATE_CONNECTED, STATE_INIT);
       }
@@ -541,13 +546,28 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     public void notifyChannelEvent(ChannelEvent event) {
       if (event.getType() == ChannelEventType.TRANSPORT_CONNECTED_EVENT) {
-        //
+        synchronized (this) {
+          this.connectedChannel = event.getChannel();
+        }
       } else if ((event.getType() == ChannelEventType.TRANSPORT_DISCONNECTED_EVENT)
                  || (event.getType() == ChannelEventType.CHANNEL_CLOSED_EVENT)) {
-        notifyDisconnected();
+        synchronized (this) {
+          if (canNotifyDisconnect(event)) {
+            notifyDisconnected();
+            this.connectedChannel = null;
+          }
+        }
       }
     }
 
+    private synchronized boolean canNotifyDisconnect(ChannelEvent event) {
+      MessageChannel eventChannel = event.getChannel();
+      boolean rv = (this.connectedChannel == null) ? false
+          : ((this.connectedChannel == eventChannel)
+             && (this.connectedChannel.getLocalAddress() == eventChannel.getLocalAddress()) && (this.connectedChannel
+              .getRemoteAddress() == eventChannel.getRemoteAddress()));
+      return rv;
+    }
   }
 
 }
