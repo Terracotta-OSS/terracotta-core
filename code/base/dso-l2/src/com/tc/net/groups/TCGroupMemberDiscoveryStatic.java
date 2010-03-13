@@ -45,7 +45,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final TCGroupManagerImpl                 manager;
   private Node                                     local;
   private Integer                                  joinedNodes             = 0;
-  private HashSet<Node>                            nodeThreadConnectingSet = new HashSet<Node>();
+  private HashSet<String>                          nodeThreadConnectingSet = new HashSet<String>();
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager) {
     this.manager = manager;
@@ -78,37 +78,38 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     DiscoveryStateMachine stateMachine = (DiscoveryStateMachine) context;
     Assert.assertNotNull(stateMachine);
     Node node = stateMachine.getNode();
+    String serverNodeName = node.getServerNodeName();
 
     if (stateMachine.isMemberInGroup() || stopAttempt.get()) { return; }
 
-    addNodeToConnectingSet(node);
+    addNodeToConnectingSet(serverNodeName);
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
       manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.connected();
     } catch (TCTimeoutException e) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.connectTimeout();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (UnknownHostException e) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.unknownHost();
       stateMachine.loggerWarn("Node:" + node + " not up. Unknown host.");
     } catch (MaxConnectionsExceededException e) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.maxConnExceed();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (CommStackMismatchException e) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.commStackMismatch();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (IOException e) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       stateMachine.connetIOException();
       stateMachine.loggerWarn("Node:" + node + " not up. IOException occured:" + e.getMessage());
     } catch (Throwable t) {
-      removeNodeFromConnectingSet(node);
+      removeNodeFromConnectingSet(serverNodeName);
       // catch all throwables to prevent discover from dying
       stateMachine.throwableException();
       stateMachine.loggerWarn("Node:" + node + " not up. Exception occured:" + t.getMessage());
@@ -161,17 +162,16 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  private void addNodeToConnectingSet(Node node) {
+  private void addNodeToConnectingSet(String nodeName) {
     synchronized (local) {
-      Assert.eval(!nodeThreadConnectingSet.contains(node));
-      nodeThreadConnectingSet.add(node);
+      Assert.eval(!nodeThreadConnectingSet.contains(nodeName));
+      nodeThreadConnectingSet.add(nodeName);
     }
   }
 
-  private void removeNodeFromConnectingSet(Node node) {
+  private void removeNodeFromConnectingSet(String nodeName) {
     synchronized (local) {
-      Assert.eval(nodeThreadConnectingSet.contains(node));
-      nodeThreadConnectingSet.remove(node);
+      nodeThreadConnectingSet.remove(nodeName);
       if (nodeThreadConnectingSet.size() == 0) local.notifyAll();
     }
   }
@@ -209,6 +209,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   public synchronized void nodeLeft(NodeID nodeID) {
     joinedNodes--;
     String nodeName = ((ServerID) nodeID).getName();
+    removeNodeFromConnectingSet(nodeName);
     nodeStateMap.get(nodeName).nodeLeft();
     notifyAll();
   }
