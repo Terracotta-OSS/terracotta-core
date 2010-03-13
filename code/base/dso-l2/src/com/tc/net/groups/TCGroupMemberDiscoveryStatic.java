@@ -85,28 +85,33 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
       manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
+      removeNodeFromConnectingSet(node);
       stateMachine.connected();
     } catch (TCTimeoutException e) {
+      removeNodeFromConnectingSet(node);
       stateMachine.connectTimeout();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (UnknownHostException e) {
+      removeNodeFromConnectingSet(node);
       stateMachine.unknownHost();
       stateMachine.loggerWarn("Node:" + node + " not up. Unknown host.");
     } catch (MaxConnectionsExceededException e) {
+      removeNodeFromConnectingSet(node);
       stateMachine.maxConnExceed();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (CommStackMismatchException e) {
+      removeNodeFromConnectingSet(node);
       stateMachine.commStackMismatch();
       stateMachine.loggerWarn("Node:" + node + " not up. " + e.getMessage());
     } catch (IOException e) {
+      removeNodeFromConnectingSet(node);
       stateMachine.connetIOException();
       stateMachine.loggerWarn("Node:" + node + " not up. IOException occured:" + e.getMessage());
     } catch (Throwable t) {
+      removeNodeFromConnectingSet(node);
       // catch all throwables to prevent discover from dying
       stateMachine.throwableException();
       stateMachine.loggerWarn("Node:" + node + " not up. Exception occured:" + t.getMessage());
-    } finally {
-      removeNodeFromConnectingSet(node);
     }
   }
 
