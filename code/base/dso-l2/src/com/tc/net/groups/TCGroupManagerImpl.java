@@ -9,6 +9,7 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
@@ -971,15 +972,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         if (!manager.getDiscover().isValidClusterNode(peerNodeID)) {
           logger.warn("Drop connection from non-member node " + peerNodeID);
           switchToState(STATE_FAILURE);
+          return;
         }
-        if (!manager.isZappedNode(peerNodeID)) {
-          // remove the old member which is doing reconnecting from same node.
-          manager.removeIfMemberReconnecting(peerNodeID);
-          switchToState(STATE_TRY_ADD_MEMBER);
-        } else {
-          logger.warn("Abort connecting to zapped node. " + stateInfo(current));
-          switchToState(STATE_FAILURE);
-        }
+
+        // remove the old member which is doing reconnecting from same node.
+        manager.removeIfMemberReconnecting(peerNodeID);
+        switchToState(STATE_TRY_ADD_MEMBER);
+
       }
 
       void setPeerNodeID(TCGroupHandshakeMessage msg) {
@@ -1070,6 +1069,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         member.notifyMemberAdded();
         manager.fireNodeEvent(member, true);
         member.setJoinedEventFired(true);
+
+        if (manager.isZappedNode(member.getPeerNodeID())) {
+          logger.info("Aborting previously zapped node " + member);
+          manager.zapNode(member.getPeerNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                          "Aborting the zapped node");
+        }
+
       }
     }
 

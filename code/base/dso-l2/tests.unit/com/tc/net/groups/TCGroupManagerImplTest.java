@@ -186,30 +186,44 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
-  private int joinedMemberSize(TCGroupManagerImpl group) {
-    Object members[] = group.getMembers().toArray();
-    int size = members.length;
-    for (int i = 0; i < size; ++i) {
-      if (!((TCGroupMember) members[i]).isReady()) --size;
-    }
-    return size;
-  }
-
   public void testOpenZappedNode() throws Exception {
     setupGroups(2);
 
     groups[0].addZappedNode(groups[1].getLocalNodeID());
 
+    MockZapNodeRequestProcessor proc1 = new MockZapNodeRequestProcessor();
+    MockZapNodeRequestProcessor proc2 = new MockZapNodeRequestProcessor();
+
+    groups[0].setZapNodeRequestProcessor(proc1);
+    groups[1].setZapNodeRequestProcessor(proc2);
+
     groups[0].join(nodes[0], nodes);
     groups[1].join(nodes[1], nodes);
-    Thread.sleep(2000);
 
-    assertEquals(0, joinedMemberSize(groups[0]));
-    // in very rare case, a member may be existing for very short time
-    if (joinedMemberSize(groups[1]) != 0) {
-      Thread.sleep(500);
-      assertEquals(0, joinedMemberSize(groups[1]));
+    int proc1OutGoingZapMsg = 0, proc1IncomingZapMsg = 0;
+    int proc2OutGoingZapMsg = 0, proc2IncomingZapMsg = 0;
+
+    while (proc1.outgoing.poll(1000) != null) {
+      proc1OutGoingZapMsg++;
     }
+
+    while (proc1.incoming.poll(1000) != null) {
+      proc1IncomingZapMsg++;
+    }
+
+    while (proc2.outgoing.poll(1000) != null) {
+      proc2OutGoingZapMsg++;
+    }
+
+    while (proc2.incoming.poll(1000) != null) {
+      proc2IncomingZapMsg++;
+    }
+
+    assertEquals(1, proc1OutGoingZapMsg);
+    assertEquals(0, proc1IncomingZapMsg);
+
+    assertEquals(0, proc2OutGoingZapMsg);
+    assertEquals(1, proc2IncomingZapMsg);
 
     tearGroups();
   }
@@ -737,6 +751,27 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     public long[] getCurrentNodeWeights() {
       return new long[0];
+    }
+  }
+
+  static final class MockZapNodeRequestProcessor implements ZapNodeRequestProcessor {
+
+    public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
+    public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
+    private int                   weight   = 0;
+
+    public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
+      outgoing.put(reason);
+      return true;
+    }
+
+    public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
+      incoming.put(reason);
+    }
+
+    public long[] getCurrentNodeWeights() {
+      long[] rv = new long[] { weight };
+      return rv;
     }
   }
 

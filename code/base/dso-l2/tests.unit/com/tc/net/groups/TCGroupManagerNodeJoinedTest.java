@@ -205,6 +205,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
 
       groupManagers[i] = gm;
+      gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
       MyGroupEventListener gel = new MyGroupEventListener(gm);
       listeners[i] = new MyListener();
       gm.registerForMessages(TestMessage.class, listeners[i]);
