@@ -14,7 +14,7 @@
   <licenses>
     <license>
       <name>Terracotta Public License</name>
-      <url>http://www.terracotta.org/web/display/orgsite/Text+of+Terracotta+Public+License</url>
+      <url>http://www.terracotta.org/legal/terracotta-public-license</url>
       <distribution>repo</distribution>
       <comments>
         The Terracotta Public License (we'll call it the "TPL") is based on the
@@ -247,6 +247,7 @@
         <version>${sigar.version}</version>
         <type>jar</type>
       </dependency>
+      <!-- linux -->
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-amd64-linux</artifactId>
@@ -255,13 +256,21 @@
       </dependency>
       <dependency>
         <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-sparc-solaris</artifactId>
+        <artifactId>libsigar-x86-linux</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
       </dependency>
+
+      <!-- solaris -->
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-amd64-solaris</artifactId>
+        <version>${sigar.version}</version>
+        <type>so</type>
+      </dependency>      
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-sparc-solaris</artifactId>
         <version>${sigar.version}</version>
         <type>so</type>
       </dependency>
@@ -271,12 +280,14 @@
         <version>${sigar.version}</version>
         <type>so</type>
       </dependency>      
+      
+      <!-- windows -->
       <dependency>
         <groupId>org.hyperic</groupId>
-        <artifactId>libsigar-x86-linux</artifactId>
+        <artifactId>sigar-amd64-winnt</artifactId>
         <version>${sigar.version}</version>
-        <type>so</type>
-      </dependency>
+        <type>dll</type>
+      </dependency>      
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>sigar-x86-winnt</artifactId>
@@ -289,18 +300,20 @@
         <version>${sigar.version}</version>
         <type>lib</type>
       </dependency>
-      <dependency>
-        <groupId>org.hyperic</groupId>
-        <artifactId>sigar-amd64-winnt</artifactId>
-        <version>${sigar.version}</version>
-        <type>dll</type>
-      </dependency>
+
+      <!-- mac osx -->
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-universal-macosx</artifactId>
         <version>${sigar.version}</version>
         <type>dylib</type>
       </dependency>
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>libsigar-universal64-macosx</artifactId>
+        <version>${sigar.version}</version>
+        <type>dylib</type>
+      </dependency>      
       <dependency>
         <groupId>org.hyperic</groupId>
         <artifactId>libsigar-universal64-macosx</artifactId>

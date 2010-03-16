@@ -142,10 +142,14 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>
+    
+    <!-- SIGAR dependencies -->
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>sigar</artifactId>
+      <type>jar</type>
     </dependency>
+    <!-- linux -->
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>libsigar-amd64-linux</artifactId>
@@ -153,14 +157,33 @@
     </dependency>
     <dependency>
       <groupId>org.hyperic</groupId>
+      <artifactId>libsigar-x86-linux</artifactId>
+      <type>so</type>
+    </dependency>
+
+    <!-- solaris -->
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>libsigar-amd64-solaris</artifactId>
+      <type>so</type>
+    </dependency>      
+    <dependency>
+      <groupId>org.hyperic</groupId>
       <artifactId>libsigar-sparc-solaris</artifactId>
       <type>so</type>
     </dependency>
     <dependency>
       <groupId>org.hyperic</groupId>
-      <artifactId>libsigar-x86-linux</artifactId>
+      <artifactId>libsigar-x86-solaris</artifactId>
       <type>so</type>
-    </dependency>
+    </dependency>      
+    
+    <!-- windows -->
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>sigar-amd64-winnt</artifactId>
+      <type>dll</type>
+    </dependency>      
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>sigar-x86-winnt</artifactId>
@@ -171,14 +194,16 @@
       <artifactId>sigar-x86-winnt</artifactId>
       <type>lib</type>
     </dependency>
-    <dependency>
-      <groupId>org.hyperic</groupId>
-      <artifactId>sigar-amd64-winnt</artifactId>
-      <type>dll</type>
-    </dependency>
+
+    <!-- mac osx -->
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>libsigar-universal-macosx</artifactId>
+      <type>dylib</type>
+    </dependency>
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>libsigar-universal64-macosx</artifactId>
       <type>dylib</type>
     </dependency>
     <dependency>
