@@ -36,7 +36,7 @@ public class ChecksumUtil {
     try {
       fis = new FileInputStream(source);
       int count = -1;
-      byte[] buffer = new byte[2048];
+      byte[] buffer = new byte[4 * 1024];
       while ((count = fis.read(buffer)) != -1) {
         md.update(buffer, 0, count);
       }
