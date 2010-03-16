@@ -181,6 +181,11 @@
       <artifactId>libsigar-universal-macosx</artifactId>
       <type>dylib</type>
     </dependency>
+    <dependency>
+      <groupId>org.hyperic</groupId>
+      <artifactId>libsigar-universal64-macosx</artifactId>
+      <type>dylib</type>
+    </dependency>
   </dependencies>
 
   <repositories>
