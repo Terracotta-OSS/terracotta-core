@@ -5,9 +5,11 @@
 package org.terracotta.modules.tool.util;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -30,7 +32,18 @@ public class ChecksumUtil {
   public static BigInteger md5Sum(File source) throws NoSuchAlgorithmException, IOException {
     MessageDigest md = MessageDigest.getInstance("MD5");
     md.reset();
-    byte[] md5sum = md.digest(FileUtils.readFileToByteArray(source));
+    FileInputStream fis = null;
+    try {
+      fis = new FileInputStream(source);
+      int count = -1;
+      byte[] buffer = new byte[2048];
+      while ((count = fis.read(buffer)) != -1) {
+        md.update(buffer, 0, count);
+      }
+    } finally {
+      IOUtils.closeQuietly(fis);
+    }
+    byte[] md5sum = md.digest();
     return new BigInteger(1, md5sum);
   }
 
