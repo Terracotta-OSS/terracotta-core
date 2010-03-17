@@ -379,9 +379,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void closeMember(TCGroupMember member, boolean isAdded) {
     member.setReady(false);
-    channelToNodeID.remove(member.getChannel());
+    removeChannelFromNodeIDMap(member.getChannel());
     if (isAdded) membersRemove(member);
     member.close();
+  }
+
+  private void removeChannelFromNodeIDMap(MessageChannel channel) {
+    channelToNodeID.remove(channel);
   }
 
   private void notifyAnyPendingRequests(TCGroupMember member) {
@@ -1094,6 +1098,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
           member.abortMemberAdding();
           manager.memberDisappeared(member);
         } else {
+          manager.removeChannelFromNodeIDMap(channel);
           channel.close();
         }
       }
