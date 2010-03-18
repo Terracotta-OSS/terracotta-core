@@ -435,4 +435,9 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public int getRemoteCallbackPort() {
     throw new AssertionError();
   }
+
+  // for testing
+  public NetworkLayer getSendLayer() {
+    return this.sendLayer;
+  }
 }
