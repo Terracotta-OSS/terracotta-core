@@ -14,6 +14,7 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.IOException;
@@ -64,6 +65,9 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
           Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
           waitTxnComplete();
           Assert.assertEquals(0, getPendingTransactionsCount());
+        } else {
+          // sleep here to let index 0 thread to complete job first without introduce transaction by barrier
+          ThreadUtil.reallySleep(1000);
         }
         barrier.await();
         if (index != 0) {
