@@ -279,7 +279,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
         if (lockRecallRate != -1) lockRecallRateDialInfo.setValue(Double.valueOf(lockRecallRate));
         if (faultRate != -1) faultRateDialInfo.setValue(Double.valueOf(faultRate));
         if (flushRate != -1) flushRateDialInfo.setValue(Double.valueOf(flushRate));
-        if (txnSizeRate != -1) txnSizeRateDialInfo.setValue(Double.valueOf(txnSizeRate / 1000d));
+        if (txnSizeRate != -1) txnSizeRateDialInfo.setValue(Double.valueOf((txnSizeRate / clusterModel.getServerGroups().length ) / 1000d));
         if (pendingTxnsCount != -1) pendingTxnsDialInfo.setValue(Integer.valueOf(pendingTxnsCount));
       }
     });
