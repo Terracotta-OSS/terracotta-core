@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.test;
 
@@ -8,9 +9,7 @@ import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
-import com.tc.config.schema.builder.SpringConfigBuilder;
 import com.tc.config.schema.builder.WebApplicationConfigBuilder;
-
 
 /**
  * Allows you to build valid config for the DSO part of an application. This class <strong>MUST NOT</strong> invoke the
@@ -25,7 +24,7 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
     setArrayPropertyTagName("roots", "root");
     setArrayPropertyTagName("distributed-methods", "distributed-method");
     setArrayPropertyTagName("additional-boot-jar-classes", "include");
-    
+
     setProperty("instrumented-classes", "");
   }
 
@@ -52,7 +51,7 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
   public void setAdditionalBootJarClasses(String[] value) {
     setProperty("additional-boot-jar-classes", value);
   }
-  
+
   public void setAppGroups(AppGroupConfigBuilder[] value) {
     setProperty("app-groups", value);
   }
@@ -80,7 +79,7 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
   public void setLocks(LockConfigBuilder[] value) {
     setProperty("locks", selfTaggingArray(value));
   }
-  
+
   public void setWebApplications(WebApplicationConfigBuilder[] value) {
     setProperty("web-applications", selfTaggingArray(value));
   }
@@ -88,6 +87,7 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
   private static final String[] ALL_PROPERTIES = new String[] { "instrumented-classes", "transient-fields", "locks",
       "roots", "distributed-methods", "additional-boot-jar-classes", "web-applications", "spring", "app-groups" };
 
+  @Override
   public String toString() {
     String out = "";
 
@@ -98,16 +98,6 @@ public class DSOApplicationConfigBuilderImpl extends BaseConfigBuilder implement
 
   public static DSOApplicationConfigBuilder newMinimalInstance() {
     return new DSOApplicationConfigBuilderImpl();
-  }
-
-  public SpringConfigBuilder getSpring() {
-    if (!isSet("spring")) setSpring(SpringConfigBuilderImpl.newMinimalInstance());
-    return (SpringConfigBuilder) getRawProperty("spring");
-  }
-
-  private void setSpring(SpringConfigBuilder builder) {
-    setProperty("spring", builder);
-    
   }
 
 }
