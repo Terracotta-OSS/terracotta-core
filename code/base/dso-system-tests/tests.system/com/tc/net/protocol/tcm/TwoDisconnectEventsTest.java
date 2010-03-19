@@ -98,6 +98,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         } else {
           cmt = (ClientMessageTransport) ((OnceAndOnlyOnceProtocolNetworkLayerImpl) cmci.getSendLayer()).getSendLayer();
         }
+        cmt.setAllowConnectionReplace(true);
 
         // send first event
         TCConnection tccomm = new MockTCConnection();
