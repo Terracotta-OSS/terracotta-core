@@ -538,7 +538,6 @@ public class BootJarTool {
       loadTerracottaClass(TCByteArrayOutputStream.class.getName());
 
       loadTerracottaClass("com.tc.object.bytecode.hook.impl.ArrayManager");
-      loadTerracottaClass("com.tc.object.bytecode.NonDistributableObjectRegistry");
       loadTerracottaClass(ProxyInstance.class.getName());
       loadTerracottaClass(JavaLangArrayHelpers.class.getName());
 
