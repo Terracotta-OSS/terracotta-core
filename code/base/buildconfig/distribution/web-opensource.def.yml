@@ -51,7 +51,7 @@ bundled_components:
       install_directory: eclipse
 bundled_modules:
   - core:
-      install_directory: eclipse/org.terracotta.dso/modules
+      install_directory: eclipse/org.terracotta.dso/platform/modules
       manifest:
         - clustered-surefire-2.3
         - excludes-config
