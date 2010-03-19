@@ -239,7 +239,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                                                                       + " Many client reconnection failures can be avoided by"
                                                                       + " configuring the Terracotta server array for \"permanent-store\""
                                                                       + " and tuning reconnection parameters. For more information,"
-                                                                      + " see http://www.terracotta.org/ha", e));
+                                                                      + " see http://www.terracotta.org/kit/reflector?kitID=default&pageID=HA", e));
         }
       }
       return isSynced;
