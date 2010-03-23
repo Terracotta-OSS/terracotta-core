@@ -4,21 +4,16 @@
  */
 package com.tctest.jdk15;
 
-import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.runtime.Os;
 import com.tc.util.runtime.Vm;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 public class LinkedBlockingQueueInterruptTakeTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 3;
-  private boolean          reconnectOriginalValue;
 
   public LinkedBlockingQueueInterruptTakeTest() {
     // MNK-527
@@ -33,25 +28,12 @@ public class LinkedBlockingQueueInterruptTakeTest extends TransparentTestBase {
   }
 
   @Override
-  protected void setExtraJvmArgs(ArrayList jvmArgs) {
-    super.setExtraJvmArgs(jvmArgs);
-    TCProperties tcProps = TCPropertiesImpl.getProperties();
-    reconnectOriginalValue = tcProps.getBoolean(TCPropertiesConsts.L2_L1RECONNECT_ENABLED);
-    tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "false");
-    System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "false");
-    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED + "=false");
+  protected boolean enableL1Reconnect() {
+    return false;
   }
 
   protected Class getApplicationClass() {
     return LinkedBlockingQueueInterruptTakeTestApp.class;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-    TCProperties tcProps = TCPropertiesImpl.getProperties();
-    tcProps.setProperty(TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "" + reconnectOriginalValue);
-    System.setProperty("com.tc." + TCPropertiesConsts.L2_L1RECONNECT_ENABLED, "" + reconnectOriginalValue);
   }
 
 }

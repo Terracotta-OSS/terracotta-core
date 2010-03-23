@@ -9,11 +9,11 @@ import com.tc.util.runtime.Vm;
 
 import java.util.Date;
 
-public class InterruptTest extends TransparentTestBase {
+public class InterruptOOOTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 2;
 
-  public InterruptTest() {
+  public InterruptOOOTest() {
     // MNK-565
     if (Os.isSolaris() && !Vm.isJDK16Compliant()) {
       disableAllUntil(new Date(Long.MAX_VALUE));
@@ -27,10 +27,11 @@ public class InterruptTest extends TransparentTestBase {
 
   @Override
   protected boolean enableL1Reconnect() {
-    return false;
+    return true;
   }
 
   protected Class getApplicationClass() {
     return InterruptTestApp.class;
   }
+
 }
