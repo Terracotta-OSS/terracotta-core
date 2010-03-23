@@ -13,7 +13,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   # - extract hibernate referecne config from standalone agent jar
   def postscript(ant, build_environment, product_directory, *args)
-    return if @no_demo
     return if @no_external_resources
 
     args.each do |resource_def|

@@ -159,13 +159,16 @@ PACKAGING & DISTRIBUTION
 NOTE: Output of binaries are placed under code/base/build/dist
 
 --no-demo
-    Use this option with "dist" target will create only the binaries
+    don't include demos while building kits
+
+--no-extra
+    don't include demos, TIMs and express products
 
 --no-schema
     Skipping schema compilation
 
 --no-no
-    This equals --no-ivy --no-demo --no-schema
+    only build a bare kit and skip ivy also
 
 dist <product_code> <flavor> [maven.repo=URL]
     Create distribution binaries.

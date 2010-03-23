@@ -162,6 +162,7 @@ class TerracottaBuilder
     option_parser.on('--no-extra') {
       @no_tims = true
       @no_external_resources = true
+      @no_demo = true
     }
 
     option_parser.on('--no-no') do 
