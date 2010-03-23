@@ -163,14 +163,15 @@ class TerracottaBuilder
       @no_tims = true
       @no_external_resources = true
       @no_demo = true
+      @no_schema = true
     }
 
     option_parser.on('--no-no') do 
       @no_ivy = true
-      @no_demo = true
-      @no_schema = true
       @no_tims = true
       @no_external_resources = true
+      @no_demo = true
+      @no_schema = true
     end
     option_parser.on('--emma') do Registry[:emma] = true end
     

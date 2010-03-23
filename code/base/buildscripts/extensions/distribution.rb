@@ -106,9 +106,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
     end
 
-    original_no_demo = @no_demo
-    @no_demo = true
-    @no_schema = true
+    original_no_extra = @no_extra
+    @no_extra = true
     begin
       product_definition_files(flavor).each do |def_file|
         puts "Processing def file #{def_file}"
@@ -124,7 +123,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         end
       end
     ensure
-      @no_demo = original_no_demo
+      @no_extra = original_no_extra
     end
   end
 
