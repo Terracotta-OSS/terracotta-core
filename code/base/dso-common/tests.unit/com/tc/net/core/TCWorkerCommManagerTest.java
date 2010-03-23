@@ -357,7 +357,7 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
            && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
            && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
-      System.out.print(".");
+      System.out.print("~");
       ThreadUtil.reallySleep(5000);
     }
 
@@ -386,22 +386,24 @@ public class TCWorkerCommManagerTest extends TCTestCase {
     // all clients should reconnect and should be distributed fairly among the worker comms.
     ThreadUtil.reallySleep(5000);
 
+    // After connection close and reconnects, the weight balance depends on when comms get the close connection events
     System.out.println("XXX waiting for all clients reconnect");
-    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 2)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 2)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 2)) {
-      System.out.print(".");
+    while (((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
+            + (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1)) + (((TCCommJDK14) commsMgr
+        .getConnectionManager().getTcComm()).getWeightForWorkerComm(2))) != 6) {
+      System.out.print("~");
       ThreadUtil.reallySleep(5000);
     }
 
     // case 5: server detecting long gcs and kicking out the clients
     proxy.setDelay(15 * 1000);
+    ThreadUtil.reallySleep(10000);
 
     System.out.println("XXX waiting for HC to kick out the clients those who connected thru proxy ports");
-    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
-      System.out.print(".");
+    while (((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
+            + (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1)) + (((TCCommJDK14) commsMgr
+        .getConnectionManager().getTcComm()).getWeightForWorkerComm(2))) != 3) {
+      System.out.print("~");
       ThreadUtil.reallySleep(5000);
     }
 
