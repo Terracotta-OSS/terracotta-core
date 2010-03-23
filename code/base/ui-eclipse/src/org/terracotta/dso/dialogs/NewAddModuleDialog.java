@@ -263,7 +263,7 @@ public class NewAddModuleDialog extends MessageDialog {
   private void populateTable() {
     fTable.removeAll();
     File installRoot = new File(System.getProperty("tc.install-root"));
-    populateTable(new File(installRoot, "modules"), "KIT");
+    populateTable(new File(installRoot, "platform/modules"), "KIT");
     String[] repos = fModules.getRepositoryArray();
     if (repos != null) {
       for (String repo : repos) {
