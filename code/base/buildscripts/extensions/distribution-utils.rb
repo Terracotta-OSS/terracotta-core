@@ -147,13 +147,55 @@ module DistributionUtils
     FilePath.new(product_directory, (component[:install_directory] || ''), (suffix || ''))
   end
 
+  private
+
+  # Maps variable names to interpolated values.  If a variable is mapped to a String,
+  # then the interpolated value is retrieved from the @config_source object using that
+  # String as the key.  If the variable is mapped to a Symbol, then the interpolated
+  # value is retrieved by invoking the method named by the Symbol on the
+  # @build_environment object.  If the variable is mapped to a proc or lambda, then
+  # the interpolated value is retrieved by invoking it.  In all cases, to_s is invoked
+  # on the resulting interpolated value.
+  VARIABLE_MAP = {
+    'api.version' => lambda { @config_source['api.version'] || 'unknown' },
+    'kitversion' => 'kit.version',
+    'version' => :version,
+    'branch' => :current_branch,
+    'platform' => lambda { @build_environment.os_family.downcase },
+    'revision' => :os_revision,
+    'edition' => :edition
+  }
+
+  VARIABLE = /#{VARIABLE_MAP.keys.map {|key| "(#{key})" }.join("|")}/
+  BRACKETED_EXPRESSION = /\{.*?(#{VARIABLE}).*?\}/
+
   def interpolate(s)
-    s = s.gsub(/api\.version/, @config_source['api.version'] || 'unknown')
-    s = s.gsub(/version/, @build_environment.version)
-    s = s.gsub(/branch/, @build_environment.current_branch)
-    s = s.gsub(/platform/, @build_environment.os_family.downcase)
-    s = s.gsub(/revision/, @build_environment.os_revision.to_s)
-    s = s.gsub(/edition/, @build_environment.edition)
-    s
+    # First, identify any bracketed variables and strip them if the contained
+    # variable is not defined.  This allows for specifying a separator character
+    # within the brackets but not having the separator appear if there is nothing
+    # to separate.
+    s = s.gsub(BRACKETED_EXPRESSION) do |match|
+      if interpolated_value($1)
+        match[1...-1] # Remove surrounding brackets
+      else
+        ""
+      end
+    end
+
+    # Now, with bracketed expressions already accounted for, we can simply gsub
+    # any remaining variables to their interpolated value.
+    s.gsub(VARIABLE) { |match| interpolated_value(match) }
+  end
+
+  def interpolated_value(variable)
+    mapping = VARIABLE_MAP[variable]
+    result = case mapping
+    when NilClass: nil
+    when String: @config_source[mapping]
+    when Symbol: @build_environment.send(mapping)
+    when Proc: instance_eval(&mapping)
+    end
+    result = result.to_s
+    result.empty? ? nil : result
   end
 end
