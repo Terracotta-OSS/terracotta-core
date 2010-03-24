@@ -34,6 +34,10 @@ class ManagementResources {
     return resources.getString("domain.ehcache.hibernate");
   }
 
+  String getQuartzMBeanDomain() {
+    return resources.getString("domain.quartz");
+  }
+
   String getNodeNameSystemProperty() {
     return resources.getString("system-property.node-name");
   }

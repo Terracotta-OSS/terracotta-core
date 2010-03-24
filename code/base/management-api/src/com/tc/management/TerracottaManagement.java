@@ -92,7 +92,7 @@ public abstract class TerracottaManagement {
   public enum MBeanDomain {
     PUBLIC(MANAGEMENT_RESOURCES.getPublicMBeanDomain()), INTERNAL(MANAGEMENT_RESOURCES.getInternalMBeanDomain()), TIM(
         MANAGEMENT_RESOURCES.getTimMBeanDomain()), EHCACHE(MANAGEMENT_RESOURCES.getEhCacheMBeanDomain()), EHCACHE_HIBERNATE(
-        MANAGEMENT_RESOURCES.getEhCacheHibernateMBeanDomain());
+        MANAGEMENT_RESOURCES.getEhCacheHibernateMBeanDomain()), QUARTZ(MANAGEMENT_RESOURCES.getQuartzMBeanDomain());
 
     private final String value;
 
@@ -192,10 +192,11 @@ public abstract class TerracottaManagement {
 
   public static final QueryExp matchAllTerracottaMBeans(UUID id) {
     try {
-      return Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
-                               new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id)), Query
+      return Query.or(Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
+                                        new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id)), Query
           .or(new ObjectName(MBeanDomain.EHCACHE + ":*,node=" + id), new ObjectName(MBeanDomain.EHCACHE_HIBERNATE
-                                                                                    + ":*,node=" + id)));
+                                                                                    + ":*,node=" + id))),
+                      new ObjectName(MBeanDomain.QUARTZ + ":*,node=" + id));
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }

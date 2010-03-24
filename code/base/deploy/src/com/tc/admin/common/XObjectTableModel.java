@@ -28,7 +28,7 @@ import javax.swing.table.AbstractTableModel;
 public class XObjectTableModel extends AbstractTableModel {
   private Class                  type;
   private ArrayList              fieldDescriptions;
-  private ArrayList              objects      = new ArrayList();
+  private final ArrayList        objects      = new ArrayList();
   private String[]               fieldNames;
   private ArrayList              showingFields;
 
@@ -242,6 +242,7 @@ public class XObjectTableModel extends AbstractTableModel {
     return getShowingFieldDescription(col).getOperation();
   }
 
+  @Override
   public Class getColumnClass(int col) {
     Method method = getShowingFieldGetter(col);
 
@@ -356,10 +357,12 @@ public class XObjectTableModel extends AbstractTableModel {
     return showingFields != null ? showingFields.size() : 0;
   }
 
+  @Override
   public boolean isCellEditable(int row, int col) {
     return getShowingFieldSetter(col) != null || getShowingFieldOperation(col) != null;
   }
 
+  @Override
   public String getColumnName(int col) {
     FieldDescription fieldDesc = getShowingFieldDescription(col);
     String heading = fieldDesc.getHeader();
@@ -419,6 +422,7 @@ public class XObjectTableModel extends AbstractTableModel {
     return "";
   }
 
+  @Override
   public void setValueAt(Object value, int row, int col) {
     Method setter = getShowingFieldSetter(col);
 
@@ -436,8 +440,16 @@ public class XObjectTableModel extends AbstractTableModel {
       public int compare(Object o1, Object o2) {
         Comparable prev = (Comparable) xgetObjectValueAt(o1, col);
         Object next = xgetObjectValueAt(o2, col);
-        int diff = prev.compareTo(next);
-        return (direction == SwingConstants.SOUTH) ? diff : -diff;
+        if (prev == null && next == null) {
+          return 0;
+        } else if (prev == null && next != null) {
+          return -1;
+        } else if (next == null && prev != null) {
+          return 1;
+        } else {
+          int diff = prev.compareTo(next);
+          return (direction == SwingConstants.SOUTH) ? diff : -diff;
+        }
       }
     };
     Collections.sort(objects, c);
