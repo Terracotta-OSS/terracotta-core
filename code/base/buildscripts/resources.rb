@@ -170,7 +170,7 @@ NOTE: Output of binaries are placed under code/base/build/dist
 --no-no
     only build a bare kit and skip ivy also
 
-dist <product_code> <flavor> [maven.repo=URL]
+dist <product_code> <flavor> [maven.repo=URL] [kit.version=number]
     Create distribution binaries.
     <product_code> may be one of dso (the default), web, or api
     <flavor> may be either OPENSOURCE (the default) or ENTERPRISE.
@@ -178,14 +178,18 @@ dist <product_code> <flavor> [maven.repo=URL]
     repository to which the generated binaries will be deployed.  The
     keyword 'local' can be used in place of a URL to specify the local
     Maven repository.  Maven must be installed to use this option.
+    If the kit.version parameter is given, it will be appended to the
+    kit name.  This parameter can also be specified in build-config.global.
 
 dist_jars <product_code> <distribution_type>
     Acts like the dist target but will only build the jar files that will be found
     in a kit.
 
-create_package <product_code>
+create_package <product_code> [kit.version=number]
     Assembles and packages the kit. Product codes: dso, web
     Default product_code is dso.
+    If the kit.version parameter is given, it will be appended to the
+    kit name.  This parameter can also be specified in build-config.global.
 
 create_all_packages
     Assembles, packages, and publishes all possible kits, based on the
