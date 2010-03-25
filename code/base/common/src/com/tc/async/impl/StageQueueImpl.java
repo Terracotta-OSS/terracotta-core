@@ -15,6 +15,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
+import com.tc.util.Util;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.TCQueue;
 
@@ -126,16 +127,24 @@ public class StageQueueImpl implements Sink {
       return;
     }
 
-    try {
-      if (context instanceof MultiThreadedEventContext) {
-        SourceQueueImpl sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
-        sourceQueue.put(context);
-      } else {
-        this.sourceQueues[0].put(context);
+    boolean interrupted = false;
+    while (true) {
+      try {
+        if (context instanceof MultiThreadedEventContext) {
+          SourceQueueImpl sourceQueue = getSourceQueueFor((MultiThreadedEventContext) context);
+          sourceQueue.put(context);
+        } else {
+          this.sourceQueues[0].put(context);
+        }
+        break;
+      } catch (InterruptedException e) {
+        this.logger.error("StageQueue Add: " + e);
+        interrupted = true;
       }
-    } catch (InterruptedException e) {
-      this.logger.error(e);
-      throw new AssertionError(e);
+    }
+
+    if (interrupted) {
+      Util.selfInterruptIfNeeded(interrupted);
     }
 
   }

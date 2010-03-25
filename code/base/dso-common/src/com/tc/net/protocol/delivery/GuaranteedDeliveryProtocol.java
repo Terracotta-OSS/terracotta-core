@@ -40,11 +40,11 @@ class GuaranteedDeliveryProtocol {
       }
     } while (true);
 
-    send.addEvent(new OOOProtocolEvent());
-
     if (interrupted) {
       Util.selfInterruptIfNeeded(interrupted);
     }
+
+    send.addEvent(new OOOProtocolEvent());
   }
 
   public void receive(OOOProtocolMessage msg) {
