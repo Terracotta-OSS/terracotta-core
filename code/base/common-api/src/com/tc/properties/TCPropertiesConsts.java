@@ -125,6 +125,8 @@ public interface TCPropertiesConsts {
    *                                   0 - disable faulting optimization 
    *                                   1 - enabled with standard implementation (continous oids)
    *                                   2 - enabled with compressed implementation (spare oids)
+   * dgc.enterpriseMarkStageInterval - The time between tokens are sent to see if each L2 finished marking (collect/rescue).
+   *                                   This is for enterprise only.
    * dgc.young.enabled              - Enables/Disables the young gen collector
    * dgc.young.frequencyInMillis    - The time in millis between each young gen collection.
    *                                  (default : 1 min, not advisable to run more frequently)
@@ -155,6 +157,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION                    = "l2.objectmanager.dgc.faulting.optimization";
   public static final String   L2_OBJECTMANAGER_DGC_YOUNG_ENABLED                            = "l2.objectmanager.dgc.young.enabled";
   public static final String   L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                          = "l2.objectmanager.dgc.young.frequencyInMillis";
+  public static final String   L2_OBJECTMANAGER_DGC_ENTERPRISE_MARK_STAGE_INTERVAL           = "l2.objectmanager.dgc.enterpriseMarkStageInterval";
   public static final String   L2_DATA_BACKUP_THROTTLE_TIME                                  = "l2.data.backup.throttle.timeInMillis";
   public static final String   L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF                       = "l2.objectmanager.persistor.measure.performance";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY        = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
