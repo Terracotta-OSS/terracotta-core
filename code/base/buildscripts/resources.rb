@@ -162,10 +162,10 @@ NOTE: Output of binaries are placed under code/base/build/dist
     don't include demos while building kits
 
 --no-external-resources
-    don't include external resources (e.g. express products) when building kits
+    don't include external resources (ehcache-core, quartz, etc) when building kits
 
 --no-tims
-    don't include TIMs when building kits
+    don't include TIMs (including express jars) when building kits
 
 --no-extra
     don't include demos, TIMs and express products
