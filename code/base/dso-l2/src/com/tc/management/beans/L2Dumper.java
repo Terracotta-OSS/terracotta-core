@@ -73,7 +73,22 @@ public class L2Dumper extends AbstractTerracottaMBean implements L2DumperMBean {
   }
 
   public void dumpClusterState() {
-    doServerDump();
+    Set allL2DumperMBeans;
+    try {
+      allL2DumperMBeans = TerracottaManagement.getAllL2DumperMBeans(mbs);
+    } catch (Exception e) {
+      logger.error(e);
+      return;
+    }
+
+    for (Iterator i = allL2DumperMBeans.iterator(); i.hasNext();) {
+      ObjectName l2DumperBean = (ObjectName) i.next();
+      try {
+        mbs.invoke(l2DumperBean, "doServerDump", new Object[] {}, new String[] {});
+      } catch (Exception e) {
+        logger.error("error dumping on " + l2DumperBean, e);
+      }
+    }
 
     Set allL1DumperMBeans;
     try {

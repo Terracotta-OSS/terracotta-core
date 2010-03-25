@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class TickerTokenManagerImpl implements TickerTokenManager {
 
   private final int                                                  id;
-  private final int                                                  timerPeriod;
+  private final long                                                 timerPeriod;
 
   private final Map<Class, TickerTokenFactory>                       factoryMap         = Collections
                                                                                             .synchronizedMap(new HashMap<Class, TickerTokenFactory>());
@@ -38,7 +38,7 @@ public abstract class TickerTokenManagerImpl implements TickerTokenManager {
                                                                                                     "Ticker Token Timer",
                                                                                                     true);
 
-  public TickerTokenManagerImpl(int id, int totalTickers, int timerPeriod) {
+  public TickerTokenManagerImpl(int id, int totalTickers, long timerPeriod) {
     this.id = id;
     this.totalTickers = totalTickers;
     this.timerPeriod = timerPeriod;

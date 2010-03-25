@@ -688,13 +688,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                              managedObjectFlushHandler,
                                                              (persistent ? 1 : this.l2Properties
                                                                  .getInt("seda.flushstage.threads")), -1);
+    long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc").getLong("enterpriseMarkStageInterval");
     TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
     boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
     long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
 
     ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
                                                                       persistent, enableYoungGenDGC,
-                                                                      youngGenDGCFrequency);
+                                                                      youngGenDGCFrequency, enterpriseMarkStageInterval);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
                                                swapCache, persistenceTransactionProvider, faultManagedObjectStage

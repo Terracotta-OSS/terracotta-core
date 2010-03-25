@@ -214,13 +214,16 @@ public class TCObjectPhysical extends TCObjectImpl {
     return cleared;
   }
 
-  private int clearObjectReferences(TransparentAccess ta) {
+  private int clearObjectReferences(TransparentAccess ta) { 
+ 
     TCField[] fields = tcClazz.getPortableFields();
+    
     if (fields.length == 0) { return 0; }
 
     Map fieldValues = null;
     int cleared = 0;
     for (TCField field : fields) {
+  
       if (!field.canBeReference()) continue;
 
       if (fieldValues == null) {
@@ -230,9 +233,11 @@ public class TCObjectPhysical extends TCObjectImpl {
       }
 
       Object obj = fieldValues.get(field.getName());
+    
       if (obj == null) continue;
 
       TCObject tobj = getObjectManager().lookupExistingOrNull(obj);
+    
       if (tobj != null) {
         ObjectID lid = tobj.getObjectID();
         setValue(field.getName(), lid);

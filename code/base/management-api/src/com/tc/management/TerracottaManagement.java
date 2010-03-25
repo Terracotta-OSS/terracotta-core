@@ -4,6 +4,7 @@
  */
 package com.tc.management;
 
+import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.net.TCSocketAddress;
 import com.tc.util.UUID;
@@ -218,5 +219,10 @@ public abstract class TerracottaManagement {
   public static final Set getAllL1DumperMBeans(final MBeanServerConnection mbs) throws MalformedObjectNameException,
       NullPointerException, IOException {
     return mbs.queryNames(new ObjectName(MBeanNames.L1DUMPER_INTERNAL.getCanonicalName() + ",*"), null);
+  }
+
+  public static final Set getAllL2DumperMBeans(final MBeanServerConnection mbs) throws MalformedObjectNameException,
+      NullPointerException, IOException {
+    return mbs.queryNames(new ObjectName(L2MBeanNames.DUMPER.getCanonicalName() + ",*"), null);
   }
 }

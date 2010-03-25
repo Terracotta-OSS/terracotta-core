@@ -2266,11 +2266,11 @@ public class ObjectManagerTest extends TCTestCase {
     public boolean paranoid;
 
     public TestObjectManagerConfig() {
-      super(10000, true, true, true, false, 60000);
+      super(10000, true, true, true, false, 60000, 1000);
     }
 
     TestObjectManagerConfig(long gcThreadSleepTime, boolean doGC) {
-      super(gcThreadSleepTime, doGC, true, true, false, 60000);
+      super(gcThreadSleepTime, doGC, true, true, false, 60000, 1000);
       throw new RuntimeException("Don't use me.");
     }
 
