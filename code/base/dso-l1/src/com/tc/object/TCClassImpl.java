@@ -348,17 +348,6 @@ public class TCClassImpl implements TCClass {
       }
     }
     
-    TCClass tcClazz = getSuperclass();
-    while(tcClazz != null) {
-    
-      TCField[] fields = tcClazz.getPortableFields();
-      for (TCField field : fields) {
-        l.add(field);
-      }
-      
-      tcClazz = tcClazz.getSuperclass();
-    }
-    
     return (TCField[]) l.toArray(new TCField[l.size()]);
   }
 

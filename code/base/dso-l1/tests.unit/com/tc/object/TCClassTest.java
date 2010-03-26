@@ -48,6 +48,32 @@ public class TCClassTest extends BaseDSOTestCase {
     assertEquals(mockLoader2, tcc5.getDefiningLoaderDescription());
   }
 
+
+  public void testPortableFields() throws Exception  {
+    DSOClientConfigHelper config = configHelper();
+    TCFieldFactory fieldFactory = new TCFieldFactory(config);
+    ClientObjectManager objectManager = new TestClientObjectManager();
+    ClassProvider classProvider = new MockClassProvider();
+    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
+    
+    TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestSuperclass1.class, null,
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
+    assertEquals(2, tcc1.getPortableFields().length);
+    
+    TCClass tcc2 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestSuperclass2.class, null,
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
+    assertEquals(2, tcc2.getPortableFields().length);
+    TCClass tcc3 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestClassPF.class, null,
+                                   MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false, true,
+                                   null, null);
+    assertEquals(1, tcc3.getPortableFields().length);
+    
+  }
+  
+  
   private class TestClass1 {
     //
   }
@@ -55,4 +81,27 @@ public class TCClassTest extends BaseDSOTestCase {
   private static class TestClass2 {
     //
   }
+  
+  @SuppressWarnings("unused")
+  private static class TestSuperclass1 {
+    
+    private long L1 = 0;
+    private long L2 = 0;
+    
+  }
+  
+  @SuppressWarnings("unused")
+  private static class TestSuperclass2 extends TestSuperclass1 {
+    
+    private long L3 = 0;
+    private long L4 = 0;
+    
+  }
+ 
+  @SuppressWarnings("unused")
+  private static class TestClassPF extends TestSuperclass2 {
+   
+   private long L5 = 0;
+   
+ }
 }

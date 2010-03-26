@@ -213,39 +213,46 @@ public class TCObjectPhysical extends TCObjectImpl {
     }
     return cleared;
   }
-
-  private int clearObjectReferences(TransparentAccess ta) { 
- 
-    TCField[] fields = tcClazz.getPortableFields();
-    
-    if (fields.length == 0) { return 0; }
+  
+  private int clearObjectReferences(TransparentAccess ta) {
 
     Map fieldValues = null;
     int cleared = 0;
-    for (TCField field : fields) {
-  
-      if (!field.canBeReference()) continue;
 
-      if (fieldValues == null) {
-        // lazy instantiation. TODO:: Add a new method in TransparentAccess __tc_getFieldNoResolve()
-        fieldValues = new HashMap();
-        ta.__tc_getallfields(fieldValues);
+    TCClass aClazz = tcClazz;
+
+    while (aClazz != null) {
+
+      TCField[] fields = aClazz.getPortableFields();
+
+      for (TCField field : fields) {
+
+        if (!field.canBeReference()) continue;
+
+        if (fieldValues == null) {
+          // lazy instantiation. TODO:: Add a new method in TransparentAccess __tc_getFieldNoResolve()
+          fieldValues = new HashMap();
+          ta.__tc_getallfields(fieldValues);
+        }
+
+        Object obj = fieldValues.get(field.getName());
+
+        if (obj == null) continue;
+
+        TCObject tobj = getObjectManager().lookupExistingOrNull(obj);
+
+        if (tobj != null) {
+          ObjectID lid = tobj.getObjectID();
+          setValue(field.getName(), lid);
+          cleared++;
+        }
       }
-
-      Object obj = fieldValues.get(field.getName());
-    
-      if (obj == null) continue;
-
-      TCObject tobj = getObjectManager().lookupExistingOrNull(obj);
-    
-      if (tobj != null) {
-        ObjectID lid = tobj.getObjectID();
-        setValue(field.getName(), lid);
-        cleared++;
-      }
+      
+      aClazz = aClazz.getSuperclass();
     }
     return cleared;
   }
+
 
   public void unresolveReference(String fieldName) {
     TCField field = tcClazz.getField(fieldName);
