@@ -572,4 +572,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     return out;
 
   }
+
+  // for testing
+  public boolean isShutdown() {
+    return this.isShutdown;
+  }
 }
