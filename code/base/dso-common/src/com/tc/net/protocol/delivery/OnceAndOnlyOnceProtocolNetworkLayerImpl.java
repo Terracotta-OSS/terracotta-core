@@ -32,6 +32,7 @@ import com.tc.util.UUID;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Timer;
 
 /**
  * NetworkLayer implementation for once and only once message delivery protocol.
@@ -53,11 +54,19 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   private final boolean                   isClient;
   private final String                    debugId;
   private UUID                            sessionId        = UUID.NULL_ID;
+  private final Timer                     restoreConnectTimer;
   private static final boolean            debug            = false;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
                                                  OOOProtocolMessageParser messageParser, Sink sendSink,
                                                  Sink receiveSink, ReconnectConfig reconnectConfig, boolean isClient) {
+    this(messageFactory, messageParser, sendSink, receiveSink, reconnectConfig, isClient, null);
+  }
+
+  public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
+                                                 OOOProtocolMessageParser messageParser, Sink sendSink,
+                                                 Sink receiveSink, ReconnectConfig reconnectConfig, boolean isClient,
+                                                 Timer restoreConnectTimer) {
     super(logger);
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
@@ -65,6 +74,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     this.delivery = new GuaranteedDeliveryProtocol(this, sendSink, receiveSink, reconnectConfig, isClient);
     this.delivery.start();
     this.delivery.pause();
+    this.restoreConnectTimer = restoreConnectTimer;
     this.sessionId = (this.isClient) ? UUID.NULL_ID : UUID.getUUID();
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
@@ -386,6 +396,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   public void startRestoringConnection() {
     debugLog("Switched to restoreConnection mode");
     reconnectMode.set(true);
+  }
+
+  public Timer getRestoreConnectTimer() {
+    return this.restoreConnectTimer;
   }
 
   public void connectionRestoreFailed() {

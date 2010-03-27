@@ -10,16 +10,15 @@ import com.tc.net.protocol.transport.RestoreConnectionCallback;
 import com.tc.util.Assert;
 import com.tc.util.DebugUtil;
 
-import java.util.Timer;
 import java.util.TimerTask;
 
 public class OOOReconnectionTimeout implements MessageTransportListener, RestoreConnectionCallback {
 
-  private static final boolean                      debug = false;
+  private static final boolean                      debug            = false;
 
   private final OnceAndOnlyOnceProtocolNetworkLayer oooLayer;
   private final long                                timeoutMillis;
-  private Timer                                     timer = null;
+  private TimeoutTimerTask                          timeoutTimerTask = null;
 
   public OOOReconnectionTimeout(final OnceAndOnlyOnceProtocolNetworkLayer oooLayer, final long timeoutMillis) {
     this.oooLayer = oooLayer;
@@ -36,7 +35,7 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
   }
 
   public synchronized void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
-    Assert.assertNull(timer);
+    Assert.assertNull(this.timeoutTimerTask);
     if (oooLayer.isClosed()) { return; }
     if (forcedDisconnect) {
       log(transport, "Transport FORCE Disconnected, skipping opening reconnect window");
@@ -45,30 +44,31 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
       log(transport, "Transport Disconnected, starting Timer for " + timeoutMillis);
       oooLayer.startRestoringConnection();
       oooLayer.notifyTransportDisconnected(transport, forcedDisconnect);
-      // start the timer...
-      timer = new Timer("ClientConnectionRestoreTimer", true);
-      timer.schedule(new TimeoutTimerTask(transport, this), timeoutMillis);
+      // schedule timer task
+      this.timeoutTimerTask = new TimeoutTimerTask(transport, this);
+      Assert.assertNotNull(oooLayer.getRestoreConnectTimer());
+      oooLayer.getRestoreConnectTimer().schedule(this.timeoutTimerTask, timeoutMillis);
     }
   }
 
   public synchronized void notifyTransportConnected(MessageTransport transport) {
-    if (timer != null) {
+    if (this.timeoutTimerTask != null) {
       log(transport, "Transport Connected, killing Timer for " + timeoutMillis);
-      cancelTimer();
+      cancelTimerTask();
     }
     oooLayer.notifyTransportConnected(transport);
   }
 
-  private void cancelTimer() {
-    timer.cancel();
-    timer = null;
+  private void cancelTimerTask() {
+    this.timeoutTimerTask.cancel();
+    this.timeoutTimerTask = null;
   }
 
   public synchronized void restoreConnectionFailed(MessageTransport transport) {
-    if (timer != null) {
+    if (this.timeoutTimerTask != null) {
       log(transport, "Restore Connection Failed, killing Timer for " + timeoutMillis);
       oooLayer.connectionRestoreFailed();
-      cancelTimer();
+      cancelTimerTask();
     }
   }
 
