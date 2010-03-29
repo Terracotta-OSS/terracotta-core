@@ -115,10 +115,9 @@ public class ChannelLifeCycleHandler extends AbstractEventHandler implements DSO
     // We want all the messages in the system from this client to reach its destinations before processing this request.
     // esp. hydrate stage and process transaction stage. This goo is for that.
     final NodeStateEventContext disconnectEvent = new NodeStateEventContext(NodeStateEventContext.REMOVE,
-                                                                            new ClientID(channel.getChannelID()
-                                                                                .toLong()));
-    InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink);
-    InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink);
+                                                                            channel.getRemoteNodeID());
+    InBandMoveToNextSink context1 = new InBandMoveToNextSink(disconnectEvent, channelSink, channel.getRemoteNodeID());
+    InBandMoveToNextSink context2 = new InBandMoveToNextSink(context1, processTransactionSink, channel.getRemoteNodeID());
     hydrateSink.add(context2);
   }
 
