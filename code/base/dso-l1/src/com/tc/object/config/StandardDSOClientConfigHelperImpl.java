@@ -198,7 +198,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final boolean                                      hasBootJar;
 
-  private volatile Map<Bundle, URL>                          bundleURLs;
+  private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
 
   public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -2079,8 +2079,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return this.hasBootJar;
   }
 
-  public void setBundleURLs(final Map<Bundle, URL> bundleURLs) {
-    this.bundleURLs = Collections.unmodifiableMap(new ConcurrentHashMap<Bundle, URL>(bundleURLs));
+  public void recordBundleURLs(final Map<Bundle, URL> toAdd) {
+    this.bundleURLs.putAll(toAdd);
   }
 
   public URL getBundleURL(final Bundle bundle) {

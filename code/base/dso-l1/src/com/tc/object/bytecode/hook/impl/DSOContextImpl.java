@@ -8,6 +8,7 @@ import org.apache.commons.io.CopyUtils;
 
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
+import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Repository;
 import com.tc.bundles.VirtualTimRepository;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
@@ -76,6 +77,7 @@ public class DSOContextImpl implements DSOContext {
                                                                              + "\n"
                                                                              + "Enter the make-boot-jar command with the -h switch for help.\n"
                                                                              + "********************************************************************************\n";
+  private final EmbeddedOSGiRuntime                 osgiRuntime;
 
   /**
    * Creates a "global" DSO Context. This context is appropriate only when there is only one DSO Context that applies to
@@ -134,7 +136,8 @@ public class DSOContextImpl implements DSOContext {
     // XXX: what should the appGroup and loaderDesc be? In theory we might want "regular" clients to access this shared
     // state too
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
-    Manager manager = new ManagerImpl(true, null, null, null, configHelper, l2Connection, true, runtimeLogger, classProvider);
+    Manager manager = new ManagerImpl(true, null, null, null, configHelper, l2Connection, true, runtimeLogger,
+                                      classProvider);
 
     Collection<Repository> repos = new ArrayList<Repository>();
     repos.add(new VirtualTimRepository(virtualTimJars));
@@ -168,13 +171,14 @@ public class DSOContextImpl implements DSOContext {
     checkForProperlyInstrumentedBaseClasses();
 
     try {
-      ModulesLoader.initModules(configHelper, classProvider, false, repos, configHelper.getUUID());
+      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, false, repos, configHelper.getUUID());
       configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {
       consoleLogger.fatal(e.getMessage());
       logger.fatal(e);
       System.exit(1);
+      throw new AssertionError("Will not run");
     }
   }
 
@@ -320,4 +324,8 @@ public class DSOContextImpl implements DSOContext {
     return preProcess(className, classfileBuffer, 0, classfileBuffer.length, loader);
   }
 
+  public void addModules(URL[] modules) throws Exception {
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), false, configHelper
+        .getUUID(), modules);
+  }
 }

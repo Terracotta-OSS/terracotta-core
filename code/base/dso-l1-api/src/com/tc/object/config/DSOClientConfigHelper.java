@@ -289,7 +289,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    */
   boolean addClassConfigBasedAdapters(ClassInfo classInfo);
 
-  void setBundleURLs(Map<Bundle, URL> bundleURLs);
+  void recordBundleURLs(Map<Bundle, URL> bundleURLs);
 
   URL getBundleURL(Bundle bundle);
 

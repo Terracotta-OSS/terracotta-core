@@ -78,7 +78,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader, final boolean publicApi) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader,
+                               final boolean publicApi) {
     /**/
   }
 
@@ -475,7 +476,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public void setBundleURLs(final Map<Bundle, URL> bundleURLs) {
+  public void recordBundleURLs(final Map<Bundle, URL> bundleURLs) {
     //
   }
 

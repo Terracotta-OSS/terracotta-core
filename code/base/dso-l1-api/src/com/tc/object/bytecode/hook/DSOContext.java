@@ -32,4 +32,5 @@ public interface DSOContext extends ClassProcessor, ClassFileTransformer {
    */
   public URL getClassResource(String className, ClassLoader loader, boolean hideSystemResources);
 
+  public void addModules(URL[] modules) throws Exception;
 }
