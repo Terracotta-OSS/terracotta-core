@@ -16,18 +16,18 @@ import java.util.Timer;
 public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
   public static final String RESTORE_TIMERTHREAD_NAME = "OOO Connection Restore Timer";
-  private volatile Timer     restoreConnectTimer      = null;
+  private Timer              restoreConnectTimer      = null;
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
-                                                                     ReconnectConfig reconnectConfig) {
+  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
+                                                                                  ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
     return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, sendSink, receiveSink,
                                                        reconnectConfig, true);
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
-                                                                     ReconnectConfig reconnectConfig) {
+  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
+                                                                                  ReconnectConfig reconnectConfig) {
     // ooo connection restore timers are needed only for servers
     if (restoreConnectTimer == null) {
       restoreConnectTimer = new Timer(RESTORE_TIMERTHREAD_NAME, true);

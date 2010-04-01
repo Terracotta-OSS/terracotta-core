@@ -399,6 +399,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public Timer getRestoreConnectTimer() {
+    Assert.assertNotNull(this.restoreConnectTimer);
     return this.restoreConnectTimer;
   }
 

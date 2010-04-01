@@ -46,7 +46,6 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
       oooLayer.notifyTransportDisconnected(transport, forcedDisconnect);
       // schedule timer task
       this.timeoutTimerTask = new TimeoutTimerTask(transport, this);
-      Assert.assertNotNull(oooLayer.getRestoreConnectTimer());
       oooLayer.getRestoreConnectTimer().schedule(this.timeoutTimerTask, timeoutMillis);
     }
   }
