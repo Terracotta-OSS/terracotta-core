@@ -43,19 +43,17 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
   <system>
     <!-- The configuration model: 'development' or 'production'.
 
-       In 'development' mode, each client can have its own configuration,
-       independent of the server or any other client. This mode can result in
-       shared data being corrupted or lost if, for instance, two different
-       clients specify roots of different types.
+    The configuration-model element is for informational purposes. The two configuration-model options are 'development' and 'production'. These values have no effect on the functioning of Terracotta servers or clients, but instead allow you to designate the intended use of a configuration file using one of two recommended modes.
 
-       In 'production' mode, it is enforced that each client has obtained its
-       configuration from its server. When a client first connects to a server
-       it determines the servers configuration model and, if production, ensures
-       that its configuration source was that server. A client can specify that its
-       configuration come from server by setting the 'tc.config' system propery as
-       -Dtc.config=serverHost:dsoPort.
+    In development, you may want each client might have its own configuration, independent of the server or any other client. This approach is useful for development, but should not be used in production as it can result in shared data being corrupted or lost if, for instance, two different clients specify roots of different types. To note that a configuration file is intended for direct use by a client, set the configuration-model to 'development'.
 
-       Default: 'development'. -->
+    In production, each client should obtain its configuration from a Terracotta server instance. To note that a configuration file is intended be be fetched from a server, set the configuration-model to 'production'.
+
+    In general, a client can specify that its configuration come from a server by setting the tc.config system propery:
+
+        -Dtc.config=serverHost:dsoPort
+
+    Default: 'development'. -->
     <configuration-model>development</configuration-model>
   </system>
 
@@ -212,9 +210,9 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
         -->
         <client-reconnect-window>120</client-reconnect-window>
 
-        <!-- Information about how DSO should persist data to disk. -->
+        <!-- Information about how DSO should persist shared data to disk. -->
         <persistence>
-          <!-- How should DSO persist data to disk? This can be one
+          <!-- How should DSO persist shared data to disk? This can be one
              of two values:
 
              'temporary-swap-only' causes the DSO server to use the
@@ -228,10 +226,10 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
              in your program will be restored to the exact state it
              was in when the server shut down.
 
-             Note that if you are using clustered DSO servers (i.e., if
-             you have more than one <server> element defined,
-             below), then you must use 'permanent-store' mode. This
-             is required for proper operation of the DSO
+             Note that if you are using clustered DSO servers
+             (you have more than one <server> element defined,
+             below), then 'permanent-store' mode is recommended.
+             This helps ensure proper operation of the DSO
              failover mechanism.
 
              Default: 'temporary-swap-only'
