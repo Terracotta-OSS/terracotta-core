@@ -43,13 +43,25 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
   <system>
     <!-- The configuration model: 'development' or 'production'.
 
-    The configuration-model element is for informational purposes. The two configuration-model options are 'development' and 'production'. These values have no effect on the functioning of Terracotta servers or clients, but instead allow you to designate the intended use of a configuration file using one of two recommended modes.
+    The configuration-model element is for informational purposes. The two
+    configuration-model options are 'development' and 'production'. These values
+    have no effect on the functioning of Terracotta servers or clients, but
+    instead allow you to designate the intended use of a configuration file
+    using one of two recommended modes.
 
-    In development, you may want each client might have its own configuration, independent of the server or any other client. This approach is useful for development, but should not be used in production as it can result in shared data being corrupted or lost if, for instance, two different clients specify roots of different types. To note that a configuration file is intended for direct use by a client, set the configuration-model to 'development'.
+    In development, you may want each client might have its own configuration,
+    independent of the server or any other client. This approach is useful for
+    development, but should not be used in production as it can result in shared
+    data being corrupted or lost if, for instance, two different clients specify
+    roots of different types. To note that a configuration file is intended for
+    direct use by a client, set the configuration-model to 'development'.
 
-    In production, each client should obtain its configuration from a Terracotta server instance. To note that a configuration file is intended be be fetched from a server, set the configuration-model to 'production'.
+    In production, each client should obtain its configuration from a Terracotta
+    server instance. To note that a configuration file is intended be be fetched
+    from a server, set the configuration-model to 'production'.
 
-    In general, a client can specify that its configuration come from a server by setting the tc.config system propery:
+    In general, a client can specify that its configuration come from a server
+    by setting the tc.config system propery:
 
         -Dtc.config=serverHost:dsoPort
 
