@@ -21,13 +21,20 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.dso.BaseRuntimeStatsPanel;
 import com.tc.admin.model.IServer;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -35,6 +42,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
@@ -42,25 +50,40 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private ServerListener           serverListener;
 
   private TimeSeries               memoryMaxSeries;
+  private StatusView               memoryMaxLabel;
   private TimeSeries               memoryUsedSeries;
+  private StatusView               memoryUsedLabel;
 
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
 
   private TimeSeries               flushRateSeries;
+  private XLabel                   flushRateLabel;
   private TimeSeries               faultRateSeries;
+  private XLabel                   faultRateLabel;
   private TimeSeries               txnRateSeries;
+  private XLabel                   txnRateLabel;
   private TimeSeries               diskFaultRateSeries;
+  private StatusView               diskFaultRateLabel;
   private TimeSeries               diskFlushRateSeries;
+  private StatusView               diskFlushRateLabel;
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays.asList(POLLED_ATTR_CPU_USAGE,
-                                                                                    POLLED_ATTR_USED_MEMORY,
-                                                                                    POLLED_ATTR_MAX_MEMORY,
-                                                                                    POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                    POLLED_ATTR_TRANSACTION_RATE,
-                                                                                    POLLED_ATTR_CACHE_MISS_RATE,
-                                                                                    POLLED_ATTR_FLUSHED_RATE));
+  protected final String           flushRateLabelFormat     = "{0,number,integer} Flushes/sec.";
+  protected final String           faultRateLabelFormat     = "{0,number,integer} Faults/sec.";
+  protected final String           txnRateLabelFormat       = "{0,number,integer} Txns/sec.";
+  protected final String           diskFaultRateLabelFormat = "{0,number,integer} Faults/sec.";
+  protected final String           diskFlushRateLabelFormat = "{0,number,integer} Flushes/sec.";
+  protected final String           memoryUsedLabelFormat    = "{0,number,integer} Used";
+  protected final String           memoryMaxLabelFormat     = "{0,number,integer} Max";
+
+  private static final Set<String> POLLED_ATTRIBUTE_SET     = new HashSet(Arrays.asList(POLLED_ATTR_CPU_USAGE,
+                                                                                        POLLED_ATTR_USED_MEMORY,
+                                                                                        POLLED_ATTR_MAX_MEMORY,
+                                                                                        POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                        POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                        POLLED_ATTR_TRANSACTION_RATE,
+                                                                                        POLLED_ATTR_CACHE_MISS_RATE,
+                                                                                        POLLED_ATTR_FLUSHED_RATE));
 
   public ServerRuntimeStatsPanel(ApplicationContext appContext, IServer server) {
     super(appContext);
@@ -116,11 +139,15 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   @Override
-  public void attributesPolled(PolledAttributesResult result) {
+  public void attributesPolled(final PolledAttributesResult result) {
     IServer theServer = getServer();
     if (theServer != null) {
-      handleDSOStats(result);
-      handleSysStats(result);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          handleDSOStats(result);
+          handleSysStats(result);
+        }
+      });
     }
   }
 
@@ -128,19 +155,56 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     IServer theServer = getServer();
     if (theServer != null) {
       tmpDate.setTime(System.currentTimeMillis());
-      updateSeries(flushRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE));
-      updateSeries(faultRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE));
-      updateSeries(txnRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE));
-      updateSeries(diskFaultRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE));
-      updateSeries(diskFlushRateSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_FLUSHED_RATE));
+      Number n;
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+      updateSeries(flushRateSeries, n);
+      if (n != null) {
+        flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, n));
+      }
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+      updateSeries(faultRateSeries, n);
+      if (n != null) {
+        faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, n));
+      }
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE);
+      updateSeries(txnRateSeries, n);
+      if (n != null) {
+        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, n));
+      }
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_CACHE_MISS_RATE);
+      updateSeries(diskFaultRateSeries, n);
+      if (n != null) {
+        diskFaultRateLabel.setText(MessageFormat.format(diskFaultRateLabelFormat, n));
+      }
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_FLUSHED_RATE);
+      updateSeries(diskFlushRateSeries, n);
+      if (n != null) {
+        diskFlushRateLabel.setText(MessageFormat.format(diskFlushRateLabelFormat, n));
+      }
     }
   }
 
   private synchronized void handleSysStats(PolledAttributesResult result) {
     IServer theServer = getServer();
     if (theServer != null) {
-      updateSeries(memoryMaxSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY));
-      updateSeries(memoryUsedSeries, (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY));
+      Number n;
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY);
+      updateSeries(memoryMaxSeries, n);
+      if (n != null) {
+        memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, n));
+      }
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY);
+      updateSeries(memoryUsedSeries, n);
+      if (n != null) {
+        memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, n));
+      }
 
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
@@ -167,6 +231,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
     flushRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.flush.rate")));
     flushRatePanel.setToolTipText(appContext.getString("server.stats.flush.rate.tip"));
+    flushRatePanel.setLayout(new BorderLayout());
+    flushRatePanel.add(flushRateLabel = createOverlayLabel());
   }
 
   private void setupFaultRatePanel(XContainer parent) {
@@ -176,6 +242,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
     faultRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.fault.rate")));
     faultRatePanel.setToolTipText(appContext.getString("server.stats.fault.rate.tip"));
+    faultRatePanel.setLayout(new BorderLayout());
+    faultRatePanel.add(faultRateLabel = createOverlayLabel());
   }
 
   private void setupTxnRatePanel(XContainer parent) {
@@ -185,23 +253,32 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     txnRatePanel.setPreferredSize(fDefaultGraphSize);
     txnRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.transaction.rate")));
     txnRatePanel.setToolTipText(appContext.getString("server.stats.transaction.rate.tip"));
+    txnRatePanel.setLayout(new BorderLayout());
+    txnRatePanel.add(txnRateLabel = createOverlayLabel());
   }
 
   private void setupCacheManagerPanel(XContainer parent) {
     diskFaultRateSeries = createTimeSeries(appContext.getString("dso.disk.fault.rate"));
     diskFlushRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
     ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { diskFaultRateSeries,
-        diskFlushRateSeries }, true));
+        diskFlushRateSeries }, false));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
     cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("server.stats.cache-manager")));
     cacheMissRatePanel.setToolTipText(appContext.getString("server.stats.cache-manager.tip"));
+    cacheMissRatePanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
+    labelHolder.add(diskFaultRateLabel = createStatusLabel(Color.red));
+    labelHolder.add(diskFlushRateLabel = createStatusLabel(Color.blue));
+    labelHolder.setOpaque(false);
+    cacheMissRatePanel.add(labelHolder, gbc);
   }
 
   private void setupMemoryPanel(XContainer parent) {
     memoryMaxSeries = createTimeSeries(appContext.getString("heap.usage.max"));
     memoryUsedSeries = createTimeSeries(appContext.getString("heap.usage.used"));
-    JFreeChart memoryChart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries });
+    JFreeChart memoryChart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries }, false);
     XYPlot plot = (XYPlot) memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
@@ -210,6 +287,13 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     memoryPanel.setPreferredSize(fDefaultGraphSize);
     memoryPanel.setBorder(new TitledBorder(appContext.getString("server.stats.heap.usage")));
     memoryPanel.setToolTipText(appContext.getString("server.stats.heap.usage.tip"));
+    memoryPanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
+    labelHolder.add(memoryMaxLabel = createStatusLabel(Color.red));
+    labelHolder.add(memoryUsedLabel = createStatusLabel(Color.blue));
+    labelHolder.setOpaque(false);
+    memoryPanel.add(labelHolder, gbc);
   }
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {

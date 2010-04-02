@@ -21,8 +21,10 @@ import com.tc.admin.common.BasicChartPanel;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.LinkButton;
+import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.model.IClusterNode;
 import com.tc.admin.model.PolledAttributeListener;
@@ -35,6 +37,7 @@ import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
@@ -59,6 +62,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.SwingConstants;
 import javax.swing.ToolTipManager;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -89,6 +93,9 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   private static final ImageIcon        fStartIcon;
   private static final ImageIcon        fStopIcon;
   private static final ImageIcon        fClearIcon;
+
+  protected static final Font           labelFont                               = new Font("DialogInput", Font.ITALIC,
+                                                                                           20);
 
   static {
     fStartIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/resume_co.gif"));
@@ -333,6 +340,24 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     allCharts.add(chart);
     return chart;
+  }
+
+  protected static XLabel createOverlayLabel() {
+    XLabel result = new XLabel();
+    result.setFont(labelFont);
+    result.setHorizontalAlignment(SwingConstants.CENTER);
+    result.setForeground(Color.gray);
+    return result;
+  }
+
+  protected static StatusView createStatusLabel(Color color) {
+    StatusView result = new StatusView();
+    XLabel label = result.getLabel();
+    label.setFont(labelFont);
+    label.setForeground(Color.gray);
+    result.setIndicator(color);
+    result.setOpaque(false);
+    return result;
   }
 
   public void hierarchyChanged(HierarchyEvent e) {

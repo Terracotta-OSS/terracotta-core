@@ -438,7 +438,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     StandardDialScale defScale = DemoChartFactory.createStandardDialScale(0, scale(5000), startAngle, extent,
                                                                           scale(1000), 4);
     StandardDialScale scale;
-    Font labelFont = (Font) appContext.getObject("dashboard.header.label.font");
+    Font headerLabelFont = (Font) appContext.getObject("dashboard.header.label.font");
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.fill = GridBagConstraints.BOTH;
@@ -509,7 +509,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     gbc.weighty = 0.0;
 
     XLabel label = new XLabel(appContext.getString("dashboard.transactions"));
-    label.setFont(labelFont);
+    label.setFont(headerLabelFont);
     label.setBorder(BorderFactory.createEtchedBorder());
     label.setHorizontalAlignment(SwingConstants.CENTER);
     label.setPreferredSize(new Dimension(0, 0));
@@ -523,7 +523,7 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     gbc.weightx = 1.0;
 
     label = new XLabel(appContext.getString("dashboard.impeding-factors"));
-    label.setFont(labelFont);
+    label.setFont(headerLabelFont);
     label.setBorder(BorderFactory.createEtchedBorder());
     label.setHorizontalAlignment(SwingConstants.CENTER);
     runtimeStatsPanel.add(label, gbc);

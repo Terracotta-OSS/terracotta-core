@@ -20,7 +20,9 @@ import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.model.IClient;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
@@ -28,7 +30,12 @@ import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.statistics.StatisticData;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,21 +51,34 @@ import javax.swing.border.TitledBorder;
 public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private IClient                  client;
   private TimeSeries               memoryMaxSeries;
+  private StatusView               memoryMaxLabel;
   private TimeSeries               memoryUsedSeries;
+  private StatusView               memoryUsedLabel;
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
   private TimeSeries               flushRateSeries;
+  private XLabel                   flushRateLabel;
   private TimeSeries               faultRateSeries;
+  private XLabel                   faultRateLabel;
   private TimeSeries               txnRateSeries;
+  private XLabel                   txnRateLabel;
   private TimeSeries               pendingTxnsSeries;
+  private XLabel                   pendingTxnsLabel;
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays
-                                                            .asList(POLLED_ATTR_CPU_USAGE, POLLED_ATTR_USED_MEMORY,
-                                                                    POLLED_ATTR_MAX_MEMORY,
-                                                                    POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                    POLLED_ATTR_TRANSACTION_RATE,
-                                                                    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+  protected final String           flushRateLabelFormat   = "{0,number,integer} Flushes/sec.";
+  protected final String           faultRateLabelFormat   = "{0,number,integer} Faults/sec.";
+  protected final String           txnRateLabelFormat     = "{0,number,integer} Txns/sec.";
+  protected final String           pendingTxnsLabelFormat = "{0,number,integer} Pending Txns/sec.";
+  protected final String           memoryUsedLabelFormat  = "{0,number,integer} Used";
+  protected final String           memoryMaxLabelFormat   = "{0,number,integer} Max";
+
+  private static final Set<String> POLLED_ATTRIBUTE_SET   = new HashSet(Arrays
+                                                              .asList(POLLED_ATTR_CPU_USAGE, POLLED_ATTR_USED_MEMORY,
+                                                                      POLLED_ATTR_MAX_MEMORY,
+                                                                      POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                      POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                      POLLED_ATTR_TRANSACTION_RATE,
+                                                                      POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public ClientRuntimeStatsPanel(ApplicationContext appContext, IClient client) {
     super(appContext);
@@ -173,15 +193,19 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private void updateAllDSOSeries(long flush, long fault, long txn, long pendingTxn) {
     if (flush != -1) {
       updateSeries(flushRateSeries, Long.valueOf(flush));
+      flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, flush));
     }
     if (fault != -1) {
       updateSeries(faultRateSeries, Long.valueOf(fault));
+      faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, fault));
     }
     if (txn != -1) {
       updateSeries(txnRateSeries, Long.valueOf(txn));
+      txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, txn));
     }
     if (pendingTxn != -1) {
       updateSeries(pendingTxnsSeries, Long.valueOf(pendingTxn));
+      pendingTxnsLabel.setText(MessageFormat.format(pendingTxnsLabelFormat, pendingTxn));
     }
   }
 
@@ -190,8 +214,19 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       public void run() {
         IClient theClient = getClient();
         if (theClient != null) {
-          updateSeries(memoryMaxSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY));
-          updateSeries(memoryUsedSeries, (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY));
+          Number n;
+
+          n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY);
+          updateSeries(memoryMaxSeries, n);
+          if (n != null) {
+            memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, n));
+          }
+
+          n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY);
+          updateSeries(memoryUsedSeries, n);
+          if (n != null) {
+            memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, n));
+          }
 
           if (cpuTimeSeries != null) {
             StatisticData[] cpuUsageData = (StatisticData[]) result
@@ -221,6 +256,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
     flushRatePanel.setBorder(new TitledBorder(appContext.getString("client.stats.flush.rate")));
     flushRatePanel.setToolTipText(appContext.getString("client.stats.flush.rate.tip"));
+    flushRatePanel.setLayout(new BorderLayout());
+    flushRatePanel.add(flushRateLabel = createOverlayLabel());
   }
 
   private void setupFaultRatePanel(XContainer parent) {
@@ -230,6 +267,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
     faultRatePanel.setBorder(new TitledBorder(appContext.getString("client.stats.fault.rate")));
     faultRatePanel.setToolTipText(appContext.getString("client.stats.fault.rate.tip"));
+    faultRatePanel.setLayout(new BorderLayout());
+    faultRatePanel.add(faultRateLabel = createOverlayLabel());
   }
 
   private void setupTxnRatePanel(XContainer parent) {
@@ -239,6 +278,8 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     txnRatePanel.setPreferredSize(fDefaultGraphSize);
     txnRatePanel.setBorder(new TitledBorder(appContext.getString("client.stats.transaction.rate")));
     txnRatePanel.setToolTipText(appContext.getString("client.stats.transaction.rate.tip"));
+    txnRatePanel.setLayout(new BorderLayout());
+    txnRatePanel.add(txnRateLabel = createOverlayLabel());
   }
 
   private void setupPendingTxnsPanel(XContainer parent) {
@@ -248,12 +289,14 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     pendingTxnsPanel.setPreferredSize(fDefaultGraphSize);
     pendingTxnsPanel.setBorder(new TitledBorder(appContext.getString("client.stats.pending.transactions")));
     pendingTxnsPanel.setToolTipText(appContext.getString("client.stats.pending.transactions.tip"));
+    pendingTxnsPanel.setLayout(new BorderLayout());
+    pendingTxnsPanel.add(pendingTxnsLabel = createOverlayLabel());
   }
 
   private void setupMemoryPanel(XContainer parent) {
     memoryMaxSeries = createTimeSeries(appContext.getString("heap.usage.max"));
     memoryUsedSeries = createTimeSeries(appContext.getString("heap.usage.used"));
-    JFreeChart memoryChart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries });
+    JFreeChart memoryChart = createChart(new TimeSeries[] { memoryMaxSeries, memoryUsedSeries }, false);
     XYPlot plot = (XYPlot) memoryChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeIncludesZero(true);
@@ -262,6 +305,13 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     memoryPanel.setPreferredSize(fDefaultGraphSize);
     memoryPanel.setBorder(new TitledBorder(appContext.getString("client.stats.heap.usage")));
     memoryPanel.setToolTipText(appContext.getString("client.stats.heap.usage.tip"));
+    memoryPanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
+    labelHolder.add(memoryMaxLabel = createStatusLabel(Color.red));
+    labelHolder.add(memoryUsedLabel = createStatusLabel(Color.blue));
+    labelHolder.setOpaque(false);
+    memoryPanel.add(labelHolder, gbc);
   }
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {

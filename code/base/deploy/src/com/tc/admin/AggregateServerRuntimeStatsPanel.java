@@ -25,7 +25,9 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.ui.Layer;
 
 import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
+import com.tc.admin.common.XLabel;
 import com.tc.admin.dso.BaseRuntimeStatsPanel;
 import com.tc.admin.dso.DGCIntervalMarker;
 import com.tc.admin.model.DGCListener;
@@ -35,7 +37,10 @@ import com.tc.admin.model.IServerGroup;
 import com.tc.admin.model.PolledAttributesResult;
 import com.tc.objectserver.api.GCStats;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -53,10 +58,15 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private ClusterListener          clusterListener;
 
   private TimeSeries               clientFlushRateSeries;
+  private XLabel                   clientFlushRateLabel;
   private TimeSeries               clientFaultRateSeries;
+  private XLabel                   clientFaultRateLabel;
   private TimeSeries               txnRateSeries;
+  private XLabel                   txnRateLabel;
   private TimeSeries               diskFaultRateSeries;
+  private StatusView               diskFaultRateLabel;
   private TimeSeries               diskFlushRateSeries;
+  private StatusView               diskFlushRateLabel;
   private XYPlot                   liveObjectCountPlot;
   private DGCIntervalMarker        currentDGCMarker;
   private String                   objectManagerTitlePattern;
@@ -64,17 +74,28 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private TimeSeries               liveObjectCountSeries;
   private TimeSeries               cachedObjectCountSeries;
   private TimeSeries               lockRecallRateSeries;
+  private StatusView               lockRecallRateLabel;
   private TimeSeries               broadcastRateSeries;
+  private StatusView               broadcastRateLabel;
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET = new HashSet(Arrays.asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                    POLLED_ATTR_TRANSACTION_RATE,
-                                                                                    POLLED_ATTR_CACHE_MISS_RATE,
-                                                                                    POLLED_ATTR_FLUSHED_RATE,
-                                                                                    POLLED_ATTR_LIVE_OBJECT_COUNT,
-                                                                                    POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                                    POLLED_ATTR_BROADCAST_RATE,
-                                                                                    POLLED_ATTR_CACHED_OBJECT_COUNT));
+  protected final String           clientFlushRateLabelFormat = "{0,number,integer} Flushes/sec.";
+  protected final String           clientFaultRateLabelFormat = "{0,number,integer} Faults/sec.";
+  protected final String           txnRateLabelFormat         = "{0,number,integer} Txns/sec.";
+  protected final String           diskFaultRateLabelFormat   = "{0,number,integer} Faults/sec.";
+  protected final String           diskFlushRateLabelFormat   = "{0,number,integer} Flushes/sec.";
+  protected final String           lockRecallRateLabelFormat  = "{0,number,integer} Recalls/sec.";
+  protected final String           broadcastRateLabelFormat   = "{0,number,integer} Broadcasts/sec.";
+
+  private static final Set<String> POLLED_ATTRIBUTE_SET       = new HashSet(Arrays
+                                                                  .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                          POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                          POLLED_ATTR_TRANSACTION_RATE,
+                                                                          POLLED_ATTR_CACHE_MISS_RATE,
+                                                                          POLLED_ATTR_FLUSHED_RATE,
+                                                                          POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                          POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                          POLLED_ATTR_BROADCAST_RATE,
+                                                                          POLLED_ATTR_CACHED_OBJECT_COUNT));
 
   public AggregateServerRuntimeStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -151,10 +172,14 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   @Override
-  public void attributesPolled(PolledAttributesResult result) {
+  public void attributesPolled(final PolledAttributesResult result) {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
-      handleDSOStats(result);
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          handleDSOStats(result);
+        }
+      });
     }
   }
 
@@ -242,11 +267,26 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
         }
       }
 
-      if (flush != -1) updateSeries(clientFlushRateSeries, Long.valueOf(flush));
-      if (fault != -1) updateSeries(clientFaultRateSeries, Long.valueOf(fault));
-      if (txn != -1) updateSeries(txnRateSeries, Long.valueOf(txn));
-      if (cacheMiss != -1) updateSeries(diskFaultRateSeries, Long.valueOf(cacheMiss));
-      if (diskFlushedRate != -1) updateSeries(diskFlushRateSeries, Long.valueOf(diskFlushedRate));
+      if (flush != -1) {
+        updateSeries(clientFlushRateSeries, Long.valueOf(flush));
+        clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, flush));
+      }
+      if (fault != -1) {
+        updateSeries(clientFaultRateSeries, Long.valueOf(fault));
+        clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, fault));
+      }
+      if (txn != -1) {
+        updateSeries(txnRateSeries, Long.valueOf(txn));
+        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, txn));
+      }
+      if (cacheMiss != -1) {
+        updateSeries(diskFaultRateSeries, Long.valueOf(cacheMiss));
+        diskFaultRateLabel.setText(MessageFormat.format(diskFaultRateLabelFormat, cacheMiss));
+      }
+      if (diskFlushedRate != -1) {
+        updateSeries(diskFlushRateSeries, Long.valueOf(diskFlushedRate));
+        diskFlushRateLabel.setText(MessageFormat.format(diskFlushRateLabelFormat, diskFlushedRate));
+      }
       if (liveObjectCount != -1) {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
         objectManagerTitle
@@ -255,8 +295,14 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       if (cachedObjectCount != -1) {
         updateSeries(cachedObjectCountSeries, Long.valueOf(cachedObjectCount));
       }
-      if (lockRecallRate != -1) updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
-      if (broadcastRate != -1) updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
+      if (lockRecallRate != -1) {
+        updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
+        lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, lockRecallRate));
+      }
+      if (broadcastRate != -1) {
+        updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
+        broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, broadcastRate));
+      }
     }
   }
 
@@ -294,7 +340,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private void setupLockRecallRatePanel(XContainer parent) {
     lockRecallRateSeries = createTimeSeries("Lock Recall Rate");
     broadcastRateSeries = createTimeSeries("Change Broadcast Rate");
-    JFreeChart chart = createChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, true);
+    JFreeChart chart = createChart(new TimeSeries[] { lockRecallRateSeries, broadcastRateSeries }, false);
     XYPlot plot = (XYPlot) chart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setAutoRangeMinimumSize(10.0);
@@ -303,6 +349,13 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     recallRatePanel.setPreferredSize(fDefaultGraphSize);
     recallRatePanel.setBorder(new TitledBorder("Lock Recalls/Change Broadcasts"));
     recallRatePanel.setToolTipText("Global Lock Recalls");
+    recallRatePanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
+    labelHolder.add(lockRecallRateLabel = createStatusLabel(Color.red));
+    labelHolder.add(broadcastRateLabel = createStatusLabel(Color.blue));
+    labelHolder.setOpaque(false);
+    recallRatePanel.add(labelHolder, gbc);
   }
 
   private void setupFlushRatePanel(XContainer parent) {
@@ -312,6 +365,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     flushRatePanel.setPreferredSize(fDefaultGraphSize);
     flushRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.flush.rate")));
     flushRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.flush.rate.tip"));
+    flushRatePanel.setLayout(new BorderLayout());
+    flushRatePanel.add(clientFlushRateLabel = createOverlayLabel());
   }
 
   private void setupFaultRatePanel(XContainer parent) {
@@ -321,6 +376,8 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     faultRatePanel.setPreferredSize(fDefaultGraphSize);
     faultRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.fault.rate")));
     faultRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.fault.rate.tip"));
+    faultRatePanel.setLayout(new BorderLayout());
+    faultRatePanel.add(clientFaultRateLabel = createOverlayLabel());
   }
 
   private void setupTxnRatePanel(XContainer parent) {
@@ -330,17 +387,26 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     txnRatePanel.setPreferredSize(fDefaultGraphSize);
     txnRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.transaction.rate")));
     txnRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.transaction.rate.tip"));
+    txnRatePanel.setLayout(new BorderLayout());
+    txnRatePanel.add(txnRateLabel = createOverlayLabel());
   }
 
   private void setupCacheManagerPanel(XContainer parent) {
     diskFaultRateSeries = createTimeSeries(appContext.getString("dso.disk.fault.rate"));
     diskFlushRateSeries = createTimeSeries(appContext.getString("dso.disk.flush.rate"));
     ChartPanel cacheMissRatePanel = createChartPanel(createChart(new TimeSeries[] { diskFaultRateSeries,
-        diskFlushRateSeries }, true));
+        diskFlushRateSeries }, false));
     parent.add(cacheMissRatePanel);
     cacheMissRatePanel.setPreferredSize(fDefaultGraphSize);
     cacheMissRatePanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.cache-manager")));
     cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache-manager.tip"));
+    cacheMissRatePanel.setLayout(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
+    labelHolder.add(diskFaultRateLabel = createStatusLabel(Color.red));
+    labelHolder.add(diskFlushRateLabel = createStatusLabel(Color.blue));
+    labelHolder.setOpaque(false);
+    cacheMissRatePanel.add(labelHolder, gbc);
   }
 
   public void statusUpdate(GCStats gcStats) {
