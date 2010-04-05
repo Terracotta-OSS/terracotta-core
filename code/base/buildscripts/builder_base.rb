@@ -157,7 +157,7 @@ class TerracottaBuilder
     option_parser.on('--no-demo') { @no_demo = true }
     option_parser.on('--no-schema') { @no_schema = true }
     option_parser.on('--no-jre') { @no_jre = true }
-    option_parser.on('--no-external-resrouces') { @no_external_resrouces = true }
+    option_parser.on('--no-external-resources') { @no_external_resources = true }
     option_parser.on('--no-tims') { @no_tims = true }
     option_parser.on('--no-extra') {
       @no_tims = true
