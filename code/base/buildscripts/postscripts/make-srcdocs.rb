@@ -2,7 +2,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # - inject copyright information into terracotta source files
   protected
   def postscript(ant, build_environment, product_directory, *args)
-    return if @no_demo
+    return if @no_demo || @no_extra
     ant.taskdef(:name => "java2html", :classname => "de.java2html.anttasks.Java2HtmlTask")
     #ant.taskdef(:name => "jalopy",    :classname => "de.hunsicker.jalopy.plugin.ant.AntPlugin")
     args.each do |entry|
