@@ -241,7 +241,7 @@ public class ManagerImpl implements Manager {
     StartupHelper startupHelper = new StartupHelper(group, action);
     startupHelper.startUp();
   }
-  
+
   public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
     if (shutdownManager != null) {
       shutdownManager.registerBeforeShutdownHook(beforeShutdownHook);
@@ -842,20 +842,16 @@ public class ManagerImpl implements Manager {
   }
 
   public void pinLock(LockID lock) {
-    if (clusteredLockingEnabled(lock)) {
-      lockManager.pinLock(lock);
-    }
+    lockManager.pinLock(lock);
   }
 
   public void unpinLock(LockID lock) {
-    if (clusteredLockingEnabled(lock)) {
-      lockManager.unpinLock(lock);
-    }
+    lockManager.unpinLock(lock);
   }
 
   private boolean clusteredLockingEnabled(LockID lock) {
-    return !((lock instanceof UnclusteredLockID) ||
-        txManager.isTransactionLoggingDisabled() || txManager.isObjectCreationInProgress());
+    return !((lock instanceof UnclusteredLockID) || txManager.isTransactionLoggingDisabled() || txManager
+        .isObjectCreationInProgress());
   }
 
   public boolean isLockedByCurrentThread(LockLevel level) {
