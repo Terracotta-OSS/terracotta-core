@@ -280,7 +280,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def __assemble
     exec_section :bundled_components
     exec_section :bundled_modules
-    if @no_demo
+    if @no_extra || @no_demo
       loud_message("--no-demo option found. No demos will be assembled")
     else
       exec_section :bundled_vendors

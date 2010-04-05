@@ -23,7 +23,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
   
   def postscript(ant, build_environment, product_directory, *args)
-    if @no_schema
+    if @no_schema || @no_extra
       loud_message("--no-schema found. Skipping")
       return
     end
