@@ -96,6 +96,7 @@ public class TestConfigObject {
   private static final String     EMMA_LIB                         = DYNAMIC_PROPERTIES_PREFIX + "emma.lib";
   private static final String     JAVA_HOME_15                     = DYNAMIC_PROPERTIES_PREFIX + "JAVA_HOME_15";
   private static final String     JAVA_HOME_16                     = DYNAMIC_PROPERTIES_PREFIX + "JAVA_HOME_16";
+  private static final String     APP_SERVER_TEST_MODE             = DYNAMIC_PROPERTIES_PREFIX + "appserver.test.mode";
 
   private static TestConfigObject INSTANCE;
 
@@ -436,5 +437,9 @@ public class TestConfigObject {
 
   public void setSpringTest(boolean springTest) {
     this.springTest = springTest;
+  }
+  
+  public boolean isExpressMode() {
+    return "express".equals(properties.getProperty(APP_SERVER_TEST_MODE, "custom"));
   }
 }
