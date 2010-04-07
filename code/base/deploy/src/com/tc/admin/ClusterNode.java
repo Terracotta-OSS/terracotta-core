@@ -332,6 +332,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   public void handleException() {
     Exception e = connectDialog.getError();
     if (e != null) {
+      clusterModel.clearConnectionCredentials();
       reportConnectError(e);
     }
   }

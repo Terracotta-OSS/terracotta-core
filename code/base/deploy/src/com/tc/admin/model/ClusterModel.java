@@ -146,6 +146,13 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     connectServer.refreshCachedCredentials();
   }
 
+  public void clearConnectionCredentials() {
+    connectServer.clearConnectionCredentials();
+    for (IServerGroup group : connectServer.getClusterServerGroups()) {
+      group.clearConnectionCredentials();
+    }
+  }
+
   public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
     if (listener != null && propertyChangeSupport != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);

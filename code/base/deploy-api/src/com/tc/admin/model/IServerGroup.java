@@ -22,6 +22,8 @@ public interface IServerGroup extends IClusterModelElement {
 
   void setConnectionCredentials(String[] creds);
 
+  void clearConnectionCredentials();
+
   IServer getActiveServer();
 
   void addServerStateListener(ServerStateListener listener);

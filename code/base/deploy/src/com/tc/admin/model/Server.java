@@ -605,6 +605,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     scm.setCredentials(creds);
   }
 
+  public synchronized void clearConnectionCredentials() {
+    ServerConnectionManager scm = getConnectionManager();
+    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    scm.clearCredentials();
+  }
+
   public JMXConnector getJMXConnector() {
     ServerConnectionManager scm = getConnectionManager();
     return scm != null ? scm.getJmxConnector() : null;

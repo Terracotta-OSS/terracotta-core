@@ -45,6 +45,8 @@ public interface IClusterModel extends IClusterModelElement, ManagedObjectFacade
 
   void setConnectionCredentials(String[] creds);
 
+  void clearConnectionCredentials();
+
   void refreshCachedCredentials();
 
   boolean hasConnectError();

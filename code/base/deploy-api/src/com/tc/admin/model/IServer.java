@@ -72,6 +72,8 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   void refreshCachedCredentials();
 
+  void clearConnectionCredentials();
+
   String getName();
 
   String getHostAddress();

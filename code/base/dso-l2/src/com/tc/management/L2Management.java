@@ -186,14 +186,21 @@ public class L2Management extends TerracottaManagement {
     env.put("jmx.remote.server.address.wildcard", "false");
     if (configurationSetupManager.commonl2Config().authentication()) {
       String pwd = configurationSetupManager.commonl2Config().authenticationPasswordFile();
+      String loginConfig = configurationSetupManager.commonl2Config().authenticationLoginConfigName();
       String access = configurationSetupManager.commonl2Config().authenticationAccessFile();
-      if (!new File(pwd).exists()) CustomerLogging.getConsoleLogger().error("Password file does not exist: " + pwd);
+      if (pwd != null && !new File(pwd).exists()) CustomerLogging.getConsoleLogger().error(
+                                                                                           "Password file does not exist: "
+                                                                                               + pwd);
       if (!new File(access).exists()) CustomerLogging.getConsoleLogger().error("Access file does not exist: " + access);
-      env.put("jmx.remote.x.password.file", pwd);
+      if (pwd != null) {
+        env.put("jmx.remote.x.password.file", pwd);
+        credentialsMsg = "Credentials: pwd[" + pwd + "] access[" + access + "]";
+      } else if (loginConfig != null) {
+        env.put("jmx.remote.x.login.config", loginConfig);
+        credentialsMsg = "Credentials: loginConfig[" + loginConfig + "] access[" + access + "]";
+      }
       env.put("jmx.remote.x.access.file", access);
       authMsg = "Authentication ON";
-      credentialsMsg = "Credentials: " + configurationSetupManager.commonl2Config().authenticationPasswordFile() + " "
-                       + configurationSetupManager.commonl2Config().authenticationAccessFile();
       url = new JMXServiceURL("service:jmx:rmi://");
       RMISocketFactory socketFactory = new BindAddrSocketFactory(bindAddress);
       RMIClientSocketFactory csf = bindAddress.isAnyLocalAddress() ? null : socketFactory;

@@ -9,6 +9,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -70,6 +71,20 @@ public class JMXConnectorProxy implements JMXConnector {
     return false;
   }
 
+  static boolean isAuthenticationException(IOException ioe) {
+    Throwable t = ioe;
+
+    while (t != null) {
+      if (t instanceof NotSerializableException) {
+        String detailMessage = t.getMessage();
+        if ("com.sun.jndi.ldap.LdapCtx".equals(detailMessage)) { return true; }
+      }
+      t = t.getCause();
+    }
+
+    return false;
+  }
+
   private void determineConnector() throws Exception {
     JMXServiceURL url = new JMXServiceURL(getSecureJMXConnectorURL(m_host, m_port));
 
@@ -78,6 +93,7 @@ public class JMXConnectorProxy implements JMXConnector {
       m_serviceURL = url;
     } catch (IOException ioe) {
       if (isConnectException(ioe)) { throw ioe; }
+      if (isAuthenticationException(ioe)) { throw new SecurityException("Invalid login name or credentials"); }
       url = new JMXServiceURL(getJMXConnectorURL(m_host, m_port));
       m_connector = JMXConnectorFactory.connect(url, m_env);
       m_serviceURL = url;

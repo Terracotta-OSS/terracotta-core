@@ -71,6 +71,12 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
+  public void clearConnectionCredentials() {
+    for (IServer server : getMembers()) {
+      server.clearConnectionCredentials();
+    }
+  }
+
   protected void setConnected(boolean connected) {
     boolean oldConnected;
     synchronized (this) {

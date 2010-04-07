@@ -2,7 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
   targetNamespace="http://www.terracotta.org/config"
-  xmlns="http://www.terracotta.org/config" version="5">
+  xmlns="http://www.terracotta.org/config" version="6">
 
   <xs:element name="tc-config">
     <xs:complexType>
@@ -436,18 +436,12 @@
     </xs:all>
   </xs:complexType>
 
-
-
   <xs:complexType name="non-distributed-fields">
     <xs:sequence>
       <xs:element name="non-distributed-field" type="java-identifier" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
     <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>
-
-
-
-
 
   <xs:complexType name='session-support'>
     <xs:simpleContent>
@@ -457,11 +451,23 @@
     </xs:simpleContent>
   </xs:complexType>
 
+  <xs:complexType name="authentication-mode">
+    <xs:annotation>
+      <xs:documentation xmlns="http://www.w3.org/1999/xhtml">Describes the authentication mode,
+        which can be either a JAAS LoginConfig name or a JMX password-file location.
+        If unset or empty, the default JMX password-file location is used.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name="login-config-name" type="xs:string" minOccurs="0" />
+      <xs:element name="password-file" type="path" minOccurs="0"
+        	default="%(java.home)/lib/management/jmxremote.password" />
+    </xs:choice>
+  </xs:complexType>
 
   <xs:complexType name="authentication">
     <xs:all>
-      <xs:element name="password-file" type="path" minOccurs="0"
-        default="%(java.home)/lib/management/jmxremote.password" />
+      <xs:element name="mode" type="authentication-mode" minOccurs="0" />
       <xs:element name="access-file" type="path" minOccurs="0"
         default="%(java.home)/lib/management/jmxremote.access" />
     </xs:all>
@@ -504,7 +510,6 @@
       <xs:attribute name="name" type="xs:string" use="required"/>
       <xs:attribute name="value" type="xs:string" use="required"/>
   </xs:complexType>
-
 
   <xs:complexType name="server">
     <xs:annotation>

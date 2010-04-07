@@ -16,9 +16,9 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
   FileConfigItem dataPath();
 
   FileConfigItem logsPath();
-  
+
   FileConfigItem serverDbBackupPath();
-  
+
   IntConfigItem jmxPort();
 
   StringConfigItem host();
@@ -28,6 +28,8 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
   String authenticationPasswordFile();
 
   String authenticationAccessFile();
+
+  String authenticationLoginConfigName();
 
   boolean httpAuthentication();
 

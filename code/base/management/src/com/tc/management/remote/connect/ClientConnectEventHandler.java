@@ -66,7 +66,8 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   }
 
   private static final class RemoteRegistrationFilter implements NotificationFilter {
-    private final UUID uuid;
+    private static final long serialVersionUID = 6745130208320538044L;
+    private final UUID        uuid;
 
     private RemoteRegistrationFilter(UUID uuid) {
       this.uuid = uuid;

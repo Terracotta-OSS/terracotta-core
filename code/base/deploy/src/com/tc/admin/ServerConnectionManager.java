@@ -133,6 +133,11 @@ public class ServerConnectionManager implements NotificationListener {
     connEnv.put("jmx.remote.credentials", creds);
   }
 
+  public void clearCredentials() {
+    Map<String, Object> connEnv = getConnectionEnvironment();
+    connEnv.remove("jmx.remote.credentials");
+  }
+
   public String[] getCredentials() {
     Map<String, Object> connEnv = getConnectionEnvironment();
     return (String[]) connEnv.get("jmx.remote.credentials");

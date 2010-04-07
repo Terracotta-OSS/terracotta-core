@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import com.tc.admin.common.ApplicationContext;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
@@ -40,7 +41,7 @@ import javax.swing.WindowConstants;
 public final class ConnectDialog extends JDialog implements HierarchyListener {
   private ApplicationContext         appContext;
 
-  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 8000;
+  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 10000;
   public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
                                                                                    DEFAULT_CONNECT_TIMEOUT_MILLIS)
                                                                         .longValue();
@@ -314,7 +315,7 @@ public final class ConnectDialog extends JDialog implements HierarchyListener {
       } catch (InterruptedException ie) {
         // interrupted by CancelButtonHandler
       } catch (Exception e) {
-        Throwable cause = e.getCause();
+        Throwable cause = ExceptionHelper.getRootCause(e);
         if (!isAuthenticating && cause instanceof SecurityException) {
           isAuthenticating = true;
           SwingUtilities.invokeLater(new Runnable() {
