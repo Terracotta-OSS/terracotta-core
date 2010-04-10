@@ -6,6 +6,8 @@ package org.terracotta.modules.tool.util;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.util.ProductInfo;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -153,6 +155,7 @@ public class DownloadUtil {
       }
 
       URLConnection connection = remoteFile.openConnection(proxy);
+      connection.setRequestProperty("User-Agent", "Terracotta tim-get/" + ProductInfo.getInstance().version());
       if (proxyAuth != null) {
         Authenticator.setDefault(new ProxyAuthenticator(proxyAuth));
       }
