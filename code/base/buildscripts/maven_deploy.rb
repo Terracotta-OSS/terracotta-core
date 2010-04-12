@@ -38,7 +38,7 @@ class MavenDeploy
       'artifactId' => artifact_id,
       'file' => file,
       'version' => version,
-      'uniqueVersion' => false
+      'uniqueVersion' => true
     }
 
     if pom_file
