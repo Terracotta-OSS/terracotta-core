@@ -84,7 +84,7 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
                             new Byte(ManagedObjectState.LIST_TYPE));
     // XXX: Hack for express tim-async
-    classNameToStateMap.put("org.terracotta.modules.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
+    classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
 
   }
 
