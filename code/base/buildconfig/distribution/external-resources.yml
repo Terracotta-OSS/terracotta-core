@@ -1,8 +1,10 @@
 
 default_repos:
-  - http://kong/maven2
-  - http://forge-dev/repo
-  - http://www.terracotta.org/download/reflector/maven2
+  - http://kong/repo/snapshots
+  - http://kong/repo/staging
+  - http://kong/repo/releases
+  - http://www.terracotta.org/download/reflector/snapshots
+  - http://www.terracotta.org/download/reflector/releases
   - http://repo1.maven.org/maven2
 
 artifacts:
