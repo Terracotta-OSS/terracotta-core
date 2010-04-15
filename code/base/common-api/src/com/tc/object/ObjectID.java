@@ -19,7 +19,7 @@ public class ObjectID extends AbstractIdentifier implements Serializable {
   public final static ObjectID NULL_ID = new ObjectID();
 
   // Only the last 7 bytes are used for object id, the 1st byte represent group id.
-  // This still holds about 72 trillion object (72057594037927935) and 128 groups
+  // This still holds about 72 trillion object (72057594037927935) and 255 groups
   public final static long     MAX_ID  = 0x00FFFFFFFFFFFFFFL;
 
   /**
