@@ -42,7 +42,7 @@ artifacts:
   - maven_artifact: false
     name: README.txt
     destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.txt
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html
     
   - maven_artifact: false
     name: CHANGELOG.txt
