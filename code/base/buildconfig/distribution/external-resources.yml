@@ -10,21 +10,21 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 2.0.0
+    version: 2.1.0-SNAPSHOT
     destination: ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 2.0.0
+    version: 2.1.0-SNAPSHOT
     destination: ehcache
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 2.0.0
+    version: 2.1.0-SNAPSHOT
     destination: ehcache
     
   - maven_artifact: true
@@ -40,7 +40,7 @@ artifacts:
     destination: ehcache    
     
   - maven_artifact: false
-    name: README.txt
+    name: README.html
     destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html
     
