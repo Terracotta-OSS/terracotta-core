@@ -18,6 +18,7 @@
          eternal="false"
          timeToIdleSeconds="120"
          timeToLiveSeconds="0"
+         statistics="true"
          memoryStoreEvictionPolicy="LFU">
     <terracotta/>
   </cache>
