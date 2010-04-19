@@ -263,8 +263,7 @@ public class TransactionBatchTest extends TestCase {
     assertTrue(folded);
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
 
-    // this txn does not share a common lock with the others (even though it has a common object) -- it
-    // should not be folded
+    // this txn has a common object although not share a common lock with the others -- it should be folded
     LockID lid2 = new StringLockID("2");
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     ClientTransaction txn4 = new ClientTransactionImpl(new NullRuntimeLogger());
@@ -272,17 +271,17 @@ public class TransactionBatchTest extends TestCase {
     txn4.fieldChanged(new MockTCObject(new ObjectID(2), this), "class", "class.field", ObjectID.NULL_ID, -1);
 
     folded = writer.addTransaction(txn4, sequenceGenerator, tidGenerator);
-    assertFalse(folded);
-    assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
+    assertTrue(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
 
     DSOGlobalServerStats stats = getDSOGlobalServerStats();
     TransactionBatchReaderImpl reader = new TransactionBatchReaderImpl(writer.getData(), clientID, serializer,
                                                                        new ActiveServerTransactionFactory(), stats);
     // let transactionSize counter sample
     ThreadUtil.reallySleep(2000);
-    assertTransactionSize(writer.getData(), 2, stats.getTransactionSizeCounter());
+    assertTransactionSize(writer.getData(), 1, stats.getTransactionSizeCounter());
 
-    assertEquals(2, reader.getNumberForTxns());
+    assertEquals(1, reader.getNumberForTxns());
     assertEquals(new TxnBatchID(1), reader.getBatchID());
 
     int count = 0;
@@ -295,7 +294,7 @@ public class TransactionBatchTest extends TestCase {
         case 1:
           assertEquals(1, txn.getTransactionID().toLong());
           assertEquals(2, txn.getChanges().size());
-          assertEquals(3, txn.getNumApplicationTxn());
+          assertEquals(4, txn.getNumApplicationTxn());
           assertEquals(0, txn.getNewRoots().size());
           assertEquals(2, txn.getObjectIDs().size());
           assertTrue(txn.getObjectIDs().containsAll(Arrays.asList(new ObjectID[] { new ObjectID(1), new ObjectID(2) })));
@@ -594,19 +593,18 @@ public class TransactionBatchTest extends TestCase {
 
     boolean folded;
 
-    // There is a common object between txn1 and txn2 (but differing locks). This should close txn1
-    // and disallow folds into it
+    // There is a common object between txn1 and txn2 (but differing locks). This should fold
     folded = writer.addTransaction(txn1, sequenceGenerator, tidGenerator);
     assertFalse(folded);
     assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
 
     folded = writer.addTransaction(txn2, sequenceGenerator, tidGenerator);
-    assertFalse(folded);
-    assertEquals(2 + startSeq, sequenceGenerator.getCurrentSequence());
+    assertTrue(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
 
     folded = writer.addTransaction(txn3, sequenceGenerator, tidGenerator);
-    assertFalse(folded);
-    assertEquals(3 + startSeq, sequenceGenerator.getCurrentSequence());
+    assertTrue(folded);
+    assertEquals(1 + startSeq, sequenceGenerator.getCurrentSequence());
   }
 
   static class BatchWriterProperties implements TCProperties {
