@@ -80,8 +80,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private final ActiveServerGroupsConfig activeServerGroupsConfig;
   private final UpdateCheckConfig        updateCheckConfig;
 
-  private String                         thisL2Identifier;
-  private L2ConfigData                   myConfigData;
+  private final String                   thisL2Identifier;
+  private final L2ConfigData             myConfigData;
   private final ConfigTCProperties       configTCProperties;
   private final Set<InetAddress>         localInetAddresses;
 
@@ -102,16 +102,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.l2ConfigData = new HashMap();
 
     this.localInetAddresses = getAllLocalInetAddresses();
-    this.thisL2Identifier = thisL2Identifier;
-    this.myConfigData = null;
 
     // this sets the beans in each repository
     runConfigurationCreator(this.configurationCreator);
-
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
-    // do this after runConfigurationCreator method call, after
-    // serversBeanRepository is set
+
+    // do this after runConfigurationCreator method call, after serversBeanRepository is set
     try {
       this.updateCheckConfig = getUpdateCheckConfig();
     } catch (XmlException e2) {
@@ -124,7 +121,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       throw new ConfigurationSetupException(e);
     }
 
-    selectL2((Servers) serversBeanRepository().bean(), "the set of L2s known to us");
+    Servers serversBean = (Servers) serversBeanRepository().bean();
+    Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
+
+    if (thisL2Identifier != null) {
+      this.thisL2Identifier = thisL2Identifier;
+    } else {
+      Server s = autoChooseThisL2(servers);
+      this.thisL2Identifier = (s != null ? s.getName() : null);
+    }
+    verifyL2Identifier(servers, this.thisL2Identifier);
+    this.myConfigData = setupConfigDataForL2(this.thisL2Identifier);
 
     this.haConfig = getHaConfig();
 
@@ -146,6 +153,26 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                                              + " is specified more than once in tc-config."
                                                                                              + "\nPlease provide different server name or port numbers(dso-port, jmx-port, "
                                                                                              + "\nl2-group-port) in tc-config."); }
+  }
+
+  private void verifyL2Identifier(final Server[] servers, final String l2Identifier) throws ConfigurationSetupException {
+    if (servers == null) return;
+    boolean found = false;
+    for (Server server : servers) {
+      if (server.getName().equals(l2Identifier)) {
+        found = true;
+        break;
+      }
+    }
+
+    if ((servers.length > 1) && !found) { throw new ConfigurationSetupException(
+                                                                                "You have specified server name '"
+                                                                                    + l2Identifier
+                                                                                    + "' which does not "
+                                                                                    + "exist in the specified tc-config file. \n\n"
+                                                                                    + "Please check your settings and try again.");
+
+    }
   }
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
@@ -295,11 +322,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     public L2ConfigData(String name) throws ConfigurationSetupException {
       this.name = name;
-      findMyL2Bean(); // To get the exception in case things are screwed
-      // up
-
+      findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
-
       this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository, configurationCreator
           .directoryConfigurationLoadedFrom()));
       this.dsoL2Config = new NewL2DSOConfigObject(createContext(this.beanRepository, configurationCreator
@@ -322,14 +346,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       Servers servers = (Servers) serversBeanRepository().bean();
       Server[] l2Array = servers == null ? null : servers.getServerArray();
 
-      if (l2Array == null || l2Array.length == 0) return null;
-      else if (this.name == null) {
+      if (l2Array == null || l2Array.length == 0) {
+        return null;
+      } else if (this.name == null) {
         if (l2Array.length > 1) {
           Server rv = autoChooseThisL2(l2Array);
           if (rv == null) {
-            throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
-                                                  + l2Array.length + " L2s defined in the configuration file. "
-                                                  + "You must indicate which L2 this is.");
+            throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
+                                                  + " there are" + l2Array.length
+                                                  + "servers defined in the Terracotta configuration file. "
+                                                  + " Pass the desired server name to the startup script using "
+                                                  + "the -n flag.");
 
           } else {
             return rv;
@@ -360,25 +387,34 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private Server autoChooseThisL2(Server[] servers) throws ConfigurationSetupException {
     Server myL2 = null;
-    try {
-      for (Server server : servers) {
-        if (localInetAddresses.contains(InetAddress.getByName(server.getHost()))) {
-          if (myL2 == null) {
-            myL2 = server;
-            this.thisL2Identifier = server.getName();
-          } else {
-            throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
-                                                  + servers.length + " L2s defined in the configuration file. "
-                                                  + "Not able to automatically choose THIS server instance ( '"
-                                                  + myL2.getName() + "' OR '" + server.getName() + "' )."
-                                                  + "You must indicate which L2 this is.");
+
+    if (servers == null) {
+      // no server elements. return nothing
+    } else if (servers.length == 1) {
+      myL2 = servers[0];
+    } else {
+      try {
+        for (Server server : servers) {
+          if (localInetAddresses.contains(InetAddress.getByName(server.getHost()))) {
+            if (myL2 == null) {
+              myL2 = server;
+            } else {
+              throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
+                                                    + " there are" + servers.length
+                                                    + "servers defined in the Terracotta configuration file. "
+                                                    + "The startup script cannot automatically choose between "
+                                                    + "the following server names: " + myL2.getName() + ", "
+                                                    + server.getName()
+                                                    + ". Pass the desired server name to the startup script using "
+                                                    + "the -n flag.");
+
+            }
           }
         }
+      } catch (UnknownHostException uhe) {
+        throw new ConfigurationSetupException("Exception when trying to choose this L2 instance : " + uhe);
       }
-    } catch (UnknownHostException uhe) {
-      throw new ConfigurationSetupException("Exception when trying to choose this L2 instance : " + uhe);
     }
-
     return myL2;
   }
 
@@ -441,39 +477,20 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                   + "server which one it is, or change the 'name' attributes of the <server> "
                                                   + "elements in the config file as appropriate.");
       }
-
       this.l2ConfigData.put(name, out);
     }
 
     return out;
   }
 
-  private void selectL2(Servers servers, final String description) throws ConfigurationSetupException {
+  private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
     this.systemConfig = new NewSystemConfigObject(createContext(systemBeanRepository(), configurationCreator
         .directoryConfigurationLoadedFrom()));
-
-    if (this.allCurrentlyKnownServers().length == 1) {
-      if (servers != null && servers.getServerArray() != null && servers.getServerArray()[0] != null) {
-        final String server0Name = servers.getServerArray()[0].getName();
-        if (thisL2Identifier == null) {
-          this.thisL2Identifier = server0Name;
-        } else {
-          if (!thisL2Identifier.equals(server0Name)) { throw new ConfigurationSetupException(
-                                                                                             "You have specified server name '"
-                                                                                                 + thisL2Identifier
-                                                                                                 + "' which does not "
-                                                                                                 + "exist in the specified tc-config file. \n\n"
-                                                                                                 + "Please check your settings and try again"); }
-        }
-        this.myConfigData = configDataFor(server0Name);
-      } else {
-        this.myConfigData = configDataFor(null);
-      }
-    } else this.myConfigData = configDataFor(this.thisL2Identifier);
-
+    L2ConfigData serverConfigData = configDataFor(this.thisL2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
-    this.myConfigData.commonL2Config().logsPath().addListener(listener);
-    listener.valueChanged(null, this.myConfigData.commonL2Config().logsPath().getObject());
+    serverConfigData.commonL2Config().logsPath().addListener(listener);
+    listener.valueChanged(null, serverConfigData.commonL2Config().logsPath().getObject());
+    return serverConfigData;
   }
 
   private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
