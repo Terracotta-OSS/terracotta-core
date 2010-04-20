@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.context;
 
@@ -37,8 +38,7 @@ public class StandardConfigContext implements ConfigContext {
   private final File                              configDirectory;
 
   public StandardConfigContext(BeanRepository beanRepository, DefaultValueProvider defaultValueProvider,
-                               IllegalConfigurationChangeHandler illegalConfigurationChangeHandler,
-                               File configDirectory) {
+                               IllegalConfigurationChangeHandler illegalConfigurationChangeHandler, File configDirectory) {
     Assert.assertNotNull(beanRepository);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(illegalConfigurationChangeHandler);
@@ -73,7 +73,7 @@ public class StandardConfigContext implements ConfigContext {
   public XmlObject bean() {
     return this.beanRepository.bean();
   }
-  
+
   public Object syncLockForBean() {
     return this.beanRepository;
   }
@@ -85,6 +85,10 @@ public class StandardConfigContext implements ConfigContext {
 
   public IntConfigItem intItem(String xpath) {
     return new IntXPathBasedConfigItem(this, xpath);
+  }
+
+  public IntConfigItem intItem(String xpath, int defaultValue) {
+    return new IntXPathBasedConfigItem(this, xpath, defaultValue);
   }
 
   public StringConfigItem stringItem(String xpath) {
@@ -110,7 +114,7 @@ public class StandardConfigContext implements ConfigContext {
   public BooleanConfigItem booleanItem(String xpath, boolean defaultValue) {
     return new BooleanXPathBasedConfigItem(this, xpath, defaultValue);
   }
-  
+
   public FileConfigItem configRelativeSubstitutedFileItem(String xpath) {
     return new SubstitutedFileXPathBasedConfigItem(this, xpath, configDirectory);
   }

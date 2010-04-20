@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.context;
 
@@ -106,7 +107,7 @@ public class MockConfigContext implements ConfigContext {
     this.lastDefaultForXPath = xpath;
     return this.returnedDefaultFor;
   }
-  
+
   public Object syncLockForBean() {
     return this;
   }
@@ -128,6 +129,10 @@ public class MockConfigContext implements ConfigContext {
   }
 
   public IntConfigItem intItem(String xpath) {
+    return null;
+  }
+
+  public IntConfigItem intItem(String xpath, int defaultValue) {
     return null;
   }
 

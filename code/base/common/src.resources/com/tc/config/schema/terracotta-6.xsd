@@ -660,8 +660,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="jmx-port" type="port" minOccurs="0"
-        default="9520">
+      <xs:element name="jmx-port" type="port" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             On what port should the server listen for
@@ -671,11 +670,11 @@
             privileges to use on Unix-style systems (Linux,
             Solaris).
 
-            Default: 9520
+            Default: "dso-port" + 10
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="l2-group-port" type="port" minOccurs="0" default="9530">
+      <xs:element name="l2-group-port" type="port" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
             Port for server to server communication which must
@@ -684,7 +683,7 @@
             below 1024 typically require 'root' privileges to
             use on Unix-style systems (Linux, Solaris).
 
-            Default: 9530
+            Default: "dso-port" + 20
           </xs:documentation>
         </xs:annotation>
       </xs:element>

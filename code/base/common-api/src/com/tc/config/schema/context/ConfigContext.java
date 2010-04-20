@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.context;
 
@@ -33,12 +34,14 @@ public interface ConfigContext {
   IllegalConfigurationChangeHandler illegalConfigurationChangeHandler();
 
   XmlObject bean();
-  
+
   Object syncLockForBean();
 
   void itemCreated(ConfigItem item);
 
   IntConfigItem intItem(String xpath);
+
+  IntConfigItem intItem(String xpath, int defaultValue);
 
   StringConfigItem stringItem(String xpath);
 

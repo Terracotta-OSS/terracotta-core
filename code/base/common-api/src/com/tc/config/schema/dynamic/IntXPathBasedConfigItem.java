@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -21,7 +22,15 @@ public class IntXPathBasedConfigItem extends XPathBasedConfigItem implements Int
 
   public IntXPathBasedConfigItem(ConfigContext context, String xpath) {
     super(context, xpath);
+    checkDefaltValue(context, xpath);
+  }
 
+  public IntXPathBasedConfigItem(ConfigContext context, String xpath, int defaultValue) {
+    super(context, xpath, new Integer(defaultValue));
+    Assert.assertNotNull(defaultValue);
+  }
+
+  private void checkDefaltValue(ConfigContext context, String xpath) {
     try {
       if (!context.hasDefaultFor(xpath) && context.isOptional(xpath)) {
         // formatting
@@ -37,9 +46,9 @@ public class IntXPathBasedConfigItem extends XPathBasedConfigItem implements Int
 
   protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
     BigInteger out = (BigInteger) super.fetchDataFromXmlObjectByReflection(xmlObject, "getBigIntegerValue");
-    
+
     if (out == null) return null;
-    
+
     boolean fits = (out.compareTo(MAX_INT_AS_BIG_INTEGER) <= 0) && (out.compareTo(MIN_INT_AS_BIG_INTEGER) >= 0);
     if (!fits) throw Assert.failure("Value " + out
                                     + " is too big to represent as an 'int'; you should either be using a "

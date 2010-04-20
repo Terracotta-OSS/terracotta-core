@@ -51,7 +51,8 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
     this.listenPort = this.context.intItem("dso-port");
-    this.l2GroupPort = this.context.intItem("l2-group-port");
+    this.l2GroupPort = this.context.intItem("l2-group-port", this.context.intItem("dso-port").getInt()
+                                                             + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT);
     this.host = this.context.stringItem("@host");
     this.bind = this.context.stringItem("@bind");
   }

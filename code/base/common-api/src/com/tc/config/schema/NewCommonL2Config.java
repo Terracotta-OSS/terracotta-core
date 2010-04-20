@@ -13,6 +13,8 @@ import com.tc.config.schema.dynamic.StringConfigItem;
  */
 public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
 
+  public static final short DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT = 10;
+
   FileConfigItem dataPath();
 
   FileConfigItem logsPath();

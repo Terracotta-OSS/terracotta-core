@@ -47,7 +47,8 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     this.serverDbBackupPath = context.configRelativeSubstitutedFileItem("data-backup");
 
     this.statisticsPath = context.configRelativeSubstitutedFileItem("statistics");
-    this.jmxPort = context.intItem("jmx-port");
+    int defaultJmxPort = context.intItem("dso-port").getInt() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    this.jmxPort = context.intItem("jmx-port", defaultJmxPort);
     this.host = context.stringItem("@host");
 
     // JMX authentication
