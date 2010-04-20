@@ -21,8 +21,8 @@ artifacts:
     is_demo: true
     
   - maven_artifact: true
-    groupId: org.terracotta.samples.ehcache
-    artifactId: hibernate
+    groupId: org.terracotta.samples.ehcache.hibernate
+    artifactId: events
     classifier: distribution
     version: 3.3.0-SNAPSHOT
     type: tar.gz
