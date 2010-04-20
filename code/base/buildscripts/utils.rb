@@ -159,20 +159,33 @@ def download_external(default_repos, dest_dir, artifact)
     if is_live?(url)
       dest = File.join(dest_dir, artifact['destination'])
       FileUtils.mkdir_p(dest) unless File.directory?(dest)
-      dest_file = artifact['maven_artifact'] == true ? File.join(dest, File.basename(url)) : File.join(dest, artifact['name'])
-      ant.get(:src => url, :dest => dest_file, :verbose => true)
-      # check if we need to untar a .tar.gz file
-      if dest_file =~ /tar.gz$/
-        root_folder = File.join(dest, File.basename(dest_file, ".tar.gz"))
-        if artifact['explode'] == true
-          ant.untar(:src => dest_file, :dest => dest, :compression => "gzip")  
-          FileUtils.rm dest_file
+      
+      if artifact['explode'] == true
+        tmp_dir = File.join("build", "tmp")
+        FileUtils.mkdir_p(tmp_dir)
+        dest_file = artifact['maven_artifact'] == true ? File.join(tmp_dir, File.basename(url)) : File.join(tmp_dir, artifact['name'])
+        ant.get(:src => url, :dest => dest_file, :verbose => true)
+        exploded_dir = File.join(tmp_dir, "exploded")
+        FileUtils.mkdir_p(exploded_dir)
+        ant.untar(:src => dest_file, :dest => exploded_dir, :compression => "gzip")
+        ant.chmod(:dir => exploded_dir, :perm => "ugo+x", :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
+        # assume the zip file contains a root folder
+        root_dir = nil
+        Dir.new(exploded_dir).each do |e|
+          next if e =~ /^\./
+          root_dir = File.expand_path(File.join(exploded_dir, e))
         end
         if artifact['remove_root_folder'] == true
           ant.move(:todir => dest) do
-            ant.fileset(:dir => root_folder)
+            ant.fileset(:dir => root_dir)
           end
+        else
+          ant.move(:file => root_dir, :todir => dest)
         end
+        FileUtils.rm_rf(tmp_dir)
+      else
+        dest_file = artifact['maven_artifact'] == true ? File.join(dest, File.basename(url)) : File.join(dest, artifact['name'])
+        ant.get(:src => url, :dest => dest_file, :verbose => true)
       end
       success = true
       break

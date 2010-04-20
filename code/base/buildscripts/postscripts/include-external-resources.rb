@@ -27,6 +27,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     puts "default repos: #{default_repos.join(',')}"
     artifacts = resource_config['artifacts']
     artifacts.each do |artifact|
+      next if @no_demo && artifact['is_demo'] == true
       download_external(default_repos, product_directory.to_s, artifact)
     end
   end

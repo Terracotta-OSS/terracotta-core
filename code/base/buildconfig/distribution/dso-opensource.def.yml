@@ -18,11 +18,6 @@ bundled_demos:
         - cart
         - tasklist
         - townsend
-  - ehcache:
-      install_directory: ehcache/samples
-      manifest:
-        - colorcache
-        - hibernate
 bundled_vendors:
    - jetty-6.1.15:
        install_directory: vendors/jetty-6.1.15
