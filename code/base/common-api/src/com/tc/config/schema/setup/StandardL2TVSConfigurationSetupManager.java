@@ -55,6 +55,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -78,6 +83,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private String                         thisL2Identifier;
   private L2ConfigData                   myConfigData;
   private final ConfigTCProperties       configTCProperties;
+  private final Set<InetAddress>         localInetAddresses;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
@@ -95,6 +101,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.systemConfig = null;
     this.l2ConfigData = new HashMap();
 
+    this.localInetAddresses = getAllLocalInetAddresses();
     this.thisL2Identifier = thisL2Identifier;
     this.myConfigData = null;
 
@@ -318,10 +325,15 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (l2Array == null || l2Array.length == 0) return null;
       else if (this.name == null) {
         if (l2Array.length > 1) {
-          // formatting
-          throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
-                                                + l2Array.length + " L2s defined in the configuration file. "
-                                                + "You must indicate which L2 this is.");
+          Server rv = autoChooseThisL2(l2Array);
+          if (rv == null) {
+            throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
+                                                  + l2Array.length + " L2s defined in the configuration file. "
+                                                  + "You must indicate which L2 this is.");
+
+          } else {
+            return rv;
+          }
         } else {
           return l2Array[0];
         }
@@ -344,6 +356,47 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         }
       }
     }
+  }
+
+  private Server autoChooseThisL2(Server[] servers) throws ConfigurationSetupException {
+    Server myL2 = null;
+    try {
+      for (Server server : servers) {
+        if (localInetAddresses.contains(InetAddress.getByName(server.getHost()))) {
+          if (myL2 == null) {
+            myL2 = server;
+            this.thisL2Identifier = server.getName();
+          } else {
+            throw new ConfigurationSetupException("You have not specified a name for your L2, and there are "
+                                                  + servers.length + " L2s defined in the configuration file. "
+                                                  + "Not able to automatically choose THIS server instance ( '"
+                                                  + myL2.getName() + "' OR '" + server.getName() + "' )."
+                                                  + "You must indicate which L2 this is.");
+          }
+        }
+      }
+    } catch (UnknownHostException uhe) {
+      throw new ConfigurationSetupException("Exception when trying to choose this L2 instance : " + uhe);
+    }
+
+    return myL2;
+  }
+
+  private Set<InetAddress> getAllLocalInetAddresses() {
+    Set<InetAddress> localAddresses = new HashSet<InetAddress>();
+    Enumeration<NetworkInterface> networkInterfaces;
+    try {
+      networkInterfaces = NetworkInterface.getNetworkInterfaces();
+    } catch (SocketException e) {
+      throw new RuntimeException(e);
+    }
+    while (networkInterfaces.hasMoreElements()) {
+      Enumeration<InetAddress> inetAddresses = networkInterfaces.nextElement().getInetAddresses();
+      while (inetAddresses.hasMoreElements()) {
+        localAddresses.add(inetAddresses.nextElement());
+      }
+    }
+    return localAddresses;
   }
 
   public String describeSources() {
