@@ -151,8 +151,6 @@ postscripts:
               org.terracotta.modules.tool.relativeUrlBase: http://www.terracotta.org/download/reflector/stable/version
   - install-forge-tims:
       args:
-        - tim-apache-struts-1.1
-        - tim-jetty-6.1
         - ehcache-terracotta
         - quartz-terracotta
         - terracotta-session
