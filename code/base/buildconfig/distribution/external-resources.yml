@@ -56,13 +56,13 @@ artifacts:
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-api
-    version: 1.5.8
+    version: 1.5.11
     destination: ehcache
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
-    version: 1.5.8
+    version: 1.5.11
     destination: ehcache    
     
   - maven_artifact: false
