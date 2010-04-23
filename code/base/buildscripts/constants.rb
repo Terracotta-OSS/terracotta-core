@@ -14,6 +14,9 @@ module PropertyNames
   MODULES_URL = 'com.tc.l1.modules.repositories'
 
   TC_BASE_DIR = 'tc.base-dir'
+
+  ENTERPRISE = 'ENTERPRISE'
+  OPENSOURCE = 'OPENSOURCE'
 end
 
 module MavenConstants
@@ -25,4 +28,12 @@ module MavenConstants
   MAVEN_REPO_LOCAL = 'local'
   DEFAULT_GROUP_ID = 'org.terracotta'
   MODULES_GROUP_ID = 'org.terracotta.modules'
+
+  TERRACOTTA_SNAPSHOTS_REPO_ID = 'terracotta-snapshots'
+  TERRACOTTA_STAGING_REPO_ID = 'terracotta-staging'
+  TERRACOTTA_RELEASES_REPO_ID = 'terracotta-releases'
+
+  TERRACOTTA_SNAPSHOTS_REPO = 'http://nexus:8080/content/repositories/terracotta-snapshots'
+  TERRACOTTA_STAGING_REPO = 'http://nexus:8080/content/repositories/terracotta-staging'
+  TERRACOTTA_RELEASES_REPO = 'http://nexus:8080/content/repositories/terracotta-releases'
 end

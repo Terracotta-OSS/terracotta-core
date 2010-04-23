@@ -37,6 +37,9 @@ AutoRequire.all_in_directory('buildscripts')
 # rather than controlling CruiseControl itself or configuring how the tests respond.
 BUILD_CONTROL_PREFIX = "tc.build-control."
 
+include MavenConstants
+include PropertyNames
+
 class BaseCodeTerracottaBuilder < TerracottaBuilder
   # Creates a new instance. 'arguments' should just be the list of arguments passed on the
   # command line.
@@ -858,7 +861,42 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  def deploy_snapshots
+    deploy(OPENSOURCE, true, TERRACOTTA_SNAPSHOTS_REPO_ID, TERRACOTTA_SNAPSHOTS_REPO)
+  end
+
+  def deploy_staging
+    deploy(OPENSOURCE, false, TERRACOTTA_STAGING_REPO_ID, TERRACOTTA_STAGING_REPO)
+  end
+
+  def deploy_releases
+    deploy(OPENSOURCE, false, TERRACOTTA_RELEASES_REPO_ID, TERRACOTTA_RELEASES_REPO)
+  end
+
+  def deploy_ee_snapshots
+    deploy(ENTERPRISE, true, TERRACOTTA_SNAPSHOTS_REPO_ID, TERRACOTTA_SNAPSHOTS_REPO)
+  end
+
+  def deploy_ee_staging
+    deploy(ENTERPRISE, false, TERRACOTTA_STAGING_REPO_ID, TERRACOTTA_STAGING_REPO)
+  end
+
+  def deploy_ee_releases
+    deploy(ENTERPRISE, false, TERRACOTTA_RELEASES_REPO_ID, TERRACOTTA_RELEASES_REPO)
+  end
+  
   private
+
+  def deploy(flavor, snapshot, repo_id, repo_url)
+    @internal_config_source[MAVEN_SNAPSHOT_CONFIG_KEY] = snapshot
+    @internal_config_source[MAVEN_REPO_ID_CONFIG_KEY] = repo_id
+    @internal_config_source[MAVEN_REPO_CONFIG_KEY] = repo_url
+    if flavor == ENTERPRISE
+      dist_maven_ee
+    else
+      dist_maven
+    end
+  end
 
   def generate_xmlbeans_class(target)
     ant_script = @static_resources.ant_script
