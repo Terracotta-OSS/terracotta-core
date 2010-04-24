@@ -101,9 +101,16 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
    * @throws TCDatabaseException
    */
   public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws TCDatabaseException {
-    // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
-    // need this to avoid deadlocks between commit thread and DGC thread. Hence READ_COMMITTED
-    Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_COMMITTED);
+    // These are the possible ways for isolation
+    // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
+    // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
+    // data read by this cursor to be modified or deleted prior to the commit of the transaction.
+    // CursorConfig.READ_UNCOMMITTED : A convenience instance to configure read operations performed by the cursor to
+    // return modified but not yet committed data.
+    // During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
+    // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
+    // avoided
+    Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     try {
       boolean found = false;
       byte idb[] = Conversion.long2Bytes(id.toLong());

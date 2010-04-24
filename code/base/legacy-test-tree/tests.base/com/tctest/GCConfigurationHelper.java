@@ -16,7 +16,8 @@ public class GCConfigurationHelper {
     public final boolean GC_VERBOSE                  = true;
   }
 
-  private int node_count = Parameters.NODE_COUNT;
+  private int nodeCount                 = Parameters.NODE_COUNT;
+  private int garbageCollectionInterval = Parameters.GARBAGE_COLLECTION_INTERVAL;
 
   public boolean getGCEnabled() {
     return Parameters.GC_ENABLED;
@@ -27,15 +28,19 @@ public class GCConfigurationHelper {
   }
 
   public int getGarbageCollectionInterval() {
-    return Parameters.GARBAGE_COLLECTION_INTERVAL;
+    return garbageCollectionInterval;
+  }
+
+  public void setGarbageCollectionInterval(int garbageCollectionInterval) {
+    this.garbageCollectionInterval = garbageCollectionInterval;
   }
 
   public int getNodeCount() {
-    return node_count;
+    return nodeCount;
   }
 
   public void setNodeCount(int nodes) {
-    node_count = nodes;
+    nodeCount = nodes;
   }
 
   public void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
@@ -44,4 +49,5 @@ public class GCConfigurationHelper {
     configFactory.setGCIntervalInSec(getGarbageCollectionInterval());
     configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);
   }
+  
 }

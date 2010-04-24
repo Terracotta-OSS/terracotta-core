@@ -212,8 +212,15 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
       throws TCDatabaseException {
     // XXX::Sleepycat has the most inefficent way to delete objects. Another way would be to delete all records
     // explicitly.
-    // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
-    // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
+    // These are the possible ways for isolation
+    // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
+    // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
+    // data read by this cursor to be modified or deleted prior to the commit of the transaction.
+    // CursorConfig.READ_UNCOMMITTED : A convenience instance to configure read operations performed by the cursor to
+    // return modified but not yet committed data.
+    // During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
+    // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
+    // avoided
     int written = 0;
     Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
@@ -288,7 +295,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
       throws TCDatabaseException {
     // XXX:: Since we read in one direction and since we have to read the first record of the next map to break out, we
     // need READ_COMMITTED to avoid deadlocks between commit thread and DGC thread.
-    Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
+    Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
     DatabaseEntry key = new DatabaseEntry();
     key.setData(idb);
