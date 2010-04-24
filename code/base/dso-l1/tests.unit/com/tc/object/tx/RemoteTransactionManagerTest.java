@@ -23,6 +23,7 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
+import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;
@@ -543,8 +544,8 @@ public class RemoteTransactionManagerTest extends TestCase {
       return false;
     }
 
-    public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                               TransactionIDGenerator transactionIDGenerator) {
+    public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+                                                  TransactionIDGenerator transactionIDGenerator) {
       txn.setSequenceID(new SequenceID(sequenceGenerator.getNextSequence()));
       txn.setTransactionID(transactionIDGenerator.nextTransactionID());
       try {
@@ -553,7 +554,7 @@ public class RemoteTransactionManagerTest extends TestCase {
       } catch (InterruptedException e) {
         throw new TCRuntimeException(e);
       }
-      return false;
+      return new FoldedInfo(null, false);
     }
 
     public TransactionBuffer removeTransaction(TransactionID txID) {

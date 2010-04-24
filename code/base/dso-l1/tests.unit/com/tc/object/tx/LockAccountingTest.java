@@ -11,6 +11,7 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -257,6 +258,65 @@ public class LockAccountingTest extends TestCase {
     
     la.waitAllCurrentTxnCompleted();
     timer.cancel();
+  }
+  
+  // verify folded txns
+  public void testFoldedTxns() throws Exception {
+    lockID1 = new StringLockID("lock1");
+    lockID2 = new StringLockID("lock2");
+    lockID3 = new StringLockID("lock3");
+    lockID4 = new StringLockID("lock4");
+    txID1 = new TransactionID(1);
+    txID2 = new TransactionID(2);
+    txID3 = new TransactionID(3);
+    txID4 = new TransactionID(4);
+    lock1Txs = new HashSet();
+    lock2Txs = new HashSet();
+    lock3Txs = new HashSet();
+    lock4Txs = new HashSet();
+    Collection tx1locks = new HashSet();
+    Collection tx2locks = new HashSet();
+    Collection tx3locks = new HashSet();
+    Collection tx4locks = new HashSet();
+
+    lock1Txs.add(txID1);
+    lock2Txs.add(txID2);
+
+    tx1locks.add(lockID1);
+    tx2locks.add(lockID2);
+    tx3locks.add(lockID3);
+    tx4locks.add(lockID4);
+
+
+    // folding lock1 and lock2 into txn1
+    la.add(txID1, tx1locks);
+    la.add(txID1, tx2locks);
+    // folding lock3 and lock4 into txn2
+    la.add(txID2, tx3locks);
+    la.add(txID2, tx4locks);
+
+    // lock1 and lock2 map to txn1
+    assertEquals(lock1Txs, la.getTransactionsFor(lockID1));
+    assertEquals(lock1Txs, la.getTransactionsFor(lockID2));
+    
+    // lock3 and lock4 map to txn2
+    assertEquals(lock2Txs, la.getTransactionsFor(lockID3));
+    assertEquals(lock2Txs, la.getTransactionsFor(lockID4));
+    
+    // verify lock1 and lock2 folded in same set
+    Set<LockID> locks = new HashSet<LockID>();
+    locks.add(lockID1);
+    locks.add(lockID2);
+    Set completedLockIDs = la.acknowledge(txID1);
+    assertEquals(locks, completedLockIDs);
+    
+    // verify lock2 and lock3 folded in same set
+    locks = new HashSet<LockID>();
+    locks.add(lockID3);
+    locks.add(lockID4);
+    completedLockIDs = la.acknowledge(txID2);
+    assertEquals(locks, completedLockIDs);
+    
   }
 
 }

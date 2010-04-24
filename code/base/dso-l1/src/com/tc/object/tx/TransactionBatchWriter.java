@@ -243,11 +243,13 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       logger.info("NOT folding, created new sequence " + sid);
     }
 
-    TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding);
+    TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding, txn
+        .getTransactionID());
 
     if (this.foldingEnabled) {
 
-      FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn.getChangeBuffers().keySet()));
+      FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn
+          .getChangeBuffers().keySet()));
       ++this.numTxnsAfterFolding;
       registerKeyForOids(txn.getChangeBuffers().keySet(), key);
     }
@@ -260,8 +262,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   // Overridden in active-active
   protected TransactionBuffer createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
                                                       ObjectStringSerializer objectStringserializer,
-                                                      DNAEncoding dnaEncoding) {
-    return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding);
+                                                      DNAEncoding dnaEncoding, TransactionID txnID) {
+    return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding, txnID);
   }
 
   private void registerKeyForOids(Set oids, FoldingKey key) {
@@ -315,8 +317,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return false;
   }
 
-  public synchronized boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                             TransactionIDGenerator tidGenerator) {
+  public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+                                                TransactionIDGenerator tidGenerator) {
     this.numTxnsBeforeFolding++;
 
     if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
@@ -329,7 +331,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
 
     this.bytesWritten += txnBuffer.write(txn);
 
-    return txnBuffer.getTxnCount() > 1;
+    return new FoldedInfo(txnBuffer.getFoldedTransactionID(), txnBuffer.getTxnCount() > 1);
   }
 
   private void removeEmptyDeltaDna(ClientTransaction txn) {
@@ -424,6 +426,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final SetOnceFlag              committed            = new SetOnceFlag();
 
     private final Map                      writers              = new LinkedHashMap();
+    private final TransactionID            txnID;
 
     // Maintaining hard references so that it doesn't get GC'ed on us
     private final IdentityHashMap          references           = new IdentityHashMap();
@@ -434,12 +437,17 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           txnCountMark;
 
     TransactionBufferImpl(SequenceID sequenceID, TCByteBufferOutputStream output, ObjectStringSerializer serializer,
-                          DNAEncoding encoding) {
+                          DNAEncoding encoding, TransactionID txnID) {
       this.sequenceID = sequenceID;
       this.output = output;
       this.serializer = serializer;
       this.encoding = encoding;
       this.startMark = output.mark();
+      this.txnID = txnID;
+    }
+
+    public TransactionID getFoldedTransactionID() {
+      return this.txnID;
     }
 
     public void writeTo(TCByteBufferOutputStream dest) {
@@ -718,6 +726,24 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED), props
           .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT), props
           .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT));
+    }
+  }
+
+  public static class FoldedInfo {
+    private final TransactionID txnID;
+    private final boolean       folded;
+
+    public FoldedInfo(TransactionID txnID, boolean folded) {
+      this.txnID = txnID;
+      this.folded = folded;
+    }
+
+    public TransactionID getFoldedTransactionID() {
+      return this.txnID;
+    }
+
+    public boolean isFolded() {
+      return this.folded;
     }
   }
 

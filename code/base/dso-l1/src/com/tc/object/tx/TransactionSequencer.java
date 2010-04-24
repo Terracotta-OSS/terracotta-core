@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
+import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
@@ -90,7 +91,7 @@ public class TransactionSequencer {
     return this.batchFactory.nextBatch(this.groupID);
   }
 
-  private boolean addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
+  private FoldedInfo addTransactionToBatch(ClientTransaction txn, ClientTransactionBatch batch) {
     return batch.addTransaction(txn, this.sequence, this.transactionIDGenerator);
   }
 
@@ -122,7 +123,8 @@ public class TransactionSequencer {
     final int numTransactionsDelta = 1;
     int numBatchesDelta = 0;
 
-    boolean folded = addTransactionToBatch(txn, this.currentBatch);
+    FoldedInfo foldInfo = addTransactionToBatch(txn, this.currentBatch);
+    boolean folded = foldInfo.isFolded();
 
     synchronized (transactionSizeCounter) {
       // transactionSize = batchSize / number of transactions
@@ -130,13 +132,17 @@ public class TransactionSequencer {
       this.transactionSizeCounter.increment(0, numTransactionsDelta);
     }
 
-    if (!txn.isConcurrent() && !folded) {
-      // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
-      TransactionID tid = txn.getTransactionID();
-      if(tid.isNull()) {
-        throw new AssertionError("Transaction id is null");
+    if (!txn.isConcurrent()) {
+      TransactionID txnID;
+      if (folded) {
+        // merge locks if folded
+        txnID = foldInfo.getFoldedTransactionID();
+      } else {
+        // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
+        txnID = txn.getTransactionID();
       }
-      this.lockAccounting.add(tid, txn.getAllLockIDs());
+      if (txnID.isNull()) { throw new AssertionError("Transaction id is null"); }
+      this.lockAccounting.add(txnID, txn.getAllLockIDs());
     }
 
     if (this.currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {

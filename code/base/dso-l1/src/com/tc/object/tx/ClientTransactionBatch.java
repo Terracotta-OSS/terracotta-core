@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 
@@ -26,7 +27,7 @@ public interface ClientTransactionBatch extends TransactionBatch {
    * 
    * @return true if the transaction was folded
    */
-  public boolean addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
+  public FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
                                 TransactionIDGenerator transactionIDGenerator);
 
   public TransactionBuffer removeTransaction(TransactionID txID);
