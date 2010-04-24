@@ -96,6 +96,7 @@ bundled_components:
         - tim-get-tool:
             kit-resources:
               - tim-get.properties
+        - tim-api
         - ent-common
         - ent-deploy
         - ent-dso-l1
