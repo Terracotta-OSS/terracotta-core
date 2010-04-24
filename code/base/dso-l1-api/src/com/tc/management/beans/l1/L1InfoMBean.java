@@ -32,6 +32,8 @@ public interface L1InfoMBean extends TerracottaMBean, NotificationEmitter, Runti
   String getCopyright();
 
   String takeThreadDump(long requestMillis);
+  
+  byte[] takeCompressedThreadDump(long requestMillis);
 
   void startBeanShell(int port);
 

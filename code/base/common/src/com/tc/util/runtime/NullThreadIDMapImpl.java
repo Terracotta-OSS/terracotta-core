@@ -8,11 +8,11 @@ import com.tc.object.locks.ThreadID;
 
 public class NullThreadIDMapImpl implements ThreadIDMap {
 
-  public void addTCThreadID(ThreadID threadID) {
+  public void addTCThreadID(final ThreadID threadID) {
     //
   }
 
-  public ThreadID getTCThreadID(Thread t) {
+  public ThreadID getTCThreadID(final Long javaThreadID) {
     return null;
   }
 

@@ -193,6 +193,12 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     logger.info(text);
     return text;
   }
+  
+  public byte[] takeCompressedThreadDump(long requestMillis) {
+    LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
+    this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
+    return ThreadDumpUtil.getCompressedThreadDump(lockInfo, this.lockInfoDumpHandler.getThreadIDMap());
+  }
 
   public String[] getCpuStatNames() {
     if (cpuNames != null) return cpuNames;

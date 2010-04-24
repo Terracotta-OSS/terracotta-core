@@ -18,7 +18,9 @@ import com.tc.stats.DSOClientMBean;
 import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
+import java.io.ByteArrayInputStream;
 import java.util.Map;
+import java.util.zip.ZipInputStream;
 
 import javax.management.Attribute;
 import javax.management.AttributeChangeNotification;
@@ -318,7 +320,11 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public String takeThreadDump(long requestMillis) {
-    return l1InfoBean != null ? l1InfoBean.takeThreadDump(requestMillis) : "";
+    if (l1InfoBean == null) return "not connected";
+    byte[] zippedByte = l1InfoBean.takeCompressedThreadDump(requestMillis);
+    if (zippedByte == null) { return MESSAGE_ON_EXCEPTION; }
+    ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
+    return decompress(zIn);
   }
 
   public int getLiveObjectCount() {

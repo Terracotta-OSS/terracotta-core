@@ -4,21 +4,30 @@
  */
 package com.tc.admin.model;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipInputStream;
 
 import javax.management.ObjectName;
 import javax.swing.event.EventListenerList;
 
 public abstract class BaseClusterNode implements IClusterNode {
+
+  private static final int                          ZIP_BUFFER_SIZE      = 2048;
+  protected static final String                     MESSAGE_ON_EXCEPTION = "Problem occured while taking the dump, Please check the logs.";
+
   protected PropertyChangeSupport                   propertyChangeSupport;
   protected Map<PolledAttribute, EventListenerList> polledAttributeListenerMap;
   protected Map<ObjectName, Set<String>>            polledAttributeSourceMap;
@@ -184,6 +193,28 @@ public abstract class BaseClusterNode implements IClusterNode {
         }
       }
       propertyChangeSupport = null;
+    }
+  }
+
+  protected String decompress(ZipInputStream zIn) {
+    StringBuilder sb = new StringBuilder();
+    try {
+      byte[] buffer = new byte[ZIP_BUFFER_SIZE];
+      while (zIn.getNextEntry() != null) {
+        int len = 0;
+        while ((len = zIn.read(buffer)) > 0) {
+          if (len < ZIP_BUFFER_SIZE) {
+            sb.append(Conversion.bytes2String(buffer).substring(0, len));
+          } else {
+            sb.append(Conversion.bytes2String(buffer));
+          }
+        }
+      }
+      return sb.toString();
+    } catch (IOException e) {
+      return "could not get the dump " + e;
+    } finally {
+      IOUtils.closeQuietly(zIn);
     }
   }
 }

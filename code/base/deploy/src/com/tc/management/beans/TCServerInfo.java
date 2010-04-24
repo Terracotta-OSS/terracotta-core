@@ -300,10 +300,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return lastCpuUpdate = cpuSRA.retrieveStatisticData();
   }
 
-  public String takeThreadDump(long requestMillis) {
-    String text = ThreadDumpUtil.getThreadDump();
-    logger.info(text);
-    return text;
+  public byte[] takeCompressedThreadDump(long requestMillis) {
+    return ThreadDumpUtil.getCompressedThreadDump();
   }
 
   public String getEnvironment() {

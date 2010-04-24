@@ -82,7 +82,7 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   StatisticData[] getCpuUsage();
 
-  String takeThreadDump(long requestMillis);
+  byte[] takeCompressedThreadDump(long requestMillis);
 
   String getEnvironment();
 

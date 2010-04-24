@@ -16,8 +16,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
   }
 
   public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
-    MonitorInfo[] emptyMI = new MonitorInfo[0];
-    StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder(100 * 1024);
     sb.append(new Date().toString());
     sb.append('\n');
     sb.append("Full thread dump ");
@@ -28,16 +27,14 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
     sb.append(System.getProperty("java.vm.info"));
     sb.append("):\n\n");
     try {
-      Thread[] threads = ThreadDumpUtil.getAllThreads();
+      final ThreadInfo[] threadsInfo = threadMXBean.dumpAllThreads(threadMXBean.isObjectMonitorUsageSupported(),
+                                                                   threadMXBean.isSynchronizerUsageSupported());
 
-      for (Thread thread : threads) {
-        long id = thread.getId();
-        ThreadInfo threadInfo = threadMXBean.getThreadInfo(new long[] { id }, true, true)[0];
-        sb.append(threadHeader(thread, threadInfo));
-        sb.append('\n');
+      for (final ThreadInfo threadInfo : threadsInfo) {
+        threadHeader(sb, threadInfo);
 
-        StackTraceElement[] stea = thread.getStackTrace();
-        MonitorInfo[] monitorInfos = threadInfo != null ? threadInfo.getLockedMonitors() : emptyMI;
+        final StackTraceElement[] stea = threadInfo.getStackTrace();
+        final MonitorInfo[] monitorInfos = threadInfo.getLockedMonitors();
         for (int j = 0; j < stea.length; j++) {
           sb.append("\tat ");
           sb.append(stea[j].toString());
@@ -54,7 +51,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
             }
           }
         }
-        sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(thread)));
+        sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(threadInfo.getThreadId())));
         if (!threadMXBean.isObjectMonitorUsageSupported() && threadMXBean.isSynchronizerUsageSupported()) {
           sb.append(threadLockedSynchronizers(threadInfo));
         }
@@ -67,50 +64,45 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
     return sb.toString();
   }
 
-  private static String threadHeader(Thread thread, ThreadInfo threadInfo) {
-    String threadName = thread.getName();
-    StringBuffer sb = new StringBuffer();
+  private static void threadHeader(final StringBuilder sb, final ThreadInfo threadInfo) {
+    final String threadName = threadInfo.getThreadName();
     sb.append("\"");
     sb.append(threadName);
     sb.append("\" ");
     sb.append("Id=");
-    sb.append(thread.getId());
+    sb.append(threadInfo.getThreadId());
 
-    if (threadInfo != null) {
-      try {
-        Thread.State threadState = threadInfo.getThreadState();
-        String lockName = threadInfo.getLockName();
-        String lockOwnerName = threadInfo.getLockOwnerName();
-        Long lockOwnerId = threadInfo.getLockOwnerId();
-        Boolean isSuspended = threadInfo.isSuspended();
-        Boolean isInNative = threadInfo.isInNative();
+    try {
+      final Thread.State threadState = threadInfo.getThreadState();
+      final String lockName = threadInfo.getLockName();
+      final String lockOwnerName = threadInfo.getLockOwnerName();
+      final Long lockOwnerId = threadInfo.getLockOwnerId();
+      final Boolean isSuspended = threadInfo.isSuspended();
+      final Boolean isInNative = threadInfo.isInNative();
 
-        sb.append(" ");
-        sb.append(threadState);
-        if (lockName != null) {
-          sb.append(" on ");
-          sb.append(lockName);
-        }
-        if (lockOwnerName != null) {
-          sb.append(" owned by \"");
-          sb.append(lockOwnerName);
-          sb.append("\" Id=");
-          sb.append(lockOwnerId);
-        }
-        if (isSuspended) {
-          sb.append(" (suspended)");
-        }
-        if (isInNative) {
-          sb.append(" (in native)");
-        }
-      } catch (Exception e) {
-        return threadInfo.toString();
+      sb.append(" ");
+      sb.append(threadState);
+      if (lockName != null) {
+        sb.append(" on ");
+        sb.append(lockName);
       }
-    } else {
-      sb.append(" (unrecognized thread id; thread state is unavailable)");
+      if (lockOwnerName != null) {
+        sb.append(" owned by \"");
+        sb.append(lockOwnerName);
+        sb.append("\" Id=");
+        sb.append(lockOwnerId);
+      }
+      if (isSuspended) {
+        sb.append(" (suspended)");
+      }
+      if (isInNative) {
+        sb.append(" (in native)");
+      }
+    } catch (final Exception e) {
+      sb.append(" ( Got exception : ").append(e.getMessage()).append(" :");
     }
 
-    return sb.toString();
+    sb.append('\n');
   }
 
   private static String threadLockedSynchronizers(ThreadInfo threadInfo) {

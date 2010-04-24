@@ -13,9 +13,9 @@ public class ThreadDumpUtilJdk15 extends ThreadDumpUtil {
     return getThreadDump(new NullLockInfoByThreadIDImpl(), new NullThreadIDMapImpl());
   }
 
-  public static String getThreadDump(LockInfoByThreadID lockInfo, ThreadIDMap threadIDMap) {
+  public static String getThreadDump(final LockInfoByThreadID lockInfo, final ThreadIDMap threadIDMap) {
 
-    StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder();
     sb.append(new Date().toString());
     sb.append('\n');
     sb.append("Full thread dump ");
@@ -26,34 +26,33 @@ public class ThreadDumpUtilJdk15 extends ThreadDumpUtil {
     sb.append(System.getProperty("java.vm.info"));
     sb.append("):\n\n");
     try {
-      Thread[] threads = ThreadDumpUtil.getAllThreads();
+      final Thread[] threads = ThreadDumpUtil.getAllThreads();
 
-      for (Thread thread : threads) {
-          sb.append(threadHeader(thread));
-          sb.append('\n');
-          StackTraceElement[] stea = thread.getStackTrace();
-          for (int j = 0; j < stea.length; j++) {
-            sb.append("\tat ");
-            sb.append(stea[j].toString());
-            sb.append('\n');
-          }
-          sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(thread)));
+      for (final Thread thread : threads) {
+        threadHeader(sb, thread);
+        sb.append('\n');
+        final StackTraceElement[] stea = thread.getStackTrace();
+        for (final StackTraceElement element : stea) {
+          sb.append("\tat ");
+          sb.append(element.toString());
           sb.append('\n');
         }
-    } catch (Exception e) {
+        sb.append(ThreadDumpUtil.getLockList(lockInfo, threadIDMap.getTCThreadID(thread.getId())));
+        sb.append('\n');
+      }
+    } catch (final Exception e) {
       e.printStackTrace();
       sb.append(e.toString());
     }
     return sb.toString();
   }
-  
-  private static String threadHeader(Thread thread) {
-    long threadId = thread.getId();
-    // CDV-1262: If Thread.getId() has been overridden, this may return null 
+
+  private static void threadHeader(final StringBuilder sb, final Thread thread) {
+    final long threadId = thread.getId();
+    // CDV-1262: If Thread.getId() has been overridden, this may return null
     // or even data from a different thread.
-    ThreadInfo threadInfo = threadMXBean.getThreadInfo(thread.getId(), Integer.MAX_VALUE);
-    String threadName = thread.getName();
-    StringBuffer sb = new StringBuffer();
+    final ThreadInfo threadInfo = threadMXBean.getThreadInfo(thread.getId(), Integer.MAX_VALUE);
+    final String threadName = thread.getName();
     sb.append("\"");
     sb.append(threadName);
     sb.append("\" ");
@@ -63,12 +62,12 @@ public class ThreadDumpUtilJdk15 extends ThreadDumpUtil {
     try {
 
       if (threadInfo != null) {
-        Thread.State threadState = threadInfo.getThreadState();
-        String lockName = threadInfo.getLockName();
-        String lockOwnerName = threadInfo.getLockOwnerName();
-        Long lockOwnerId = threadInfo.getLockOwnerId();
-        Boolean isSuspended = threadInfo.isSuspended();
-        Boolean isInNative = threadInfo.isInNative();
+        final Thread.State threadState = threadInfo.getThreadState();
+        final String lockName = threadInfo.getLockName();
+        final String lockOwnerName = threadInfo.getLockOwnerName();
+        final Long lockOwnerId = threadInfo.getLockOwnerId();
+        final Boolean isSuspended = threadInfo.isSuspended();
+        final Boolean isInNative = threadInfo.isInNative();
 
         sb.append(" ");
         sb.append(threadState);
@@ -92,11 +91,9 @@ public class ThreadDumpUtilJdk15 extends ThreadDumpUtil {
         sb.append(" (unrecognized thread id; thread state is unavailable)");
       }
 
-      return sb.toString();
-    } catch (Exception e) {
-      return threadInfo.toString();
+    } catch (final Exception e) {
+      sb.append(threadInfo.toString());
     }
   }
-
 
 }

@@ -37,6 +37,7 @@ import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.ConnectException;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipInputStream;
 
 import javax.management.AttributeChangeNotification;
 import javax.management.InstanceNotFoundException;
@@ -1296,7 +1298,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized String takeThreadDump(long moment) {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    return theServerInfoBean != null ? theServerInfoBean.takeThreadDump(moment) : "not connected";
+    if (theServerInfoBean == null) return "not connected";
+    byte[] zippedByte = theServerInfoBean.takeCompressedThreadDump(moment);
+    if (zippedByte == null) { return MESSAGE_ON_EXCEPTION; }
+    ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
+    return decompress(zIn);
   }
 
   public synchronized void addServerLogListener(ServerLogListener listener) {
