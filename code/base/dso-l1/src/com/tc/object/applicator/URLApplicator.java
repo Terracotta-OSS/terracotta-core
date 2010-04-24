@@ -4,10 +4,10 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -24,12 +24,12 @@ import java.net.URL;
  */
 public class URLApplicator extends BaseApplicator {
 
-  public URLApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public URLApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object pojo)
+      throws IOException, ClassNotFoundException {
     TCURL url = (TCURL) pojo;
     DNACursor cursor = dna.getCursor();
 
@@ -89,7 +89,7 @@ public class URLApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     URL url = (URL) pojo;
     writer.addLogicalAction(SerializationUtil.URL_SET,
                             new Object[] { url.getProtocol(), url.getHost(), new Integer(url.getPort()),
@@ -101,7 +101,7 @@ public class URLApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

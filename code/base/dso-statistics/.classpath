@@ -20,5 +20,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/license-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/management-api"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tim-api"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcstats-xmlbeans-generated.jar"/>
 </classpath>

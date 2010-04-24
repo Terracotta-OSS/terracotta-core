@@ -4,9 +4,8 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
 import com.tc.object.TCClass;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAEncoding;
 
@@ -31,8 +30,8 @@ public class CalendarApplicator extends PhysicalApplicator {
   }
 
   @Override
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     super.hydrate(objectManager, tcObject, dna, po);
 
     Class c = po.getClass();

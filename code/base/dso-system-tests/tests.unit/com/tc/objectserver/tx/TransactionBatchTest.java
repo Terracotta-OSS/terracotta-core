@@ -5,7 +5,6 @@
 package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
-import com.tc.config.TcProperty;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -55,6 +54,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.TestCase;
@@ -667,7 +667,7 @@ public class TransactionBatchTest extends TestCase {
       throw new AssertionError();
     }
 
-    public void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
+    public void overwriteTcPropertiesFromConfig(Map<String, String> props) {
       throw new AssertionError();
     }
 

@@ -4,13 +4,12 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
 import com.tc.object.TCClass;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
 
@@ -39,8 +38,9 @@ public class FileApplicator extends PhysicalApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  @Override
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     boolean remoteFileSeparatorObtained = false;
     char sepChar = 0;
@@ -68,7 +68,8 @@ public class FileApplicator extends PhysicalApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  @Override
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     super.dehydrate(objectManager, tcObject, writer, pojo);
 
     String fieldName = FILE_SEPARATOR_FIELD;
@@ -86,10 +87,12 @@ public class FileApplicator extends PhysicalApplicator {
       this.sep = sep;
     }
 
+    @Override
     public void defaultReadObject() {
       //
     }
 
+    @Override
     public char readChar() throws IOException {
       if (charRead) { throw new EOFException(); }
       charRead = true;

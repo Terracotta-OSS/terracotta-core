@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.store.h2;
 
@@ -13,6 +14,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticDataCSVParser;
 import com.tc.statistics.database.StatisticsDatabase;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
 import com.tc.statistics.database.impl.H2StatisticsDatabase;
@@ -63,29 +65,30 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class H2StatisticsStoreImpl implements StatisticsStore {
-  public final static int DATABASE_STRUCTURE_VERSION = 6;
-  
-  public final static String H2_URL_SUFFIX = "statistics-store";
+  public final static int            DATABASE_STRUCTURE_VERSION              = 6;
 
-  private final static TCLogger LOGGER = TCLogging.getLogger(H2StatisticsStoreImpl.class);
+  public final static String         H2_URL_SUFFIX                           = "statistics-store";
 
-  private final static long DATABASE_STRUCTURE_CHECKSUM = 2820643252L;
+  private final static TCLogger      LOGGER                                  = TCLogging
+                                                                                 .getLogger(H2StatisticsStoreImpl.class);
 
-  private final static String SQL_NEXT_STATISTICLOGID = "SELECT nextval('seq_statisticlog')";
-  private final static String SQL_GET_AVAILABLE_SESSIONIDS = "SELECT sessionid FROM statisticlog GROUP BY sessionid ORDER BY sessionid ASC";
-  private final static String SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS = "SELECT agentdifferentiator FROM statisticlog WHERE sessionid = ? GROUP BY agentdifferentiator ORDER BY agentdifferentiator ASC";
-  private final static String SQL_INSERT_STATISTICSDATA = "INSERT INTO statisticlog (id, sessionid, agentip, agentdifferentiator, moment, statname, statelement, datanumber, datatext, datatimestamp, datadecimal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  private final static String SQL_CLEAR_SESSION_STATISTICS = "DELETE FROM statisticlog WHERE sessionid = ?";
-  private final static String SQL_CLEAR_ALL_STATISTICS = "DELETE FROM statisticlog";
+  private final static long          DATABASE_STRUCTURE_CHECKSUM             = 2820643252L;
+
+  private final static String        SQL_NEXT_STATISTICLOGID                 = "SELECT nextval('seq_statisticlog')";
+  private final static String        SQL_GET_AVAILABLE_SESSIONIDS            = "SELECT sessionid FROM statisticlog GROUP BY sessionid ORDER BY sessionid ASC";
+  private final static String        SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS = "SELECT agentdifferentiator FROM statisticlog WHERE sessionid = ? GROUP BY agentdifferentiator ORDER BY agentdifferentiator ASC";
+  private final static String        SQL_INSERT_STATISTICSDATA               = "INSERT INTO statisticlog (id, sessionid, agentip, agentdifferentiator, moment, statname, statelement, datanumber, datatext, datatimestamp, datadecimal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  private final static String        SQL_CLEAR_SESSION_STATISTICS            = "DELETE FROM statisticlog WHERE sessionid = ?";
+  private final static String        SQL_CLEAR_ALL_STATISTICS                = "DELETE FROM statisticlog";
 
   protected final StatisticsDatabase database;
 
-  private final File lockFile;
-  private final Set listeners = new CopyOnWriteArraySet();
+  private final File                 lockFile;
+  private final Set                  listeners                               = new CopyOnWriteArraySet();
 
-  private volatile boolean open = false;
+  private volatile boolean           open                                    = false;
 
-  private static final Random rand = new Random();
+  private static final Random        rand                                    = new Random();
 
   public H2StatisticsStoreImpl(final File dbDir) {
     final String suffix;
@@ -97,13 +100,14 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       suffix = H2_URL_SUFFIX;
     }
     this.database = new H2StatisticsDatabase(dbDir, suffix);
-    this.lockFile = new File(dbDir, suffix+"-tc.lck");
+    this.lockFile = new File(dbDir, suffix + "-tc.lck");
   }
 
   public void open() throws StatisticsStoreException {
     synchronized (this) {
       try {
         FileLockGuard.guard(lockFile, new FileLockGuard.Guarded() {
+          @Override
           public void execute() throws FileLockGuard.InnerException {
             try {
               try {
@@ -120,7 +124,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
           }
         });
       } catch (FileLockGuard.InnerException e) {
-        throw (StatisticsStoreException)e.getInnerException();
+        throw (StatisticsStoreException) e.getInnerException();
       } catch (IOException e) {
         throw new StatisticsStoreException("Unexpected error while obtaining or releasing lock file.", e);
       }
@@ -163,40 +167,36 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       database.ensureExistingConnection();
 
       JdbcHelper.calculateChecksum(new CaptureChecksum() {
+        @Override
         public void execute() throws Exception {
           database.getConnection().setAutoCommit(false);
 
           try {
-            /*====================================================================
-              == !!! IMPORTANT !!!
-              ==
-              == Any significant change to the structure of the database
-              == should increase the version number of the database, which is
-              == stored in the DATABASE_STRUCTURE_VERSION field of this class.
-              == You will need to update the DATABASE_STRUCTURE_CHECKSUM field
-              == also since it serves as a safeguard to ensure that the version is
-              == always adapted. The correct checksum value will be given to you
-              == when a checksum mismatch is detected.
-              ====================================================================*/
+            /*
+             * ==================================================================== == !!! IMPORTANT !!! == == Any
+             * significant change to the structure of the database == should increase the version number of the
+             * database, which is == stored in the DATABASE_STRUCTURE_VERSION field of this class. == You will need to
+             * update the DATABASE_STRUCTURE_CHECKSUM field == also since it serves as a safeguard to ensure that the
+             * version is == always adapted. The correct checksum value will be given to you == when a checksum mismatch
+             * is detected. ====================================================================
+             */
 
             database.createVersionTable();
 
-            JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE SEQUENCE IF NOT EXISTS seq_statisticlog");
+            JdbcHelper.executeUpdate(database.getConnection(), "CREATE SEQUENCE IF NOT EXISTS seq_statisticlog");
 
-            JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE TABLE IF NOT EXISTS statisticlog (" +
-                "id BIGINT NOT NULL PRIMARY KEY, " +
-                "sessionid VARCHAR(255) NOT NULL, " +
-                "agentip VARCHAR(39) NOT NULL, " +
-                "agentdifferentiator VARCHAR(255) NULL, " +
-                "moment TIMESTAMP NOT NULL, " +
-                "statname VARCHAR(255) NOT NULL," +
-                "statelement VARCHAR(255) NULL, " +
-                "datanumber BIGINT NULL, " +
-                "datatext LONGVARCHAR NULL, " +
-                "datatimestamp TIMESTAMP NULL, " +
-                "datadecimal DECIMAL(8, 4) NULL)");
+            JdbcHelper.executeUpdate(database.getConnection(), "CREATE TABLE IF NOT EXISTS statisticlog ("
+                                                               + "id BIGINT NOT NULL PRIMARY KEY, "
+                                                               + "sessionid VARCHAR(255) NOT NULL, "
+                                                               + "agentip VARCHAR(39) NOT NULL, "
+                                                               + "agentdifferentiator VARCHAR(255) NULL, "
+                                                               + "moment TIMESTAMP NOT NULL, "
+                                                               + "statname VARCHAR(255) NOT NULL,"
+                                                               + "statelement VARCHAR(255) NULL, "
+                                                               + "datanumber BIGINT NULL, "
+                                                               + "datatext LONGVARCHAR NULL, "
+                                                               + "datatimestamp TIMESTAMP NULL, "
+                                                               + "datadecimal DECIMAL(8, 4) NULL)");
 
             recreateCachedStatisticsStructureTable();
 
@@ -227,54 +227,48 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
   }
 
   private void recreateCachedStatisticsStructureTable() throws SQLException {
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP TABLE IF EXISTS cachedstatlogstructure");
+
     JdbcHelper.executeUpdate(database.getConnection(),
-      "DROP TABLE IF EXISTS cachedstatlogstructure");
-    
-    JdbcHelper.executeUpdate(database.getConnection(),
-      "CREATE TABLE IF NOT EXISTS cachedstatlogstructure AS " +
-        "SELECT sessionid, agentip, agentdifferentiator, statname, statelement " +
-          "FROM statisticlog " +
-          "GROUP BY sessionid, agentip, agentdifferentiator, statname, statelement");
+                             "CREATE TABLE IF NOT EXISTS cachedstatlogstructure AS "
+                                 + "SELECT sessionid, agentip, agentdifferentiator, statname, statelement "
+                                 + "FROM statisticlog "
+                                 + "GROUP BY sessionid, agentip, agentdifferentiator, statname, statelement");
   }
 
   private void createStatisticLogIndexes() throws SQLException {
     JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_sessionid ON statisticlog(sessionid)");
+                             "CREATE INDEX IF NOT EXISTS idx_statisticlog_sessionid ON statisticlog(sessionid)");
 
     JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_agentip ON statisticlog(agentip)");
+                             "CREATE INDEX IF NOT EXISTS idx_statisticlog_agentip ON statisticlog(agentip)");
+
+    JdbcHelper
+        .executeUpdate(database.getConnection(),
+                       "CREATE INDEX IF NOT EXISTS idx_statisticlog_agentdifferentiator ON statisticlog(agentdifferentiator)");
 
     JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_agentdifferentiator ON statisticlog(agentdifferentiator)");
+                             "CREATE INDEX IF NOT EXISTS idx_statisticlog_moment ON statisticlog(moment)");
 
     JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_moment ON statisticlog(moment)");
+                             "CREATE INDEX IF NOT EXISTS idx_statisticlog_statname ON statisticlog(statname)");
 
     JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_statname ON statisticlog(statname)");
-
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "CREATE INDEX IF NOT EXISTS idx_statisticlog_statelement ON statisticlog(statelement)");
+                             "CREATE INDEX IF NOT EXISTS idx_statisticlog_statelement ON statisticlog(statelement)");
   }
 
   private void dropStatisticLogIndexes() throws SQLException {
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_sessionid");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_sessionid");
 
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_agentip");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_agentip");
 
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_agentdifferentiator");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_agentdifferentiator");
 
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_moment");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_moment");
 
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_statname");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_statname");
 
-    JdbcHelper.executeUpdate(database.getConnection(),
-              "DROP INDEX IF EXISTS idx_statisticlog_statelement");
+    JdbcHelper.executeUpdate(database.getConnection(), "DROP INDEX IF EXISTS idx_statisticlog_statelement");
   }
 
   private void setupPreparedStatements() throws StatisticsStoreException {
@@ -302,21 +296,20 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
       // obtain a new ID for the statistic data
       id = JdbcHelper.fetchNextSequenceValue(database.getPreparedStatement(SQL_NEXT_STATISTICLOGID));
-      
+
       // insert the statistic data with the provided values
-      row_count = JdbcHelper.executeUpdate(database.getConnection(), SQL_INSERT_STATISTICSDATA, new PreparedStatementHandler() {
-        public void setParameters(PreparedStatement statement) throws SQLException {
-          setStatisticDataParameters(statement, id, data);
-        }
-      });
+      row_count = JdbcHelper.executeUpdate(database.getConnection(), SQL_INSERT_STATISTICSDATA,
+                                           new PreparedStatementHandler() {
+                                             public void setParameters(PreparedStatement statement) throws SQLException {
+                                               setStatisticDataParameters(statement, id, data);
+                                             }
+                                           });
     } catch (Exception e) {
       throw new StatisticsStoreStatisticStorageErrorException(data, e);
     }
 
     // ensure that a row was inserted
-    if (row_count != 1) {
-      throw new StatisticsStoreStatisticStorageErrorException(id, data, null);
-    }
+    if (row_count != 1) { throw new StatisticsStoreStatisticStorageErrorException(id, data, null); }
   }
 
   private void setStatisticDataParameters(PreparedStatement statement, long id, StatisticData data) throws SQLException {
@@ -340,9 +333,9 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       statement.setNull(8, Types.BIGINT);
       statement.setNull(9, Types.VARCHAR);
       statement.setNull(10, Types.TIMESTAMP);
-      statement.setBigDecimal(11, (BigDecimal)data.getData());
+      statement.setBigDecimal(11, (BigDecimal) data.getData());
     } else if (data.getData() instanceof Number) {
-      statement.setLong(8, ((Number)data.getData()).longValue());
+      statement.setLong(8, ((Number) data.getData()).longValue());
       statement.setNull(9, Types.VARCHAR);
       statement.setNull(10, Types.TIMESTAMP);
       statement.setNull(11, Types.NUMERIC);
@@ -354,12 +347,13 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     } else if (data.getData() instanceof Date) {
       statement.setNull(8, Types.BIGINT);
       statement.setNull(9, Types.VARCHAR);
-      statement.setTimestamp(10, new Timestamp(((Date)data.getData()).getTime()));
+      statement.setTimestamp(10, new Timestamp(((Date) data.getData()).getTime()));
       statement.setNull(11, Types.NUMERIC);
     }
   }
 
-  public void importCsvStatistics(final Reader reader, final StatisticsStoreImportListener listener) throws StatisticsStoreException {
+  public void importCsvStatistics(final Reader reader, final StatisticsStoreImportListener listener)
+      throws StatisticsStoreException {
     Assert.assertNotNull("reader", reader);
 
     try {
@@ -381,7 +375,6 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     try {
       ps_insert = database.getConnection().prepareStatement(SQL_INSERT_STATISTICSDATA);
 
-
       try {
         dropStatisticLogIndexes();
 
@@ -394,18 +387,19 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                 continue;
               }
 
-              final StatisticData data = StatisticData.newInstanceFromCsvLine(StatisticData.CURRENT_CSV_VERSION, line);
+              final StatisticData data = StatisticDataCSVParser
+                  .newInstanceFromCsvLine(StatisticDataCSVParser.CURRENT_CSV_VERSION, line);
               if (data != null) {
                 ps_insert.clearParameters();
 
-                final long id = JdbcHelper.fetchNextSequenceValue(database.getPreparedStatement(SQL_NEXT_STATISTICLOGID));
+                final long id = JdbcHelper.fetchNextSequenceValue(database
+                    .getPreparedStatement(SQL_NEXT_STATISTICLOGID));
                 setStatisticDataParameters(ps_insert, id, data);
                 ps_insert.addBatch();
                 count++;
 
                 // notify about every 1000 inserts
-                if (listener != null &&
-                    0 == count % 1000) {
+                if (listener != null && 0 == count % 1000) {
                   listener.imported(count);
                 }
 
@@ -425,8 +419,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
 
             // excute the remaining batch inserts
             ps_insert.executeBatch();
-            if (listener != null &&
-                count % 1000 != 0) {
+            if (listener != null && count % 1000 != 0) {
               listener.imported(count);
             }
           } catch (IOException e) {
@@ -472,7 +465,8 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     }
   }
 
-  public void retrieveStatistics(final StatisticsRetrievalCriteria criteria, final StatisticDataUser user) throws StatisticsStoreException {
+  public void retrieveStatistics(final StatisticsRetrievalCriteria criteria, final StatisticDataUser user)
+      throws StatisticsStoreException {
     Assert.assertNotNull("criteria", criteria);
 
     try {
@@ -496,30 +490,30 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       }
       if (criteria.getNames().size() > 0) {
         StringBuffer where_names = new StringBuffer();
-        for (int i = 0 ; i < criteria.getNames().size(); i++) {
+        for (int i = 0; i < criteria.getNames().size(); i++) {
           if (where_names.length() > 0) {
             where_names.append(", ");
           }
           where_names.append("?");
         }
-        sql_where.add("statname IN ("+where_names+")");
+        sql_where.add("statname IN (" + where_names + ")");
       }
       if (criteria.getElements().size() > 0) {
         StringBuffer where_elements = new StringBuffer();
-        for (int i = 0 ; i < criteria.getElements().size(); i++) {
+        for (int i = 0; i < criteria.getElements().size(); i++) {
           if (where_elements.length() > 0) {
             where_elements.append(", ");
           }
           where_elements.append("?");
         }
-        sql_where.add("statelement IN ("+where_elements+")");
+        sql_where.add("statelement IN (" + where_elements + ")");
       }
 
       StringBuffer sql = new StringBuffer("SELECT * FROM statisticlog");
       if (sql_where.size() > 0) {
         sql.append(" WHERE ");
         boolean first = true;
-        for (Iterator it = sql_where.iterator(); it.hasNext(); ) {
+        for (Iterator it = sql_where.iterator(); it.hasNext();) {
           if (first) {
             first = false;
           } else {
@@ -549,13 +543,13 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
             statement.setTimestamp(param++, new Timestamp(criteria.getStop().getTime()));
           }
           if (criteria.getNames().size() > 0) {
-            for (Iterator it = criteria.getNames().iterator(); it.hasNext(); ) {
-              statement.setString(param++, (String)it.next());
+            for (Iterator it = criteria.getNames().iterator(); it.hasNext();) {
+              statement.setString(param++, (String) it.next());
             }
           }
           if (criteria.getElements().size() > 0) {
-            for (Iterator it = criteria.getElements().iterator(); it.hasNext(); ) {
-              statement.setString(param++, (String)it.next());
+            for (Iterator it = criteria.getElements().iterator(); it.hasNext();) {
+              statement.setString(param++, (String) it.next());
             }
           }
         }
@@ -565,9 +559,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
             StatisticData data = database.getStatisticsData(resultSet.getString("sessionid"), resultSet);
 
             // consume the data
-            if (!user.useStatisticData(data)) {
-              return;
-            }
+            if (!user.useStatisticData(data)) { return; }
           }
         }
       });
@@ -578,7 +570,9 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     }
   }
 
-  public void aggregateStatisticsData(final Writer writer, final TextualDataFormat format, final String sessionId, final String agentDifferentiator, final String[] names, final String[] elements, final Long interval) throws StatisticsStoreException {
+  public void aggregateStatisticsData(final Writer writer, final TextualDataFormat format, final String sessionId,
+                                      final String agentDifferentiator, final String[] names, final String[] elements,
+                                      final Long interval) throws StatisticsStoreException {
     Assert.assertNotNull("format", format);
     Assert.assertNotNull("sessionId", sessionId);
     Assert.assertNotNull("agentDifferentiator", agentDifferentiator);
@@ -591,25 +585,21 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
         writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<data>\n");
       }
 
-      final boolean[] has_data = new boolean[] {false};
+      final boolean[] has_data = new boolean[] { false };
 
-      final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria()
-        .sessionId(sessionId)
-        .agentDifferentiator(agentDifferentiator)
-        .setNames(names)
-        .setElements(elements);
+      final StatisticsRetrievalCriteria criteria = new StatisticsRetrievalCriteria().sessionId(sessionId)
+          .agentDifferentiator(agentDifferentiator).setNames(names).setElements(elements);
       if (interval != null) {
         long now = System.currentTimeMillis();
         criteria.start(new Date(now - interval.longValue()));
       }
       retrieveStatistics(criteria, new StatisticDataUser() {
-        private Date lastMoment = null;
-        private int valueCounter = 0;
+        private Date lastMoment   = null;
+        private int  valueCounter = 0;
 
         public boolean useStatisticData(final StatisticData data) {
           try {
-            if (null == lastMoment ||
-                !lastMoment.equals(data.getMoment())) {
+            if (null == lastMoment || !lastMoment.equals(data.getMoment())) {
               valueCounter = 0;
 
               if (null == lastMoment) {
@@ -643,7 +633,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                 if (data_value instanceof String) {
                   writer.write(StringEscapeUtils.escapeXml(data_value.toString()));
                 } else if (data_value instanceof Date) {
-                  writer.write(String.valueOf(((Date)data_value).getTime()));
+                  writer.write(String.valueOf(((Date) data_value).getTime()));
                 } else {
                   writer.write(String.valueOf(data_value));
                 }
@@ -653,11 +643,11 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
                 if (data_value instanceof String) {
                   writer.write(StatisticData.escapeForCsv(data_value.toString()));
                 } else if (data_value instanceof Date) {
-                  writer.write(String.valueOf(((Date)data_value).getTime()));
+                  writer.write(String.valueOf(((Date) data_value).getTime()));
                 } else {
                   writer.write(String.valueOf(data_value));
                 }
-               }
+              }
             }
           } catch (IOException e) {
             LOGGER.warn("Unexpected error while writing aggregated statistic data.", e);
@@ -678,7 +668,9 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     }
   }
 
-  public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase, final StatisticsRetrievalCriteria criteria, final boolean zipContents) throws StatisticsStoreException {
+  public void retrieveStatisticsAsCsvStream(final OutputStream os, final String filenameBase,
+                                            final StatisticsRetrievalCriteria criteria, final boolean zipContents)
+      throws StatisticsStoreException {
     final OutputStream out;
 
     try {
@@ -697,12 +689,12 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
         try {
           if (zipstream != null) {
             final ZipEntry zipentry = new ZipEntry(filenameBase + ".csv");
-            zipentry.setComment(StatisticData.CURRENT_CSV_VERSION);
+            zipentry.setComment(StatisticDataCSVParser.CURRENT_CSV_VERSION);
             zipstream.putNextEntry(zipentry);
           }
 
           try {
-            out.write(StatisticData.CURRENT_CSV_HEADER.getBytes("UTF-8"));
+            out.write(StatisticDataCSVParser.CURRENT_CSV_HEADER.getBytes("UTF-8"));
             retrieveStatistics(criteria, new StatisticDataUser() {
               public boolean useStatisticData(final StatisticData data) {
                 try {
@@ -748,7 +740,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
       throw new StatisticsStoreSessionIdsRetrievalErrorException(e);
     }
 
-    return (String[])results.toArray(new String[results.size()]);
+    return (String[]) results.toArray(new String[results.size()]);
   }
 
   public String[] getAvailableAgentDifferentiators(final String sessionId) throws StatisticsStoreException {
@@ -756,22 +748,23 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
     try {
       database.ensureExistingConnection();
 
-      JdbcHelper.executeQuery(database.getConnection(), SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS, new PreparedStatementHandler() {
-        public void setParameters(PreparedStatement statement) throws SQLException {
-          statement.setString(1, sessionId);
-        }
-      }, new ResultSetHandler() {
-        public void useResultSet(ResultSet resultSet) throws SQLException {
-          while (resultSet.next()) {
-            results.add(resultSet.getString("agentdifferentiator"));
-          }
-        }
-      });
+      JdbcHelper.executeQuery(database.getConnection(), SQL_GET_AVAILABLE_AGENT_DIFFERENTIATORS,
+                              new PreparedStatementHandler() {
+                                public void setParameters(PreparedStatement statement) throws SQLException {
+                                  statement.setString(1, sessionId);
+                                }
+                              }, new ResultSetHandler() {
+                                public void useResultSet(ResultSet resultSet) throws SQLException {
+                                  while (resultSet.next()) {
+                                    results.add(resultSet.getString("agentdifferentiator"));
+                                  }
+                                }
+                              });
     } catch (Exception e) {
       throw new StatisticsStoreException("getAvailableNodes", e);
     }
 
-    return (String[])results.toArray(new String[results.size()]);
+    return (String[]) results.toArray(new String[results.size()]);
   }
 
   public void clearStatistics(final String sessionId) throws StatisticsStoreException {
@@ -794,7 +787,7 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
   public void clearAllStatistics() throws StatisticsStoreException {
     try {
       database.ensureExistingConnection();
-      
+
       JdbcHelper.executeUpdate(database.getConnection(), SQL_CLEAR_ALL_STATISTICS);
     } catch (Exception e) {
       throw new StatisticsStoreClearAllStatisticsErrorException(e);
@@ -804,49 +797,45 @@ public class H2StatisticsStoreImpl implements StatisticsStore {
   }
 
   public void addListener(final StatisticsStoreListener listener) {
-    if (null == listener) {
-      return;
-    }
+    if (null == listener) { return; }
 
     listeners.add(listener);
   }
 
   public void removeListener(final StatisticsStoreListener listener) {
-    if (null == listener) {
-      return;
-    }
+    if (null == listener) { return; }
 
     listeners.remove(listener);
   }
 
   private void fireOpened() {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsStoreListener)it.next()).opened();
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsStoreListener) it.next()).opened();
       }
     }
   }
 
   private void fireClosed() {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsStoreListener)it.next()).closed();
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsStoreListener) it.next()).closed();
       }
     }
   }
 
   private void fireSessionCleared(final String sessionId) {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsStoreListener)it.next()).sessionCleared(sessionId);
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsStoreListener) it.next()).sessionCleared(sessionId);
       }
     }
   }
 
   private void fireAllSessionsCleared() {
     if (listeners.size() > 0) {
-      for (Iterator it = listeners.iterator(); it.hasNext(); ) {
-        ((StatisticsStoreListener)it.next()).allSessionsCleared();
+      for (Iterator it = listeners.iterator(); it.hasNext();) {
+        ((StatisticsStoreListener) it.next()).allSessionsCleared();
       }
     }
   }

@@ -4,7 +4,7 @@
  */
 package com.tctest.jdk15;
 
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -121,7 +121,7 @@ public class ReentrantReadWriteLockFlushFaultTest extends TransparentTestBase {
     }
 
     private static void clearRefs(Object[] locks) {
-      TCObject tco = ManagerUtil.getObject(locks);
+      TCObjectExternal tco = ManagerUtil.getObject(locks);
       tco.clearAccessed();
       tco.clearReferences(SIZE);
     }

@@ -7,10 +7,9 @@ package com.tc.object.applicator;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.dna.api.DNA;
@@ -72,8 +71,8 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  public LinkedBlockingQueueApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public LinkedBlockingQueueApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -105,8 +104,8 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     LinkedBlockingQueue queue = (LinkedBlockingQueue) po;
     DNACursor cursor = dna.getCursor();
     boolean hasPhysicalAction = false;
@@ -230,12 +229,13 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     dehydrateFields(objectManager, tcObject, writer, pojo);
     dehydrateMembers(objectManager, tcObject, writer, pojo);
   }
 
-  private void dehydrateFields(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  private void dehydrateFields(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer,
+                               Object pojo) {
     try {
       Object takeLock = TAKE_LOCK_FIELD.get(pojo);
       takeLock = getDehydratableObject(takeLock, objectManager);
@@ -253,7 +253,8 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  private void dehydrateMembers(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  private void dehydrateMembers(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer,
+                                Object pojo) {
     Queue queue = (Queue) pojo;
 
     for (Iterator i = queue.iterator(); i.hasNext();) {
@@ -271,7 +272,7 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     }
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

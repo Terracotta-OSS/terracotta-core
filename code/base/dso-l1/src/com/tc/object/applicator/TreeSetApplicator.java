@@ -1,16 +1,17 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.util.Assert;
@@ -44,12 +45,13 @@ public class TreeSetApplicator extends HashSetApplicator {
     }
   }
 
-  public TreeSetApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public TreeSetApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
-      ClassNotFoundException {
+  @Override
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object pojo)
+      throws IOException, ClassNotFoundException {
     TreeSet set = (TreeSet) pojo;
     DNACursor cursor = dna.getCursor();
 
@@ -77,7 +79,8 @@ public class TreeSetApplicator extends HashSetApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  @Override
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     TreeSet set = (TreeSet) pojo;
     Comparator cmp = set.comparator();
     if (cmp != null) {
@@ -90,6 +93,7 @@ public class TreeSetApplicator extends HashSetApplicator {
     super.dehydrate(objectManager, tcObject, writer, pojo);
   }
 
+  @Override
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
     TreeSet set = (TreeSet) pojo;
     filterPortableObject(set.comparator(), addTo);

@@ -9,6 +9,7 @@ import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.statistics.StatisticData;
+import com.tc.statistics.StatisticDataCSVParser;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.gatherer.StatisticsGathererListener;
 import com.tc.statistics.gatherer.exceptions.StatisticsGathererException;
@@ -42,9 +43,10 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
 
   private L2TVSConfigurationSetupManager configSetupManager;
   private StatisticsGathererSubSystem    system;
-  
-  private boolean connected = false;
 
+  private boolean                        connected          = false;
+
+  @Override
   public void init() {
     configSetupManager = (L2TVSConfigurationSetupManager) getServletContext()
         .getAttribute(ConfigServlet.CONFIG_ATTRIBUTE);
@@ -58,10 +60,8 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
   }
 
   private synchronized void startup() throws StatisticsGathererException {
-    if (connected) {
-      return;
-    }
-    
+    if (connected) { return; }
+
     final NewCommonL2Config commonConfig = configSetupManager.commonl2Config();
     final NewL2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
     String hostname = dsoConfig.bind().getString();
@@ -72,7 +72,8 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     system.getStatisticsGatherer().connect(hostname, port);
   }
 
-  public synchronized void methodShutdown(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
+  public synchronized void methodShutdown(final HttpServletRequest request, final HttpServletResponse response)
+      throws Throwable {
     if (!connected) {
       system.getStatisticsGatherer().disconnect();
     }
@@ -138,10 +139,10 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     StatisticData[] data = system.getStatisticsGatherer().captureStatistic(name);
     response.setContentType("text/plain");
     StringBuilder out = new StringBuilder();
-    out.append(StatisticData.CURRENT_CSV_HEADER);
+    out.append(StatisticDataCSVParser.CURRENT_CSV_HEADER);
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        out.append(data[i].toCsv());
+      for (StatisticData element : data) {
+        out.append(element.toCsv());
       }
     }
     print(response, out.toString());
@@ -151,7 +152,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
       throws Throwable {
     String[] names = request.getParameterValues("names");
     if (null == names) throw new IllegalArgumentException("names");
-    
+
     response.setContentType("text/xml");
     StringBuilder out = new StringBuilder();
 
@@ -159,13 +160,13 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     out.append("<statistics>\n");
 
     for (String name : names) {
-      out.append("  <statistic type=\""+name+"\">\n");
+      out.append("  <statistic type=\"" + name + "\">\n");
       StatisticData[] data = system.getStatisticsGatherer().retrieveStatisticData(name);
       if (data != null) {
-        for (int i = 0; i < data.length; i++) {
+        for (StatisticData element : data) {
           out.append("    <data>\n");
           out.append("      ");
-          out.append(data[i].toXml());
+          out.append(element.toXml());
           out.append("\n");
           out.append("    </data>\n");
         }
@@ -177,10 +178,11 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
 
     print(response, out.toString());
   }
-  
+
   private final static long                              REALTIME_DATA_INTERVAL   = 1000L;
   private final static long                              REALTIME_DATA_BUFFERSIZE = 60;
-  private final static long                              REALTIME_DATA_MAXAGE     = REALTIME_DATA_BUFFERSIZE * REALTIME_DATA_INTERVAL;
+  private final static long                              REALTIME_DATA_MAXAGE     = REALTIME_DATA_BUFFERSIZE
+                                                                                    * REALTIME_DATA_INTERVAL;
 
   private final static Pattern                           XML_TAG_NAME_PATTERN     = Pattern.compile("\\W");
 
@@ -191,36 +193,36 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
   private String xmlTagName(final String name) {
     return XML_TAG_NAME_PATTERN.matcher(name).replaceAll("_");
   }
-  
-  public void methodRealtime(final HttpServletRequest request, final HttpServletResponse response)
-      throws Throwable {
+
+  public void methodRealtime(final HttpServletRequest request, final HttpServletResponse response) throws Throwable {
     final String[] names = request.getParameterValues("names");
     if (null == names) throw new IllegalArgumentException("names");
-    
+
     startup();
-    
+
     updateRealtimeData(names);
 
     response.setContentType("text/xml");
-    
+
     StringBuilder out = new StringBuilder();
-    
+
     realtimeDataLock.readLock().lock();
     try {
       Map<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>> nodes = new LinkedHashMap<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>>();
 
       for (Map.Entry<String, LinkedList<StatisticData[]>> entry : realtimeData.entrySet()) {
         final String statName = entry.getKey();
-        
+
         for (StatisticData[] statDataSnapshot : entry.getValue()) {
           for (StatisticData statData : statDataSnapshot) {
-            
-            Map<String, Map<String, Map<Date, List<StatisticData>>>> stats = nodes.get(statData.getAgentDifferentiator());
+
+            Map<String, Map<String, Map<Date, List<StatisticData>>>> stats = nodes.get(statData
+                .getAgentDifferentiator());
             if (null == stats) {
               stats = new HashMap<String, Map<String, Map<Date, List<StatisticData>>>>();
               nodes.put(statData.getAgentDifferentiator(), stats);
             }
-            
+
             Map<String, Map<Date, List<StatisticData>>> elements = stats.get(statName);
             if (null == elements) {
               elements = new HashMap<String, Map<Date, List<StatisticData>>>();
@@ -231,23 +233,23 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
             if (null == element) {
               element = statName;
             }
-            Map<Date, List<StatisticData>> timeseries = elements.get(element);        
+            Map<Date, List<StatisticData>> timeseries = elements.get(element);
             if (null == timeseries) {
               timeseries = new LinkedHashMap<Date, List<StatisticData>>();
               elements.put(element, timeseries);
             }
-            
+
             List<StatisticData> dataElements = timeseries.get(statData.getMoment());
             if (null == dataElements) {
               dataElements = new ArrayList<StatisticData>();
               timeseries.put(statData.getMoment(), dataElements);
             }
-            
+
             dataElements.add(statData);
           }
         }
       }
-      
+
       out.append("<?xml version=\"1.0\"?>\n");
       out.append("<nodes>\n");
       for (Map.Entry<String, Map<String, Map<String, Map<Date, List<StatisticData>>>>> nodeEntry : nodes.entrySet()) {
@@ -255,7 +257,8 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
         out.append("  <");
         out.append(nodeName);
         out.append(">\n");
-        for (Map.Entry<String, Map<String, Map<Date, List<StatisticData>>>> statsEntry : nodeEntry.getValue().entrySet()) {
+        for (Map.Entry<String, Map<String, Map<Date, List<StatisticData>>>> statsEntry : nodeEntry.getValue()
+            .entrySet()) {
           final String statName = xmlTagName(statsEntry.getKey());
           out.append("    <");
           out.append(statName);
@@ -265,18 +268,18 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
             out.append("      <");
             out.append(elementName);
             out.append(">\n");
-            
+
             Set<Map.Entry<Date, List<StatisticData>>> timeseriesSet = elementEntry.getValue().entrySet();
-            if (elementEntry.getValue().size() > 1 &&
-                elementEntry.getValue().size() < REALTIME_DATA_BUFFERSIZE) {
-              outputRealtimeDataElement(out, System.currentTimeMillis()-REALTIME_DATA_MAXAGE, timeseriesSet.iterator().next().getValue());
+            if (elementEntry.getValue().size() > 1 && elementEntry.getValue().size() < REALTIME_DATA_BUFFERSIZE) {
+              outputRealtimeDataElement(out, System.currentTimeMillis() - REALTIME_DATA_MAXAGE, timeseriesSet
+                  .iterator().next().getValue());
             }
             for (Map.Entry<Date, List<StatisticData>> timeseriesEntry : timeseriesSet) {
               long time = timeseriesEntry.getKey().getTime();
               List<StatisticData> data = timeseriesEntry.getValue();
               outputRealtimeDataElement(out, time, data);
             }
-            
+
             out.append("      </");
             out.append(elementName);
             out.append(">\n");
@@ -293,7 +296,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
     } finally {
       realtimeDataLock.readLock().unlock();
     }
-    
+
     print(response, out.toString());
   }
 
@@ -319,9 +322,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
   private void updateRealtimeData(final String[] statNames) throws StatisticsGathererException {
     realtimeDataLock.readLock().lock();
     try {
-      if (System.currentTimeMillis() <  lastRealtimeData + REALTIME_DATA_INTERVAL) {
-        return;
-      }
+      if (System.currentTimeMillis() < lastRealtimeData + REALTIME_DATA_INTERVAL) { return; }
     } finally {
       realtimeDataLock.readLock().unlock();
     }
@@ -336,7 +337,7 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
           aggregatedData = new LinkedList<StatisticData[]>();
           realtimeData.put(statName, aggregatedData);
         }
-        
+
         // remove outdated aggregated data
         Iterator<StatisticData[]> it = aggregatedData.iterator();
         while (it.hasNext()) {
@@ -344,9 +345,8 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
             it.remove();
           }
         }
-        
-        if (data != null &&
-            data.length > 0) {
+
+        if (data != null && data.length > 0) {
           aggregatedData.addLast(data);
           if (aggregatedData.size() > REALTIME_DATA_BUFFERSIZE) {
             aggregatedData.removeFirst();

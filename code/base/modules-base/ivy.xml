@@ -2,6 +2,5 @@
 <ivy-module version="2.0">
   <info organisation="org.terracotta" module="modules-base"/>
   <dependencies defaultconf="default">
-    <dependency name="knopflerfish-tc" rev="2.0.1" org="knopflerfish-tc"/>
   </dependencies>
 </ivy-module>

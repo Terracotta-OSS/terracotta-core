@@ -4,7 +4,7 @@
  */
 package java.util.concurrent;
 
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.Clearable;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
@@ -188,7 +188,7 @@ public abstract class ConcurrentHashMapTC extends ConcurrentHashMap implements T
       for (Iterator i = __tc_delegateEntrySet().iterator(); i.hasNext() && toClear > cleared;) {
         Map.Entry e = (Map.Entry) i.next();
         if (((TCMapEntry) e).__tc_isValueFaultedIn()) {
-          TCObject tcObject = ManagerUtil.lookupExistingOrNull(e.getValue());
+          TCObjectExternal tcObject = ManagerUtil.lookupExistingOrNull(e.getValue());
           if (tcObject != null && !tcObject.recentlyAccessed()) {
             ((TCMapEntry) e).__tc_rawSetValue(tcObject.getObjectID());
             cleared++;

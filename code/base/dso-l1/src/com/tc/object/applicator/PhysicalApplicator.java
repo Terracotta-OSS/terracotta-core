@@ -4,10 +4,10 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.TCClass;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
@@ -29,7 +29,7 @@ public class PhysicalApplicator extends BaseApplicator {
   private final TCClass clazz;
 
   public PhysicalApplicator(TCClass clazz, DNAEncoding encoding) {
-    super(encoding);
+    super(encoding, TCLogging.getLogger(PhysicalApplicator.class));
     this.clazz = clazz;
   }
 
@@ -51,18 +51,18 @@ public class PhysicalApplicator extends BaseApplicator {
 
       addTo.addNamedReference(clazz.getName(), fName, map.get(qualifiedParentFieldName));
     }
-    for (int i = 0; i < fields.length; i++) {
-      Object o = map.get(fields[i].getName());
+    for (TCField field : fields) {
+      Object o = map.get(field.getName());
 
       if (o != null && isPortableReference(o.getClass())) {
-        addTo.addNamedReference(fields[i].getName(), o);
+        addTo.addNamedReference(field.getName(), o);
       }
     }
     return addTo;
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     String fieldName;
     Object fieldValue;
@@ -76,7 +76,7 @@ public class PhysicalApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     if (!objectManager.isPortableInstance(pojo)) { return; }
 
     TCClass tcc = clazz;
@@ -107,8 +107,8 @@ public class PhysicalApplicator extends BaseApplicator {
         }
       }
 
-      for (int i = 0; i < fields.length; i++) {
-        String fieldName = fields[i].getName();
+      for (TCField field : fields) {
+        String fieldName = field.getName();
         Object fieldValue = fieldValues.get(fieldName);
 
         if (fieldValue == null) {
@@ -130,14 +130,14 @@ public class PhysicalApplicator extends BaseApplicator {
           // such an attempt was made.
           value = ObjectID.NULL_ID;
         }
-        writer.addPhysicalAction(fieldName, value, fields[i].canBeReference());
+        writer.addPhysicalAction(fieldName, value, field.canBeReference());
       }
       tcc = tcc.getSuperclass();
     }
 
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

@@ -4,8 +4,7 @@
  */
 package com.tc.properties;
 
-import com.tc.config.TcProperty;
-
+import java.util.Map;
 import java.util.Properties;
 
 class TCSubProperties implements TCProperties {
@@ -30,6 +29,7 @@ class TCSubProperties implements TCProperties {
     return properties.getProperty(getActualKey(key));
   }
 
+  @Override
   public String toString() {
     return "TCSubProperties(" + category + ")";
   }
@@ -70,7 +70,7 @@ class TCSubProperties implements TCProperties {
     return properties.getBoolean(getActualKey(key), defaultValue);
   }
 
-  public void overwriteTcPropertiesFromConfig(TcProperty[] tcProperties) {
+  public void overwriteTcPropertiesFromConfig(Map<String, String> props) {
     throw new UnsupportedOperationException();
   }
 

@@ -164,26 +164,27 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
    * they were with 1.4. This adaption is needed for both PORTABLE and ADAPTABLE classes as we can have instance where
    * Logical subclass of ADAPTABLE class calls clone() to make a copy of itself. The resolveLock needs to be held for
    * the duration of the clone() call if the reference is to a shared object
-   * 
+   *
    * <pre>
    * Object refToBeCloned;
    * Object rv;
-   * TCObject tco = ManagerUtil.lookupExistingOrNull(refToBeCloned)
+   * TCObjectExternal tco = ManagerUtil.lookupExistingOrNull(refToBeCloned)
    * if (tco != null) {
    *   synchronized (tco.getResolveLock()) {
    *     tco.resolveAllReferences();
-   *     rv = Util.fixTCObjectReferenceOfClonedObject(refToBeCloned, refToBeCloned.clone());
+   *     rv = CloneUtil.fixTCObjectReferenceOfClonedObject(refToBeCloned, refToBeCloned.clone());
    *   }
    * } else {
    *   rv = refToBeCloned.clone();
    * }
    * </pre>
-   * 
+   *
    * @return
    * @see AbstractMap and HashMap
    */
   private boolean handleCloneCall(int opcode, String classname, String theMethodName, String desc) {
-    if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc) && (classname.startsWith("[") || classname.equals("java/lang/Object"))) {
+    if ("clone".equals(theMethodName) && "()Ljava/lang/Object;".equals(desc)
+        && (classname.startsWith("[") || classname.equals("java/lang/Object"))) {
       Type objectType = Type.getObjectType("java/lang/Object");
 
       int refToBeCloned = newLocal(objectType);
@@ -200,24 +201,24 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
       super.visitTryCatchBlock(l2, l3, l2, null);
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "lookupExistingOrNull",
-                            "(Ljava/lang/Object;)Lcom/tc/object/TCObject;");
+                            "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;");
       super.visitVarInsn(ASTORE, ref2);
       super.visitVarInsn(ALOAD, ref2);
       Label l8 = new Label();
       super.visitJumpInsn(IFNULL, l8);
       super.visitVarInsn(ALOAD, ref2);
-      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;");
+      super
+          .visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock", "()Ljava/lang/Object;");
       super.visitInsn(DUP);
       super.visitVarInsn(ASTORE, ref3);
       super.visitInsn(MONITORENTER);
       super.visitLabel(l0);
       super.visitVarInsn(ALOAD, ref2);
-      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveAllReferences", "()V");
+      super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "resolveAllReferences", "()V");
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitVarInsn(ALOAD, refToBeCloned);
       super.visitMethodInsn(opcode, classname, theMethodName, desc);
-      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/hook/impl/Util",
-                            "fixTCObjectReferenceOfClonedObject",
+      super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/CloneUtil", "fixTCObjectReferenceOfClonedObject",
                             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
       super.visitVarInsn(ASTORE, ref1);
       super.visitVarInsn(ALOAD, ref3);
@@ -317,15 +318,15 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
 
   private void callMonitorEnterWithContextInfo() {
     super.visitLdcInsn(new Integer(autoLockType));
-    //super.visitLdcInsn(autoLockContextInfo);
+    // super.visitLdcInsn(autoLockContextInfo);
     visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter", "(Ljava/lang/Object;I)V");
   }
 
   private void callMonitorExit() {
     super.visitLdcInsn(new Integer(autoLockType));
-    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");    
+    visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorExit", "(Ljava/lang/Object;I)V");
   }
-  
+
   private void visitInsnForReadLock(int opCode) {
     switch (opCode) {
       case MONITORENTER:
@@ -402,12 +403,12 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           // ..., array, index
           super.visitInsn(DUP2); // ..., array, index, array, index
           super.visitInsn(POP); // ..., array, index, array
-          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObject;"); // ..., array, index,
+          callArrayManagerMethod("getObject", "(Ljava/lang/Object;)Lcom/tc/object/TCObjectExternal;"); // ..., array, index,
           // tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
           super.visitJumpInsn(IFNULL, notManaged); // ..., array, index, tcobj
           super.visitInsn(DUP); // ..., array, index, tcobj, tcobj
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "getResolveLock", "()Ljava/lang/Object;"); // ...,
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "getResolveLock", "()Ljava/lang/Object;"); // ...,
           // array,
           // index,
           // tcobj,
@@ -420,7 +421,7 @@ public class TransparencyCodeAdapter extends AdviceAdapter implements Opcodes {
           super.visitLabel(lockedStart); // ..., array, index, tcobj
           super.visitInsn(DUP2); // ..., array, index, tcobj, index, tcobj
           super.visitInsn(SWAP); // ..., array, index, tcobj, tcobj, index
-          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveArrayReference", "(I)V"); // ...,
+          super.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObjectExternal", "resolveArrayReference", "(I)V"); // ...,
           // array,
           // index,
           // tcobj

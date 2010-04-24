@@ -25,6 +25,7 @@ public class ReflectClassBuilderAdapter extends ClassAdapter implements ClassAda
     return new ReflectClassBuilderAdapter(visitor);
   }
 
+  @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
     return new HideTCInstrumentationAdapter(mv);
@@ -36,16 +37,17 @@ public class ReflectClassBuilderAdapter extends ClassAdapter implements ClassAda
       super(mv);
     }
 
+    @Override
     public void visitMethodInsn(int opcode, String owner, String name, String desc) {
       super.visitMethodInsn(opcode, owner, name, desc);
 
       if ((opcode == INVOKEVIRTUAL) && "java/lang/Class".equals(owner) && "getInterfaces".equals(name)) {
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ByteCodeUtil", "purgeTCInterfaces",
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/TCInterfaces", "purgeTCInterfaces",
                               "([Ljava/lang/Class;)[Ljava/lang/Class;");
       }
 
       if ((opcode == INVOKEVIRTUAL) && "java/lang/Class".equals(owner) && "getDeclaredMethods".equals(name)) {
-        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ByteCodeUtil", "purgeTCMethods",
+        super.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/TCInterfaces", "purgeTCMethods",
                               "([Ljava/lang/reflect/Method;)[Ljava/lang/reflect/Method;");
       }
 

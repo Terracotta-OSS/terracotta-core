@@ -13,6 +13,7 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
+import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
@@ -168,6 +169,11 @@ public class ModulesLoader {
                                                       + " the Terracotta bytecode instrumentation");
       osgiRuntime.registerService(StandardDSOClientConfigHelper.class.getName(), configHelper, serviceProps);
     }
+
+    osgiRuntime.registerService(TCLogger.class.getName(), TCLogging.getLogger(TerracottaConfiguratorModule.class),
+                                new Hashtable());
+
+    osgiRuntime.registerService(TCProperties.class.getName(), TCPropertiesImpl.getProperties(), new Hashtable());
 
     final List moduleList = new ArrayList();
     moduleList.addAll(getAdditionalModules());

@@ -6,6 +6,7 @@ package com.tc.config.schema.setup;
 
 import org.apache.xmlbeans.XmlObject;
 
+import com.tc.config.TcProperty;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
@@ -28,6 +29,9 @@ import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.TcProperties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.
  */
@@ -38,7 +42,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   private final L2ConfigForL1        l2ConfigForL1;
   private final NewL1DSOConfig       dsoL1Config;
   private final ConfigTCProperties   configTCProperties;
-  private boolean                    loadedFromTrustedSource;
+  private final boolean              loadedFromTrustedSource;
 
   public StandardL1TVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
                                                 DefaultValueProvider defaultValueProvider,
@@ -94,9 +98,15 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   public NewL1DSOConfig dsoL1Config() {
     return this.dsoL1Config;
   }
-  
+
   private void overwriteTcPropertiesFromConfig() {
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
+
+    Map<String, String> propMap = new HashMap<String, String>();
+    for (TcProperty tcp : this.configTCProperties.getTcPropertiesArray()) {
+      propMap.put(tcp.getPropertyName(), tcp.getPropertyValue());
+    }
+
+    tcProps.overwriteTcPropertiesFromConfig(propMap);
   }
 }

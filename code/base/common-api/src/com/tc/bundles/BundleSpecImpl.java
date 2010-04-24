@@ -45,14 +45,17 @@ final class BundleSpecImpl extends BundleSpec {
     }
   }
 
+  @Override
   public String getSymbolicName() {
     return this.symbolicName;
   }
 
+  @Override
   public String getName() {
     return extractInfo("name");
   }
 
+  @Override
   public String getGroupId() {
     return extractInfo("group-id");
   }
@@ -75,19 +78,23 @@ final class BundleSpecImpl extends BundleSpec {
     return result.toString().replaceFirst("\\.$", "");
   }
 
+  @Override
   public String getVersion() {
     return isVersionSpecified() ? getVersionSpec() : "(any-version)";
   }
 
+  @Override
   public boolean isOptional() {
     final String resolution = (String) attributes.get(PROP_KEY_RESOLUTION);
     return (resolution != null) && resolution.equals("optional");
   }
 
+  @Override
   public boolean isVersionSpecified() {
     return getVersionSpec().length() > 0;
   }
 
+  @Override
   public boolean isVersionSpecifiedAbsolute() {
     return getVersionSpec().matches(IConstants.OSGI_VERSION_PATTERN.pattern());
   }
@@ -97,9 +104,10 @@ final class BundleSpecImpl extends BundleSpec {
     return (verspec == null) ? "" : verspec;
   }
 
+  @Override
   public boolean isCompatible(final String symName, final String version) {
     // symbolic-names must match
-    if (!BundleSpec.isMatchingSymbolicName(symbolicName, symName)) return false;
+    if (!BundleSpecUtil.isMatchingSymbolicName(symbolicName, symName)) return false;
 
     // if symbolic-names are matching, then check for version compatibility -
     // and if no specific bundle-version required/specified so it must be compatible with the version
@@ -111,7 +119,7 @@ final class BundleSpecImpl extends BundleSpec {
     return range.withinRange(target);
 
     // check for equality - we don't support version ranges yet
-//    return getVersion().equals(version);
+    // return getVersion().equals(version);
   }
-  
+
 }

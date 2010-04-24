@@ -4,10 +4,10 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.TCMap;
 import com.tc.object.dna.api.DNA;
@@ -27,8 +27,8 @@ import java.util.Map.Entry;
  */
 public class HashMapApplicator extends BaseApplicator {
 
-  public HashMapApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public HashMapApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -47,8 +47,8 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal TCObjectExternal, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
 
     while (cursor.next(encoding)) {
@@ -59,7 +59,7 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  protected void apply(ClientObjectManager objectManager, Object po, int method, Object[] params)
+  protected void apply(ApplicatorObjectManager objectManager, Object po, int method, Object[] params)
       throws ClassNotFoundException {
     Map m = (Map) po;
     switch (method) {
@@ -99,12 +99,12 @@ public class HashMapApplicator extends BaseApplicator {
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForValue(ClientObjectManager objectManager, Object v) throws ClassNotFoundException {
+  protected Object getObjectForValue(ApplicatorObjectManager objectManager, Object v) throws ClassNotFoundException {
     return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForKey(ClientObjectManager objectManager, Object k) throws ClassNotFoundException {
+  protected Object getObjectForKey(ApplicatorObjectManager objectManager, Object k) throws ClassNotFoundException {
     return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
   }
 
@@ -117,7 +117,8 @@ public class HashMapApplicator extends BaseApplicator {
     return params.length == 3 ? params[1] : params[0];
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal TCObjectExternal, DNAWriter writer,
+                        Object pojo) {
 
     Map map = (Map) pojo;
     for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
@@ -143,7 +144,8 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) throws IOException,
+      ClassNotFoundException {
     if (false) { throw new IOException(); } // silence compiler warning
     if (false) { throw new ClassNotFoundException(); } // silence compiler warning
     throw new UnsupportedOperationException();

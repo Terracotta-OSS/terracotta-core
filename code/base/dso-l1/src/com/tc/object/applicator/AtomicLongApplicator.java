@@ -4,8 +4,8 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
-import com.tc.object.TCObject;
+import com.tc.logging.TCLogger;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.AtomicLongAdapter;
 import com.tc.object.dna.api.DNA;
@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * NOTE: This applicator is only used for IBM JDK
  */
 public class AtomicLongApplicator extends BaseApplicator {
-  public AtomicLongApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public AtomicLongApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
     Vm.assertIsIbm();
   }
 
@@ -33,8 +33,8 @@ public class AtomicLongApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
 
     Assert.assertTrue(po.getClass().getName(), po instanceof AtomicLong);
@@ -47,14 +47,14 @@ public class AtomicLongApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     AtomicLong ai = (AtomicLong) pojo;
     long value = ai.get();
 
     writer.addPhysicalAction(AtomicLongAdapter.VALUE_FIELD_NAME, Long.valueOf(value));
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

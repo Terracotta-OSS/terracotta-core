@@ -1,11 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
@@ -35,13 +36,13 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  public LinkedHashMapApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public LinkedHashMapApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
   @Override
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object pojo) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object pojo)
+      throws IOException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     while (cursor.next(encoding)) {
       Object action = cursor.getAction();
@@ -67,7 +68,8 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
   }
 
   @Override
-  protected void apply(ClientObjectManager objectManager, Object pojo, int method, Object[] params) throws ClassNotFoundException {
+  protected void apply(ApplicatorObjectManager objectManager, Object pojo, int method, Object[] params)
+      throws ClassNotFoundException {
     switch (method) {
       case SerializationUtil.GET:
         ((LinkedHashMap) pojo).get(params[0]);
@@ -86,13 +88,14 @@ public class LinkedHashMapApplicator extends PartialHashMapApplicator {
   }
 
   @Override
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     writer.addPhysicalAction(ACCESS_ORDER_FIELDNAME, Boolean.valueOf(getAccessOrder(pojo)));
     super.dehydrate(objectManager, tcObject, writer, pojo);
   }
 
   @Override
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) throws IOException,
+      ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     if (!cursor.next(encoding)) { throw new AssertionError(
                                                            "Cursor is empty in LinkedHashMapApplicator.getNewInstance()"); }

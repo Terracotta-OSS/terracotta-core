@@ -4,10 +4,10 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -42,8 +42,8 @@ public class TreeMapApplicator extends BaseApplicator {
     }
   }
 
-  public TreeMapApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public TreeMapApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -67,8 +67,8 @@ public class TreeMapApplicator extends BaseApplicator {
     }
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     Map m = (Map) po;
     DNACursor cursor = dna.getCursor();
 
@@ -114,7 +114,7 @@ public class TreeMapApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     TreeMap map = (TreeMap) pojo;
 
     Comparator cmp = map.comparator();
@@ -147,7 +147,8 @@ public class TreeMapApplicator extends BaseApplicator {
 
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) throws IOException,
+      ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     if (!cursor.next(encoding)) { throw new AssertionError("Cursor is empty in TreeMap.getNewInstance()"); }
     PhysicalAction physicalAction = cursor.getPhysicalAction();

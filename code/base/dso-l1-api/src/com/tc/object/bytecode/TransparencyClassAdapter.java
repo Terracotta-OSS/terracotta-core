@@ -33,11 +33,14 @@ import java.util.Set;
 /**
  * @author steve
  */
-public class TransparencyClassAdapter extends ClassAdapterBase {
+public class TransparencyClassAdapter extends ClassAdapterBase implements TransparencyClassAdapterHack {
   private static final TCLogger            logger             = TCLogging.getLogger(TransparencyClassAdapter.class);
-  private static final boolean             useFastFinalFields = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.INSTRUMENTATION_FINAL_FIELD_FAST_READ);
-  
-  private final Set                        doNotInstrument = new HashSet();
+  private static final boolean             useFastFinalFields = TCPropertiesImpl
+                                                                  .getProperties()
+                                                                  .getBoolean(
+                                                                              TCPropertiesConsts.INSTRUMENTATION_FINAL_FIELD_FAST_READ);
+
+  private final Set                        doNotInstrument    = new HashSet();
   private final PhysicalClassAdapterLogger physicalClassLogger;
   private final InstrumentationLogger      instrumentationLogger;
 
@@ -112,8 +115,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   }
 
   @Override
-  protected FieldVisitor basicVisitField(final int access, final String name, final String desc, final String signature,
-                                         final Object value) {
+  protected FieldVisitor basicVisitField(final int access, final String name, final String desc,
+                                         final String signature, final Object value) {
     try {
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
           || (spec.isClassAdaptable() && isRoot(access, name))) {
@@ -129,7 +132,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return cv.visitField(access, name, desc, signature, value);
   }
 
-  private void generateGettersSetters(final int fieldAccess, final String name, final String desc, final boolean isStatic) {
+  private void generateGettersSetters(final int fieldAccess, final String name, final String desc,
+                                      final boolean isStatic) {
     boolean isTransient = getTransparencyClassSpec().isTransient(fieldAccess, spec.getClassInfo(), name);
     // Plain getter and setters are generated for transient fields as other instrumented classes might call them.
     boolean createPlainAccessors = isTransient && !isStatic;
@@ -164,8 +168,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return ByteCodeUtil.isPrimitive(t);
   }
 
-  private MethodVisitor ignoreMethodIfNeeded(final int access, final String name, final String desc, final String signature,
-                                             final String[] exceptions, final MemberInfo memberInfo) {
+  private MethodVisitor ignoreMethodIfNeeded(final int access, final String name, final String desc,
+                                             final String signature, final String[] exceptions,
+                                             final MemberInfo memberInfo) {
     if (name.startsWith(ByteCodeUtil.TC_METHOD_PREFIX) || doNotInstrument.contains(name + desc)
         || getTransparencyClassSpec().doNotInstrument(name)) {
       if (!getTransparencyClassSpec().hasCustomMethodAdapter(memberInfo)) {
@@ -282,8 +287,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void createLockMethod(int access, final String name, final String desc, final String signature, final String[] exceptions,
-                                final LockDefinition[] locks, final boolean skipLocalJVMLock) {
+  private void createLockMethod(int access, final String name, final String desc, final String signature,
+                                final String[] exceptions, final LockDefinition[] locks, final boolean skipLocalJVMLock) {
     try {
       physicalClassLogger.logCreateLockMethodBegin(access, name, desc, signature, exceptions, locks);
       doNotInstrument.add(name + desc);
@@ -309,7 +314,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return ByteCodeUtil.SYNC_METHOD_RENAME_PREFIX + name;
   }
 
-  private void createSyncMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
+  private void createSyncMethod(final int access, final String name, final String desc, final String signature,
+                                final String[] exceptions) {
     Type returnType = Type.getReturnType(desc);
     // access should have the synchronized modifier
     MethodVisitor mv = cv.visitMethod(access, getTCSyncMethodName(name), desc, signature, exceptions);
@@ -327,8 +333,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitEnd();
   }
 
-  private void recreateMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions,
-                              final LockDefinition[] locks, final boolean skipLocalJVMLock) {
+  private void recreateMethod(final int access, final String name, final String desc, final String signature,
+                              final String[] exceptions, final LockDefinition[] locks, final boolean skipLocalJVMLock) {
     Type returnType = Type.getReturnType(desc);
     physicalClassLogger.logCreateLockMethodVoidBegin(access, name, desc, signature, exceptions, locks);
     MethodVisitor c = cv.visitMethod(access & (~Modifier.SYNCHRONIZED), name, desc, signature, exceptions);
@@ -358,8 +364,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     c.visitEnd();
   }
 
-  private int addBooleanLocalVariablesIfMoreThanOneLock(final int access, final String desc, final LockDefinition[] locks,
-                                                        final MethodVisitor c, final int[] localBooleanVariables) {
+  private int addBooleanLocalVariablesIfMoreThanOneLock(final int access, final String desc,
+                                                        final LockDefinition[] locks, final MethodVisitor c,
+                                                        final int[] localBooleanVariables) {
     int nextLocalVariable = ByteCodeUtil.getFirstLocalVariableOffset(access, desc);
     if (locks.length > 1) {
       for (int i = 0; i < locks.length; i++) {
@@ -371,7 +378,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return nextLocalVariable;
   }
 
-  private void startDsoLockTryBlock(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
+  private void startDsoLockTryBlock(final int access, final String name, final String desc,
+                                    final LockDefinition[] locks, final MethodVisitor c,
                                     final int[] localBooleanVariables, final Label startTryBlockLabel) {
     if (locks.length > 1) {
       c.visitLabel(startTryBlockLabel);
@@ -441,7 +449,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     System.exit(1);
   }
 
-  private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc, final MethodVisitor c) {
+  private void callRenamedMethod(final int callingMethodModifier, final String name, final String desc,
+                                 final MethodVisitor c) {
     // Call the renamed original method.
     ByteCodeUtil.prepareStackForMethodCall(callingMethodModifier, desc, c);
     if (Modifier.isStatic(callingMethodModifier)) {
@@ -454,9 +463,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
   /**
    * Creates a tc lock method for the given method that returns a value (doesn't return void).
    */
-  private void addDsoLockMethodInsnReturn(final int access, final String name, final String desc, final String signature,
-                                          final String[] exceptions, final LockDefinition[] locks, final Type returnType,
-                                          final MethodVisitor c) {
+  private void addDsoLockMethodInsnReturn(final int access, final String name, final String desc,
+                                          final String signature, final String[] exceptions,
+                                          final LockDefinition[] locks, final Type returnType, final MethodVisitor c) {
     int[] localBooleanVariables = new int[locks.length];
     int localVariableOffset = addBooleanLocalVariablesIfMoreThanOneLock(access, desc, locks, c, localBooleanVariables);
 
@@ -492,7 +501,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
   }
 
-  private void callTCBeginWithLocks(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
+  private void callTCBeginWithLocks(final int access, final String name, final String desc,
+                                    final LockDefinition[] locks, final MethodVisitor c,
                                     final int[] localBooleanVariables) {
     physicalClassLogger.logCallTCBeginWithLocksStart(access, name, desc, locks, c);
     for (int i = 0; i < locks.length; i++) {
@@ -516,8 +526,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void callTCCommit(final int access, final String name, final String desc, final LockDefinition[] locks, final MethodVisitor c,
-                            final int[] localBooleanVariables) {
+  private void callTCCommit(final int access, final String name, final String desc, final LockDefinition[] locks,
+                            final MethodVisitor c, final int[] localBooleanVariables) {
     physicalClassLogger.logCallTCCommitBegin(access, name, desc, locks, c);
     Label returnLabel = new Label();
     for (int i = 0; i < locks.length; i++) {
@@ -562,14 +572,16 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
     mv.visitIntInsn(BIPUSH, lockLevel);
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "beginVolatile",
+                       "(Lcom/tc/object/TCObjectExternal;Ljava/lang/String;I)V");
   }
 
   private void callVolatileCommit(final String fieldName, final int lockLevel, final MethodVisitor mv) {
     getManaged(mv);
     mv.visitLdcInsn(fieldName);
     mv.visitIntInsn(BIPUSH, lockLevel);
-    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitVolatile", "(Lcom/tc/object/TCObject;Ljava/lang/String;I)V");
+    mv.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "commitVolatile",
+                       "(Lcom/tc/object/TCObjectExternal;Ljava/lang/String;I)V");
   }
 
   private void createPlainGetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
@@ -622,8 +634,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     gv.visitEnd();
   }
 
-  private void checkReturnObjectType(final String fieldName, final String rootName, final String targetType, final int loadVariableNumber,
-                                     final Label matchLabel, final MethodVisitor mv) {
+  private void checkReturnObjectType(final String fieldName, final String rootName, final String targetType,
+                                     final int loadVariableNumber, final Label matchLabel, final MethodVisitor mv) {
     mv.visitVarInsn(ALOAD, loadVariableNumber);
     mv.visitTypeInsn(INSTANCEOF, targetType);
     mv.visitJumpInsn(IFNE, matchLabel);
@@ -745,7 +757,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return getTransparencyClassSpec().isVolatile(access, spec.getClassInfo(), fieldName);
   }
 
-  private void createInstrumentedGetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
+  private void createInstrumentedGetter(final int methodAccess, final int fieldAccess, final String name,
+                                        final String desc) {
     Assert.eval(!getTransparencyClassSpec().isLogical());
     MethodVisitor gv = this.visitMethod(methodAccess, ByteCodeUtil.fieldGetterMethod(name), "()" + desc, null, null);
     if (useFastFinalFields && Modifier.isFinal(fieldAccess)) {
@@ -754,30 +767,31 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       createInstrumentedNonFinalGetter(gv, fieldAccess, name, desc);
     }
   }
-  
-  private void createInstrumentedNonFinalGetter(final MethodVisitor gv, final int fieldAccess, final String name, final String desc) {
+
+  private void createInstrumentedNonFinalGetter(final MethodVisitor gv, final int fieldAccess, final String name,
+                                                final String desc) {
     try {
       final int THIS_SLOT = 0;
       final int RESOLVE_LOCK_SLOT = 2;
       final int TC_OBJECT_SLOT = 3;
-      
+
       boolean isVolatile = isVolatile(fieldAccess, name);
 
       Type fieldType = Type.getType(desc);
 
       Label syncBegin = new Label();
       Label syncEnd = new Label();
-      
+
       Label notManaged = new Label();
       Label resolved = new Label();
 
-      //Check if `this' is managed
+      // Check if `this' is managed
       getManaged(gv);
       gv.visitInsn(DUP);
       gv.visitVarInsn(ASTORE, TC_OBJECT_SLOT);
       gv.visitJumpInsn(IFNULL, notManaged);
 
-      //lock appropriate locks (the resolve lock and possibly the volatile lock)
+      // lock appropriate locks (the resolve lock and possibly the volatile lock)
       if (isVolatile) {
         callVolatileBegin(spec.getClassNameDots() + '.' + name, LockLevel.READ.toInt(), gv);
       }
@@ -788,22 +802,22 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       gv.visitInsn(MONITORENTER);
       gv.visitLabel(syncBegin);
 
-      //check if field is null under resolve lock (null means we must resolve)
+      // check if field is null under resolve lock (null means we must resolve)
       gv.visitVarInsn(ALOAD, THIS_SLOT);
       gv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), name, desc);
       gv.visitJumpInsn(IFNONNULL, resolved);
 
-      //resolve the reference (possibly talk to the server)
+      // resolve the reference (possibly talk to the server)
       gv.visitVarInsn(ALOAD, TC_OBJECT_SLOT);
       gv.visitLdcInsn(spec.getClassNameDots() + '.' + name);
       gv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/TCObject", "resolveReference", "(Ljava/lang/String;)V");
 
-      //read the resolved field
+      // read the resolved field
       gv.visitLabel(resolved);
       gv.visitVarInsn(ALOAD, THIS_SLOT);
       gv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), name, desc);
 
-      //unlock appropriate locks and return
+      // unlock appropriate locks and return
       gv.visitVarInsn(ALOAD, RESOLVE_LOCK_SLOT);
       gv.visitInsn(MONITOREXIT);
       if (isVolatile) {
@@ -811,8 +825,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       }
       gv.visitInsn(fieldType.getOpcode(IRETURN));
       gv.visitLabel(syncEnd);
-      
-      //unlock appropriate locks and throw exception (exception handler)
+
+      // unlock appropriate locks and throw exception (exception handler)
       gv.visitVarInsn(ALOAD, RESOLVE_LOCK_SLOT);
       gv.visitInsn(MONITOREXIT);
       if (isVolatile) {
@@ -820,7 +834,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       }
       gv.visitInsn(ATHROW);
 
-      //`this' instance is not managed - read the field normally
+      // `this' instance is not managed - read the field normally
       gv.visitLabel(notManaged);
       gv.visitVarInsn(ALOAD, THIS_SLOT);
       gv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), name, desc);
@@ -837,17 +851,18 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     }
   }
 
-  private void createInstrumentedFinalGetter(final MethodVisitor gv, final int fieldAccess, final String name, final String desc) {
+  private void createInstrumentedFinalGetter(final MethodVisitor gv, final int fieldAccess, final String name,
+                                             final String desc) {
     try {
       final int THIS_SLOT = 0;
 
       Type fieldType = Type.getType(desc);
       Label regularGet = new Label();
 
-      //Do a dirty read of the variable
+      // Do a dirty read of the variable
       gv.visitVarInsn(ALOAD, THIS_SLOT);
       gv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), name, desc);
-      gv.visitInsn(DUP);      
+      gv.visitInsn(DUP);
       gv.visitJumpInsn(IFNULL, regularGet);
       gv.visitInsn(fieldType.getOpcode(IRETURN));
 
@@ -861,7 +876,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       throw e;
     }
   }
-  
+
   private void getManaged(final MethodVisitor mv) {
     mv.visitVarInsn(ALOAD, 0);
     mv.visitMethodInsn(INVOKEVIRTUAL, spec.getClassNameSlashes(), MANAGED_METHOD, "()" + MANAGED_FIELD_TYPE);
@@ -920,7 +935,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     scv.visitEnd();
   }
 
-  private void createInstrumentedSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
+  private void createInstrumentedSetter(final int methodAccess, final int fieldAccess, final String name,
+                                        final String desc) {
     try {
       Type t = Type.getType(desc);
       if (isRoot(methodAccess, name)) {
@@ -1049,8 +1065,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitFieldInsn(getInsn, spec.getClassNameSlashes(), name, desc);
   }
 
-  private void callPutFieldInsn(final boolean isStatic, final Type targetType, final int localVar, final String name, final String desc,
-                                final MethodVisitor mv) {
+  private void callPutFieldInsn(final boolean isStatic, final Type targetType, final int localVar, final String name,
+                                final String desc, final MethodVisitor mv) {
     int putInsn = isStatic ? PUTSTATIC : PUTFIELD;
 
     if (!isStatic) ByteCodeUtil.pushThis(mv);
@@ -1067,16 +1083,18 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     mv.visitFieldInsn(putInsn, spec.getClassNameSlashes(), name, desc);
   }
 
-  private void generateCodeForVolatileTransactionBegin(final Label l1, final Label l2, final Label l3, final Label l4, final String fieldName,
-                                                       final int lockLevel, final MethodVisitor scv) {
+  private void generateCodeForVolatileTransactionBegin(final Label l1, final Label l2, final Label l3, final Label l4,
+                                                       final String fieldName, final int lockLevel,
+                                                       final MethodVisitor scv) {
     scv.visitTryCatchBlock(l4, l1, l1, null);
     scv.visitTryCatchBlock(l2, l3, l1, null);
     scv.visitLabel(l4);
     callVolatileBegin(fieldName, lockLevel, scv);
   }
 
-  private void generateCodeForVolativeTransactionCommit(final Label l1, final Label l2, final MethodVisitor scv, final int newVar1,
-                                                        final int newVar2, final String fieldName, final int lockLevel) {
+  private void generateCodeForVolativeTransactionCommit(final Label l1, final Label l2, final MethodVisitor scv,
+                                                        final int newVar1, final int newVar2, final String fieldName,
+                                                        final int lockLevel) {
     scv.visitJumpInsn(GOTO, l2);
     scv.visitLabel(l1);
     scv.visitVarInsn(ASTORE, newVar2);
@@ -1096,8 +1114,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     return getTransparencyClassSpec().isInjectedField(fieldName);
   }
 
-
-  private void createObjectFieldSetter(final int methodAccess, final int fieldAccess, final String name, final String desc) {
+  private void createObjectFieldSetter(final int methodAccess, final int fieldAccess, final String name,
+                                       final String desc) {
     try {
       boolean isVolatile = isVolatile(fieldAccess, name);
       Label l1 = new Label();
@@ -1133,8 +1151,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       scv.visitJumpInsn(IFNULL, labelArgumentIsNull);
 
       if (isVolatile) {
-        generateCodeForVolatileTransactionBegin(l1, l2, labelArgumentIsNull, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE.toInt(),
-                                                scv);
+        generateCodeForVolatileTransactionBegin(l1, l2, labelArgumentIsNull, l4, spec.getClassNameDots() + "." + name,
+                                                LockLevel.WRITE.toInt(), scv);
       }
 
       scv.visitVarInsn(ALOAD, 2);
@@ -1146,7 +1164,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
                           "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;I)V");
 
       if (isVolatile) {
-        generateCodeForVolativeTransactionCommit(l1, l2, scv, 3, 4, spec.getClassNameDots() + "." + name, LockLevel.WRITE.toInt());
+        generateCodeForVolativeTransactionCommit(l1, l2, scv, 3, 4, spec.getClassNameDots() + "." + name,
+                                                 LockLevel.WRITE.toInt());
       }
 
       scv.visitLabel(labelArgumentIsNull);
@@ -1185,8 +1204,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       mv.visitJumpInsn(IFNULL, l0);
 
       if (isVolatile) {
-        generateCodeForVolatileTransactionBegin(l1, l2, l0, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE.toInt(),
-                                                mv);
+        generateCodeForVolatileTransactionBegin(l1, l2, l0, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE
+            .toInt(), mv);
       }
 
       mv.visitVarInsn(ALOAD, 1 + t.getSize());
@@ -1200,7 +1219,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
 
       if (isVolatile) {
         generateCodeForVolativeTransactionCommit(l1, l2, mv, 2 + t.getSize(), 3 + t.getSize(), spec.getClassNameDots()
-                                                                                               + "." + name, LockLevel.WRITE.toInt());
+                                                                                               + "." + name,
+                                                 LockLevel.WRITE.toInt());
       }
 
       mv.visitLabel(l0);
@@ -1229,8 +1249,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
     Assert.eval("Can't call tc monitorexit from a static method.", !Modifier.isStatic(callingMethodModifier));
     ByteCodeUtil.pushThis(c);
     c.visitLdcInsn(new Integer(def.getLockLevelAsInt()));
-    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter",
-                      "(Ljava/lang/Object;I)V");
+    c.visitMethodInsn(INVOKESTATIC, ManagerUtil.CLASS, "instrumentationMonitorEnter", "(Ljava/lang/Object;I)V");
   }
 
   private void addPrimitiveTypeZeroCompare(final MethodVisitor mv, final Type type, final Label notZeroLabel) {
@@ -1253,5 +1272,9 @@ public class TransparencyClassAdapter extends ClassAdapterBase {
       default:
         mv.visitJumpInsn(IFNE, notZeroLabel);
     }
+  }
+
+  public MethodVisitor basicVisitMethodHack(int access, String name, String desc, String signature, String[] exceptions) {
+    return basicVisitMethod(access, name, desc, signature, exceptions);
   }
 }

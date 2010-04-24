@@ -4,21 +4,20 @@
  */
 package com.tc.bundles;
 
+import java.lang.reflect.Constructor;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.lang.reflect.Constructor;
-import java.text.MessageFormat;
 
 /**
- * Represents an OSGI bundle specification as declared in the Require-Bundle property
- * of an OSGI bundle as a dependency.
+ * Represents an OSGI bundle specification as declared in the Require-Bundle property of an OSGI bundle as a dependency.
  */
 public abstract class BundleSpec {
 
-  public static final String   REQUIRE_BUNDLE              = "Require-Bundle";
+  public static final String    REQUIRE_BUNDLE              = "Require-Bundle";
   protected static final String PROP_KEY_RESOLUTION         = "resolution";
   protected static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
   protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
@@ -42,15 +41,11 @@ public abstract class BundleSpec {
   public abstract boolean isVersionSpecified();
 
   public abstract boolean isVersionSpecifiedAbsolute();
-  
-  public final static boolean isMatchingSymbolicName(final String arg0, final String arg1) {
-    return (arg0 != null) && (arg1 != null) && arg0.equalsIgnoreCase(arg1);
-  }
 
   public static final String getSymbolicName(final Manifest manifest) {
     return manifest.getMainAttributes().getValue("Bundle-SymbolicName");
   }
-  
+
   public static final String getName(final Manifest manifest) {
     return manifest.getMainAttributes().getValue("Bundle-Name");
   }
@@ -58,11 +53,11 @@ public abstract class BundleSpec {
   public static final String getVersion(final Manifest manifest) {
     return manifest.getMainAttributes().getValue("Bundle-Version");
   }
-  
+
   public static final String getDescription(final Manifest manifest) {
     return manifest.getMainAttributes().getValue("Bundle-Description");
   }
-  
+
   public static final String[] getRequirements(final Manifest manifest) {
     return getRequirements(manifest.getMainAttributes().getValue(REQUIRE_BUNDLE));
   }

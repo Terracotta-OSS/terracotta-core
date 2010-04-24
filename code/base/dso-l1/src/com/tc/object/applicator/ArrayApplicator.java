@@ -4,9 +4,9 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -22,7 +22,7 @@ import java.lang.reflect.Array;
 public class ArrayApplicator extends BaseApplicator {
 
   public ArrayApplicator(DNAEncoding encoding) {
-    super(encoding);
+    super(encoding, TCLogging.getLogger(ArrayApplicator.class));
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -30,8 +30,7 @@ public class ArrayApplicator extends BaseApplicator {
 
     Object[] array = (Object[]) pojo;
 
-    for (int i = 0, len = array.length; i < len; i++) {
-      Object o = array[i];
+    for (Object o : array) {
       if (o != null && isPortableReference(o.getClass())) {
         addTo.addAnonymousReference(o);
       }
@@ -39,8 +38,8 @@ public class ArrayApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
 
     while (cursor.next(encoding)) {
@@ -63,13 +62,13 @@ public class ArrayApplicator extends BaseApplicator {
     }
   }
 
-  private static void hydrateNonPrimitiveArray(Object[] source, TCObject tcObject, Object pojo, int offset) {
+  private static void hydrateNonPrimitiveArray(Object[] source, TCObjectExternal tcObject, Object pojo, int offset) {
     for (int i = 0, n = source.length; i < n; i++) {
       setArrayElement(offset + i, source[i], tcObject, pojo);
     }
   }
 
-  private static void setArrayElement(int index, Object value, TCObject tcObject, Object pojo) {
+  private static void setArrayElement(int index, Object value, TCObjectExternal tcObject, Object pojo) {
     String fieldName = String.valueOf(index);
     if (value instanceof ObjectID) {
       tcObject.setArrayReference(index, (ObjectID) value);
@@ -81,7 +80,7 @@ public class ArrayApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     writer.setArrayLength(Array.getLength(pojo));
 
     if (ClassUtils.isPrimitiveArray(pojo)) {
@@ -110,7 +109,7 @@ public class ArrayApplicator extends BaseApplicator {
     }
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

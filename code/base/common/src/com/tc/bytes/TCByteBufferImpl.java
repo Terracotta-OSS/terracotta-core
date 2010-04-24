@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 
 // XXX: Should we wrap the native java.nio overflow, underflow and readOnly exceptions with the TC versions?
 // This would make the TCByteBuffer interface consistent w.r.t. exceptions (whilst being blind to JDK13 vs JDK14)
-public class TCByteBufferImpl implements TCByteBuffer {
+public class TCByteBufferImpl implements TCByteBuffer, BufferPool {
 
   private static final State       INIT        = new State("INIT");
   private static final State       CHECKED_OUT = new State("CHECKED_OUT");
@@ -306,6 +306,7 @@ public class TCByteBufferImpl implements TCByteBuffer {
     return buffer.isReadOnly();
   }
 
+  @Override
   public String toString() {
     return (buffer == null) ? "TCByteBufferJDK14(null buffer)" : "TCByteBufferJDK14@" + System.identityHashCode(this)
                                                                  + "(" + buffer.toString() + ")";
@@ -500,8 +501,12 @@ public class TCByteBufferImpl implements TCByteBuffer {
     state = CHECKED_OUT;
   }
 
-  public BoundedLinkedQueue getBufferPool() {
-    return bufPool;
+  public BufferPool getBufferPool() {
+    return this;
+  }
+
+  public void offer(TCByteBuffer buf) throws InterruptedException {
+    this.bufPool.offer(buf, 0);
   }
 
   /* This is the debug version. PLEASE DONT DELETE */

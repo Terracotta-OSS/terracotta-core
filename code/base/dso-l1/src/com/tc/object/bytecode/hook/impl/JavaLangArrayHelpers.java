@@ -4,7 +4,7 @@
  */
 package com.tc.object.bytecode.hook.impl;
 
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.ManagerUtil;
 
 public class JavaLangArrayHelpers {
@@ -14,7 +14,7 @@ public class JavaLangArrayHelpers {
    * Optimization used by String.getChars(int, int, char[], int)
    */
   public static void charArrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length) {
-    TCObject tco = ManagerUtil.getObject(dest);
+    TCObjectExternal tco = ManagerUtil.getObject(dest);
     if (tco != null) {
       ManagerUtil.charArrayCopy(src, srcPos, dest, destPos, length, tco);
     } else {
@@ -39,7 +39,7 @@ public class JavaLangArrayHelpers {
     int i = offset + srcBegin;
     char[] val = value;
 
-    TCObject tco = ManagerUtil.getObject(dst);
+    TCObjectExternal tco = ManagerUtil.getObject(dst);
     if (tco != null) {
       while (i < n) {
         dst[j] = (byte) val[i++];
@@ -56,7 +56,7 @@ public class JavaLangArrayHelpers {
    * Called by the 1.5 implementation of java/lang/AbstractStringBuilder.append(int|long)
    */
   public static void javaLangAbstractStringBuilderAppend(char[] value, int appendLength, int bufferLength) {
-    TCObject tco = ManagerUtil.getObject(value);
+    TCObjectExternal tco = ManagerUtil.getObject(value);
 
     if (tco != null) {
       int index = bufferLength - appendLength;

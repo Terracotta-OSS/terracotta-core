@@ -369,7 +369,8 @@ public class Resolver {
     final String bundlesymname = manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME);
     final String bundleversion = manifest.getMainAttributes().getValue(BUNDLE_VERSION);
     try {
-      return BundleSpec.isMatchingSymbolicName(symname, bundlesymname) && version.equals(Version.parse(bundleversion));
+      return BundleSpecUtil.isMatchingSymbolicName(symname, bundlesymname)
+             && version.equals(Version.parse(bundleversion));
     } catch (NumberFormatException e) { // thrown by parseVersion()
       consoleLogger.warn("Bad version attribute in TIM manifest from jar file: '" + ResolverUtils.canonicalize(bundle)
                          + "', version='" + bundleversion + "'.  Skipping...", e);

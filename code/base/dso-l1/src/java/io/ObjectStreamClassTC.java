@@ -4,13 +4,14 @@
  */
 package java.io;
 
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.ManagerUtil;
 
 public class ObjectStreamClassTC extends ObjectStreamClass {
+  @Override
   void getObjFieldValues(Object obj, Object[] vals) {
 
-    TCObject tco = ManagerUtil.lookupExistingOrNull(obj);
+    TCObjectExternal tco = ManagerUtil.lookupExistingOrNull(obj);
     if (tco != null) {
       synchronized (tco.getResolveLock()) {
         tco.resolveAllReferences();

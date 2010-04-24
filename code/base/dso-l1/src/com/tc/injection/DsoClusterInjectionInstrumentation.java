@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2009 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.injection;
 
@@ -22,14 +23,15 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
 
   private final static class Factory implements ClassAdapterFactory {
     private final FieldInfo fieldToInjectInto;
-    private final String identityString;
-    private final String declaringTypeInternalName;
-    private final String fieldTypeInternalName;
+    private final String    identityString;
+    private final String    declaringTypeInternalName;
+    private final String    fieldTypeInternalName;
 
     private Factory(final FieldInfo fieldToInjectInto) {
       this.fieldToInjectInto = fieldToInjectInto;
-      this.identityString = fieldToInjectInto.getDeclaringType().getName()+"."+fieldToInjectInto.getName();
-      this.declaringTypeInternalName = ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getDeclaringType().getName());
+      this.identityString = fieldToInjectInto.getDeclaringType().getName() + "." + fieldToInjectInto.getName();
+      this.declaringTypeInternalName = ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getDeclaringType()
+          .getName());
       this.fieldTypeInternalName = ByteCodeUtil.classNameToInternalName(fieldToInjectInto.getType().getName());
     }
 
@@ -63,22 +65,29 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
       }
 
       @Override
-      public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
+      public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature,
+                                       final String[] exceptions) {
         if (TC_INJECTION_METHOD_NAME.equals(name)) {
           isInjectionMethodPresent = true;
-          return new DsoClusterInjectionMethod(super.visitMethod(access, name, desc, signature, exceptions), access, name, desc);
-        } else if ("<init>".equals(name)) {
-          return new DsoClusterConstructorInjection(super.visitMethod(access, name, desc, signature, exceptions), access, name, desc);
-        }
+          return new DsoClusterInjectionMethod(super.visitMethod(access, name, desc, signature, exceptions), access,
+                                               name, desc);
+        } else if ("<init>".equals(name)) { return new DsoClusterConstructorInjection(super.visitMethod(access, name,
+                                                                                                        desc,
+                                                                                                        signature,
+                                                                                                        exceptions),
+                                                                                      access, name, desc); }
 
         return super.visitMethod(access, name, desc, signature, exceptions);
       }
 
       private void addFieldInjectionByteCode(final MethodVisitor mv) {
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getManager", "()Lcom/tc/object/bytecode/Manager;");
-        mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/bytecode/Manager", "getDsoCluster", "()Lcom/tc/cluster/DsoCluster;");
-        mv.visitFieldInsn(PUTFIELD, declaringTypeInternalName, fieldToInjectInto.getName(), 'L'+fieldTypeInternalName+';');
+        mv.visitMethodInsn(INVOKESTATIC, "com/tc/object/bytecode/ManagerUtil", "getManager",
+                           "()Lcom/tc/object/bytecode/Manager;");
+        mv.visitMethodInsn(INVOKEINTERFACE, "com/tc/object/bytecode/Manager", "getDsoCluster",
+                           "()Lcom/tc/cluster/DsoCluster;");
+        mv.visitFieldInsn(PUTFIELD, declaringTypeInternalName, fieldToInjectInto.getName(),
+                          'L' + fieldTypeInternalName + ';');
       }
 
       @Override
@@ -127,7 +136,8 @@ public class DsoClusterInjectionInstrumentation implements InjectionInstrumentat
           }
         }
 
-        public DsoClusterConstructorInjection(final MethodVisitor mv, final int access, final String name, final String desc) {
+        public DsoClusterConstructorInjection(final MethodVisitor mv, final int access, final String name,
+                                              final String desc) {
           super(mv, access, name, desc);
         }
 

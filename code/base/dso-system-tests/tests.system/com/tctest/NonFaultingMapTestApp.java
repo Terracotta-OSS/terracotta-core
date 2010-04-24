@@ -9,6 +9,7 @@ import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -45,7 +46,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
   private final List          tests;
 
   private final List          localList      = new ArrayList();
-  
+
   public NonFaultingMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
 
@@ -57,6 +58,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
     this.tests = getTestNames();
   }
 
+  @Override
   public void runTest() throws Throwable {
     Thread.currentThread().setName("CLIENT " + ManagerUtil.getClientID());
 
@@ -72,16 +74,14 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
         synchronized (sharedMap) {
           sharedMap.put("objectIds", new HashSet());
         }
-        
+
         localList.clear();
 
         Map map = (Map) maps.next();
 
         long start = System.currentTimeMillis();
-        if (barrier.barrier() == 0)
-          System.err.print("Running test: " + name + " on " + map.getClass() + " ... ");
-        
-        
+        if (barrier.barrier() == 0) System.err.print("Running test: " + name + " on " + map.getClass() + " ... ");
+
         try {
           runOp(name, map, false);
         } catch (Throwable t) {
@@ -90,8 +90,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
         } finally {
           barrier.barrier();
         }
-        if (exit.shouldExit())
-          return;        
+        if (exit.shouldExit()) return;
 
         try {
           runOp(name, map, true);
@@ -99,19 +98,17 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
           exit.toggle();
           throw t;
         } finally {
-          if (barrier.barrier() == 0)
-            System.err.println(" took " + (System.currentTimeMillis() - start) + " millis");
+          if (barrier.barrier() == 0) System.err.println(" took " + (System.currentTimeMillis() - start) + " millis");
         }
 
-        if (exit.shouldExit())
-          return;        
+        if (exit.shouldExit()) return;
       }
     }
   }
 
   private void setupTestMaps(String name) {
     List maps = new ArrayList();
-    
+
     maps.add(new HashMap());
     maps.add(new Hashtable());
 
@@ -122,14 +119,14 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
     // This is just to make sure all the expected maps are here.
     // As new map classes get added to this test, you'll have to adjust this number obviously
     Assert.assertEquals("Map-count discrepancy", 2 + (Vm.isJDK15Compliant() ? 1 : 0), maps.size());
-    
+
     synchronized (sharedMap) {
       sharedMap.put("maps", maps);
     }
   }
-  
+
   private Iterator getTestMaps() {
-    List testMaps = (List) sharedMap.get("maps");    
+    List testMaps = (List) sharedMap.get("maps");
     return testMaps.iterator();
   }
 
@@ -168,8 +165,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
     List rv = new ArrayList();
     Class klass = getClass();
     Method[] methods = klass.getDeclaredMethods();
-    for (int i = 0; i < methods.length; i++) {
-      Method m = methods[i];
+    for (Method m : methods) {
       if (m.getName().matches(METHOD_PATTERN)) {
         Class[] args = m.getParameterTypes();
 
@@ -198,7 +194,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
 
     spec.addRoot("sharedMap", "sharedMap");
     spec.addRoot("barrier", "barrier");
-    spec.addRoot("barrier2", "barrier2");    
+    spec.addRoot("barrier2", "barrier2");
     spec.addRoot("exit", "exit");
 
     String methodExpression = "* " + testClass + "*.*(..)";
@@ -219,38 +215,37 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
     }
   }
 
-  
   private void addObjectToLocalSet(Object o) {
-    //prevent L1 GC
+    // prevent L1 GC
     localList.add(o);
-    
-    //get TCObject (Object should always be managed at this point)
-    TCObject tco = ManagerUtil.lookupExistingOrNull(o);
+
+    // get TCObject (Object should always be managed at this point)
+    TCObjectExternal tco = ManagerUtil.lookupExistingOrNull(o);
     Assert.assertNotNull("TCObject for " + o, tco);
 
-    //record object id in clustered collection (as long to prevent munging)
+    // record object id in clustered collection (as long to prevent munging)
     Set objectIds = (Set) sharedMap.get("objectIds");
     synchronized (objectIds) {
       objectIds.add(new Long(tco.getObjectID().toLong()));
     }
   }
-  
+
   private int getLocalObjectCount() {
-    //XXX: this is kludgey (a less circuitous route would be nicer)
-    ClientObjectManager cm = ManagerUtil.lookupExistingOrNull(sharedMap).getTCClass().getObjectManager();
+    // XXX: this is kludgey (a less circuitous route would be nicer)
+    ClientObjectManager cm = ((TCObject) ManagerUtil.lookupExistingOrNull(sharedMap)).getTCClass().getObjectManager();
 
     Set objectIds = (Set) sharedMap.get("objectIds");
     int localCount = 0;
-    for (Iterator it = objectIds.iterator(); it.hasNext(); ) {
+    for (Iterator it = objectIds.iterator(); it.hasNext();) {
       Object o = it.next();
-      ObjectID oid = new ObjectID(((Long)o).longValue());
+      ObjectID oid = new ObjectID(((Long) o).longValue());
       if (cm.lookupIfLocal(oid) != null) localCount++;
     }
 
     return localCount;
   }
-  
-  void testNonFaultingPutAllMethod(Map map, boolean validate) {    
+
+  void testNonFaultingPutAllMethod(Map map, boolean validate) {
     synchronized (sharedMap) {
       Assert.assertTrue(ManagerUtil.isManaged(map));
       if (validate) {
@@ -298,7 +293,7 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
 
         Set someKeys = new HashSet();
         for (int i = 0; i < keys.length; i++) {
-          if (!((String)keys[i]).startsWith(Thread.currentThread().getName())) {
+          if (!((String) keys[i]).startsWith(Thread.currentThread().getName())) {
             someKeys.add(keys[i]);
           }
         }
@@ -314,46 +309,46 @@ public class NonFaultingMapTestApp extends AbstractErrorCatchingTransparentApp {
         map.put(Thread.currentThread().getName() + ".alice", alice);
 
         addObjectToLocalSet(bob);
-        addObjectToLocalSet(alice);        
+        addObjectToLocalSet(alice);
       }
     }
   }
-  
+
   void testNonFaultingKeySetRetainAllMethod(Map map, boolean validate) {
     synchronized (map) {
       if (validate) {
-        
+
         Set keySet = map.keySet();
         Object[] keys = keySet.toArray();
-        
+
         Set someKeys = new HashSet();
-        for (int i = 0; i < keys.length; i++) {
-          if (((String)keys[i]).startsWith(Thread.currentThread().getName())) {
-            someKeys.add(keys[i]);
+        for (Object key : keys) {
+          if (((String) key).startsWith(Thread.currentThread().getName())) {
+            someKeys.add(key);
           }
         }
-        
+
         keySet.retainAll(someKeys);
-        
+
         Assert.assertEquals("Unnecessary L1 faulting occured", 2, getLocalObjectCount());
       } else {
         Object bob = new Object();
         Object alice = new Object();
-        
+
         map.put(Thread.currentThread().getName() + ".bob", bob);
         map.put(Thread.currentThread().getName() + ".alice", alice);
-        
+
         addObjectToLocalSet(bob);
         addObjectToLocalSet(alice);
       }
     }
   }
-  
+
   void testNonFaultingKeySetIteratorRemoveMethod(Map map, boolean validate) {
     synchronized (map) {
       if (validate) {
         Set keySet = map.keySet();
-        for (Iterator i = keySet.iterator(); i.hasNext(); ) {
+        for (Iterator i = keySet.iterator(); i.hasNext();) {
           Object key = i.next();
           if (!key.equals(Thread.currentThread().getName())) {
             i.remove();

@@ -9,7 +9,6 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.guimodels-config
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: @maven.version.OSGi@
-Import-Package: org.terracotta.modules.configuration
 Require-Bundle: org.terracotta.modules.modules-base;bundle-version:=@api.version.OSGi@
 Terracotta-RequireVersion: @maven.version.OSGi@
 Terracotta-InternalTIM: true

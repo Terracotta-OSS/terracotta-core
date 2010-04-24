@@ -1,12 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
 import sun.misc.Unsafe;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.ManagerUtil;
 
 import java.lang.reflect.Field;
@@ -24,7 +25,7 @@ public class UnsafeUtil {
   }
 
   public static void updateDSOSharedField(Object obj, long fieldOffset, Object update) {
-    TCObject tcObject = ManagerUtil.lookupExistingOrNull(obj);
+    TCObjectExternal tcObject = ManagerUtil.lookupExistingOrNull(obj);
     if (tcObject == null) { throw new NullPointerException("Object is not a DSO shared object."); }
     tcObject.objectFieldChangedByOffset(obj.getClass().getName(), fieldOffset, update, -1);
   }
@@ -33,11 +34,11 @@ public class UnsafeUtil {
     long offset = unsafe.objectFieldOffset(field);
     unsafe.putObject(obj, offset, value);
   }
-  
+
   public static void monitorEnter(Object obj) {
     unsafe.monitorEnter(obj);
   }
-  
+
   public static void monitorExit(Object obj) {
     unsafe.monitorExit(obj);
   }
@@ -49,11 +50,11 @@ public class UnsafeUtil {
   private static Unsafe findUnsafe() {
     Class uc = Unsafe.class;
     Field[] fields = uc.getDeclaredFields();
-    for (int i = 0; i < fields.length; i++) {
-      if (fields[i].getName().equals("theUnsafe")) {
-        fields[i].setAccessible(true);
+    for (Field field : fields) {
+      if (field.getName().equals("theUnsafe")) {
+        field.setAccessible(true);
         try {
-          return (Unsafe) fields[i].get(uc);
+          return (Unsafe) field.get(uc);
         } catch (IllegalArgumentException e) {
           throw new TCRuntimeException(e);
         } catch (IllegalAccessException e) {

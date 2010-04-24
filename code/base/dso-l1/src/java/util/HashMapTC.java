@@ -8,12 +8,13 @@ import com.tc.exception.TCObjectNotFoundException;
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.Clearable;
+import com.tc.object.bytecode.CloneUtil;
 import com.tc.object.bytecode.HashMapClassAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.TCMap;
-import com.tc.object.bytecode.hook.impl.Util;
 import com.tc.util.Assert;
 
 /*
@@ -339,7 +340,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
   @Override
   public Object clone() {
     Manageable clone = (Manageable) super.clone();
-    return Util.fixTCObjectReferenceOfClonedObject(this, clone);
+    return CloneUtil.fixTCObjectReferenceOfClonedObject(this, clone);
   }
 
   /*
@@ -431,7 +432,7 @@ public class HashMapTC extends HashMap implements TCMap, Manageable, Clearable {
       for (Iterator i = super.entrySet().iterator(); i.hasNext() && toClear > cleared;) {
         EntryWrapper e = (EntryWrapper) i.next();
 
-        TCObject tcObject = ManagerUtil.lookupExistingOrNull(e.__tc_getLocalValue());
+        TCObjectExternal tcObject = ManagerUtil.lookupExistingOrNull(e.__tc_getLocalValue());
         if (tcObject != null && !tcObject.recentlyAccessed()) {
           ObjectID oid = tcObject.getObjectID();
           e.__tc_setLocalValue(oid);

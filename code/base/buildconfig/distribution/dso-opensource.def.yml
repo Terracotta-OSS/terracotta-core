@@ -64,12 +64,9 @@ bundled_components:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
             modules:
-              - common-api
-              - dso-l1-api
-              - license-common
-              - management-api
-              - modules-base
+              - tim-api
               - thirdparty-api
+              - dso-cluster-api
         - test-api-api.version:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
@@ -113,9 +110,10 @@ bundled_components:
         - modules-base
         - thirdparty
         - thirdparty-api
+        - tim-api
         - tim-get-tool:
             kit-resources:
-              - tim-get.properties
+              - tim-get.properties       
 bundled_modules:
   - core:
       install_directory: platform/modules

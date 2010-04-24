@@ -4,8 +4,8 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
-import com.tc.object.TCObject;
+import com.tc.logging.TCLogger;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.AtomicIntegerAdapter;
 import com.tc.object.dna.api.DNA;
@@ -23,8 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * NOTE: This applicator is only used for IBM JDK
  */
 public class AtomicIntegerApplicator extends BaseApplicator {
-  public AtomicIntegerApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public AtomicIntegerApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
     Vm.assertIsIbm();
   }
 
@@ -33,8 +33,8 @@ public class AtomicIntegerApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, IllegalArgumentException, ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
 
     Assert.assertTrue(po.getClass().getName(), po instanceof AtomicInteger);
@@ -47,14 +47,14 @@ public class AtomicIntegerApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     AtomicInteger ai = (AtomicInteger) pojo;
     int value = ai.get();
 
     writer.addPhysicalAction(AtomicIntegerAdapter.VALUE_FIELD_NAME, Integer.valueOf(value));
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) {
     throw new UnsupportedOperationException();
   }
 

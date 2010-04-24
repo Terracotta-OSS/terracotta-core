@@ -5,9 +5,9 @@
 package com.tc.object.applicator;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogger;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -50,8 +50,8 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  public ConcurrentHashMapApplicator(DNAEncoding encoding) {
-    super(encoding);
+  public ConcurrentHashMapApplicator(DNAEncoding encoding, TCLogger logger) {
+    super(encoding, logger);
   }
 
   @Override
@@ -81,8 +81,8 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
   }
 
   @Override
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, ClassNotFoundException {
     Object[] segments = null;
     DNACursor cursor = dna.getCursor();
 
@@ -122,7 +122,8 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
     }
   }
 
-  private Object[] resolveReferences(ClientObjectManager objectManager, Object[] sids) throws ClassNotFoundException {
+  private Object[] resolveReferences(ApplicatorObjectManager objectManager, Object[] sids)
+      throws ClassNotFoundException {
     Object segment = objectManager.lookupObject((ObjectID) sids[0]);
     Object[] segments = (Object[]) Array.newInstance(segment.getClass(), sids.length);
     segments[0] = segment;
@@ -141,12 +142,13 @@ public class ConcurrentHashMapApplicator extends PartialHashMapApplicator {
   }
 
   @Override
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     dehydrateFields(objectManager, tcObject, writer, pojo);
     super.dehydrate(objectManager, tcObject, writer, pojo);
   }
 
-  private void dehydrateFields(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  private void dehydrateFields(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer,
+                               Object pojo) {
     try {
       Object segmentMask = SEGMENT_MASK_FIELD.get(pojo);
       segmentMask = getDehydratableObject(segmentMask, objectManager);

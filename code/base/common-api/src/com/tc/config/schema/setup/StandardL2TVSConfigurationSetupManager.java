@@ -10,6 +10,7 @@ import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
+import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
@@ -189,17 +190,17 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     validateGroupNames(groupArray);
 
-    for (int i = 0; i < serverArray.length; i++) {
-      verifyServerPortUsed(serverPorts, serverArray[i]);
-      String serverName = serverArray[i].getName();
+    for (Server element : serverArray) {
+      verifyServerPortUsed(serverPorts, element);
+      String serverName = element.getName();
       boolean found = false;
       int gid = -1;
-      for (int j = 0; j < groupArray.length; j++) {
-        if (groupArray[j].isMember(serverName)) {
+      for (ActiveServerGroupConfig element2 : groupArray) {
+        if (element2.isMember(serverName)) {
           if (found) { throw new ConfigurationSetupException("Server{" + serverName
                                                              + "} is part of more than 1 mirror-group:  groups{" + gid
-                                                             + "," + groupArray[j].getGroupId() + "}"); }
-          gid = groupArray[j].getGroupId().toInt();
+                                                             + "," + element2.getGroupId() + "}"); }
+          gid = element2.getGroupId().toInt();
           found = true;
         }
       }
@@ -209,8 +210,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void validateGroupNames(ActiveServerGroupConfig[] groupArray) throws ConfigurationSetupException {
     HashSet list = new HashSet();
-    for (int i = 0; i < groupArray.length; i++) {
-      String grpName = groupArray[i].getGroupName();
+    for (ActiveServerGroupConfig element : groupArray) {
+      String grpName = element.getGroupName();
       if (grpName != null) {
         if (list.contains(grpName)) { throw new ConfigurationSetupException(
                                                                             "Group Name {"
@@ -497,11 +498,11 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
 
     Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
-    for (int i = 0; i < groupArray.length; i++) {
-      boolean isNwAP = groupArray[i].getHa().isNetworkedActivePassive();
-      String[] members = groupArray[i].getMembers().getMemberArray();
-      for (int j = 0; j < members.length; j++) {
-        serversToMode.put(members[j], isNwAP);
+    for (ActiveServerGroupConfig element : groupArray) {
+      boolean isNwAP = element.getHa().isNetworkedActivePassive();
+      String[] members = element.getMembers().getMemberArray();
+      for (String member : members) {
+        serversToMode.put(member, isNwAP);
       }
     }
 
@@ -648,7 +649,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void overwriteTcPropertiesFromConfig() {
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    tcProps.overwriteTcPropertiesFromConfig(this.configTCProperties.getTcPropertiesArray());
+
+    Map<String, String> propMap = new HashMap<String, String>();
+    for (TcProperty tcp : this.configTCProperties.getTcPropertiesArray()) {
+      propMap.put(tcp.getPropertyName(), tcp.getPropertyValue());
+    }
+
+    tcProps.overwriteTcPropertiesFromConfig(propMap);
   }
 
   public ActiveServerGroupConfig getActiveServerGroupForThisL2() {

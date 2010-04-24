@@ -4,9 +4,9 @@
  */
 package com.tc.object.applicator;
 
-import com.tc.object.ClientObjectManager;
+import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
-import com.tc.object.TCObject;
+import com.tc.object.TCObjectExternal;
 import com.tc.object.TraversedReferences;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.dna.api.DNA;
@@ -26,7 +26,7 @@ public class ProxyApplicator extends BaseApplicator {
   private static final String INVOCATION_HANDLER_FIELD_NAME = "java.lang.reflect.Proxy.h";
 
   public ProxyApplicator(DNAEncoding encoding) {
-    super(encoding);
+    super(encoding, TCLogging.getLogger(ProxyApplicator.class));
   }
 
   public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
@@ -34,8 +34,8 @@ public class ProxyApplicator extends BaseApplicator {
     return addTo;
   }
 
-  public void hydrate(ClientObjectManager objectManager, TCObject tcObject, DNA dna, Object po) throws IOException,
-      IllegalArgumentException, ClassNotFoundException {
+  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNA dna, Object po)
+      throws IOException, IllegalArgumentException, ClassNotFoundException {
     // Most of the time, hydrate() of ProxyApplicator will not be needed as we create
     // instance of a Proxy instance using the getNewInstance() method. This is being
     // called only when someone is modifying the invocation handler field of a proxy using
@@ -57,7 +57,7 @@ public class ProxyApplicator extends BaseApplicator {
     }
   }
 
-  public void dehydrate(ClientObjectManager objectManager, TCObject tcObject, DNAWriter writer, Object pojo) {
+  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal tcObject, DNAWriter writer, Object pojo) {
     InvocationHandler handler = Proxy.getInvocationHandler(pojo);
     Object dehydratableHandler = getDehydratableObject(handler, objectManager);
 
@@ -67,7 +67,8 @@ public class ProxyApplicator extends BaseApplicator {
     writer.addPhysicalAction(INVOCATION_HANDLER_FIELD_NAME, dehydratableHandler);
   }
 
-  public Object getNewInstance(ClientObjectManager objectManager, DNA dna) throws IOException, ClassNotFoundException {
+  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) throws IOException,
+      ClassNotFoundException {
     DNACursor cursor = dna.getCursor();
     Assert.assertEquals(3, cursor.getActionCount());
 
