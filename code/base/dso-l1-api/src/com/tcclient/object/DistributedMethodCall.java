@@ -4,7 +4,6 @@
  */
 package com.tcclient.object;
 
-
 /**
  * Representation of a distributed method call
  */
@@ -16,6 +15,7 @@ public class DistributedMethodCall {
 
   /**
    * Construct DMI call
+   * 
    * @param receiver Receiver object, should never be null
    * @param parameters Parameters to method call, should never be null
    * @param methodName Receiver method name, should never be null
@@ -44,24 +44,20 @@ public class DistributedMethodCall {
   }
 
   /**
-   * @return Parameters description 
+   * @return Parameters description
    */
   public String getParameterDesc() {
     return paramDesc;
   }
 
   /**
-   * @return Parameter values, never null
+   * @return Parameter values (unresolved if not literals)
    */
-  public final Object[] getParameters() {
-    // The parameters array is read here to make sure the elements are resolved -- passing the internal array to
-    // non-instrumented code would fail to resolve the elements, probably resulting in an NPE
-    Object[] rv = new Object[parameters.length];
-    for (int i = 0; i < parameters.length; i++)
-      rv[i] = parameters[i];
-    return rv;
+  public final Object[] getParametersUnresolved() {
+    return parameters;
   }
 
+  @Override
   public String toString() {
     return receiver.getClass().getName() + "." + methodName + paramDesc;
   }

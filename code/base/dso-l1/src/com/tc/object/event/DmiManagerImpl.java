@@ -9,6 +9,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ObjectID;
+import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.loaders.ClassProvider;
@@ -25,9 +26,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class DmiManagerImpl implements DmiManager {
-  private static final TCLogger     logger = TCLogging.getLogger(DmiManager.class);
-  private static final StringLockID lock   = new StringLockID("@DistributedMethodCall");
-  private static final Object       TRUE   = new Object();
+  private static final TCLogger     logger             = TCLogging.getLogger(DmiManager.class);
+  private static final StringLockID lock               = new StringLockID("@DistributedMethodCall");
+  private static final Object       TRUE               = new Object();
+  private static final Object[]     EMPTY_OBJECT_ARRAY = new Object[] {};
 
   private final ClassProvider       classProvider;
   private final ClientObjectManager objMgr;
@@ -58,8 +60,9 @@ public class DmiManagerImpl implements DmiManager {
     final String methodName = method.substring(0, method.indexOf('('));
     final String paramDesc = method.substring(method.indexOf('('));
     final DistributedMethodCall dmc = new DistributedMethodCall(receiver, params, methodName, paramDesc);
-    if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(), dmc
-        .getMethodName(), dmc.getParameterDesc());
+    if (runtimeLogger.getDistributedMethodDebug()) runtimeLogger.distributedMethodCall(receiver.getClass().getName(),
+                                                                                       dmc.getMethodName(), dmc
+                                                                                           .getParameterDesc());
     objMgr.getTransactionManager().begin(lock, LockLevel.CONCURRENT);
     try {
       final ObjectID receiverId = objMgr.lookupOrCreate(receiver).getObjectID();
@@ -97,7 +100,7 @@ public class DmiManagerImpl implements DmiManager {
     }
   }
 
-  private static void invoke0(DistributedMethodCall dmc) throws IllegalArgumentException, IllegalAccessException,
+  private void invoke0(DistributedMethodCall dmc) throws IllegalArgumentException, IllegalAccessException,
       InvocationTargetException {
     final ClassLoader origContextLoader = Thread.currentThread().getContextClassLoader();
     Method m = getMethod(dmc);
@@ -108,9 +111,22 @@ public class DmiManagerImpl implements DmiManager {
     Thread.currentThread().setContextClassLoader(tcl);
 
     try {
-      m.invoke(dmc.getReceiver(), dmc.getParameters());
+      m.invoke(dmc.getReceiver(), getParamaters(dmc));
     } finally {
       Thread.currentThread().setContextClassLoader(origContextLoader);
+    }
+  }
+
+  private Object[] getParamaters(DistributedMethodCall dmc) {
+    Object[] unresolvedParams = dmc.getParametersUnresolved();
+    if (unresolvedParams.length == 0) { return EMPTY_OBJECT_ARRAY; }
+
+    TCObject tco = objMgr.lookupExistingOrNull(unresolvedParams);
+    if (tco == null) { throw new AssertionError(); }
+
+    synchronized (tco.getResolveLock()) {
+      tco.resolveAllReferences();
+      return unresolvedParams.clone();
     }
   }
 
@@ -122,15 +138,15 @@ public class DmiManagerImpl implements DmiManager {
 
     while (c != null) {
       Method[] methods = c.getDeclaredMethods();
-      for (int i = 0; i < methods.length; i++) {
-        Method m = methods[i];
+      for (Method method : methods) {
+        Method m = method;
         if (!m.getName().equals(methodName)) {
           continue;
         }
         Class[] argTypes = m.getParameterTypes();
         StringBuffer signature = new StringBuffer("(");
-        for (int j = 0; j < argTypes.length; j++) {
-          signature.append(Type.getDescriptor(argTypes[j]));
+        for (Class argType : argTypes) {
+          signature.append(Type.getDescriptor(argType));
         }
         signature.append(")");
         signature.append(Type.getDescriptor(m.getReturnType()));
@@ -146,8 +162,7 @@ public class DmiManagerImpl implements DmiManager {
   private static void checkClassAvailability(ClassProvider classProvider, DmiClassSpec[] classSpecs)
       throws ClassNotFoundException {
     Assert.pre(classSpecs != null);
-    for (int i = 0; i < classSpecs.length; i++) {
-      DmiClassSpec s = classSpecs[i];
+    for (DmiClassSpec s : classSpecs) {
       classProvider.getClassFor(s.getClassName(), LoaderDescription.fromString(s.getClassLoaderDesc()));
     }
   }
@@ -159,8 +174,7 @@ public class DmiManagerImpl implements DmiManager {
 
     Set set = new HashSet();
     set.add(getClassSpec(classProvider, receiver));
-    for (int i = 0; i < params.length; i++) {
-      final Object p = params[i];
+    for (final Object p : params) {
       if (p != null) set.add(getClassSpec(classProvider, p));
     }
     DmiClassSpec[] rv = new DmiClassSpec[set.size()];
