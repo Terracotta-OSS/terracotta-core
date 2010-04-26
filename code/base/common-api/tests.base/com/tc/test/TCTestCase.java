@@ -92,7 +92,6 @@ public class TCTestCase extends TestCase {
 
   private void init() {
     TCLogging.disableLocking();
-    printOutCurrentJavaProcesses();
   }
 
   // called by timer thread (ie. NOT the main thread of test case)
@@ -134,6 +133,7 @@ public class TCTestCase extends TestCase {
 
   @Override
   public void runBare() throws Throwable {
+    printOutCurrentJavaProcesses();
     if (allDisabledUntil != null) {
       if (new Date().before(this.allDisabledUntil)) {
         System.out.println("NOTE: ALL tests in " + this.getClass().getName() + " are disabled until "
@@ -246,7 +246,7 @@ public class TCTestCase extends TestCase {
     this.timeoutThreshold = threshold;
   }
 
-  protected final synchronized TempDirectoryHelper getTempDirectoryHelper() {
+  protected synchronized TempDirectoryHelper getTempDirectoryHelper() {
     if (tempDirectoryHelper == null) {
       tempDirectoryHelper = new TempDirectoryHelper(getClass(), cleanTempDir());
     }
@@ -258,7 +258,7 @@ public class TCTestCase extends TestCase {
     return true;
   }
 
-  protected final synchronized DataDirectoryHelper getDataDirectoryHelper() {
+  protected synchronized DataDirectoryHelper getDataDirectoryHelper() {
     if (dataDirectoryHelper == null) {
       dataDirectoryHelper = new DataDirectoryHelper(getClass());
     }
@@ -266,19 +266,19 @@ public class TCTestCase extends TestCase {
     return dataDirectoryHelper;
   }
 
-  protected final File getDataDirectory() throws IOException {
+  protected File getDataDirectory() throws IOException {
     return getDataDirectoryHelper().getDirectory();
   }
 
-  protected final File getDataFile(String fileName) throws IOException {
+  protected File getDataFile(String fileName) throws IOException {
     return getDataDirectoryHelper().getFile(fileName);
   }
 
-  protected final File getTempDirectory() throws IOException {
+  protected File getTempDirectory() throws IOException {
     return getTempDirectoryHelper().getDirectory();
   }
 
-  protected final File getTempFile(String fileName) throws IOException {
+  protected File getTempFile(String fileName) throws IOException {
     return getTempDirectoryHelper().getFile(fileName);
   }
 
