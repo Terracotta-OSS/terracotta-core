@@ -67,7 +67,7 @@ public class MapOfCollectionsTestApp extends AbstractTransparentApp {
           verifyMap(ret);
         }
       }
-      
+
       if (i % 1000 == 0) {
         System.out.println("completed loop " + i);
       }
@@ -82,26 +82,22 @@ public class MapOfCollectionsTestApp extends AbstractTransparentApp {
     for (int i = 0; i < SIZE; i++) {
       val.put(new Key(i * index), new Value(i * index));
     }
-    
+
     return val;
   }
-  
+
   private void verifyMap(Map<Key, Value> map) {
     int index = map.get(new Key(Integer.MAX_VALUE)).getVal();
 
     Assert.assertEquals(createMap(index), map);
   }
-  
+
   private static class Value {
 
-    private int val;
+    private final int val;
 
     public int getVal() {
       return val;
-    }
-
-    public synchronized void setVal(int val) {
-      this.val = val;
     }
 
     public Value(int val) {
@@ -122,15 +118,7 @@ public class MapOfCollectionsTestApp extends AbstractTransparentApp {
 
   private static class Key {
 
-    private int key;
-
-    public int getVal() {
-      return key;
-    }
-
-    public synchronized void setVal(int val) {
-      this.key = val;
-    }
+    private final int key;
 
     public Key(int val) {
       this.key = val;
