@@ -33,6 +33,10 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
   /**
    * Thread.getId() should be final but it isn't, so subclasses can break the contract.
    * When this happens we need to behave gracefully.  See CDV-1262.
+   * We used to use Thread.getId in ThreadDumpUtilJdk16.getThreadDump(). Since Thread.getId
+   * method is not final so if any thread override the method we used to get Exception
+   * DEV-3897 changed the behavior for ThreadDumpUtilJdk16.getThreadDump and so we get the 
+   * correct thread dump even in case when the Thread.getId() method id overridden. 
    */
   public void testBadThreadId() throws Throwable {
     final int numThreads = 10;
@@ -50,7 +54,7 @@ public class ThreadDumpUtilJdk16Test extends ThreadDumpUtilTestBase {
       assertEquals(numThreads, countSubstrings(dump, OBSERVER_GATE));
       
       // half the strings should be complaining about unrecognized IDs
-      assertEquals(numThreads / 2, countSubstrings(dump, OVERRIDDEN));
+      assertEquals(0, countSubstrings(dump, OVERRIDDEN));
     } catch (Throwable t) {
       System.err.println(dump);
       throw t;
