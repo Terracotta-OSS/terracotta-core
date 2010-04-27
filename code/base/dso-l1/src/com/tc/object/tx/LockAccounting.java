@@ -107,6 +107,7 @@ public class LockAccounting {
 
   private void removeTxn(TransactionIDWrapper txnIDWrapper) {
     tx2Locks.remove(txnIDWrapper);
+    tid2wrap.remove(txnIDWrapper.getTransactionID());
     notifyTxnRemoved(txnIDWrapper);
   }
 
@@ -219,6 +220,21 @@ public class LockAccounting {
     public String toString() {
       return "TransactionIDWrapper [isReceived=" + isReceived + ", txID=" + txID + "]";
     }
+  }
+
+  // for testing purpose only
+  int sizeOfTransactionMap() {
+    return tx2Locks.size();
+  }
+
+  // for testing purpose only
+  int sizeOfLockMap() {
+    return lock2Txs.size();
+  }
+
+  // for testing purpose only
+  int sizeOfIDWrapMap() {
+    return tid2wrap.size();
   }
 
 }

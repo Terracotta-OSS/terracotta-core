@@ -290,10 +290,23 @@ public class LockAccountingTest extends TestCase {
 
     // folding lock1 and lock2 into txn1
     la.add(txID1, tx1locks);
+    assertEquals(1, la.sizeOfTransactionMap());
+    assertEquals(1, la.sizeOfLockMap());
+    assertEquals(1, la.sizeOfIDWrapMap());
     la.add(txID1, tx2locks);
+    assertEquals(1, la.sizeOfTransactionMap());
+    assertEquals(2, la.sizeOfLockMap());
+    assertEquals(1, la.sizeOfIDWrapMap());
+    
     // folding lock3 and lock4 into txn2
     la.add(txID2, tx3locks);
+    assertEquals(2, la.sizeOfTransactionMap());
+    assertEquals(3, la.sizeOfLockMap());
+    assertEquals(2, la.sizeOfIDWrapMap());
     la.add(txID2, tx4locks);
+    assertEquals(2, la.sizeOfTransactionMap());
+    assertEquals(4, la.sizeOfLockMap());
+    assertEquals(2, la.sizeOfIDWrapMap());
 
     // lock1 and lock2 map to txn1
     assertEquals(lock1Txs, la.getTransactionsFor(lockID1));
@@ -309,6 +322,9 @@ public class LockAccountingTest extends TestCase {
     locks.add(lockID2);
     Set completedLockIDs = la.acknowledge(txID1);
     assertEquals(locks, completedLockIDs);
+    assertEquals(1, la.sizeOfTransactionMap());
+    assertEquals(2, la.sizeOfLockMap());
+    assertEquals(1, la.sizeOfIDWrapMap());
     
     // verify lock2 and lock3 folded in same set
     locks = new HashSet<LockID>();
@@ -316,7 +332,10 @@ public class LockAccountingTest extends TestCase {
     locks.add(lockID4);
     completedLockIDs = la.acknowledge(txID2);
     assertEquals(locks, completedLockIDs);
-    
+    assertEquals(0, la.sizeOfTransactionMap());
+    assertEquals(0, la.sizeOfLockMap());
+    assertEquals(0, la.sizeOfIDWrapMap());
+
   }
 
 }
