@@ -50,15 +50,18 @@ import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.List;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
   private final HaConfig haConfig;
   private final GroupID  thisGroupID;
+  private final TCLogger logger;
 
   public StandardDSOServerBuilder(HaConfig haConfig, TCLogger logger) {
-    logger.info("Standard DSO Server created");
+    this.logger = logger;
+    this.logger.info("Standard DSO Server created");
     this.haConfig = haConfig;
     this.thisGroupID = this.haConfig.getThisGroup().getGroupId();
   }
@@ -145,7 +148,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public void dump() {
-    // Nothing to dump
+    logger.info(ThreadDumpUtil.getThreadDump());
   }
 
   public void initializeContext(ConfigurationContext context) {
