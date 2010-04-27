@@ -10,6 +10,16 @@ if "x%ANT_HOME%"=="x" (
   cmd /c exit /b 1
 )
 
+if "%1" == "help" (
+  type README.txt
+  exit /b 0
+)
+
+if "%1" == "" (
+  type README.txt
+  exit /b 0
+)
+
 setlocal enabledelayedexpansion
 
 set jruby_version=jruby-1.1.6a

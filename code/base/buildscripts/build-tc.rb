@@ -121,7 +121,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   # Prints a help message.
   def help
-    puts(Resources::HELP_MESSAGE)
+    loud_message "Please read README.txt for available tcbuild targets"
   end
 
   # Shows a list of all available variants for each subtree. Useful for debugging the buildsystem.

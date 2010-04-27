@@ -1,11 +1,3 @@
-#
-# All content copyright (c) 2003-2008 Terracotta, Inc.,
-# except as may otherwise be noted in a separate copyright notice.
-# All rights reserved
-#
-
-module Resources
-  HELP_MESSAGE = <<END_HELP_MESSAGE
 usage: tcbuild <target>
 
 Available targets are:
@@ -241,6 +233,9 @@ dist_maven with the --no-ivy and --no-compile options:
 
     tcbuild compile  # skip this step if everything is already compiled
     tcbuild dist_maven --no-ivy --no-compile
+    
+dist_maven_ee
+  Builds and installs EE artifacts. This only work if you have a EE branch checked out
 
 RUNNING SERVERS, CLASSES, ETC.
 
@@ -301,7 +296,3 @@ http://docs.terracotta.org/confluence/display/devdocs/Building+Terracotta
 http://docs.terracotta.org/confluence/display/devdocs/Configuring+JDK+Versions
 http://docs.terracotta.org/confluence/display/devdocs/tcbuild+Targets
 http://docs.terracotta.org/confluence/display/devdocs/Source+Modules
-
-END_HELP_MESSAGE
-
-end # module Resources
