@@ -149,12 +149,10 @@ postscripts:
               org.terracotta.modules.tool.relativeUrlBase: http://www.terracotta.org/download/reflector/stable/version
   - install-forge-tims:
       args:
-        - ehcache-terracotta
-        - quartz-terracotta
-        - terracotta-session
   - include-external-resources:
       args:
         - buildconfig/distribution/external-resources.yml
+        - buildconfig/distribution/external-resources-opensource.yml
   - delete-tim-get-index
   - include-schemas:
       args:

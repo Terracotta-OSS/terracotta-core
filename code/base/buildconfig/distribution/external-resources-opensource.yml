@@ -1,0 +1,28 @@
+
+default_repos:
+  - http://kong/repo/snapshots
+  - http://kong/repo/staging
+  - http://kong/repo/releases
+  - http://www.terracotta.org/download/reflector/snapshots
+  - http://www.terracotta.org/download/reflector/releases
+  - http://repo1.maven.org/maven2
+
+artifacts:
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-terracotta
+    version: 2.1.0-SNAPSHOT
+    destination: ehcache
+
+  - maven_artifact: true
+    groupId: org.terracotta.quartz
+    artifactId: quartz-terracotta
+    version: 1.2.0-SNAPSHOT
+    destination: quartz
+
+  - maven_artifact: true
+    groupId: org.terracotta.session
+    artifactId: terracotta-session
+    version: 1.1.0-SNAPSHOT
+    destination: sessions
+

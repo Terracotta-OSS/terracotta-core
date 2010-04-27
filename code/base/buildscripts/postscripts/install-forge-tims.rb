@@ -13,6 +13,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     return if @no_tims
 
     args.each do |tim|
+      next if tim.nil? || tim.strip.empty?
       puts("***** Installing #{tim}")
       tim_get(:install, tim)
     end
