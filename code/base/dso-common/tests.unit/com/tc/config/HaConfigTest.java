@@ -8,8 +8,10 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
+import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -58,6 +60,108 @@ public class HaConfigTest extends TCTestCase {
         // expected exception
       }
 
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  public void testHaMode() {
+    try {
+      tcConfig = getTempFile("tc-config-testHaMode1.xml");
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n</servers>" 
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+                                                                                                    null,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
+      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals("networked-active-passive", configSetupMgr.haConfig().haMode());
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals("networked-active-passive", configSetupMgr.haConfig().haMode());
+      
+      
+      tcConfig = getTempFile("tc-config-testHaMode2.xml");
+      config =        "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <ha>" 
+                      + "\n          <mode>networked-active-passive</mode>"
+                      + "\n             <networked-active-passive>"
+                      + "\n                 <election-time>5</election-time>"
+                      + "\n             </networked-active-passive> "
+                      + "\n      </ha>"
+                      + "\n</servers>" 
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals("networked-active-passive", configSetupMgr.haConfig().haMode());
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals("networked-active-passive", configSetupMgr.haConfig().haMode());
+      
+      tcConfig = getTempFile("tc-config-testHaMode3.xml");
+      config =        "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                      + "\n<servers>"
+                      + "\n      <server name=\"server1\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <server name=\"server2\">" 
+                      + "\n      <dso>" 
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" 
+                      + "\n        </persistence>" 
+                      + "\n      </dso>"
+                      + "\n      </server>" 
+                      + "\n      <ha>" 
+                      + "\n          <mode>disk-based-active-passive</mode>"
+                      + "\n      </ha>"
+                      + "\n</servers>" 
+                      + "\n</tc:tc-config>";
+      writeConfigFile(config);
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      Assert.assertEquals("disk-based-active-passive", configSetupMgr.haConfig().haMode());
+      
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
+      Assert.assertEquals("disk-based-active-passive", configSetupMgr.haConfig().haMode());
+      
     } catch (Exception e) {
       throw new AssertionError(e);
     }

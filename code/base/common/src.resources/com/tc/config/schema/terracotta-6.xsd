@@ -481,7 +481,7 @@
 
   <xs:complexType name="ha">
     <xs:all>
-      <xs:element name="mode" type="ha-mode" minOccurs="0" default="disk-based-active-passive" />
+      <xs:element name="mode" type="ha-mode" minOccurs="0" default="networked-active-passive" />
       <xs:element name="networked-active-passive" type="networked-active-passive" minOccurs="0" />
     </xs:all>
   </xs:complexType>
