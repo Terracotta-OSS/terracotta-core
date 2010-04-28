@@ -9,6 +9,12 @@ default_repos:
 
 artifacts:
   - maven_artifact: true
+    groupId: org.terracotta
+    artifactId: express-runtime
+    version: 1.0.0-SNAPSHOT
+    destination: common
+
+  - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta
     version: 3.0.0-SNAPSHOT
