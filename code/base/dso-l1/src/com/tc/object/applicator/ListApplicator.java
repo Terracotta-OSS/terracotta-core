@@ -133,6 +133,11 @@ public class ListApplicator extends BaseApplicator {
           logger.error("Cannot removeLast() because list is empty");
         }
         break;
+      case SerializationUtil.REMOVE_ALL:
+        for (Object o : params) {
+          list.remove(o);
+        }
+        break;
       case SerializationUtil.CLEAR:
         list.clear();
         break;
