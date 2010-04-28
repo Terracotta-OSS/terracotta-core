@@ -17,6 +17,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
 import java.lang.reflect.Method;
 
 public class FileApplicator extends PhysicalApplicator {
@@ -61,7 +62,7 @@ public class FileApplicator extends PhysicalApplicator {
     if (!dna.isDelta()) {
       Assert.assertTrue(remoteFileSeparatorObtained);
       try {
-        FILE_READ_OBJECT.invoke(po, new Object[] { new FileObjectInputStream(sepChar) });
+        FILE_READ_OBJECT.invoke(po, new Object[] { new FileObjectInputStream(sepChar, ((File) po).getPath()) });
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -79,17 +80,81 @@ public class FileApplicator extends PhysicalApplicator {
 
   private static class FileObjectInputStream extends ObjectInputStream {
 
-    private final char sep;
-    private boolean    charRead;
+    private final char   sep;
+    private boolean      charRead;
+    private final String path;
 
-    protected FileObjectInputStream(char sep) throws IOException, SecurityException {
+    protected FileObjectInputStream(char sep, String path) throws IOException, SecurityException {
       super();
       this.sep = sep;
+      this.path = path;
     }
 
     @Override
     public void defaultReadObject() {
       //
+    }
+
+    @Override
+    public GetField readFields() {
+      return new GetField() {
+
+        @Override
+        public ObjectStreamClass getObjectStreamClass() {
+          throw new AssertionError();
+        }
+
+        @Override
+        public Object get(String name, Object val) {
+          if ("path".equals(name)) { return path; }
+          throw new AssertionError();
+        }
+
+        @Override
+        public double get(String name, double val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public float get(String name, float val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public long get(String name, long val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public int get(String name, int val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public short get(String name, short val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public char get(String name, char val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public byte get(String name, byte val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public boolean get(String name, boolean val) {
+          throw new AssertionError();
+        }
+
+        @Override
+        public boolean defaulted(String name) {
+          throw new AssertionError();
+        }
+      };
     }
 
     @Override
