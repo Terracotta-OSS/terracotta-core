@@ -10,7 +10,7 @@ default_repos:
 artifacts:
   - maven_artifact: true
     groupId: org.terracotta
-    artifactId: express-runtime
+    artifactId: terracotta-express-runtime
     version: 1.0.0-SNAPSHOT
     destination: common
 
