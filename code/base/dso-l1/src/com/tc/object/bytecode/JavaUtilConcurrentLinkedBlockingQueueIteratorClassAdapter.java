@@ -31,6 +31,7 @@ public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends C
     private final int newLocalVar;
     private boolean incNext = false;
     private boolean incDone = false;
+    private boolean logicalInvoke = false;
     
     public RemoveMethodAdapter(int access, String desc, MethodVisitor mv) {
       super(access, desc, mv);
@@ -54,7 +55,21 @@ public class JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter extends C
           incDone = true;
         }
       } else if (PUTFIELD == opcode && "item".equals(name)) {
-        addLogicalInvokeMethod();
+        if (!logicalInvoke) {
+          addLogicalInvokeMethod();
+          logicalInvoke = true;
+        }
+      }
+    }
+    
+    @Override
+    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+      super.visitMethodInsn(opcode, owner, name, desc);
+      if ("unlink".equals(name)) {
+        if (!logicalInvoke) {
+          addLogicalInvokeMethod();
+          logicalInvoke = true;
+        }
       }
     }
     
