@@ -42,7 +42,18 @@ public class PhysicalStateClassLoaderTest extends TCTestCase {
   }
   
   public void testClassGeneratedMethods() throws Exception {
-    byte[] clazzBytes = loader.createClassBytes(cs, new ArrayList<FieldType>());
+    ArrayList<FieldType> field = new ArrayList<FieldType>();
+    field.add(FieldType.create("int_field", 12, false, 1));
+    field.add(FieldType.create("float_field", 12.0f, false, 1));
+    field.add(FieldType.create("long_field", 12L, false, 1));
+    field.add(FieldType.create("double_field", 12.0d, false, 1));
+    field.add(FieldType.create("char_field", 'c', false, 1));
+    field.add(FieldType.create("boolean_field", true, false, 1));
+    field.add(FieldType.create("byte_field", (byte)2, false, 1));
+    field.add(FieldType.create("short_field", (short)2, false, 1));
+    
+    
+    byte[] clazzBytes = loader.createClassBytes(cs, field);
 
     try {
       Class clazz = loader.defineClassFromBytes(cs.getGeneratedClassName(), 0, clazzBytes, 0, clazzBytes.length);
@@ -51,6 +62,15 @@ public class PhysicalStateClassLoaderTest extends TCTestCase {
       }
       else{
         Class[]  noParam = new Class[]{};
+        Assert.assertEquals(int.class, clazz.getDeclaredField("int_field_1").getType());
+        Assert.assertEquals(float.class, clazz.getDeclaredField("float_field_1").getType());
+        Assert.assertEquals(long.class, clazz.getDeclaredField("long_field_1").getType());
+        Assert.assertEquals(double.class, clazz.getDeclaredField("double_field_1").getType());
+        Assert.assertEquals(char.class, clazz.getDeclaredField("char_field_1").getType());
+        Assert.assertEquals(boolean.class, clazz.getDeclaredField("boolean_field_1").getType());
+        Assert.assertEquals(byte.class, clazz.getDeclaredField("byte_field_1").getType());
+        Assert.assertEquals(short.class, clazz.getDeclaredField("short_field_1").getType());
+        
         Assert.assertNotNull(clazz.getDeclaredMethod("getLoaderDescription" , noParam));
         Assert.assertNotNull(clazz.getDeclaredMethod("getClassName" , noParam));
         Assert.assertNotNull(clazz.getDeclaredMethod("getClassId" , noParam));
