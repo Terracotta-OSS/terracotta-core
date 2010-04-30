@@ -89,7 +89,13 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       info(Message.STARTING_BUNDLE, new Object[] { bundle.getSymbolicName() });
     }
 
-    framework.startBundle(bundle.getBundleId());
+    try {
+      framework.startBundle(bundle.getBundleId());
+    } catch (BundleException be) {
+      consoleLogger.error("Failed to start bundle: " + bundle.getSymbolicName(), be);
+      throw be;
+    }
+    
     if ((bundle.getState() & Bundle.ACTIVE) != bundle.getState()) {
       StringBuffer msg = new StringBuffer();
       msg.append("Failed to start bundle: ").append(bundle.getSymbolicName());
