@@ -87,8 +87,8 @@ public class StandardConfigContext implements ConfigContext {
     return new IntXPathBasedConfigItem(this, xpath);
   }
 
-  public IntConfigItem intItem(String xpath, int defaultValue) {
-    return new IntXPathBasedConfigItem(this, xpath, defaultValue);
+  public IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage) {
+    return new IntXPathBasedConfigItem(this, xpath, defaultValue, logDefaultValueUsage);
   }
 
   public StringConfigItem stringItem(String xpath) {

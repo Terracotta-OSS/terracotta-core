@@ -41,7 +41,7 @@ public interface ConfigContext {
 
   IntConfigItem intItem(String xpath);
 
-  IntConfigItem intItem(String xpath, int defaultValue);
+  IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage);
 
   StringConfigItem stringItem(String xpath);
 

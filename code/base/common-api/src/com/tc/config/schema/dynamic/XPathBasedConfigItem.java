@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -8,6 +9,8 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.listen.ConfigurationChangeListener;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
 
 import java.lang.reflect.InvocationTargetException;
@@ -15,8 +18,7 @@ import java.lang.reflect.Method;
 
 /**
  * A {@link ConfigItem} that uses XPaths to find its data. Caches the current value for efficiency, and provides for
- * specification of a default, which it will use if the value is <code>null</code>.
- * </p>
+ * specification of a default, which it will use if the value is <code>null</code>. </p>
  * <p>
  * Subclasses must take care of extracting the actual required value from the {@link XmlObject}.
  * </p>
@@ -30,14 +32,14 @@ public abstract class XPathBasedConfigItem implements ConfigItem, ConfigurationC
 
   private final ConfigContext              context;
   private final String                     xpath;
+  private final boolean                    logDefaultValueUsage;
+  private final CompoundConfigItemListener listener;
 
   private Object                           defaultValue;
   private boolean                          defaultInitialized;
-
-  private final CompoundConfigItemListener listener;
-
   private boolean                          haveCurrentValue;
   private Object                           currentValue;
+  private final TCLogger                   logger = TCLogging.getLogger(XPathBasedConfigItem.class);
 
   public XPathBasedConfigItem(ConfigContext context, String xpath) {
     Assert.assertNotNull(context);
@@ -47,7 +49,7 @@ public abstract class XPathBasedConfigItem implements ConfigItem, ConfigurationC
     this.xpath = xpath;
 
     this.defaultInitialized = false;
-
+    this.logDefaultValueUsage = false;
     this.listener = new CompoundConfigItemListener();
 
     this.haveCurrentValue = false;
@@ -78,20 +80,21 @@ public abstract class XPathBasedConfigItem implements ConfigItem, ConfigurationC
    * provide this method instead.
    */
   public XPathBasedConfigItem(ConfigContext context, String xpath, Object defaultValue) {
+    this(context, xpath, defaultValue, false);
+  }
+
+  public XPathBasedConfigItem(ConfigContext context, String xpath, Object defaultValue, boolean logDefaultValueUsage) {
     Assert.assertNotNull(context);
     Assert.assertNotBlank(xpath);
 
     this.context = context;
     this.xpath = xpath;
-
     this.defaultValue = defaultValue;
     this.defaultInitialized = true;
-
+    this.logDefaultValueUsage = logDefaultValueUsage;
     this.listener = new CompoundConfigItemListener();
-
     this.haveCurrentValue = false;
     this.currentValue = null;
-
     this.context.itemCreated(this);
   }
 
@@ -125,7 +128,10 @@ public abstract class XPathBasedConfigItem implements ConfigItem, ConfigurationC
                                 + " nodes, not " + "just 1. This should never happen; there is a bug in the software.");
     }
 
-    if (out == null) out = this.defaultValue;
+    if (out == null) {
+      if (this.logDefaultValueUsage) logger.info("Using default value for " + this.xpath + " : " + this.defaultValue);
+      out = this.defaultValue;
+    }
 
     return out;
   }

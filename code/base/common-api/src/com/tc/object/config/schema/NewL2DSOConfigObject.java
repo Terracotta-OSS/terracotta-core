@@ -7,6 +7,7 @@ package com.tc.object.config.schema;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -51,8 +52,11 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
     this.listenPort = this.context.intItem("dso-port");
-    this.l2GroupPort = this.context.intItem("l2-group-port", this.context.intItem("dso-port").getInt()
-                                                             + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT);
+    int tempGroupPort = this.context.intItem("dso-port").getInt()
+                        + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
+        : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
+    this.l2GroupPort = this.context.intItem("l2-group-port", defaultGroupPort, true);
     this.host = this.context.stringItem("@host");
     this.bind = this.context.stringItem("@bind");
   }

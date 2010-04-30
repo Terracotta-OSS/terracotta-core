@@ -132,7 +132,7 @@ public class MockConfigContext implements ConfigContext {
     return null;
   }
 
-  public IntConfigItem intItem(String xpath, int defaultValue) {
+  public IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage) {
     return null;
   }
 

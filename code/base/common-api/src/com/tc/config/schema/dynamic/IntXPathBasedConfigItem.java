@@ -25,8 +25,9 @@ public class IntXPathBasedConfigItem extends XPathBasedConfigItem implements Int
     checkDefaltValue(context, xpath);
   }
 
-  public IntXPathBasedConfigItem(ConfigContext context, String xpath, int defaultValue) {
-    super(context, xpath, new Integer(defaultValue));
+  public IntXPathBasedConfigItem(ConfigContext context, String xpath, int defaultValue,
+                                 boolean logDefaultValueUsage) {
+    super(context, xpath, new Integer(defaultValue), logDefaultValueUsage);
     Assert.assertNotNull(defaultValue);
   }
 

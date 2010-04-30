@@ -76,6 +76,15 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n        </persistence>"
                       + "\n      </dso>"
                       + "\n</server>"
+                      + "\n      <server name=\"server5\">"
+                      + "\n       <dso-port>65534</dso-port>"
+                      + "\n      <dso>"
+                      + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>"
+                      + "\n        </persistence>"
+                      + "\n      </dso>"
+                      + "\n</server>"
+
                       + "\n      <server name=\"server4\">"
                       + "\n      <dso>"
                       + "\n        <persistence>"
@@ -114,6 +123,18 @@ public class ConfigDefaultPortTest extends TCTestCase {
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().listenPort().getInt());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getInt());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getInt());
+
+      // case 5: ports range overflow
+      configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server5");
+      Assert.assertEquals(65534, configSetupMgr.dsoL2Config().listenPort().getInt());
+      Assert
+          .assertEquals(
+                        ((65534 + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT) % NewCommonL2Config.MAX_PORTNUMBER)
+                            + NewCommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getInt());
+      Assert
+          .assertEquals(
+                        ((65534 + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT) % NewCommonL2Config.MAX_PORTNUMBER)
+                            + NewCommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getInt());
 
     } catch (Exception e) {
       throw new AssertionError(e);
