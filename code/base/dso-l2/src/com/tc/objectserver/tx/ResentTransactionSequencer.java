@@ -161,7 +161,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   }
 
   private boolean moveToPassThruActiveIfPossible() {
-    if (this.resentTxns.isEmpty()) {
+    if (this.state == INCOMING_RESENT && this.resentTxns.isEmpty()) {
       this.state = PASS_THRU_ACTIVE;
       clearPending();
       logger.info("Unregistering ResentTransactionSequencer since no more resent Transactions : "

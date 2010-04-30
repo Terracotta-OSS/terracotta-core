@@ -20,4 +20,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/thirdparty-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/tim-api"/>
+	<classpathentry kind="lib" path="/dependencies/lib/mockito-all-1.8.2.jar"/>
 </classpath>
