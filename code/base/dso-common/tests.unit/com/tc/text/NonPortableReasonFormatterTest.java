@@ -4,6 +4,7 @@
  */
 package com.tc.text;
 
+import com.tc.exception.TCNonPortableObjectError;
 import com.tc.util.NonPortableDetail;
 
 import java.io.PrintWriter;
@@ -22,6 +23,7 @@ public class NonPortableReasonFormatterTest extends TestCase {
   private StringWriter               stringWriter;
   private String                     separator;
 
+  @Override
   public void setUp() {
     stringFormatter = new StringFormatter();
     stringWriter = new StringWriter();
@@ -50,7 +52,7 @@ public class NonPortableReasonFormatterTest extends TestCase {
     
     expected.append("For more information on this issue, please visit our Troubleshooting Guide at:" + 
                     stringFormatter.newline());                    
-    expected.append("http://terracotta.org/kit/troubleshooting" + stringFormatter.newline());
+    expected.append(TCNonPortableObjectError.NPOE_TROUBLE_SHOOTING_GUIDE + stringFormatter.newline());
     expected.append(stringFormatter.newline());
     
     expected.append("0123456789" + separator + "0123456789" + stringFormatter.newline());

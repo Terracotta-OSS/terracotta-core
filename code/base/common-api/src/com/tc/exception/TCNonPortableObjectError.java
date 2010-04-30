@@ -7,6 +7,8 @@ package com.tc.exception;
  * Indicates that an object cannot be made portable.  
  */
 public class TCNonPortableObjectError extends TCError {
+  
+  public static final String NPOE_TROUBLE_SHOOTING_GUIDE = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=npoe";
 
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
   

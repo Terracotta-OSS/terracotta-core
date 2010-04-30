@@ -5,6 +5,7 @@
 package com.tc.object.tx;
 
 import com.tc.exception.TCClassNotFoundException;
+import com.tc.exception.TCError;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -156,7 +157,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
     errorMsg.append(StringUtil.LINE_SEPARATOR).append(StringUtil.LINE_SEPARATOR);
     errorMsg.append("For more information on this issue, please visit our Troubleshooting Guide at:");
     errorMsg.append(StringUtil.LINE_SEPARATOR);
-    errorMsg.append("http://terracotta.org/kit/troubleshooting");
+    errorMsg.append(TCError.TROUBLE_SHOOTING_GUIDE);
 
     return Util.getFormattedMessage(errorMsg.toString());
   }
@@ -197,7 +198,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
                  + " * The code itself does not have synchronization that Terracotta\n" + "   can use as a boundary.\n"
                  + " * The class doing the locking must be included for instrumentation.\n"
                  + " * The object was first locked, then shared.\n\n"
-                 + "For more information on how to solve this issue, see:\n" + "http://www.terracotta.org/usoe";
+                 + "For more information on how to solve this issue, see:\n" + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
 
       throw new UnlockedSharedObjectException(errorMsg, Thread.currentThread().getName(), this.cidProvider
           .getClientID().toLong(), details);
@@ -693,7 +694,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
                                                + "\n\nPlease alter the locks section of your Terracotta configuration so that this"
                                                + "\naccess is auto-locked or protected by a named lock with write access."
                                                + "\n\nFor more information on this issue, please visit our Troubleshooting Guide at:"
-                                               + "\nhttp://terracotta.org/kit/troubleshooting ";
+                                               + "\n" + UnlockedSharedObjectException.TROUBLE_SHOOTING_GUIDE;
 
   public void waitForAllCurrentTransactionsToComplete() {
     remoteTxManager.waitForAllCurrentTransactionsToComplete();

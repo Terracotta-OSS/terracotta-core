@@ -12,6 +12,8 @@ import com.tc.exception.ExceptionWrapperImpl;
  * @author steve
  */
 public class UnlockedSharedObjectException extends RuntimeException {
+  
+  public static final String TROUBLE_SHOOTING_GUIDE  = "http://www.terracotta.org/kit/reflector?kitID=default&pageID=usoe";
 
   private static final ExceptionWrapper wrapper = new ExceptionWrapperImpl();
 

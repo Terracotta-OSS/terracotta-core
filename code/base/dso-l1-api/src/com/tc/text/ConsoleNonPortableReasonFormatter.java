@@ -3,6 +3,7 @@
  */
 package com.tc.text;
 
+import com.tc.exception.TCNonPortableObjectError;
 import com.tc.util.NonPortableDetail;
 import com.tc.util.NonPortableReason;
 
@@ -97,7 +98,7 @@ public class ConsoleNonPortableReasonFormatter implements NonPortableReasonForma
     out.println(paragraphFormatter.format(reasonText));
     out.println();
     out.println("For more information on this issue, please visit our Troubleshooting Guide at:");
-    out.println("http://terracotta.org/kit/troubleshooting");
+    out.println(TCNonPortableObjectError.NPOE_TROUBLE_SHOOTING_GUIDE);
     out.println();
   }
 
