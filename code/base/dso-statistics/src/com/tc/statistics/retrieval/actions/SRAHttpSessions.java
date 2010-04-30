@@ -5,20 +5,25 @@
 package com.tc.statistics.retrieval.actions;
 
 import com.tc.management.beans.sessions.SessionStatisticsMBean;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRAHttpSessions implements StatisticRetrievalAction {
-  public static final String ACTION_NAME    = "http sessions";
+  public static final String           ACTION_NAME    = "http sessions";
 
-  public static final String CREATED        = "created";
-  public static final String CREATED_RATE   = "creation rate (per minute)";
-  public static final String DESTROYED      = "destroyed";
-  public static final String DESTROYED_RATE = "destruction rate (per minute)";
-  public static final String REQUESTS       = "requests";
-  public static final String REQUEST_RATE   = "request rate (per minute)";
+  public static final String           CREATED        = "created";
+  public static final String           CREATED_RATE   = "creation rate (per minute)";
+  public static final String           DESTROYED      = "destroyed";
+  public static final String           DESTROYED_RATE = "destruction rate (per minute)";
+  public static final String           REQUESTS       = "requests";
+  public static final String           REQUEST_RATE   = "request rate (per minute)";
+
+  private final SessionStatisticsMBean bean;
+
+  public SRAHttpSessions(SessionStatisticsMBean bean) {
+    this.bean = bean;
+  }
 
   public String getName() {
     return ACTION_NAME;
@@ -29,8 +34,6 @@ public class SRAHttpSessions implements StatisticRetrievalAction {
   }
 
   public StatisticData[] retrieveStatisticData() {
-    SessionStatisticsMBean bean = ManagerUtil.getHttpSessionMonitor();
-
     if (bean == null) return EMPTY_STATISTIC_DATA;
 
     // if (!bean.isEnabled())

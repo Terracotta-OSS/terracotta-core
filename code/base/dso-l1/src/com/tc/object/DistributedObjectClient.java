@@ -317,7 +317,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       registry.registerActionInstance(new SRAL1TransactionsPerBatch(this.transactionsPerBatchCounter));
       registry.registerActionInstance(new SRAL1TransactionSize(this.transactionSizeCounter));
       registry.registerActionInstance(new SRAL1PendingBatchesSize(this.pendingBatchesSize));
-      registry.registerActionInstance(new SRAHttpSessions());
       registry.registerActionInstance(new SRAL1TransactionCount(this.txCounter));
       registry.registerActionInstance(new SRAVmGarbageCollector(SRAVmGarbageCollectorType.L1_VM_GARBAGE_COLLECTOR));
 
@@ -514,6 +513,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .getInstrumentationLogger(), this.config.rawConfigText(), this, this.config.getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
+    // Now we register the SRA for sessions
+    this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry()
+        .registerActionInstance(new SRAHttpSessions(l1Management.getHttpSessionMonitor()));
+
     // Setup the lock manager
     ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
     this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
@@ -564,7 +567,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // more likely an AssertionError
     Stage pauseStage = stageManager.createStage(ClientConfigurationContext.CLIENT_COORDINATION_STAGE,
                                                 new ClientCoordinationHandler(), 1, maxSize);
-    
+
     Stage clusterMembershipEventStage = stageManager
         .createStage(ClientConfigurationContext.CLUSTER_MEMBERSHIP_EVENT_STAGE,
                      new ClusterMemberShipEventsHandler(this.dsoCluster), 1, maxSize);
