@@ -264,6 +264,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return NAME_CHANNEL_LAYER;
   }
 
+  public String toString() {
+    return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID]") + ":" + getLocalAddress() + " <--> " + getRemoteAddress());
+  }
+
   class ChannelStatus {
     private ChannelState state;
 

@@ -1113,4 +1113,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     zappedSet.add(nodeID);
   }
 
+  public void closeMember(ServerID serverID) {
+    TCGroupMember member = getMember(serverID);
+    if (member != null) {
+      logger.info("Close member " + member);
+      closeMember(member, true);
+    } else {
+      logger.info("Non-exist member " + serverID);
+    }
+  }
 }

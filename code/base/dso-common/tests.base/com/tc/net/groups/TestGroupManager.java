@@ -22,6 +22,10 @@ public class TestGroupManager implements GroupManager {
     return localNodeID;
   }
 
+  public void closeMember(ServerID next) {
+    // NOP
+  }
+
   public NodeID join(Node thisNode, Node[] allNodes) {
     return localNodeID;
   }

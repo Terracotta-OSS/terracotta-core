@@ -104,4 +104,8 @@ public class SingleNodeGroupManager implements GroupManager {
     return true;
   }
 
+  public void closeMember(ServerID serverID) {
+    // NOP
+  }
+
 }
