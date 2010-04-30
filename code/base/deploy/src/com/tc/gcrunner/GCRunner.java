@@ -84,13 +84,13 @@ public class GCRunner {
     host = host == null ? DEFAULT_HOST : host;
 
     try {
-      System.err.println("Invoking DGC on " + host + ":" + port);
+      consoleLogger.info("Invoking DGC on " + host + ":" + port);
       new GCRunner(host, port, username, password).runGC();
     } catch (IOException ioe) {
-      System.err.println("Unable to connect to host '" + host + "', port " + port
+      consoleLogger.error("Unable to connect to host '" + host + "', port " + port
                          + ". Are you sure there is a Terracotta server instance running there?");
     } catch (SecurityException se) {
-      System.err.println(se.getMessage());
+      consoleLogger.error(se.getMessage());
       commandLineBuilder.usageAndDie();
     }
   }
@@ -101,7 +101,7 @@ public class GCRunner {
       port = Integer.parseInt(portString);
     } catch (NumberFormatException e) {
       port = DEFAULT_PORT;
-      System.err.println("Invalid port number specified. Using default port '" + port + "'");
+      consoleLogger.warn("Invalid port number specified. Using default port '" + port + "'");
     }
     return port;
   }

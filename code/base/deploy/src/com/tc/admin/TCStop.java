@@ -13,6 +13,8 @@ import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -27,13 +29,15 @@ import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 
 public class TCStop {
-  private final String       host;
-  private final int          port;
-  private final String       username;
-  private final String       password;
+  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
-  public static final String DEFAULT_HOST = "localhost";
-  public static final int    DEFAULT_PORT = 9520;
+  private final String          host;
+  private final int             port;
+  private final String          username;
+  private final String          password;
+
+  public static final String    DEFAULT_HOST  = "localhost";
+  public static final int       DEFAULT_PORT  = 9520;
 
   public static final void main(String[] args) throws Exception {
     Options options = StandardTVSConfigurationSetupManagerFactory.createOptions(true);
@@ -97,20 +101,20 @@ public class TCStop {
       String[] servers = manager.allCurrentlyKnownServers();
 
       if (nameSpecified && !Arrays.asList(servers).contains(name)) {
-        System.err.println("The specified configuration of the Terracotta server instance '" + name
-                           + "' does not exist; exiting.");
+        consoleLogger.error("The specified configuration of the Terracotta server instance '" + name
+                            + "' does not exist; exiting.");
         System.exit(1);
       }
 
       if (name == null && servers != null && servers.length == 1) {
         name = servers[0];
-        System.err.println("There is only one Terracotta server instance in this configuration file (" + name
+        consoleLogger.info("There is only one Terracotta server instance in this configuration file (" + name
                            + "); stopping it.");
       } else if (name == null && servers != null && servers.length > 1) {
-        System.err
-            .println("There are multiple Terracotta server instances defined in this configuration file; please specify "
-                     + "which one you want to stop, using the '-n' command-line option. Available servers are:\n"
-                     + "    " + ArrayUtils.toString(servers));
+        consoleLogger
+            .error("There are multiple Terracotta server instances defined in this configuration file; please specify "
+                   + "which one you want to stop, using the '-n' command-line option. Available servers are:\n"
+                   + "    " + ArrayUtils.toString(servers));
         System.exit(1);
       }
 
@@ -120,12 +124,12 @@ public class TCStop {
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
       port = serverConfig.jmxPort().getInt();
-      System.err.println("Host: " + host + ", port: " + port);
+      consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {
         host = DEFAULT_HOST;
         port = DEFAULT_PORT;
-        System.err.println("No host or port provided. Stopping the Terracotta server instance at '" + host + "', port "
+        consoleLogger.info("No host or port provided. Stopping the Terracotta server instance at '" + host + "', port "
                            + port + " by default.");
       } else if (arguments.length == 1) {
         host = DEFAULT_HOST;
@@ -139,13 +143,13 @@ public class TCStop {
     try {
       new TCStop(host, port, userName, password).stop();
     } catch (SecurityException se) {
-      System.err.println(se.getMessage());
+      consoleLogger.error(se.getMessage());
       commandLineBuilder.usageAndDie();
     } catch (Exception e) {
       Throwable root = getRootCause(e);
       if (root instanceof ConnectException) {
-        System.err.println("Unable to connect to host '" + host + "', port " + port
-                           + ". Are you sure there is a Terracotta server instance running there?");
+        consoleLogger.error("Unable to connect to host '" + host + "', port " + port
+                            + ". Are you sure there is a Terracotta server instance running there?");
       }
     }
   }
