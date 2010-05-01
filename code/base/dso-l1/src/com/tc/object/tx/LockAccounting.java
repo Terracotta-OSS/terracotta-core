@@ -29,7 +29,7 @@ public class LockAccounting {
     return toString();
   }
 
-  public String toString() {
+  public synchronized String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("Lock Accounting:\n");
     builder.append("[tx2Locks=" + tx2Locks + ", lock2Txs=" + lock2Txs + "]");

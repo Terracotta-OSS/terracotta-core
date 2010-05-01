@@ -5,11 +5,14 @@
 package com.tc.object.tx;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.lang.TCThreadGroup;
+import com.tc.lang.ThrowableHandler;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
@@ -71,7 +74,7 @@ public class LockAccountingTest extends TestCase {
 
     tx4locks.add(lockID4);
     lock4Txs.add(txID4);
-    
+
     la.add(txID1, tx1locks);
     la.add(txID2, tx2locks);
     la.add(txID3, tx3locks);
@@ -244,7 +247,7 @@ public class LockAccountingTest extends TestCase {
     };
     Timer timer = new Timer("timeout thread");
     timer.schedule(task, 5000);
-    
+
     TimerTask rmTask = new TimerTask() {
       public void run() {
         la.acknowledge(txID1);
@@ -335,6 +338,79 @@ public class LockAccountingTest extends TestCase {
     assertEquals(0, la.sizeOfTransactionMap());
     assertEquals(0, la.sizeOfLockMap());
     assertEquals(0, la.sizeOfIDWrapMap());
+
+  }
+
+  private class RunToStringThread extends Thread {
+    private boolean success = true;
+
+    public RunToStringThread(ThreadGroup threadGroup) {
+      super(threadGroup, "ToStringThread");
+    }
+
+    public void run() {
+      for (int i = 0; i < 20; ++i) {
+        try {
+          System.out.println(la.toString());
+        } catch (ConcurrentModificationException e) {
+          e.printStackTrace();
+          success = false;
+          interrupt();
+        }
+        ThreadUtil.reallySleep(500);
+      }
+    }
+
+    public boolean isSuccess() {
+      return success;
+    }
+  }
+
+  private class AddTxnThread extends Thread {
+    private boolean success = true;
+
+    public AddTxnThread(ThreadGroup threadGroup) {
+      super(threadGroup, "AddTxnThread");
+    }
+
+    public void run() {
+      for (int i = 0; i < 500; ++i) {
+        LockID lockID = new StringLockID("lock" + i);
+        Collection txlocks = new HashSet();
+        txlocks.add(lockID);
+        TransactionID txID = new TransactionID(i);
+        la.add(txID, txlocks);
+        ThreadUtil.reallySleep(10);
+      }
+      for (int i = 0; i < 500; ++i) {
+        la.acknowledge(new TransactionID(i));
+        ThreadUtil.reallySleep(5);
+      }
+    }
+
+    public boolean isSuccess() {
+      return success;
+    }
+
+  }
+
+  // test for DEV-4081, toString() causing ConcuurentModificationException
+  public void testToStringCME() {
+    TCThreadGroup threadGroup = new TCThreadGroup(new ThrowableHandler(null), "TCLockAccountingTestGroup");
+    RunToStringThread runToStringThread = new RunToStringThread(threadGroup);
+    AddTxnThread addTxnThread = new AddTxnThread(threadGroup);
+
+    addTxnThread.start();
+    runToStringThread.start();
+    try {
+      addTxnThread.join();
+      runToStringThread.join();
+    } catch (InterruptedException e) {
+      fail();
+    }
+
+    assertTrue(runToStringThread.isSuccess());
+    assertTrue(addTxnThread.isSuccess());
 
   }
 
