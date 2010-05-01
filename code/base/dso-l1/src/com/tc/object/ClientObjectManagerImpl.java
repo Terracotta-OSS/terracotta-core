@@ -24,7 +24,7 @@ import com.tc.object.appevent.NonPortableFieldSetContext;
 import com.tc.object.appevent.NonPortableObjectEvent;
 import com.tc.object.appevent.NonPortableRootContext;
 import com.tc.object.bytecode.Manageable;
-import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.hook.impl.ArrayManager;
 import com.tc.object.cache.CacheStats;
 import com.tc.object.cache.Evictable;
 import com.tc.object.cache.EvictionPolicy;
@@ -911,7 +911,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
       if (pojo != null) {
         if (pojo.getClass().isArray()) {
-          ManagerUtil.register(pojo, obj);
+          ArrayManager.register(pojo, obj);
         }
 
         if (pojo instanceof Manageable) {
