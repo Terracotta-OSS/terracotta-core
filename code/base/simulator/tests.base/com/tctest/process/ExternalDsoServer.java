@@ -81,6 +81,10 @@ public class ExternalDsoServer {
     }
   }
 
+  public File getWorkingDir() {
+    return this.workingDir;
+  }
+
   private File saveToFile(InputStream configInput) throws IOException {
     File config = new File(workingDir, SERVER_CONFIG_FILENAME);
     FileOutputStream out = new FileOutputStream(config);
@@ -194,7 +198,7 @@ public class ExternalDsoServer {
   public void addJvmArg(String jvmarg) {
     jvmArgs.add(jvmarg);
   }
-  
+
   public void dumpServerControl() throws Exception {
     this.serverProc.dumpServerControl();
   }
