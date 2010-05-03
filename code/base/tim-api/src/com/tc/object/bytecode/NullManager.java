@@ -7,7 +7,6 @@ package com.tc.object.bytecode;
 import com.tc.cluster.DsoCluster;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectExternal;
 import com.tc.object.loaders.ClassProvider;
@@ -141,10 +140,6 @@ public class NullManager implements Manager {
 
   public TCLogger getLogger(String loggerName) {
     return new NullTCLogger();
-  }
-
-  public SessionMonitor getHttpSessionMonitor() {
-    throw new UnsupportedOperationException();
   }
 
   public TCObjectExternal lookupOrCreate(Object obj) {
@@ -331,5 +326,9 @@ public class NullManager implements Manager {
 
   public void registerBeforeShutdownHook(Runnable beforeShutdownHook) {
     throw new UnsupportedOperationException();
+  }
+
+  public void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
+    //
   }
 }

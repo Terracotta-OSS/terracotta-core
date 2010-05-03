@@ -13,7 +13,6 @@ import javax.management.ObjectName;
 
 public class L1MBeanNames {
 
-  public static final ObjectName HTTP_SESSIONS_PUBLIC;
   public static final ObjectName CLUSTER_BEAN_PUBLIC;
   public static final ObjectName L1INFO_PUBLIC;
   public static final ObjectName RUNTIME_LOGGING_PUBLIC;
@@ -22,9 +21,6 @@ public class L1MBeanNames {
 
   static {
     try {
-      HTTP_SESSIONS_PUBLIC = TerracottaManagement.createObjectName(Type.Sessions, Subsystem.None, null,
-                                                                   "Terracotta for Sessions",
-                                                                   TerracottaManagement.MBeanDomain.PUBLIC);
       CLUSTER_BEAN_PUBLIC = TerracottaManagement.createObjectName(Type.Cluster, Subsystem.None, null,
                                                                   "Terracotta Cluster Bean",
                                                                   TerracottaManagement.MBeanDomain.PUBLIC);

@@ -52,8 +52,6 @@ import com.tc.logging.LogLevel;
 import com.tc.logging.NullTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaMBean;
-import com.tc.management.beans.sessions.SessionMonitor;
-import com.tc.management.beans.sessions.SessionStatisticsMBean;
 import com.tc.net.NIOWorkarounds;
 import com.tc.object.ObjectID;
 import com.tc.object.Portability;
@@ -734,9 +732,6 @@ public class BootJarTool {
   }
 
   private final void addManagementClasses() {
-    loadTerracottaClass(SessionMonitor.class.getName());
-    loadTerracottaClass(SessionMonitor.class.getName() + "$SessionsComptroller");
-    loadTerracottaClass(SessionStatisticsMBean.class.getName());
     loadTerracottaClass(TerracottaMBean.class.getName());
   }
 

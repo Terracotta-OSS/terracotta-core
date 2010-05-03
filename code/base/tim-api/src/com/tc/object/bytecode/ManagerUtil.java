@@ -8,7 +8,6 @@ package com.tc.object.bytecode;
 
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectExternal;
 import com.tc.object.bytecode.hook.impl.ArrayManager;
@@ -17,6 +16,7 @@ import com.tc.object.loaders.NamedClassLoader;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.properties.TCProperties;
+import com.tc.statistics.StatisticRetrievalAction;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -125,6 +125,10 @@ public class ManagerUtil {
    */
   public static String getUUID() {
     return getManager().getUUID();
+  }
+
+  public static void registerStatisticRetrievalAction(StatisticRetrievalAction sra) {
+    getManager().registerStatisticRetrievalAction(sra);
   }
 
   /**
@@ -1108,13 +1112,6 @@ public class ManagerUtil {
    */
   public static void register(final Object array, final TCObjectExternal obj) {
     ArrayManager.register(array, obj);
-  }
-
-  /**
-   * @return HTTP Session monitor
-   */
-  public static SessionMonitor getHttpSessionMonitor() {
-    return getManager().getHttpSessionMonitor();
   }
 
   /**

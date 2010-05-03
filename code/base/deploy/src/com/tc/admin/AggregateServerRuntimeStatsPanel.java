@@ -402,6 +402,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     cacheMissRatePanel.setToolTipText(appContext.getString("aggregate.server.stats.cache-manager.tip"));
     cacheMissRatePanel.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
+    gbc.anchor = GridBagConstraints.WEST;
     XContainer labelHolder = new XContainer(new GridLayout(0, 1));
     labelHolder.add(diskFaultRateLabel = createStatusLabel(Color.red));
     labelHolder.add(diskFlushRateLabel = createStatusLabel(Color.blue));

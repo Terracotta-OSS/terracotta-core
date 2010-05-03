@@ -6,11 +6,11 @@
     
     <dependency name="jetty" rev="6.1.8" org="org.mortbay.jetty"/>
     <dependency name="jetty-util" rev="6.1.8" org="org.mortbay.jetty"/>
-    <dependency name="jfreechart" rev="1.0.11" org="jfree">
+    <dependency name="jfreechart" rev="1.0.13" org="jfree">
       <exclude module="gnujaxp" org="gnujaxp"/>
       <exclude module="junit" org="junit"/>
     </dependency>
-    <dependency name="jcommon" rev="1.0.14" org="jfree">
+    <dependency name="jcommon" rev="1.0.16" org="jfree">
       <exclude module="gnujaxp" org="gnujaxp"/>
       <exclude module="junit" org="junit"/>
     </dependency>    

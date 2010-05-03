@@ -5,8 +5,8 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.DsoCluster;
+import com.tc.exception.TCClassNotFoundException;
 import com.tc.logging.TCLogger;
-import com.tc.management.beans.sessions.SessionMonitor;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObjectExternal;
 import com.tc.object.loaders.ClassProvider;
@@ -276,11 +276,6 @@ public interface Manager extends TerracottaLocking {
   InstrumentationLogger getInstrumentationLogger();
 
   /**
-   * @return Session monitor MBean
-   */
-  public SessionMonitor getHttpSessionMonitor();
-
-  /**
    * @return TCProperties
    */
   public TCProperties getTCProperties();
@@ -328,6 +323,8 @@ public interface Manager extends TerracottaLocking {
   public MBeanServer getMBeanServer();
 
   public StatisticRetrievalAction getStatisticRetrievalActionInstance(String name);
+
+  public void registerStatisticRetrievalAction(StatisticRetrievalAction sra);
 
   /**
    * Used by instrumented code to perform a clustered <code>monitorenter</code>.

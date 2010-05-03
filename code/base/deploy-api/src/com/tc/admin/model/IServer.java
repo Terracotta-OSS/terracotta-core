@@ -177,10 +177,16 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                        TimeUnit unit);
 
+  Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap);
+
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit);
+
+  Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation);
 
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit, Object[] args,
                                  String[] sigs);
+
+  Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, Object[] args, String[] sigs);
 
   int getLiveObjectCount();
 
