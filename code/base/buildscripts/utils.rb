@@ -179,18 +179,20 @@ def download_external(default_repos, dest_dir, artifact)
         # recover execution bits
         ant.chmod(:dir => exploded_dir, :perm => "ugo+x", :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
         
-        # assume the zip file contains a root folder
-        root_dir = nil
-        Dir.new(exploded_dir).each do |e|
-          next if e =~ /^\./
-          root_dir = File.expand_path(File.join(exploded_dir, e))
-        end
         if artifact['remove_root_folder'] == true
+          # assume the zip file contains a root folder
+          root_dir = nil
+          Dir.new(exploded_dir).each do |e|
+            next if e =~ /^\./
+            root_dir = File.expand_path(File.join(exploded_dir, e))
+          end
           ant.move(:todir => dest) do
             ant.fileset(:dir => root_dir)
           end
         else
-          ant.move(:file => root_dir, :todir => dest)
+          ant.move(:todir => dest) do
+            ant.fileset(:dir => exploded_dir)
+          end
         end
         FileUtils.rm_rf(tmp_dir)
       else
