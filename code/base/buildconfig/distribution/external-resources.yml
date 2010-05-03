@@ -44,14 +44,16 @@ artifacts:
     artifactId: ehcache-core
     classifier: javadoc
     version: 2.1.0-SNAPSHOT
-    destination: ehcache
+    destination: ehcache/javadoc
+    explode: true
     
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
     version: 2.1.0-SNAPSHOT
-    destination: ehcache
+    destination: ehcache/src
+    explode: true
     
   - maven_artifact: true
     groupId: org.slf4j

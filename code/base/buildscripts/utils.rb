@@ -167,8 +167,18 @@ def download_external(default_repos, dest_dir, artifact)
         ant.get(:src => url, :dest => dest_file, :verbose => true)
         exploded_dir = File.join(tmp_dir, "exploded")
         FileUtils.mkdir_p(exploded_dir)
-        ant.untar(:src => dest_file, :dest => exploded_dir, :compression => "gzip")
+        
+        if dest_file =~ /tar.gz$/
+          ant.untar(:src => dest_file, :dest => exploded_dir, :compression => "gzip")
+        elsif dest_file =~ /(jar|zip)$/
+          ant.unzip(:src => dest_file, :dest => exploded_dir)
+        else
+          raise("Don't know how to unpack file #{dest_file}")
+        end
+
+        # recover execution bits
         ant.chmod(:dir => exploded_dir, :perm => "ugo+x", :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
+        
         # assume the zip file contains a root folder
         root_dir = nil
         Dir.new(exploded_dir).each do |e|
