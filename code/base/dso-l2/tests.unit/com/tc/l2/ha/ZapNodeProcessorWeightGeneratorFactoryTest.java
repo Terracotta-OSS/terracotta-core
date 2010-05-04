@@ -85,7 +85,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
     Assert.assertEquals(wgf1, whoWin(wgf1, wgf2));
 
     toughTxnTime(transactionBatchManager2);
-    Assert.assertEquals(wgf2, whoWin(wgf1, wgf2));
+    Assert.assertEquals(wgf2, whoWin(wgf2, wgf1));
 
     // who has more L1s
     setActiveChannels(channelManager1, 2);
