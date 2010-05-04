@@ -212,7 +212,7 @@
         <version>1.6</version>
       </dependency>
 
-      <!-- Dependencies for core Terracotta artifacts (terracotta, terracotta-api) -->
+      <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcconfig</artifactId>

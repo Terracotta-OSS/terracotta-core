@@ -3,7 +3,7 @@
 	<name>thirdparty</name>
 	<comment>thirdparty source code</comment>
 	<projects>
-		<project>thirdparty-api</project>
+		<project>thirdparty</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

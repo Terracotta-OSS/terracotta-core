@@ -23,7 +23,6 @@ bundled_components:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -33,7 +32,6 @@ bundled_components:
         - management-api
         - modules-base
         - thirdparty
-        - thirdparty-api
         - tim-get-tool:
             kit-resources:
               - tim-get.properties

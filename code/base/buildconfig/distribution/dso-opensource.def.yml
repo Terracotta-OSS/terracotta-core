@@ -60,13 +60,6 @@ bundled_components:
               - dso-l2-common
               - dso-statistics-api
               - management-api      
-        - tim-api-api.version:
-            # install in 'api-jars' folder so it can be deleted later
-            install_directory: api-jars
-            modules:
-              - tim-api
-              - thirdparty-api
-              - dso-cluster-api
         - test-api-api.version:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
@@ -80,11 +73,6 @@ bundled_components:
               - legacy-test-tree
               - license-common
               - simulator
-        - terracotta-api-api.version:
-            javadoc: true   
-            install_directory: lib
-            modules:
-              - dso-cluster-api
 
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
@@ -99,7 +87,6 @@ bundled_components:
         - dso-common-jdk16
         - dso-l1
         - dso-l1-api
-        - dso-cluster-api
         - dso-l2
         - dso-l2-common
         - dso-statistics
@@ -109,7 +96,6 @@ bundled_components:
         - management-api
         - modules-base
         - thirdparty
-        - thirdparty-api
         - tim-api
         - tim-get-tool:
             kit-resources:
@@ -163,7 +149,7 @@ postscripts:
         - sessions/samples
   - maven-deploy:
       args:
-        - artifact_count: 11
+        - artifact_count: 9
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml
@@ -197,24 +183,12 @@ postscripts:
           artifact: tcstats
           file: lib/tcstats-xmlbeans-generated.jar
           pom: poms/tcstats-pom.xml
-        - groupId: org.terracotta.api
-          artifact: tim-api
-          file: api-jars/tim-api-api.version.jar
-          pom: poms/terracotta-tim-api-pom.xml
-          version: api.version
-          inject: 
-            - lib/resources/build-data.txt
         - groupId: org.terracotta
           artifact: terracotta-jmx-api
           file: lib/terracotta-jmx-api.jar
           pom: poms/terracotta-jmx-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
-        - groupId: org.terracotta.api
-          artifact: terracotta-api
-          file: lib/terracotta-api-api.version.jar
-          pom: poms/terracotta-api-pom.xml
-          version: api.version
         - groupId: org.terracotta.api
           artifact: test-api
           file: api-jars/test-api-api.version.jar

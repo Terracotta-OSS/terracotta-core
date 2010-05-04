@@ -45,8 +45,8 @@ public class ClasspathProvider extends StandardClasspathProvider {
       ArrayList<IRuntimeClasspathEntry> list = new ArrayList<IRuntimeClasspathEntry>();
       IPath[] paths = gatherDevClasspathEntries();
 
-      for (int i = 0; i < paths.length; i++) {
-        list.add(JavaRuntime.newArchiveRuntimeClasspathEntry(paths[i]));
+      for (IPath path : paths) {
+        list.add(JavaRuntime.newArchiveRuntimeClasspathEntry(path));
       }
 
       return list.toArray(new IRuntimeClasspathEntry[0]);
@@ -84,12 +84,11 @@ public class ClasspathProvider extends StandardClasspathProvider {
     IPath buildPath = location.append("..");
 
     String[] dirs = { "deploy", "deploy-api", "common", "common-api", "management", "management-api", "aspectwerkz",
-        "sigarstats", "thirdparty", "thirdparty-api", "dso-common", "dso-common-jdk16", "dso-cluster-api", "dso-l1",
-        "dso-l1-api", "dso-l2", "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool",
-        "license-common" };
+        "sigarstats", "thirdparty", "dso-common", "dso-common-jdk16", "dso-l1", "dso-l1-api", "dso-l2",
+        "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool", "license-common" };
 
-    for (int i = 0; i < dirs.length; i++) {
-      list.add(buildPath.append(dirs[i]).append("build.eclipse").append("src.classes"));
+    for (String dir : dirs) {
+      list.add(buildPath.append(dir).append("build.eclipse").append("src.classes"));
     }
 
     // this is to get access to build-data.txt in dev mode
@@ -98,8 +97,8 @@ public class ClasspathProvider extends StandardClasspathProvider {
     final List<File> fileList = new ArrayList<File>();
     File libDir;
 
-    for (int i = 0; i < dirs.length; i++) {
-      libDir = location.append("..").append(dirs[i]).append("lib").toFile();
+    for (String dir : dirs) {
+      libDir = location.append("..").append(dir).append("lib").toFile();
       if (libDir.exists()) {
         fileList.addAll(listArchives(libDir));
       }
@@ -110,8 +109,8 @@ public class ClasspathProvider extends StandardClasspathProvider {
     File projectDir = null;
     String dir = null;
     try {
-      for (int i = 0; i < dirs.length; i++) {
-        dir = dirs[i];
+      for (String dir2 : dirs) {
+        dir = dir2;
         projectDir = location.append("..").append(dir).toFile();
         ivy = new File(projectDir + File.separator + "ivy.xml");
         if (ivy.exists()) {

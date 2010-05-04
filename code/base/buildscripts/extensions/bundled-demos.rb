@@ -40,7 +40,7 @@ module BundledDemos
             build_script = 'build.xml'
 
             # inject api version to build.xml of chatter and sharedqueue
-            @ant.replace(:token => "@api.version@", :value => @config_source['api.version'], :file => File.expand_path(build_script))
+            @ant.replace(:token => "@tim-api.version@", :value => @config_source['tim-api.version'], :file => File.expand_path(build_script))
             
             raise AntBuildScriptError.new, "Unable to pre-compile the sample application `#{demo_directory}, the Ant build script `#{build_script}' is missing." unless File.exists?(build_script)
             if File.exists?('DO-NOT-PRE-COMPILE')

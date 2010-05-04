@@ -21,6 +21,7 @@ end
 
 module MavenConstants
   API_VERSION_CONFIG_KEY = 'api.version'
+  TIM_API_VERSION_CONFIG_KEY = 'tim-api.version'
   MAVEN_REPO_CONFIG_KEY = 'maven.repo'
   MAVEN_REPO_ID_CONFIG_KEY = 'maven.repositoryId'
   MAVEN_VERSION_CONFIG_KEY = 'maven.version'
