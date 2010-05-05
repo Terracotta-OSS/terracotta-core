@@ -25,6 +25,10 @@
       <artifactId>tcconfig</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.api</groupId>
+      <artifactId>tim-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tc-l1-reconnect-properties</artifactId>
     </dependency>
