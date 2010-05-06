@@ -15,6 +15,8 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -147,6 +149,20 @@ public final class ProductInfo {
   }
 
   static InputStream getData(String name) {
+    URL source = ProductInfo.class.getProtectionDomain().getCodeSource().getLocation();
+    if (source.getProtocol().equals("file") && source.toExternalForm().endsWith(".jar")) {
+      URL res;
+      try {
+        res = new URL("jar:" + source.toExternalForm() + "!" + name);
+        InputStream in = res.openStream();
+        if (in != null) { return in; }
+      } catch (MalformedURLException e) {
+        throw new AssertionError(e);
+      } catch (IOException e) {
+        // must not be embedded in this jar -- resolve via loader path
+      }
+    }
+
     return ProductInfo.class.getResourceAsStream(name);
   }
 
