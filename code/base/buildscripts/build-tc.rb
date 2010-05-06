@@ -179,7 +179,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     if @build_environment.is_ee_branch?
       bases << @ee_basedir
     end
-
+    
+    FilePath.new(@static_resources.lib_dependencies_directory).ensure_directory
     dependencies_pattern = "#{@static_resources.lib_dependencies_directory.to_s}/[artifact]-[revision].[ext]"
 
     bases.each do |base|

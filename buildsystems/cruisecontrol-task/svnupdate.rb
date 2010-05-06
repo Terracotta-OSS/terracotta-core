@@ -13,9 +13,6 @@ class SvnUpdate
     @is_ee_branch = @os_topdir =~ /community/ ? true : false
     @ee_topdir = File.join(@os_topdir, "..") if @is_ee_branch
     
-    # hack around Tim's sin of deleting dependencies/lib
-    `rm -rf #{@os_topdir}/code/base/dependencies/lib`
-
     if ENV['OS'] =~ /Windows/i
       @os_topdir=`cygpath -u #{@os_topdir}`.chomp
       @ee_topdir=`cygpath -u #{@ee_topdir}`.chomp if @is_ee_branch
