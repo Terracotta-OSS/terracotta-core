@@ -144,7 +144,11 @@ class BuildModule
 
     if self.module?
       module_info = create_module_jar(ant, build_results)
-      if repo = config_source[MAVEN_REPO_CONFIG_KEY]
+
+      # Per DEV-4134, only install/deploy default modules to Maven repo
+      # when it's a OSS branch so we don't overwrite the OSS ones
+      # with builds from EE
+      if (repo = config_source[MAVEN_REPO_CONFIG_KEY]) && !config_source['exclude-default-modules']
         maven = MavenDeploy.new(:repository_url => repo,
           :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
           :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])

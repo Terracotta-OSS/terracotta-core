@@ -11,6 +11,7 @@ class Object
   end
 end
 
+
 # Adds methods to class String that are useful for our purposes.
 class String
   # Does this string start with exactly the given string?
