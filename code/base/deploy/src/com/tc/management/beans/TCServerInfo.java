@@ -153,7 +153,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     if (!server.canShutdown()) { throw new RuntimeException(
                                                             "Server cannot be shutdown because it is not fully started."); }
     logger.warn("shutdown is invoked by MBean");
-    final Timer timer = new Timer();
+    final Timer timer = new Timer("TCServerInfo shutdown timer");
     final TimerTask task = new TimerTask() {
       @Override
       public void run() {

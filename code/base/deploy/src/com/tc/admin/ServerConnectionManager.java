@@ -454,7 +454,7 @@ public class ServerConnectionManager implements NotificationListener {
       connectMonitorAction = new ConnectionMonitorAction();
     }
     if (connectMonitorTimer == null) {
-      connectMonitorTimer = new Timer();
+      connectMonitorTimer = new Timer("ServerConnectionManager Connect Monitor Timer");
       connectMonitorTimer.schedule(connectMonitorAction, CONNECT_MONITOR_PERIOD, CONNECT_MONITOR_PERIOD);
     }
   }

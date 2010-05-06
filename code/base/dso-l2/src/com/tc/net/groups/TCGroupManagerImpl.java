@@ -97,7 +97,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private final ConcurrentHashMap<MessageChannel, ServerID> channelToNodeID             = new ConcurrentHashMap<MessageChannel, ServerID>();
   private final ConcurrentHashMap<ServerID, TCGroupMember>  members                     = new ConcurrentHashMap<ServerID, TCGroupMember>();
   private final ConcurrentHashMap<String, TCGroupMember>    nodenameToMembers           = new ConcurrentHashMap<String, TCGroupMember>();
-  private final Timer                                       handshakeTimer              = new Timer(true);
+  private final Timer                                       handshakeTimer              = new Timer(
+                                                                                                    "TC Group Manager Handshake timer",
+                                                                                                    true);
   private final Set<NodeID>                                 zappedSet                   = Collections
                                                                                             .synchronizedSet(new HashSet<NodeID>());
   private final StageManager                                stageManager;
