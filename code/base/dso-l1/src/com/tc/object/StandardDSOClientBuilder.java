@@ -9,6 +9,7 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.TCClient;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
@@ -74,7 +75,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
                                                                final PreparedComponentsFromL2Connection connComp,
                                                                final SessionProvider sessionProvider,
-                                                               int maxReconnectTries, int socketConnectTimeout) {
+                                                               int maxReconnectTries, int socketConnectTimeout,
+                                                               TCClient client) {
     ClientMessageChannel cmc;
     ConfigItem connectionInfoItem = connComp.createConnectionInfoConfigItem();
     ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
@@ -118,7 +120,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     GroupID defaultGroups[] = dsoChannel.getGroupIDs();
     Assert.assertNotNull(defaultGroups);
     Assert.assertEquals(1, defaultGroups.length);
-    
+
     return new ClusterMetaDataManagerImpl(defaultGroups[0], encoding, threadIDManager, nwoFactory, kfovFactory,
                                           nmdmFactory);
   }

@@ -11,6 +11,8 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.MockSink;
 import com.tc.async.impl.StageManagerImpl;
+import com.tc.config.NodesStore;
+import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -43,6 +45,8 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -77,8 +81,11 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     MyListener l2 = new MyListener();
     gm2.registerForMessages(ObjectSyncMessage.class, l2);
 
-    NodeID n1 = gm1.join(allNodes[0], allNodes);
-    NodeID n2 = gm2.join(allNodes[1], allNodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, allNodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    NodeID n1 = gm1.join(allNodes[0], nodeStore);
+    NodeID n2 = gm2.join(allNodes[1], nodeStore);
 
     ThreadUtil.reallySleep(1000);
 

@@ -4,16 +4,11 @@
  */
 package com.tc.net.core;
 
-import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.util.StringUtil;
 
-public class ConnectionAddressProvider {
+public class ConnectionAddressProvider implements ClusterTopologyChangedListener {
 
-  private final ConnectionInfo[] addresses;
-
-  public ConnectionAddressProvider(ConfigItem source) {
-    this((ConnectionInfo[]) source.getObject());
-  }
+  private volatile ConnectionInfo[] addresses;
 
   public ConnectionAddressProvider(ConnectionInfo[] addresses) {
     this.addresses = (addresses == null) ? ConnectionInfo.EMPTY_ARRAY : addresses;
@@ -27,8 +22,20 @@ public class ConnectionAddressProvider {
     return new ConnectionAddressIterator(addresses);
   }
   
+  public synchronized void serversUpdated(ConnectionAddressProvider... addressProviders) {
+    for(ConnectionAddressProvider cap: addressProviders) {
+      if(cap.getGroupId() == this.getGroupId()) {
+        this.addresses = cap.addresses;
+      }
+    }
+  }
+
   public int getGroupId() {
-    if(addresses == null || addresses[0] == null) return -1;
+    if (addresses == null || addresses[0] == null) {
+      synchronized (this) {
+        if (addresses == null || addresses[0] == null) { return -1; }
+      }
+    }
     return addresses[0].getGroupId();
   }
 }

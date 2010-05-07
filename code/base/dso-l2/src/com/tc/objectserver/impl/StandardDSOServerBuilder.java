@@ -63,7 +63,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     this.logger = logger;
     this.logger.info("Standard DSO Server created");
     this.haConfig = haConfig;
-    this.thisGroupID = this.haConfig.getThisGroup().getGroupId();
+    this.thisGroupID = this.haConfig.getThisGroupID();
   }
 
   public GarbageCollector createGarbageCollector(List<PostInit> toInit, ObjectManagerConfig objectManagerConfig,
@@ -83,8 +83,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              StageManager stageManager, ServerID serverNodeID, Sink httpSink,
                                              StripeIDStateManager stripeStateManager,
                                              ServerGlobalTransactionManager gtxm) {
+    // TODO: currently making all with L2hacoordinator which should probably the case after this feature
     if (networkedHA) {
-      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink);
+      return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink, this.haConfig.getNodesStore());
     } else {
       return new SingleNodeGroupManager();
     }

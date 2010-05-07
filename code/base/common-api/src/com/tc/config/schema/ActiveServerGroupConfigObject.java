@@ -14,7 +14,6 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
 import com.tc.net.GroupID;
-import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
@@ -32,9 +31,9 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   public static final int     defaultGroupId = 0;
 
   private GroupID             groupId;
+  private String              grpName;
   private final NewHaConfig   haConfig;
   private final MembersConfig membersConfig;
-  private final String        grpName;
 
   public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager) {
     super(context);
@@ -42,10 +41,6 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     MirrorGroup group = (MirrorGroup) context.bean();
 
     String groupName = group.getGroupName();
-    if (groupName == null) {
-      groupName = ActiveCoordinatorHelper.getGroupNameFrom(group.getMembers().getMemberArray());
-    }
-
     this.grpName = groupName;
 
     membersConfig = new MembersConfigObject(createContext(setupManager, true, group));
@@ -58,6 +53,10 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
 
   public NewHaConfig getHa() {
     return this.haConfig;
+  }
+  
+  public void setGroupName(String groupName) {
+    this.grpName = groupName;
   }
 
   public String getGroupName() {

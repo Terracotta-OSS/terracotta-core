@@ -17,7 +17,7 @@ public interface L1TVSConfigurationSetupManager {
   boolean loadedFromTrustedSource();
 
   String rawConfigText();
-  
+
   NewCommonL1Config commonL1Config();
 
   L2ConfigForL1 l2Config();
@@ -29,4 +29,6 @@ public interface L1TVSConfigurationSetupManager {
   String[] applicationNames();
 
   NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
+
+  void reloadServersConfiguration() throws ConfigurationSetupException;
 }

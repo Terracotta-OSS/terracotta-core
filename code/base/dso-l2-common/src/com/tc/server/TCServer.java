@@ -6,6 +6,7 @@ package com.tc.server;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 
 public interface TCServer {
   void start() throws Exception;
@@ -49,8 +50,10 @@ public interface TCServer {
   int getDSOListenPort();
 
   int getDSOGroupPort();
-  
+
   void waitUntilShutdown();
 
   void dump();
+
+  void reloadConfiguration() throws ConfigurationSetupException;
 }

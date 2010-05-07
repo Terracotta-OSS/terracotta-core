@@ -34,6 +34,10 @@ public class GroupInfoServlet extends HttpServlet {
   private Map<String, String>                     serverNameToHostName;
 
   public void init() {
+    // NO OP
+  }
+
+  private void createDocumentToSend() {
     configSetupManager = (L2TVSConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
     serverGroupsDocument = ServerGroupsDocument.Factory.newInstance();
     createServerNameToDsoPortAndHostname();
@@ -74,7 +78,8 @@ public class GroupInfoServlet extends HttpServlet {
     }
   }
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+  protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    createDocumentToSend();
     OutputStream out = response.getOutputStream();
     IOUtils.copy(this.serverGroupsDocument.newInputStream(), out);
     response.flushBuffer();

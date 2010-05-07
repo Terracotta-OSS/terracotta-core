@@ -39,10 +39,10 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     L1TVSConfigurationSetupManager {
   private final ConfigurationCreator configurationCreator;
   private final NewCommonL1Config    commonL1Config;
-  private final L2ConfigForL1        l2ConfigForL1;
   private final NewL1DSOConfig       dsoL1Config;
   private final ConfigTCProperties   configTCProperties;
   private final boolean              loadedFromTrustedSource;
+  private volatile L2ConfigForL1     l2ConfigForL1;
 
   public StandardL1TVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
                                                 DefaultValueProvider defaultValueProvider,
@@ -108,5 +108,13 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
     }
 
     tcProps.overwriteTcPropertiesFromConfig(propMap);
+  }
+
+  public void reloadServersConfiguration() throws ConfigurationSetupException {
+    configurationCreator.reloadServersConfiguration(serversBeanRepository());
+    // reload L2 config here as well
+    L2ConfigForL1 tempL2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
+                                                              createContext(systemBeanRepository(), null));
+    this.l2ConfigForL1 = tempL2ConfigForL1;
   }
 }

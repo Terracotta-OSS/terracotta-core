@@ -8,6 +8,8 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
+import com.tc.config.NodesStore;
+import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.lang.TCThreadGroup;
@@ -33,6 +35,8 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
@@ -159,7 +163,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     // joining
     System.out.println("*** Start Joining...");
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], allNodes);
+      Set<Node> nodeSet = new HashSet<Node>();
+      Collections.addAll(nodeSet, allNodes);
+      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+      groupManagers[i].join(allNodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(1000 * nodes);
 
@@ -215,8 +222,11 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     // joining
     System.out.println("*** Start Joining...");
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, proxiedAllNodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nodes; ++i) {
-      groupManagers[i].join(allNodes[i], proxiedAllNodes);
+      groupManagers[i].join(allNodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(1000 * nodes);
 

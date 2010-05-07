@@ -11,6 +11,8 @@ import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
+import com.tc.config.NodesStore;
+import com.tc.config.NodesStoreImpl;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessageFactory;
 import com.tc.lang.TCThreadGroup;
@@ -40,7 +42,9 @@ import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /*
  * This test is to verify fix for DEV-2149 reallocating big memory. After test, grep "large" to see if big memory block
@@ -79,8 +83,11 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     MyListener l2 = new MyListener();
     gm2.registerForMessages(RelayedCommitTransactionMessage.class, l2);
 
-    NodeID n1 = gm1.join(allNodes[0], allNodes);
-    NodeID n2 = gm2.join(allNodes[1], allNodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, allNodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    NodeID n1 = gm1.join(allNodes[0], nodeStore);
+    NodeID n2 = gm2.join(allNodes[1], nodeStore);
 
     ThreadUtil.reallySleep(1000);
 

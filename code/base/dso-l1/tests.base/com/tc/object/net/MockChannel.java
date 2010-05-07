@@ -134,4 +134,8 @@ public class MockChannel implements DSOClientMessageChannel {
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
     throw new ImplementMe();
   }
+
+  public void reloadConfiguration() {
+    throw new ImplementMe();
+  }
 }

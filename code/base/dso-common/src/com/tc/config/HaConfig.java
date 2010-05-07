@@ -4,8 +4,9 @@
  */
 package com.tc.config;
 
+import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.net.GroupID;
 import com.tc.net.groups.Node;
-import com.tc.net.groups.ServerGroup;
 
 public interface HaConfig {
 
@@ -24,17 +25,25 @@ public interface HaConfig {
    */
   boolean isDiskedBasedActivePassive();
 
-  ServerGroup getActiveCoordinatorGroup();
-
-  ServerGroup[] getAllActiveServerGroups();
+  GroupID getActiveCoordinatorGroupID();
+  
+  GroupID[] getGroupIDs();
 
   Node getThisNode();
 
-  ServerGroup getThisGroup();
+  GroupID getThisGroupID();
 
-  Node[] getThisGroupNodes();
-
-  Node[] getAllNodes();
+  NodesStore getNodesStore();
 
   boolean isActiveCoordinatorGroup();
+
+  /**
+   * @return true if nodes are removed
+   * @throws ConfigurationSetupException
+   */
+  ReloadConfigChangeContext reloadConfiguration() throws ConfigurationSetupException;
+
+  ClusterInfo getClusterInfo();
+
+  String getNodeName(String member);
 }

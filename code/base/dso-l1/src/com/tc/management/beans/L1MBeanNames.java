@@ -18,6 +18,7 @@ public class L1MBeanNames {
   public static final ObjectName RUNTIME_LOGGING_PUBLIC;
   public static final ObjectName INSTRUMENTATION_LOGGING_PUBLIC;
   public static final ObjectName RUNTIME_OUTPUT_OPTIONS_PUBLIC;
+  public static final ObjectName ENTERPRISE_TC_CLIENT;
 
   static {
     try {
@@ -35,6 +36,9 @@ public class L1MBeanNames {
       RUNTIME_OUTPUT_OPTIONS_PUBLIC = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
                                                                             "Terracotta Runtime Output Options Bean",
                                                                             TerracottaManagement.MBeanDomain.PUBLIC);
+      ENTERPRISE_TC_CLIENT = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.Logging, null,
+                                                                   "Terracotta Enterprise Bean",
+                                                                   TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

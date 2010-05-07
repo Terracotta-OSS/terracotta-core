@@ -39,6 +39,8 @@ public interface DSOClientMBean extends TerracottaMBean {
   ObjectName getRuntimeOutputOptionsBeanName();
 
   RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean();
+  
+  ObjectName getEnterpriseTCClientBeanName();
 
   ChannelID getChannelID();
 

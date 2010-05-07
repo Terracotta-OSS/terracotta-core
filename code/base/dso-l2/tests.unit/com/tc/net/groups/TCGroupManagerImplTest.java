@@ -9,6 +9,8 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.bytes.TCByteBuffer;
+import com.tc.config.NodesStore;
+import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.l2.msg.GCResultMessage;
@@ -53,7 +55,9 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -110,8 +114,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
     // open test
     groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
 
@@ -147,8 +154,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
     // open test
     groups[0].openChannel(LOCALHOST, proxyPort, new NullChannelEventListener());
 
@@ -196,9 +206,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setZapNodeRequestProcessor(proc1);
     groups[1].setZapNodeRequestProcessor(proc2);
-
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
 
     int proc1OutGoingZapMsg = 0, proc1IncomingZapMsg = 0;
     int proc2OutGoingZapMsg = 0, proc2IncomingZapMsg = 0;
@@ -236,8 +249,13 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
 
     groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
     groups[1].openChannel(LOCALHOST, groupPorts[0], new NullChannelEventListener());
@@ -267,8 +285,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
 
     groups[0].openChannel(LOCALHOST, groupPorts[1], new NullChannelEventListener());
     Thread.sleep(1000);
@@ -323,8 +345,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[0].registerForMessages(ObjectSyncMessage.class, listeners[0]);
     groups[1].registerForMessages(ObjectSyncMessage.class, listeners[1]);
 
-    groups[0].join(nodes[0], nodes);
-    groups[1].join(nodes[1], nodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    groups[0].join(nodes[0], nodeStore);
+    groups[1].join(nodes[1], nodeStore);
     ThreadUtil.reallySleep(1000);
     assertEquals(1, groups[0].size());
     assertEquals(1, groups[1].size());
@@ -368,8 +393,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(GCResultMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nGrp; ++i) {
-      groups[i].join(nodes[i], nodes);
+      groups[i].join(nodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(5000);
     for (int i = 0; i < nGrp; ++i) {
@@ -427,8 +455,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(L2StateMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
+    
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nGrp; ++i) {
-      groups[i].join(nodes[i], nodes);
+      groups[i].join(nodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(5000);
     for (int i = 0; i < nGrp; ++i) {
@@ -466,7 +498,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
     for (int i = 0; i < nGrp; ++i) {
-      groups[i].join(nodes[i], nodes);
+      Set<Node> nodeSet = new HashSet<Node>();
+      Collections.addAll(nodeSet, nodes);
+      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+      groups[i].join(nodes[i], nodeStore);
     }
 
     ThreadUtil.reallySleep(5000);
@@ -506,8 +541,12 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(TestMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
+    
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, nodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
     for (int i = 0; i < nGrp; ++i) {
-      nodeIDs[i] = groups[i].join(nodes[i], nodes);
+      nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(1000);
     for (int i = 0; i < nGrp; ++i) {
@@ -654,7 +693,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(TestMessage.class, listeners[i]);
     }
     for (int i = 0; i < nGrp; ++i) {
-      nodeIDs[i] = groups[i].join(nodes[i], nodes);
+      Set<Node> nodeSet = new HashSet<Node>();
+      Collections.addAll(nodeSet, nodes);
+      NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+      nodeIDs[i] = groups[i].join(nodes[i], nodeStore);
     }
     ThreadUtil.reallySleep(1000);
     for (int i = 0; i < nGrp; ++i) {

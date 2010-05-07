@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -37,7 +38,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
   public boolean loadedFromTrustedSource() {
     return this.loadedFromTrustedSource;
   }
-  
+
   public String describeSources() {
     return "Dynamically-generated configuration for tests";
   }
@@ -49,7 +50,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
                                                   ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException {
     try {
-      
+
       l1BeanRepository.setBean(this.beanSet.clientBean(), "from test config");
       addRepository(l1BeanRepository);
       l1BeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
@@ -61,12 +62,11 @@ public class TestConfigurationCreator implements ConfigurationCreator {
       systemBeanRepository.setBean(this.beanSet.systemBean(), "from test config");
       addRepository(systemBeanRepository);
       systemBeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-      
+
       tcPropertiesRepository.setBean(this.beanSet.tcPropertiesBean(), "from test config");
       addRepository(tcPropertiesRepository);
       tcPropertiesRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-      
-      
+
       String[] allNames = this.beanSet.applicationNames();
       for (int i = 0; i < allNames.length; ++i) {
         MutableBeanRepository repository = applicationsRepository.repositoryFor(allNames[i]);
@@ -82,13 +82,17 @@ public class TestConfigurationCreator implements ConfigurationCreator {
   public String rawConfigText() {
     return null;
   }
-  
+
   public File directoryConfigurationLoadedFrom() {
     return null;
   }
 
   private synchronized void addRepository(MutableBeanRepository theRepository) {
     this.allRepositoriesStoredInto.add(theRepository);
+  }
+
+  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository) {
+    throw new UnsupportedOperationException();
   }
 
 }

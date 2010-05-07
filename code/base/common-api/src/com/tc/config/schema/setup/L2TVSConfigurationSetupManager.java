@@ -12,6 +12,7 @@ import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.server.ServerConnectionValidator;
 
 import java.io.InputStream;
 
@@ -30,7 +31,7 @@ public interface L2TVSConfigurationSetupManager {
   UpdateCheckConfig updateCheckConfig();
 
   ActiveServerGroupsConfig activeServerGroupsConfig();
-  
+
   ActiveServerGroupConfig getActiveServerGroupForThisL2();
 
   String[] applicationNames();
@@ -44,10 +45,12 @@ public interface L2TVSConfigurationSetupManager {
   InputStream effectiveConfigFile();
 
   String[] allCurrentlyKnownServers();
-  
+
   String getL2Identifier();
 
   NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
 
   NewL2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
+
+  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator) throws ConfigurationSetupException;
 }

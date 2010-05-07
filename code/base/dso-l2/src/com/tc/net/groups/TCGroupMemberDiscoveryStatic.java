@@ -61,8 +61,28 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  public void addNode(Node node) {
+    DiscoveryStateMachine stateMachine = new DiscoveryStateMachine(node);
+    DiscoveryStateMachine old = nodeStateMap.put(getNodeName(node), stateMachine);
+    Assert.assertNull("Duplicate nodes specified in config, please check " + getNodeName(node), old);
+    stateMachine.start();
+
+    if (stateMachine.isTimeToConnect()) {
+      stateMachine.connecting();
+      discoveryPut(stateMachine);
+    }
+    synchronized (this) {
+      this.notifyAll();
+    }
+  }
+
+  public void removeNode(Node node) {
+    DiscoveryStateMachine old = nodeStateMap.remove(getNodeName(node));
+    Assert.assertNotNull("Tried removing node which was not present", old);
+  }
+
   private String getNodeName(Node node) {
-    return (node.getServerNodeName());
+    return node.getServerNodeName();
   }
 
   public boolean isValidClusterNode(NodeID nodeID) {
@@ -576,4 +596,10 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
+  public boolean isServerConnected(String nodeName) {
+    DiscoveryStateMachine dsm = nodeStateMap.get(nodeName);
+    if (dsm == null) { return false; }
+
+    return dsm.isMemberInGroup();
+  }
 }

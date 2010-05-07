@@ -120,6 +120,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     logCopyOfConfig();
   }
 
+  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository) throws ConfigurationSetupException {
+    ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
+    loadServerConfigDataFromSources(sources, l2sBeanRepository);
+  }
+  
   private ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
     String[] components = configrationSpec.split(",");
     ConfigurationSource[] out = new ConfigurationSource[components.length];

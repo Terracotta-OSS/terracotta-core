@@ -198,5 +198,4 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   public GroupID[] getGroupIDs() {
     return this.groups;
   }
-
 }

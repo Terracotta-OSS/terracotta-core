@@ -15,6 +15,7 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.NullSink;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.exception.TCRuntimeException;
@@ -50,6 +51,7 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
@@ -342,6 +344,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
   private GroupManager                           groupCommManager;
   private Stage                                  hydrateStage;
   private StripeIDStateManager                   stripeIDStateManager;
+
+  protected EnterpriseTCServerMbean              enterpriseTCMbean;
 
   // used by a test
   public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager,
@@ -688,7 +692,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
                                                              managedObjectFlushHandler,
                                                              (persistent ? 1 : this.l2Properties
                                                                  .getInt("seda.flushstage.threads")), -1);
-    long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc").getLong("enterpriseMarkStageInterval");
+    long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc")
+        .getLong("enterpriseMarkStageInterval");
     TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
     boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
     long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
@@ -741,7 +746,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     stripeIDStateManager = new StripeIDStateManagerImpl(haConfig, this.persistor.getPersistentStateStore());
 
     ProductInfo pInfo = ProductInfo.getInstance();
-    DSOChannelManager channelManager = new DSOChannelManagerImpl(haConfig.getThisGroup().getGroupId(), this.l1Listener
+    DSOChannelManager channelManager = new DSOChannelManagerImpl(haConfig.getThisGroupID(), this.l1Listener
         .getChannelManager(), this.communicationsManager.getConnectionManager(), pInfo.version(), stripeIDStateManager);
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
@@ -975,6 +980,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
       }
     });
 
+    // TODO: currently making all with L2hacoordinator which should probably the case after this feature
     if (networkedHA) {
       WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
                                                                                                  channelManager,
@@ -1045,12 +1051,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
   public void startGroupManagers() {
     try {
-      NodeID myNodeId = this.groupCommManager.join(this.haConfig.getThisNode(), this.haConfig.getThisGroupNodes());
+      NodeID myNodeId = this.groupCommManager.join(this.haConfig.getThisNode(), this.haConfig.getNodesStore());
       logger.info("This L2 Node ID = " + myNodeId);
     } catch (GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);
     }
+  }
+
+  public void reloadConfiguration() throws ConfigurationSetupException {
+    if (false) { throw new ConfigurationSetupException(); }
+    throw new UnsupportedOperationException();
   }
 
   protected void initRouteMessages(final Stage processTx, final Stage rootRequest, final Stage requestLock,
@@ -1412,7 +1423,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
 
     this.l2Management = new L2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
                                          this.statisticsAgentSubSystem, this.statisticsGateway,
-                                         this.configSetupManager, this, bind, jmxPort, remoteEventsSink);
+                                         this.configSetupManager, this, bind, jmxPort, remoteEventsSink,
+                                         this.enterpriseTCMbean);
+
     this.l2Management.start();
   }
 
@@ -1440,4 +1453,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler {
     return new NullThreadIDMapImpl();
   }
 
+  protected GroupManager getGroupManager() {
+    return this.groupCommManager;
+  }
 }

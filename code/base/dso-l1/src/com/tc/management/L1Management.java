@@ -18,6 +18,7 @@ import com.tc.management.beans.logging.RuntimeLogging;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptions;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.management.beans.object.EnterpriseTCClientMbean;
 import com.tc.management.exposed.TerracottaCluster;
 import com.tc.management.remote.protocol.ProtocolProvider;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
@@ -63,11 +64,13 @@ public final class L1Management extends TerracottaManagement {
   private final MBeanSpec[]              mbeanSpecs;
 
   private final L1Dumper                 l1DumpBean;
+  private final EnterpriseTCClientMbean  enterpriseTCClientMbean;
 
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
-                      final TCClient client, final MBeanSpec[] mbeanSpecs) {
+                      final TCClient client, final MBeanSpec[] mbeanSpecs,
+                      EnterpriseTCClientMbean enterpriseTCClientMbean) {
     super();
 
     started = new SetOnceFlag();
@@ -82,6 +85,7 @@ public final class L1Management extends TerracottaManagement {
       instrumentationLoggingBean = new InstrumentationLogging(instrumentationLogger);
       runtimeOutputOptionsBean = new RuntimeOutputOptions(runtimeLogger);
       runtimeLoggingBean = new RuntimeLogging(runtimeLogger);
+      this.enterpriseTCClientMbean = enterpriseTCClientMbean;
     } catch (NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException(
                                    "Unable to construct one of the L1 MBeans: this is a programming error in one of those beans",
@@ -146,6 +150,7 @@ public final class L1Management extends TerracottaManagement {
     else if (objectName.equals(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC)) return instrumentationLoggingBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC)) return runtimeOutputOptionsBean;
     else if (objectName.equals(L1MBeanNames.RUNTIME_LOGGING_PUBLIC)) return runtimeLoggingBean;
+    else if (objectName.equals(L1MBeanNames.ENTERPRISE_TC_CLIENT)) return enterpriseTCClientMbean;
     else {
       synchronized (mBeanServerLock) {
         if (mBeanServer != null) { return findMBean(objectName, mBeanInterface, mBeanServer); }
@@ -191,6 +196,10 @@ public final class L1Management extends TerracottaManagement {
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.registerMBeans(mBeanServer, tunnelingHandler.getUUID());
     }
+    if (enterpriseTCClientMbean != null) {
+      registerMBean(enterpriseTCClientMbean, L1MBeanNames.ENTERPRISE_TC_CLIENT);
+    }
+
     registerMBean(l1InfoBean, L1MBeanNames.L1INFO_PUBLIC);
     registerMBean(instrumentationLoggingBean, L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     registerMBean(runtimeOutputOptionsBean, L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);

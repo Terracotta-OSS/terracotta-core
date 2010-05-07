@@ -14,6 +14,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
 import com.tc.object.bytecode.SessionConfiguration;
@@ -305,4 +306,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   SessionConfiguration getSessionConfiguration(String appName);
 
   void addWebApplication(String pattern, SessionConfiguration config);
+
+  L1TVSConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException;
 }

@@ -76,5 +76,4 @@ public interface DSOClientMessageChannel {
   public JMXMessage getJMXMessage();
 
   public GroupID[] getGroupIDs();
-
 }

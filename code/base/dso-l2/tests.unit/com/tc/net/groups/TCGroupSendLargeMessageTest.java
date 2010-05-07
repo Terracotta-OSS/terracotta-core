@@ -9,6 +9,8 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
+import com.tc.config.NodesStore;
+import com.tc.config.NodesStoreImpl;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.lang.TCThreadGroup;
@@ -28,6 +30,8 @@ import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TCGroupSendLargeMessageTest extends TCTestCase {
   private final static String LOCALHOST   = "localhost";
@@ -61,8 +65,11 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     MyListener l2 = new MyListener();
     gm2.registerForMessages(GCResultMessage.class, l2);
 
-    NodeID n1 = gm1.join(allNodes[0], allNodes);
-    NodeID n2 = gm2.join(allNodes[1], allNodes);
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, allNodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    NodeID n1 = gm1.join(allNodes[0], nodeStore);
+    NodeID n2 = gm2.join(allNodes[1], nodeStore);
 
     ThreadUtil.reallySleep(1000);
 

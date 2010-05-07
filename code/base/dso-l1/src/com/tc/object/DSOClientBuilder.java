@@ -7,6 +7,7 @@ import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.TCClient;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -55,7 +56,7 @@ public interface DSOClientBuilder {
   DSOClientMessageChannel createDSOClientMessageChannel(final CommunicationsManager commMgr,
                                                         final PreparedComponentsFromL2Connection connComp,
                                                         final SessionProvider sessionProvider, int maxReconnectTries,
-                                                        int socketConnectTimeout);
+                                                        int socketConnectTimeout, TCClient client);
 
   CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
                                                     final NetworkStackHarnessFactory stackHarnessFactory,

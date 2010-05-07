@@ -14,12 +14,11 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
-import com.tc.net.GroupID;
+import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 
-import java.util.Arrays;
 import java.util.Comparator;
 
 public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
@@ -53,13 +52,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
                                                                   setupManager);
     }
 
-    // Assign GroupID to groups in sorted order according to the group names
-    Arrays.sort(tempGroupConfigArray, new ActiveGroupNameComparator());
-    for (int i = 0; i < tempGroupConfigArray.length; i++) {
-      tempGroupConfigArray[i].setGroupId(new GroupID(i));
-    }
-
-    this.groupConfigArray = tempGroupConfigArray;
+    this.groupConfigArray = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
   }
 
   public int getActiveServerGroupCount() {

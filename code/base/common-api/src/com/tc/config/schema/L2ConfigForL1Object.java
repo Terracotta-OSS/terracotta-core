@@ -21,8 +21,6 @@ import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -120,16 +118,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
         Assert.assertNotNull(asgArray);
         Assert.assertTrue(asgArray.length >= 1);
 
-        // Set group names if not already set
-        for (int i = 0; i < asgArray.length; i++) {
-          String groupName = asgArray[i].getGroupName();
-          if (groupName == null) {
-            groupName = ActiveCoordinatorHelper.getGroupNameFrom(asgArray[i].getMembers().getMemberArray());
-            asgArray[i].setGroupName(groupName);
-          }
-        }
-        // Sort the array according to the group names
-        Arrays.sort(asgArray, new MirrorGroupNameComparator());
+        asgArray = ActiveCoordinatorHelper.generateGroupNames(asgArray);
 
         for (int i = 0; i < asgArray.length; i++) {
           String[] members = asgArray[i].getMembers().getMemberArray();
@@ -205,11 +194,5 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
         return l2DataArray;
       }
     };
-  }
-
-  public static class MirrorGroupNameComparator implements Comparator<MirrorGroup> {
-    public int compare(MirrorGroup obj1, MirrorGroup obj2) {
-      return obj1.getGroupName().compareTo(obj2.getGroupName());
-    }
   }
 }

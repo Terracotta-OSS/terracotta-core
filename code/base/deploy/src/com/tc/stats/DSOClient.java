@@ -14,6 +14,7 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
+import com.tc.management.beans.object.EnterpriseTCClientMbean;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -43,7 +44,7 @@ import javax.management.ObjectName;
 
 public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean, NotificationListener {
 
-  private static final TCLogger                logger         = TCLogging.getLogger(DSOClient.class);
+  private static final TCLogger                logger                  = TCLogging.getLogger(DSOClient.class);
 
   private final MBeanServer                    mbeanServer;
   private boolean                              isListeningForTunneledBeans;
@@ -60,9 +61,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter                 flushRate;
   private final SampledCounter                 faultRate;
   private final Counter                        pendingTransactions;
-  private final SynchronizedLong               sequenceNumber = new SynchronizedLong(0L);
+  private final SynchronizedLong               sequenceNumber          = new SynchronizedLong(0L);
   private final ClientID                       clientID;
   private final ClientStateManager             stateManager;
+
+  private ObjectName                           enterpriseMBeanName;
+  private EnterpriseTCClientMbean              enterpriseMBean = null;
+  private boolean                              isEnterprisebeanSet     = false;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -90,6 +95,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.instrumentationLoggingBeanName = getTunneledBeanName(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
     this.runtimeLoggingBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_LOGGING_PUBLIC);
     this.runtimeOutputOptionsBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
+    this.enterpriseMBeanName = getTunneledBeanName(L1MBeanNames.ENTERPRISE_TC_CLIENT);
 
     testSetupTunneledBeans();
   }
@@ -292,6 +298,11 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
         .newProxyInstance(mbeanServer, runtimeOutputOptionsBeanName, RuntimeOutputOptionsMBean.class, false);
   }
 
+  private void setupEnterpriseClientMBean() {
+    enterpriseMBean = (EnterpriseTCClientMbean) MBeanServerInvocationHandler
+        .newProxyInstance(mbeanServer, enterpriseMBeanName, EnterpriseTCClientMbean.class, false);
+  }
+
   private boolean haveAllTunneledBeans() {
     return l1InfoBean != null && instrumentationLoggingBean != null && runtimeLoggingBean != null
            && runtimeOutputOptionsBean != null;
@@ -330,6 +341,13 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     if (runtimeOutputOptionsBean == null && matchesClientBeanName(runtimeOutputOptionsBeanName, beanName)) {
       runtimeOutputOptionsBeanName = beanName;
       setupRuntimeOutputOptionsBean();
+    }
+
+    if (!isEnterprisebeanSet && enterpriseMBean == null
+        && matchesClientBeanName(enterpriseMBeanName, beanName)) {
+      enterpriseMBeanName = beanName;
+      setupEnterpriseClientMBean();
+      isEnterprisebeanSet = true;
     }
 
     if (haveAllTunneledBeans()) {
@@ -394,5 +412,9 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return Arrays.asList(NOTIFICATION_INFO).toArray(EMPTY_NOTIFICATION_INFO);
+  }
+
+  public ObjectName getEnterpriseTCClientBeanName() {
+    return enterpriseMBeanName;
   }
 }

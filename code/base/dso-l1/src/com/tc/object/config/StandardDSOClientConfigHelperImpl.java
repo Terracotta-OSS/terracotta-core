@@ -2122,4 +2122,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
+  public L1TVSConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {
+    configSetupManager.reloadServersConfiguration();
+    return configSetupManager;
+  }
+
 }

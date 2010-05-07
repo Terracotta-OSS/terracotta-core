@@ -10,7 +10,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
 import com.tc.net.StripeID;
-import com.tc.net.groups.ServerGroup;
 import com.tc.net.groups.StripeIDEventListener;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.object.persistence.api.PersistentMapStore;
@@ -36,15 +35,14 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager {
   public StripeIDStateManagerImpl(HaConfig haConfig, PersistentMapStore persistentStateStore) {
     this.persistentStateStore = persistentStateStore;
     this.isAACoordinator = haConfig.isActiveCoordinatorGroup();
-    this.thisGroupID = haConfig.getThisGroup().getGroupId();
+    this.thisGroupID = haConfig.getThisGroupID();
     this.unKnownIDCount.set(loadStripeIDFromDB(haConfig));
   }
 
   private int loadStripeIDFromDB(HaConfig haConfig) {
-    ServerGroup[] groups = haConfig.getAllActiveServerGroups();
-    int count = groups.length;
-    for (ServerGroup group : groups) {
-      GroupID gid = group.getGroupId();
+    GroupID[] groupIDs = haConfig.getGroupIDs();
+    int count = groupIDs.length;
+    for (GroupID gid : groupIDs) {
       String id = getFromStore(gid);
       StripeID stripeID;
       if (id != null) {
