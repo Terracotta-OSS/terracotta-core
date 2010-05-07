@@ -4,6 +4,8 @@
   <property name="m2_pattern" value="[organisation]/[artifact]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
 
   <property name="local-m2-pattern" value="${user.home}/.m2/repository/${m2_pattern}"/> 
+  
+  <property name="ivy.checksums" value=""/>
 
   <resolvers>
 

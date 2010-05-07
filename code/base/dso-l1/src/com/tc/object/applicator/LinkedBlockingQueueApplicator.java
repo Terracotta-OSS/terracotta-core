@@ -32,7 +32,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class LinkedBlockingQueueApplicator extends BaseApplicator {
   private static final TCLogger logger                                  = TCLogging
                                                                             .getLogger(LinkedBlockingQueueApplicator.class);
-  private static final String   LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX = LinkedBlockingQueue.class.getName() + ".";
   private static final String   TAKE_LOCK_FIELD_NAME                    = "takeLock";
   private static final String   PUT_LOCK_FIELD_NAME                     = "putLock";
   private static final String   CAPACITY_FIELD_NAME                     = "capacity";
@@ -137,11 +136,11 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
         String fieldName = physicalAction.getFieldName();
         Object value = physicalAction.getObject();
 
-        if (fieldName.equals(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + TAKE_LOCK_FIELD_NAME)) {
+        if (fieldName.equals(TAKE_LOCK_FIELD_NAME)) {
           takeLock = objectManager.lookupObject((ObjectID) value);
-        } else if (fieldName.equals(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + PUT_LOCK_FIELD_NAME)) {
+        } else if (fieldName.equals(PUT_LOCK_FIELD_NAME)) {
           putLock = objectManager.lookupObject((ObjectID) value);
-        } else if (fieldName.equals(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + CAPACITY_FIELD_NAME)) {
+        } else if (fieldName.equals(CAPACITY_FIELD_NAME)) {
           capacity = value;
         }
       }
@@ -239,15 +238,15 @@ public class LinkedBlockingQueueApplicator extends BaseApplicator {
     try {
       Object takeLock = TAKE_LOCK_FIELD.get(pojo);
       takeLock = getDehydratableObject(takeLock, objectManager);
-      writer.addPhysicalAction(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + TAKE_LOCK_FIELD_NAME, takeLock);
+      writer.addPhysicalAction(TAKE_LOCK_FIELD_NAME, takeLock);
 
       Object putLock = PUT_LOCK_FIELD.get(pojo);
       putLock = getDehydratableObject(putLock, objectManager);
-      writer.addPhysicalAction(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + PUT_LOCK_FIELD_NAME, putLock);
+      writer.addPhysicalAction(PUT_LOCK_FIELD_NAME, putLock);
 
       Object capacity = CAPACITY_FIELD.get(pojo);
       capacity = getDehydratableObject(capacity, objectManager);
-      writer.addPhysicalAction(LINKED_BLOCKING_QUEUE_FIELD_NAME_PREFIX + CAPACITY_FIELD_NAME, capacity);
+      writer.addPhysicalAction(CAPACITY_FIELD_NAME, capacity);
     } catch (IllegalAccessException e) {
       throw new TCRuntimeException(e);
     }

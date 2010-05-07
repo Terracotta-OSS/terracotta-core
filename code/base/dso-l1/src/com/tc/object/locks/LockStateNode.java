@@ -360,8 +360,6 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     private final long                   waitTime;
     private final Stack<PendingLockHold> reacquires;
     
-    private volatile boolean             notified;
-    
     LockWaiter(ThreadID owner, Object waitObject, Stack<LockHold> holds, long timeout) {
       super(owner);
       if (waitObject == null) {
@@ -388,20 +386,13 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     
     void park() throws InterruptedException {
       synchronized (waitObject) {
-        while (!notified) {
-          waitObject.wait();
-        }
+        waitObject.wait();
       }
     }
 
     void park(long timeout) throws InterruptedException {
-      long lastTime = System.currentTimeMillis();
       synchronized (waitObject) {
-        while (!notified && timeout > 0) {
-          waitObject.wait(timeout);
-          long now = System.currentTimeMillis();
-          timeout -= now - lastTime;
-        }
+        waitObject.wait(timeout);
       }
     }
     
@@ -410,7 +401,6 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       LOCK_TIMER.schedule(new TimerTask() {
         @Override public void run() {
           synchronized (waitObject) {
-            notified = true;
             waitObject.notifyAll();
           }
         }

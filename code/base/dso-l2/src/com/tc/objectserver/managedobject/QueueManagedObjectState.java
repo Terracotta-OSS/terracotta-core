@@ -23,12 +23,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Server representation of a list
+ * Server representation of a queue
  */
 public class QueueManagedObjectState extends LogicalManagedObjectState {
-  private static final String TAKE_LOCK_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.takeLock";
-  private static final String PUT_LOCK_FIELD_NAME  = "java.util.concurrent.LinkedBlockingQueue.putLock";
-  private static final String CAPACITY_FIELD_NAME  = "java.util.concurrent.LinkedBlockingQueue.capacity";
+  private static final String TAKE_LOCK_FIELD_NAME = "takeLock";
+  private static final String PUT_LOCK_FIELD_NAME  = "putLock";
+  private static final String CAPACITY_FIELD_NAME  = "capacity";
 
   private ObjectID            takeLockField;
   private ObjectID            putLockField;
