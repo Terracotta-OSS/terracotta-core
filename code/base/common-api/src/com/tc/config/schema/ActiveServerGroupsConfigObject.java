@@ -26,7 +26,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   private final int                       activeServerGroupCount;
 
   public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager)
-      throws XmlException {
+      throws XmlException, ConfigurationSetupException {
     super(context);
     context.ensureRepositoryProvides(MirrorGroups.class);
     final MirrorGroups groups = (MirrorGroups) context.bean();

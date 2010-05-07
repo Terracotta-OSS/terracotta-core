@@ -6,6 +6,7 @@ package com.tc.util;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupConfigObject;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.net.GroupID;
 import com.terracottatech.config.MirrorGroup;
 
@@ -15,11 +16,16 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 
 public class ActiveCoordinatorHelper {
-  static final String GROUP_NAME_PREFIX = "Tc-Group-";
+  public static final String GROUP_NAME_PREFIX = "Tc-Group-";
 
-  public static ActiveServerGroupConfigObject[] generateGroupInfo(ActiveServerGroupConfigObject[] originalGroupInfos) {
+  public static ActiveServerGroupConfigObject[] generateGroupInfo(ActiveServerGroupConfigObject[] originalGroupInfos)
+      throws ConfigurationSetupException {
     TreeMap<String, ActiveServerGroupConfigObject> candidateGroupNames = generateCandidateGroupNames(originalGroupInfos);
 
+    if (originalGroupInfos.length != candidateGroupNames.size()) { throw new ConfigurationSetupException(
+                                                                                                         "The group names specified are same "
+                                                                                                             + candidateGroupNames
+                                                                                                                 .keySet()); }
     // Generate Group Info
     ActiveServerGroupConfigObject[] groupInfos = new ActiveServerGroupConfigObject[originalGroupInfos.length];
     int groupID = 0;
