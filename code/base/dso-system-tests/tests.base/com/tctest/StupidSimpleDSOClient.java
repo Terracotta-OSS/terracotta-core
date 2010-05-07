@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -55,7 +56,10 @@ public class StupidSimpleDSOClient {
   public static void main(String[] args) throws Exception {
     StandardTVSConfigurationSetupManagerFactory factory;
 
-    factory = new StandardTVSConfigurationSetupManagerFactory(args, false, new FatalIllegalConfigurationChangeHandler());
+    factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                              args,
+                                                              StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                              new FatalIllegalConfigurationChangeHandler());
     L1TVSConfigurationSetupManager configManager = factory.createL1TVSConfigurationSetupManager();
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(configManager);
     IsolationClassLoader classLoader = new IsolationClassLoader(new StandardDSOClientConfigHelperImpl(configManager),

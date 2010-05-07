@@ -40,7 +40,8 @@ public class TCStop {
   public static final int       DEFAULT_PORT  = 9520;
 
   public static final void main(String[] args) throws Exception {
-    Options options = StandardTVSConfigurationSetupManagerFactory.createOptions(true);
+    Options options = StandardTVSConfigurationSetupManagerFactory
+        .createOptions(StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2);
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
     commandLineBuilder.setOptions(options);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
@@ -89,7 +90,9 @@ public class TCStop {
       }
 
       FatalIllegalConfigurationChangeHandler changeHandler = new FatalIllegalConfigurationChangeHandler();
-      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(args, true,
+      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                                                                    args,
+                                                                                                    StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                                                     changeHandler);
 
       String name = null;

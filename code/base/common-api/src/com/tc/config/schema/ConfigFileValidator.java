@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -18,7 +19,10 @@ public class ConfigFileValidator {
   public void validate(String[] args) throws ConfigurationSetupException {
     StandardTVSConfigurationSetupManagerFactory factory;
 
-    factory = new StandardTVSConfigurationSetupManagerFactory(args, true, new FatalIllegalConfigurationChangeHandler());
+    factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                              args,
+                                                              StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                              new FatalIllegalConfigurationChangeHandler());
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
     description = manager.describeSources();
   }

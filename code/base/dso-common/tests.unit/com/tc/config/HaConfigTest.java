@@ -25,34 +25,34 @@ public class HaConfigTest extends TCTestCase {
     try {
       tcConfig = getTempFile("tc-config-testFakeL2sName.xml");
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"
-                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                      + "\n<servers>"
-                      + "\n      <server name=\"server1\">" 
-                      + "\n      <dso>" 
-                      + "\n        <persistence>"
-                      + "\n          <mode>permanent-store</mode>" 
-                      + "\n        </persistence>" 
-                      + "\n      </dso>"
-                      + "\n      </server>" 
-                      + "\n</servers>" 
-                      + "\n</tc:tc-config>";
+                      + "\n<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "\n<servers>"
+                      + "\n      <server name=\"server1\">" + "\n      <dso>" + "\n        <persistence>"
+                      + "\n          <mode>permanent-store</mode>" + "\n        </persistence>" + "\n      </dso>"
+                      + "\n      </server>" + "\n</servers>" + "\n</tc:tc-config>";
       writeConfigFile(config);
-      
-      //test for picking up default active server group
-      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-          "-f", tcConfig.getAbsolutePath() }, true, new FatalIllegalConfigurationChangeHandler());
+
+      // test for picking up default active server group
+      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+                                                                                                    new String[] {
+                                                                                                        "-f",
+                                                                                                        tcConfig
+                                                                                                            .getAbsolutePath() },
+                                                                                                    StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                                                    new FatalIllegalConfigurationChangeHandler());
       HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getThisGroupNodes().length == 1);
 
-      //test for picking up right active server group for a give server
+      // test for picking up right active server group for a give server
       factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server1" }, true, new FatalIllegalConfigurationChangeHandler());
+          "server1" }, StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                new FatalIllegalConfigurationChangeHandler());
       haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getThisGroupNodes().length == 1);
 
-      //expecting an error when given non existing server for haConfig
+      // expecting an error when given non existing server for haConfig
       factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server2" }, true, new FatalIllegalConfigurationChangeHandler());
+          "server2" }, StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                new FatalIllegalConfigurationChangeHandler());
       try {
         new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
         throw new AssertionError("Config setup manager is suppose to blast for non-existing server name");

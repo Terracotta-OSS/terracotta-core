@@ -92,7 +92,7 @@ public class DSOContextImpl implements DSOContext {
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
-                                                                                                          false,
+                                                                                                          StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
@@ -116,7 +116,7 @@ public class DSOContextImpl implements DSOContext {
     // XXX: refactor this to not duplicate createContext() so much
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
-                                                                                                          false,
+                                                                                                          StandardTVSConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
@@ -233,7 +233,7 @@ public class DSOContextImpl implements DSOContext {
   private synchronized static DSOClientConfigHelper getGlobalConfigHelper() throws ConfigurationSetupException {
     if (staticConfigHelper == null) {
       StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
-                                                                                                            false,
+                                                                                                            StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                                                             new FatalIllegalConfigurationChangeHandler());
 
       logger.debug("Created StandardTVSConfigurationSetupManagerFactory.");

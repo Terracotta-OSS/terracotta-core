@@ -114,7 +114,7 @@ public class RestartTestEnvironment {
 
     config = new StandardTVSConfigurationSetupManagerFactory(new String[] {
         StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
-                                                             true, new MockIllegalConfigurationChangeHandler());
+        StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2, new MockIllegalConfigurationChangeHandler());
   }
 
   private void writeL2Config() throws Exception {

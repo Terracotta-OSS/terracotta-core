@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -8,9 +9,9 @@ package com.tc.config.schema.setup;
  */
 public interface TVSConfigurationSetupManagerFactory {
 
-  public static final String DEFAULT_APPLICATION_NAME  = "default";
-
-  public static final String CONFIG_FILE_PROPERTY_NAME = "tc.config";
+  public static final String DEFAULT_APPLICATION_NAME         = "default";
+  public static final String CONFIG_FILE_PROPERTY_NAME        = "tc.config";
+  public static final String SERVER_CONFIG_FILE_PROPERTY_NAME = "tc.server.topology";
 
   L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException;
 
