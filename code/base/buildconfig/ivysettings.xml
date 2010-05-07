@@ -5,8 +5,6 @@
 
   <property name="local-m2-pattern" value="${user.home}/.m2/repository/${m2_pattern}"/> 
   
-  <property name="ivy.checksums" value=""/>
-
   <resolvers>
 
     <filesystem name="local-m2" m2compatible="true" checkmodified="true" changingPattern=".*SNAPSHOT">
