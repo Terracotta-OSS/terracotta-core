@@ -71,7 +71,7 @@ public class KnopflerfishOSGiTest extends TestCase {
       assertTrue("Terracotta-RequireVersion attribute for " + symbolicName + " module must not be empty.",
                  requireversion.length() > 0);
       assertEquals("Terracotta-RequireVersion attribute for " + symbolicName + " module mis expected to be "
-                   + PRODUCT_VERSION_DOT_QUALIFIER, requireversion, PRODUCT_VERSION_DOT_QUALIFIER);
+                   + PRODUCT_VERSION_DASH_QUALIFIER, requireversion, PRODUCT_VERSION_DASH_QUALIFIER);
 
       String mode = IVersionCheck.OFF;
       int actual = osgiRuntime.versionCheck(mode, requireversion, PRODUCT_VERSION_DASH_QUALIFIER);
