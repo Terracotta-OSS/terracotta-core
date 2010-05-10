@@ -167,7 +167,6 @@ public class Resolver {
     // Resolve null versions by finding newest candidate in available repositories
     if (version == null) {
       version = findNewestVersion(groupId, name);
-      module.setVersion(version);
 
       if (version == null) {
         String msg = "No version was specified for "
@@ -177,6 +176,8 @@ public class Resolver {
                      + " in the Terracotta configuration file and no versions were found in the available repositories.";
         throw new BundleException(msg);
       }
+
+      module.setVersion(version);
     }
 
     // CDV-691: If you are defining a module in the tc-config.xml, the schema requires that you specify

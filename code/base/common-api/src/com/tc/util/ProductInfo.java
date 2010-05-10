@@ -15,6 +15,9 @@ import org.apache.commons.lang.StringUtils;
 
 import com.tc.timapi.Version;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -161,6 +164,16 @@ public final class ProductInfo {
         throw new AssertionError(e);
       } catch (IOException e) {
         // must not be embedded in this jar -- resolve via loader path
+      }
+    } else if (source.getProtocol().equals("file") && (new File(source.getPath()).isDirectory())) {
+      File local = new File(source.getPath(), name);
+
+      if (local.isFile()) {
+        try {
+          return new FileInputStream(local);
+        } catch (FileNotFoundException e) {
+          throw new AssertionError(e);
+        }
       }
     }
 

@@ -9,5 +9,5 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-SymbolicName: org.terracotta.modules.standard-config
 Bundle-Vendor: Terracotta, Inc.
 Bundle-Version: @maven.version.OSGi@
-Terracotta-RequireVersion: @maven.version.OSGi@
+Terracotta-RequireVersion: @maven.version@
 Terracotta-InternalTIM: true
