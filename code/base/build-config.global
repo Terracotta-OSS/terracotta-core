@@ -43,3 +43,4 @@ maven.snapshot=true
 # This should be changed to a fixed value when finalize the version of
 # the TIM API for this kit line
 tim-api.version=1.3.0-SNAPSHOT
+
