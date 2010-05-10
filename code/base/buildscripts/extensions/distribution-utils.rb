@@ -157,7 +157,7 @@ module DistributionUtils
   # the interpolated value is retrieved by invoking it.  In all cases, to_s is invoked
   # on the resulting interpolated value.
   VARIABLE_MAP = {
-    'api.version' => lambda { @config_source['api.version'] || 'unknown' },
+    'tim-api.version' => lambda { @config_source['tim-api.version'] || 'unknown' },
     'kitversion' => 'kit.version',
     'version' => :version,
     'branch' => :current_branch,

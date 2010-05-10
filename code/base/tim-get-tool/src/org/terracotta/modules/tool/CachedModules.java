@@ -57,8 +57,8 @@ public class CachedModules implements Modules {
   private String             tcVersion;
 
   @Inject
-  @Named(ConfigAnnotation.API_VERSION)
-  private String             apiVersion;
+  @Named(ConfigAnnotation.TIM_API_VERSION)
+  private String             timApiVersion;
 
   @Inject
   @Named(ConfigAnnotation.CONFIG_INSTANCE)
@@ -110,30 +110,26 @@ public class CachedModules implements Modules {
   private static boolean attributesVerified(File srcfile, AbstractModule module) throws IOException {
     String moduleName = null;
     String moduleVersion = null;
-    
+
     Manifest mf = (new JarFile(srcfile)).getManifest();
     Attributes attrs = mf.getMainAttributes();
     moduleName = attrs.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
     String osgiVersion = attrs.getValue(ManifestAttributes.OSGI_VERSION.attribute());
-    
-    if(moduleName == null || osgiVersion == null) {
+
+    if (moduleName == null || osgiVersion == null) {
       // Try to use Terracotta-ArtifactCoordinates instead
       String coords = attrs.getValue(ManifestAttributes.TERRACOTTA_COORDINATES.attribute());
-      if(coords == null || coords.length() == 0) {
-        return false;
-      } 
-      
+      if (coords == null || coords.length() == 0) { return false; }
+
       String[] parts = coords.split(":");
-      if(parts.length != 3) {
-        return false;
-      }
+      if (parts.length != 3) { return false; }
       moduleName = parts[0] + "." + parts[1];
       moduleVersion = parts[2];
     } else {
       // Normal bundle
       moduleVersion = OSGiToMaven.bundleVersionToProjectVersion(osgiVersion);
     }
-    
+
     return moduleName.equals(module.symbolicName()) && moduleVersion.equals(module.version());
   }
 
@@ -156,7 +152,7 @@ public class CachedModules implements Modules {
       SAXException, IOException {
     this.config = config;
     this.tcVersion = config.getTcVersion();
-    this.apiVersion = config.getApiVersion();
+    this.timApiVersion = config.getTimApiVersion();
     this.includeSnapshots = config.getIncludeSnapshots();
     this.repository = repository;
     this.dataLoader = null;
@@ -278,18 +274,20 @@ public class CachedModules implements Modules {
   }
 
   boolean qualify(Module module) {
-    return isKitEditionMatch(module) && new VersionMatcher(tcVersion, apiVersion).matches(module.tcVersion(), module.apiVersion());
+    return isKitEditionMatch(module)
+           && new VersionMatcher(tcVersion, timApiVersion).matches(module.tcVersion(), module.timApiVersion());
   }
-  
+
   boolean isKitEditionMatch(Module module) {
-    if(module.kit().equals(KitTypes.ALL.type())) {
+    if (module.kit().equals(KitTypes.ALL.type())) {
       return true;
-    } else if(module.kit().equals(KitTypes.ENTERPRISE.type())) {
+    } else if (module.kit().equals(KitTypes.ENTERPRISE.type())) {
       return config.isEnterpriseKit();
-    } else if(module.kit().equals(KitTypes.OPEN_SOURCE.type())) {
+    } else if (module.kit().equals(KitTypes.OPEN_SOURCE.type())) {
       return config.isOpenSourceKit();
     } else {
-      throw new IllegalArgumentException("Unknown <tc-kit> value for module " + module.groupId + ":" + module.artifactId + ":" + module.version() + ": " + module.kit());
+      throw new IllegalArgumentException("Unknown <tc-kit> value for module " + module.groupId + ":"
+                                         + module.artifactId + ":" + module.version() + ": " + module.kit());
     }
   }
 
@@ -340,8 +338,8 @@ public class CachedModules implements Modules {
     return tcVersion;
   }
 
-  public String apiVersion() {
-    return apiVersion;
+  public String timApiVersion() {
+    return timApiVersion;
   }
 
   public String indexTimeStamp() {

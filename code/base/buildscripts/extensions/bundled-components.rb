@@ -117,7 +117,7 @@ module BundledComponents
           if javadoc
             puts "Generating javadoc for #{a_module.name}"
             javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "platform", "docs", "javadoc").ensure_directory
-            title = "Terracotta API version #{@config_source['api.version']}"
+            title = "Terracotta version #{build_environment.version}"
             ant.javadoc(:destdir => javadoc_destdir.to_s,
               :author => true, :version => true, :use => true, :defaultexcludes => "true",
               :header => title,

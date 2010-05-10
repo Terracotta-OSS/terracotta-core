@@ -132,13 +132,6 @@ modules:
         - dso-statistics-api
         - management-api
         - tim-api
-  - modules-base:
-      options:
-        jdk: J2SE-1.5
-        module: true
-      dependencies:
-        - deploy-api
-        - tim-api
   - excludes-config:
       options:
         jdk: J2SE-1.5
@@ -147,7 +140,6 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-base
         - tim-api
   - guimodels-config:
       options:
@@ -157,7 +149,6 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-base
         - tim-api
   - jdk15-preinst-config:
       options:
@@ -167,7 +158,6 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-base
         - tim-api
   - standard-config:
       options:
@@ -177,7 +167,6 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-base
         - tim-api
   - sigarstats:
       options:
@@ -267,7 +256,6 @@ modules:
         - dso-statistics
         - dso-statistics-api
         - management-api
-        - modules-base
         - sigarstats
         - thirdparty
         - tim-api
@@ -464,7 +452,6 @@ modules:
         - common-api
         - license-common
         - dso-l1-api
-        - modules-base
         - tim-api
   - eclipsegen:
       options:

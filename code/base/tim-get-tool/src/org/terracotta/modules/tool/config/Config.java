@@ -7,6 +7,7 @@ package org.terracotta.modules.tool.config;
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.util.PropertiesInterpolator;
 
+import com.tc.timapi.Version;
 import com.tc.util.ProductInfo;
 
 import java.io.File;
@@ -24,7 +25,7 @@ public class Config {
   public static final String KEYSPACE              = "org.terracotta.modules.tool.";
 
   public static final String TC_VERSION            = "tcVersion";
-  public static final String API_VERSION           = "apiVersion";
+  public static final String TIM_API_VERSION       = "timApiVersion";
   public static final String RELATIVE_URL_BASE     = "relativeUrlBase";
   public static final String INCLUDE_SNAPSHOTS     = "includeSnapshots";
   public static final String PROXY_URL             = "proxyUrl";
@@ -36,7 +37,7 @@ public class Config {
   public static final String ENV_TIMGET_PROXY_AUTH = "TIMGET_PROXY_AUTH";
 
   private String             tcVersion;
-  private String             apiVersion;
+  private String             timApiVersion;
   private URI                relativeUrlBase;
   private boolean            includeSnapshots;
   private URL                proxyUrl;
@@ -54,7 +55,7 @@ public class Config {
   public Config(Properties properties) {
     properties = new PropertiesInterpolator().interpolated(properties);
     this.setTcVersion(getProperty(properties, TC_VERSION));
-    this.setApiVersion(getProperty(properties, API_VERSION));
+    this.setTimApiVersion(getProperty(properties, TIM_API_VERSION, Version.getVersion().getFullVersionString()));
 
     try {
       this.setRelativeUrlBase(new URI(getProperty(properties, RELATIVE_URL_BASE)));
@@ -122,12 +123,12 @@ public class Config {
     this.tcVersion = tcVersion;
   }
 
-  public String getApiVersion() {
-    return apiVersion;
+  public String getTimApiVersion() {
+    return timApiVersion;
   }
 
-  public void setApiVersion(String apiVersion) {
-    this.apiVersion = apiVersion;
+  public void setTimApiVersion(String timApiVersion) {
+    this.timApiVersion = timApiVersion;
   }
 
   public URI getRelativeUrlBase() {

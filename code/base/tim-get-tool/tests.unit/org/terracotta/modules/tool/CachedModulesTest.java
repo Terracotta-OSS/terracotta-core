@@ -16,6 +16,7 @@ public final class CachedModulesTest extends TestCase {
 
   protected Config testConfig;
 
+  @Override
   public void setUp() {
     testConfig = TestConfig.createTestConfig();
   }
@@ -191,7 +192,6 @@ public final class CachedModulesTest extends TestCase {
     modules = load(testData, "0.0.0", "0.0.0");
     assertTrue(modules.listLatest().isEmpty());
 
-
     modules = load(testData, "3.0.0", "1.0.0");
     List<Module> list = modules.listLatest();
     assertFalse(list.isEmpty());
@@ -202,8 +202,8 @@ public final class CachedModulesTest extends TestCase {
     module = list.get(1);
     assertEquals("foo.bar.def", module.symbolicName());
     assertEquals("2.0.0", module.version());
-    assertEquals(2, modules.list().size());  
-    
+    assertEquals(2, modules.list().size());
+
     modules = load(testData, "3.0.0", "1.0.1");
     list = modules.listLatest();
     assertFalse(list.isEmpty());
@@ -214,16 +214,15 @@ public final class CachedModulesTest extends TestCase {
     module = list.get(1);
     assertEquals("foo.bar.def", module.symbolicName());
     assertEquals("2.0.1", module.version());
-    assertEquals(4, modules.list().size());  
+    assertEquals(4, modules.list().size());
   }
-  
+
   public void testSidewaysInstallPath() throws Exception {
     Modules modules;
     String testData = "/testData05.xml";
 
     modules = load(testData, "0.0.0", "0.0.0");
     assertTrue(modules.listLatest().isEmpty());
-
 
     modules = load(testData, "3.0.0", "1.0.0");
     List<Module> list = modules.listLatest();
@@ -243,15 +242,15 @@ public final class CachedModulesTest extends TestCase {
     assertEquals("2.1.0", module.version());
     assertTrue(module.installPath().getCanonicalPath().endsWith("test"));
   }
-  
+
   private Modules load(String testData, String tcVersion) {
     return load(testData, tcVersion, "1.0.0");
   }
-    
+
   private Modules load(String testData, String tcVersion, String apiVersion) {
     testConfig.setTcVersion(tcVersion);
-    if(apiVersion != null) {
-      testConfig.setApiVersion(apiVersion);
+    if (apiVersion != null) {
+      testConfig.setTimApiVersion(apiVersion);
     }
     File tmpdir = new File(System.getProperty("java.io.tmpdir"));
     try {

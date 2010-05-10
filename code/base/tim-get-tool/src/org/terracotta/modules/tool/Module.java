@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class Module extends AttributesModule implements Installable {
 
-  private final Modules             modules;
+  private final Modules modules;
 
   public Module(Modules modules, Element module, URI relativeUrlBase) {
     this(modules, DocumentToAttributes.transform(module), relativeUrlBase);
@@ -44,7 +44,6 @@ public class Module extends AttributesModule implements Installable {
   protected Modules owner() {
     return modules;
   }
-
 
   public String category() {
     return getAttributesHelper().getAttrValueAsString("category", StringUtils.EMPTY);
@@ -83,7 +82,7 @@ public class Module extends AttributesModule implements Installable {
 
   /**
    * Descriptive text about the module.
-   * 
+   *
    * @return A String
    */
   public String description() {
@@ -91,16 +90,17 @@ public class Module extends AttributesModule implements Installable {
   }
 
   /**
-   * Check what kits this module is applicable for 
+   * Check what kits this module is applicable for
+   *
    * @see org.terracotta.modules.tool.commands.KitTypes
    */
   public String kit() {
     return getAttributesHelper().getAttrValueAsString("tc-kit", KitTypes.ALL.type());
   }
-  
+
   /**
    * The URL pointing to the documentation for this module
-   * 
+   *
    * @return An URL. Will return this module's website URL if none was defined.
    */
   public URL docUrl() {
@@ -130,7 +130,7 @@ public class Module extends AttributesModule implements Installable {
   /**
    * Retrieve the siblings of this module. The list returned is sorted in ascending-order, ie: oldest version first. The
    * listed returned DOES NOT include the module itself.
-   * 
+   *
    * @return a List of Module.
    */
   public List<Module> siblings() {
@@ -145,9 +145,9 @@ public class Module extends AttributesModule implements Installable {
     return getAttributesHelper().getAttrValueAsString("tc-version", null);
   }
 
-  public String apiVersion() {
-    if (getAttributes().containsKey("api-version")) {
-      return getAttributesHelper().getAttrValueAsString("api-version", null);
+  public String timApiVersion() {
+    if (getAttributes().containsKey("tim-api-version")) {
+      return getAttributesHelper().getAttrValueAsString("tim-api-version", null);
     } else {
       return VersionMatcher.ANY_VERSION;
     }
@@ -175,7 +175,7 @@ public class Module extends AttributesModule implements Installable {
 
   /**
    * The website URL of this module.
-   * 
+   *
    * @return An URL. Will return a the URL point to the TC Forge if none was defined.
    */
   public URL website() {
@@ -187,10 +187,10 @@ public class Module extends AttributesModule implements Installable {
     }
     return getAttributesHelper().getAttrValueAsUrl("website", alturl);
   }
-  
+
   /**
-   * Currently we are determining this based on whether the tc-downloadPath exists.  This value
-   * is usually set to install a download outside the modules directory.
+   * Currently we are determining this based on whether the tc-downloadPath exists. This value is usually set to install
+   * a download outside the modules directory.
    */
   public boolean installsAsModule() {
     String downloadPath = getAttributesHelper().getAttrValueAsString("tc-downloadPath", null);

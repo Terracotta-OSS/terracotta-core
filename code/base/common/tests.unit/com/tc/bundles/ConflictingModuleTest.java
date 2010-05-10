@@ -20,8 +20,8 @@ public class ConflictingModuleTest extends TCTestCase {
 
   public ConflictingModuleTest() {
     ProductInfo info = ProductInfo.getInstance();
-    apiVersion = info.apiVersion();
-    tcVersion = info.mavenArtifactsVersion();
+    apiVersion = info.timApiVersion();
+    tcVersion = info.version();
   }
 
   public void testConflict() throws Exception {

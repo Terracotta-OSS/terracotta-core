@@ -133,20 +133,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     dist_maven('ENTERPRISE')
   end
   
-  # call dist_maven to deploy maven artifacts
-  # and deploy api javadoc to the api_dir
-  # this target is intended to be used by artifact monkey only (su10mo4)
-  # hhuynh
-  def deploy_artifacts
-    dist_maven('OPENSOURCE')
-    fail("api_dir is not set") unless @config_source['api_dir']
-    dest = FilePath.new(@config_source['api_dir'], @build_environment.api_version).ensure_directory
-    src = FilePath.new(product_directory, "platform", "docs", "javadoc")
-    fail("API src folder doesn't exist!") unless src.exist?
-    puts "Copy api javadoc from #{src.to_s} to #{dest.to_s}"
-    FileUtils.cp_r(src.to_s, dest.to_s)
-  end
-
   # assemble and package the kits  for the product code supplied
   def create_package(product_code='DSO', flavor='OPENSOURCE')
     check_if_type_supplied(product_code, flavor)

@@ -226,32 +226,24 @@ public class Resolver {
         }
 
         if (symName.equals(manifest.getMainAttributes().getValue(BUNDLE_SYMBOLICNAME))) {
-          String moduleTcVersion = manifest.getMainAttributes().getValue("tc-version");
-          if (moduleTcVersion == null) {
-            moduleTcVersion = VersionMatcher.ANY_VERSION;
-          }
-          String moduleApiVersion = manifest.getMainAttributes().getValue("api-version");
-          if (moduleApiVersion == null) {
-            moduleApiVersion = VersionMatcher.ANY_VERSION;
+          String moduleTcVersion = manifest.getMainAttributes().getValue("Terracotta-RequireVersion");
 
-            // See if any of the required dependencies is modules-base - the version is the api version
-            String requiredBundles = manifest.getMainAttributes().getValue(BundleSpec.REQUIRE_BUNDLE);
-            if (requiredBundles != null) {
-              // logger.info("  checking for api in required bundles");
-              String[] specs = requiredBundles.split(",");
-              for (String spec : specs) {
-                BundleSpec bundleSpec = new BundleSpecImpl(spec);
-                // logger.info("    found " + bundleSpec.getSymbolicName() + ":" + bundleSpec.getVersion());
-                if (bundleSpec.getSymbolicName().equals("org.terracotta.modules.modules-base")) {
-                  moduleApiVersion = OSGiToMaven.bundleVersionToProjectVersion(bundleSpec.getVersion());
-                  // logger.info("    found modules-base api version: " + moduleApiVersion);
-                  break;
-                }
-              }
+          String timApiVersion = manifest.getMainAttributes().getValue("Terracotta-TIM-API");
+
+          if (timApiVersion == null) {
+            if (moduleTcVersion != null) {
+              timApiVersion = VersionMatcher.ANY_VERSION;
+            } else {
+              // no TIM API or specific core version specified, ignore this jar
+              continue;
             }
           }
 
-          if (versionMatcher.matches(moduleTcVersion, moduleApiVersion)) {
+          if (moduleTcVersion == null) {
+            moduleTcVersion = VersionMatcher.ANY_VERSION;
+          }
+
+          if (versionMatcher.matches(moduleTcVersion, timApiVersion)) {
             // logger.info("found matching bundle, version = " + manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             newestVersion = newerVersion(newestVersion, manifest.getMainAttributes().getValue(BUNDLE_VERSION));
             logger.info("new version = " + newestVersion);
@@ -580,7 +572,6 @@ public class Resolver {
   }
 
   private static final class Message {
-
     static final Message WARN_FILE_IGNORED_MISSING_MANIFEST = new Message("warn.file.ignored.missing-manifest");
     // static final Message WARN_REPOSITORY_PROTOCOL_UNSUPPORTED = new Message("warn.repository.protocol.unsupported");
     static final Message ERROR_BUNDLE_UNREADABLE            = new Message("error.bundle.unreadable");

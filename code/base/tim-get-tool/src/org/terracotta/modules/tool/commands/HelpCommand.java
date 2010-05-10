@@ -88,14 +88,14 @@ public class HelpCommand extends ModuleOperatorCommand {
   private void displayDebugInfo() {
     // call this so the index file can be parsed once
     modules.list();
-    
+
     out.println("Debug info:");
     out.println("   Index timestamp: " + modules.indexTimeStamp());
     out.println("   Index URL:       " + config.getDataFileUrl());
     out.println("   Repo URL:        " + config.getRelativeUrlBase());
     out.println("   Cached index:    " + config.getIndexFile());
     out.println("   TC version:      " + config.getTcVersion());
-    out.println("   API version:     " + config.getApiVersion());
+    out.println("   TIM API version:     " + config.getTimApiVersion());
     out.println();
   }
 }

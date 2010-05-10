@@ -227,7 +227,7 @@ public final class ModuleTest extends TCTestCase {
     String version = "2.0.0";
     Module module = modules.get("foo.bar", "abc", version);
     assertNotNull(module);
-    assertEquals("[1.0.0,1.1.0)", module.apiVersion());
+    assertEquals("[1.0.0,1.1.0)", module.timApiVersion());
 
     List<String> versions = module.versions();
     assertEquals(1, versions.size());
@@ -242,13 +242,13 @@ public final class ModuleTest extends TCTestCase {
 
     module = modules.get("foo.bar", "abc", "2.1.0");
     assertNotNull(module);
-    assertEquals("[1.1.0,1.2.0)", module.apiVersion());
+    assertEquals("[1.1.0,1.2.0)", module.timApiVersion());
     versions = module.versions();
     assertEquals(0, versions.size());
 
     // API version 2.0.0 -> should pull in no modules
     apiVersion = "2.0.0";
-    testConfig.setApiVersion(apiVersion);
+    testConfig.setTimApiVersion(apiVersion);
     modules = loadModules("/testData04.xml", tcVersion, apiVersion);
     list = modules.list();
     assertTrue(list.isEmpty());
@@ -341,7 +341,9 @@ public final class ModuleTest extends TCTestCase {
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
           .installPath().toString());
-      assertEquals(FilenameUtils.separatorsToSystem("/dummy/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar"), module.installLocationInRepository(new File("/dummy")).toString());
+      assertEquals(FilenameUtils
+          .separatorsToSystem("/dummy/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar"), module
+          .installLocationInRepository(new File("/dummy")).toString());
       assertEquals("tim-ehcache-1.3-1.0.2.jar", module.filename());
 
       assertFalse(module.docUrl().toURI().equals(module.website().toURI()));
@@ -575,7 +577,7 @@ public final class ModuleTest extends TCTestCase {
   private Modules loadModules(String testData, String tcVersion, String apiVersion) throws IOException {
     testConfig.setTcVersion(tcVersion);
     if (apiVersion != null) {
-      testConfig.setApiVersion(apiVersion);
+      testConfig.setTimApiVersion(apiVersion);
     }
 
     File tmpdir = this.getTempDirectory();

@@ -39,6 +39,7 @@ import com.tc.object.loaders.Namespace;
 import com.tc.object.util.JarResourceLoader;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.timapi.Version;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
@@ -184,7 +185,7 @@ public class ModulesLoader {
     final URL[] osgiRepositories = osgiRuntime.getRepositories();
     final ProductInfo info = ProductInfo.getInstance();
     final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), true, info
-        .mavenArtifactsVersion(), info.apiVersion(), addlRepos);
+        .mavenArtifactsVersion(), info.timApiVersion(), addlRepos);
     final URL[] locations = resolver.resolve(allModules);
 
     installAndStartBundles(osgiRuntime, configHelper, classProvider, forBootJar, id, locations);
@@ -213,6 +214,19 @@ public class ModulesLoader {
               logger.info("Installing TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'");
               installTIMByteProvider(bundle, bundleURL, id);
             }
+
+            String timApiInJar = (String) headers.get("Terracotta-TIM-API");
+            if (timApiInJar != null) {
+              String actualTimApiVersion = Version.getVersion().getFullVersionString();
+              if (!timApiInJar.equals(actualTimApiVersion)) {
+                // XXX: Should there be a way to disable this check?
+                throw new BundleException(bundle.getSymbolicName() + " was intended for TIM API version " + timApiInJar
+                                          + ", but you seem to be running " + actualTimApiVersion);
+              }
+            } else {
+              logger.warn(bundle.getSymbolicName() + " does not declare a TIM API version requirement");
+            }
+
           }
           printModuleBuildInfo(bundle);
           loadConfiguration(configHelper, bundle, bundleURL);

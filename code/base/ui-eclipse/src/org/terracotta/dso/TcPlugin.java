@@ -667,8 +667,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         tmpModules.setModuleArray(new Module[] { origModule });
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(tmpModules);
         String[] repositories = ResolverUtils.urlsToStrings(osgiRuntime.getRepositories());
-        final Resolver resolver = new Resolver(repositories, ProductInfo.getInstance().mavenArtifactsVersion(),
-                                               ProductInfo.getInstance().apiVersion());
+        final Resolver resolver = new Resolver(repositories, ProductInfo.getInstance().version(), ProductInfo
+            .getInstance().timApiVersion());
         Module[] allModules = tmpModules.getModuleArray();
         ModuleInfo origModuleInfo = modulesConfig.getOrAdd(origModule);
 
@@ -692,7 +692,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modulesCopy);
       final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRuntime.getRepositories()), ProductInfo
-          .getInstance().mavenArtifactsVersion(), ProductInfo.getInstance().apiVersion());
+          .getInstance().version(), ProductInfo.getInstance().timApiVersion());
       Module[] allModules = modulesCopy.getModuleArray();
 
       resolver.resolve(allModules);

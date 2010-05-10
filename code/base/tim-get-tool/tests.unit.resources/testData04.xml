@@ -2,7 +2,7 @@
 <modules format-version='2'>
   <module artifactId='abc' version='2.0.0' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.0.0,1.1.0)</api-version>
+    <tim-api-version>[1.0.0,1.1.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/abc/2.0.0/abc-2.0.0.jar
     </repoURL>
@@ -11,7 +11,7 @@
   </module>
   <module artifactId='abc' version='2.0.1' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.0.1,1.1.0)</api-version>
+    <tim-api-version>[1.0.1,1.1.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/abc/2.0.1/abc-2.0.1.jar
     </repoURL>
@@ -20,18 +20,18 @@
   </module>
   <module artifactId='abc' version='2.1.0' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.1.0,1.2.0)</api-version>
+    <tim-api-version>[1.1.0,1.2.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/abc/2.1.0/abc-2.1.0.jar
     </repoURL>
     <installPath>foo/bar/abc/2.1.0</installPath>
     <filename>abc-2.1.0.jar</filename>
   </module>
-  
-  
+
+
   <module artifactId='def' version='2.0.0' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.0.0,1.1.0)</api-version>
+    <tim-api-version>[1.0.0,1.1.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/def/2.0.0/def-2.0.0.jar
     </repoURL>
@@ -43,7 +43,7 @@
   </module>
   <module artifactId='def' version='2.0.1' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.0.1,1.1.0)</api-version>
+    <tim-api-version>[1.0.1,1.1.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/def/2.0.1/def-2.0.1.jar
     </repoURL>
@@ -55,7 +55,7 @@
   </module>
   <module artifactId='def' version='2.1.0' groupId='foo.bar'>
     <tc-version>*</tc-version>
-    <api-version>[1.1.0,1.2.0)</api-version>
+    <tim-api-version>[1.1.0,1.2.0)</tim-api-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/def/2.1.0/def-2.1.0.jar
     </repoURL>
@@ -65,6 +65,6 @@
       <moduleRef artifactId='abc' version='2.1.0' groupId='foo.bar' />
     </dependencies>
   </module>
-  
-  
+
+
 </modules>

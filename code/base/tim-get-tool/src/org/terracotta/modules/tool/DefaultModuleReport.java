@@ -106,7 +106,7 @@ public class DefaultModuleReport extends ModuleReport {
     out.println("Download : " + module.repoUrl());
     out.println("Status   : " + module.tcProjectStatus());
     out.println("Internal : " + module.tcInternalTIM() + "\n");
-    
+
     if (!StringUtils.isEmpty(module.description())) {
       out.println(module.description().replaceAll("\n[ ]+", "\n"));
       out.println();
@@ -115,8 +115,8 @@ public class DefaultModuleReport extends ModuleReport {
     String compatibility = "any Terracotta version.";
     if (!module.tcVersion().equals(VersionMatcher.ANY_VERSION)) {
       compatibility = "Terracotta " + module.tcVersion();
-    } else if (!module.apiVersion().equals(VersionMatcher.ANY_VERSION)) {
-      compatibility = "Terracotta API " + module.apiVersion();
+    } else if (!module.timApiVersion().equals(VersionMatcher.ANY_VERSION)) {
+      compatibility = "Terracotta TIM API " + module.timApiVersion();
     }
     out.println("Compatible with " + compatibility);
 
@@ -179,7 +179,7 @@ public class DefaultModuleReport extends ModuleReport {
     } catch (Exception e) {
       out.println(e.getMessage());
     }
-    
+
     out.println("Note: If you are installing the newest or only version, the version may be omitted.");
 
     String text = writer.toString();
@@ -257,12 +257,12 @@ public class DefaultModuleReport extends ModuleReport {
     out.println();
     out.println(indent(mavenCoordinates(module)));
     out.println();
-    
-    if(module.installsAsModule()) {
+
+    if (module.installsAsModule()) {
       out.println(indent(configInfo(module)));
       out.println();
     }
-    
+
     out.println(indent(installationInfo(module)));
 
     String text = writer.toString();

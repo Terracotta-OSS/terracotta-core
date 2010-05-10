@@ -35,9 +35,9 @@ public class ResolverTest extends TestCase {
   private final String         tcVersion;
 
   public ResolverTest() {
-     ProductInfo info = ProductInfo.getInstance();
-     apiVersion = info.apiVersion();
-     tcVersion = info.mavenArtifactsVersion();
+    ProductInfo info = ProductInfo.getInstance();
+    apiVersion = info.timApiVersion();
+    tcVersion = info.mavenArtifactsVersion();
   }
 
   public void testResolveBundle() throws IOException {
@@ -163,7 +163,7 @@ public class ResolverTest extends TestCase {
     if (repoDir.exists()) try {
       FileUtils.deleteDirectory(repoDir);
     } catch (IOException e) {
-      // 
+      //
     }
     return repoUrl;
   }

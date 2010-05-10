@@ -60,7 +60,7 @@ bundled_components:
               - dso-l2-common
               - dso-statistics-api
               - management-api      
-        - test-api-api.version:
+        - test-api-maven.version:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
             source: tests.base
@@ -94,7 +94,6 @@ bundled_components:
         - sigarstats
         - management
         - management-api
-        - modules-base
         - thirdparty
         - tim-api
         - tim-get-tool:
@@ -109,7 +108,6 @@ bundled_modules:
         - guimodels-config
         - jdk15-preinst-config
         - standard-config
-        - modules-base
 packaging:
   - tar:
       assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
@@ -191,9 +189,9 @@ postscripts:
             - lib/resources/build-data.txt
         - groupId: org.terracotta.api
           artifact: test-api
-          file: api-jars/test-api-api.version.jar
+          file: api-jars/test-api-maven.version.jar
           pom: poms/terracotta-test-api-pom.xml
-          version: api.version
+          version: maven.version
           inject: 
             - lib/resources/build-data.txt
   - delete-api-jars

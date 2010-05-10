@@ -30,7 +30,6 @@ bundled_components:
         - sigarstats
         - management
         - management-api
-        - modules-base
         - thirdparty
         - tim-get-tool:
             kit-resources:
@@ -56,7 +55,6 @@ bundled_modules:
         - guimodels-config
         - jdk15-preinst-config
         - standard-config
-        - modules-base
 packaging:
   - tar
 postscripts:

@@ -37,12 +37,11 @@ public class TIMGetTool {
   public static void main(String[] args) {
     new TIMGetTool(args);
   }
-  
+
   private String          commandName;
   private List<String>    commandArgs;
   private CommandRegistry commandRegistry;
   private ActionLog       actionLog;
-  
 
   public TIMGetTool(String[] args) {
     prologue();
@@ -76,7 +75,7 @@ public class TIMGetTool {
       System.exit(100);
     }
   }
-  
+
   /**
    * Useful for testing to control the environment a bit more.
    */
@@ -91,19 +90,19 @@ public class TIMGetTool {
     if (pInfo.isPatched()) System.out.println(pInfo.toLongPatchString());
     System.out.println();
   }
-  
+
   public void mainWithExceptions(String args[], Properties timGetProps) throws Exception {
     parse(args);
-    
+
     actionLog = new ActionLog();
-    if(timGetProps == null) {
+    if (timGetProps == null) {
       configure(createConfig());
     } else {
       configure(new Config(timGetProps));
     }
     execute();
   }
-  
+
   private void parse(String args[]) throws Exception {
     commandName = CommandUtil.deductNameFromClass(HelpCommand.class);
     commandArgs = new ArrayList<String>();
@@ -145,6 +144,7 @@ public class TIMGetTool {
       commandRegistry.addCommand(injector.getInstance(UpdateCommand.class));
       commandRegistry.addCommand(injector.getInstance(UpgradeCommand.class));
     } catch (Exception e) {
+      e.printStackTrace();
       Throwable rootCause = rootCause(e);
       throw new Exception("Initialization error: " + rootCause.getClass() + ": " + rootCause.getMessage());
     }

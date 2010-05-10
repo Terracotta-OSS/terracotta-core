@@ -30,7 +30,7 @@ import java.net.Proxy.Type;
  * Module definition for Guice dependency injection.
  */
 class AppContext implements Module, ConfigAnnotation {
-  private final Config config;
+  private final Config    config;
   private final ActionLog actionLog;
 
   public AppContext(Config config, ActionLog actionLog) {
@@ -43,9 +43,9 @@ class AppContext implements Module, ConfigAnnotation {
     // binder.bindConstant().annotatedWith(TerracottaVersion.class).to(config.getTcVersion());
     binder.bindConstant().annotatedWith(Names.named(TERRACOTTA_VERSION)).to(config.getTcVersion());
 
-    // Inject the tcVersion anywhere the @ApiVersion annotation is used
+    // Inject the tcTimApiVersion anywhere the @TimApiVersion annotation is used
     // binder.bindConstant().annotatedWith(ApiVersion.class).to(config.getApiVersion());
-    binder.bindConstant().annotatedWith(Names.named(API_VERSION)).to(config.getApiVersion());
+    binder.bindConstant().annotatedWith(Names.named(TIM_API_VERSION)).to(config.getTimApiVersion());
 
     // Inject the relativeUrlBase anywhere @Named(ConfigAnnotation.RELATIVE_URL_BASE) is used
     binder.bindConstant().annotatedWith(Names.named(RELATIVE_URL_BASE)).to(config.getRelativeUrlBase().toString());
@@ -69,7 +69,7 @@ class AppContext implements Module, ConfigAnnotation {
     // Make action log object available
     binder.bind(ActionLog.class).in(Scopes.SINGLETON);
     binder.bind(ActionLog.class).annotatedWith(Names.named(ACTION_LOG_INSTANCE)).toInstance(actionLog);
-    
+
     binder.bind(ModuleReport.class).to(DefaultModuleReport.class);
     binder.bind(ModuleReport.class).annotatedWith(Names.named(MODULEREPORT_INSTANCE)).to(DefaultModuleReport.class)
         .in(Scopes.SINGLETON);
