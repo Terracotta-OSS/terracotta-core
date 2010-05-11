@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<modules format-version='2'>
+<modules format-version='3'>
   <module artifactId='baz' version='0.0.0' groupId='foo.bar'>
     <tc-version>0.0.0</tc-version>
     <repoURL>
@@ -20,7 +20,7 @@
     </dependencies>
   </module>
   <module artifactId='quux' version='0.0.0' groupId='foo.bar'>
-    <tc-version>0.0.0</tc-version> 
+    <tc-version>0.0.0</tc-version>
     <repoURL>
       http://127.0.0.1:8888/foo/bar/quux/0.0.0/quux-0.0.0.jar
     </repoURL>
