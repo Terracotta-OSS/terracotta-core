@@ -46,7 +46,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class CachedModules implements Modules {
-  static final String        FORMAT_VERSION = "2";
+  static final String        FORMAT_VERSION = "3";
 
   private List<Module>       modules;
   private List<Module>       qualifiedModules;
