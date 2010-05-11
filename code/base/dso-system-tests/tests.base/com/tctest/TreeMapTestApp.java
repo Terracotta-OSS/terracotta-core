@@ -12,6 +12,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractTransparentApp;
 
 import java.util.Comparator;
@@ -33,11 +34,17 @@ public class TreeMapTestApp extends AbstractTransparentApp {
 
   private final SubMapKey     subMapKeyRoot = new SubMapKey(0);
 
-  private final int           loopcount     = 200;
+  private final int           loopcount;
 
   public TreeMapTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     barrier = new CyclicBarrier(getParticipantCount());
+    // MNK-1600
+    if (Os.isSolaris()) {
+      loopcount = 100;
+    } else {
+      loopcount = 200;
+    }
   }
 
   public void run() {
