@@ -14,7 +14,6 @@ import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
-import com.tc.management.beans.object.EnterpriseTCClientMbean;
 import com.tc.net.ClientID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelID;
@@ -66,8 +65,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final ClientStateManager             stateManager;
 
   private ObjectName                           enterpriseMBeanName;
-  private EnterpriseTCClientMbean              enterpriseMBean = null;
-  private boolean                              isEnterprisebeanSet     = false;
+  private boolean                              isEnterpriseBeanNameSet     = false;
 
   private static final MBeanNotificationInfo[] NOTIFICATION_INFO;
 
@@ -298,11 +296,6 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
         .newProxyInstance(mbeanServer, runtimeOutputOptionsBeanName, RuntimeOutputOptionsMBean.class, false);
   }
 
-  private void setupEnterpriseClientMBean() {
-    enterpriseMBean = (EnterpriseTCClientMbean) MBeanServerInvocationHandler
-        .newProxyInstance(mbeanServer, enterpriseMBeanName, EnterpriseTCClientMbean.class, false);
-  }
-
   private boolean haveAllTunneledBeans() {
     return l1InfoBean != null && instrumentationLoggingBean != null && runtimeLoggingBean != null
            && runtimeOutputOptionsBean != null;
@@ -343,11 +336,9 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
       setupRuntimeOutputOptionsBean();
     }
 
-    if (!isEnterprisebeanSet && enterpriseMBean == null
-        && matchesClientBeanName(enterpriseMBeanName, beanName)) {
+    if (!isEnterpriseBeanNameSet && matchesClientBeanName(enterpriseMBeanName, beanName)) {
       enterpriseMBeanName = beanName;
-      setupEnterpriseClientMBean();
-      isEnterprisebeanSet = true;
+      isEnterpriseBeanNameSet = true;
     }
 
     if (haveAllTunneledBeans()) {

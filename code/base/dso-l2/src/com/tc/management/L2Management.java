@@ -22,9 +22,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitor;
-import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -81,15 +79,12 @@ public class L2Management extends TerracottaManagement {
   private static final Map                     rmiRegistryMap = new HashMap();
   private final int                            jmxPort;
   private final InetAddress                    bindAddress;
-  private final ServerDBBackup                 serverDbBackupBean;
   private final Sink                           remoteEventsSink;
-  private final EnterpriseTCServerMbean        enterpriseTCServerMbean;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
                       L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
-                      InetAddress bindAddr, int port, Sink remoteEventsSink,
-                      EnterpriseTCServerMbean enterpriseTCServerMbean) throws MBeanRegistrationException,
+                      InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,
       NotCompliantMBeanException, InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;
     this.lockStatistics = lockStatistics;
@@ -101,16 +96,8 @@ public class L2Management extends TerracottaManagement {
     this.jmxPort = port;
     this.remoteEventsSink = remoteEventsSink;
 
-    this.enterpriseTCServerMbean = enterpriseTCServerMbean;
     try {
       objectManagementBean = new ObjectManagementMonitor();
-    } catch (NotCompliantMBeanException ncmbe) {
-      throw new TCRuntimeException(
-                                   "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
-                                   ncmbe);
-    }
-    try {
-      serverDbBackupBean = new ServerDBBackup(configurationSetupManager);
     } catch (NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException(
                                    "Unable to construct one of the L2 MBeans: this is a programming error in one of those beans",
@@ -266,21 +253,11 @@ public class L2Management extends TerracottaManagement {
     return objectManagementBean;
   }
 
-  public ServerDBBackup findServerDbBackupMBean() {
-    return serverDbBackupBean;
-  }
-  
   private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
     mBeanServer.registerMBean(objectManagementBean, L2MBeanNames.OBJECT_MANAGEMENT);
-
-    if (enterpriseTCServerMbean != null) {
-      mBeanServer.registerMBean(enterpriseTCServerMbean, L2MBeanNames.ENTERPRISE_TC_SERVER);
-    }
-
-    mBeanServer.registerMBean(serverDbBackupBean, L2MBeanNames.SERVER_DB_BACKUP);
     mBeanServer.registerMBean(lockStatistics, L2MBeanNames.LOCK_STATISTICS);
     if (statisticsAgentSubSystem.isActive()) {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);
@@ -290,7 +267,7 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 
-  private void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
+  protected void unregisterMBeans() throws InstanceNotFoundException, MBeanRegistrationException {
     mBeanServer.unregisterMBean(L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.unregisterMBean(L2MBeanNames.LOGGER);
     mBeanServer.unregisterMBean(L2MBeanNames.OBJECT_MANAGEMENT);
@@ -304,7 +281,7 @@ public class L2Management extends TerracottaManagement {
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
 
   }
-
+  
   public static class TCSynchroMessageConnectionServer extends SynchroMessageConnectionServerImpl {
 
     private final Sink remoteEventsSink;

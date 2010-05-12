@@ -75,7 +75,8 @@ import java.util.Set;
 public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
     L2TVSConfigurationSetupManager {
 
-  private static final TCLogger             logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
+  private static final TCLogger             logger                 = TCLogging
+                                                                       .getLogger(StandardL2TVSConfigurationSetupManager.class);
 
   private final ConfigurationCreator        configurationCreator;
   private final Map                         l2ConfigData;
@@ -88,6 +89,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private NewSystemConfig                   systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
+  private volatile boolean                  isMirrorGroupSpecified = true;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
@@ -258,7 +260,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                    public XmlObject getChild(XmlObject parent) {
                                                                      MirrorGroups activeServerGroups = ((Servers) parent)
                                                                          .getMirrorGroups();
-                                                                     if (activeServerGroups == null) {
+                                                                     if (activeServerGroups == null
+                                                                         || !isMirrorGroupSpecified) {
+                                                                       isMirrorGroupSpecified = false;
                                                                        activeServerGroups = defaultActiveServerGroups;
                                                                        ((Servers) parent)
                                                                            .setMirrorGroups(activeServerGroups);

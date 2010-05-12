@@ -7,6 +7,7 @@ import com.tc.async.api.Sink;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -18,6 +19,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -28,6 +30,7 @@ import com.tc.object.idprovider.impl.RemoteObjectIDBatchSequenceProvider;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
+import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
@@ -40,6 +43,7 @@ import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.ToggleableReferenceManager;
@@ -121,4 +125,8 @@ public interface DSOClientBuilder {
                                                       final DsoClusterInternal dsoCluster, final String clientVersion,
                                                       final Collection<ClientHandshakeCallback> callbacks);
 
+  L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
+                                  RuntimeLogger runtimeLogger, InstrumentationLogger instrumentationLogger,
+                                  String rawConfigText, DistributedObjectClient distributedObjectClient,
+                                  MBeanSpec[] mBeanSpecs);
 }

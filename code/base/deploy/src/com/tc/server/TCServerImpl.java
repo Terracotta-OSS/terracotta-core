@@ -469,7 +469,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ObjectStatsRecorder objectStatsRecorder,
                                                                   L2State l2State, TCServerImpl serverImpl) {
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this);
+                                       objectStatsRecorder, l2State, this, this);
   }
 
   private void startHTTPServer(final NewCommonL2Config commonL2Config, final TerracottaConnector tcConnector)

@@ -9,6 +9,7 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
+import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
@@ -25,6 +26,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.ClientGlobalTransactionManagerImpl;
@@ -41,6 +43,7 @@ import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.locks.ClientLockManagerImpl;
 import com.tc.object.locks.RemoteLockManager;
 import com.tc.object.locks.RemoteLockManagerImpl;
+import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
@@ -58,6 +61,7 @@ import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
@@ -77,12 +81,17 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                final SessionProvider sessionProvider,
                                                                int maxReconnectTries, int socketConnectTimeout,
                                                                TCClient client) {
-    ClientMessageChannel cmc;
+    ConnectionAddressProvider cap = createConnectionAddressProvider(connComp);
+    ClientMessageChannel cmc = commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0,
+                                                           socketConnectTimeout, cap);
+    return new DSOClientMessageChannelImpl(cmc, new GroupID[] { new GroupID(cap.getGroupId()) });
+  }
+
+  protected ConnectionAddressProvider createConnectionAddressProvider(final PreparedComponentsFromL2Connection connComp) {
     ConfigItem connectionInfoItem = connComp.createConnectionInfoConfigItem();
     ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
     ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
-    cmc = commMgr.createClientChannel(sessionProvider, maxReconnectTries, null, 0, socketConnectTimeout, cap);
-    return new DSOClientMessageChannelImpl(cmc, new GroupID[] { new GroupID(cap.getGroupId()) });
+    return cap;
   }
 
   public CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
@@ -221,6 +230,14 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              Collection<ClientHandshakeCallback> callbacks) {
     return new ClientHandshakeManagerImpl(logger, channel, chmf, pauseSink, sessionManager, dsoCluster, clientVersion,
                                           callbacks);
+  }
+
+  public L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
+                                         RuntimeLogger runtimeLogger, InstrumentationLogger instrumentationLogger,
+                                         String rawConfigText, DistributedObjectClient distributedObjectClient,
+                                         MBeanSpec[] mBeanSpecs) {
+    return new L1Management(teh, statisticsAgentSubSystem, runtimeLogger, instrumentationLogger, rawConfigText,
+                            distributedObjectClient, mBeanSpecs);
   }
 
 }

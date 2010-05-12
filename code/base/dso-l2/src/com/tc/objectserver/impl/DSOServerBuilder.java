@@ -11,7 +11,10 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.TCLogger;
+import com.tc.management.L2Management;
+import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -35,13 +38,18 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
+import com.tc.statistics.StatisticsAgentSubSystemImpl;
+import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 
+import java.net.InetAddress;
 import java.util.List;
 
 public interface DSOServerBuilder extends TCDumper, PostInit {
@@ -94,4 +102,12 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfig,
                                       MessageRecycler recycler, StripeIDStateManager stripeStateManager);
+
+  L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
+                                  StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
+                                  StatisticsGatewayMBeanImpl statisticsGateway,
+                                  L2TVSConfigurationSetupManager configSetupManager,
+                                  DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
+                                  Sink remoteEventsSink, DBEnvironment dbenv,
+                                  ServerConnectionValidator serverConnectionValidator) throws Exception;
 }
