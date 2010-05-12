@@ -195,6 +195,7 @@ public class LockStatManagerTest extends TestCase {
 
       lockStatManager.setLockStatisticsEnabled(true);
 
+      ThreadUtil.reallySleep(1200);
       verifyLockStatsManagerStatistics(runningLockRecallCount);
 
       resetLockManager(true);
@@ -354,9 +355,12 @@ public class LockStatManagerTest extends TestCase {
     long maxSampledTime = lastSampleTime;
     for (TimeStampedCounterValue val : values) {
       if (val.getTimestamp() <= lastSampleTime) continue;
-      maxSampledTime = val.getTimestamp();
+      if (val.getTimestamp() > maxSampledTime) {
+        maxSampledTime = val.getTimestamp();
+      }
       count += val.getCounterValue();
     }
+    Assert.assertEquals(expected, count);
     return maxSampledTime;
   }
 
