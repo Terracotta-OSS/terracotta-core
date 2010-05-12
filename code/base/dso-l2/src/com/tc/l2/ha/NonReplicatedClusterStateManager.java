@@ -6,6 +6,7 @@ package com.tc.l2.ha;
 
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.net.NodeID;
+import com.tc.util.State;
 
 public class NonReplicatedClusterStateManager implements ReplicatedClusterStateManager {
 
@@ -27,6 +28,10 @@ public class NonReplicatedClusterStateManager implements ReplicatedClusterStateM
 
   public void fireNodeLeftEvent(NodeID nodeID) {
     // Nop
+  }
+
+  public void setCurrentState(State currentState) {
+    //Nop
   }
 
 }

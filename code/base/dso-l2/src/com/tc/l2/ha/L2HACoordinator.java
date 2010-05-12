@@ -80,7 +80,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private L2ObjectStateManager                            l2ObjectStateManager;
   private ReplicatedClusterStateManager                   rClusterStateMgr;
 
-  private ClusterState                                    clusterState;
   private SequenceGenerator                               sequenceGenerator;
 
   private final NewHaConfig                               haConfig;
@@ -109,7 +108,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
     boolean isCleanDB = isCleanDB(persistentStateStore);
 
-    this.clusterState = new ClusterState(persistentStateStore, server.getManagedObjectStore(), server
+    ClusterState clusterState = new ClusterState(persistentStateStore, server.getManagedObjectStore(), server
         .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider(), thisGroupID, stripeIDStateManager);
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
 
@@ -216,7 +215,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     // someone wants to be notified earlier
     fireStateChangedEvent(sce);
     
-    clusterState.setCurrentState(sce.getCurrentState());
+    this.rClusterStateMgr.setCurrentState(sce.getCurrentState());
     rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
       rClusterStateMgr.goActiveAndSyncState();

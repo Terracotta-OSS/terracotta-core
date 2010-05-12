@@ -24,6 +24,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionIDFactoryListener;
 import com.tc.objectserver.context.NodeStateEventContext;
 import com.tc.util.Assert;
+import com.tc.util.State;
 
 import java.util.Iterator;
 
@@ -197,5 +198,9 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
   public void fireNodeLeftEvent(NodeID nodeID) {
     // this is needed to clean up some data structures internally
     channelLifeCycleSink.add(new NodeStateEventContext(NodeStateEventContext.REMOVE, nodeID));
+  }
+
+  public synchronized void setCurrentState(State currentState) {
+    this.state.setCurrentState(currentState);
   }
 }

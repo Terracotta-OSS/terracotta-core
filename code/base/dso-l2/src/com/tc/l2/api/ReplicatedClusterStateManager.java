@@ -6,6 +6,7 @@ package com.tc.l2.api;
 
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
+import com.tc.util.State;
 
 public interface ReplicatedClusterStateManager {
 
@@ -18,5 +19,7 @@ public interface ReplicatedClusterStateManager {
   public void publishClusterState(NodeID nodeID) throws GroupException;
 
   public void fireNodeLeftEvent(NodeID nodeID);
+
+  public void setCurrentState(State currentState);
 
 }
