@@ -30,18 +30,8 @@ import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.util.concurrent.TCExceptionResultException;
 import com.tc.util.concurrent.TCFuture;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
-import java.rmi.server.RMISocketFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,27 +49,23 @@ import javax.management.remote.generic.GenericConnectorServer;
 import javax.management.remote.generic.MessageConnectionServer;
 import javax.management.remote.message.MBeanServerRequestMessage;
 import javax.management.remote.message.Message;
-import javax.management.remote.rmi.RMIConnectorServer;
-import javax.management.remote.rmi.RMIJRMPServerImpl;
 import javax.security.auth.Subject;
 
 public class L2Management extends TerracottaManagement {
+  private static final TCLogger                  logger = TCLogging.getLogger(L2Management.class);
 
-  private static final TCLogger                logger         = TCLogging.getLogger(L2Management.class);
-
-  private MBeanServer                          mBeanServer;
-  private JMXConnectorServer                   jmxConnectorServer;
-  private final L2TVSConfigurationSetupManager configurationSetupManager;
-  private final TCServerInfoMBean              tcServerInfo;
-  private final TCDumper                       tcDumper;
-  private final ObjectManagementMonitor        objectManagementBean;
-  private final LockStatisticsMonitorMBean     lockStatistics;
-  private final StatisticsAgentSubSystem       statisticsAgentSubSystem;
-  private final StatisticsGatewayMBeanImpl     statisticsGateway;
-  private static final Map                     rmiRegistryMap = new HashMap();
-  private final int                            jmxPort;
-  private final InetAddress                    bindAddress;
-  private final Sink                           remoteEventsSink;
+  protected MBeanServer                          mBeanServer;
+  protected JMXConnectorServer                   jmxConnectorServer;
+  protected final L2TVSConfigurationSetupManager configurationSetupManager;
+  private final TCServerInfoMBean                tcServerInfo;
+  private final TCDumper                         tcDumper;
+  private final ObjectManagementMonitor          objectManagementBean;
+  private final LockStatisticsMonitorMBean       lockStatistics;
+  private final StatisticsAgentSubSystem         statisticsAgentSubSystem;
+  private final StatisticsGatewayMBeanImpl       statisticsGateway;
+  protected final int                            jmxPort;
+  protected final InetAddress                    bindAddress;
+  private final Sink                             remoteEventsSink;
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
@@ -122,111 +108,42 @@ public class L2Management extends TerracottaManagement {
   }
 
   /**
-   * Keep track of RMI Registries by jmxPort. In 1.5 and forward you can create multiple RMI Registries in a single VM.
+   * EnterpriseL2Management overrides this as a no-op.
    */
-  private static Registry getRMIRegistry(int jmxPort, RMIClientSocketFactory csf, RMIServerSocketFactory ssf)
-      throws RemoteException {
-    Integer key = new Integer(jmxPort);
-    Registry registry = (Registry) rmiRegistryMap.get(key);
-    if (registry == null) {
-      rmiRegistryMap.put(key, registry = LocateRegistry.createRegistry(jmxPort, csf, ssf));
-    }
-    return registry;
-  }
-
-  // DEV-1060
-  private static class BindAddrSocketFactory extends RMISocketFactory implements Serializable {
-    private final InetAddress bindAddr;
-
-    public BindAddrSocketFactory(InetAddress bindAddress) {
-      this.bindAddr = bindAddress;
-    }
-
-    @Override
-    public ServerSocket createServerSocket(int port) throws IOException {
-      return new ServerSocket(port, 0, this.bindAddr);
-    }
-
-    @Override
-    public Socket createSocket(String dummy, int port) throws IOException {
-      return new Socket(bindAddr, port);
-    }
-
-    @Override
-    public int hashCode() {
-      return bindAddr.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      } else if (obj == null || getClass() != obj.getClass()) { return false; }
-
-      BindAddrSocketFactory other = (BindAddrSocketFactory) obj;
-      return bindAddr.equals(other.bindAddr);
+  protected void validateAuthenticationElement() {
+    if (configurationSetupManager.commonl2Config().authentication()) {
+      CustomerLogging.getConsoleLogger()
+          .warn("JMX authentication is an Enterprise Edition feature; using standard, unsecured JMXMP connector");
     }
   }
 
   public synchronized void start() throws Exception {
     JMXServiceURL url;
     Map env = new HashMap();
-    String authMsg = "Authentication OFF";
-    String credentialsMsg = "";
     env.put("jmx.remote.x.server.connection.timeout", new Long(Long.MAX_VALUE));
     env.put("jmx.remote.server.address.wildcard", "false");
-    if (configurationSetupManager.commonl2Config().authentication()) {
-      String pwd = configurationSetupManager.commonl2Config().authenticationPasswordFile();
-      String loginConfig = configurationSetupManager.commonl2Config().authenticationLoginConfigName();
-      String access = configurationSetupManager.commonl2Config().authenticationAccessFile();
-      if (pwd != null && !new File(pwd).exists()) CustomerLogging.getConsoleLogger().error(
-                                                                                           "Password file does not exist: "
-                                                                                               + pwd);
-      if (!new File(access).exists()) CustomerLogging.getConsoleLogger().error("Access file does not exist: " + access);
-      if (pwd != null) {
-        env.put("jmx.remote.x.password.file", pwd);
-        credentialsMsg = "Credentials: pwd[" + pwd + "] access[" + access + "]";
-      } else if (loginConfig != null) {
-        env.put("jmx.remote.x.login.config", loginConfig);
-        credentialsMsg = "Credentials: loginConfig[" + loginConfig + "] access[" + access + "]";
-      }
-      env.put("jmx.remote.x.access.file", access);
-      authMsg = "Authentication ON";
-      url = new JMXServiceURL("service:jmx:rmi://");
-      RMISocketFactory socketFactory = new BindAddrSocketFactory(bindAddress);
-      RMIClientSocketFactory csf = bindAddress.isAnyLocalAddress() ? null : socketFactory;
-      RMIServerSocketFactory ssf = socketFactory;
-      RMIJRMPServerImpl server = new RMIJRMPServerImpl(jmxPort, csf, ssf, env);
-      jmxConnectorServer = new RMIConnectorServer(url, env, server, mBeanServer);
-      jmxConnectorServer.start();
-      getRMIRegistry(jmxPort, csf, ssf).bind("jmxrmi", server);
-      String urlHost = bindAddress.getHostAddress();
-      CustomerLogging.getConsoleLogger().info(
-                                              "JMX Server started. " + authMsg + " - Available at URL["
-                                                  + "Service:jmx:rmi:///jndi/rmi://" + urlHost + ":" + jmxPort
-                                                  + "/jmxrmi" + "]");
-      if (!credentialsMsg.equals("")) CustomerLogging.getConsoleLogger().info(credentialsMsg);
-    } else {
-      // DEV-1060
-      url = new JMXServiceURL("jmxmp", bindAddress.getHostAddress(), jmxPort);
 
-      MessageConnectionServer msgConnectionServer = new SocketConnectionServer(url, env);
+    validateAuthenticationElement();
 
-      // We use our own connection server classes here so that we can intervene when remote jmx requests come in.
-      // Specifically we take every request and instead of processing it directly in the JMX thread, we pass the request
-      // off to a thread pool. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
-      // don't want happening in our code. Pushing the requests into our own threads provides isolation from these
-      // interrupts (see DEV-1955)
-      SynchroMessageConnectionServer synchroMessageConnectionServer = new TCSynchroMessageConnectionServer(
-                                                                                                           remoteEventsSink,
-                                                                                                           msgConnectionServer,
-                                                                                                           env);
-      env.put(DefaultConfig.SYNCHRO_MESSAGE_CONNECTION_SERVER, synchroMessageConnectionServer);
+    // DEV-1060
+    url = new JMXServiceURL("jmxmp", bindAddress.getHostAddress(), jmxPort);
 
-      jmxConnectorServer = new GenericConnectorServer(env, mBeanServer);
-      jmxConnectorServer.start();
-      CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
-    }
+    MessageConnectionServer msgConnectionServer = new SocketConnectionServer(url, env);
+
+    // We use our own connection server classes here so that we can intervene when remote jmx requests come in.
+    // Specifically we take every request and instead of processing it directly in the JMX thread, we pass the request
+    // off to a thread pool. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
+    // don't want happening in our code. Pushing the requests into our own threads provides isolation from these
+    // interrupts (see DEV-1955)
+    SynchroMessageConnectionServer synchroMessageConnectionServer = new TCSynchroMessageConnectionServer(
+                                                                                                         remoteEventsSink,
+                                                                                                         msgConnectionServer,
+                                                                                                         env);
+    env.put(DefaultConfig.SYNCHRO_MESSAGE_CONNECTION_SERVER, synchroMessageConnectionServer);
+
+    jmxConnectorServer = new GenericConnectorServer(env, mBeanServer);
+    jmxConnectorServer.start();
+    CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
   }
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
@@ -253,7 +170,7 @@ public class L2Management extends TerracottaManagement {
     return objectManagementBean;
   }
 
-  private void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
+  protected void registerMBeans() throws MBeanRegistrationException, NotCompliantMBeanException,
       InstanceAlreadyExistsException {
     mBeanServer.registerMBean(tcServerInfo, L2MBeanNames.TC_SERVER_INFO);
     mBeanServer.registerMBean(JMXLogging.getJMXAppender().getMBean(), L2MBeanNames.LOGGER);
@@ -263,7 +180,6 @@ public class L2Management extends TerracottaManagement {
       statisticsAgentSubSystem.registerMBeans(mBeanServer);
     }
     mBeanServer.registerMBean(statisticsGateway, StatisticsMBeanNames.STATISTICS_GATEWAY);
-
     mBeanServer.registerMBean(new L2Dumper(tcDumper, mBeanServer), L2MBeanNames.DUMPER);
   }
 
@@ -277,11 +193,9 @@ public class L2Management extends TerracottaManagement {
       statisticsAgentSubSystem.unregisterMBeans(mBeanServer);
     }
     mBeanServer.unregisterMBean(StatisticsMBeanNames.STATISTICS_GATEWAY);
-
     mBeanServer.unregisterMBean(L2MBeanNames.DUMPER);
-
   }
-  
+
   public static class TCSynchroMessageConnectionServer extends SynchroMessageConnectionServerImpl {
 
     private final Sink remoteEventsSink;
@@ -377,8 +291,6 @@ public class L2Management extends TerracottaManagement {
       }
 
       return callback.execute(request);
-
     }
   }
-
 }

@@ -520,8 +520,8 @@
     <xs:all>
       <xs:element name="authentication" type="authentication" minOccurs="0">
         <xs:annotation>
-          <xs:documentation xmlns="http://www.w3.org/1999/xhtml"> Turn on authentication for the Terracotta server. An
-            empty tag &lt;authentication/&gt; defaults to the standard Java JMX authentication mechanism referring
+          <xs:documentation xmlns="http://www.w3.org/1999/xhtml"> Turn on JMX authentication for the Terracotta Server, Enterprise Edition.
+            An empty tag &lt;authentication/&gt; defaults to the standard Java JMX authentication mechanism referring
             to password and access files in: $JAVA_HOME/jre/lib/management.
             <ul>
               <li>$JAVA_HOME/jre/lib/management/jmxremote.password</li>
@@ -537,7 +537,7 @@
             You must also:<br/>
             $ chmod 500 jmxremote.password<br/>
             $ chown &lt;user who will execute the tc-server&gt; jmxremote.password
-              </xs:documentation>
+          </xs:documentation>
         </xs:annotation>
       </xs:element>
 
