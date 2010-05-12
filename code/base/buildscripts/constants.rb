@@ -34,7 +34,6 @@ module MavenConstants
   TERRACOTTA_RELEASES_REPO_ID = 'terracotta-releases'
 
   TERRACOTTA_EE_SNAPSHOTS_REPO_ID = 'terracotta-ee-snapshots'
-  TERRACOTTA_EE_STAGING_REPO_ID = TERRACOTTA_STAGING_REPO_ID
   TERRACOTTA_EE_RELEASES_REPO_ID = 'terracotta-ee-releases'
 
   TERRACOTTA_SNAPSHOTS_REPO = 'http://nexus:8080/content/repositories/terracotta-snapshots'
@@ -42,6 +41,5 @@ module MavenConstants
   TERRACOTTA_RELEASES_REPO = 'http://nexus:8080/content/repositories/terracotta-releases'
 
   TERRACOTTA_EE_SNAPSHOTS_REPO = 'http://nexus:8080/content/repositories/terracotta-ee-snapshots'
-  TERRACOTTA_EE_STAGING_REPO = TERRACOTTA_STAGING_REPO
   TERRACOTTA_EE_RELEASES_REPO = 'http://nexus:8080/content/repositories/terracotta-ee-releases'
 end

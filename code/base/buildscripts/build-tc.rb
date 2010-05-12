@@ -879,7 +879,8 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   def deploy_ee_staging
-    deploy(ENTERPRISE, false, TERRACOTTA_EE_STAGING_REPO_ID, TERRACOTTA_EE_STAGING_REPO)
+    # since staging is always internal, we use it for both OSS and EE artifacts
+    deploy(ENTERPRISE, false, TERRACOTTA_STAGING_REPO_ID, TERRACOTTA_STAGING_REPO)
   end
 
   def deploy_ee_releases
