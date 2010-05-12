@@ -102,8 +102,8 @@ public interface L2LockStatsManager {
       return Collections.EMPTY_LIST;
     }
     
-    public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
-      return globalLockRecallCounter.getAllSampleValues();
+    public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
+      return globalLockRecallCounter.getMostRecentSample();
     }
   };
   
@@ -145,5 +145,5 @@ public interface L2LockStatsManager {
   
   public void enableStatsForNodeIfNeeded(NodeID nodeID);
 
-  public TimeStampedCounterValue[] getGlobalLockRecallHistory();
+  public TimeStampedCounterValue getLockRecallMostRecentSample();
 }

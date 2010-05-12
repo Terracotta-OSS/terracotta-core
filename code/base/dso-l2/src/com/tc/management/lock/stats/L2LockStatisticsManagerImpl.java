@@ -235,8 +235,8 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
     return lsc.getNumberOfLockHopRequested();
   }
 
-  public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
-    return globalLockRecallCounter.getAllSampleValues();
+  public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
+    return globalLockRecallCounter.getMostRecentSample();
   }
 
   public synchronized Collection<LockSpec> getLockSpecs() {

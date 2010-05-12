@@ -546,11 +546,12 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats, ObjectStatsManager objectManager) {
+    public void start(DSOChannelManager channelManager, DSOGlobalServerStats serverStats,
+                      ObjectStatsManager objectManager) {
       throw new ImplementMe();
     }
 
-    public synchronized TimeStampedCounterValue[] getGlobalLockRecallHistory() {
+    public synchronized TimeStampedCounterValue getLockRecallMostRecentSample() {
       return null;
     }
   }
