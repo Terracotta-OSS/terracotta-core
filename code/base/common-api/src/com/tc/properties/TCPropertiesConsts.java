@@ -427,8 +427,8 @@ public interface TCPropertiesConsts {
   public static final String   L1_TRANSACTIONMANAGER_FOLDING_DEBUG                           = "l1.transactionmanager.folding.debug";
   public static final String   L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT                    = "l1.transactionmanager.timeoutForAckOnExit";
 
-  public static final String   TC_TRANSPORT_HANDSHAKE_TIMEOUT                                     = "tc.transport.handshake.timeout";
-  public static final String   TC_CONFIG_SOURCEGET_TIMEOUT                                        = "tc.config.getFromSource.timeout";
+  public static final String   TC_TRANSPORT_HANDSHAKE_TIMEOUT                                = "tc.transport.handshake.timeout";
+  public static final String   TC_CONFIG_SOURCEGET_TIMEOUT                                   = "tc.config.getFromSource.timeout";
 
   /*********************************************************************************************************************
    * <code>
@@ -785,4 +785,12 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   INSTRUMENTATION_FINAL_FIELD_FAST_READ                         = "instrumentation.finalField.fastRead";
+
+  /*********************************************************************************************************************
+   * <code>
+   * l2.dump.on.exception.timeout - After get an uncaught exception, the server takes a dump. If the dump doesn't 
+   * happen within this timeout the server will exit (in seconds).   
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L2_DUMP_ON_EXCEPTION_TIMEOUT                                  = "l2.dump.on.exception.timeout";
 }

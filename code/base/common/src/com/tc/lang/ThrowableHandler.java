@@ -25,6 +25,8 @@ import com.tc.util.startuplock.LocationNotCreatedException;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Handle throwables appropriately by printing messages to the logger, etc. Deal with nasty problems that can occur as
@@ -39,6 +41,13 @@ public class ThrowableHandler {
   private final ExceptionHelperImpl  helper;
   private final CopyOnWriteArrayList callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
   private final HashMap              callbackOnExitExceptionHandlers = new HashMap();
+
+  private static final long          TIME_OUT                        = TCPropertiesImpl
+                                                                         .getProperties()
+                                                                         .getLong(
+                                                                                  TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT);
+  private boolean                    isExitScheduled                 = false;
+  private boolean                    isDumpTaken                     = false;
 
   /**
    * Construct a new ThrowableHandler with a logger
@@ -82,11 +91,13 @@ public class ThrowableHandler {
    * @param t Throwable
    */
   public void handleThrowable(final Thread thread, final Throwable t) {
+    final CallbackOnExitState throwableState = new CallbackOnExitState(t);
+    scheduleExit(throwableState);
+
     final Throwable proximateCause = helper.getProximateCause(t);
     final Throwable ultimateCause = helper.getUltimateCause(t);
 
     Object registeredExitHandlerObject = null;
-    CallbackOnExitState throwableState = new CallbackOnExitState(t);
     try {
       if ((registeredExitHandlerObject = callbackOnExitExceptionHandlers.get(proximateCause.getClass())) != null) {
         ((CallbackOnExitHandler) registeredExitHandlerObject).callbackOnExit(throwableState);
@@ -99,6 +110,52 @@ public class ThrowableHandler {
       logger.error("Error while handling uncaught expection" + t.getCause(), throwable);
     }
 
+    exit(throwableState);
+  }
+
+  private synchronized void scheduleExit(final CallbackOnExitState throwableState) {
+    if (isExitScheduled) { return; }
+    isExitScheduled = true;
+
+    TimerTask timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        exit(throwableState);
+      }
+    };
+    Timer timer = new Timer("Dump On Timeout Timer");
+    timer.schedule(timerTask, TIME_OUT);
+  }
+
+  private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
+
+    logException(thread, throwableState);
+
+    synchronized (this) {
+      if (!isDumpTaken) {
+        isDumpTaken = true;
+        for (Iterator iter = callbackOnExitDefaultHandlers.iterator(); iter.hasNext();) {
+          CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
+          callbackOnExitHandler.callbackOnExit(throwableState);
+        }
+      }
+    }
+  }
+
+  private void logException(Thread thread, CallbackOnExitState throwableState) {
+    try {
+      // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
+      // before the stacktrace prints
+      throwableState.getThrowable().printStackTrace(System.err);
+      System.err.flush();
+      logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers.",
+                   throwableState.getThrowable());
+    } catch (Exception e) {
+      // IGNORE EXCEPTION HERE
+    }
+  }
+
+  private void exit(CallbackOnExitState throwableState) {
     boolean autoRestart = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART);
 
     if (autoRestart && throwableState.isRestartNeeded()) {
@@ -108,21 +165,7 @@ public class ThrowableHandler {
     }
   }
 
-  private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
-
-    // We need to make SURE that our stacktrace gets printed, when using just the logger sometimes the VM exits
-    // before the stacktrace prints
-    throwableState.getThrowable().printStackTrace(System.err);
-    System.err.flush();
-    logger.error("Thread:" + thread + " got an uncaught exception. calling CallbackOnExitDefaultHandlers.",
-                 throwableState.getThrowable());
-    for (Iterator iter = callbackOnExitDefaultHandlers.iterator(); iter.hasNext();) {
-      CallbackOnExitHandler callbackOnExitHandler = (CallbackOnExitHandler) iter.next();
-      callbackOnExitHandler.callbackOnExit(throwableState);
-    }
-  }
-
-  protected void exit(int status) {
+  protected synchronized void exit(int status) {
     // let all the logging finish
     ThreadUtil.reallySleep(2000);
     System.exit(status);

@@ -53,7 +53,9 @@ public class L2DumperTestApp extends AbstractTransparentApp {
 
   private void takeServerDump() {
     try {
+      long time = System.currentTimeMillis();
       new DumpServer("localhost", jmxPort).dumpServer();
+      System.out.println("Time taken for dump = " + (System.currentTimeMillis() - time));
     } catch (Exception e) {
       e.printStackTrace();
     }
