@@ -35,6 +35,7 @@ public class Config {
   public static final String CACHE                 = "cache";
   public static final String DATA_CACHE_EXPIRATION = "dataCacheExpirationInSeconds";
   public static final String ENV_TIMGET_PROXY_AUTH = "TIMGET_PROXY_AUTH";
+  public static final String UNKNOWN               = "UNKNOWN";
 
   private String             tcVersion;
   private String             timApiVersion;
@@ -57,10 +58,12 @@ public class Config {
     this.setTcVersion(getProperty(properties, TC_VERSION));
     this.setTimApiVersion(getProperty(properties, TIM_API_VERSION, Version.getVersion().getFullVersionString()));
 
+    String relativeUrl = null;
     try {
-      this.setRelativeUrlBase(new URI(getProperty(properties, RELATIVE_URL_BASE)));
+      relativeUrl = getProperty(properties, RELATIVE_URL_BASE, UNKNOWN);
+      this.setRelativeUrlBase(new URI(relativeUrl.trim()));
     } catch (URISyntaxException e) {
-      throw new InvalidConfigurationException(RELATIVE_URL_BASE + " is not a valid URL");
+      throw new InvalidConfigurationException(RELATIVE_URL_BASE + " is not a valid URL '" + relativeUrl + "'");
     }
     this.setIncludeSnapshots(Boolean.parseBoolean(getProperty(properties, INCLUDE_SNAPSHOTS)));
 
