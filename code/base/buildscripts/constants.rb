@@ -36,4 +36,8 @@ module MavenConstants
   TERRACOTTA_SNAPSHOTS_REPO = 'http://nexus:8080/content/repositories/terracotta-snapshots'
   TERRACOTTA_STAGING_REPO = 'http://nexus:8080/content/repositories/terracotta-staging'
   TERRACOTTA_RELEASES_REPO = 'http://nexus:8080/content/repositories/terracotta-releases'
+
+  TERRACOTTA_EE_SNAPSHOTS_REPO = 'http://nexus:8080/content/repositories/terracotta-ee-snapshots'
+  TERRACOTTA_EE_STAGING_REPO = TERRACOTTA_STAGING_REPO
+  TERRACOTTA_EE_RELEASES_REPO = 'http://nexus:8080/content/repositories/terracotta-ee-releases'
 end
