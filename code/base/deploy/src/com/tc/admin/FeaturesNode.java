@@ -10,6 +10,7 @@ import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.dso.ClientsNode;
+import com.tc.admin.dso.DSOHelper;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IServer;
 import com.tc.management.beans.TIMByteProviderMBean;
@@ -48,17 +49,20 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
   public FeaturesNode(ClusterNode clusterNode, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
     super(adminClientContext.getString("cluster.features"));
+
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
     this.clusterNode = clusterNode;
     this.clusterListener = new ClusterListener(clusterModel);
-    activeFeatureMap = new LinkedHashMap<String, Feature>();
-    nodeMap = new LinkedHashMap<Feature, FeatureNode>();
+    this.activeFeatureMap = new LinkedHashMap<String, Feature>();
+    this.nodeMap = new LinkedHashMap<Feature, FeatureNode>();
 
     clusterModel.addPropertyChangeListener(clusterListener);
     if (clusterModel.getActiveCoordinator() != null) {
       init();
     }
+
+    setIcon(DSOHelper.getHelper().getFeaturesIcon());
   }
 
   protected synchronized IClusterModel getClusterModel() {
@@ -127,12 +131,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       Feature feature = entry.getValue();
       if (!nodeMap.containsKey(feature)) {
         FeatureNode featureNode = newFeatureNode(feature);
-        if (getParent() == null) {
-          clusterNode.insertChild(this, 0);
-        }
-        add(featureNode);
-        nodeStructureChanged();
-        adminClientContext.getAdminClientController().expand(featureNode);
+        handlePresentationReady(featureNode);
       }
     }
   }
@@ -140,7 +139,36 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   private FeatureNode newFeatureNode(Feature feature) {
     FeatureNode node = new FeatureNode(feature, adminClientContext, clusterModel);
     nodeMap.put(feature, node);
+    node.addPresentationListener(new PresentationListenerImpl(node));
     return node;
+  }
+
+  private class PresentationListenerImpl implements PresentationListener {
+    private final FeatureNode featureNode;
+
+    PresentationListenerImpl(FeatureNode featureNode) {
+      this.featureNode = featureNode;
+    }
+
+    public void presentationReady(boolean ready) {
+      handlePresentationReady(featureNode);
+    }
+  }
+
+  private void handlePresentationReady(FeatureNode featureNode) {
+    if (featureNode.isPresentationReady()) {
+      if (getParent() == null) {
+        clusterNode.insertChild(this, 1);
+      }
+      adminClientContext.getAdminClientController().expand(this);
+      addChild(featureNode);
+      adminClientContext.getAdminClientController().expand(featureNode);
+    } else if (isNodeChild(featureNode)) {
+      removeChild(featureNode);
+      if (getChildCount() == 0) {
+        clusterNode.removeChild(this);
+      }
+    }
   }
 
   protected boolean testRegisterFeature(ObjectName on) {
@@ -187,7 +215,9 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   private void tearDownFeature(Feature feature) {
     FeatureNode node = nodeMap.remove(feature);
     if (node != null) {
-      removeChild(node);
+      if (isNodeChild(node)) {
+        removeChild(node);
+      }
       node.tearDown();
     }
     if (getParent() != null && getChildCount() == 0) {

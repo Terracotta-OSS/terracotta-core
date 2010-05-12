@@ -33,7 +33,6 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
 
     add(createRootsNode());
     add(new ClassesNode(adminClientContext, clusterModel));
-    add(createGCStatsNode());
   }
 
   protected RootsNode createRootsNode() {
@@ -42,10 +41,6 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
 
   protected ClassesNode createClassesNode() {
     return new ClassesNode(adminClientContext, getClusterModel());
-  }
-
-  protected GCStatsNode createGCStatsNode() {
-    return new GCStatsNode(adminClientContext, getClusterModel());
   }
 
   synchronized IClusterModel getClusterModel() {

@@ -6,8 +6,8 @@ package com.tc.admin;
 
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XTreeNode;
-import com.tc.admin.dso.ClusteredHeapNode;
-import com.tc.admin.dso.DiagnosticsNode;
+import com.tc.admin.dso.MonitoringNode;
+import com.tc.admin.dso.PlatformNode;
 import com.tc.admin.model.ClusterModel;
 import com.tc.admin.model.IClusterModel;
 import com.tc.admin.model.IClusterNode;
@@ -24,7 +24,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -498,11 +497,6 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         AdminClientController controller = adminClientContext.getAdminClientController();
         nodeStructureChanged();
         controller.expand(this);
-
-        Enumeration theChildren = children();
-        while (theChildren.hasMoreElements()) {
-          controller.expand((XTreeNode) theChildren.nextElement());
-        }
         controller.expandAll(topologyNode);
       }
     } catch (Throwable t) {
@@ -515,10 +509,10 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   TopologyNode topologyNode;
 
   protected void addChildren() {
-    featuresNode = createFeaturesNode();
-    add(createClusteredHeapNode());
-    add(createDiagnosticsNode());
     add(topologyNode = createTopologyNode());
+    featuresNode = createFeaturesNode();
+    add(createPlatformNode());
+    add(createMonitoringNode());
   }
 
   private FeaturesNode featuresNode;
@@ -527,12 +521,12 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     return new FeaturesNode(this, adminClientContext, getClusterModel());
   }
 
-  protected ClusteredHeapNode createClusteredHeapNode() {
-    return new ClusteredHeapNode(adminClientContext, getClusterModel());
+  protected PlatformNode createPlatformNode() {
+    return new PlatformNode(this, adminClientContext, getClusterModel());
   }
 
-  protected DiagnosticsNode createDiagnosticsNode() {
-    return new DiagnosticsNode(adminClientContext, getClusterModel(), this);
+  protected MonitoringNode createMonitoringNode() {
+    return new MonitoringNode(this, adminClientContext, getClusterModel());
   }
 
   protected TopologyNode createTopologyNode() {

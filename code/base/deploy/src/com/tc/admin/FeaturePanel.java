@@ -17,22 +17,27 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JProgressBar;
 
-public class FeaturePanel extends XContainer {
+public class FeaturePanel extends XContainer implements PropertyChangeListener {
   protected Feature             feature;
+  protected FeatureNode         featureNode;
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
   protected Presentation        presentation;
 
-  public FeaturePanel(final Feature feature, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+  public FeaturePanel(final Feature feature, final FeatureNode featureNode, IAdminClientContext adminClientContext,
+                      IClusterModel clusterModel) {
     super(new BorderLayout());
 
     this.feature = feature;
+    this.featureNode = featureNode;
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
@@ -68,17 +73,18 @@ public class FeaturePanel extends XContainer {
     }
   }
 
+  public Presentation getPresentation() {
+    return presentation;
+  }
+
   private void createPresentation() {
     try {
       PresentationFactory factory;
       if ((factory = feature.getPresentationFactory()) != null) {
         presentation = factory.create(PresentationContext.DEV);
         if (presentation != null) {
-          removeAll();
-          add(presentation);
+          presentation.addPropertyChangeListener(this);
           presentation.setup(adminClientContext, clusterModel);
-          revalidate();
-          repaint();
         } else {
           System.err.println("Failed to instantiate instance of '" + factory + "'");
         }
@@ -88,6 +94,27 @@ public class FeaturePanel extends XContainer {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public void propertyChange(PropertyChangeEvent evt) {
+    String prop = evt.getPropertyName();
+    if (Presentation.PROP_PRESENTATION_READY.equals(prop)) {
+      boolean ready = ((Boolean) evt.getNewValue()).booleanValue();
+      handlePresentationReady(ready);
+    }
+  }
+
+  private void handlePresentationReady(boolean ready) {
+    removeAll();
+    if (ready) {
+      add(presentation);
+      featureNode.setIcon(presentation.getIcon());
+      featureNode.nodeChanged();
+    }
+    revalidate();
+    repaint();
+
+    firePropertyChange(Presentation.PROP_PRESENTATION_READY, !ready, ready);
   }
 
   private void showError(Throwable error) {

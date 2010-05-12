@@ -42,6 +42,7 @@
   	validate="true">
   	<forward name="Success" path="/display.jsp" redirect="true"/>
   	<forward name="Failure" path="/display.jsp" redirect="true"/>
+  	<forward name="NoSession" path="/action/welcome" redirect="true"/>
   </action> 
   
   <action
@@ -51,6 +52,7 @@
     name="addToListForm"
     input="/display.jsp">
     <forward name="Success" path="/action/displayUserList" redirect="true"/>
+  	<forward name="NoSession" path="/action/welcome" redirect="true"/>
   </action>  
 </action-mappings>
           

@@ -5,14 +5,10 @@
 package com.tc.admin.dso;
 
 import com.tc.admin.ClusterNode;
-import com.tc.admin.ClusterThreadDumpProvider;
 import com.tc.admin.IAdminClientContext;
-import com.tc.admin.StatsRecorderNode;
-import com.tc.admin.ThreadDumpsNode;
 import com.tc.admin.common.ComponentNode;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
-import com.tc.admin.dso.locks.LocksNode;
 import com.tc.admin.model.IClusterModel;
 
 import java.awt.Component;
@@ -25,38 +21,27 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTML;
 
-public class DiagnosticsNode extends ComponentNode implements HyperlinkListener {
+public class PlatformNode extends ComponentNode implements HyperlinkListener {
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
   protected XScrollPane         diagnosticsPanel;
 
-  public DiagnosticsNode(IAdminClientContext adminClientContext, IClusterModel clusterModel, ClusterNode clusterNode) {
-    super(adminClientContext.getString("dso.diagnostics"));
+  public PlatformNode(ClusterNode clusterNode, IAdminClientContext adminClientContext, IClusterModel clusterModel) {
+    super(adminClientContext.getString("dso.platform"));
 
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
-    try {
-      add(createLocksNode(clusterNode));
-    } catch (Throwable t) {
-      t.printStackTrace();
-      // Need a more specific exception but this means we're trying to connect to an
-      // older version of the server, that doesn't have the LockMonitorMBean we expect.
-    }
-    add(createThreadDumpsNode(clusterNode));
-    add(createStatsRecorderNode());
+    add(createClusteredHeapNode());
+    add(createDiagnosticsNode(clusterNode));
   }
 
-  protected LocksNode createLocksNode(ClusterNode clusterNode) {
-    return new LocksNode(adminClientContext, clusterNode);
+  protected ClusteredHeapNode createClusteredHeapNode() {
+    return new ClusteredHeapNode(adminClientContext, getClusterModel());
   }
 
-  protected ThreadDumpsNode createThreadDumpsNode(ClusterThreadDumpProvider threadDumpProvider) {
-    return new ThreadDumpsNode(adminClientContext, clusterModel, threadDumpProvider);
-  }
-
-  protected StatsRecorderNode createStatsRecorderNode() {
-    return new StatsRecorderNode(adminClientContext, getClusterModel());
+  protected DiagnosticsNode createDiagnosticsNode(ClusterNode clusterNode) {
+    return new DiagnosticsNode(adminClientContext, getClusterModel(), clusterNode);
   }
 
   synchronized IClusterModel getClusterModel() {
@@ -69,7 +54,7 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
       XTextPane textPane = new XTextPane();
       diagnosticsPanel = new XScrollPane(textPane);
       try {
-        textPane.setPage(getClass().getResource("DiagnosticsIntro.html"));
+        textPane.setPage(getClass().getResource("PlatformIntro.html"));
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -95,7 +80,7 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
 
   @Override
   public Icon getIcon() {
-    return DSOHelper.getHelper().getDiagnosticsIcon();
+    return DSOHelper.getHelper().getPlatformIcon();
   }
 
   @Override

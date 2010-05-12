@@ -16,6 +16,8 @@ public class Feature {
   private final FeatureClassLoader loader;
   private PresentationFactory      presentationFactory;
 
+  public static final String       PROP_FEATURE_READY = "featureReady";
+
   public Feature(String symbolicName, String displayName) {
     this.symbolicName = symbolicName;
     this.displayName = displayName;

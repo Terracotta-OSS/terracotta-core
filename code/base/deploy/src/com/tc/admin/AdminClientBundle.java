@@ -72,6 +72,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "dso.roots", "Object browser" },
         { "dso.heap", "Clustered heap" },
         { "dso.diagnostics", "Diagnostics" },
+        { "dso.platform", "Platform" },
+        { "dso.monitoring", "Monitoring" },
         { "cluster.topology", "Topology" },
         { "cluster.features", "My application" },
         { "dso.runtime.stats", "Runtime statistics" },

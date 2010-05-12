@@ -19,8 +19,11 @@ public class DSOHelper extends BaseHelper {
   private static final DSOHelper helper = new DSOHelper();
   private Icon                   gcIcon;
   private Icon                   topologyIcon;
+  private Icon                   featuresIcon;
   private Icon                   diagnosticsIcon;
   private Icon                   clusteredHeapIcon;
+  private Icon                   platformIcon;
+  private Icon                   monitoringIcon;
 
   private DSOHelper() {/**/
   }
@@ -68,5 +71,35 @@ public class DSOHelper extends BaseHelper {
     }
     return clusteredHeapIcon;
   }
-  
+
+  public Icon getPlatformIcon() {
+    if (platformIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "newex_wiz.gif");
+      if (url != null) {
+        platformIcon = new ImageIcon(url);
+      }
+    }
+    return platformIcon;
+  }
+
+  public Icon getMonitoringIcon() {
+    if (monitoringIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "monitor_obj.gif");
+      if (url != null) {
+        monitoringIcon = new ImageIcon(url);
+      }
+    }
+    return monitoringIcon;
+  }
+
+  public Icon getFeaturesIcon() {
+    if (featuresIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "plugin.png");
+      if (url != null) {
+        featuresIcon = new ImageIcon(url);
+      }
+    }
+    return featuresIcon;
+  }
+
 }
