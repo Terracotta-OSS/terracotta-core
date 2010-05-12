@@ -140,11 +140,22 @@ postscripts:
         - sessions/samples         
   - maven-deploy:
       args:
-        - artifact_count: 3
+        - artifact_count: 5
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml
           pom: pom.xml
+        - groupId: org.terracotta
+          artifact: terracotta-core-parent
+          srcfile: poms/terracotta-core-parent-pom.xml
+          pom: poms/terracotta-core-parent-pom.xml
+        - groupId: org.terracotta
+          artifact: terracotta-ee
+          file: lib/tc.jar
+          pom: poms/terracotta-ee-pom.xml
+          inject: 
+            - lib/resources/build-data.txt
+            - lib/resources/tim-get.properties
         - groupId: org.terracotta
           artifact: terracotta-l1-parent
           srcfile: poms/terracotta-l1-parent-pom.xml
