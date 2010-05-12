@@ -228,7 +228,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (theReadySet != null) {
       theReadySet.add(L2MBeanNames.TC_SERVER_INFO);
       theReadySet.add(L2MBeanNames.DSO);
-      theReadySet.add(L2MBeanNames.SERVER_DB_BACKUP);
+      // theReadySet.add(L2MBeanNames.SERVER_DB_BACKUP);
       theReadySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
       theReadySet.add(L2MBeanNames.LOGGER);
       theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
