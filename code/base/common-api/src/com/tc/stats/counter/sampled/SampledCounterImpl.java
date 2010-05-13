@@ -5,7 +5,6 @@
 package com.tc.stats.counter.sampled;
 
 import com.tc.stats.counter.CounterImpl;
-import com.tc.util.concurrent.CircularLossyQueue;
 
 import java.util.TimerTask;
 
@@ -13,16 +12,15 @@ import java.util.TimerTask;
  * A counter that keeps sampled values
  */
 public class SampledCounterImpl extends CounterImpl implements SampledCounter {
-  protected final CircularLossyQueue<TimeStampedCounterValue> history;
   protected final boolean                                     resetOnSample;
   private final TimerTask                                     samplerTask;
   private final long                                          intervalMillis;
-
+  private volatile TimeStampedCounterValue                    mostRecentSample;
+  
   public SampledCounterImpl(SampledCounterConfig config) {
     super(config.getInitialValue());
 
     this.intervalMillis = config.getIntervalSecs() * 1000;
-    this.history = new CircularLossyQueue<TimeStampedCounterValue>(config.getHistorySize());
     this.resetOnSample = config.isResetOnSample();
 
     this.samplerTask = new TimerTask() {
@@ -35,11 +33,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   }
 
   public TimeStampedCounterValue getMostRecentSample() {
-    return this.history.peek();
-  }
-
-  public TimeStampedCounterValue[] getAllSampleValues() {
-    return this.history.toArray(new TimeStampedCounterValue[this.history.depth()]);
+    return mostRecentSample;
   }
 
   public void shutdown() {
@@ -65,9 +59,7 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
     }
 
     final long now = System.currentTimeMillis();
-    TimeStampedCounterValue timedSample = new TimeStampedCounterValue(now, sample);
-
-    history.push(timedSample);
+    mostRecentSample = new TimeStampedCounterValue(now, sample);
   }
 
   public long getAndReset() {

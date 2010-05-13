@@ -12,15 +12,9 @@ public interface SampledCounter extends Counter {
   
   TimeStampedCounterValue getMostRecentSample();
 
-  TimeStampedCounterValue[] getAllSampleValues();
-
   long getAndReset();
   
   public final static SampledCounter NULL_SAMPLED_COUNTER = new SampledCounter() {
-
-    public TimeStampedCounterValue[] getAllSampleValues() {
-      return null;
-    }
 
     public TimeStampedCounterValue getMostRecentSample() {
       return null;
