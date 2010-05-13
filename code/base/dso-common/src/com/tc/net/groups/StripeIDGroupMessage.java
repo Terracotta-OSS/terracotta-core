@@ -9,7 +9,6 @@ import com.tc.io.TCByteBufferOutput;
 import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.util.Assert;
-import com.tc.util.State;
 
 import java.io.IOException;
 
@@ -22,7 +21,7 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
 
   private GroupID         groupID;
   private StripeID        stripeID;
-  private State           senderState;
+  private boolean         isActive;
   private boolean         remap;
 
   // To make serialization happy
@@ -30,11 +29,11 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     super(-1);
   }
 
-  public StripeIDGroupMessage(int type, GroupID groupID, StripeID stripeID, State senderState, boolean isRemap) {
+  public StripeIDGroupMessage(int type, GroupID groupID, StripeID stripeID, boolean isActive, boolean isRemap) {
     super(type);
     this.groupID = groupID;
     this.stripeID = stripeID;
-    this.senderState = senderState;
+    this.isActive = isActive;
     this.remap = isRemap;
   }
 
@@ -46,7 +45,7 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer.deserializeFrom(in);
     stripeID = (StripeID) nodeIDSerializer.getNodeID();
-    senderState = new State(in.readString());
+    isActive = in.readBoolean();
     remap = in.readBoolean();
   }
 
@@ -54,12 +53,12 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     Assert.assertEquals(STRIPEID_MESSAGE, getType());
     new NodeIDSerializer(groupID).serializeTo(out);
     new NodeIDSerializer(stripeID).serializeTo(out);
-    out.writeString(senderState.getName());
+    out.writeBoolean(isActive);
     out.writeBoolean(remap);
   }
 
   public String toString() {
-    return "StripeIDGroupMessage [ " + this.stripeID + " " + this.groupID + " " + this.senderState + " isRemap:"
+    return "StripeIDGroupMessage [ " + this.stripeID + " " + this.groupID + " isActive: " + this.isActive + " isRemap:"
            + this.remap + " ]";
   }
 
@@ -71,8 +70,8 @@ public class StripeIDGroupMessage extends AbstractGroupMessage {
     return this.stripeID;
   }
 
-  public State getSenderState() {
-    return this.senderState;
+  public boolean isActive() {
+    return this.isActive;
   }
 
   public boolean isRemap() {

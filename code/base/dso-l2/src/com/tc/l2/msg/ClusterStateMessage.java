@@ -177,7 +177,6 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         break;
       case COMPLETE_STATE:
-        state.setStripeID(clusterID);
         state.setNextAvailableObjectID(nextAvailableObjectID);
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
@@ -188,6 +187,8 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         for (GroupID gid : stripeIDMap.keySet()) {
           state.addToStripeIDMap(gid, stripeIDMap.get(gid));
         }
+        // trigger local stripeID ready event after StripeIDMap loaded.
+        state.setStripeID(clusterID);
         break;
       case NEW_CONNECTION_CREATED:
         state.addNewConnection(connectionID);
