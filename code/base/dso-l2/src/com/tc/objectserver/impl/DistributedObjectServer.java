@@ -129,7 +129,6 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManager;
 import com.tc.objectserver.DSOApplicationEvents;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.ObjectStatsManagerImpl;
@@ -1015,8 +1014,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                         serverTransactionSequencerImpl, sraBdb);
 
     // XXX: yucky casts
-    this.managementContext = new ServerManagementContext(this.transactionManager,
-                                                         (ObjectManagerMBean) this.objectManager,
+    this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
                                                          (LockManagerMBean) this.lockManager,
                                                          (DSOChannelManagerMBean) channelManager, serverStats,
                                                          channelStats, instanceMonitor, appEvents);

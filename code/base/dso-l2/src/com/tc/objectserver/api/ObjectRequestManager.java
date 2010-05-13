@@ -10,7 +10,7 @@ import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 
-public interface ObjectRequestManager {
+public interface ObjectRequestManager extends ObjectManagerMBean {
 
   public void requestObjects(ObjectRequestServerContext requestContext);
 

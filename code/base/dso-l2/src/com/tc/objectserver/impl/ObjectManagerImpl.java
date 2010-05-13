@@ -17,7 +17,6 @@ import com.tc.object.cache.EvictionPolicy;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
-import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.objectserver.api.ShutdownError;
 import com.tc.objectserver.context.GCResultContext;
@@ -64,8 +63,8 @@ import java.util.Set;
 /**
  * Manages access to all the Managed objects in the system.
  */
-public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, ObjectManagerMBean, Evictable,
-    DumpHandler, PrettyPrintable {
+public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeListener, Evictable, DumpHandler,
+    PrettyPrintable {
 
   private static final TCLogger                       logger                = TCLogging.getLogger(ObjectManager.class);
 
@@ -223,6 +222,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * For management use only (see interface documentation)
    */
   public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
+
     if (!containsObject(id)) { throw new NoSuchObjectException(id); }
 
     final ManagedObject object = lookup(id, true, false);

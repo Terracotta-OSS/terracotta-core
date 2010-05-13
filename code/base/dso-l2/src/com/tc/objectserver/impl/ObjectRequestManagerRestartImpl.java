@@ -7,10 +7,13 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.util.ObjectIDSet;
@@ -124,6 +127,31 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     this.delegate.sendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, isServerInitiated,
                               maxRequestDepth);
 
+  }
+
+  // delegating all ObjectManagerMbean requests to the object manager
+  public int getCachedObjectCount() {
+    return this.objectManager.getCachedObjectCount();
+  }
+
+  public int getLiveObjectCount() {
+    return this.objectManager.getLiveObjectCount();
+  }
+
+  public Iterator getRootNames() {
+    return this.objectManager.getRootNames();
+  }
+
+  public Iterator getRoots() {
+    return this.objectManager.getRoots();
+  }
+
+  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) throws NoSuchObjectException {
+    return this.objectManager.lookupFacade(id, limit);
+  }
+
+  public ObjectID lookupRootID(String name) {
+    return this.objectManager.lookupRootID(name);
   }
 
 }

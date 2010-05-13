@@ -248,4 +248,16 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   public int getLiveObjectCount() {
     return 0;
   }
+
+  public int getCachedObjectCount() {
+    return 0;
+  }
+
+  public Iterator getRootNames() {
+    return null;
+  }
+
+  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
+    return null;
+  }
 }

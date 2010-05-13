@@ -18,6 +18,7 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.util.Assert;
@@ -267,4 +268,17 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   public int getLiveObjectCount() {
     return managed.size();
   }
+
+  public int getCachedObjectCount() {
+    return 0;
+  }
+
+  public Iterator getRootNames() {
+    return null;
+  }
+
+  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
+    return null;
+  }
+
 }

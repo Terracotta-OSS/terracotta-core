@@ -19,6 +19,7 @@ import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
+import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectManagerLookupResults;
 import com.tc.objectserver.api.ObjectRequestManager;
@@ -27,6 +28,7 @@ import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.context.RespondToObjectRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -564,5 +566,30 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
              + " , requestedObjectIDs = " + this.requestedObjectIDs + " , missingObjectIDs = " + this.missingObjectIDs
              + " , serverInitiated = " + this.serverInitiated + " ] ";
     }
+  }
+
+  // delegating all ObjectManagerMbean requests to the object manager
+  public int getCachedObjectCount() {
+    return this.objectManager.getCachedObjectCount();
+  }
+
+  public int getLiveObjectCount() {
+    return this.objectManager.getLiveObjectCount();
+  }
+
+  public Iterator getRootNames() {
+    return this.objectManager.getRootNames();
+  }
+
+  public Iterator getRoots() {
+    return this.objectManager.getRoots();
+  }
+
+  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) throws NoSuchObjectException {
+    return this.objectManager.lookupFacade(id, limit);
+  }
+
+  public ObjectID lookupRootID(String name) {
+    return this.objectManager.lookupRootID(name);
   }
 }

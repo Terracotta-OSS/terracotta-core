@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
  */
-public interface ObjectManager extends ManagedObjectProvider {
+public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean {
 
   public void stop();
 

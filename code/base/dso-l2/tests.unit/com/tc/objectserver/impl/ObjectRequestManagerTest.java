@@ -58,6 +58,7 @@ import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
+import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
@@ -943,6 +944,19 @@ public class ObjectRequestManagerTest extends TestCase {
     public int getLiveObjectCount() {
       throw new NotImplementedException(TestObjectManager.class);
     }
+
+    public int getCachedObjectCount() {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
+
+    public Iterator getRootNames() {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
+
+    public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
+
   }
 
   private static class TestMessageChannel implements MessageChannel {
