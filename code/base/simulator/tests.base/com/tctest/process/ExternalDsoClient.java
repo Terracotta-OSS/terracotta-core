@@ -8,6 +8,8 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.process.StreamCopier;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TestConfigObject;
 import com.tc.util.Assert;
 
@@ -49,6 +51,14 @@ public class ExternalDsoClient {
     prepareTCJvmArgs();
   }
 
+  protected void addProductKeyIfExists(List vmargs) {
+    String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
+    String productKeyPath = System.getProperty(propertyKey);
+    if (productKeyPath != null) {
+      vmargs.add("-D" + propertyKey + "=" + productKeyPath);
+    }
+  }
+  
   private File saveToFile(InputStream configInput) throws IOException {
     File config = new File(workingDir, CLIENT_CONFIG_FILENAME);
     FileOutputStream out = new FileOutputStream(config);
@@ -144,6 +154,7 @@ public class ExternalDsoClient {
       this.jvmArgs.add("-Dtc.classpath=" + createTcClassPath());
       this.jvmArgs.add(bootclasspath);
       this.jvmArgs.add("-Dtc.config=" + configFile);
+      addProductKeyIfExists(jvmArgs);
     } catch (Exception e) {
       throw Assert.failure("Can't set JVM args", e);
     }

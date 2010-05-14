@@ -132,6 +132,8 @@ public class ExtraProcessServerControl extends ServerControlBase {
     this.mergeOutput = mergeOutput;
     this.name = "DSO process @ " + getHost() + ":" + getDsoPort() + ", jmx-port:" + adminPort;
     this.runningDirectory = runningDirectory;
+
+    addProductKeyIfExists(jvmArgs);
     jvmArgs.add("-Dcom.tc.l1.modules.repositories=" + System.getProperty("com.tc.l1.modules.repositories"));
     jvmArgs.add("-Dtc.base-dir=" + System.getProperty("tc.base-dir"));
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
@@ -144,6 +146,16 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
     if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
+    }
+  }
+
+  protected void addProductKeyIfExists(List args) {
+    String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
+    String productKeyPath = System.getProperty(propertyKey);
+    System.out.println("XXX expected product key path: " + productKeyPath);
+    if (productKeyPath != null) {
+      args.add("-D" + propertyKey + "=" + productKeyPath);
+      System.out.println("XXX ading to server process: " + "-D" + propertyKey + "=" + productKeyPath);
     }
   }
 

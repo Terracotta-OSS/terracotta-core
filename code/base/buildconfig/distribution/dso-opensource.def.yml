@@ -60,7 +60,7 @@ bundled_components:
               - dso-l2-common
               - dso-statistics-api
               - management-api      
-        - test-api-maven.version:
+        - test-api:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
             source: tests.base
@@ -193,9 +193,8 @@ postscripts:
             - lib/resources/build-data.txt
         - groupId: org.terracotta.api
           artifact: test-api
-          file: api-jars/test-api-maven.version.jar
+          file: api-jars/test-api.jar
           pom: poms/terracotta-test-api-pom.xml
-          version: maven.version
           inject: 
             - lib/resources/build-data.txt
   - delete-api-jars
