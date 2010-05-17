@@ -7,6 +7,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,10 +154,6 @@ public class MockClientLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public void dumpToLogger() {
-    throw new ImplementMe();
-  }
-
   public static class Begin {
     public LockID    lock;
     public LockLevel level;
@@ -187,5 +184,9 @@ public class MockClientLockManager implements ClientLockManager {
 
   public boolean isLockedByCurrentThread(LockLevel level) {
     return false;
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    throw new ImplementMe();
   }
 }

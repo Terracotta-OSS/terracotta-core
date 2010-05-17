@@ -10,6 +10,7 @@ import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.List;
@@ -79,10 +80,6 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
     // NOP
   }
 
-  public void dumpToLogger() {
-    //
-  }
-
   public void waitForAllCurrentTransactionsToComplete() {
     //
   }
@@ -94,5 +91,9 @@ public class TestRemoteTransactionManager implements RemoteTransactionManager {
   public void batchReceived(TxnBatchID batchId, Set<TransactionID> set, NodeID nid) {
     throw new ImplementMe();
 
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    throw new ImplementMe();
   }
 }

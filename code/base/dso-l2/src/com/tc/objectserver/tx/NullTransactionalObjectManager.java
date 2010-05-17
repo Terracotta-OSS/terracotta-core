@@ -7,7 +7,6 @@ package com.tc.objectserver.tx;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.context.RecallObjectsContext;
-import com.tc.text.PrettyPrinter;
 
 import java.util.Collection;
 
@@ -40,13 +39,5 @@ public class NullTransactionalObjectManager implements TransactionalObjectManage
 
   public void recallCheckedoutObject(RecallObjectsContext roc) {
     // Nop
-  }
-
-  public void dumpToLogger() {
-    // Nop
-  }
-
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return null;
   }
 }

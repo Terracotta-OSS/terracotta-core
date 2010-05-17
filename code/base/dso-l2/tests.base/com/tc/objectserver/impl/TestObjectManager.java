@@ -212,11 +212,6 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   }
 
-  public void dumpToLogger() {
-    throw new ImplementMe();
-
-  }
-
   public void preFetchObjectsAndCreate(Set oids, Set newOids) {
     // Nop
   }

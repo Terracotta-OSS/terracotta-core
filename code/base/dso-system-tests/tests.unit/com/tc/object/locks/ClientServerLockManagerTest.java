@@ -28,6 +28,7 @@ public class ClientServerLockManagerTest extends TestCase {
   private TestSessionManager          sessionManager;
   private ManualThreadIDManager       threadManager;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     sessionManager = new TestSessionManager();
@@ -92,6 +93,7 @@ public class ClientServerLockManagerTest extends TestCase {
     final CyclicBarrier barrier = new CyclicBarrier(2);
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -127,6 +129,7 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.lock(lockID1, LockLevel.READ);
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -154,6 +157,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -193,6 +197,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -245,6 +250,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -289,6 +295,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -342,6 +349,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread waitCallThread = new Thread() {
 
+      @Override
       public void run() {
         try {
           threadManager.setThreadID(tx1);
@@ -392,6 +400,7 @@ public class ClientServerLockManagerTest extends TestCase {
 
     Thread pendingLockRequestThread = new Thread() {
 
+      @Override
       public void run() {
         threadManager.setThreadID(tx1);
         clientLockManager.lock(lockID1, LockLevel.WRITE);
@@ -492,6 +501,7 @@ public class ClientServerLockManagerTest extends TestCase {
     throw new AssertionError(e);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     glue.stop();
     super.tearDown();

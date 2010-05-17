@@ -24,6 +24,7 @@ import com.tc.util.State;
 import com.tc.util.UUID;
 import com.tc.util.sequence.ObjectIDSequence;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class ClusterState {
   private final GroupID                             thisGroupID;
   private final StripeIDStateManager                stripeIDStateManager;
 
-  private final Set                                 connections          = new HashSet();
+  private final Set                                 connections          = Collections.synchronizedSet(new HashSet());
   private long                                      nextAvailObjectID    = -1;
   private long                                      nextAvailChannelID   = -1;
   private long                                      nextAvailGlobalTxnID = -1;
@@ -224,6 +225,20 @@ public class ClusterState {
 
   public void addToStripeIDMap(GroupID gid, StripeID sid) {
     stripeIDStateManager.verifyOrSaveStripeID(gid, sid, true);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder strBuilder = new StringBuilder();
+    strBuilder.append("ClusterState [ ");
+    strBuilder.append("Connections [ ").append(this.connections).append(" ]");
+    strBuilder.append(" nextAvailGlobalTxnID: ").append(this.nextAvailGlobalTxnID);
+    strBuilder.append(" nextAvailChannelID: ").append(this.nextAvailChannelID);
+    strBuilder.append(" nextAvailObjectID: ").append(this.nextAvailObjectID);
+    strBuilder.append(" currentState: ").append(this.currentState);
+    strBuilder.append(" stripeID: ").append(this.stripeID);
+    strBuilder.append(" ]");
+    return strBuilder.toString();
   }
 
 }

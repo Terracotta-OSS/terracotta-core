@@ -20,17 +20,14 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
-import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.State;
 import com.tc.util.TCAssertionError;
 import com.tc.util.Util;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -552,15 +549,6 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     public void reset() {
       this.currentLWM = TransactionID.NULL_ID;
     }
-  }
-
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.autoflush(false);
-    prettyPrinter.visit(this);
-    writer.flush();
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

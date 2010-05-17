@@ -12,6 +12,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
@@ -136,6 +137,10 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public void preFetchObject(ObjectID id) {
+    throw new ImplementMe();
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 }

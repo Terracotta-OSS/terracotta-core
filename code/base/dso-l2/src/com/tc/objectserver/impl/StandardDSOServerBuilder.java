@@ -13,6 +13,7 @@ import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
 import com.tc.management.beans.LockStatisticsMonitor;
@@ -103,7 +104,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                          ServerTransactionManager transactionMgr,
                                                          Sink objectRequestSink, Sink respondObjectRequestSink,
                                                          ObjectStatsRecorder statsRecorder, List<PostInit> toInit,
-                                                         StageManager stageManager, int maxStageSize) {
+                                                         StageManager stageManager, int maxStageSize,
+                                                         DumpHandlerStore dumpHandlerStore) {
     ObjectRequestManagerImpl orm = new ObjectRequestManagerImpl(objectMgr, channelManager, clientStateMgr,
                                                                 objectRequestSink, respondObjectRequestSink,
                                                                 statsRecorder);
@@ -129,7 +131,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                      DSOGlobalServerStats serverStats,
                                                                      ConnectionIDFactory connectionIdFactory,
                                                                      int maxStageSize,
-                                                                     ChannelManager genericChannelManager) {
+                                                                     ChannelManager genericChannelManager,
+                                                                     DumpHandlerStore dumpHandlerStore) {
     return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, objStore, lockMgr, channelManager,
                                               clientStateMgr, txnMgr, txnObjectMgr, clientHandshakeManager,
                                               channelStats, coordinator,

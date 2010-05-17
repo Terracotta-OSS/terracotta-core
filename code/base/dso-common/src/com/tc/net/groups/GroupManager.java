@@ -8,10 +8,11 @@ import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Set;
 
-public interface GroupManager {
+public interface GroupManager extends PrettyPrintable {
 
   public NodeID join(final Node thisNode, final NodesStore nodesStore) throws GroupException;
 

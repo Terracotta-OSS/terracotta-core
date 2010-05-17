@@ -380,4 +380,9 @@ public class StateManagerImpl implements StateManager {
       consoleLogger.warn(message);
     }
   }
+  
+  @Override
+  public String toString() {
+    return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
+  }
 }

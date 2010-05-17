@@ -11,7 +11,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.ArrayList;
@@ -100,14 +99,6 @@ public class TestServerTransactionManager implements ServerTransactionManager {
   }
 
   public void nodeConnected(NodeID nodeID) {
-    throw new ImplementMe();
-  }
-
-  public void dumpToLogger() {
-    throw new ImplementMe();
-  }
-
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 

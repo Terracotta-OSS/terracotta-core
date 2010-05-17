@@ -13,15 +13,19 @@ import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDEventListener;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StripeIDStateManagerImpl implements StripeIDStateManager {
+public class StripeIDStateManagerImpl implements StripeIDStateManager, PrettyPrintable {
   private static final TCLogger                             logger               = TCLogging
                                                                                      .getLogger(StripeIDStateManagerImpl.class);
 
@@ -146,6 +150,18 @@ public class StripeIDStateManagerImpl implements StripeIDStateManager {
     if (unKnownIDCount.get() == 0) {
       listener.notifyStripeIDMapReady();
     }
+  }
+  
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
+    out.print("groupIDToStripeIDMap:").flush();
+    StringBuilder strBuffer = new StringBuilder();
+    for(Iterator<Entry<GroupID, StripeID>> iter = this.groupIDToStripeIDMap.entrySet().iterator(); iter.hasNext();){
+      Entry<GroupID, StripeID> entry = iter.next();
+      strBuffer.append(entry.getKey() + "->" + entry.getValue()).append(",");
+    }
+    out.duplicateAndIndent().indent().print(strBuffer.toString()).flush();
+    return out;
   }
 
 }

@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Client State Manager maintains the list of objects that are faulted into each client.
  */
-public class ClientStateManagerImpl implements ClientStateManager {
+public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintable {
 
   private final Map<NodeID, ClientStateImpl> clientStates;
   private final TCLogger                     logger;

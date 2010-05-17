@@ -55,6 +55,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -65,7 +67,7 @@ import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
-    SequenceGeneratorListener {
+    SequenceGeneratorListener, PrettyPrintable {
 
   private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
 
@@ -214,7 +216,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public void l2StateChanged(StateChangedEvent sce) {
     // someone wants to be notified earlier
     fireStateChangedEvent(sce);
-    
+
     this.rClusterStateMgr.setCurrentState(sce.getCurrentState());
     rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
@@ -306,5 +308,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
       return true;
     }
     return false;
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    StringBuilder strBuilder = new StringBuilder();
+    strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
+    strBuilder.append(this.thisGroupID).append(" ").append(this.l2ObjectStateManager);
+    strBuilder.append(" ]");
+    out.indent().print(strBuilder.toString()).flush();
+    out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();
+    return out;
   }
 }

@@ -4,7 +4,6 @@
 package com.tc.objectserver.locks;
 
 import com.tc.async.api.Sink;
-import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.L2LockStatsManager;
@@ -19,33 +18,30 @@ import com.tc.objectserver.locks.ServerLock.NotifyAction;
 import com.tc.objectserver.locks.factory.ServerLockFactoryImpl;
 import com.tc.objectserver.locks.timer.TimerCallback;
 import com.tc.objectserver.locks.timer.LockTimer.LockTimerContext;
-import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintable, LockManagerMBean,
-    L2LockStatisticsChangeListener, TimerCallback {
+public class LockManagerImpl implements LockManager, PrettyPrintable, LockManagerMBean, L2LockStatisticsChangeListener,
+    TimerCallback {
   private enum RequestType {
     LOCK, TRY_LOCK
   }
 
-  private final LockStore                         lockStore;
-  private final DSOChannelManager                 channelManager;
-  private final LockHelper                        lockHelper;
-  private final ReentrantReadWriteLock            statusLock       = new ReentrantReadWriteLock();
-  private boolean                                 isStarted        = false;
-  private LinkedBlockingQueue<RequestLockContext> lockRequestQueue = new LinkedBlockingQueue<RequestLockContext>();
+  private final LockStore                               lockStore;
+  private final DSOChannelManager                       channelManager;
+  private final LockHelper                              lockHelper;
+  private final ReentrantReadWriteLock                  statusLock       = new ReentrantReadWriteLock();
+  private boolean                                       isStarted        = false;
+  private final LinkedBlockingQueue<RequestLockContext> lockRequestQueue = new LinkedBlockingQueue<RequestLockContext>();
 
-  private static final TCLogger                   logger           = TCLogging.getLogger(LockManagerImpl.class);
+  private static final TCLogger                         logger           = TCLogging.getLogger(LockManagerImpl.class);
 
   public LockManagerImpl(Sink lockSink, DSOChannelManager channelManager) {
     this(lockSink, channelManager, new ServerLockFactoryImpl());
@@ -62,9 +58,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.lock(cid, tid, level, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -76,9 +70,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.tryLock(cid, tid, level, timeout, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -91,9 +83,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     // Lock might be removed from the lock store in the call to the unlock
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.unlock(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -105,9 +95,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.queryLock(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -119,9 +107,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.interrupt(cid, tid, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -152,9 +138,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return addNotifiedWaitersTo;
-      }
+      if (!isClientAlive(cid)) { return addNotifiedWaitersTo; }
       return lock.notify(cid, tid, action, addNotifiedWaitersTo, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -166,9 +150,7 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
 
     ServerLock lock = lockStore.checkOut(lid);
     try {
-      if(!isClientAlive(cid)) {
-        return;
-      }
+      if (!isClientAlive(cid)) { return; }
       lock.wait(cid, tid, timeout, lockHelper);
     } finally {
       lockStore.checkIn(lock);
@@ -290,19 +272,18 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     }
   }
 
-  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
-                                              RequestType type) {
+  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level, RequestType type) {
     return queueIfNecessary(lid, cid, tid, level, type, -1);
   }
 
-  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level,
-                                              RequestType type, long timeout) {
+  private boolean queueIfNecessary(LockID lid, ClientID cid, ThreadID tid, ServerLockLevel level, RequestType type,
+                                   long timeout) {
     statusLock.readLock().lock();
     try {
       if (!isStarted) {
         queueRequest(lid, cid, tid, level, type, timeout);
         return false;
-      } 
+      }
       return true;
     } finally {
       statusLock.readLock().unlock();
@@ -320,10 +301,9 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   private boolean isValidStateFor(LockID lid, ClientID cid, ThreadID tid, String callType) {
     statusLock.readLock().lock();
     try {
-      if (!isStarted) {
-        throw new AssertionError(callType + " message received when lock manager was starting"
-                                 + " Message Context: [LockID=" + lid + ", NodeID=" + cid + ", ThreadID=" + tid + "]");
-      } 
+      if (!isStarted) { throw new AssertionError(callType + " message received when lock manager was starting"
+                                                 + " Message Context: [LockID=" + lid + ", NodeID=" + cid
+                                                 + ", ThreadID=" + tid + "]"); }
       return true;
     } finally {
       statusLock.readLock().unlock();
@@ -337,15 +317,6 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
     } finally {
       statusLock.readLock().unlock();
     }
-  }
-
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.autoflush(false);
-    prettyPrinter.visit(this);
-    writer.flush();
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -456,4 +427,5 @@ public class LockManagerImpl implements LockManager, DumpHandler, PrettyPrintabl
   public LockHelper getHelper() {
     return lockHelper;
   }
+
 }

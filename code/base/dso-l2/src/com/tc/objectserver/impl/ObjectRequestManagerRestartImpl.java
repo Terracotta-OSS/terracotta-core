@@ -16,6 +16,7 @@ import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.tx.AbstractServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
 
@@ -127,6 +128,12 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     this.delegate.sendObjects(requestedNodeID, objs, requestedObjectIDs, missingObjectIDs, isServerInitiated,
                               maxRequestDepth);
 
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getSimpleName()).flush();
+    out.indent().print("ObjectRequestManager: ").visit(this.delegate).flush();
+    return out;
   }
 
   // delegating all ObjectManagerMbean requests to the object manager

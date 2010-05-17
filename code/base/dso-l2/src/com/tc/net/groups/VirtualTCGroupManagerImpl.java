@@ -11,6 +11,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.util.Map;
@@ -155,6 +156,16 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
 
   public boolean isConnectionToNodeActive(NodeID sid) {
     return groupManager.isConnectionToNodeActive(sid);
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    StringBuilder strBuffer = new StringBuilder();
+    strBuffer.append(VirtualTCGroupManagerImpl.class.getSimpleName()).append(" [ ");
+
+    strBuffer.append("groupNodeIDs: {").append(this.groupNodeIDs).append("} ]");
+
+    out.indent().print(strBuffer.toString()).flush();
+    return out;
   }
 
   public boolean isServerConnected(String nodeName) {

@@ -8,7 +8,6 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.Set;
 /**
  * Client State Manager Interface
  */
-public interface ClientStateManager extends PrettyPrintable {
+public interface ClientStateManager {
 
   /**
    * Initializes the internal data structures for newly connected client

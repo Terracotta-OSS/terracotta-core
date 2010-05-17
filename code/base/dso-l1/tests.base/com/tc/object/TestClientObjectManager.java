@@ -13,7 +13,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.loaders.LoaderDescription;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.util.ToggleableStrongReference;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.lang.ref.ReferenceQueue;
@@ -199,14 +198,6 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-    throw new ImplementMe();
-  }
-
-  public void dumpToLogger() {
-    throw new ImplementMe();
-  }
-
-  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     throw new ImplementMe();
   }
 

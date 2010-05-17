@@ -20,9 +20,6 @@ import com.tc.management.L1Info;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
-import com.tc.object.locks.ClientLockManagerImpl;
-import com.tc.object.locks.LockID;
-import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.object.locks.TestRemoteLockManager.LockResponder;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -86,6 +83,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         new Thread() {
+          @Override
           public void run() {
             clientLockManagerImpl.award(gid, sessionManager.getSessionID(gid), lock, ThreadID.VM_ID, level);
           }
@@ -126,6 +124,7 @@ public class ClientLockManagerTest extends TCTestCase {
 
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         new Thread() {
+          @Override
           public void run() {
             clientLockManagerImpl.award(gid, sessionManager.getSessionID(gid), lock, ThreadID.VM_ID, level);
           }
@@ -407,6 +406,7 @@ public class ClientLockManagerTest extends TCTestCase {
       public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
         queue.put(new Object[] {lock, thread, level});
         new Thread() {
+          @Override
           public void run() {
             lockManager.award(gid, sessionManager.getSessionID(gid), lock, ThreadID.VM_ID, level);
           }

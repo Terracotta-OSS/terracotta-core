@@ -4,7 +4,6 @@
  */
 package com.tc.object.tx;
 
-import com.tc.logging.DumpHandler;
 import com.tc.net.NodeID;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.ObjectID;
@@ -14,7 +13,6 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.session.SessionID;
-import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +21,7 @@ import java.util.Map;
 /**
  * ThreadLocal based transaction manager interface. Changes go through here to the transaction for the current thread.
  */
-public interface ClientTransactionManager extends DumpHandler, PrettyPrintable {
+public interface ClientTransactionManager {
 
   /**
    * Begin a thread local transaction

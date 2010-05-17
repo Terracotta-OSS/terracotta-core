@@ -12,7 +12,6 @@ import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.DumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -45,12 +44,10 @@ import com.tc.object.util.ToggleableStrongReference;
 import com.tc.object.walker.ObjectGraphWalker;
 import com.tc.text.ConsoleNonPortableReasonFormatter;
 import com.tc.text.ConsoleParagraphFormatter;
-import com.tc.text.DumpLoggerWriter;
 import com.tc.text.NonPortableReasonFormatter;
 import com.tc.text.ParagraphFormatter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
@@ -80,7 +77,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
-    Evictable, DumpHandler, PrettyPrintable {
+    Evictable, PrettyPrintable {
 
   private static final long                    CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
   // REFERENCE_MAP_SEG must be power of 2
@@ -1211,15 +1208,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   // XXX:: Not synchronizing to improve performance, should be called only during cache eviction
   private int idToManaged_size() {
     return this.idToManaged.size();
-  }
-
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.autoflush(false);
-    prettyPrinter.visit(this);
-    writer.flush();
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {

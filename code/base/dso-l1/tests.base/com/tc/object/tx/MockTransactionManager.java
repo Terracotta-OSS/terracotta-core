@@ -17,7 +17,6 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.ClientTransactionManagerImpl.ThreadTransactionLoggingStack;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 
@@ -194,14 +193,6 @@ public class MockTransactionManager implements ClientTransactionManager {
 
   public boolean isLockOnTopStack(LockID lock) {
     return false;
-  }
-
-  public void dumpToLogger() {
-    throw new ImplementMe();
-  }
-
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    throw new ImplementMe();
   }
 
   public ClientTransaction getCurrentTransaction() {

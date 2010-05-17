@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.tx;
 
+import com.tc.handler.CallbackDumpAdapter;
+import com.tc.handler.CallbackDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -18,14 +20,11 @@ import com.tc.objectserver.context.TransactionLookupContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -44,7 +43,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * This class keeps track of locally checked out objects for applies and maintain the objects to txnid mapping in the
  * server. It wraps calls going to object manager from lookup, apply, commit stages
  */
-public class TransactionalObjectManagerImpl implements TransactionalObjectManager {
+public class TransactionalObjectManagerImpl implements TransactionalObjectManager, PrettyPrintable {
 
   private static final TCLogger                logger                  = TCLogging
                                                                            .getLogger(TransactionalObjectManagerImpl.class);
@@ -227,6 +226,12 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
       map.put(oid, mo);
     }
     return map;
+  }
+
+  private void dumpToLogger() {
+    CallbackDumpHandler dumpHandler =new CallbackDumpHandler();
+    dumpHandler.registerForDump(new CallbackDumpAdapter(this));
+    dumpHandler.dump();
   }
 
   private void log(String message) {
@@ -413,22 +418,9 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     }
   }
 
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.autoflush(false);
-    prettyPrinter.visit(this);
-    writer.flush();
-  }
-
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
-    out.indent().print("checkedOutObjects: ").visit(this.checkedOutObjects).flush();
-    out.indent().print("applyPendingTxns: ").visit(this.applyPendingTxns).flush();
-    out.indent().print("commitPendingTxns: ").visit(this.commitPendingTxns).flush();
-    out.indent().print("pendingTxnList: ").visit(this.pendingTxnList).flush();
-    out.indent().print("pendingObjectRequest: ").visit(this.pendingObjectRequest).println().flush();
+    out.indent().print(shortDescription()).flush();
     return out;
   }
 

@@ -3,14 +3,14 @@
  */
 package com.tc.object.locks;
 
-import com.tc.logging.DumpHandler;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 
-public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCallback, DumpHandler {
+public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCallback, PrettyPrintable {
   /**
   * Called by a Terracotta thread to notify the given thread waiting on the lock.
   */

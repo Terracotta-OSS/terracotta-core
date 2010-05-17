@@ -14,8 +14,10 @@ import com.tc.l2.state.DummyStateManager;
 import com.tc.l2.state.StateManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.SingleNodeGroupManager;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 
-public class L2HADisabledCooridinator implements L2Coordinator {
+public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable {
 
   private final GroupManager                  groupManager;
   private final StateManager                  stateMgr;
@@ -55,6 +57,16 @@ public class L2HADisabledCooridinator implements L2Coordinator {
 
   public ReplicatedTransactionManager getReplicatedTransactionManager() {
     return replicatedTxnMgr;
+  }
+  
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getSimpleName()).flush();
+    StringBuilder strBuffer = new StringBuilder();
+    strBuffer.append("L2HADisabledCooridinator [ ");
+    strBuffer.append(this.stateMgr);
+    strBuffer.append(" ]");
+    out.indent().print(strBuffer.toString()).flush();
+    return out;
   }
 
 }

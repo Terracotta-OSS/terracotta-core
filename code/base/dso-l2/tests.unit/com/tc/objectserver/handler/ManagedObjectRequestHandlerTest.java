@@ -43,7 +43,8 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager, requestSink,
-                                                                                 respondSink, new ObjectStatsRecorder());
+                                                                                 respondSink,
+                                                                                 new ObjectStatsRecorder());
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.setObjectRequestManager(objectRequestManager);

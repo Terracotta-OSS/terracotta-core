@@ -10,14 +10,11 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
-import com.tc.text.DumpLoggerWriter;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Util;
 import com.tc.util.runtime.ThreadIDManager;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Timer;
@@ -606,72 +603,88 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   static enum State {
     RUNNING {
+      @Override
       State unpause() {
         throw new AssertionError("unpause is an invalid state transition for " + this);
       }
 
+      @Override
       State pause() {
         return PAUSED;
       }
 
+      @Override
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
 
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
     },
 
     STARTING {
+      @Override
       State unpause() {
         return RUNNING;
       }
 
+      @Override
       State pause() {
         return PAUSED;
       }
 
+      @Override
       State initialize() {
         throw new AssertionError("initialize is an invalid state transition for " + this);
       }
 
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
     },
 
     PAUSED {
+      @Override
       State unpause() {
         throw new AssertionError("unpause is an invalid state transition for " + this);
       }
 
+      @Override
       State pause() {
         throw new AssertionError("pause is an invalid state transition for " + this);
       }
 
+      @Override
       State initialize() {
         return STARTING;
       }
 
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
     },
 
     SHUTDOWN {
+      @Override
       State pause() {
         return SHUTDOWN;
       }
 
+      @Override
       State unpause() {
         return SHUTDOWN;
       }
 
+      @Override
       State initialize() {
         return SHUTDOWN;
       }
 
+      @Override
       State shutdown() {
         return SHUTDOWN;
       }
@@ -684,15 +697,6 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     abstract State initialize();
 
     abstract State shutdown();
-  }
-
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.autoflush(false);
-    prettyPrinter.visit(this);
-    writer.flush();
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {

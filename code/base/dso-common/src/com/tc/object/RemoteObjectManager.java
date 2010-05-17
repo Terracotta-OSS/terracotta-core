@@ -8,6 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 import java.util.Set;
@@ -15,7 +16,7 @@ import java.util.Set;
 /**
  * Local representation of the remote object manager
  */
-public interface RemoteObjectManager extends ClientHandshakeCallback {
+public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrintable {
 
   public DNA retrieve(ObjectID id);
 

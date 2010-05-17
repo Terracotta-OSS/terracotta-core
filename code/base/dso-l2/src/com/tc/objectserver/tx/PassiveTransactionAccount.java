@@ -91,4 +91,11 @@ public class PassiveTransactionAccount implements TransactionAccount {
       callback.onComplete(nodeID);
     }
   }
+  
+  @Override
+  public String toString() {
+    StringBuilder strBuilder = new StringBuilder();
+    strBuilder.append(nodeID).append("->").append("txnIds: ").append(this.txnIDs);
+    return strBuilder.toString();
+  }
 }

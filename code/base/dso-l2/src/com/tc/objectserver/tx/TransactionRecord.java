@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.tx;
 
@@ -10,11 +11,11 @@ import java.util.Set;
 
 public class TransactionRecord {
   private final TransactionState state;
-  private final Set              waitees;
+  private final Set<NodeID>      waitees;
 
   public TransactionRecord() {
     this.state = new TransactionState();
-    this.waitees = new HashSet();
+    this.waitees = new HashSet<NodeID>();
   }
 
   public void relayTransactionComplete() {
@@ -37,6 +38,7 @@ public class TransactionRecord {
     return state.isComplete() && waitees.isEmpty();
   }
 
+  @Override
   public String toString() {
     return "TransactionRecord@" + System.identityHashCode(this) + " = " + state + "  :: waitees = " + waitees;
   }
@@ -56,4 +58,5 @@ public class TransactionRecord {
   public boolean contains(NodeID waitee) {
     return waitees.contains(waitee);
   }
+
 }

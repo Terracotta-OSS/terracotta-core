@@ -114,6 +114,13 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return this.nodes.values();
   }
 
+  @Override
+  public String toString() {
+    StringBuilder strBuilder = new StringBuilder();
+    strBuilder.append(L2ObjectStateManagerImpl.class.getSimpleName()).append(": [ ").append(this.nodes.values()).append("]");
+    return strBuilder.toString();
+  }
+
   private static final State START                  = new State("START");
   private static final State READY_TO_SYNC          = new State("READY_TO_SYNC");
   private static final State SYNC_STARTED           = new State("SYNC_STARTED");

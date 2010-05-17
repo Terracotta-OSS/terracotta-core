@@ -68,7 +68,6 @@ import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.test.TCTestCase;
-import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
@@ -635,9 +634,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      throw new ImplementMe();
-    }
   }
 
   private class TestServerTransactionManager implements ServerTransactionManager {
@@ -729,14 +725,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
-      throw new ImplementMe();
-    }
-
-    public void dumpToLogger() {
-      throw new ImplementMe();
-    }
-
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
 

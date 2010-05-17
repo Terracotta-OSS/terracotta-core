@@ -113,7 +113,18 @@ public class ObjectSynchTransactionAccount implements TransactionAccount {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public String toString() {
-    return "ObjectSynchTransactionAccount [ " + sourceID + " ] : { txn2Waitees  : " + txn2Waitees + " }";
+    StringBuilder strBuffer = new StringBuilder();
+    strBuffer.append("ObjectSynchTransactionAccount [ " + sourceID + " ] : { txn2Waitees  : ");
+    synchronized (this) {
+      for(Iterator<Entry> iter = this.txn2Waitees.entrySet().iterator(); iter.hasNext();){
+        Entry entry = iter.next();
+        strBuffer.append(entry.getKey()).append(": ").append(entry.getValue());
+      }
+    }
+    strBuffer.append(" }\n");
+    return strBuffer.toString();
   }
+
 }

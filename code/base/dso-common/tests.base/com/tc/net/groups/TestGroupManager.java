@@ -9,6 +9,7 @@ import com.tc.config.NodesStore;
 import com.tc.exception.TCRuntimeException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.text.PrettyPrinter;
 
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -102,6 +103,10 @@ public class TestGroupManager implements GroupManager {
   }
 
   public boolean isServerConnected(String nodeName) {
+    throw new UnsupportedOperationException();
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new UnsupportedOperationException();
   }
 }

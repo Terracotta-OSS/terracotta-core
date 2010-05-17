@@ -59,6 +59,7 @@ import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
@@ -74,11 +75,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -689,6 +692,30 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private boolean isZappedNode(NodeID nodeID) {
     return (zappedSet.contains(nodeID));
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    StringBuilder strBuffer = new StringBuilder();
+    strBuffer.append(TCGroupManagerImpl.class.getSimpleName()).append(" [ ");
+    strBuffer.append("Channel to NodeId Map: {");
+    for (Iterator<Entry<MessageChannel, ServerID>> channelToNodeIdIterator = this.channelToNodeID.entrySet().iterator(); channelToNodeIdIterator
+        .hasNext();) {
+      Entry<MessageChannel, ServerID> entry = channelToNodeIdIterator.next();
+      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
+    }
+    strBuffer.append("}\n\t");
+
+    strBuffer.append("members: {");
+    for (Iterator<Entry<ServerID, TCGroupMember>> membersIterator = this.members.entrySet().iterator(); membersIterator
+        .hasNext();) {
+      Entry<ServerID, TCGroupMember> entry = membersIterator.next();
+      strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
+    }
+    strBuffer.append("}\n\t");
+
+    strBuffer.append("zappedSet: {").append(this.zappedSet).append(" ").append("} ]");
+    out.indent().print(strBuffer.toString()).flush();
+    return out;
   }
 
   private static class GroupResponseImpl implements GroupResponse {

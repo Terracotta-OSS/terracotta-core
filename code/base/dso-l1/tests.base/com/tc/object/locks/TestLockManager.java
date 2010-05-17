@@ -6,12 +6,9 @@ package com.tc.object.locks;
 
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.LockID;
-import com.tc.object.locks.ServerLockLevel;
-import com.tc.object.locks.StringLockID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
+import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -121,8 +118,8 @@ public class TestLockManager implements ClientLockManager {
                               final ServerLockLevel type) {
     throw new ImplementMe();
   }
-
-  public void dumpToLogger() {
+  
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
 

@@ -31,15 +31,13 @@ import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.text.Banner;
-import com.tc.text.DumpLoggerWriter;
+import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
-import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.StringUtil;
 import com.tc.util.Util;
 
-import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -47,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class ClientTransactionManagerImpl implements ClientTransactionManager {
+public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
   private static final TCLogger                logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
   private final ThreadLocal                    transaction = new ThreadLocal() {
@@ -673,14 +671,6 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager {
 
   public void addDmiDescriptor(final DmiDescriptor dd) {
     getTransaction().addDmiDescritor(dd);
-  }
-
-  public void dumpToLogger() {
-    DumpLoggerWriter writer = new DumpLoggerWriter();
-    PrintWriter pw = new PrintWriter(writer);
-    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
-    prettyPrinter.visit(this);
-    writer.flush();
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {

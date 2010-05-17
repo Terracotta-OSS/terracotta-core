@@ -160,10 +160,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void dumpToLogger() {
-      throw new ImplementMe();
-    }
-
     public Collection<ClientServerExchangeLockContext> getAllLockContexts() {
       throw new ImplementMe();
     }
@@ -179,6 +175,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public boolean isLockedByCurrentThread(LockLevel level) {
+      throw new ImplementMe();
+    }
+
+    public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
   }
@@ -309,14 +309,6 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public ToggleableStrongReference getOrCreateToggleRef(final ObjectID id, final Object peer) {
-      throw new ImplementMe();
-    }
-
-    public void dumpToLogger() {
-      throw new ImplementMe();
-    }
-
-    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       throw new ImplementMe();
     }
 

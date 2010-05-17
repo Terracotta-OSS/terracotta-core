@@ -24,6 +24,7 @@ import com.tc.exception.ZapServerNodeException;
 import com.tc.handler.CallbackDatabaseDirtyAlertAdapter;
 import com.tc.handler.CallbackDirtyDatabaseExceptionAdapter;
 import com.tc.handler.CallbackDumpAdapter;
+import com.tc.handler.CallbackDumpHandler;
 import com.tc.handler.CallbackGroupExceptionHandler;
 import com.tc.handler.CallbackZapDirtyDbExceptionAdapter;
 import com.tc.handler.CallbackZapServerNodeExceptionAdapter;
@@ -40,7 +41,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
-import com.tc.logging.DumpHandler;
+import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.ThreadDumpHandler;
@@ -67,7 +68,6 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.Node;
-import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OOOEventHandler;
@@ -208,7 +208,6 @@ import com.tc.objectserver.tx.ServerTransactionSequencerImpl;
 import com.tc.objectserver.tx.ServerTransactionSequencerStats;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
-import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
 import com.tc.properties.L1ReconnectConfigImpl;
@@ -291,7 +290,8 @@ import javax.management.remote.JMXConnectorServer;
 /**
  * Startup and shutdown point. Builds and starts the server
  */
-public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, ServerConnectionValidator {
+public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, ServerConnectionValidator,
+    DumpHandlerStore {
   private final ConnectionPolicy                 connectionPolicy;
   private final TCServerInfoMBean                tcServerInfoMBean;
   private final ObjectStatsRecorder              objectStatsRecorder;
@@ -311,7 +311,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ServerConfigurationContext             context;
   private ObjectManagerImpl                      objectManager;
   private ObjectRequestManager                   objectRequestManager;
-  private TransactionalObjectManager             txnObjectManager;
+  private TransactionalObjectManagerImpl         txnObjectManager;
   private CounterManager                         sampledCounterManager;
   private LockManagerImpl                        lockManager;
   private ServerManagementContext                managementContext;
@@ -342,7 +342,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private GroupManager                           groupCommManager;
   private Stage                                  hydrateStage;
-  private StripeIDStateManager                   stripeIDStateManager;
+  private StripeIDStateManagerImpl               stripeIDStateManager;
+  private final CallbackDumpHandler              dumpHandler      = new CallbackDumpHandler();
 
   // used by a test
   public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager,
@@ -386,21 +387,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public void dump() {
-    if (this.lockManager != null) {
-      ((DumpHandler) this.lockManager).dumpToLogger();
-    }
-
-    if (this.objectManager != null) {
-      this.objectManager.dumpToLogger();
-    }
-
-    if (this.txnObjectManager != null) {
-      this.txnObjectManager.dumpToLogger();
-    }
-
-    if (this.transactionManager != null) {
-      this.transactionManager.dumpToLogger();
-    }
+    this.dumpHandler.dump();
     this.serverBuilder.dump();
   }
 
@@ -705,6 +692,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.objectManager.setStatsListener(objMgrStats);
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
     managedObjectChangeListenerProvider.setListener(this.objectManager);
+    CallbackDumpAdapter objMgrDumpAdapter = new CallbackDumpAdapter(this.objectManager);
+    this.threadGroup.addCallbackOnExitDefaultHandler(objMgrDumpAdapter);
+    this.dumpHandler.registerForDump(objMgrDumpAdapter);
 
     TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
     CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
@@ -740,6 +730,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
     stripeIDStateManager = new StripeIDStateManagerImpl(haConfig, this.persistor.getPersistentStateStore());
 
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
+
     ProductInfo pInfo = ProductInfo.getInstance();
     DSOChannelManager channelManager = new DSOChannelManagerImpl(haConfig.getThisGroupID(), this.l1Listener
         .getChannelManager(), this.communicationsManager.getConnectionManager(), pInfo.version(), stripeIDStateManager);
@@ -759,7 +751,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
     this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener(this.lockManager);
 
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.lockManager));
+    CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
+    this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
+    this.dumpHandler.registerForDump(lockDumpAdapter);
     ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
     TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
@@ -810,9 +804,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ServerTransactionSequencerImpl serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, serverTransactionSequencerImpl,
                                                                gtxm, txnStageCoordinator);
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.txnObjectManager));
+    
+    CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
+    this.threadGroup.addCallbackOnExitDefaultHandler(txnObjMgrDumpAdapter);
+    this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);
     this.objectManager.setTransactionalObjectManager(this.txnObjectManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.objectManager));
+    
     this.transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
                                                                this.txnObjectManager, taa, globalTxnCounter,
@@ -820,7 +817,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                new ServerTransactionManagerConfig(this.l2Properties
                                                                    .getPropertiesFor("transactionmanager")),
                                                                this.objectStatsRecorder);
-    this.threadGroup.addCallbackOnExitDefaultHandler(new CallbackDumpAdapter(this.transactionManager));
+    CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.transactionManager);
+    this.threadGroup.addCallbackOnExitDefaultHandler(txnMgrDumpAdapter);
+    this.dumpHandler.registerForDump(txnMgrDumpAdapter);
 
     ServerClusterMetaDataManager clusterMetaDataManager = new ServerClusterMetaDataManagerImpl(logger,
                                                                                                this.clientStateManager,
@@ -882,7 +881,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               objectRequestStage.getSink(),
                                                                               respondToObjectRequestStage.getSink(),
                                                                               this.objectStatsRecorder, toInit,
-                                                                              stageManager, maxStageSize);
+                                                                              stageManager, maxStageSize, this);
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.objectRequestManager));
     Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
                                                 new RequestObjectIDBatchHandler(this.objectStore), 1, maxStageSize);
     Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
@@ -952,6 +952,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                       stageManager, this.thisServerNodeID,
                                                                       this.httpSink, stripeIDStateManager, gtxm);
 
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
     GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
                                                                     this.clientStateManager, stageManager,
@@ -995,6 +996,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.l2Coordinator = new L2HADisabledCooridinator(this.groupCommManager);
     }
 
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, this.objectManager,
                                                                        this.objectRequestManager, this.objectStore,
                                                                        this.lockManager, channelManager,
@@ -1004,7 +1006,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        transactionBatchManager, gtxm,
                                                                        clientHandshakeManager, clusterMetaDataManager,
                                                                        serverStats, connectionIdFactory, maxStageSize,
-                                                                       this.l1Listener.getChannelManager());
+                                                                       this.l1Listener.getChannelManager(), this);
     toInit.add(this.serverBuilder);
 
     stageManager.startAll(this.context, toInit);
@@ -1450,6 +1452,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected GroupManager getGroupManager() {
     return this.groupCommManager;
+  }
+
+  public void registerForDump(CallbackDumpAdapter dumpAdapter) {
+    this.dumpHandler.registerForDump(dumpAdapter);
   }
 
   public boolean isAlive(String name) {

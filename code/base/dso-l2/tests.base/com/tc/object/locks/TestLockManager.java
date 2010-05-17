@@ -89,10 +89,6 @@ public class TestLockManager implements LockManager {
     return null;
   }
 
-  public void dumpToLogger() {
-    throw new ImplementMe();
-  }
-
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     return null;
   }

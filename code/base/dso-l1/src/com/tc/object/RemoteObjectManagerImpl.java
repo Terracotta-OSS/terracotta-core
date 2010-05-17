@@ -18,6 +18,8 @@ import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -38,7 +40,7 @@ import java.util.Map.Entry;
 /**
  * This class is responsible for any communications to the server for object retrieval and removal
  */
-public class RemoteObjectManagerImpl implements RemoteObjectManager {
+public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrintable {
 
   private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
   private static final int     REMOVE_OBJECTS_THRESHOLD                  = 10000;
@@ -270,8 +272,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     ObjectLookupState old = this.objectLookupStates.put(lookupState.getLookupID(), lookupState);
     Assert.assertNull(old);
     int size = this.objectLookupStates.size();
-    if(size % 5000 == 4999) {
-      logger.warn("Too many pending requests in the system : objectLookup states size : " + size + " dna Cache size : " + dnaCache.size());
+    if (size % 5000 == 4999) {
+      logger.warn("Too many pending requests in the system : objectLookup states size : " + size + " dna Cache size : "
+                  + dnaCache.size());
     }
     if (size <= MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY) {
       sendRequestNow(lookupState);
@@ -455,8 +458,9 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
     ObjectID id = dna.getObjectID();
     this.dnaCache.put(id, dna);
     ObjectLookupState ols = this.objectLookupStates.get(id);
-    if(ols != null && ols.isPrefetch()) {
-      // Prefetched requests are removed from the lookupState map so it can be removed from the cache if it is not used within a certain time.
+    if (ols != null && ols.isPrefetch()) {
+      // Prefetched requests are removed from the lookupState map so it can be removed from the cache if it is not used
+      // within a certain time.
       this.objectLookupStates.remove(id);
     }
   }
@@ -638,5 +642,19 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager {
       i.remove();
       return oidsToRemove;
     }
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.duplicateAndIndent().indent().print(getClass().getSimpleName()).flush();
+    out.duplicateAndIndent().indent().print("dnaCache:").visit(this.dnaCache).flush();
+    StringBuilder strBuffer = new StringBuilder();
+    for (Iterator<Entry<ObjectID, ObjectLookupState>> iter = this.objectLookupStates.entrySet().iterator(); iter
+        .hasNext();) {
+      Entry<ObjectID, ObjectLookupState> entry = iter.next();
+      strBuffer.append(entry.getKey()).append(":").append(entry.getValue()).append("\n");
+    }
+    out.duplicateAndIndent().indent().print("pending objects:").print(strBuffer.toString()).flush();
+    out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates).flush();
+    return out;
   }
 }

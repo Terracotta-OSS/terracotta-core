@@ -10,6 +10,7 @@ import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
 import com.tc.management.beans.LockStatisticsMonitor;
@@ -60,7 +61,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                   ClientStateManager clientStateMgr,
                                                   ServerTransactionManager transactionMgr, Sink objectRequestSink,
                                                   Sink respondObjectRequestSink, ObjectStatsRecorder statsRecorder,
-                                                  List<PostInit> toInit, StageManager stageManager, int maxStageSize);
+                                                  List<PostInit> toInit, StageManager stageManager, int maxStageSize,
+                                                  DumpHandlerStore dumpHandlerStore);
 
   void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
 
@@ -90,7 +92,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                               ServerClusterMetaDataManager clusterMetaDataManager,
                                                               DSOGlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
-                                                              int maxStageSize, ChannelManager genericChannelManager);
+                                                              int maxStageSize, ChannelManager genericChannelManager,
+                                                              DumpHandlerStore dumpHandlerStore);
 
   GroupManager getClusterGroupCommManager();
 

@@ -9,7 +9,6 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.managedobject.BackReferences;
-import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,10 +59,6 @@ public class TestClientStateManager implements ClientStateManager {
   
   public int getReferenceCount(NodeID node) {
     return 0;
-  }
-
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    return out.print(getClass().getName());
   }
 
   public void stop() {

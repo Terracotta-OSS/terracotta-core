@@ -74,6 +74,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
   private ClientLockManager     clientLockManager;
   private ManualThreadIDManager threadManager;
 
+  @Override
   public void setUp() throws Exception {
     BoundedLinkedQueue clientLockRequestQueue = new BoundedLinkedQueue();
     BoundedLinkedQueue serverLockRespondQueue = new BoundedLinkedQueue();
@@ -147,6 +148,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     threadManager.setThreadID(tid1);
     clientLockManager.lock(l1, LockLevel.READ);
     Thread t1 = new Thread() {
+      @Override
       public void run() {
         String threadName = "t1";
         System.err.println("Thread " + threadName + " request lock");
@@ -159,6 +161,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     };
 
     Thread t2 = new Thread() {
+      @Override
       public void run() {
         String threadName = "t2";
         System.err.println("Thread " + threadName + " request lock");
@@ -207,6 +210,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     clientLockManager.lock(l1, LockLevel.READ);
 
     Thread t = new Thread() {
+      @Override
       public void run() {
         try {
           LockManagerSystemTest.this.threadManager.setThreadID(tid1);
@@ -230,6 +234,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     t.join();
 
     Thread secondReader = new Thread() {
+      @Override
       public void run() {
         System.out.println("Read requested !");
         LockManagerSystemTest.this.threadManager.setThreadID(tid2);
@@ -242,6 +247,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     sleep(5);
 
     Thread secondWriter = new Thread() {
+      @Override
       public void run() {
         System.out.println("Write requested !");
         LockManagerSystemTest.this.threadManager.setThreadID(tid3);
@@ -291,6 +297,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     // try obtaining a write lock on l1 in a second thread. This should block initially since a write lock is already
     // held on l1
     Thread t = new Thread() {
+      @Override
       public void run() {
         System.out.println("Asked for second lock");
         threadManager.setThreadID(tid2);
@@ -318,6 +325,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     clientLockManager.lock(l3, LockLevel.READ);
     done[0] = false;
     t = new Thread() {
+      @Override
       public void run() {
         System.out.println("Asking for write lock");
         threadManager.setThreadID(tid4);
@@ -347,6 +355,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     done[0] = false;
     t = new Thread() {
+      @Override
       public void run() {
         System.out.println("Asking for read lock");
         threadManager.setThreadID(tid1);
@@ -359,6 +368,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
 
     done[1] = false;
     t = new Thread() {
+      @Override
       public void run() {
         System.out.println("Asking for read lock");
         threadManager.setThreadID(tid2);
@@ -400,6 +410,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     // Try the lock 100 times while it's being locked by the first thread, this will
     // thus fail 100 times
     final Thread t1 = new Thread() {
+      @Override
       public void run() {
         System.out.println("Trying second lock 100 times");
         for (int i = 0; i < 100; i++) {
@@ -430,6 +441,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
     // Try the lock 100 times while it's not being locked by the first thread, this will
     // thus never fail
     final Thread t2 = new Thread() {
+      @Override
       public void run() {
         System.out.println("Trying second lock once more 100 times");
         for (int i = 0; i < 100; i++) {
@@ -462,6 +474,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       this.clientLockRequestQueue = clientLockRequestQueue;
     }
 
+    @Override
     protected void sendMessage(LockRequestMessage req) {
       try {
         clientLockRequestQueue.put(req);
@@ -563,11 +576,13 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       this.serverLockRespondQueue = serverLockRespondQueue;
     }
 
+    @Override
     protected LockResponseMessage createMessage(EventContext context, TCMessageType messageType) {
       return new LockResponseMessage(new SessionID(100), new NullMessageMonitor(), new TCByteBufferOutputStream(),
                                      new TestMessageChannel(), messageType);
     }
 
+    @Override
     protected void send(LockResponseMessage responseMessage) {
       try {
         serverLockRespondQueue.put(responseMessage);
@@ -589,6 +604,7 @@ public class LockManagerSystemTest extends BaseDSOTestCase {
       this.setDaemon(true);
     }
 
+    @Override
     public void run() {
       while (true) {
         EventContext ec;

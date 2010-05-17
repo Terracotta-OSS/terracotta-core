@@ -8,6 +8,7 @@ import com.tc.async.api.Sink;
 import com.tc.config.NodesStore;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
+import com.tc.text.PrettyPrinter;
 
 import java.util.Collections;
 import java.util.List;
@@ -103,6 +104,10 @@ public class SingleNodeGroupManager implements GroupManager {
 
   public boolean isConnectionToNodeActive(NodeID sid) {
     return true;
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    return out;
   }
 
   public boolean isServerConnected(String nodeName) {

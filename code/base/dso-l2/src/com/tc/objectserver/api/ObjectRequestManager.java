@@ -6,11 +6,12 @@ package com.tc.objectserver.api;
 
 import com.tc.net.ClientID;
 import com.tc.object.ObjectRequestServerContext;
+import com.tc.text.PrettyPrintable;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;
 
-public interface ObjectRequestManager extends ObjectManagerMBean {
+public interface ObjectRequestManager extends ObjectManagerMBean, PrettyPrintable {
 
   public void requestObjects(ObjectRequestServerContext requestContext);
 

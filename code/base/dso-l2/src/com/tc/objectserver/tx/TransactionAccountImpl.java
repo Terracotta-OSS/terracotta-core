@@ -23,17 +23,14 @@ import java.util.Map.Entry;
  * transaction.
  */
 public class TransactionAccountImpl implements TransactionAccount {
-  final NodeID               sourceID;
-  private final Map          waitees = Collections.synchronizedMap(new HashMap());
-  private volatile boolean   dead    = false;
-  private CallBackOnComplete callBack;
+  final NodeID                                        sourceID;
+  private final Map<TransactionID, TransactionRecord> waitees = Collections
+                                                                  .synchronizedMap(new HashMap<TransactionID, TransactionRecord>());
+  private volatile boolean                            dead    = false;
+  private CallBackOnComplete                          callBack;
 
   public TransactionAccountImpl(NodeID source) {
     this.sourceID = source;
-  }
-
-  public String toString() {
-    return "TransactionAccount[" + sourceID + ": waitees=" + waitees + "]\n";
   }
 
   public NodeID getNodeID() {
@@ -75,7 +72,7 @@ public class TransactionAccountImpl implements TransactionAccount {
   }
 
   private TransactionRecord getRecord(TransactionID requestID) {
-    return (TransactionRecord) waitees.get(requestID);
+    return waitees.get(requestID);
   }
 
   public boolean skipApplyAndCommit(TransactionID requestID) {
@@ -165,6 +162,22 @@ public class TransactionAccountImpl implements TransactionAccount {
     if (dead && waitees.isEmpty()) {
       callBack.onComplete(sourceID);
     }
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder strBuffer = new StringBuilder();
+    strBuffer.append("TransactionAccount[" + sourceID + ": ");
+    synchronized (waitees) {
+      for(Iterator<Entry<TransactionID, TransactionRecord>> iter = this.waitees.entrySet().iterator(); iter.hasNext();){
+        Entry<TransactionID, TransactionRecord> entry = iter.next();
+        strBuffer.append("{").append(entry.getKey()).append(": ");
+        synchronized (entry.getValue()) {
+          strBuffer.append(entry.getValue()).append("}\n\t");
+        }
+      }
+    }
+    return strBuffer.toString();
   }
 
 }
