@@ -761,7 +761,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           stateGuard.readLock().unlock();
         }
       }
-      logger.info("Lock GC collected " + gcCount + " garbage locks");
+      if (gcCount > 0) {
+        logger.info("Lock GC collected " + gcCount + " garbage locks");
+      }
     }
   }
 
