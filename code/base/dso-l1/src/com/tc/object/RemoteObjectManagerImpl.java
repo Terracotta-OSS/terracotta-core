@@ -646,15 +646,13 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.duplicateAndIndent().indent().print(getClass().getSimpleName()).flush();
+    out.duplicateAndIndent().indent().print(this.groupID).flush();
     out.duplicateAndIndent().indent().print("dnaCache:").visit(this.dnaCache).flush();
     StringBuilder strBuffer = new StringBuilder();
-    for (Iterator<Entry<ObjectID, ObjectLookupState>> iter = this.objectLookupStates.entrySet().iterator(); iter
-        .hasNext();) {
-      Entry<ObjectID, ObjectLookupState> entry = iter.next();
-      strBuffer.append(entry.getKey()).append(":").append(entry.getValue()).append("\n");
-    }
     out.duplicateAndIndent().indent().print("pending objects:").print(strBuffer.toString()).flush();
-    out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates).flush();
+
+    //printing this.objectLookupStates.toString() as PrettyPrinter prints the size of the map otherwise
+    out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates.toString()).flush();
     return out;
   }
 }

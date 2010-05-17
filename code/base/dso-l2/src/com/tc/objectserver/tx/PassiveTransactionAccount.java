@@ -94,8 +94,6 @@ public class PassiveTransactionAccount implements TransactionAccount {
   
   @Override
   public String toString() {
-    StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(nodeID).append("->").append("txnIds: ").append(this.txnIDs);
-    return strBuilder.toString();
+    return "PassiveTransactionAccount [ " + nodeID + " ] = " + txnIDs;
   }
 }
