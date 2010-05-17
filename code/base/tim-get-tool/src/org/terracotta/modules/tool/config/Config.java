@@ -92,7 +92,8 @@ public class Config {
   }
 
   private static String getProperty(Properties props, String name) {
-    return getProperty(props, name, null);
+    String retVal = getProperty(props, name, null);
+    return retVal == null ? null : retVal.trim();
   }
 
   private static String getProperty(Properties props, String name, String defaultValue) {
