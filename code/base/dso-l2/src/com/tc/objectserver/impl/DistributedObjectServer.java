@@ -451,7 +451,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     NIOWorkarounds.solaris10Workaround();
-
+    
+    // start the JMX server
+    try {
+      startJMXServer(bind, this.configSetupManager.commonl2Config().jmxPort().getInt(), new RemoteJMXProcessor());
+    } catch (Exception e) {
+      String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      System.exit(-1);
+    }
+    
     this.configSetupManager.commonl2Config().changesInItemIgnored(this.configSetupManager.commonl2Config().dataPath());
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
     PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
@@ -515,18 +525,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                               serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                   .dataPath().getFile(), this.objectStatsRecorder);
       sraBdb = new SRABerkeleyDB((SleepycatPersistor) this.persistor);
-
-      // start the JMX server
-      try {
-        startJMXServer(bind, this.configSetupManager.commonl2Config().jmxPort().getInt(), new RemoteJMXProcessor(),
-                       dbenv);
-      } catch (Exception e) {
-        String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
-        consoleLogger.error(msg);
-        logger.error(msg, e);
-        System.exit(-1);
-      }
-
+      
+      l2Management.init(dbenv);
+      
       // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
       // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
       // l2.memorystore.enabled=true.
@@ -804,12 +805,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     ServerTransactionSequencerImpl serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, serverTransactionSequencerImpl,
                                                                gtxm, txnStageCoordinator);
-    
+
     CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(txnObjMgrDumpAdapter);
     this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);
     this.objectManager.setTransactionalObjectManager(this.txnObjectManager);
-    
+
     this.transactionManager = new ServerTransactionManagerImpl(gtxm, transactionStore, this.lockManager,
                                                                this.clientStateManager, this.objectManager,
                                                                this.txnObjectManager, taa, globalTxnCounter,
@@ -1412,7 +1413,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.gcStatsEventPublisher;
   }
 
-  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink, DBEnvironment dbenv)
+  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink)
       throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
@@ -1421,7 +1422,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
                                                               this.statisticsAgentSubSystem, this.statisticsGateway,
                                                               this.configSetupManager, this, bind, jmxPort,
-                                                              remoteEventsSink, dbenv, this);
+                                                              remoteEventsSink, this);
 
     this.l2Management.start();
   }

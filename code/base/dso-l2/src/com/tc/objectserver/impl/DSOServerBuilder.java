@@ -39,7 +39,6 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
@@ -111,6 +110,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                   StatisticsGatewayMBeanImpl statisticsGateway,
                                   L2TVSConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
-                                  Sink remoteEventsSink, DBEnvironment dbenv,
-                                  ServerConnectionValidator serverConnectionValidator) throws Exception;
+                                  Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator)
+      throws Exception;
 }
