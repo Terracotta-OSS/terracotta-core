@@ -114,7 +114,7 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta
-    version: 3.0.0-SNAPSHOT
+    version: 2.2.0-SNAPSHOT
     destination: ehcache
 
   - maven_artifact: true
