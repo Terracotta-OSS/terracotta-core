@@ -79,8 +79,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader,
-                               final boolean publicApi) {
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoader) {
     /**/
   }
 

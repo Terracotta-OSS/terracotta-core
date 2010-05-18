@@ -848,9 +848,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return classReplacements;
   }
 
-  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly,
-                               final boolean publicApi) {
-    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly, publicApi));
+  public void addClassResource(final String className, final URL resource, final boolean targetSystemLoaderOnly) {
+    Resource prev = this.classResources.put(className, new Resource(resource, targetSystemLoaderOnly));
     // CDV-1053: don't call URL.equals() which can block
     if ((prev != null) && (!prev.getResource().toString().equals(resource.toString()))) {
       // we want to know if modules more than one module is trying to export the same class
@@ -2095,12 +2094,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     private final URL     resource;
     private final boolean targetSystemLoaderOnly;
-    private final boolean publicApi;
 
-    Resource(final URL resource, final boolean targetSystemLoaderOnly, final boolean publicApi) {
+    Resource(final URL resource, final boolean targetSystemLoaderOnly) {
       this.resource = resource;
       this.targetSystemLoaderOnly = targetSystemLoaderOnly;
-      this.publicApi = publicApi;
     }
 
     URL getResource() {
@@ -2109,11 +2106,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     boolean isTargetSystemLoaderOnly() {
       return targetSystemLoaderOnly;
-    }
-
-    @SuppressWarnings("unused")
-    boolean isPublicApi() {
-      return publicApi;
     }
 
     @Override
