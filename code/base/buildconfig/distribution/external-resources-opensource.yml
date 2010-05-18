@@ -8,27 +8,4 @@ default_repos:
   - http://repo1.maven.org/maven2
 
 artifacts:
-  - maven_artifact: true
-    groupId: org.terracotta
-    artifactId: terracotta-express-runtime
-    version: 1.0.0-SNAPSHOT
-    destination: common
-
-  - maven_artifact: true
-    groupId: net.sf.ehcache
-    artifactId: ehcache-terracotta
-    version: 3.0.0-SNAPSHOT
-    destination: ehcache
-
-  - maven_artifact: true
-    groupId: org.terracotta.quartz
-    artifactId: quartz-terracotta
-    version: 1.2.0-SNAPSHOT
-    destination: quartz
-
-  - maven_artifact: true
-    groupId: org.terracotta.session
-    artifactId: terracotta-session
-    version: 1.1.0-SNAPSHOT
-    destination: sessions
 
