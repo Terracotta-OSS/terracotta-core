@@ -54,16 +54,6 @@ bundled_components:
               - ent-common
               - ent-dso-l1
               - ent-deploy              
-        - terracotta-jmx-api:
-            install_directory: lib
-            modules:
-              - common-api
-              - deploy-api
-              - dso-l1-api
-              - dso-l2-common
-              - dso-statistics-api
-              - management-api
-              
       # NOTE: this section also controls what goes into the 'tc.jar' file
       modules:
         - aspectwerkz:

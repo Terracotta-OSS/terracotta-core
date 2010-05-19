@@ -51,15 +51,6 @@ bundled_components:
             add_dependencies: true
             modules:
               - dso-l1
-        - terracotta-jmx-api:
-            install_directory: lib
-            modules:
-              - common-api
-              - deploy-api
-              - dso-l1-api
-              - dso-l2-common
-              - dso-statistics-api
-              - management-api      
         - test-api:
             # install in 'api-jars' folder so it can be deleted later
             install_directory: api-jars
@@ -147,7 +138,7 @@ postscripts:
         - sessions/samples
   - maven-deploy:
       args:
-        - artifact_count: 10
+        - artifact_count: 9
         - groupId: org.terracotta
           artifact: parent
           srcfile: pom.xml
@@ -185,12 +176,6 @@ postscripts:
           artifact: tcstats
           file: lib/tcstats-xmlbeans-generated.jar
           pom: poms/tcstats-pom.xml
-        - groupId: org.terracotta
-          artifact: terracotta-jmx-api
-          file: lib/terracotta-jmx-api.jar
-          pom: poms/terracotta-jmx-api-pom.xml
-          inject: 
-            - lib/resources/build-data.txt
         - groupId: org.terracotta.api
           artifact: test-api
           file: api-jars/test-api.jar
