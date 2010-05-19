@@ -48,7 +48,7 @@ public class ThreadDump {
 
   static PID getPID() {
     try {
-      return new PID(GetPid.getInstance().getPid());
+      return new PID(GetPid.getInstance().getPid(), "not available");
     } catch (Exception e) {
       e.printStackTrace();
 
@@ -65,11 +65,11 @@ public class ThreadDump {
 
     if (index < 0) { throw new RuntimeException("unexpected format: " + vmName); }
 
-    return new PID(Integer.parseInt(vmName.substring(0, index)));
+    return new PID(Integer.parseInt(vmName.substring(0, index)), "not available");
   }
 
   private static void dumpThreadsMany(int iterations, long delay, Set<PID> pids) {
-    System.err.println("Thread dumping PID(s): " + pids);
+    echoProcesses(pids);
 
     boolean multiple = pids.size() > 1;
 
@@ -87,6 +87,20 @@ public class ThreadDump {
       }
       ThreadUtil.reallySleep(delay);
     }
+  }
+
+  private static void echoProcesses(Set<PID> pids) {
+    StringBuilder sb = new StringBuilder("Thread dumping these processes:\n");
+    for (PID pid : pids) {
+      sb.append("  ");
+      sb.append(pid.getPid());
+      sb.append("\t");
+      sb.append(pid.getCmdLine());
+      sb.append("\n");
+    }
+
+    System.err.println(sb.toString());
+
   }
 
   public static void dumpAllJavaProcesses() {
@@ -193,7 +207,7 @@ public class ThreadDump {
             continue;
           }
 
-          boolean added = pids.add(new PID(Integer.parseInt(pid)));
+          boolean added = pids.add(new PID(Integer.parseInt(pid), line));
           if (!added) {
             Banner.warnBanner("Found duplicate PID? " + line);
           }
@@ -243,7 +257,7 @@ public class ThreadDump {
             continue;
           }
 
-          boolean added = pids.add(new PID(Integer.parseInt(pid)));
+          boolean added = pids.add(new PID(Integer.parseInt(pid), line));
           if (!added) {
             Banner.warnBanner("Found duplicate PID? " + line);
           }
@@ -265,10 +279,16 @@ public class ThreadDump {
   }
 
   static class PID {
-    private final int pid;
+    private final int    pid;
+    private final String cmdLine;
 
-    PID(int pid) {
+    PID(int pid, String cmdLine) {
       this.pid = pid;
+      this.cmdLine = cmdLine;
+    }
+
+    String getCmdLine() {
+      return cmdLine;
     }
 
     int getPid() {
@@ -277,7 +297,7 @@ public class ThreadDump {
 
     @Override
     public String toString() {
-      return String.valueOf(pid);
+      return String.valueOf(pid) + " [" + cmdLine + "]";
     }
 
     @Override
