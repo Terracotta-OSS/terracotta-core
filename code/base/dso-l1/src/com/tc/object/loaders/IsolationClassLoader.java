@@ -88,6 +88,20 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
     Class c = findLoadedClass(name);
     if (c != null) { return c; }
 
+    // This is a coded Java version of the instrumentation done by the LoadClassAdapter.
+    // We have to do this because we cannot automatically instrument the IsolationClassLoader.
+    byte[] classBytes = ClassProcessorHelper.loadClassInternalHook(name, this);
+    if (classBytes != null) {
+      synchronized (this) {
+        c = findLoadedClass(name);
+        if (c != null) {
+          return c;
+        } else {
+          return defineClass(name, classBytes, 0, classBytes.length);
+        }
+      }
+    }
+    
     // "com.tc." classes are delegated to the system loader so that test classes can catch the same exception types as
     // the DSO runtime (which is in the system loader). "org.apache.commons.logging" classes are also delegated so that
     // the stupid checks in commons logging about multiple versions don't go off

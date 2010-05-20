@@ -3,6 +3,13 @@
  */
 package com.tctest;
 
+import org.apache.commons.io.IOUtils;
+
+import com.tc.asm.ClassAdapter;
+import com.tc.asm.ClassReader;
+import com.tc.asm.ClassWriter;
+import com.tc.asm.commons.RemappingClassAdapter;
+import com.tc.asm.commons.SimpleRemapper;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -12,6 +19,10 @@ import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,7 +56,24 @@ public class ClassExportTest extends TransparentTestBase {
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       if (config instanceof StandardDSOClientConfigHelper) {
         StandardDSOClientConfigHelper standardConfig = (StandardDSOClientConfigHelper) config;
-        standardConfig.addClassResource("com.tctest.ExportedClass", getResourceURL(ExportedClass.class), false);
+        
+        try {
+          ClassWriter cw = new ClassWriter(0);
+          ClassAdapter rename = new RemappingClassAdapter(cw, new SimpleRemapper("com/tctest/ExportedClass", "com/tctest/ExportedClassButNot"));
+            new ClassReader(getResourceURL(ExportedClass.class).openStream()).accept(rename, 0);
+          
+          File temp = File.createTempFile("terracotta_class_export_test", ".class");
+          temp.deleteOnExit();
+          OutputStream out = new FileOutputStream(temp);
+          try {
+            IOUtils.write(cw.toByteArray(), out);
+          } finally {
+            out.close();
+          }
+          standardConfig.addClassResource("com.tctest.ExportedClassButNot", temp.toURL(), false);
+        } catch (IOException e) {
+          throw new AssertionError(e);
+        }
       } else {
         throw new AssertionError();
       }
@@ -53,7 +81,9 @@ public class ClassExportTest extends TransparentTestBase {
 
     @Override
     public void runTest() throws ClassNotFoundException, InterruptedException, ExecutionException {
-      ClassLoader.getSystemClassLoader().loadClass("com.tctest.ExportedClass");
+      Thread.currentThread().getContextClassLoader().loadClass("com.tctest.ExportedClassButNot");
+      this.getClass().getClassLoader().loadClass("com.tctest.ExportedClassButNot");
+      
       final ClassLoader broken = new ClassLoader(null) {
         @Override
         public Class<?> loadClass(String name) throws ClassNotFoundException {
@@ -71,7 +101,7 @@ public class ClassExportTest extends TransparentTestBase {
       List<Future<Class>> futures = executor.<Class> invokeAll(Collections
           .<Callable<Class>> nCopies(16, new Callable<Class>() {
             public Class call() throws Exception {
-              return broken.loadClass("com.tctest.ExportedClass");
+              return broken.loadClass("com.tctest.ExportedClassButNot");
             }
           }));
 

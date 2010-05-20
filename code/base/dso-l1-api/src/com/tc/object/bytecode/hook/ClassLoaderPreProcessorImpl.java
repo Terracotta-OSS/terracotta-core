@@ -327,6 +327,10 @@ public class ClassLoaderPreProcessorImpl {
 
   /**
    * Adding hook into ClassLoader.loadClass[Internal]() method to load tc classes.
+   * 
+   * This instrumentation code is mirrored by the export code in IsolationClassLoader.
+   * If you change this in any functionally significant way please update the IsolationClassLoader
+   * too otherwise we may see strange test failures.
    */
   public static class LoadClassAdapter extends AdviceAdapter {
     
@@ -342,15 +346,15 @@ public class ClassLoaderPreProcessorImpl {
       Label lockStart = new Label();
       Label lockEnd = new Label();
       Label lockEndEx = new Label();
+      Label lockEndExEnd = new Label();
       mv.visitTryCatchBlock(lockStart, lockEnd, lockEndEx, null);
-      mv.visitTryCatchBlock(lockEndEx, noExport, lockEndEx, null);
+      mv.visitTryCatchBlock(lockEndEx, lockEndExEnd, lockEndEx, null);
       
       final int thisSlot = 0;
       final int classnameSlot = 1;
       final int classbytesSlot = 2;
       final int loadedclassSlot = 3;
       final int lockSlot = 4;
-      final int exceptionSlot = 4;
       
       mv.visitVarInsn(ALOAD, classnameSlot);
       mv.visitVarInsn(ALOAD, thisSlot);
@@ -398,10 +402,9 @@ public class ClassLoaderPreProcessorImpl {
       mv.visitInsn(ARETURN);
 
       mv.visitLabel(lockEndEx);
-      mv.visitVarInsn(ASTORE, exceptionSlot);
       mv.visitVarInsn(ALOAD, lockSlot);
       mv.visitInsn(MONITOREXIT);
-      mv.visitVarInsn(ALOAD, exceptionSlot);
+      mv.visitLabel(lockEndExEnd);
       mv.visitInsn(ATHROW);
 
       mv.visitLabel(noExport);
