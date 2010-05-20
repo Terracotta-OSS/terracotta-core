@@ -44,14 +44,14 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 2.1.0-SNAPSHOT
+    version: 2.2.1-SNAPSHOT
     destination: ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 2.1.0-SNAPSHOT
+    version: 2.2.1-SNAPSHOT
     destination: ehcache/javadoc
     explode: true
     
@@ -59,7 +59,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 2.1.0-SNAPSHOT
+    version: 2.2.1-SNAPSHOT
     destination: ehcache/src
     explode: true
     
