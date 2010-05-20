@@ -74,6 +74,8 @@ public class HashMapTCTest extends TCTestCase {
           return new MockRuntimeOptions();
         } else if ("runtimeOutputOptions".equals(name)) {
           return new MockOutputOptions();
+        } else if ("getClassResource".equals(name)) {
+          return null;
         } else if (Vm.isIBM() && "isRoot".equals(name)
                    && ("java.lang.reflect.Method".equals(args[0]) || "java.lang.reflect.Constructor".equals(args[0]))) {
           // the implementation of java.lang.Class in the IBM JDK is different and caches

@@ -184,6 +184,9 @@ public class DSOContextImpl implements DSOContext {
       System.exit(1);
       throw new AssertionError("Will not run");
     }
+
+    //do a pre-emptive class load since this path gets nested inside other classloads...
+    getClassResource("non.existent.Class", getClass().getClassLoader(), true);
   }
 
   /**

@@ -184,7 +184,7 @@ public class ClassLoaderPreProcessorImpl {
       }
       
       if (CLASSLOADER_CLASS_NAME.equals(className) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(desc)
-          && ("loadClassInternal".equals(name) || "loadClass".equals(name))) {
+          && "loadClass".equals(name)) {
         return new LoadClassAdapter(mv, access, name, desc);
       } else if (CLASSLOADER_CLASS_NAME.equals(className) && "getResource".equals(name)
                  && "(Ljava/lang/String;)Ljava/net/URL;".equals(desc)) {
