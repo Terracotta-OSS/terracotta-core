@@ -856,7 +856,7 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.INTERRUPT));
     }
 
-    public boolean isTransactionsForLockFlushed(LockID lock, LockFlushCallback callback) {
+    public boolean asyncFlush(LockID lock, LockFlushCallback callback) {
       Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
       return true;
     }

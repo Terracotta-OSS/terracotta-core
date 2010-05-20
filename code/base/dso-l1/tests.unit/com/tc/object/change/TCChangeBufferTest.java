@@ -26,11 +26,11 @@ import junit.framework.TestCase;
 public class TCChangeBufferTest extends TestCase {
 
   public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
-    ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
-    TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ClassProvider classProvider = new MockClassProvider();
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
+    final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     // physical updates should be ignored
     buffer.fieldChanged("classname", "fieldname", new ObjectID(12), -1);
@@ -38,26 +38,25 @@ public class TCChangeBufferTest extends TestCase {
 
     buffer.logicalInvoke(SerializationUtil.PUT, new Object[] { new ObjectID(1), new ObjectID(2) });
 
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, 
-                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
-                                         false);
+    final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                               serializer, encoding, mockTCObject.getTCClass()
+                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 
-    DNAImpl dna = new DNAImpl(serializer, true);
+    final DNAImpl dna = new DNAImpl(serializer, true);
     dna.deserializeFrom(new TCByteBufferInputStream(output.toArray()));
 
     int count = 0;
-    DNACursor cursor = dna.getCursor();
+    final DNACursor cursor = dna.getCursor();
     while (cursor.next(encoding)) {
       count++;
-      LogicalAction action = dna.getLogicalAction();
+      final LogicalAction action = dna.getLogicalAction();
 
       if (action.getMethod() == SerializationUtil.PUT) {
         assertEquals(new ObjectID(1), action.getParameters()[0]);
@@ -71,35 +70,34 @@ public class TCChangeBufferTest extends TestCase {
   }
 
   public void testLastPhysicalChangeWins() throws Exception {
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
-    ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this);
-    TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ClassProvider classProvider = new MockClassProvider();
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this);
+    final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     for (int i = 0; i < 100; i++) {
       buffer.fieldChanged("class", "class.field", new ObjectID(i), -1);
     }
 
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
-    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, 
-                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
-                                         false);
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                               serializer, encoding, mockTCObject.getTCClass()
+                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 
-    DNAImpl dna = new DNAImpl(serializer, true);
+    final DNAImpl dna = new DNAImpl(serializer, true);
     dna.deserializeFrom(new TCByteBufferInputStream(output.toArray()));
 
     int count = 0;
-    DNACursor cursor = dna.getCursor();
+    final DNACursor cursor = dna.getCursor();
     while (cursor.next(encoding)) {
       count++;
-      PhysicalAction action = dna.getPhysicalAction();
+      final PhysicalAction action = dna.getPhysicalAction();
 
       if (action.isTruePhysical() && action.getFieldName().equals("class.field")) {
         assertEquals(new ObjectID(99), action.getObject());
@@ -112,36 +110,35 @@ public class TCChangeBufferTest extends TestCase {
   }
 
   public void testLastArrayChangeWins() throws Exception {
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
-    ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, true, false);
-    TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ClassProvider classProvider = new MockClassProvider();
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, true, false);
+    final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
     for (int i = 0; i < 100; i++) {
       buffer.fieldChanged("class", "class.arrayField", new ObjectID(1000 + i), 1);
     }
 
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
-                                         serializer, encoding, 
-                                         mockTCObject.getTCClass().getDefiningLoaderDescription().toDelimitedString(), 
-                                         false);
+    final DNAWriter writer = new DNAWriterImpl(output, mockTCObject.getObjectID(), mockTCObject.getTCClass().getName(),
+                                               serializer, encoding, mockTCObject.getTCClass()
+                                                   .getDefiningLoaderDescription().toDelimitedString(), false);
 
     buffer.writeTo(writer);
     writer.markSectionEnd();
     writer.finalizeHeader();
     output.close();
 
-    DNAImpl dna = new DNAImpl(serializer, true);
+    final DNAImpl dna = new DNAImpl(serializer, true);
     dna.deserializeFrom(new TCByteBufferInputStream(output.toArray()));
 
     int count = 0;
-    DNACursor cursor = dna.getCursor();
+    final DNACursor cursor = dna.getCursor();
     while (cursor.next(encoding)) {
       count++;
-      PhysicalAction action = dna.getPhysicalAction();
+      final PhysicalAction action = dna.getPhysicalAction();
 
       if (action.isArrayElement() && action.getArrayIndex() == 1) {
         assertEquals(new ObjectID(1099), action.getObject());

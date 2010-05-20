@@ -73,9 +73,12 @@ public class ManagedObjectStateFactory {
                             new Byte(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
-    // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
+    // XXX: hack to support CDM in tim-concurrent-collections.
     classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso", Byte
         .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
+    // XXX: hack to support CDMServerMap in tim-concurrent-collections.
+    classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedServerMapDso", Byte
+        .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE));
     // XXX: hack to support Hibernate cache entry type
     classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
@@ -89,7 +92,8 @@ public class ManagedObjectStateFactory {
 
   }
 
-  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider, final StringIndex stringIndex,
+  private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
+                                    final StringIndex stringIndex,
                                     final PhysicalManagedObjectStateFactory physicalMOFactory,
                                     final PersistentCollectionFactory factory) {
     this.listenerProvider = listenerProvider;
@@ -142,9 +146,9 @@ public class ManagedObjectStateFactory {
     return this.listenerProvider.getListener();
   }
 
-  public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className, final String loaderDesc,
-                                        final DNACursor cursor) {
-    byte type = getStateObjectTypeFor(className);
+  public ManagedObjectState createState(final ObjectID oid, final ObjectID parentID, final String className,
+                                        final String loaderDesc, final DNACursor cursor) {
+    final byte type = getStateObjectTypeFor(className);
 
     if (type == ManagedObjectState.LITERAL_TYPE) { return new LiteralTypesManagedObjectState(); }
 
@@ -182,9 +186,11 @@ public class ManagedObjectStateFactory {
             .createPersistentMap(oid));
       case ManagedObjectState.URL_TYPE:
         return new URLManagedObjectState(classID);
-        // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
         return new ConcurrentDistributedMapManagedObjectState(classID, this.persistentCollectionFactory
+            .createPersistentMap(oid));
+      case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
+        return new ConcurrentDistributedServerMapManagedObjectState(classID, this.persistentCollectionFactory
             .createPersistentMap(oid));
       case ManagedObjectState.TDC_SERIALIZED_ENTRY:
         return new TDCSerializedEntryManagedObjectState(classID);
@@ -202,10 +208,10 @@ public class ManagedObjectStateFactory {
   public String getClassName(final long classID) {
     String s = null;
     try {
-      String separator = Namespace.getClassNameAndLoaderSeparator();
+      final String separator = Namespace.getClassNameAndLoaderSeparator();
       s = getStringIndex().getStringFor(classID);
       return s.substring(s.indexOf(separator) + separator.length());
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       throw new AssertionError("loaderDesc://:ClassName string for classId  " + classID + " not in the right format : "
                                + s);
     }
@@ -214,19 +220,19 @@ public class ManagedObjectStateFactory {
   public String getLoaderDescription(final long classID) {
     String s = null;
     try {
-      String separator = Namespace.getClassNameAndLoaderSeparator();
+      final String separator = Namespace.getClassNameAndLoaderSeparator();
       s = getStringIndex().getStringFor(classID);
       return s.substring(0, s.indexOf(separator));
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       throw new AssertionError("loaderDesc://:ClassName string for classId  " + classID + " not in the right format : "
                                + s);
     }
   }
 
   private byte getStateObjectTypeFor(String className) {
-    String logicalExtendingClassName = Namespace.parseLogicalNameIfNeceesary(className);
+    final String logicalExtendingClassName = Namespace.parseLogicalNameIfNeceesary(className);
     if (logicalExtendingClassName != null) {
-      Byte t = (Byte) classNameToStateMap.get(logicalExtendingClassName);
+      final Byte t = (Byte) classNameToStateMap.get(logicalExtendingClassName);
       if (t != null) { return t.byteValue(); }
 
       className = Namespace.parseClassNameIfNecessary(className);
@@ -234,13 +240,14 @@ public class ManagedObjectStateFactory {
 
     if (className.startsWith("[")) { return ManagedObjectState.ARRAY_TYPE; }
 
-    Byte type = (Byte) classNameToStateMap.get(className);
+    final Byte type = (Byte) classNameToStateMap.get(className);
     if (type != null) { return type.byteValue(); }
     if (LiteralValues.isLiteral(className)) { return ManagedObjectState.LITERAL_TYPE; }
     return ManagedObjectState.PHYSICAL_TYPE;
   }
 
-  public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId) throws ClassNotFoundException {
+  public PhysicalManagedObjectState createPhysicalState(final ObjectID parentID, final int classId)
+      throws ClassNotFoundException {
     return this.physicalMOFactory.create(parentID, classId);
   }
 
@@ -279,9 +286,10 @@ public class ManagedObjectStateFactory {
           return URLManagedObjectState.readFrom(in);
         case ManagedObjectState.LINKED_HASHSET_TYPE:
           return LinkedHashSetManagedObjectState.readFrom(in);
-          // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
         case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
           return ConcurrentDistributedMapManagedObjectState.readFrom(in);
+        case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
+          return ConcurrentDistributedServerMapManagedObjectState.readFrom(in);
         case ManagedObjectState.TDC_SERIALIZED_ENTRY:
           return TDCSerializedEntryManagedObjectState.readFrom(in);
         case ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY:
@@ -289,16 +297,17 @@ public class ManagedObjectStateFactory {
         default:
           throw new AssertionError("Unknown type : " + type + " : Dont know how to deserialize this type !");
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       e.printStackTrace();
       throw new TCRuntimeException(e);
-    } catch (ClassNotFoundException e) {
+    } catch (final ClassNotFoundException e) {
       throw new TCRuntimeException(e);
     }
   }
 
-  public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className, final String loaderDesc,
-                                          final DNACursor cursor, final ManagedObjectState oldState) {
+  public ManagedObjectState recreateState(final ObjectID id, final ObjectID pid, final String className,
+                                          final String loaderDesc, final DNACursor cursor,
+                                          final ManagedObjectState oldState) {
     Assert.assertEquals(ManagedObjectState.PHYSICAL_TYPE, oldState.getType());
     final long classID = getClassID(className, loaderDesc);
     return this.physicalMOFactory.recreate(classID, pid, className, loaderDesc, cursor,

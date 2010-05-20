@@ -25,13 +25,13 @@ public interface RemoteTransactionManager extends ClientHandshakeCallback, Prett
    */
   public void flush(LockID lockID);
 
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
+
   public void commit(ClientTransaction transaction);
 
   public TransactionBuffer receivedAcknowledgement(SessionID sessionID, TransactionID txID, NodeID nodeID);
 
   public void receivedBatchAcknowledgement(TxnBatchID batchID, NodeID nodeID);
-
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback);
 
   public void stopProcessing();
 

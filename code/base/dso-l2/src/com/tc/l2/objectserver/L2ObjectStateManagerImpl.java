@@ -36,25 +36,25 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   private final CopyOnWriteArrayList     listeners = new CopyOnWriteArrayList();
   private final ServerTransactionManager transactionManager;
 
-  public L2ObjectStateManagerImpl(ObjectManager objectManager, ServerTransactionManager transactionManager) {
+  public L2ObjectStateManagerImpl(final ObjectManager objectManager, final ServerTransactionManager transactionManager) {
     this.objectManager = objectManager;
     this.transactionManager = transactionManager;
   }
 
-  public void registerForL2ObjectStateChangeEvents(L2ObjectStateListener listener) {
+  public void registerForL2ObjectStateChangeEvents(final L2ObjectStateListener listener) {
     this.listeners.add(listener);
   }
 
-  private void fireMissingObjectsStateEvent(NodeID nodeID, int missingObjects) {
-    for (Iterator i = this.listeners.iterator(); i.hasNext();) {
-      L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+  private void fireMissingObjectsStateEvent(final NodeID nodeID, final int missingObjects) {
+    for (final Iterator i = this.listeners.iterator(); i.hasNext();) {
+      final L2ObjectStateListener l = (L2ObjectStateListener) i.next();
       l.missingObjectsFor(nodeID, missingObjects);
     }
   }
 
-  private void fireObjectSyncCompleteEvent(NodeID nodeID) {
-    for (Iterator i = this.listeners.iterator(); i.hasNext();) {
-      L2ObjectStateListener l = (L2ObjectStateListener) i.next();
+  private void fireObjectSyncCompleteEvent(final NodeID nodeID) {
+    for (final Iterator i = this.listeners.iterator(); i.hasNext();) {
+      final L2ObjectStateListener l = (L2ObjectStateListener) i.next();
       l.objectSyncCompleteFor(nodeID);
     }
   }
@@ -63,14 +63,14 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return this.nodes.size();
   }
 
-  public void removeL2(NodeID nodeID) {
-    Object l2State = this.nodes.remove(nodeID);
+  public void removeL2(final NodeID nodeID) {
+    final Object l2State = this.nodes.remove(nodeID);
     if (l2State == null) {
       logger.warn("L2State Not found for " + nodeID);
     }
   }
 
-  public boolean addL2(NodeID nodeID, Set oids) {
+  public boolean addL2(final NodeID nodeID, final Set oids) {
     L2ObjectStateImpl l2State;
     synchronized (this.nodes) {
       l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
@@ -91,8 +91,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return true;
   }
 
-  public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink) {
-    L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
+  public ManagedObjectSyncContext getSomeObjectsToSyncContext(final NodeID nodeID, final int count, final Sink sink) {
+    final L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
     if (l2State != null) {
       return l2State.getSomeObjectsToSyncContext(count, sink);
     } else {
@@ -101,8 +101,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     }
   }
 
-  public void close(ManagedObjectSyncContext mosc) {
-    L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(mosc.getNodeID());
+  public void close(final ManagedObjectSyncContext mosc) {
+    final L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(mosc.getNodeID());
     if (l2State != null) {
       l2State.close(mosc);
     } else {
@@ -142,12 +142,12 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private int                      totalObjectsToSync;
     private int                      totalObjectsSynced;
 
-    public L2ObjectStateImpl(NodeID nodeID, Set oids) {
+    public L2ObjectStateImpl(final NodeID nodeID, final Set oids) {
       this.nodeID = nodeID;
       this.existingOids = oids;
     }
 
-    private void close(ManagedObjectSyncContext mosc) {
+    private void close(final ManagedObjectSyncContext mosc) {
       Assert.assertTrue(mosc == this.syncingContext);
       this.syncingContext = null;
       if (this.missingOids.isEmpty()) {
@@ -161,11 +161,11 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       }
     }
 
-    private ManagedObjectSyncContext getSomeObjectsToSyncContext(int count, Sink sink) {
+    private ManagedObjectSyncContext getSomeObjectsToSyncContext(final int count, final Sink sink) {
       Assert.assertTrue(this.state == SYNC_STARTED);
       Assert.assertNull(this.syncingContext);
       if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
-      ObjectIDSet oids = new ObjectIDSet();
+      final ObjectIDSet oids = new ObjectIDSet();
       addSomeMissingObjectIDsTo(oids, count);
       this.totalObjectsSynced += oids.size();
       this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(), sink,
@@ -173,8 +173,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       return this.syncingContext;
     }
 
-    private void addSomeMissingObjectIDsTo(ObjectIDSet oids, int count) {
-      for (Iterator<ObjectID> i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
+    private void addSomeMissingObjectIDsTo(final ObjectIDSet oids, int count) {
+      for (final Iterator<ObjectID> i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
         // XXX:: This has to be commented because even though ObjectIDSet supports remove() now it is slightly slower
         // than removeAll.
@@ -184,11 +184,11 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     }
 
-    private ManagedObjectSyncContext getMissingRootsSynccontext(Sink sink) {
-      ObjectIDSet oids = new ObjectIDSet();
+    private ManagedObjectSyncContext getMissingRootsSynccontext(final Sink sink) {
+      final ObjectIDSet oids = new ObjectIDSet();
       // NOTE:: some root IDs might not be present in this mirror group in AA config
-      for (Iterator i = this.missingRoots.values().iterator(); i.hasNext();) {
-        ObjectID rootID = (ObjectID) i.next();
+      for (final Iterator i = this.missingRoots.values().iterator(); i.hasNext();) {
+        final ObjectID rootID = (ObjectID) i.next();
         if (this.missingOids.remove(rootID)) {
           oids.add(rootID);
         }
@@ -212,10 +212,10 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private int computeDiff() {
       this.missingOids = L2ObjectStateManagerImpl.this.objectManager.getAllObjectIDs();
       this.missingRoots = L2ObjectStateManagerImpl.this.objectManager.getRootNamesToIDsMap();
-      int objectCount = this.missingOids.size();
-      Set missingHere = new HashSet();
-      for (Iterator i = this.existingOids.iterator(); i.hasNext();) {
-        Object o = i.next();
+      final int objectCount = this.missingOids.size();
+      final Set missingHere = new HashSet();
+      for (final Iterator i = this.existingOids.iterator(); i.hasNext();) {
+        final Object o = i.next();
         if (!this.missingOids.remove(o)) {
           missingHere.add(o);
         }
@@ -234,7 +234,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         // message from DGC) from previous active reached the other node and not this node and the active crashed
         logger.warn("Object IDs MISSING HERE : " + missingHere.size() + " : " + missingHere);
       }
-      int missingCount = this.missingOids.size();
+      final int missingCount = this.missingOids.size();
       if (missingCount == 0) {
         this.state = IN_SYNC;
       } else {
@@ -255,7 +255,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
 
     private void moveToReadyToSyncState() {
       this.state = READY_TO_SYNC;
-      int missingObjects = computeDiff();
+      final int missingObjects = computeDiff();
       fireMissingObjectsStateEvent(this.nodeID, missingObjects);
     }
 

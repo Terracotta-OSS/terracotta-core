@@ -34,7 +34,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
     throw new ImplementMe();
   }
 
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
     return true;
   }
 

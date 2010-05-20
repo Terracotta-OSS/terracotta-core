@@ -49,30 +49,30 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
   private final SampledCounter      broadcastCounter;
   private final SampledRateCounter  changesPerBroadcast;
 
-  public BroadcastChangeHandler(SampledCounter broadcastCounter, ObjectStatsRecorder objectStatsRecorder,
-                                SampledRateCounter changesPerBroadcast) {
+  public BroadcastChangeHandler(final SampledCounter broadcastCounter, final ObjectStatsRecorder objectStatsRecorder,
+                                final SampledRateCounter changesPerBroadcast) {
     this.broadcastCounter = broadcastCounter;
     this.objectStatsRecorder = objectStatsRecorder;
     this.changesPerBroadcast = changesPerBroadcast;
   }
 
   @Override
-  public void handleEvent(EventContext context) {
-    BroadcastChangeContext bcc = (BroadcastChangeContext) context;
+  public void handleEvent(final EventContext context) {
+    final BroadcastChangeContext bcc = (BroadcastChangeContext) context;
 
     final NodeID committerID = bcc.getNodeID();
     final TransactionID txnID = bcc.getTransactionID();
 
     final MessageChannel[] channels = this.channelManager.getActiveChannels();
 
-    for (MessageChannel client : channels) {
+    for (final MessageChannel client : channels) {
       // TODO:: make message channel return clientID and short channelManager call.
-      ClientID clientID = this.channelManager.getClientIDFor(client.getChannelID());
+      final ClientID clientID = this.channelManager.getClientIDFor(client.getChannelID());
 
-      Map newRoots = bcc.getNewRoots();
-      Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
+      final Map newRoots = bcc.getNewRoots();
+      final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List prunedChanges = Collections.EMPTY_LIST;
-      TreeSet lookupObjectIDs = new TreeSet();
+      final TreeSet lookupObjectIDs = new TreeSet();
 
       if (!clientID.equals(committerID)) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
@@ -83,7 +83,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
         updateStats(prunedChanges);
       }
 
-      DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
+      final DmiDescriptor[] prunedDmis = pruneDmiDescriptors(bcc.getDmiDescriptors(), clientID, this.clientStateManager);
       final boolean includeDmi = !clientID.equals(committerID) && prunedDmis.length > 0;
       if (!prunedChanges.isEmpty() || !lookupObjectIDs.isEmpty() || !notifiedWaiters.isEmpty() || !newRoots.isEmpty()
           || includeDmi) {
@@ -103,7 +103,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
                                                                                    .getName(), -1, true));
         }
         final DmiDescriptor[] dmi = (includeDmi) ? prunedDmis : DmiDescriptor.EMPTY_ARRAY;
-        BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
+        final BroadcastTransactionMessage responseMessage = (BroadcastTransactionMessage) client
             .createMessage(TCMessageType.BROADCAST_TRANSACTION_MESSAGE);
         responseMessage.initialize(prunedChanges, bcc.getSerializer(), bcc.getLockIDs(), getNextChangeIDFor(clientID),
                                    txnID, committerID, bcc.getGlobalTransactionID(), bcc.getTransactionType(), bcc
@@ -119,9 +119,9 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     this.transactionManager.broadcasted(committerID, txnID);
   }
 
-  private void updateStats(List prunedChanges) {
-    for (Iterator i = prunedChanges.iterator(); i.hasNext();) {
-      DNA dna = (DNA) i.next();
+  private void updateStats(final List prunedChanges) {
+    for (final Iterator i = prunedChanges.iterator(); i.hasNext();) {
+      final DNA dna = (DNA) i.next();
       String className = dna.getTypeName();
       if (className == null) {
         className = "UNKNOWN"; // Could happen on restart scenario
@@ -130,30 +130,30 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
     }
   }
 
-  private static DmiDescriptor[] pruneDmiDescriptors(DmiDescriptor[] dmiDescriptors, ClientID clientID,
-                                                     ClientStateManager clientStateManager) {
+  private static DmiDescriptor[] pruneDmiDescriptors(final DmiDescriptor[] dmiDescriptors, final ClientID clientID,
+                                                     final ClientStateManager clientStateManager) {
     if (dmiDescriptors.length == 0) { return dmiDescriptors; }
 
-    List list = new ArrayList();
-    for (DmiDescriptor dd : dmiDescriptors) {
+    final List list = new ArrayList();
+    for (final DmiDescriptor dd : dmiDescriptors) {
       if (dd.isFaultReceiver() || clientStateManager.hasReference(clientID, dd.getReceiverId())) {
         list.add(dd);
       }
     }
-    DmiDescriptor[] rv = new DmiDescriptor[list.size()];
+    final DmiDescriptor[] rv = new DmiDescriptor[list.size()];
     list.toArray(rv);
     return rv;
   }
 
-  private long getNextChangeIDFor(ClientID clientID) {
+  private long getNextChangeIDFor(final ClientID clientID) {
     // FIXME Fix this facility. Should keep a counter for every client and
     // increment on every
     return 0;
   }
 
   @Override
-  protected void initialize(ConfigurationContext context) {
-    ServerConfigurationContext scc = (ServerConfigurationContext) context;
+  protected void initialize(final ConfigurationContext context) {
+    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.channelManager = scc.getChannelManager();
     this.clientStateManager = scc.getClientStateManager();
     this.transactionManager = scc.getTransactionManager();

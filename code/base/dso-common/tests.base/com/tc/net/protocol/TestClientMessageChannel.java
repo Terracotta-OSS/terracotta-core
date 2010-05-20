@@ -15,6 +15,7 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageRouter;
@@ -33,22 +34,22 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     this(null, null, null, null);
   }
 
-  public TestClientMessageChannel(TCMessageFactory msgFactory, TCMessageRouter router, SessionProvider sessionProvider,
-                                  ConnectionAddressProvider addrProvider) {
+  public TestClientMessageChannel(final TCMessageFactory msgFactory, final TCMessageRouter router,
+                                  final SessionProvider sessionProvider, final ConnectionAddressProvider addrProvider) {
 
     setLocalNodeID(ClientID.NULL_ID);
     setRemoteNodeID(GroupID.NULL_ID);
   }
 
   public boolean isInitConnect() {
-    return initConnect;
+    return this.initConnect;
   }
 
   public void connected() {
-    initConnect = false;
+    this.initConnect = false;
   }
 
-  public void addClassMapping(TCMessageType type, Class msgClass) {
+  public void addClassMapping(final TCMessageType type, final Class msgClass) {
     throw new ImplementMe();
 
   }
@@ -65,27 +66,27 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     throw new ImplementMe();
   }
 
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
     throw new ImplementMe();
 
   }
 
-  public void routeMessageType(TCMessageType type, TCMessageSink sink) {
+  public void routeMessageType(final TCMessageType type, final TCMessageSink sink) {
     throw new ImplementMe();
 
   }
 
-  public void unrouteMessageType(TCMessageType type) {
+  public void unrouteMessageType(final TCMessageType type) {
     throw new ImplementMe();
 
   }
 
-  public void addAttachment(String key, Object value, boolean replace) {
+  public void addAttachment(final String key, final Object value, final boolean replace) {
     throw new ImplementMe();
 
   }
 
-  public void addListener(ChannelEventListener listener) {
+  public void addListener(final ChannelEventListener listener) {
     throw new ImplementMe();
 
   }
@@ -95,11 +96,11 @@ public class TestClientMessageChannel implements ClientMessageChannel {
 
   }
 
-  public TCMessage createMessage(TCMessageType type) {
+  public TCMessage createMessage(final TCMessageType type) {
     throw new ImplementMe();
   }
 
-  public Object getAttachment(String key) {
+  public Object getAttachment(final String key) {
     throw new ImplementMe();
   }
 
@@ -139,20 +140,24 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     throw new ImplementMe();
   }
 
-  public Object removeAttachment(String key) {
+  public Object removeAttachment(final String key) {
     throw new ImplementMe();
   }
 
-  public void send(TCNetworkMessage message) {
+  public void send(final TCNetworkMessage message) {
     throw new ImplementMe();
 
   }
 
-  public void setRemoteNodeID(NodeID destination) {
+  public void setRemoteNodeID(final NodeID destination) {
     throw new ImplementMe();
   }
 
-  public void setLocalNodeID(NodeID source) {
+  public void setLocalNodeID(final NodeID source) {
+    throw new ImplementMe();
+  }
+
+  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
     throw new ImplementMe();
   }
 

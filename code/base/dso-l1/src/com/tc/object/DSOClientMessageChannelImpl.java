@@ -13,6 +13,7 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
@@ -37,6 +38,8 @@ import com.tc.object.msg.RequestManagedObjectMessage;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessage;
 import com.tc.object.msg.RequestRootMessageFactory;
+import com.tc.object.msg.ServerMapMessageFactory;
+import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.util.TCTimeoutException;
 
@@ -46,7 +49,7 @@ import java.net.UnknownHostException;
 public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, LockRequestMessageFactory,
     RequestRootMessageFactory, RequestManagedObjectMessageFactory, ClientHandshakeMessageFactory,
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
-    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory,
+    CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, ServerMapMessageFactory,
     KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory, LockStatisticsReponseMessageFactory {
 
   private final ClientMessageChannel channel;
@@ -61,6 +64,11 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   public void addClassMapping(final TCMessageType messageType, final Class messageClass) {
     this.channel.addClassMapping(messageType, messageClass);
+  }
+
+  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
+    this.channel.addClassMapping(type, messageFactory);
+
   }
 
   public ClientIDProvider getClientIDProvider() {
@@ -112,6 +120,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public ServerMapMessageFactory getServerMapMessageFactory() {
+    return this;
+  }
+
   public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory() {
     return this;
   }
@@ -121,7 +133,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   }
 
   public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
-    ClientHandshakeMessage rv = (ClientHandshakeMessage) this.channel
+    final ClientHandshakeMessage rv = (ClientHandshakeMessage) this.channel
         .createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
     return rv;
   }
@@ -173,6 +185,17 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
 
   public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage(final NodeID nodeID) {
     return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
+  }
+
+  public ServerMapRequestMessage newServerTCMapRequestMessage(final NodeID nodeID, final ServerMapRequestType type) {
+    switch (type) {
+      case GET_SIZE:
+        return (ServerMapRequestMessage) this.channel.createMessage(TCMessageType.GET_SIZE_SERVER_MAP_REQUEST_MESSAGE);
+      case GET_VALUE_FOR_KEY:
+        return (ServerMapRequestMessage) this.channel.createMessage(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE);
+      default:
+        throw new AssertionError("Wrong Type : " + type);
+    }
   }
 
   public NodeMetaDataMessage newNodeMetaDataMessage() {

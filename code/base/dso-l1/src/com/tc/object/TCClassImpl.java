@@ -42,7 +42,7 @@ import java.util.Map;
  * Peer of a Class under management.
  * <p>
  * This is used to cache the fields of each class by type.
- *
+ * 
  * @author orion
  */
 public class TCClassImpl implements TCClass {
@@ -89,18 +89,18 @@ public class TCClassImpl implements TCClass {
               final String logicalExtendingClassName, final boolean isLogical, final boolean isCallConstructor,
               final boolean onLoadInjection, final String onLoadScript, final String onLoadMethod,
               final boolean useNonDefaultConstructor, final boolean useResolveLockWhileClearing,
-              String postCreateMethod, String preCreateMethod) {
+              final String postCreateMethod, final String preCreateMethod) {
     this.clazzFactory = clazzFactory;
     this.objectManager = objectManager;
     this.peer = peer;
     this.loaderDesc = loaderDesc;
     this.indexed = peer.isArray();
 
-    boolean isStatic = Modifier.isStatic(peer.getModifiers());
-    boolean mightBeInner = peer.getName().indexOf('$') != -1 && !isIndexed();
+    final boolean isStatic = Modifier.isStatic(peer.getModifiers());
+    final boolean mightBeInner = peer.getName().indexOf('$') != -1 && !isIndexed();
     this.parentField = mightBeInner && !isStatic ? findParentField() : null;
-    this.isNonStaticInner = parentField != null;
-    this.parentFieldName = parentField == null ? null : getName() + '.' + parentField.getName();
+    this.isNonStaticInner = this.parentField != null;
+    this.parentFieldName = this.parentField == null ? null : getName() + '.' + this.parentField.getName();
 
     this.isLogical = isLogical;
     this.isProxyClass = Proxy.isProxyClass(peer) || ProxyInstance.class.getName().equals(peer.getName());
@@ -116,7 +116,7 @@ public class TCClassImpl implements TCClass {
 
     introspectFields(peer, factory);
     this.portableFields = createPortableFields();
-    this.useNonDefaultConstructor = isProxyClass || ClassUtils.isPortableReflectionClass(peer)
+    this.useNonDefaultConstructor = this.isProxyClass || ClassUtils.isPortableReflectionClass(peer)
                                     || useNonDefaultConstructor;
     this.logicalSuperClass = logicalSuperClass;
     this.offsetToFieldNames = getFieldOffsets(peer);
@@ -126,19 +126,19 @@ public class TCClassImpl implements TCClass {
     this.preCreateMethods = resolveCreateMethods(preCreateMethod, true);
   }
 
-  private List<Method> resolveCreateMethods(String methodName, boolean preCreate) {
-    List<Method> rv = new ArrayList<Method>();
-    if (superclazz != null) {
-      rv.addAll(preCreate ? superclazz.getPreCreateMethods() : superclazz.getPostCreateMethods());
+  private List<Method> resolveCreateMethods(final String methodName, final boolean preCreate) {
+    final List<Method> rv = new ArrayList<Method>();
+    if (this.superclazz != null) {
+      rv.addAll(preCreate ? this.superclazz.getPreCreateMethods() : this.superclazz.getPostCreateMethods());
     }
 
     if (methodName != null) {
       try {
-        Method method = peer.getDeclaredMethod(methodName);
+        final Method method = this.peer.getDeclaredMethod(methodName);
         method.setAccessible(true);
         rv.add(method);
-      } catch (Exception e) {
-        logger.error("Exception resolving method '" + methodName + "' on " + peer, e);
+      } catch (final Exception e) {
+        logger.error("Exception resolving method '" + methodName + "' on " + this.peer, e);
       }
     }
 
@@ -148,11 +148,11 @@ public class TCClassImpl implements TCClass {
   }
 
   public Field getParentField() {
-    return parentField;
+    return this.parentField;
   }
 
   public boolean isNotClearable() {
-    return isNotClearable;
+    return this.isNotClearable;
   }
 
   public boolean isNonStaticInner() {
@@ -164,21 +164,21 @@ public class TCClassImpl implements TCClass {
   }
 
   private Field findParentField() {
-    Field[] fields = peer.getDeclaredFields();
-    for (Field field : fields) {
-      if (SERIALIZATION_UTIL.isParent(field.getName())) return field;
+    final Field[] fields = this.peer.getDeclaredFields();
+    for (final Field field : fields) {
+      if (SERIALIZATION_UTIL.isParent(field.getName())) { return field; }
     }
     return null;
   }
 
   private TCClass findSuperClass(final Class c) {
-    Class superclass = c.getSuperclass();
-    if (superclass != null) { return clazzFactory.getOrCreate(superclass, objectManager); }
+    final Class superclass = c.getSuperclass();
+    if (superclass != null) { return this.clazzFactory.getOrCreate(superclass, this.objectManager); }
     return null;
   }
 
   private ChangeApplicator createApplicator() {
-    return clazzFactory.createApplicatorFor(this, indexed);
+    return this.clazzFactory.createApplicatorFor(this, this.indexed);
   }
 
   public void hydrate(final TCObject tcObject, final DNA dna, final Object pojo, final boolean force)
@@ -195,7 +195,7 @@ public class TCClassImpl implements TCClass {
 
     if (force || (localVersion < dnaVersion)) {
       tcObject.setVersion(dnaVersion);
-      applicator.hydrate(objectManager, tcObject, dna, pojo);
+      this.applicator.hydrate(this.objectManager, tcObject, dna, pojo);
     } else if (logger.isDebugEnabled()) {
       logger
           .debug("IGNORING UPDATE, local object at version " + localVersion + ", dna update is version " + dnaVersion);
@@ -205,13 +205,13 @@ public class TCClassImpl implements TCClass {
 
   public void dehydrate(final TCObject tcObject, final DNAWriter writer, final Object pojo) {
     try {
-      applicator.dehydrate(objectManager, tcObject, writer, pojo);
-    } catch (ConcurrentModificationException cme) {
+      this.applicator.dehydrate(this.objectManager, tcObject, writer, pojo);
+    } catch (final ConcurrentModificationException cme) {
       // try to log some useful stuff about the pojo in question here.
       // This indicates improper locking, but is certainly possible
-      String type = pojo == null ? "null" : pojo.getClass().getName();
-      String toString = String.valueOf(pojo);
-      int ihc = System.identityHashCode(pojo);
+      final String type = pojo == null ? "null" : pojo.getClass().getName();
+      final String toString = String.valueOf(pojo);
+      final int ihc = System.identityHashCode(pojo);
       logger.error("Shared object (presumably new) modified during dehydrate (type " + type + ", ihc " + ihc + "): "
                    + toString, cme);
       throw cme;
@@ -219,66 +219,66 @@ public class TCClassImpl implements TCClass {
   }
 
   public Class getComponentType() {
-    return peer.getComponentType();
+    return this.peer.getComponentType();
   }
 
   public boolean isEnum() {
-    return isEnum;
+    return this.isEnum;
   }
 
   public String getName() {
-    if (isProxyClass) { return ProxyInstance.class.getName(); }
-    if (isEnum) { return LiteralValues.ENUM_CLASS_DOTS; }
-    return peer.getName();
+    if (this.isProxyClass) { return ProxyInstance.class.getName(); }
+    if (this.isEnum) { return LiteralValues.ENUM_CLASS_DOTS; }
+    return this.peer.getName();
   }
 
   public String getExtendingClassName() {
     String className = getName();
     if (this.logicalExtendingClassName != null) {
-      className = Namespace.createLogicalExtendingClassName(className, logicalExtendingClassName);
+      className = Namespace.createLogicalExtendingClassName(className, this.logicalExtendingClassName);
     }
     return className;
   }
 
   public TCClass getSuperclass() {
-    return superclazz;
+    return this.superclazz;
   }
 
   public synchronized Constructor getConstructor() {
-    if (constructor == null) {
+    if (this.constructor == null) {
       // As best as I can tell, the reason for the lazy initialization here is that we don't actually need the cstr
       // looked up for all of the TCClass instances we cook up. Additionally, the assertions in findConstructor will go
       // off for a fair number of abstract base classes (eg. java.util.AbstractMap, java.util.Dictionary, etc)
-      constructor = findConstructor();
+      this.constructor = findConstructor();
     }
-    return constructor;
+    return this.constructor;
   }
 
   public boolean hasOnLoadInjection() {
-    return onLoadInjection;
+    return this.onLoadInjection;
   }
 
   public boolean hasOnLoadExecuteScript() {
-    return onLoadScript != null;
+    return this.onLoadScript != null;
   }
 
   public String getOnLoadExecuteScript() {
     Assert.eval(hasOnLoadExecuteScript());
-    return onLoadScript;
+    return this.onLoadScript;
   }
 
   public String getOnLoadMethod() {
     Assert.eval(hasOnLoadMethod());
-    return onLoadMethod;
+    return this.onLoadMethod;
   }
 
   private Constructor findConstructor() {
     Constructor rv = null;
 
-    if (isCallConstructor || isLogical) {
-      Constructor[] cons = peer.getDeclaredConstructors();
-      for (Constructor con : cons) {
-        Class[] types = con.getParameterTypes();
+    if (this.isCallConstructor || this.isLogical) {
+      final Constructor[] cons = this.peer.getDeclaredConstructors();
+      for (final Constructor con : cons) {
+        final Class[] types = con.getParameterTypes();
         if (types.length == 0) {
           rv = con;
           rv.setAccessible(true);
@@ -287,88 +287,88 @@ public class TCClassImpl implements TCClass {
       }
     }
 
-    rv = ReflectionUtil.newConstructor(peer, logicalSuperClass);
+    rv = ReflectionUtil.newConstructor(this.peer, this.logicalSuperClass);
     rv.setAccessible(true);
     return rv;
   }
 
   public String getParentFieldName() {
-    return parentFieldName;
+    return this.parentFieldName;
   }
 
   private void introspectFields(final Class clazz, final TCFieldFactory fieldFactory) {
     // Note: this gets us all of the fields declared in the class, static
     // as well as instance fields.
-    Field[] fields = clazz.equals(Object.class) ? new Field[0] : clazz.getDeclaredFields();
+    final Field[] fields = clazz.equals(Object.class) ? new Field[0] : clazz.getDeclaredFields();
 
     Field field;
     TCField tcField;
-    for (Field field2 : fields) {
+    for (final Field field2 : fields) {
       field = field2;
       // The factory does a bunch of callbacks based on the field type.
       tcField = fieldFactory.getInstance(this, field);
-      declaredTCFieldsByName.put(field.getName(), tcField);
-      tcFieldsByName.put(tcField.getName(), tcField);
+      this.declaredTCFieldsByName.put(field.getName(), tcField);
+      this.tcFieldsByName.put(tcField.getName(), tcField);
     }
   }
 
   @Override
   public String toString() {
-    return peer.getName();
+    return this.peer.getName();
   }
 
   /**
    * Expects the field name in the format <classname>. <fieldname>(e.g. com.foo.Bar.baz)
    */
   public TCField getField(final String name) {
-    TCField rv = (TCField) tcFieldsByName.get(name);
-    if (rv == null && superclazz != null) {
-      rv = superclazz.getField(name);
+    TCField rv = (TCField) this.tcFieldsByName.get(name);
+    if (rv == null && this.superclazz != null) {
+      rv = this.superclazz.getField(name);
     }
     return rv;
   }
 
   public TCField[] getPortableFields() {
-    return portableFields;
+    return this.portableFields;
   }
 
   public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
-    return applicator.getPortableObjects(pojo, addTo);
+    return this.applicator.getPortableObjects(pojo, addTo);
   }
 
   private TCField[] createPortableFields() {
-    if (isLogical || !objectManager.isPortableClass(this.peer)) { return new TCField[0]; }
-    LinkedList l = new LinkedList();
- 
-    for (Iterator i = declaredTCFieldsByName.values().iterator(); i.hasNext();) {
+    if (this.isLogical || !this.objectManager.isPortableClass(this.peer)) { return new TCField[0]; }
+    final LinkedList l = new LinkedList();
 
-      TCField f = (TCField) i.next();
+    for (final Iterator i = this.declaredTCFieldsByName.values().iterator(); i.hasNext();) {
+
+      final TCField f = (TCField) i.next();
       if (f.isPortable()) {
         l.add(f);
       }
     }
-    
+
     return (TCField[]) l.toArray(new TCField[l.size()]);
   }
 
   public boolean isIndexed() {
-    return indexed;
+    return this.indexed;
   }
 
   public LoaderDescription getDefiningLoaderDescription() {
-    return loaderDesc;
+    return this.loaderDesc;
   }
 
   public boolean isLogical() {
-    return isLogical;
+    return this.isLogical;
   }
 
   public ClientObjectManager getObjectManager() {
-    return objectManager;
+    return this.objectManager;
   }
 
   public TCObject createTCObject(final ObjectID id, final Object pojo, final boolean isNew) {
-    if (isLogical) {
+    if (this.isLogical) {
       return new TCObjectLogical(id, pojo, this, isNew);
     } else {
       return new TCObjectPhysical(id, pojo, this, isNew);
@@ -376,25 +376,25 @@ public class TCClassImpl implements TCClass {
   }
 
   public boolean hasOnLoadMethod() {
-    return onLoadMethod != null;
+    return this.onLoadMethod != null;
   }
 
   public boolean isUseNonDefaultConstructor() {
-    return useNonDefaultConstructor;
+    return this.useNonDefaultConstructor;
   }
 
   public Object getNewInstanceFromNonDefaultConstructor(final DNA dna) throws IOException, ClassNotFoundException {
-    Object o = applicator.getNewInstance(objectManager, dna);
+    final Object o = this.applicator.getNewInstance(this.objectManager, dna);
 
     if (o == null) { throw new AssertionError("Can't find suitable constructor for class: " + getName() + "."); }
     return o;
   }
 
   private static Map getFieldOffsets(final Class peer) {
-    Map rv = new HashMap();
+    final Map rv = new HashMap();
     if (unsafe != null) {
       try {
-        Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
+        final Field[] fields = peer.equals(Object.class) ? new Field[0] : peer.getDeclaredFields();
         // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", # of field: "
         // + fields.length);
         for (int i = 0; i < fields.length; i++) {
@@ -405,11 +405,11 @@ public class TCClassImpl implements TCClass {
               // System.err.println("Thread " + Thread.currentThread().getName() + ", class: " + getName() + ", field: "
               // + fields[i].getName() + ", offset: " + unsafe.objectFieldOffset(fields[i]));
             }
-          } catch (Exception e) {
+          } catch (final Exception e) {
             // Ignore those fields that throw an exception
           }
         }
-      } catch (Exception e) {
+      } catch (final Exception e) {
         throw new TCRuntimeException(e);
       }
     }
@@ -418,19 +418,19 @@ public class TCClassImpl implements TCClass {
   }
 
   private static String makeFieldName(final Field field) {
-    StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
+    final StringBuffer sb = new StringBuffer(field.getDeclaringClass().getName());
     sb.append(".");
     sb.append(field.getName());
     return sb.toString();
   }
 
   public String getFieldNameByOffset(final long fieldOffset) {
-    Long fieldOffsetObj = new Long(fieldOffset);
+    final Long fieldOffsetObj = new Long(fieldOffset);
 
-    String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
+    final String field = (String) this.offsetToFieldNames.get(fieldOffsetObj);
     if (field == null) {
-      if (superclazz != null) {
-        return superclazz.getFieldNameByOffset(fieldOffset);
+      if (this.superclazz != null) {
+        return this.superclazz.getFieldNameByOffset(fieldOffset);
       } else {
         throw new AssertionError("Field does not exist for offset: " + fieldOffset);
       }
@@ -440,18 +440,18 @@ public class TCClassImpl implements TCClass {
   }
 
   public boolean isPortableField(final long fieldOffset) {
-    String fieldName = getFieldNameByOffset(fieldOffset);
-    TCField tcField = getField(fieldName);
+    final String fieldName = getFieldNameByOffset(fieldOffset);
+    final TCField tcField = getField(fieldName);
 
     return tcField.isPortable();
   }
 
   public boolean isProxyClass() {
-    return isProxyClass;
+    return this.isProxyClass;
   }
 
   public boolean useResolveLockWhileClearing() {
-    return useResolveLockWhileClearing;
+    return this.useResolveLockWhileClearing;
   }
 
   public List<Method> getPostCreateMethods() {

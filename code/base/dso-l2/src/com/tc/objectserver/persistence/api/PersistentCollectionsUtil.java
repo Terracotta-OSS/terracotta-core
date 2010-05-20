@@ -11,7 +11,7 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
 
 public class PersistentCollectionsUtil {
 
-  public static boolean isPersistableCollectionType(byte type) {
+  public static boolean isPersistableCollectionType(final byte type) {
     switch (type) {
       case ManagedObjectState.MAP_TYPE:
       case ManagedObjectState.PARTIAL_MAP_TYPE:
@@ -19,23 +19,24 @@ public class PersistentCollectionsUtil {
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
       case ManagedObjectState.SET_TYPE:
       case ManagedObjectState.TREE_SET_TYPE:
-      // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
+      case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
         return true;
       default:
         return false;
     }
   }
 
-  public static PersistableCollection createPersistableCollection(ObjectID id, SleepycatCollectionFactory collectionFactory,
-                                                            byte type) {
+  public static PersistableCollection createPersistableCollection(final ObjectID id,
+                                                                  final SleepycatCollectionFactory collectionFactory,
+                                                                  final byte type) {
     switch (type) {
       case ManagedObjectState.MAP_TYPE:
       case ManagedObjectState.PARTIAL_MAP_TYPE:
       case ManagedObjectState.TREE_MAP_TYPE:
       case ManagedObjectState.CONCURRENT_HASHMAP_TYPE:
-      // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
       case ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE:
+      case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
         return (PersistableCollection) collectionFactory.createPersistentMap(id);
       case ManagedObjectState.SET_TYPE:
       case ManagedObjectState.TREE_SET_TYPE:

@@ -45,20 +45,20 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    rootName = "testSyncRoot";
-    rootObject = new Object();
-    ObjectID objectID = new ObjectID(1);
-    TCObject tcObject = new MockTCObject(objectID, rootObject);
-    TestObjectFactory objectFactory = new TestObjectFactory();
-    objectFactory.peerObject = rootObject;
+    this.rootName = "testSyncRoot";
+    this.rootObject = new Object();
+    final ObjectID objectID = new ObjectID(1);
+    final TCObject tcObject = new MockTCObject(objectID, this.rootObject);
+    final TestObjectFactory objectFactory = new TestObjectFactory();
+    objectFactory.peerObject = this.rootObject;
     objectFactory.tcObject = tcObject;
-    objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
-                                                    new ObjectIDProviderImpl(new SimpleSequence()), new NullCache(),
-                                                    new NullRuntimeLogger(),
-                                                    new ClientIDProviderImpl(new TestChannelIDProvider()),
-                                                    new MockClassProvider(), new TestClassFactory(), objectFactory);
+    this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
+                                                         new ObjectIDProviderImpl(new SimpleSequence()),
+                                                         new NullCache(), new NullRuntimeLogger(),
+                                                         new ClientIDProviderImpl(new TestChannelIDProvider()),
+                                                         new MockClassProvider(), new TestClassFactory(), objectFactory);
 
-    objectManager.setTransactionManager(new MockTransactionManagerImpl());
+    this.objectManager.setTransactionManager(new MockTransactionManagerImpl());
   }
 
   @Override
@@ -76,30 +76,31 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   public void testRootCreateOrReplaceWithNonDsoFinal() throws Exception {
     // If retrieveRootID() of RemoteObjectManager is being called, this call will throw an
     // AssertionError.
-    objectManager.lookupOrCreateRoot(rootName, rootObject, false);
+    this.objectManager.lookupOrCreateRoot(this.rootName, this.rootObject, false);
   }
 
   public void testRootCreateOrReplaceWithDsoFinal() throws Exception {
     try {
-      objectManager.lookupOrCreateRoot(rootName, rootObject, true);
+      this.objectManager.lookupOrCreateRoot(this.rootName, this.rootObject, true);
       throw new AssertionError("should have thrown an AssertionError");
-    } catch (AssertionError e) {
+    } catch (final AssertionError e) {
       // expected.
     }
   }
 
   private static class MockClientObjectManagerImpl extends ClientObjectManagerImpl {
-    public MockClientObjectManagerImpl(RemoteObjectManager remoteObjectManager,
-                                       DSOClientConfigHelper clientConfiguration, ObjectIDProvider idProvider,
-                                       EvictionPolicy cache, RuntimeLogger runtimeLogger, ClientIDProvider provider,
-                                       ClassProvider classProvider, TCClassFactory classFactory,
-                                       TCObjectFactory objectFactory) {
+    public MockClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
+                                       final DSOClientConfigHelper clientConfiguration,
+                                       final ObjectIDProvider idProvider, final EvictionPolicy cache,
+                                       final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
+                                       final ClassProvider classProvider, final TCClassFactory classFactory,
+                                       final TCObjectFactory objectFactory) {
       super(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger, provider, classProvider,
             classFactory, objectFactory, new TestPortability(), null, null);
     }
 
     @Override
-    public Object lookupObject(ObjectID objectID) {
+    public Object lookupObject(final ObjectID objectID) {
       return null;
     }
   }
@@ -107,19 +108,19 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class MockRemoteObjectManagerImpl extends TestRemoteObjectManager {
 
     @Override
-    public ObjectID retrieveRootID(String name) {
+    public ObjectID retrieveRootID(final String name) {
       throw new AssertionError("retrieveRootID should not be called.");
     }
   }
 
   private static class MockTransactionManagerImpl extends MockTransactionManager {
     @Override
-    public void createRoot(String name, ObjectID id) {
+    public void createRoot(final String name, final ObjectID id) {
       return;
     }
 
     @Override
-    public void createObject(TCObject source) {
+    public void createObject(final TCObject source) {
       return;
     }
 
@@ -131,31 +132,31 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
 
   private static class TestPortability implements Portability {
 
-    public NonPortableReason getNonPortableReason(Class topLevelClass) {
+    public NonPortableReason getNonPortableReason(final Class topLevelClass) {
       throw new ImplementMe();
     }
 
-    public boolean isInstrumentationNotNeeded(String name) {
+    public boolean isInstrumentationNotNeeded(final String name) {
       return false;
     }
 
-    public boolean isPortableClass(Class clazz) {
+    public boolean isPortableClass(final Class clazz) {
       return true;
     }
 
-    public boolean isClassPhysicallyInstrumented(Class clazz) {
+    public boolean isClassPhysicallyInstrumented(final Class clazz) {
       throw new ImplementMe();
     }
 
-    public boolean isPortableInstance(Object obj) {
+    public boolean isPortableInstance(final Object obj) {
       return true;
     }
 
-    public boolean overridesHashCode(Object obj) {
+    public boolean overridesHashCode(final Object obj) {
       throw new ImplementMe();
     }
 
-    public boolean overridesHashCode(Class clazz) {
+    public boolean overridesHashCode(final Class clazz) {
       throw new ImplementMe();
     }
 

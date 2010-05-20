@@ -16,6 +16,7 @@ import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -69,10 +70,14 @@ public interface DSOClientBuilder {
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, UUID id);
 
-  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr);
+  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr, 
+                                                                      final RemoteServerMapManager remoteServerMapManager);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                 final int faultCount, final SessionManager sessionManager);
+
+  RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+                                                      final SessionManager sessionManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,
@@ -129,4 +134,7 @@ public interface DSOClientBuilder {
                                   RuntimeLogger runtimeLogger, InstrumentationLogger instrumentationLogger,
                                   String rawConfigText, DistributedObjectClient distributedObjectClient,
                                   MBeanSpec[] mBeanSpecs);
+  
+  TCClassFactory createTCClassFactory(final DSOClientConfigHelper config,
+                            final ClassProvider classProvider, final DNAEncoding dnaEncoding,final Manager manager, final RemoteServerMapManager remoteServerMapManager);
 }

@@ -39,4 +39,5 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
   public boolean isInDNACache(ObjectID id);
 
   public void preFetchObject(ObjectID id);
+
 }

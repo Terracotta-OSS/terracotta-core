@@ -32,6 +32,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -110,11 +111,20 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                 statsRecorder);
     return new ObjectRequestManagerRestartImpl(objectMgr, transactionMgr, orm);
   }
+  
+  public ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr,
+                                                                   DSOChannelManager channelManager,
+                                                                   Sink respondToServerTCMapSink,
+                                                                   Sink managedObjectRequestSink) {
+    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink, managedObjectRequestSink);
+  }
+
 
   public ServerConfigurationContext createServerConfigurationContext(
                                                                      StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
+                                                                     ServerMapRequestManager serverTCMapRequestManager,
                                                                      ManagedObjectStore objStore,
                                                                      LockManager lockMgr,
                                                                      DSOChannelManager channelManager,
@@ -132,7 +142,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                      int maxStageSize,
                                                                      ChannelManager genericChannelManager,
                                                                      DumpHandlerStore dumpHandlerStore) {
-    return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, objStore, lockMgr, channelManager,
+    return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, serverTCMapRequestManager, objStore, lockMgr, channelManager,
                                               clientStateMgr, txnMgr, txnObjectMgr, clientHandshakeManager,
                                               channelStats, coordinator,
                                               new CommitTransactionMessageToTransactionBatchReader(serverStats),
@@ -176,7 +186,6 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                objectManager, transactionManager, gtxm, weightGeneratorFactory, haConfigure, recycler,
                                thisGroupID, stripeStateManager);
   }
-
   public L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
                                          LockStatisticsMonitor lockStatisticsMBean,
                                          StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

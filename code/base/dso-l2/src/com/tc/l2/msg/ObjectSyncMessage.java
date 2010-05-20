@@ -45,51 +45,53 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     super(-1);
   }
 
-  public ObjectSyncMessage(int type) {
+  public ObjectSyncMessage(final int type) {
     super(type);
   }
 
-  protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
+  @Override
+  protected void basicDeserializeFrom(final TCByteBufferInput in) throws IOException {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
-    servertxnID = new ServerTransactionID(nodeIDSerializer.getNodeID(), new TransactionID(in.readLong()));
-    oids = new ObjectIDSet();
-    oids.deserializeFrom(in);
-    dnaCount = in.readInt();
+    this.servertxnID = new ServerTransactionID(nodeIDSerializer.getNodeID(), new TransactionID(in.readLong()));
+    this.oids = new ObjectIDSet();
+    this.oids.deserializeFrom(in);
+    this.dnaCount = in.readInt();
     readRootsMap(in);
-    serializer = new ObjectStringSerializer();
-    serializer.deserializeFrom(in);
+    this.serializer = new ObjectStringSerializer();
+    this.serializer.deserializeFrom(in);
     this.dnas = readByteBuffers(in);
     this.sequenceID = in.readLong();
   }
 
-  protected void basicSerializeTo(TCByteBufferOutput out) {
+  @Override
+  protected void basicSerializeTo(final TCByteBufferOutput out) {
     Assert.assertEquals(MANAGED_OBJECT_SYNC_TYPE, getType());
-    NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(servertxnID.getSourceID());
+    final NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(this.servertxnID.getSourceID());
     nodeIDSerializer.serializeTo(out);
-    out.writeLong(servertxnID.getClientTransactionID().toLong());
-    oids.serializeTo(out);
-    out.writeInt(dnaCount);
+    out.writeLong(this.servertxnID.getClientTransactionID().toLong());
+    this.oids.serializeTo(out);
+    out.writeInt(this.dnaCount);
     writeRootsMap(out);
-    serializer.serializeTo(out);
-    writeByteBuffers(out, dnas);
-    recycle(dnas);
-    dnas = null;
+    this.serializer.serializeTo(out);
+    writeByteBuffers(out, this.dnas);
+    recycle(this.dnas);
+    this.dnas = null;
     out.writeLong(this.sequenceID);
   }
 
-  private void writeRootsMap(TCByteBufferOutput out) {
-    out.writeInt(rootsMap.size());
-    for (Iterator i = rootsMap.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
+  private void writeRootsMap(final TCByteBufferOutput out) {
+    out.writeInt(this.rootsMap.size());
+    for (final Iterator i = this.rootsMap.entrySet().iterator(); i.hasNext();) {
+      final Entry e = (Entry) i.next();
       out.writeString((String) e.getKey());
       out.writeLong(((ObjectID) e.getValue()).toLong());
     }
   }
 
-  private void readRootsMap(TCByteBufferInput in) throws IOException {
-    int size = in.readInt();
+  private void readRootsMap(final TCByteBufferInput in) throws IOException {
+    final int size = in.readInt();
     if (size == 0) {
       this.rootsMap = Collections.EMPTY_MAP;
     } else {
@@ -100,14 +102,15 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     }
   }
 
-  private void recycle(TCByteBuffer[] buffers) {
-    for (int i = 0; i < buffers.length; i++) {
-      buffers[i].recycle();
+  private void recycle(final TCByteBuffer[] buffers) {
+    for (final TCByteBuffer buffer : buffers) {
+      buffer.recycle();
     }
   }
 
-  public void initialize(ServerTransactionID stxnID, ObjectIDSet dnaOids, int count, TCByteBuffer[] serializedDNAs,
-                         ObjectStringSerializer objectSerializer, Map roots, long sqID) {
+  public void initialize(final ServerTransactionID stxnID, final ObjectIDSet dnaOids, final int count,
+                         final TCByteBuffer[] serializedDNAs, final ObjectStringSerializer objectSerializer,
+                         final Map roots, final long sqID) {
     this.servertxnID = stxnID;
     this.oids = dnaOids;
     this.dnaCount = count;
@@ -118,15 +121,15 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   }
 
   public int getDnaCount() {
-    return dnaCount;
+    return this.dnaCount;
   }
 
   public ObjectIDSet getOids() {
-    return oids;
+    return this.oids;
   }
 
   public Map getRootsMap() {
-    return rootsMap;
+    return this.rootsMap;
   }
 
   /**
@@ -135,13 +138,13 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
    */
   public List getDNAs() {
     Assert.assertNotNull(this.dnas);
-    TCByteBufferInputStream toi = new TCByteBufferInputStream(this.dnas);
-    ArrayList objectDNAs = new ArrayList(dnaCount);
-    for (int i = 0; i < dnaCount; i++) {
-      ObjectDNAImpl dna = new ObjectDNAImpl(serializer, false);
+    final TCByteBufferInputStream toi = new TCByteBufferInputStream(this.dnas);
+    final ArrayList objectDNAs = new ArrayList(this.dnaCount);
+    for (int i = 0; i < this.dnaCount; i++) {
+      final ObjectDNAImpl dna = new ObjectDNAImpl(this.serializer, false);
       try {
         dna.deserializeFrom(toi);
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw new AssertionError(e);
       }
       Assert.assertFalse(dna.isDelta());
@@ -155,9 +158,9 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
    * For testing only
    */
   public TCByteBuffer[] getUnprocessedDNAs() {
-    TCByteBuffer[] tcbb = new TCByteBuffer[dnas.length];
-    for (int i = 0; i < dnas.length; i++) {
-      tcbb[i] = dnas[i];
+    final TCByteBuffer[] tcbb = new TCByteBuffer[this.dnas.length];
+    for (int i = 0; i < this.dnas.length; i++) {
+      tcbb[i] = this.dnas[i];
     }
     return tcbb;
   }
@@ -167,6 +170,6 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
   }
 
   public ServerTransactionID getServerTransactionID() {
-    return servertxnID;
+    return this.servertxnID;
   }
 }

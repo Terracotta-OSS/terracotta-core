@@ -17,39 +17,39 @@ public class StorageDNAEncodingImpl extends BaseDNAEncodingImpl {
   }
 
   @Override
-  protected boolean useStringEnumRead(byte type) {
+  protected boolean useStringEnumRead(final byte type) {
     return false;
   }
 
   @Override
-  protected boolean useClassProvider(byte type, byte typeToCheck) {
+  protected boolean useClassProvider(final byte type, final byte typeToCheck) {
     return false;
   }
 
   @Override
-  protected boolean useUTF8String(byte type) {
+  protected boolean useUTF8String(final byte type) {
     return false;
   }
 
   private static class FailureClassProvider implements ClassProvider {
 
-    public LoaderDescription getLoaderDescriptionFor(Class clazz) {
+    public LoaderDescription getLoaderDescriptionFor(final Class clazz) {
       throw new AssertionError();
     }
 
-    public ClassLoader getClassLoader(LoaderDescription loaderDesc) {
+    public ClassLoader getClassLoader(final LoaderDescription loaderDesc) {
       throw new AssertionError();
     }
 
-    public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
+    public LoaderDescription getLoaderDescriptionFor(final ClassLoader loader) {
       throw new AssertionError();
     }
 
-    public Class getClassFor(String className, LoaderDescription desc) throws ClassNotFoundException {
+    public Class getClassFor(final String className, final LoaderDescription desc) throws ClassNotFoundException {
       throw new ClassNotFoundException();
     }
 
-    public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
+    public void registerNamedLoader(final NamedClassLoader loader, final String appGroup) {
       throw new AssertionError();
     }
   }

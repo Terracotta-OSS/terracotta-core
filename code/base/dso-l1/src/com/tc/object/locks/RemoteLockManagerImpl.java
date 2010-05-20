@@ -22,94 +22,96 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
 
   @Deprecated
   private final ClientLockStatManager          statManager;
-  
-  public RemoteLockManagerImpl(ClientIDProvider clientIdProvider, GroupID group, LockRequestMessageFactory messageFactory, ClientGlobalTransactionManager globalTxManager, ClientLockStatManager statManager) {
+
+  public RemoteLockManagerImpl(final ClientIDProvider clientIdProvider, final GroupID group,
+                               final LockRequestMessageFactory messageFactory,
+                               final ClientGlobalTransactionManager globalTxManager,
+                               final ClientLockStatManager statManager) {
     this.messageFactory = messageFactory;
     this.globalTxManager = globalTxManager;
     this.group = group;
     this.clientIdProvider = clientIdProvider;
-    
+
     this.statManager = statManager;
   }
-  
+
   public ClientID getClientID() {
-    return clientIdProvider.getClientID();
-  }
-  
-  public void flush(LockID lock) {
-    globalTxManager.flush(lock);
+    return this.clientIdProvider.getClientID();
   }
 
-
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
-    globalTxManager.waitForServerToReceiveTxnsForThisLock(lock);
+  public void flush(final LockID lock) {
+    this.globalTxManager.flush(lock);
   }
-  
-  public void interrupt(LockID lock, ThreadID thread) {
-    LockRequestMessage msg = createMessage();
+
+  public boolean asyncFlush(final LockID lock, final LockFlushCallback callback) {
+    return this.globalTxManager.asyncFlush(lock, callback);
+  }
+
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {
+    this.globalTxManager.waitForServerToReceiveTxnsForThisLock(lock);
+  }
+
+  public void interrupt(final LockID lock, final ThreadID thread) {
+    final LockRequestMessage msg = createMessage();
     msg.initializeInterruptWait(lock, thread);
     sendMessage(msg);
   }
 
-  public boolean isTransactionsForLockFlushed(LockID lock, LockFlushCallback callback) {
-    return globalTxManager.isTransactionsForLockFlushed(lock, callback);
-  }
-
-  public void lock(LockID lock, ThreadID thread, ServerLockLevel level) {
+  public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
     fireRemoteCall(lock, thread);
-    
-    LockRequestMessage msg = createMessage();
+
+    final LockRequestMessage msg = createMessage();
     msg.initializeLock(lock, thread, level);
     sendMessage(msg);
   }
 
-  public void query(LockID lock, ThreadID thread) {
-    LockRequestMessage msg = createMessage();
+  public void query(final LockID lock, final ThreadID thread) {
+    final LockRequestMessage msg = createMessage();
     msg.initializeQuery(lock, thread);
     sendMessage(msg);
   }
 
-  public void tryLock(LockID lock, ThreadID thread, ServerLockLevel level, long timeout) {
+  public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
     fireRemoteCall(lock, thread);
 
-    LockRequestMessage msg = createMessage();
+    final LockRequestMessage msg = createMessage();
     msg.initializeTryLock(lock, thread, timeout, level);
     sendMessage(msg);
   }
 
-  public void unlock(LockID lock, ThreadID thread, ServerLockLevel level) {
-    LockRequestMessage msg = createMessage();
+  public void unlock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+    final LockRequestMessage msg = createMessage();
     msg.initializeUnlock(lock, thread, level);
     sendMessage(msg);
   }
 
-  public void wait(LockID lock, ThreadID thread, long waitTime) {
-    LockRequestMessage msg = createMessage();
+  public void wait(final LockID lock, final ThreadID thread, final long waitTime) {
+    final LockRequestMessage msg = createMessage();
     msg.initializeWait(lock, thread, waitTime);
     sendMessage(msg);
   }
 
-  public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState) {
-    LockRequestMessage msg = createMessage();
+  public void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState) {
+    final LockRequestMessage msg = createMessage();
     msg.initializeRecallCommit(lock);
-    for (ClientServerExchangeLockContext context : lockState) {
+    for (final ClientServerExchangeLockContext context : lockState) {
       msg.addContext(context);
     }
     sendMessage(msg);
   }
 
   private LockRequestMessage createMessage() {
-    return messageFactory.newLockRequestMessage(group);
+    return this.messageFactory.newLockRequestMessage(this.group);
   }
 
-  protected void sendMessage(LockRequestMessage msg) {
+  protected void sendMessage(final LockRequestMessage msg) {
     msg.send();
   }
-  
+
   @Deprecated
-  private void fireRemoteCall(LockID lock, ThreadID thread) {
-    if (statManager.isEnabled()) {
-      statManager.recordLockHopped(lock, thread);
+  private void fireRemoteCall(final LockID lock, final ThreadID thread) {
+    if (this.statManager.isEnabled()) {
+      this.statManager.recordLockHopped(lock, thread);
     }
   }
 }

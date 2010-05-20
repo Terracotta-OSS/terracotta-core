@@ -84,20 +84,20 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     final ObjectID id = new ObjectID(1);
     final List errors = Collections.synchronizedList(new ArrayList());
 
-    Runnable lookup = new Runnable() {
+    final Runnable lookup = new Runnable() {
       public void run() {
         try {
           ClientObjectManagerTest.this.mgr.lookup(id);
-        } catch (Throwable t) {
+        } catch (final Throwable t) {
           System.err.println("got exception: " + t.getClass().getName());
           errors.add(t);
         }
       }
     };
 
-    Thread t1 = new Thread(lookup);
+    final Thread t1 = new Thread(lookup);
     t1.start();
-    Thread t2 = new Thread(lookup);
+    final Thread t2 = new Thread(lookup);
     t2.start();
 
     ThreadUtil.reallySleep(5000);
@@ -119,13 +119,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.remoteObjectManager = new TestRemoteObjectManager() {
 
       @Override
-      public DNA retrieve(ObjectID id) {
+      public DNA retrieve(final ObjectID id) {
         try {
 
           ClientObjectManagerTest.this.mutualRefBarrier.barrier();
-        } catch (BrokenBarrierException e) {
+        } catch (final BrokenBarrierException e) {
           throw new AssertionError(e);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
         return new TestDNA(id);
@@ -133,44 +133,44 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     };
 
     // re-init manager
-    TestMutualReferenceObjectFactory testMutualReferenceObjectFactory = new TestMutualReferenceObjectFactory();
-    ClientObjectManagerImpl clientObjectManager = new ClientObjectManagerImpl(
-                                                                              this.remoteObjectManager,
-                                                                              this.clientConfiguration,
-                                                                              this.idProvider,
-                                                                              this.cache,
-                                                                              this.runtimeLogger,
-                                                                              new ClientIDProviderImpl(
-                                                                                                       new TestChannelIDProvider()),
-                                                                              this.classProvider,
-                                                                              this.classFactory,
-                                                                              testMutualReferenceObjectFactory,
-                                                                              new PortabilityImpl(
-                                                                                                  this.clientConfiguration),
-                                                                              null, null);
+    final TestMutualReferenceObjectFactory testMutualReferenceObjectFactory = new TestMutualReferenceObjectFactory();
+    final ClientObjectManagerImpl clientObjectManager = new ClientObjectManagerImpl(
+                                                                                    this.remoteObjectManager,
+                                                                                    this.clientConfiguration,
+                                                                                    this.idProvider,
+                                                                                    this.cache,
+                                                                                    this.runtimeLogger,
+                                                                                    new ClientIDProviderImpl(
+                                                                                                             new TestChannelIDProvider()),
+                                                                                    this.classProvider,
+                                                                                    this.classFactory,
+                                                                                    testMutualReferenceObjectFactory,
+                                                                                    new PortabilityImpl(
+                                                                                                        this.clientConfiguration),
+                                                                                    null, null);
     this.mgr = clientObjectManager;
-    MockTransactionManager mockTransactionManager = new MockTransactionManager();
+    final MockTransactionManager mockTransactionManager = new MockTransactionManager();
     this.mgr.setTransactionManager(mockTransactionManager);
     testMutualReferenceObjectFactory.setObjectManager(this.mgr);
 
     // run the threads now..
-    ObjectID objectID1 = new ObjectID(1);
-    ObjectID objectID2 = new ObjectID(2);
-    ExceptionHolder exceptionHolder1 = new ExceptionHolder();
-    ExceptionHolder exceptionHolder2 = new ExceptionHolder();
+    final ObjectID objectID1 = new ObjectID(1);
+    final ObjectID objectID2 = new ObjectID(2);
+    final ExceptionHolder exceptionHolder1 = new ExceptionHolder();
+    final ExceptionHolder exceptionHolder2 = new ExceptionHolder();
 
-    LookupThread lookupThread1 = new LookupThread(objectID1, this.mgr, mockTransactionManager, exceptionHolder1);
-    LookupThread lookupThread2 = new LookupThread(objectID2, this.mgr, mockTransactionManager, exceptionHolder2);
+    final LookupThread lookupThread1 = new LookupThread(objectID1, this.mgr, mockTransactionManager, exceptionHolder1);
+    final LookupThread lookupThread2 = new LookupThread(objectID2, this.mgr, mockTransactionManager, exceptionHolder2);
     //
-    Thread t1 = new Thread(lookupThread1);
+    final Thread t1 = new Thread(lookupThread1);
     t1.start();
-    Thread t2 = new Thread(lookupThread2);
+    final Thread t2 = new Thread(lookupThread2);
     t2.start();
     try {
       t1.join();
       t2.join();
 
-    } catch (InterruptedException e) {
+    } catch (final InterruptedException e) {
       throw new AssertionError(e);
     }
 
@@ -190,8 +190,8 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     private final ClientTransactionManager clientTransactionManager;
     private final ExceptionHolder          exceptionHolder;
 
-    public LookupThread(ObjectID oid, ClientObjectManager clientObjectManager,
-                        ClientTransactionManager clientTransactionManager, ExceptionHolder exceptionHolder) {
+    public LookupThread(final ObjectID oid, final ClientObjectManager clientObjectManager,
+                        final ClientTransactionManager clientTransactionManager, final ExceptionHolder exceptionHolder) {
       this.oid = oid;
       this.clientObjectManager = clientObjectManager;
       this.clientTransactionManager = clientTransactionManager;
@@ -204,11 +204,11 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
         assertNotNull(this.clientTransactionManager);
         assertNotNull(this.oid);
         assertFalse(this.clientTransactionManager.isTransactionLoggingDisabled());
-        TestObject testObject = (TestObject) this.clientObjectManager.lookupObject(this.oid);
+        final TestObject testObject = (TestObject) this.clientObjectManager.lookupObject(this.oid);
         assertNotNull(testObject);
         assertNotNull(testObject.object);
         assertFalse(this.clientTransactionManager.isTransactionLoggingDisabled());
-      } catch (Exception e) {
+      } catch (final Exception e) {
         this.exceptionHolder.getExceptionOccurred().set(true);
         this.exceptionHolder.setThreadException(e);
       }
@@ -223,7 +223,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return this.threadException;
     }
 
-    public void setThreadException(Exception threadException) {
+    public void setThreadException(final Exception threadException) {
       this.threadException = threadException;
     }
 
@@ -234,7 +234,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   }
 
   public void testExceptionDuringHydrateClearsState() throws Exception {
-    RuntimeException expect = new RuntimeException();
+    final RuntimeException expect = new RuntimeException();
     this.tcObject.setHydrateException(expect);
 
     TestDNA dna = newEmptyDNA();
@@ -243,7 +243,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     try {
       this.mgr.lookup(this.objectID);
       fail("no exception");
-    } catch (Exception e) {
+    } catch (final Exception e) {
       if (!(e == expect || e.getCause() == expect)) {
         fail(e);
       }
@@ -255,7 +255,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     try {
       this.mgr.lookup(this.objectID);
       fail("no exception");
-    } catch (Exception e) {
+    } catch (final Exception e) {
       if (!(e == expect || e.getCause() == expect)) {
         fail(e);
       }
@@ -267,12 +267,12 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
    */
   public void testLookupOrCreateRootDoesntBlockReconnect() throws Exception {
     // prepare a successful object lookup
-    TestDNA dna = newEmptyDNA();
+    final TestDNA dna = newEmptyDNA();
     prepareObjectLookupResults(dna);
 
     // prepare the lookup thread
-    CyclicBarrier barrier = new CyclicBarrier(1);
-    LookupRootAgent lookup1 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
+    final CyclicBarrier barrier = new CyclicBarrier(1);
+    final LookupRootAgent lookup1 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
 
     // start the lookup
     new Thread(lookup1).start();
@@ -287,13 +287,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   public void testLookupOrCreateRootConcurrently() throws Exception {
 
     // prepare a successful object lookup
-    TestDNA dna = newEmptyDNA();
+    final TestDNA dna = newEmptyDNA();
     prepareObjectLookupResults(dna);
 
     // prepare the lookup threads.
-    CyclicBarrier barrier = new CyclicBarrier(3);
-    LookupRootAgent lookup1 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
-    LookupRootAgent lookup2 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
+    final CyclicBarrier barrier = new CyclicBarrier(3);
+    final LookupRootAgent lookup1 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
+    final LookupRootAgent lookup2 = new LookupRootAgent(barrier, this.mgr, this.rootName, this.object);
 
     // start the first lookup
     new Thread(lookup1).start();
@@ -322,13 +322,13 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
   }
 
   private TestDNA newEmptyDNA() {
-    TestDNA dna = new TestDNA();
+    final TestDNA dna = new TestDNA();
     dna.objectID = this.objectID;
     dna.arraySize = 0;
     return dna;
   }
 
-  private void prepareObjectLookupResults(TestDNA dna) {
+  private void prepareObjectLookupResults(final TestDNA dna) {
     this.remoteObjectManager.retrieveResults.put(dna);
   }
 
@@ -340,7 +340,8 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public Throwable                  exception;
     private final CyclicBarrier       barrier;
 
-    private LookupRootAgent(CyclicBarrier barrier, ClientObjectManager manager, String rootName, Object object) {
+    private LookupRootAgent(final CyclicBarrier barrier, final ClientObjectManager manager, final String rootName,
+                            final Object object) {
       this.barrier = barrier;
       this.manager = manager;
       this.rootName = rootName;
@@ -354,22 +355,22 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public void run() {
       try {
         this.result = this.manager.lookupOrCreateRoot(this.rootName, this.object);
-      } catch (Throwable t) {
+      } catch (final Throwable t) {
         t.printStackTrace();
         this.exception = t;
       } finally {
         try {
           this.barrier.barrier();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           e.printStackTrace();
         }
       }
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       if (o instanceof LookupRootAgent) {
-        LookupRootAgent cmp = (LookupRootAgent) o;
+        final LookupRootAgent cmp = (LookupRootAgent) o;
         if (this.result == null) { return cmp.result == null; }
         return this.result.equals(cmp.result);
       } else {
@@ -394,7 +395,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       // do nothing
     }
 
-    public TestDNA(ObjectID objectID) {
+    public TestDNA(final ObjectID objectID) {
       this.objectID = objectID;
     }
 
@@ -448,23 +449,24 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
                                                   };
 
-    public void setObjectManager(ClientObjectManager objectManager) {
+    public void setObjectManager(final ClientObjectManager objectManager) {
       this.clientObjectManager = objectManager;
     }
 
-    public Object getNewPeerObject(TCClass type, Object parent) throws IllegalArgumentException, SecurityException {
+    public Object getNewPeerObject(final TCClass type, final Object parent) throws IllegalArgumentException,
+        SecurityException {
       return new TestObject();
     }
 
-    public Object getNewArrayInstance(TCClass type, int size) {
+    public Object getNewArrayInstance(final TCClass type, final int size) {
       throw new ImplementMe();
     }
 
-    public Object getNewPeerObject(TCClass type) throws IllegalArgumentException, SecurityException {
+    public Object getNewPeerObject(final TCClass type) throws IllegalArgumentException, SecurityException {
       return new TestObject();
     }
 
-    public Object getNewPeerObject(TCClass type, DNA dna) {
+    public Object getNewPeerObject(final TCClass type, final DNA dna) {
       return new TestObject();
     }
 
@@ -472,35 +474,35 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return (Counter) this.localDepthCounter.get();
     }
 
-    public TCObject getNewInstance(ObjectID id, Object peer, Class clazz, boolean isNew) {
+    public TCObject getNewInstance(final ObjectID id, final Object peer, final Class clazz, final boolean isNew) {
       throw new ImplementMe();
     }
 
-    public TCObject getNewInstance(ObjectID id, Class clazz, boolean isNew) {
+    public TCObject getNewInstance(final ObjectID id, final Class clazz, final boolean isNew) {
       TCObjectPhysical tcObj = null;
       if (id.toLong() == 1) {
         if (getLocalDepthCounter().get() == 0) {
-          TCField[] tcFields = new TCField[] { new MockTCField("object") };
-          TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
+          final TCField[] tcFields = new TCField[] { new MockTCField("object") };
+          final TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
           tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           tcObj.setReference("object", new ObjectID(2));
           getLocalDepthCounter().increment();
         } else {
-          TCField[] tcFields = new TCField[] { new MockTCField("object") };
-          TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
+          final TCField[] tcFields = new TCField[] { new MockTCField("object") };
+          final TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
           tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           getLocalDepthCounter().increment();
         }
       } else if (id.toLong() == 2) {
         if (getLocalDepthCounter().get() == 0) {
-          TCField[] tcFields = new TCField[] { new MockTCField("object") };
-          TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
+          final TCField[] tcFields = new TCField[] { new MockTCField("object") };
+          final TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
           tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           tcObj.setReference("object", new ObjectID(1));
           getLocalDepthCounter().increment();
         } else {
-          TCField[] tcFields = new TCField[] { new MockTCField("object") };
-          TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
+          final TCField[] tcFields = new TCField[] { new MockTCField("object") };
+          final TCClass tcClass = new MockTCClass(this.clientObjectManager, true, true, true, tcFields);
           tcObj = new TCObjectPhysical(id, null, tcClass, isNew);
           getLocalDepthCounter().increment();
         }
@@ -515,22 +517,22 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public TestObject object;
     private TCObject  tcObject;
 
-    public void __tc_getallfields(Map map) {
+    public void __tc_getallfields(final Map map) {
       throw new ImplementMe();
 
     }
 
-    public Object __tc_getmanagedfield(String name) {
+    public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
-    public void __tc_setfield(String name, Object value) {
+    public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (TestObject) value;
       }
     }
 
-    public void __tc_setmanagedfield(String name, Object value) {
+    public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
 
     }
@@ -539,7 +541,7 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
       return this.tcObject == null ? false : true;
     }
 
-    public void __tc_managed(TCObject t) {
+    public void __tc_managed(final TCObject t) {
       this.tcObject = t;
     }
 
@@ -554,27 +556,27 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     @SuppressWarnings("unused")
     private StupidTestObject    object;
 
-    public void __tc_getallfields(Map map) {
+    public void __tc_getallfields(final Map map) {
       throw new ImplementMe();
 
     }
 
-    public Object __tc_getmanagedfield(String name) {
+    public Object __tc_getmanagedfield(final String name) {
       throw new ImplementMe();
     }
 
-    public void __tc_setfield(String name, Object value) {
+    public void __tc_setfield(final String name, final Object value) {
       if ("object".equals(name)) {
         this.object = (StupidTestObject) value;
       }
     }
 
-    public void __tc_setmanagedfield(String name, Object value) {
+    public void __tc_setmanagedfield(final String name, final Object value) {
       throw new ImplementMe();
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       return rndm.nextBoolean();
     }
 
@@ -591,10 +593,10 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     this.objectFactory.peerObject = this.object;
     this.objectFactory.tcObject = this.tcObject;
 
-    TestDNA dna = newEmptyDNA();
+    final TestDNA dna = newEmptyDNA();
     prepareObjectLookupResults(dna);
 
-    TCObject tco = this.mgr.lookup(this.objectID);
+    final TCObject tco = this.mgr.lookup(this.objectID);
 
     for (int i = 0; i < 100; i++) {
       Assert.assertSame(tco.getObjectID(), this.mgr.lookupExistingObjectID(this.object));

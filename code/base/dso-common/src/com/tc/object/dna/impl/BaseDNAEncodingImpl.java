@@ -101,16 +101,16 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   protected final ClassProvider  classProvider;
 
-  public BaseDNAEncodingImpl(ClassProvider classProvider) {
+  public BaseDNAEncodingImpl(final ClassProvider classProvider) {
     this.classProvider = classProvider;
   }
 
-  public void encodeClassLoader(ClassLoader value, TCDataOutput output) {
+  public void encodeClassLoader(final ClassLoader value, final TCDataOutput output) {
     output.writeByte(TYPE_ID_JAVA_LANG_CLASSLOADER);
-    writeString(classProvider.getLoaderDescriptionFor(value).toDelimitedString(), output);
+    writeString(this.classProvider.getLoaderDescriptionFor(value).toDelimitedString(), output);
   }
 
-  public void encode(Object value, TCDataOutput output) {
+  public void encode(Object value, final TCDataOutput output) {
     if (value == null) {
       // Normally Null values should have already been converted to null ObjectID, but this is not true when there are
       // multiple versions of the same class in the cluster sharign data.
@@ -126,9 +126,9 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         break;
       case ENUM:
         output.writeByte(TYPE_ID_ENUM);
-        Class enumClass = ((Enum) value).getDeclaringClass();
+        final Class enumClass = ((Enum) value).getDeclaringClass();
         writeString(enumClass.getName(), output);
-        writeString(classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
+        writeString(this.classProvider.getLoaderDescriptionFor(enumClass).toDelimitedString(), output);
         writeString(((Enum) value).name(), output);
         break;
       case ENUM_HOLDER:
@@ -144,9 +144,9 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         break;
       case JAVA_LANG_CLASS:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS);
-        Class c = (Class) value;
+        final Class c = (Class) value;
         writeString(c.getName(), output);
-        writeString(classProvider.getLoaderDescriptionFor(c).toDelimitedString(), output);
+        writeString(this.classProvider.getLoaderDescriptionFor(c).toDelimitedString(), output);
         break;
       case JAVA_LANG_CLASS_HOLDER:
         output.writeByte(TYPE_ID_JAVA_LANG_CLASS_HOLDER);
@@ -185,7 +185,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         output.writeShort(((Short) value).shortValue());
         break;
       case STRING:
-        String s = (String) value;
+        final String s = (String) value;
         boolean stringInterned = false;
 
         if (StringTCUtil.isInterned(s)) {
@@ -203,7 +203,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         }
         break;
       case STRING_BYTES:
-        UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
+        final UTF8ByteDataHolder utfBytes = (UTF8ByteDataHolder) value;
         boolean stringbytesInterned = false;
         if (utfBytes.isInterned()) {
           stringbytesInterned = true;
@@ -214,7 +214,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         writeByteArray(utfBytes.getBytes(), output);
         break;
       case STRING_BYTES_COMPRESSED:
-        UTF8ByteCompressedDataHolder utfCompressedBytes = (UTF8ByteCompressedDataHolder) value;
+        final UTF8ByteCompressedDataHolder utfCompressedBytes = (UTF8ByteCompressedDataHolder) value;
         boolean interned = false;
 
         if (utfCompressedBytes.isInterned()) {
@@ -235,7 +235,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
         break;
       case STACK_TRACE_ELEMENT:
         output.writeByte(TYPE_ID_STACK_TRACE_ELEMENT);
-        StackTraceElement ste = (StackTraceElement) value;
+        final StackTraceElement ste = (StackTraceElement) value;
         writeStackTraceElement(ste, output);
         break;
       case BIG_INTEGER:
@@ -267,41 +267,41 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     // unreachable
   }
 
-  private void writeStackTraceElement(StackTraceElement ste, TCDataOutput output) {
+  private void writeStackTraceElement(final StackTraceElement ste, final TCDataOutput output) {
     output.writeString(ste.getClassName());
     output.writeString(ste.getMethodName());
     output.writeString(ste.getFileName());
     output.writeInt(ste.getLineNumber());
   }
 
-  private void writeEnumInstance(EnumInstance value, TCDataOutput output) {
+  private void writeEnumInstance(final EnumInstance value, final TCDataOutput output) {
     writeByteArray(value.getClassInstance().getName().getBytes(), output);
     writeByteArray(value.getClassInstance().getLoaderDef().getBytes(), output);
     writeByteArray(((UTF8ByteDataHolder) value.getEnumName()).getBytes(), output);
   }
 
-  private void writeClassLoaderInstance(ClassLoaderInstance value, TCDataOutput output) {
+  private void writeClassLoaderInstance(final ClassLoaderInstance value, final TCDataOutput output) {
     writeByteArray(value.getLoaderDef().getBytes(), output);
   }
 
-  private void writeClassInstance(ClassInstance value, TCDataOutput output) {
+  private void writeClassInstance(final ClassInstance value, final TCDataOutput output) {
     writeByteArray(value.getName().getBytes(), output);
     writeByteArray(value.getLoaderDef().getBytes(), output);
   }
 
-  private void writeString(String string, TCDataOutput output) {
+  private void writeString(final String string, final TCDataOutput output) {
     try {
       writeByteArray(string.getBytes("UTF-8"), output);
-    } catch (UnsupportedEncodingException e) {
+    } catch (final UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }
   }
 
-  private void writeCompressedString(String string, TCDataOutput output) {
-    byte[] uncompressed = StringCompressionUtil.stringToUncompressedBin(string);
-    CompressedData compressedInfo = StringCompressionUtil.compressBin(uncompressed);
-    byte[] compressed = compressedInfo.getCompressedData();
-    int compressedSize = compressedInfo.getCompressedSize();
+  private void writeCompressedString(final String string, final TCDataOutput output) {
+    final byte[] uncompressed = StringCompressionUtil.stringToUncompressedBin(string);
+    final CompressedData compressedInfo = StringCompressionUtil.compressBin(uncompressed);
+    final byte[] compressed = compressedInfo.getCompressedData();
+    final int compressedSize = compressedInfo.getCompressedSize();
 
     // XXX:: We are writing the original string's uncompressed byte[] length so that we save a couple of copies when
     // decompressing
@@ -318,12 +318,12 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     }
   }
 
-  private void writeByteArray(byte[] bytes, int offset, int length, TCDataOutput output) {
+  private void writeByteArray(final byte[] bytes, final int offset, final int length, final TCDataOutput output) {
     output.writeInt(length);
     output.write(bytes, offset, length);
   }
 
-  private void writeByteArray(byte bytes[], TCDataOutput output) {
+  private void writeByteArray(final byte bytes[], final TCDataOutput output) {
     output.writeInt(bytes.length);
     output.write(bytes);
   }
@@ -335,17 +335,17 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
   // output.writeChar(chars[i]);
   // }
   // }
-  protected byte[] readByteArray(TCDataInput input) throws IOException {
-    int length = input.readInt();
+  protected byte[] readByteArray(final TCDataInput input) throws IOException {
+    final int length = input.readInt();
     if (length >= BYTE_WARN) {
       logger.warn("Attempting to allocate a large byte array of size: " + length);
     }
-    byte[] array = new byte[length];
+    final byte[] array = new byte[length];
     input.readFully(array);
     return array;
   }
 
-  public Object decode(TCDataInput input) throws IOException, ClassNotFoundException {
+  public Object decode(final TCDataInput input) throws IOException, ClassNotFoundException {
     final byte type = input.readByte();
 
     switch (type) {
@@ -392,11 +392,11 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
       case TYPE_ID_STACK_TRACE_ELEMENT:
         return readStackTraceElement(input);
       case TYPE_ID_BIG_INTEGER:
-        byte[] b1 = readByteArray(input);
+        final byte[] b1 = readByteArray(input);
         return new BigInteger(b1);
       case TYPE_ID_BIG_DECIMAL:
         // char[] chars = readCharArray(input); // Unfortunately this is 1.5 specific
-        byte[] b2 = readByteArray(input);
+        final byte[] b2 = readByteArray(input);
         return new BigDecimal(new String(b2));
         // case TYPE_ID_URL:
         // {
@@ -429,19 +429,19 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
   // return array;
   // }
 
-  private Object readStackTraceElement(TCDataInput input) throws IOException {
-    String className = input.readString();
-    String methodName = input.readString();
-    String fileName = input.readString();
-    int lineNumber = input.readInt();
+  private Object readStackTraceElement(final TCDataInput input) throws IOException {
+    final String className = input.readString();
+    final String methodName = input.readString();
+    final String fileName = input.readString();
+    final int lineNumber = input.readInt();
     return new StackTraceElement(className, methodName, fileName, lineNumber);
   }
 
-  public void encodeArray(Object value, TCDataOutput output) {
+  public void encodeArray(final Object value, final TCDataOutput output) {
     encodeArray(value, output, value == null ? -1 : Array.getLength(value));
   }
 
-  public void encodeArray(Object value, TCDataOutput output, int length) {
+  public void encodeArray(final Object value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_ARRAY);
 
     if (value == null) {
@@ -451,7 +451,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
       output.writeInt(length);
     }
 
-    Class type = value.getClass().getComponentType();
+    final Class type = value.getClass().getComponentType();
 
     if (type.isPrimitive()) {
       output.writeByte(ARRAY_TYPE_PRIMITIVE);
@@ -489,74 +489,74 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     }
   }
 
-  private void encodeByteArray(byte[] value, TCDataOutput output, int length) {
+  private void encodeByteArray(final byte[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_BYTE);
     output.write(value, 0, length);
 
   }
 
-  private void encodeObjectArray(Object[] value, TCDataOutput output, int length) {
+  private void encodeObjectArray(final Object[] value, final TCDataOutput output, final int length) {
     for (int i = 0; i < length; i++) {
       encode(value[i], output);
     }
   }
 
-  private void encodeDoubleArray(double[] value, TCDataOutput output, int length) {
+  private void encodeDoubleArray(final double[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_DOUBLE);
     for (int i = 0; i < length; i++) {
       output.writeDouble(value[i]);
     }
   }
 
-  private void encodeFloatArray(float[] value, TCDataOutput output, int length) {
+  private void encodeFloatArray(final float[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_FLOAT);
     for (int i = 0; i < length; i++) {
       output.writeFloat(value[i]);
     }
   }
 
-  private void encodeLongArray(long[] value, TCDataOutput output, int length) {
+  private void encodeLongArray(final long[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_LONG);
     for (int i = 0; i < length; i++) {
       output.writeLong(value[i]);
     }
   }
 
-  private void encodeIntArray(int[] value, TCDataOutput output, int length) {
+  private void encodeIntArray(final int[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_INT);
     for (int i = 0; i < length; i++) {
       output.writeInt(value[i]);
     }
   }
 
-  private void encodeShortArray(short[] value, TCDataOutput output, int length) {
+  private void encodeShortArray(final short[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_SHORT);
     for (int i = 0; i < length; i++) {
       output.writeShort(value[i]);
     }
   }
 
-  private void encodeCharArray(char[] value, TCDataOutput output, int length) {
+  private void encodeCharArray(final char[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_CHAR);
     for (int i = 0; i < length; i++) {
       output.writeChar(value[i]);
     }
   }
 
-  private void encodeBooleanArray(boolean[] value, TCDataOutput output, int length) {
+  private void encodeBooleanArray(final boolean[] value, final TCDataOutput output, final int length) {
     output.writeByte(TYPE_ID_BOOLEAN);
     for (int i = 0; i < length; i++) {
       output.writeBoolean(value[i]);
     }
   }
 
-  private void checkSize(Class type, int threshold, int len) {
+  private void checkSize(final Class type, final int threshold, final int len) {
     if (len >= threshold) {
       logger.warn("Attempt to read a " + type + " array of len: " + len + "; threshold=" + threshold);
     }
   }
 
-  private Object decodeArray(TCDataInput input) throws IOException, ClassNotFoundException {
+  private Object decodeArray(final TCDataInput input) throws IOException, ClassNotFoundException {
     final int len = input.readInt();
     if (len < 0) { return null; }
 
@@ -573,9 +573,10 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     // unreachable
   }
 
-  private Object[] decodeNonPrimitiveArray(int len, TCDataInput input) throws IOException, ClassNotFoundException {
+  private Object[] decodeNonPrimitiveArray(final int len, final TCDataInput input) throws IOException,
+      ClassNotFoundException {
     checkSize(Object.class, REF_WARN, len);
-    Object[] rv = new Object[len];
+    final Object[] rv = new Object[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = decode(input);
     }
@@ -583,8 +584,8 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     return rv;
   }
 
-  private Object decodePrimitiveArray(int len, TCDataInput input) throws IOException {
-    byte type = input.readByte();
+  private Object decodePrimitiveArray(final int len, final TCDataInput input) throws IOException {
+    final byte type = input.readByte();
 
     switch (type) {
       case TYPE_ID_BOOLEAN:
@@ -618,100 +619,100 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
     // unreachable
   }
 
-  private short[] decodeShortArray(int len, TCDataInput input) throws IOException {
-    short[] rv = new short[len];
+  private short[] decodeShortArray(final int len, final TCDataInput input) throws IOException {
+    final short[] rv = new short[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readShort();
     }
     return rv;
   }
 
-  private long[] decodeLongArray(int len, TCDataInput input) throws IOException {
-    long[] rv = new long[len];
+  private long[] decodeLongArray(final int len, final TCDataInput input) throws IOException {
+    final long[] rv = new long[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readLong();
     }
     return rv;
   }
 
-  private int[] decodeIntArray(int len, TCDataInput input) throws IOException {
-    int[] rv = new int[len];
+  private int[] decodeIntArray(final int len, final TCDataInput input) throws IOException {
+    final int[] rv = new int[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readInt();
     }
     return rv;
   }
 
-  private float[] decodeFloatArray(int len, TCDataInput input) throws IOException {
-    float[] rv = new float[len];
+  private float[] decodeFloatArray(final int len, final TCDataInput input) throws IOException {
+    final float[] rv = new float[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readFloat();
     }
     return rv;
   }
 
-  private double[] decodeDoubleArray(int len, TCDataInput input) throws IOException {
-    double[] rv = new double[len];
+  private double[] decodeDoubleArray(final int len, final TCDataInput input) throws IOException {
+    final double[] rv = new double[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readDouble();
     }
     return rv;
   }
 
-  private char[] decodeCharArray(int len, TCDataInput input) throws IOException {
-    char[] rv = new char[len];
+  private char[] decodeCharArray(final int len, final TCDataInput input) throws IOException {
+    final char[] rv = new char[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readChar();
     }
     return rv;
   }
 
-  private byte[] decodeByteArray(int len, TCDataInput input) throws IOException {
-    byte[] rv = new byte[len];
+  private byte[] decodeByteArray(final int len, final TCDataInput input) throws IOException {
+    final byte[] rv = new byte[len];
     if (len != 0) {
-      int read = input.read(rv, 0, len);
+      final int read = input.read(rv, 0, len);
       if (read != len) { throw new IOException("read " + read + " bytes, expected " + len); }
     }
     return rv;
   }
 
-  private boolean[] decodeBooleanArray(int len, TCDataInput input) throws IOException {
-    boolean[] rv = new boolean[len];
+  private boolean[] decodeBooleanArray(final int len, final TCDataInput input) throws IOException {
+    final boolean[] rv = new boolean[len];
     for (int i = 0, n = rv.length; i < n; i++) {
       rv[i] = input.readBoolean();
     }
     return rv;
   }
 
-  private Object readCurrency(TCDataInput input, byte type) throws IOException {
-    byte[] data = readByteArray(input);
-    String currencyCode = new String(data, "UTF-8");
+  private Object readCurrency(final TCDataInput input, final byte type) throws IOException {
+    final byte[] data = readByteArray(input);
+    final String currencyCode = new String(data, "UTF-8");
     return Currency.getInstance(currencyCode);
   }
 
-  private Object readEnum(TCDataInput input, byte type) throws IOException, ClassNotFoundException {
-    UTF8ByteDataHolder name = new UTF8ByteDataHolder(readByteArray(input));
-    UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
-    byte[] data = readByteArray(input);
+  private Object readEnum(final TCDataInput input, final byte type) throws IOException, ClassNotFoundException {
+    final UTF8ByteDataHolder name = new UTF8ByteDataHolder(readByteArray(input));
+    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
+    final byte[] data = readByteArray(input);
 
     if (useStringEnumRead(type)) {
-      Class enumType = new ClassInstance(name, def).asClass(classProvider);
-      String enumName = new String(data, "UTF-8");
+      final Class enumType = new ClassInstance(name, def).asClass(this.classProvider);
+      final String enumName = new String(data, "UTF-8");
       return Enum.valueOf(enumType, enumName);
     } else {
-      ClassInstance clazzInstance = new ClassInstance(name, def);
-      UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
+      final ClassInstance clazzInstance = new ClassInstance(name, def);
+      final UTF8ByteDataHolder enumName = new UTF8ByteDataHolder(data);
       return new EnumInstance(clazzInstance, enumName);
     }
   }
 
   protected abstract boolean useStringEnumRead(byte type);
 
-  private Object readClassLoader(TCDataInput input, byte type) throws IOException {
-    UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
+  private Object readClassLoader(final TCDataInput input, final byte type) throws IOException {
+    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
 
     if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASSLOADER)) {
-      return new ClassLoaderInstance(def).asClassLoader(classProvider);
+      return new ClassLoaderInstance(def).asClassLoader(this.classProvider);
     } else {
       return new ClassLoaderInstance(def);
     }
@@ -719,26 +720,26 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   protected abstract boolean useClassProvider(byte type, byte typeToCheck);
 
-  private Object readClass(TCDataInput input, byte type) throws IOException, ClassNotFoundException {
-    UTF8ByteDataHolder name = new UTF8ByteDataHolder(readByteArray(input));
-    UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
+  private Object readClass(final TCDataInput input, final byte type) throws IOException, ClassNotFoundException {
+    final UTF8ByteDataHolder name = new UTF8ByteDataHolder(readByteArray(input));
+    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(readByteArray(input));
 
     if (useClassProvider(type, TYPE_ID_JAVA_LANG_CLASS)) {
-      return new ClassInstance(name, def).asClass(classProvider);
+      return new ClassInstance(name, def).asClass(this.classProvider);
     } else {
       return new ClassInstance(name, def);
     }
   }
 
-  private Object readString(TCDataInput input, byte type) throws IOException {
-    boolean isInterned = input.readBoolean();
-    byte[] data = readByteArray(input);
+  private Object readString(final TCDataInput input, final byte type) throws IOException {
+    final boolean isInterned = input.readBoolean();
+    final byte[] data = readByteArray(input);
     if (useUTF8String(type)) {
       // special case the empty string to save memory
       if (data.length == 0) { return ""; }
 
       if (isInterned) {
-        String temp = new String(data, "UTF-8");
+        final String temp = new String(data, "UTF-8");
         return temp.intern();
       } else {
         return new String(data, "UTF-8");
@@ -750,22 +751,22 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
 
   protected abstract boolean useUTF8String(byte type);
 
-  protected Object readCompressedString(TCDataInput input) throws IOException {
-    boolean isInterned = input.readBoolean();
-    int stringUncompressedByteLength = input.readInt();
-    byte[] data = readByteArray(input);
+  protected Object readCompressedString(final TCDataInput input) throws IOException {
+    final boolean isInterned = input.readBoolean();
+    final int stringUncompressedByteLength = input.readInt();
+    final byte[] data = readByteArray(input);
 
-    int stringLength = input.readInt();
-    int stringHash = input.readInt();
+    final int stringLength = input.readInt();
+    final int stringHash = input.readInt();
 
     return new UTF8ByteCompressedDataHolder(data, isInterned, stringUncompressedByteLength, stringLength, stringHash);
   }
 
-  public static String inflateCompressedString(byte[] data, int length) {
+  public static String inflateCompressedString(final byte[] data, int length) {
     try {
-      ByteArrayInputStream bais = new ByteArrayInputStream(data);
-      InflaterInputStream iis = new InflaterInputStream(bais);
-      byte uncompressed[] = new byte[length];
+      final ByteArrayInputStream bais = new ByteArrayInputStream(data);
+      final InflaterInputStream iis = new InflaterInputStream(bais);
+      final byte uncompressed[] = new byte[length];
       int read;
       int offset = 0;
       while (length > 0 && (read = iis.read(uncompressed, offset, length)) != -1) {
@@ -775,7 +776,7 @@ public abstract class BaseDNAEncodingImpl implements DNAEncoding {
       iis.close();
       Assert.assertEquals(0, length);
       return new String(uncompressed, "UTF-8");
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new AssertionError(e);
     }
   }

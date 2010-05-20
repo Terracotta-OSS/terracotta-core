@@ -32,6 +32,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_METADATA_STAGE                    = "cluster_metadata_stage";
   public static final String             RECEIVED_SYNC_WRITE_TRANSACTION_ACK_STAGE = "received_sync_write_transaction_ack_stage";
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE            = "cluster_membership_event_stage";
+  public static final String             RECEIVE_SERVER_MAP_RESPONSE_STAGE         = "receive_server_map_response_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;
@@ -53,23 +54,23 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   }
 
   public ClientLockManager getLockManager() {
-    return lockManager;
+    return this.lockManager;
   }
 
   public RemoteObjectManager getObjectManager() {
-    return remoteObjectManager;
+    return this.remoteObjectManager;
   }
 
   public ClientTransactionManager getTransactionManager() {
-    return txManager;
+    return this.txManager;
   }
 
   public ClientHandshakeManager getClientHandshakeManager() {
-    return clientHandshakeManager;
+    return this.clientHandshakeManager;
   }
 
   public ClusterMetaDataManager getClusterMetaDataManager() {
-    return clusterMetaDataManager;
+    return this.clusterMetaDataManager;
   }
 
 }

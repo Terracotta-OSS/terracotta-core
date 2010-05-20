@@ -19,21 +19,24 @@ public class CommitTransactionChangeHandler extends AbstractEventHandler {
   private final PersistenceTransactionProvider ptxp;
   private TransactionalObjectManager           txnObjectManager;
 
-  public CommitTransactionChangeHandler(PersistenceTransactionProvider ptxp) {
+  public CommitTransactionChangeHandler(final PersistenceTransactionProvider ptxp) {
     this.ptxp = ptxp;
   }
 
-  public void handleEvent(EventContext context) {
-    CommitTransactionContext ctc = (CommitTransactionContext) context;
-    txnObjectManager.commitTransactionsComplete(ctc);
+  @Override
+  public void handleEvent(final EventContext context) {
+    final CommitTransactionContext ctc = (CommitTransactionContext) context;
+    this.txnObjectManager.commitTransactionsComplete(ctc);
     if (ctc.isInitialized()) {
-      transactionManager.commit(ptxp, ctc.getObjects(), ctc.getNewRoots(), ctc.getAppliedServerTransactionIDs());
+      this.transactionManager.commit(this.ptxp, ctc.getObjects(), ctc.getNewRoots(), ctc
+          .getAppliedServerTransactionIDs());
     }
   }
 
-  public void initialize(ConfigurationContext context) {
+  @Override
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionManager = scc.getTransactionManager();
     this.txnObjectManager = scc.getTransactionalObjectManager();
   }

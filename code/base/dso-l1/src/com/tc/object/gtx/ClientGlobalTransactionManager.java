@@ -22,7 +22,7 @@ public interface ClientGlobalTransactionManager extends GlobalTransactionManager
    */
   public int size();
 
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback);
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock);
 }

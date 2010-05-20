@@ -12,27 +12,28 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-// TODO::This class doesnt maintain backreferences anymore. Should be renamed.
+// TODO::This class doesn't maintain back references anymore. Should be renamed.
 public class BackReferences {
 
   private final Map nodes;
-
   private final Set parents;
+  private final Set ignoreBroadcasts;
 
   public BackReferences() {
     this.parents = new HashSet();
     this.nodes = new HashMap();
+    this.ignoreBroadcasts = new HashSet();
   }
 
-  public void addBackReference(ObjectID child, ObjectID parent) {
+  public void addBackReference(final ObjectID child, final ObjectID parent) {
     if (child.isNull()) { return; }
-    Node c = getOrCreateNode(child);
-    Node p = getOrCreateNode(parent);
+    final Node c = getOrCreateNode(child);
+    final Node p = getOrCreateNode(parent);
     p.addChild(c);
     this.parents.add(parent);
   }
 
-  private Node getOrCreateNode(ObjectID id) {
+  private Node getOrCreateNode(final ObjectID id) {
     Node n = (Node) this.nodes.get(id);
     if (n == null) {
       n = new Node(id);
@@ -45,10 +46,10 @@ public class BackReferences {
     return new HashSet(this.parents);
   }
 
-  public Set addReferencedChildrenTo(Set objectIDs, Set interestedParents) {
-    for (Iterator i = interestedParents.iterator(); i.hasNext();) {
-      ObjectID pid = (ObjectID) i.next();
-      Node p = getOrCreateNode(pid);
+  public Set addReferencedChildrenTo(final Set objectIDs, final Set interestedParents) {
+    for (final Iterator i = interestedParents.iterator(); i.hasNext();) {
+      final ObjectID pid = (ObjectID) i.next();
+      final Node p = getOrCreateNode(pid);
       p.addAllReferencedChildrenTo(objectIDs);
     }
     return objectIDs;
@@ -59,7 +60,7 @@ public class BackReferences {
     private final ObjectID id;
     private final Set      children;
 
-    public Node(ObjectID id) {
+    public Node(final ObjectID id) {
       this.id = id;
       this.children = new HashSet();
     }
@@ -74,21 +75,21 @@ public class BackReferences {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       if (o instanceof Node) {
-        Node other = (Node) o;
+        final Node other = (Node) o;
         return this.id.equals(other.id);
       }
       return false;
     }
 
-    public void addChild(Node c) {
+    public void addChild(final Node c) {
       this.children.add(c);
     }
 
-    public Set addAllReferencedChildrenTo(Set objectIDs) {
-      for (Iterator i = this.children.iterator(); i.hasNext();) {
-        Node child = (Node) i.next();
+    public Set addAllReferencedChildrenTo(final Set objectIDs) {
+      for (final Iterator i = this.children.iterator(); i.hasNext();) {
+        final Node child = (Node) i.next();
         if (objectIDs.add(child.getID())) {
           child.addAllReferencedChildrenTo(objectIDs);
         }
@@ -103,4 +104,11 @@ public class BackReferences {
     }
   }
 
+  public void ignoreBroadcastFor(final ObjectID objectID) {
+    this.ignoreBroadcasts.add(objectID);
+  }
+
+  public boolean isBroadcastIgnoredFor(final ObjectID oid) {
+    return this.ignoreBroadcasts.contains(oid);
+  }
 }

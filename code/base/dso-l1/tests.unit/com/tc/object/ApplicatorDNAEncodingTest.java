@@ -39,18 +39,18 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   ClassProvider classProvider = new MockClassProvider();
 
   public void testZeroLengthByteArray() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    byte[] b = new byte[] {};
+    final byte[] b = new byte[] {};
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    final DNAEncoding encoding = getApplicatorEncoding();
     encoding.encode(b, output);
 
     // The bug this test is for only happens if DNAEncoding gets back -1 from the input stream upon being asked to read
     // 0 bytes from a stream that is at EOF. ByteArrayInputStream happens to be one implemented in such a way
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     IOUtils.copy(new TCByteBufferInputStream(output.toArray()), baos);
-    TCObjectInputStream input = new TCObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+    final TCObjectInputStream input = new TCObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
 
     assertTrue(Arrays.equals(b, (byte[]) encoding.decode(input)));
 
@@ -58,16 +58,16 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testNonPrimitiveArrays2() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    Integer[] array = new Integer[] { new Integer(43), new Integer(-1) };
-    ObjectID[] array2 = new ObjectID[] {};
+    final Integer[] array = new Integer[] { new Integer(43), new Integer(-1) };
+    final ObjectID[] array2 = new ObjectID[] {};
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    final DNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(array, output);
     encoding.encodeArray(array2, output);
 
-    TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
+    final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
 
     assertTrue(Arrays.equals(array, (Object[]) encoding.decode(input)));
     assertTrue(Arrays.equals(array2, (Object[]) encoding.decode(input)));
@@ -76,19 +76,19 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   private DNAEncoding getApplicatorEncoding() {
-    return new ApplicatorDNAEncodingImpl(classProvider);
+    return new ApplicatorDNAEncodingImpl(this.classProvider);
   }
 
   public void testNonPrimitiveArrays() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    Object[] array = new Object[] { new ObjectID(12), new Integer(34), new Double(Math.PI), ObjectID.NULL_ID,
+    final Object[] array = new Object[] { new ObjectID(12), new Integer(34), new Double(Math.PI), ObjectID.NULL_ID,
         new Long(Long.MIN_VALUE + 34), "timmy" };
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    final DNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(array, output);
 
-    TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
+    final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
 
     assertTrue(Arrays.equals(array, (Object[]) encoding.decode(input)));
 
@@ -96,11 +96,11 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testNullArray() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    final DNAEncoding encoding = getApplicatorEncoding();
     encoding.encodeArray(null, output);
-    TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
+    final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
 
     assertNull(encoding.decode(input));
 
@@ -109,18 +109,18 @@ public class ApplicatorDNAEncodingTest extends TestCase {
 
   public void testPrimitiveArrays() throws Exception {
 
-    DNAEncoding encoding = getApplicatorEncoding();
+    final DNAEncoding encoding = getApplicatorEncoding();
     for (int iter = 0; iter < 250; iter++) {
-      TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+      final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-      byte[] b = makeByteArray();
-      char[] c = makeCharArray();
-      double[] d = makeDoubleArray();
-      float[] f = makeFloatArray();
-      int[] i = makeIntArray();
-      long[] j = makeLongArray();
-      short[] s = makeShortArray();
-      boolean[] z = makeBooleanArray();
+      final byte[] b = makeByteArray();
+      final char[] c = makeCharArray();
+      final double[] d = makeDoubleArray();
+      final float[] f = makeFloatArray();
+      final int[] i = makeIntArray();
+      final long[] j = makeLongArray();
+      final short[] s = makeShortArray();
+      final boolean[] z = makeBooleanArray();
 
       encoding.encodeArray(b, output);
       encoding.encodeArray(c, output);
@@ -131,7 +131,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
       encoding.encodeArray(s, output);
       encoding.encodeArray(z, output);
 
-      TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
+      final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
 
       assertTrue(Arrays.equals(b, (byte[]) encoding.decode(input)));
       assertTrue(Arrays.equals(c, (char[]) encoding.decode(input)));
@@ -147,74 +147,74 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   private short[] makeShortArray() {
-    short[] rv = new short[rnd.nextInt(10)];
+    final short[] rv = new short[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = (short) rnd.nextInt();
+      rv[i] = (short) this.rnd.nextInt();
     }
     return rv;
   }
 
   private long[] makeLongArray() {
-    long[] rv = new long[rnd.nextInt(10)];
+    final long[] rv = new long[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = rnd.nextLong();
+      rv[i] = this.rnd.nextLong();
     }
     return rv;
   }
 
   private int[] makeIntArray() {
-    int[] rv = new int[rnd.nextInt(10)];
+    final int[] rv = new int[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = rnd.nextInt();
+      rv[i] = this.rnd.nextInt();
     }
     return rv;
   }
 
   private float[] makeFloatArray() {
-    float[] rv = new float[rnd.nextInt(10)];
+    final float[] rv = new float[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = rnd.nextFloat();
+      rv[i] = this.rnd.nextFloat();
     }
 
     return rv;
   }
 
   private double[] makeDoubleArray() {
-    double[] rv = new double[rnd.nextInt(10)];
+    final double[] rv = new double[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = rnd.nextDouble();
+      rv[i] = this.rnd.nextDouble();
     }
 
     return rv;
   }
 
   private char[] makeCharArray() {
-    char[] rv = new char[rnd.nextInt(10)];
+    final char[] rv = new char[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = new Character((char) rnd.nextInt(Character.MAX_VALUE)).charValue();
+      rv[i] = new Character((char) this.rnd.nextInt(Character.MAX_VALUE)).charValue();
     }
     return rv;
   }
 
   private byte[] makeByteArray() {
-    byte[] rv = new byte[rnd.nextInt(10)];
+    final byte[] rv = new byte[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = (byte) rnd.nextInt();
+      rv[i] = (byte) this.rnd.nextInt();
     }
     return rv;
   }
 
   private boolean[] makeBooleanArray() {
-    boolean[] rv = new boolean[rnd.nextInt(10)];
+    final boolean[] rv = new boolean[this.rnd.nextInt(10)];
     for (int i = 0; i < rv.length; i++) {
-      rv[i] = rnd.nextBoolean();
+      rv[i] = this.rnd.nextBoolean();
     }
     return rv;
   }
-  
+
   public void testUnicodeChars() throws Exception {
-    StringBuffer str = new StringBuffer();
-    for(int i=0; i<100; i++) {
+    final StringBuffer str = new StringBuffer();
+    for (int i = 0; i < 100; i++) {
       str.append('\u7aba');
       str.append('\ucabb');
       str.append('\uffcf');
@@ -224,7 +224,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     }
     helpTestStringEncodingDecoding(str.toString(), true, false);
   }
-  
+
   public void testUncompressedInternedStringDecoding() throws Exception {
     String littleString = new String("abc");
     littleString = StringTCUtil.intern(littleString);
@@ -232,12 +232,12 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testUncompressedStringDecoding() throws Exception {
-    String littleString = new String("abc");
+    final String littleString = new String("abc");
     helpTestStringEncodingDecoding(littleString, false, false);
   }
 
   public void testCompressedStringDecoding() throws Exception {
-    String bigString = getBigString(100000);
+    final String bigString = getBigString(100000);
     helpTestStringEncodingDecoding(bigString, true, false);
   }
 
@@ -247,21 +247,22 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     helpTestStringEncodingDecoding(bigString, true, true);
   }
 
-  public void helpTestStringEncodingDecoding(String s, boolean compressed, boolean interned) throws Exception {
+  public void helpTestStringEncodingDecoding(final String s, final boolean compressed, final boolean interned)
+      throws Exception {
     // Encode string using applicator encoding into data
-    DNAEncoding applicatorEncoding = getApplicatorEncoding();
+    final DNAEncoding applicatorEncoding = getApplicatorEncoding();
     TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     applicatorEncoding.encode(s, output);
-    TCByteBuffer[] data = output.toArray();
+    final TCByteBuffer[] data = output.toArray();
 
     // Decode string from data using storage encoding (into UTF8ByteDataHolder) into decoded
-    DNAEncoding storageEncoding = getStorageEncoder();
+    final DNAEncoding storageEncoding = getStorageEncoder();
     TCByteBufferInputStream input = new TCByteBufferInputStream(data);
-    UTF8ByteDataHolder decoded = (UTF8ByteDataHolder) storageEncoding.decode(input);
+    final UTF8ByteDataHolder decoded = (UTF8ByteDataHolder) storageEncoding.decode(input);
 
     if (compressed) {
       assertTrue(decoded instanceof UTF8ByteCompressedDataHolder);
-      UTF8ByteCompressedDataHolder compressedDecoded = (UTF8ByteCompressedDataHolder)decoded;
+      final UTF8ByteCompressedDataHolder compressedDecoded = (UTF8ByteCompressedDataHolder) decoded;
       assertEquals(s.getBytes("UTF-8").length, compressedDecoded.getUncompressedStringLength());
       System.err.println("Compressed String length = " + compressedDecoded.getBytes().length);
       assertEquals(s.length(), compressedDecoded.getStringLength());
@@ -273,28 +274,28 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     // Encode UTF8ByteDataHolder into data2 using storage encoding
     output = new TCByteBufferOutputStream();
     storageEncoding.encode(decoded, output);
-    TCByteBuffer[] data2 = output.toArray();
+    final TCByteBuffer[] data2 = output.toArray();
 
     // Decode UTF8ByteDataHolder from data2 into decoded2 using storage encoding
     input = new TCByteBufferInputStream(data2);
-    UTF8ByteDataHolder decoded2 = (UTF8ByteDataHolder) storageEncoding.decode(input);
+    final UTF8ByteDataHolder decoded2 = (UTF8ByteDataHolder) storageEncoding.decode(input);
     assertEquals(decoded, decoded2);
 
     // Decode from original data using applicator encoding into str
     input = new TCByteBufferInputStream(data);
-    String str = (String) applicatorEncoding.decode(input);
+    final String str = (String) applicatorEncoding.decode(input);
     assertEquals(s, str);
 
     // Decode from data2 using applicator encoding into str2
     input = new TCByteBufferInputStream(data2);
-    String str2 = (String) applicatorEncoding.decode(input);
+    final String str2 = (String) applicatorEncoding.decode(input);
     assertEquals(s, str2);
 
   }
 
-  private String getBigString(int length) {
-    String sample = "mold for Big String";
-    StringBuffer sb = new StringBuffer();
+  private String getBigString(final int length) {
+    final String sample = "mold for Big String";
+    final StringBuffer sb = new StringBuffer();
     while (sb.length() < length) {
       sb.append(sample);
     }
@@ -302,14 +303,14 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testStringDecode() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAEncoding encoding = getApplicatorEncoding();
     encoding.encode("timmy", output);
     UTF8ByteDataHolder orgUTF;
     encoding.encode((orgUTF = new UTF8ByteDataHolder("teck".getBytes("UTF-8"))), output);
 
-    TCByteBuffer[] data = output.toArray();
+    final TCByteBuffer[] data = output.toArray();
 
     encoding = getStorageEncoder();
     TCByteBufferInputStream input = new TCByteBufferInputStream(data);
@@ -337,7 +338,7 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testStringInternAdaptedFlags() {
-    String str1 = new String("Simran");
+    final String str1 = new String("Simran");
     UTF8ByteDataHolder utf8Holder;
     String str2;
 
@@ -349,22 +350,22 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testStringInternDecode() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
     DNAEncoding encoding = getApplicatorEncoding();
 
-    String orgStr = new String("Life is a interned Circle");
+    final String orgStr = new String("Life is a interned Circle");
     String str = StringTCUtil.intern(orgStr);
     encoding.encode(str, output);
 
-    String temp = new String("May be, life is a interned Triangle");
+    final String temp = new String("May be, life is a interned Triangle");
     str = StringTCUtil.intern(temp);
-    UTF8ByteDataHolder orgUTF = new UTF8ByteDataHolder(str);
+    final UTF8ByteDataHolder orgUTF = new UTF8ByteDataHolder(str);
     encoding.encode(orgUTF, output);
 
-    String orgNonIntStr = new String("But, life is not a straight line for sure");
+    final String orgNonIntStr = new String("But, life is not a straight line for sure");
     encoding.encode(orgNonIntStr, output);
 
-    TCByteBuffer[] data = output.toArray();
+    final TCByteBuffer[] data = output.toArray();
 
     encoding = getStorageEncoder();
     TCByteBufferInputStream input = new TCByteBufferInputStream(data);
@@ -415,24 +416,25 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testClassExpand() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
     DNAEncoding encoding = getApplicatorEncoding();
     encoding.encode(getClass(), output);
     Class c = Object.class;
-    UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
-    UTF8ByteDataHolder def = new UTF8ByteDataHolder(classProvider.getLoaderDescriptionFor(c).toDelimitedString());
-    ClassInstance ci = new ClassInstance(name, def);
+    final UTF8ByteDataHolder name = new UTF8ByteDataHolder(c.getName());
+    final UTF8ByteDataHolder def = new UTF8ByteDataHolder(this.classProvider.getLoaderDescriptionFor(c)
+        .toDelimitedString());
+    final ClassInstance ci = new ClassInstance(name, def);
     encoding.encode(ci, output);
 
-    TCByteBuffer[] data = output.toArray();
+    final TCByteBuffer[] data = output.toArray();
 
     encoding = getStorageEncoder();
     TCByteBufferInputStream input = new TCByteBufferInputStream(data);
     ClassInstance holder = (ClassInstance) encoding.decode(input);
     assertEquals(getClass().getName(), holder.getName().asString());
-    assertEquals(classProvider.getLoaderDescriptionFor(getClass()), 
-                 LoaderDescription.fromString(holder.getLoaderDef().asString()));
+    assertEquals(this.classProvider.getLoaderDescriptionFor(getClass()), LoaderDescription.fromString(holder
+        .getLoaderDef().asString()));
 
     holder = (ClassInstance) encoding.decode(input);
     assertEquals(name, holder.getName());
@@ -451,9 +453,9 @@ public class ApplicatorDNAEncodingTest extends TestCase {
   }
 
   public void testBasic() throws Exception {
-    TCByteBufferOutputStream output = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream output = new TCByteBufferOutputStream();
 
-    List data = new ArrayList();
+    final List data = new ArrayList();
     data.add(new ObjectID(1));
     data.add("one");
     data.add(new Boolean(true));
@@ -476,15 +478,15 @@ public class ApplicatorDNAEncodingTest extends TestCase {
     data.add("ten");
     data.add(new BigDecimal(84564547.45465478d));
 
-    DNAEncoding encoding = getApplicatorEncoding();
-    for (Iterator i = data.iterator(); i.hasNext();) {
+    final DNAEncoding encoding = getApplicatorEncoding();
+    for (final Iterator i = data.iterator(); i.hasNext();) {
       encoding.encode(i.next(), output);
     }
 
-    TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
-    for (Iterator i = data.iterator(); i.hasNext();) {
-      Object orig = i.next();
-      Object decoded = encoding.decode(input);
+    final TCByteBufferInputStream input = new TCByteBufferInputStream(output.toArray());
+    for (final Iterator i = data.iterator(); i.hasNext();) {
+      final Object orig = i.next();
+      final Object decoded = encoding.decode(input);
 
       assertEquals(orig, decoded);
     }

@@ -9,11 +9,11 @@ import com.tc.util.Assert;
 
 public class TCObjectLogical extends TCObjectImpl {
 
-  public TCObjectLogical(ObjectID id, Object peer, TCClass tcc, boolean isNew) {
+  public TCObjectLogical(final ObjectID id, final Object peer, final TCClass tcc, final boolean isNew) {
     super(id, peer, tcc, isNew);
   }
 
-  public void logicalInvoke(int method, String methodName, Object[] parameters) {
+  public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
     getObjectManager().getTransactionManager().logicalInvoke(this, method, methodName, parameters);
   }
 
@@ -28,15 +28,16 @@ public class TCObjectLogical extends TCObjectImpl {
   }
 
   @Override
-  protected int clearReferences(Object pojo, int toClear) {
-    if(! (pojo instanceof Clearable)) {
-      Assert.fail("TCObjectLogical.clearReferences expected Clearable but got " + (pojo == null ? "null" : pojo.getClass().getName()));
+  protected int clearReferences(final Object pojo, final int toClear) {
+    if (!(pojo instanceof Clearable)) {
+      Assert.fail("TCObjectLogical.clearReferences expected Clearable but got "
+                  + (pojo == null ? "null" : pojo.getClass().getName()));
     }
-    Clearable clearable = (Clearable) pojo;
+    final Clearable clearable = (Clearable) pojo;
     return clearable.__tc_clearReferences(toClear);
   }
 
-  public void unresolveReference(String fieldName) {
+  public void unresolveReference(final String fieldName) {
     throw new AssertionError();
   }
 }

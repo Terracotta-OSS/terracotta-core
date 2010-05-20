@@ -30,7 +30,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
 
   public DNA retrieve(final ObjectID id) {
     this.retrieveCalls.put(id);
-    DNA dna = (DNA) this.retrieveResults.take();
+    final DNA dna = (DNA) this.retrieveResults.take();
     if (dna == THROW_NOT_FOUND) { throw new TCObjectNotFoundException("missing ID"); }
     return dna;
   }
@@ -136,7 +136,16 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     // NOP
   }
 
-  public void preFetchObject(ObjectID id) {
+  public void preFetchObject(final ObjectID id) {
+    throw new ImplementMe();
+  }
+
+  public ObjectID getMappingForKey(final ObjectID oid, final Object portableKey) {
+    throw new ImplementMe();
+  }
+
+  public void addResponseForKeyValueMapping(final SessionID localSessionID, final ObjectID mapID,
+                                            final Object portableKey, final Object portableValue, final NodeID nodeID) {
     throw new ImplementMe();
   }
 

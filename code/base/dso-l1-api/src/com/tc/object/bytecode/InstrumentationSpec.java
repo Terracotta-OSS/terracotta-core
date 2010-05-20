@@ -65,6 +65,8 @@ class InstrumentationSpec {
 
   private final Set                   classHierarchy;
   private final Map                   shouldOverrideMethods;
+  private final Set                   recordedMethods;
+  private final Set                   recordedFields;
   private final Set                   logicalExtendingMethodSpec;
   private final Set                   logicalExtendingFieldSpec;
   private final ClassLoader           caller;
@@ -75,6 +77,8 @@ class InstrumentationSpec {
     this.caller = caller;
     this.classHierarchy = new HashSet();
     this.shouldOverrideMethods = new HashMap();
+    this.recordedMethods = new HashSet();
+    this.recordedFields = new HashSet();
     this.logicalExtendingMethodSpec = new HashSet();
     this.logicalExtendingFieldSpec = new HashSet();
     this.fieldInfoMap = buildFieldInfoMap();
@@ -184,6 +188,14 @@ class InstrumentationSpec {
 
   String getClassSignature() {
     return classSignature;
+  }
+  
+  public boolean hasMethod(String nameAndDesc) {
+    return recordedMethods.contains(nameAndDesc);
+  }
+  
+  public boolean hasField(String nameAndDesc) {
+    return recordedFields.contains(nameAndDesc);
   }
 
   void decideOnInstrumentationAction(Portability portability) {
@@ -355,6 +367,7 @@ class InstrumentationSpec {
       Assert.assertNull(parentClassInfo);
       this.parentClassInfo = new ParentClassInfo(name, desc);
     }
+    recordedFields.add(name + desc);
   }
 
   void recordExistingMethods(String name, String desc, String signature) {
@@ -364,6 +377,7 @@ class InstrumentationSpec {
       writeObjectSerializedMethod = IS_NOT_NEEDED;
     }
     shouldOverrideMethods.remove(name + desc);
+    recordedMethods.add(name + desc);
   }
 
   boolean shouldVisitField(String name) {

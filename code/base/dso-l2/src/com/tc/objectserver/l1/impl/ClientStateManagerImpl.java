@@ -33,14 +33,14 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
   private final Map<NodeID, ClientStateImpl> clientStates;
   private final TCLogger                     logger;
 
-  public ClientStateManagerImpl(TCLogger logger) {
+  public ClientStateManagerImpl(final TCLogger logger) {
     this.logger = logger;
     this.clientStates = new ConcurrentHashMap<NodeID, ClientStateImpl>();
   }
 
-  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences includeIDs, NodeID id,
-                                                       Set<ObjectID> lookupObjectIDs) {
-    ClientStateImpl clientState = getClientState(id);
+  public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes, final BackReferences includeIDs,
+                                                       final NodeID id, final Set<ObjectID> lookupObjectIDs) {
+    final ClientStateImpl clientState = getClientState(id);
     if (clientState == null) {
       this.logger.warn(": createPrunedChangesAndAddObjectIDTo : Client state is NULL (probably due to disconnect) : "
                        + id);
@@ -49,11 +49,12 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
 
     clientState.lock();
     try {
-      List<DNA> prunedChanges = new LinkedList<DNA>();
+      final List<DNA> prunedChanges = new LinkedList<DNA>();
 
       for (final DNA dna : changes) {
-        if (clientState.containsReference(dna.getObjectID())) {
-          if (dna.isDelta()) {
+        final ObjectID oid = dna.getObjectID();
+        if (clientState.containsReference(oid)) {
+          if (dna.isDelta() && !includeIDs.isBroadcastIgnoredFor(oid)) {
             prunedChanges.add(dna);
           } else {
             // This new Object must have already been sent as a part of a different lookup. So ignoring this change.
@@ -73,8 +74,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void addReference(NodeID id, ObjectID objectID) {
-    ClientStateImpl c = getClientState(id);
+  public void addReference(final NodeID id, final ObjectID objectID) {
+    final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
@@ -87,8 +88,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void removeReferences(NodeID id, Set<ObjectID> removed) {
-    ClientStateImpl c = getClientState(id);
+  public void removeReferences(final NodeID id, final Set<ObjectID> removed) {
+    final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
@@ -101,8 +102,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public boolean hasReference(NodeID id, ObjectID objectID) {
-    ClientStateImpl c = getClientState(id);
+  public boolean hasReference(final NodeID id, final ObjectID objectID) {
+    final ClientStateImpl c = getClientState(id);
     if (c != null) {
       c.lock();
       try {
@@ -116,7 +117,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void addAllReferencedIdsTo(Set<ObjectID> ids) {
+  public void addAllReferencedIdsTo(final Set<ObjectID> ids) {
     for (final ClientStateImpl c : this.clientStates.values()) {
       c.lock();
       try {
@@ -127,15 +128,15 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void removeReferencedFrom(NodeID id, Set<ObjectID> oids) {
-    ClientStateImpl c = getClientState(id);
+  public void removeReferencedFrom(final NodeID id, final Set<ObjectID> oids) {
+    final ClientStateImpl c = getClientState(id);
     if (c == null) {
       this.logger.warn(": removeReferencedFrom : Client state is NULL (probably due to disconnect) : " + id);
       return;
     }
     c.lock();
     try {
-      Set<ObjectID> refs = c.getReferences();
+      final Set<ObjectID> refs = c.getReferences();
       oids.removeAll(refs);
     } finally {
       c.unlock();
@@ -145,22 +146,22 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
   /*
    * returns newly added references
    */
-  public Set<ObjectID> addReferences(NodeID id, Set<ObjectID> oids) {
-    ClientStateImpl c = getClientState(id);
+  public Set<ObjectID> addReferences(final NodeID id, final Set<ObjectID> oids) {
+    final ClientStateImpl c = getClientState(id);
     if (c == null) {
       this.logger.warn(": addReferences : Client state is NULL (probably due to disconnect) : " + id);
       return Collections.emptySet();
     }
     c.lock();
     try {
-      Set<ObjectID> refs = c.getReferences();
+      final Set<ObjectID> refs = c.getReferences();
       if (refs.isEmpty()) {
         refs.addAll(oids);
         return oids;
       }
 
-      Set<ObjectID> newReferences = new HashSet<ObjectID>();
-      for (ObjectID oid : oids) {
+      final Set<ObjectID> newReferences = new HashSet<ObjectID>();
+      for (final ObjectID oid : oids) {
         if (refs.add(oid)) {
           newReferences.add(oid);
         }
@@ -171,21 +172,21 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void shutdownNode(NodeID waitee) {
+  public void shutdownNode(final NodeID waitee) {
     this.clientStates.remove(waitee);
   }
 
-  public void startupNode(NodeID nodeID) {
-    Object old = this.clientStates.put(nodeID, new ClientStateImpl(nodeID));
+  public void startupNode(final NodeID nodeID) {
+    final Object old = this.clientStates.put(nodeID, new ClientStateImpl(nodeID));
     if (old != null) { throw new AssertionError("Client connected before disconnecting : old Client state = " + old); }
   }
 
-  private ClientStateImpl getClientState(NodeID id) {
+  private ClientStateImpl getClientState(final NodeID id) {
     return this.clientStates.get(id);
   }
 
-  public int getReferenceCount(NodeID nodeID) {
-    ClientStateImpl c = getClientState(nodeID);
+  public int getReferenceCount(final NodeID nodeID) {
+    final ClientStateImpl c = getClientState(nodeID);
     if (c == null) { return 0; }
     c.lock();
     try {
@@ -200,12 +201,12 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    PrettyPrinter rv = out;
+    final PrettyPrinter rv = out;
     out.print(getClass().getName()).flush();
     out = out.duplicateAndIndent();
     out.indent().print("client states: ").flush();
     out = out.duplicateAndIndent();
-    for (ClientStateImpl c : this.clientStates.values()) {
+    for (final ClientStateImpl c : this.clientStates.values()) {
       c.lock();
       try {
         out.indent().print(c.getNodeID() + "=").visit(c).flush();
@@ -221,7 +222,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     private final Set<ObjectID> managed = new ObjectIDSet();
     private final ReentrantLock lock    = new ReentrantLock();
 
-    public ClientStateImpl(NodeID nodeID) {
+    public ClientStateImpl(final NodeID nodeID) {
       this.nodeID = nodeID;
     }
 
@@ -233,12 +234,12 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       this.lock.unlock();
     }
 
-    public void removeReferencedObjectIDsFrom(Set<ObjectID> lookupObjectIDs) {
+    public void removeReferencedObjectIDsFrom(final Set<ObjectID> lookupObjectIDs) {
       lookupObjectIDs.removeAll(this.managed);
     }
 
-    public void addReferencedChildrenTo(Set objectIDs, BackReferences includeIDs) {
-      Set parents = includeIDs.getAllParents();
+    public void addReferencedChildrenTo(final Set objectIDs, final BackReferences includeIDs) {
+      final Set parents = includeIDs.getAllParents();
       parents.retainAll(this.managed);
       includeIDs.addReferencedChildrenTo(objectIDs, parents);
     }
@@ -252,25 +253,25 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       return this.managed;
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       out.print(getClass().getName()).flush();
       out.duplicateAndIndent().indent().print("managed: ").visit(this.managed);
       return out;
     }
 
-    public void addReference(ObjectID id) {
+    public void addReference(final ObjectID id) {
       this.managed.add(id);
     }
 
-    public boolean containsReference(ObjectID id) {
+    public boolean containsReference(final ObjectID id) {
       return this.managed.contains(id);
     }
 
-    public void removeReferences(Set<ObjectID> references) {
+    public void removeReferences(final Set<ObjectID> references) {
       this.managed.removeAll(references);
     }
 
-    public void addReferencedIdsTo(Set<ObjectID> ids) {
+    public void addReferencedIdsTo(final Set<ObjectID> ids) {
       ids.addAll(this.managed);
     }
 

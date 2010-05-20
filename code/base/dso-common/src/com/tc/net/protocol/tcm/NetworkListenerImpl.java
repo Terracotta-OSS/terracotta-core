@@ -17,7 +17,7 @@ import java.util.Set;
 
 /**
  * A handle to a specific server port listener
- *
+ * 
  * @author teck
  */
 class NetworkListenerImpl implements NetworkListener {
@@ -31,13 +31,15 @@ class NetworkListenerImpl implements NetworkListener {
   private final boolean                   reuseAddr;
   private final ConnectionIDFactory       connectionIdFactory;
   private final Sink                      httpSink;
-  private final WireProtocolMessageSink wireProtoMsgSnk;
+  private final WireProtocolMessageSink   wireProtoMsgSnk;
 
   // this cstr is intentionally not public, only the Comms Manager should be
   // creating them
-  NetworkListenerImpl(TCSocketAddress addr, CommunicationsManagerImpl commsMgr, ChannelManagerImpl channelManager,
-                      TCMessageFactory msgFactory, TCMessageRouter router, boolean reuseAddr,
-                      ConnectionIDFactory connectionIdFactory, Sink httpSink, WireProtocolMessageSink wireProtoMsgSnk) {
+  NetworkListenerImpl(final TCSocketAddress addr, final CommunicationsManagerImpl commsMgr,
+                      final ChannelManagerImpl channelManager, final TCMessageFactory msgFactory,
+                      final TCMessageRouter router, final boolean reuseAddr,
+                      final ConnectionIDFactory connectionIdFactory, final Sink httpSink,
+                      final WireProtocolMessageSink wireProtoMsgSnk) {
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;
@@ -52,65 +54,66 @@ class NetworkListenerImpl implements NetworkListener {
 
   /**
    * Start this listener listening on the network. You probably don't want to start a listener until you have properly
-   * setup your protocol routes, since you might miss messages between the time the listener is <code>start()</code>
-   * 'ed and the time you add your routes.
-   *
+   * setup your protocol routes, since you might miss messages between the time the listener is <code>start()</code> 'ed
+   * and the time you add your routes.
+   * 
    * @throws IOException if an IO error occurs (this will most likely be a problem binding to the specified
    *         port/address)
    */
-  public synchronized void start(Set initialConnectionIDs) throws IOException {
-    this.lsnr = commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
-                                             this.connectionIdFactory, this.httpSink, this.wireProtoMsgSnk);
+  public synchronized void start(final Set initialConnectionIDs) throws IOException {
+    this.lsnr = this.commsMgr.createCommsListener(this.addr, this.channelManager, this.reuseAddr, initialConnectionIDs,
+                                                  this.connectionIdFactory, this.httpSink, this.wireProtoMsgSnk);
     this.started = true;
-    commsMgr.registerListener(this);
+    this.commsMgr.registerListener(this);
   }
 
-  public synchronized void stop(long timeout) throws TCTimeoutException {
-    if (!started) { return; }
+  public synchronized void stop(final long timeout) throws TCTimeoutException {
+    if (!this.started) { return; }
 
     try {
-      if (lsnr != null) {
-        lsnr.stop(timeout);
+      if (this.lsnr != null) {
+        this.lsnr.stop(timeout);
       }
     } finally {
-      started = false;
-      commsMgr.unregisterListener(this);
+      this.started = false;
+      this.commsMgr.unregisterListener(this);
     }
   }
 
-  public void routeMessageType(TCMessageType messageType, TCMessageSink sink) {
-    tcmRouter.routeMessageType(messageType, sink);
+  public void routeMessageType(final TCMessageType messageType, final TCMessageSink sink) {
+    this.tcmRouter.routeMessageType(messageType, sink);
   }
 
   /**
    * Routes a TCMessage to a sink. The hydrate sink will do the hydrate() work
    */
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
     routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
   }
 
   public ChannelManager getChannelManager() {
-    return channelManager;
+    return this.channelManager;
   }
 
-  public void addClassMapping(TCMessageType type, Class msgClass) {
+  public void addClassMapping(final TCMessageType type, final Class msgClass) {
     this.msgFactory.addClassMapping(type, msgClass);
   }
 
   public synchronized InetAddress getBindAddress() {
-    if (!started) { throw new IllegalStateException("Listener not running"); }
-    return lsnr.getBindAddress();
+    if (!this.started) { throw new IllegalStateException("Listener not running"); }
+    return this.lsnr.getBindAddress();
   }
 
   public synchronized int getBindPort() {
-    if (!started) { throw new IllegalStateException("Listener not running"); }
-    return lsnr.getBindPort();
+    if (!this.started) { throw new IllegalStateException("Listener not running"); }
+    return this.lsnr.getBindPort();
   }
 
+  @Override
   public String toString() {
     try {
       return getBindAddress().getHostAddress() + ":" + getBindPort();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       return "Exception in toString(): " + e.getMessage();
     }
   }

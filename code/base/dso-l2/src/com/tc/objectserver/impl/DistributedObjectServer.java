@@ -104,6 +104,10 @@ import com.tc.object.msg.ClientHandshakeMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
+import com.tc.object.msg.GetSizeServerMapRequestMessageImpl;
+import com.tc.object.msg.GetSizeServerMapResponseMessageImpl;
+import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
+import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
@@ -132,6 +136,7 @@ import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ObjectStatsManager;
 import com.tc.objectserver.api.ObjectStatsManagerImpl;
+import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManagerImpl;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
@@ -167,7 +172,9 @@ import com.tc.objectserver.handler.RequestObjectIDBatchHandler;
 import com.tc.objectserver.handler.RequestRootHandler;
 import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
+import com.tc.objectserver.handler.RespondToServerMapRequestHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
+import com.tc.objectserver.handler.ServerMapRequestHandler;
 import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
 import com.tc.objectserver.handler.TransactionLookupHandler;
@@ -311,6 +318,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ServerConfigurationContext             context;
   private ObjectManagerImpl                      objectManager;
   private ObjectRequestManager                   objectRequestManager;
+  private ServerMapRequestManager                serverTCMapRequestManager;
   private TransactionalObjectManagerImpl         txnObjectManager;
   private CounterManager                         sampledCounterManager;
   private LockManagerImpl                        lockManager;
@@ -396,25 +404,25 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
-    L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
+    final L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
 
-    List<PostInit> toInit = new ArrayList<PostInit>();
+    final List<PostInit> toInit = new ArrayList<PostInit>();
 
     try {
       this.lockStatisticsMBean = new LockStatisticsMonitor(lockStatsManager);
-    } catch (NotCompliantMBeanException ncmbe) {
+    } catch (final NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException("Unable to construct the " + LockStatisticsMonitor.class.getName()
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
 
     // perform the DSO network config verification
-    NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
 
     // verify user input host name, DEV-2293
-    String host = l2DSOConfig.host().getString();
-    InetAddress ip = InetAddress.getByName(host);
+    final String host = l2DSOConfig.host().getString();
+    final InetAddress ip = InetAddress.getByName(host);
     if (!ip.isLoopbackAddress() && (NetworkInterface.getByInetAddress(ip) == null)) {
-      String msg = "Unable to find local network interface for " + host;
+      final String msg = "Unable to find local network interface for " + host;
       consoleLogger.error(msg);
       logger.error(msg, new TCRuntimeException(msg));
       System.exit(-1);
@@ -426,9 +434,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       bindAddress = TCSocketAddress.WILDCARD_IP;
     }
 
-    InetAddress bind = InetAddress.getByName(bindAddress);
+    final InetAddress bind = InetAddress.getByName(bindAddress);
 
-    AddressChecker addressChecker = new AddressChecker();
+    final AddressChecker addressChecker = new AddressChecker();
     if (!addressChecker.isLegalBindAddress(bind)) { throw new IOException("Invalid bind address [" + bind
                                                                           + "]. Local addresses are "
                                                                           + addressChecker.getAllLocalAddresses()); }
@@ -445,7 +453,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
     try {
       this.statisticsGateway = new StatisticsGatewayMBeanImpl();
-    } catch (NotCompliantMBeanException e) {
+    } catch (final NotCompliantMBeanException e) {
       throw new TCRuntimeException("Unable to construct the " + StatisticsGatewayMBeanImpl.class.getName()
                                    + " MBean; this is a programming error. Please go fix that class.", e);
     }
@@ -464,17 +472,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     
     this.configSetupManager.commonl2Config().changesInItemIgnored(this.configSetupManager.commonl2Config().dataPath());
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
-    PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
+    final PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
 
     this.l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
-    TCProperties objManagerProperties = this.l2Properties.getPropertiesFor("objectmanager");
+    final TCProperties objManagerProperties = this.l2Properties.getPropertiesFor("objectmanager");
 
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
 
     final boolean swapEnabled = true;
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
-    TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
+    final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
     this.startupLock = new StartupLock(location, this.l2Properties.getBoolean("startuplock.retries.enabled"));
 
     if (!this.startupLock.canProceed(new TCRandomFileAccessImpl(), persistent)) {
@@ -486,10 +494,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       System.exit(1);
     }
 
-    int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
+    final int maxStageSize = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
-    StageManager stageManager = this.seda.getStageManager();
-    SessionManager sessionManager = new NullSessionManager();
+    final StageManager stageManager = this.seda.getStageManager();
+    final SessionManager sessionManager = new NullSessionManager();
 
     EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;
@@ -502,8 +510,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     SRABerkeleyDB sraBdb = null;
 
     if (swapEnabled) {
-      File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(),
-                             NewL2DSOConfig.OBJECTDB_DIRNAME);
+      final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(),
+                                   NewL2DSOConfig.OBJECTDB_DIRNAME);
       logger.debug("persistent: " + persistent);
       if (!persistent) {
         if (dbhome.exists()) {
@@ -514,20 +522,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       }
       logger.debug("persistence database home: " + dbhome);
 
-      CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
+      final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
       this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-      DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, this.l2Properties.getPropertiesFor("berkeleydb")
-          .addAllPropertiesTo(new Properties()));
-      SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
+      final DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, this.l2Properties
+          .getPropertiesFor("berkeleydb").addAllPropertiesTo(new Properties()));
+      final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
 
       this.persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
                                               serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                   .dataPath().getFile(), this.objectStatsRecorder);
       sraBdb = new SRABerkeleyDB((SleepycatPersistor) this.persistor);
+
       
       l2Management.init(dbenv);
-      
       // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
       // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
       // l2.memorystore.enabled=true.
@@ -539,7 +547,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       // persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
       // }
 
-      String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
+      final String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
         swapCache = new LRUEvictionPolicy(-1);
       } else if (cachePolicy.equals("LFU")) {
@@ -548,14 +556,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         throw new AssertionError("Unknown Cache Policy : " + cachePolicy
                                  + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
       }
-      int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
-      Sink gcDisposerSink = stageManager.createStage(
-                                                     ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
-                                                     new GarbageDisposeHandler(gcPublisher, this.persistor
-                                                         .getManagedObjectPersistor(), this.persistor
-                                                         .getPersistenceTransactionProvider(), objManagerProperties
-                                                         .getInt("deleteBatchSize")), gcDeleteThreads, maxStageSize)
-          .getSink();
+      final int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
+      final Sink gcDisposerSink = stageManager.createStage(
+                                                           ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
+                                                           new GarbageDisposeHandler(gcPublisher, this.persistor
+                                                               .getManagedObjectPersistor(), this.persistor
+                                                               .getPersistenceTransactionProvider(),
+                                                                                     objManagerProperties
+                                                                                         .getInt("deleteBatchSize")),
+                                                           gcDeleteThreads, maxStageSize).getSink();
 
       this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
     } else {
@@ -594,8 +603,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       transactionStorePTP = new NullPersistenceTransactionProvider();
     }
 
-    GlobalTransactionIDBatchRequestHandler gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(gidSequence);
-    Stage requestBatchStage = stageManager
+    final GlobalTransactionIDBatchRequestHandler gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
+                                                                                                                  gidSequence);
+    final Stage requestBatchStage = stageManager
         .createStage(ServerConfigurationContext.REQUEST_BATCH_GLOBAL_TRANSACTION_ID_SEQUENCE_STAGE,
                      gidSequenceProvider, 1, maxStageSize);
     gidSequenceProvider.setRequestBatchSink(requestBatchStage.getSink());
@@ -622,7 +632,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
     }
 
-    MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
+    final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
 
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
                                                                networkStackHarnessFactory, this.connectionPolicy,
@@ -635,7 +645,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final DSOApplicationEvents appEvents;
     try {
       appEvents = new DSOApplicationEvents();
-    } catch (NotCompliantMBeanException ncmbe) {
+    } catch (final NotCompliantMBeanException ncmbe) {
       throw new TCRuntimeException("Unable to construct the " + DSOApplicationEvents.class.getName()
                                    + " MBean; this is a programming error. Please go fix that class.", ncmbe);
     }
@@ -643,26 +653,33 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.clientStateManager = new ClientStateManagerImpl(TCLogging.getLogger(ClientStateManager.class));
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionEnabled());
-    boolean gcEnabled = l2DSOConfig.garbageCollectionEnabled().getBoolean();
+    final boolean gcEnabled = l2DSOConfig.garbageCollectionEnabled().getBoolean();
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionInterval());
-    long gcInterval = l2DSOConfig.garbageCollectionInterval().getInt();
+    final long gcInterval = l2DSOConfig.garbageCollectionInterval().getInt();
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.garbageCollectionVerbose());
-    boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
+    final boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     this.sampledCounterManager = new CounterManagerImpl();
-    SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-    SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-    SampledCounter objectFlushedRate = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-    ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate,
-                                                                    objectFlushedRate);
-    SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-    SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
-    SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
+    final SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    final SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    final SampledCounter objectFlushedRate = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    final ObjectManagerStatsImpl objMgrStats = new ObjectManagerStatsImpl(objectCreationRate, objectFaultRate,
+                                                                          objectFlushedRate);
+    final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    final SampledCounter time2FaultFromDisk = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
+    final SampledCounter time2Add2ObjMgr = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
 
-    SequenceValidator sequenceValidator = new SequenceValidator(0);
+    final SequenceValidator sequenceValidator = new SequenceValidator(0);
     // Server initiated request processing queues shouldn't have any max queue size.
+
     ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler(l2FaultFromDisk,
                                                                                         time2FaultFromDisk,
                                                                                         time2Add2ObjMgr,
@@ -681,9 +698,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     boolean enableYoungGenDGC = youngDGCProperties.getBoolean("enabled");
     long youngGenDGCFrequency = youngDGCProperties.getLong("frequencyInMillis");
 
-    ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
-                                                                      persistent, enableYoungGenDGC,
-                                                                      youngGenDGCFrequency, enterpriseMarkStageInterval);
+    final ObjectManagerConfig objectManagerConfig = new ObjectManagerConfig(gcInterval * 1000, gcEnabled, verboseGC,
+                                                                            persistent, enableYoungGenDGC,
+                                                                            youngGenDGCFrequency,
+                                                                            enterpriseMarkStageInterval);
 
     this.objectManager = new ObjectManagerImpl(objectManagerConfig, this.clientStateManager, this.objectStore,
                                                swapCache, persistenceTransactionProvider, faultManagedObjectStage
@@ -697,12 +715,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup.addCallbackOnExitDefaultHandler(objMgrDumpAdapter);
     this.dumpHandler.registerForDump(objMgrDumpAdapter);
 
-    TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
-    CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
+    final TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
+    final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
+    final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
         .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), this.threadGroup);
-    long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
-    LongGCLogger gcLogger = new LongGCLogger(logger, timeOut);
+    final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
+    final LongGCLogger gcLogger = new LongGCLogger(logger, timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
     // CDV-1181 warn if using CMS
     tcMemManager.checkGarbageCollectors();
@@ -721,15 +739,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
-    int serverPort = l2DSOConfig.listenPort().getInt();
+    final int serverPort = l2DSOConfig.listenPort().getInt();
 
     this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/" + serverPort);
 
     this.l1Listener = this.communicationsManager.createListener(sessionManager, new TCSocketAddress(bind, serverPort),
                                                                 true, this.connectionIdFactory, this.httpSink);
 
-    ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
-    stripeIDStateManager = new StripeIDStateManagerImpl(haConfig, this.persistor.getPersistentStateStore());
+    final ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
+    this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getPersistentStateStore());
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 
@@ -739,70 +757,76 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
 
-    ChannelStatsImpl channelStats = new ChannelStatsImpl(this.sampledCounterManager, channelManager);
+    final ChannelStatsImpl channelStats = new ChannelStatsImpl(this.sampledCounterManager, channelManager);
     channelManager.addEventListener(channelStats);
 
-    CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
+    final CommitTransactionMessageRecycler recycler = new CommitTransactionMessageRecycler();
     toInit.add(recycler);
 
     // Creating a stage here so that the sink can be passed
-    Stage respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-                                                        new RespondToRequestLockHandler(), numCommWorkers, 1,
-                                                        maxStageSize);
+    final Stage respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
+                                                              new RespondToRequestLockHandler(), numCommWorkers, 1,
+                                                              maxStageSize);
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
     this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener(this.lockManager);
 
     CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
     this.dumpHandler.registerForDump(lockDumpAdapter);
-    ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
-    TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
+    final TransactionFilter txnFilter = this.serverBuilder.getTransactionFilter(toInit, stageManager, maxStageSize);
 
     // create a stage which will send an ack to the clients that they have received a particular batch
-    Stage syncWriteTxnRecvdAckStage = stageManager.createStage(ServerConfigurationContext.SYNC_WRITE_TXN_RECVD_STAGE,
-                                                               new SyncWriteTransactionReceivedHandler(channelManager),
-                                                               4, maxStageSize);
-    TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator, recycler,
-                                                                                          txnFilter,
-                                                                                          syncWriteTxnRecvdAckStage
-                                                                                              .getSink());
+    final Stage syncWriteTxnRecvdAckStage = stageManager
+        .createStage(ServerConfigurationContext.SYNC_WRITE_TXN_RECVD_STAGE,
+                     new SyncWriteTransactionReceivedHandler(channelManager), 4, maxStageSize);
+    final TransactionBatchManagerImpl transactionBatchManager = new TransactionBatchManagerImpl(sequenceValidator,
+                                                                                                recycler, txnFilter,
+                                                                                                syncWriteTxnRecvdAckStage
+                                                                                                    .getSink());
     toInit.add(transactionBatchManager);
 
-    TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager, transactionBatchManager);
-    SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    final TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager,
+                                                                                  transactionBatchManager);
+    final SampledCounter globalTxnCounter = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
 
-    SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    final SampledCounter broadcastCounter = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
 
-    SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
+    final SampledCounter globalObjectFaultCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
+    final SampledCounter globalObjectFlushCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
+    final SampledCounter globalLockRecallCounter = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
-    SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
+    final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
+    final SampledRateCounter changesPerBroadcast = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
-    SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
+    final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.sampledCounterManager
         .createCounter(sampledRateCounterConfig);
-    SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager.createCounter(sampledCounterConfig);
+    final SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager
+        .createCounter(sampledCounterConfig);
 
-    DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter, globalObjectFaultCounter,
-                                                                    globalTxnCounter, objMgrStats, broadcastCounter,
-                                                                    l2FaultFromDisk, time2FaultFromDisk,
-                                                                    time2Add2ObjMgr, globalLockRecallCounter,
-                                                                    changesPerBroadcast, transactionSizeCounter,
-                                                                    globalLockCount);
+    final DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
+                                                                          globalObjectFaultCounter, globalTxnCounter,
+                                                                          objMgrStats, broadcastCounter,
+                                                                          l2FaultFromDisk, time2FaultFromDisk,
+                                                                          time2Add2ObjMgr, globalLockRecallCounter,
+                                                                          changesPerBroadcast, transactionSizeCounter,
+                                                                          globalLockCount);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
-    ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator, transactionStore,
-                                                                                 transactionStorePTP,
-                                                                                 gidSequenceProvider,
-                                                                                 globalTransactionIDSequence);
+    final ServerGlobalTransactionManager gtxm = new ServerGlobalTransactionManagerImpl(sequenceValidator,
+                                                                                       transactionStore,
+                                                                                       transactionStorePTP,
+                                                                                       gidSequenceProvider,
+                                                                                       globalTransactionIDSequence);
 
-    TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
-    ServerTransactionSequencerImpl serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
+    final TransactionalStagesCoordinatorImpl txnStageCoordinator = new TransactionalStagesCoordinatorImpl(stageManager);
+    final ServerTransactionSequencerImpl serverTransactionSequencerImpl = new ServerTransactionSequencerImpl();
     this.txnObjectManager = new TransactionalObjectManagerImpl(this.objectManager, serverTransactionSequencerImpl,
                                                                gtxm, txnStageCoordinator);
 
@@ -822,10 +846,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup.addCallbackOnExitDefaultHandler(txnMgrDumpAdapter);
     this.dumpHandler.registerForDump(txnMgrDumpAdapter);
 
-    ServerClusterMetaDataManager clusterMetaDataManager = new ServerClusterMetaDataManagerImpl(logger,
-                                                                                               this.clientStateManager,
-                                                                                               this.objectManager,
-                                                                                               channelManager);
+    final ServerClusterMetaDataManager clusterMetaDataManager = new ServerClusterMetaDataManagerImpl(
+                                                                                                     logger,
+                                                                                                     this.clientStateManager,
+                                                                                                     this.objectManager,
+                                                                                                     channelManager);
 
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOOKUP_STAGE, new TransactionLookupHandler(), 1,
                              maxStageSize);
@@ -840,41 +865,52 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     // Server initiated request processing stages should not be bounded
     stageManager.createStage(ServerConfigurationContext.RECALL_OBJECTS_STAGE, new RecallObjectsHandler(), 1, -1);
 
-    int commitThreads = (persistent ? this.l2Properties.getInt("seda.commitstage.threads") : 1);
+    final int commitThreads = (persistent ? this.l2Properties.getInt("seda.commitstage.threads") : 1);
     stageManager.createStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE,
                              new CommitTransactionChangeHandler(transactionStorePTP), commitThreads, maxStageSize);
 
     txnStageCoordinator.lookUpSinks();
 
-    Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
-                                               new ProcessTransactionHandler(transactionBatchManager), 1, maxStageSize);
+    final Stage processTx = stageManager.createStage(ServerConfigurationContext.PROCESS_TRANSACTION_STAGE,
+                                                     new ProcessTransactionHandler(transactionBatchManager), 1,
+                                                     maxStageSize);
 
-    Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
-                                                 new RequestRootHandler(), 1, maxStageSize);
+    final Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
+                                                       new RequestRootHandler(), 1, maxStageSize);
 
-    BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter,
-                                                                               this.objectStatsRecorder,
-                                                                               changesPerBroadcast);
+    final BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter,
+                                                                                     this.objectStatsRecorder,
+                                                                                     changesPerBroadcast);
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
                              maxStageSize);
-    Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
-                                                 new RequestLockUnLockHandler(), numCommWorkers, 1, maxStageSize);
-    ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
-                                                                                  transactionBatchManager,
-                                                                                  channelManager, this.haConfig);
+    final Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
+                                                       new RequestLockUnLockHandler(), numCommWorkers, 1, maxStageSize);
+    final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
+                                                                                        transactionBatchManager,
+                                                                                        channelManager, this.haConfig);
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
 
-    Stage objectRequestStage = stageManager.createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
-                                                        new ManagedObjectRequestHandler(globalObjectFaultCounter,
-                                                                                        globalObjectFlushCounter),
-                                                        this.l2Properties
-                                                            .getInt("seda.managedobjectrequeststage.threads"), 1,
-                                                        maxStageSize);
-    Stage respondToObjectRequestStage = stageManager
+    final Stage objectRequestStage = stageManager
+        .createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
+                     new ManagedObjectRequestHandler(globalObjectFaultCounter, globalObjectFlushCounter),
+                     this.l2Properties.getInt("seda.managedobjectrequeststage.threads"), 1, maxStageSize);
+    final Stage respondToObjectRequestStage = stageManager
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
                      this.l2Properties.getInt("seda.managedobjectresponsestage.threads"), maxStageSize);
+
+    final Stage serverMapRequestStage = stageManager.createStage(ServerConfigurationContext.SERVER_MAP_REQUEST_STAGE,
+                                                                 new ServerMapRequestHandler(), 8, maxStageSize);
+    final Stage respondToServerTCMapStage = stageManager
+        .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
+                     maxStageSize);
+
+    this.serverTCMapRequestManager = this.serverBuilder.createServerTCMapRequestManager(this.objectManager,
+                                                                                        channelManager,
+                                                                                        respondToServerTCMapStage
+                                                                                            .getSink(),
+                                                                                        objectRequestStage.getSink());
 
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,
@@ -884,19 +920,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               this.objectStatsRecorder, toInit,
                                                                               stageManager, maxStageSize, this);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.objectRequestManager));
-    Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
-                                                new RequestObjectIDBatchHandler(this.objectStore), 1, maxStageSize);
-    Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
-                                                    new TransactionAcknowledgementHandler(), 1, maxStageSize);
-    Stage clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
-                                                     new ClientHandshakeHandler(), 1, maxStageSize);
+    final Stage oidRequest = stageManager.createStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE,
+                                                      new RequestObjectIDBatchHandler(this.objectStore), 1,
+                                                      maxStageSize);
+    final Stage transactionAck = stageManager.createStage(ServerConfigurationContext.TRANSACTION_ACKNOWLEDGEMENT_STAGE,
+                                                          new TransactionAcknowledgementHandler(), 1, maxStageSize);
+    final Stage clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
+                                                           new ClientHandshakeHandler(), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, new HydrateHandler(),
                                                  numCommWorkers, 1, maxStageSize);
     final Stage txnLwmStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE,
                                                        new TransactionLowWaterMarkHandler(gtxm), 1, maxStageSize);
 
-    Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
-                                                    new JMXEventsHandler(appEvents), 1, maxStageSize);
+    final Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
+                                                          new JMXEventsHandler(appEvents), 1, maxStageSize);
 
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
                                                                  new ClientConnectEventHandler(this.statisticsGateway),
@@ -914,57 +951,59 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createStage(ServerConfigurationContext.CLIENT_LOCK_STATISTICS_RESPOND_STAGE,
                      new ClientLockStatisticsHandler(lockStatsManager), 1, 1);
 
-    Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
-                                                          new ServerClusterMetaDataHandler(), 1, maxStageSize);
+    final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
+                                                                new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
     initClassMappings();
     initRouteMessages(processTx, rootRequest, requestLock, objectRequestStage, oidRequest, transactionAck,
                       clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
-                      clientLockStatisticsRespondStage, clusterMetaDataStage);
+                      clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage);
 
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.clientReconnectWindow());
     long reconnectTimeout = l2DSOConfig.clientReconnectWindow().getInt();
     logger.debug("Client Reconnect Window: " + reconnectTimeout + " seconds");
     reconnectTimeout *= 1000;
-    ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
-                                                                                           TCLogging
-                                                                                               .getLogger(ServerClientHandshakeManager.class),
-                                                                                           channelManager,
-                                                                                           this.transactionManager,
-                                                                                           transactionBatchManager,
-                                                                                           sequenceValidator,
-                                                                                           this.clientStateManager,
-                                                                                           this.lockManager,
-                                                                                           stageManager
-                                                                                               .getStage(
-                                                                                                         ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
-                                                                                               .getSink(),
-                                                                                           stageManager
-                                                                                               .getStage(
-                                                                                                         ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
-                                                                                               .getSink(),
-                                                                                           new Timer("Reconnect timer",
-                                                                                                     true),
-                                                                                           reconnectTimeout,
-                                                                                           persistent, consoleLogger);
+    final ServerClientHandshakeManager clientHandshakeManager = new ServerClientHandshakeManager(
+                                                                                                 TCLogging
+                                                                                                     .getLogger(ServerClientHandshakeManager.class),
+                                                                                                 channelManager,
+                                                                                                 this.transactionManager,
+                                                                                                 transactionBatchManager,
+                                                                                                 sequenceValidator,
+                                                                                                 this.clientStateManager,
+                                                                                                 this.lockManager,
+                                                                                                 stageManager
+                                                                                                     .getStage(
+                                                                                                               ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
+                                                                                                     .getSink(),
+                                                                                                 stageManager
+                                                                                                     .getStage(
+                                                                                                               ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
+                                                                                                     .getSink(),
+                                                                                                 new Timer(
+                                                                                                           "Reconnect timer",
+                                                                                                           true),
+                                                                                                 reconnectTimeout,
+                                                                                                 persistent,
+                                                                                                 consoleLogger);
 
-    boolean networkedHA = this.haConfig.isNetworkedActivePassive();
+    final boolean networkedHA = this.haConfig.isNetworkedActivePassive();
     this.groupCommManager = this.serverBuilder.createGroupCommManager(networkedHA, this.configSetupManager,
                                                                       stageManager, this.thisServerNodeID,
-                                                                      this.httpSink, stripeIDStateManager, gtxm);
+                                                                      this.httpSink, this.stripeIDStateManager, gtxm);
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.groupCommManager));
     // initialize the garbage collector
-    GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig, this.objectManager,
-                                                                    this.clientStateManager, stageManager,
-                                                                    maxStageSize, gcPublisher, this.objectManager,
-                                                                    this.clientStateManager,
-                                                                    getGcStatsEventPublisher(),
-                                                                    getStatisticsAgentSubSystem());
+    final GarbageCollector gc = this.serverBuilder.createGarbageCollector(toInit, objectManagerConfig,
+                                                                          this.objectManager, this.clientStateManager,
+                                                                          stageManager, maxStageSize, gcPublisher,
+                                                                          this.objectManager, this.clientStateManager,
+                                                                          getGcStatsEventPublisher(),
+                                                                          getStatisticsAgentSubSystem());
     gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     this.objectManager.setGarbageCollector(gc);
     if (objectManagerConfig.startGCThread()) {
-      StoppableThread st = new GarbageCollectorThread(this.threadGroup, "DGC-Thread", gc, objectManagerConfig);
+      final StoppableThread st = new GarbageCollectorThread(this.threadGroup, "DGC-Thread", gc, objectManagerConfig);
       st.setDaemon(true);
       gc.setState(st);
     }
@@ -979,18 +1018,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // TODO: currently making all with L2hacoordinator which should probably the case after this feature
     if (networkedHA) {
-      WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
-                                                                                                 channelManager,
-                                                                                                 transactionBatchManager,
-                                                                                                 this.transactionManager,
-                                                                                                 host, serverPort);
+      final WeightGeneratorFactory weightGeneratorFactory = new ZapNodeProcessorWeightGeneratorFactory(
+                                                                                                       channelManager,
+                                                                                                       transactionBatchManager,
+                                                                                                       this.transactionManager,
+                                                                                                       host, serverPort);
       logger.info("L2 Networked HA Enabled ");
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                     this.groupCommManager, this.persistor
                                                                         .getPersistentStateStore(), this.objectManager,
                                                                     this.transactionManager, gtxm,
                                                                     weightGeneratorFactory, this.configSetupManager
-                                                                        .haConfig(), recycler, stripeIDStateManager);
+                                                                        .haConfig(), recycler,
+                                                                    this.stripeIDStateManager);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -999,9 +1039,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.l2Coordinator));
     this.context = this.serverBuilder.createServerConfigurationContext(stageManager, this.objectManager,
-                                                                       this.objectRequestManager, this.objectStore,
-                                                                       this.lockManager, channelManager,
-                                                                       this.clientStateManager,
+                                                                       this.objectRequestManager,
+                                                                       this.serverTCMapRequestManager,
+                                                                       this.objectStore, this.lockManager,
+                                                                       channelManager, this.clientStateManager,
                                                                        this.transactionManager, this.txnObjectManager,
                                                                        channelStats, this.l2Coordinator,
                                                                        transactionBatchManager, gtxm,
@@ -1025,7 +1066,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
 
-    ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(objectManager, objectManager.getObjectStore());
+    final ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(this.objectManager, this.objectManager
+        .getObjectStore());
     // Start lock statistics manager.
     lockStatsManager.start(channelManager, serverStats, objStatsManager);
     if (lockStatsManager.isLockStatisticsEnabled()) {
@@ -1034,7 +1076,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       L2LockStatsManager.UNSYNCHRONIZED_LOCK_STATS_MANAGER.start(channelManager, serverStats, objStatsManager);
     }
 
-    CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
+    final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
     this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 
     startGroupManagers();
@@ -1048,9 +1090,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public void startGroupManagers() {
     try {
+
       NodeID myNodeId = this.groupCommManager.join(this.haConfig.getThisNode(), this.haConfig.getNodesStore());
       logger.info("This L2 Node ID = " + myNodeId);
-    } catch (GroupException e) {
+    } catch (final GroupException e) {
       logger.error("Caught Exception :", e);
       throw new RuntimeException(e);
     }
@@ -1065,8 +1108,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                    final Stage objectRequestStage, final Stage oidRequest, final Stage transactionAck,
                                    final Stage clientHandshake, final Stage txnLwmStage, final Stage jmxEventsStage,
                                    final Stage jmxRemoteTunnelStage, final Stage clientLockStatisticsRespondStage,
-                                   final Stage clusterMetaDataStage) {
-    Sink hydrateSink = this.hydrateStage.getSink();
+                                   final Stage clusterMetaDataStage, final Stage serverMapRequestStage) {
+    final Sink hydrateSink = this.hydrateStage.getSink();
     this.l1Listener.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.REQUEST_ROOT_MESSAGE, rootRequest.getSink(), hydrateSink);
@@ -1090,6 +1133,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1Listener.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE, serverMapRequestStage
+        .getSink(), hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.GET_SIZE_SERVER_MAP_REQUEST_MESSAGE,
+                                     serverMapRequestStage.getSink(), hydrateSink);
 
   }
 
@@ -1137,6 +1184,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                     NodeMetaDataResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
                                     SyncWriteTransactionReceivedMessage.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_SIZE_SERVER_MAP_REQUEST_MESSAGE,
+                                    GetSizeServerMapRequestMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
+                                    GetSizeServerMapResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
+                                    GetValueServerMapRequestMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
+                                    GetValueServerMapResponseMessageImpl.class);
   }
 
   protected TCLogger getLogger() {
@@ -1144,8 +1199,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
-    String nodeName = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt()).getServerNodeName();
-    ServerID aNodeID = new ServerID(nodeName, UUID.getUUID().toString().getBytes());
+    final String nodeName = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt())
+        .getServerNodeName();
+    final ServerID aNodeID = new ServerID(nodeName, UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
@@ -1180,7 +1236,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                    final ServerTransactionSequencerStats serverTransactionSequencerStats,
                                                    final SRABerkeleyDB sraBdb) {
     if (this.statisticsAgentSubSystem.isActive()) {
-      StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
+      final StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
       registry.registerActionInstance(new SRAMemoryUsage());
       registry.registerActionInstance(new SRASystemProperties());
@@ -1219,7 +1275,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public boolean startActiveMode() throws IOException {
     this.transactionManager.goToActiveMode();
-    Set existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
+    final Set existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
     consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
@@ -1228,7 +1284,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private static String format(final NetworkListener listener) {
-    StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
+    final StringBuilder sb = new StringBuilder(listener.getBindAddress().getHostAddress());
     sb.append(':');
     sb.append(listener.getBindPort());
     return sb.toString();
@@ -1244,7 +1300,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public void startBeanShell(final int port) {
     try {
-      Interpreter i = new Interpreter();
+      final Interpreter i = new Interpreter();
       i.set("dsoServer", this);
       i.set("objectManager", this.objectManager);
       i.set("txnObjectManager", this.txnObjectManager);
@@ -1252,7 +1308,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       i.eval("setAccessibility(true)"); // turn off access restrictions
       i.eval("server(portnum)");
       consoleLogger.info("Bean shell is started on port " + port);
-    } catch (EvalError e) {
+    } catch (final EvalError e) {
       e.printStackTrace();
     }
   }
@@ -1262,13 +1318,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
    * config value unless the special value 0 is specified for use in the tests to get a random port.
    */
   public int getListenPort() {
-    NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    int configValue = l2DSOConfig.listenPort().getInt();
+    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final int configValue = l2DSOConfig.listenPort().getInt();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {
         return this.l1Listener.getBindPort();
-      } catch (IllegalStateException ise) {/**/
+      } catch (final IllegalStateException ise) {/**/
       }
     }
     return -1;
@@ -1279,8 +1335,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public int getGroupPort() {
-    NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    int configValue = l2DSOConfig.l2GroupPort().getInt();
+    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final int configValue = l2DSOConfig.l2GroupPort().getInt();
     if (configValue != 0) { return configValue; }
     return -1;
   }
@@ -1288,13 +1344,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public synchronized void stop() {
     try {
       this.statisticsAgentSubSystem.cleanup();
-    } catch (Throwable e) {
+    } catch (final Throwable e) {
       logger.warn(e);
     }
 
     try {
       this.statisticsGateway.cleanup();
-    } catch (Throwable e) {
+    } catch (final Throwable e) {
       logger.warn(e);
     }
 
@@ -1303,7 +1359,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (this.l1Listener != null) {
       try {
         this.l1Listener.stop(5000);
-      } catch (TCTimeoutException e) {
+      } catch (final TCTimeoutException e) {
         logger.warn("timeout trying to stop listener: " + e.getMessage());
       }
     }
@@ -1315,34 +1371,34 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (this.objectManager != null) {
       try {
         this.objectManager.stop();
-      } catch (Throwable e) {
+      } catch (final Throwable e) {
         logger.error(e);
       }
     }
 
     try {
       this.objectStore.shutdown();
-    } catch (Throwable e) {
+    } catch (final Throwable e) {
       logger.warn(e);
     }
 
     try {
       this.persistor.close();
-    } catch (DBException e) {
+    } catch (final DBException e) {
       logger.warn(e);
     }
 
     if (this.sampledCounterManager != null) {
       try {
         this.sampledCounterManager.shutdown();
-      } catch (Exception e) {
+      } catch (final Exception e) {
         logger.error(e);
       }
     }
 
     try {
       stopJMXServer();
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       logger.error("Error shutting down jmx server", t);
     }
 
@@ -1352,7 +1408,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public void quickStop() {
     try {
       stopJMXServer();
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       logger.error("Error shutting down jmx server", t);
     }
 

@@ -3,7 +3,8 @@
  */
 package com.tc.object;
 
-enum LookupState {
+
+enum LookupState implements LookupStateTransition {
 
   UNINITALIZED {
 

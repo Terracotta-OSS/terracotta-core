@@ -10,10 +10,10 @@ import com.tc.util.Assert;
 import java.io.IOException;
 
 public class StringLockID implements LockID {
-  private static final long serialVersionUID = 0x159578a476cef87dL;
-  
+  private static final long        serialVersionUID = 0x159578a476cef87dL;
+
   @Deprecated
-  public final static StringLockID NULL_ID = new StringLockID("null id");
+  public final static StringLockID NULL_ID          = new StringLockID("null id");
 
   private String                   id;
 
@@ -26,41 +26,44 @@ public class StringLockID implements LockID {
    * 
    * @param id ID value
    */
-  public StringLockID(String id) {
+  public StringLockID(final String id) {
     Assert.eval(id != null);
     this.id = id;
   }
-  
+
   /**
    * @return String value of id value
    */
   public String asString() {
-    return id;
+    return this.id;
   }
 
+  @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + id + ")";
+    return getClass().getSimpleName() + "(" + this.id + ")";
   }
 
+  @Override
   public int hashCode() {
-    return id.hashCode();
+    return this.id.hashCode();
   }
 
-  public boolean equals(Object obj) {
+  @Override
+  public boolean equals(final Object obj) {
     if (obj instanceof StringLockID) {
-      StringLockID lid = (StringLockID) obj;
+      final StringLockID lid = (StringLockID) obj;
       return this.id.equals(lid.id);
     }
     return false;
   }
 
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readString();
     return this;
   }
 
-  public void serializeTo(TCByteBufferOutput serialOutput) {
-    serialOutput.writeString(id);
+  public void serializeTo(final TCByteBufferOutput serialOutput) {
+    serialOutput.writeString(this.id);
   }
 
   public LockIDType getLockType() {

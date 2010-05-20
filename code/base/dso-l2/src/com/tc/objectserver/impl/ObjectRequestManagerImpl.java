@@ -74,9 +74,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
   private final ObjectStatsRecorder objectStatsRecorder;
 
-  public ObjectRequestManagerImpl(ObjectManager objectManager, DSOChannelManager channelManager,
-                                  ClientStateManager stateManager, Sink objectRequestSink,
-                                  Sink respondObjectRequestSink, ObjectStatsRecorder objectStatsRecorder) {
+  public ObjectRequestManagerImpl(final ObjectManager objectManager, final DSOChannelManager channelManager,
+                                  final ClientStateManager stateManager, final Sink objectRequestSink,
+                                  final Sink respondObjectRequestSink, final ObjectStatsRecorder objectStatsRecorder) {
     this.objectManager = objectManager;
     this.channelManager = channelManager;
     this.stateManager = stateManager;
@@ -86,18 +86,19 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     this.objectStatsRecorder = objectStatsRecorder;
   }
 
-  public void requestObjects(ObjectRequestServerContext requestContext) {
+  public void requestObjects(final ObjectRequestServerContext requestContext) {
     splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(), requestContext
         .getRequestedObjectIDs(), requestContext.getRequestDepth(), requestContext.isServerInitiated(), requestContext
         .getRequestingThreadName());
   }
 
-  private void splitAndRequestObjects(ClientID clientID, ObjectRequestID requestID, SortedSet<ObjectID> ids,
-                                      int maxRequestDepth, boolean serverInitiated, String requestingThreadName) {
+  private void splitAndRequestObjects(final ClientID clientID, final ObjectRequestID requestID,
+                                      final SortedSet<ObjectID> ids, final int maxRequestDepth,
+                                      final boolean serverInitiated, final String requestingThreadName) {
 
     ObjectIDSet split = new ObjectIDSet();
-    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      ObjectID id = iter.next();
+    for (final Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
+      final ObjectID id = iter.next();
       split.add(id);
       if (split.size() >= SPLIT_SIZE || !iter.hasNext()) {
         basicRequestObjects(clientID, requestID, serverInitiated, requestingThreadName,
@@ -108,8 +109,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
   }
 
-  private void basicRequestObjects(ClientID clientID, ObjectRequestID requestID, boolean serverInitiated,
-                                   String requestingThreadName, RequestedObject requestedObject) {
+  private void basicRequestObjects(final ClientID clientID, final ObjectRequestID requestID,
+                                   final boolean serverInitiated, final String requestingThreadName,
+                                   final RequestedObject requestedObject) {
 
     LookupContext lookupContext = null;
 
@@ -125,15 +127,15 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
   }
 
-  public void sendObjects(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                          ObjectIDSet missingObjectIDs, boolean isServerInitiated, int maxRequestDepth) {
+  public void sendObjects(final ClientID requestedNodeID, final Collection objs, final ObjectIDSet requestedObjectIDs,
+                          final ObjectIDSet missingObjectIDs, final boolean isServerInitiated, final int maxRequestDepth) {
 
     // Create ordered list of objects
-    LinkedList objectsInOrder = new LinkedList();
-    Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
-    for (Iterator i = objs.iterator(); i.hasNext();) {
-      ManagedObject mo = (ManagedObject) i.next();
-      ObjectID id = mo.getID();
+    final LinkedList objectsInOrder = new LinkedList();
+    final Set ids = new HashSet(Math.max((int) (objs.size() / .75f) + 1, 16));
+    for (final Iterator i = objs.iterator(); i.hasNext();) {
+      final ManagedObject mo = (ManagedObject) i.next();
+      final ObjectID id = mo.getID();
       ids.add(id);
       if (requestedObjectIDs.contains(id)) {
         objectsInOrder.addLast(mo);
@@ -144,40 +146,40 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     // Create map of clients and objects to be sent
     Set<ClientID> clientList = null;
-    long batchID = this.batchIDSequence.next();
-    RequestedObject reqObj = new RequestedObject(requestedObjectIDs, maxRequestDepth);
+    final long batchID = this.batchIDSequence.next();
+    final RequestedObject reqObj = new RequestedObject(requestedObjectIDs, maxRequestDepth);
     synchronized (this) {
       clientList = this.objectRequestCache.remove(reqObj);
     }
 
-    Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();
-    Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();
+    final Map<ClientID, Set<ObjectID>> clientNewIDsMap = new HashMap<ClientID, Set<ObjectID>>();
+    final Map<ClientID, BatchAndSend> messageMap = new HashMap<ClientID, BatchAndSend>();
 
-    for (Object element : clientList) {
-      ClientID clientID = (ClientID) element;
+    for (final Object element : clientList) {
+      final ClientID clientID = (ClientID) element;
       try {
         // make batch and send object for each client.
-        MessageChannel channel = this.channelManager.getActiveChannel(clientID);
+        final MessageChannel channel = this.channelManager.getActiveChannel(clientID);
         messageMap.put(clientID, new BatchAndSend(channel, batchID));
         // get set of objects which are not present in the client out of the returned ones
-        Set newIds = this.stateManager.addReferences(clientID, ids);
+        final Set newIds = this.stateManager.addReferences(clientID, ids);
         clientNewIDsMap.put(clientID, newIds);
-      } catch (NoSuchChannelException e) {
+      } catch (final NoSuchChannelException e) {
         logger.warn("Not sending objects to client " + clientID + ": " + e);
       }
     }
 
     // send objects to each client
     if (!messageMap.isEmpty()) {
-      boolean requestDebug = this.objectStatsRecorder.getRequestDebug();
+      final boolean requestDebug = this.objectStatsRecorder.getRequestDebug();
 
-      for (Entry<ClientID, Set<ObjectID>> entry : clientNewIDsMap.entrySet()) {
-        ClientID clientID = entry.getKey();
-        Set newIDs = entry.getValue();
-        BatchAndSend batchAndSend = messageMap.get(clientID);
+      for (final Entry<ClientID, Set<ObjectID>> entry : clientNewIDsMap.entrySet()) {
+        final ClientID clientID = entry.getKey();
+        final Set newIDs = entry.getValue();
+        final BatchAndSend batchAndSend = messageMap.get(clientID);
 
-        for (Iterator iter = objectsInOrder.iterator(); iter.hasNext();) {
-          ManagedObject mo = (ManagedObject) iter.next();
+        for (final Iterator iter = objectsInOrder.iterator(); iter.hasNext();) {
+          final ManagedObject mo = (ManagedObject) iter.next();
           if (newIDs.contains(mo.getID())) {
             batchAndSend.sendObject(mo);
             if (requestDebug) {
@@ -198,16 +200,16 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
           logger.warn("Server Initiated lookup = " + isServerInitiated + ". Ignoring Missing Objects : "
                       + missingObjectIDs);
         } else {
-          for (Entry<ClientID, BatchAndSend> entry : messageMap.entrySet()) {
-            ClientID clientID = entry.getKey();
-            BatchAndSend batchAndSend = entry.getValue();
+          for (final Entry<ClientID, BatchAndSend> entry : messageMap.entrySet()) {
+            final ClientID clientID = entry.getKey();
+            final BatchAndSend batchAndSend = entry.getValue();
             logger.warn("Sending missing ids: " + missingObjectIDs.size() + " , to client: " + clientID);
             batchAndSend.sendMissingObjects(missingObjectIDs);
           }
         }
       }
 
-      for (BatchAndSend batchAndSend : messageMap.values()) {
+      for (final BatchAndSend batchAndSend : messageMap.values()) {
         batchAndSend.flush();
       }
     } else {
@@ -224,7 +226,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     return this.objectRequestCache.clientSize();
   }
 
-  private void updateStats(ManagedObject mo) {
+  private void updateStats(final ManagedObject mo) {
     String className = mo.getManagedObjectState().getClassName();
     if (className == null) {
       className = "UNKNOWN";
@@ -246,7 +248,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     private final int         depth;
     private final int         hashCode;
 
-    RequestedObject(ObjectIDSet oidSet, int depth) {
+    RequestedObject(final ObjectIDSet oidSet, final int depth) {
       this.oidSet = oidSet;
       this.depth = depth;
       this.hashCode = oidSet.hashCode();
@@ -261,9 +263,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
       if (!(obj instanceof RequestedObject)) { return false; }
-      RequestedObject reqObj = (RequestedObject) obj;
+      final RequestedObject reqObj = (RequestedObject) obj;
       if (this.oidSet.equals(reqObj.getLookupIDSet()) && this.depth == reqObj.getMaxDepth()) { return true; }
       return false;
     }
@@ -289,14 +291,14 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     private int                                                 sameClientRequestCount;
 
-    public ObjectRequestCache(boolean verbose) {
+    public ObjectRequestCache(final boolean verbose) {
       this.verbose = verbose;
     }
 
     // for tests
     protected int numberOfRequestedObjects() {
       int val = 0;
-      for (Object element : this.objectRequestMap.keySet()) {
+      for (final Object element : this.objectRequestMap.keySet()) {
         val += ((RequestedObject) element).getLookupIDSet().size();
       }
       return val;
@@ -314,15 +316,15 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     // for tests
     protected Set<ClientID> clients() {
-      Set<ClientID> clients = new LinkedHashSet<ClientID>();
-      for (LinkedHashSet<ClientID> linkedHashSet : this.objectRequestMap.values()) {
+      final Set<ClientID> clients = new LinkedHashSet<ClientID>();
+      for (final LinkedHashSet<ClientID> linkedHashSet : this.objectRequestMap.values()) {
         clients.addAll(linkedHashSet);
       }
       return clients;
     }
 
     // TODO: put multiple clients, and single client request, print every 100 request
-    public boolean add(RequestedObject reqObjects, ClientID clientID) {
+    public boolean add(final RequestedObject reqObjects, final ClientID clientID) {
       // check already been requested.
 
       LinkedHashSet<ClientID> clientList = this.objectRequestMap.get(reqObjects);
@@ -352,15 +354,15 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       }
     }
 
-    public boolean contains(RequestedObject reqObj) {
+    public boolean contains(final RequestedObject reqObj) {
       return this.objectRequestMap.containsKey(reqObj);
     }
 
-    public Set<ClientID> getClientsForRequest(RequestedObject reqObj) {
+    public Set<ClientID> getClientsForRequest(final RequestedObject reqObj) {
       return this.objectRequestMap.get(reqObj);
     }
 
-    public Set<ClientID> remove(RequestedObject reqObj) {
+    public Set<ClientID> remove(final RequestedObject reqObj) {
       return this.objectRequestMap.remove(reqObj);
     }
 
@@ -392,16 +394,16 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     private ObjectStringSerializer   serializer = new ObjectStringSerializer();
     private TCByteBufferOutputStream out        = new TCByteBufferOutputStream();
 
-    public BatchAndSend(MessageChannel channel, long batchID) {
+    public BatchAndSend(final MessageChannel channel, final long batchID) {
       this.channel = channel;
       this.batchID = batchID;
     }
 
-    public void sendObject(ManagedObject m) {
+    public void sendObject(final ManagedObject m) {
       m.toDNA(this.out, this.serializer);
       this.sendCount++;
       if (this.sendCount > 1000) {
-        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
+        final RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
             .createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE);
         responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, this.batches++);
         responseMessage.send();
@@ -413,7 +415,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     public void flush() {
       if (this.sendCount > 0) {
-        RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
+        final RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
             .createMessage(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE);
         responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, 0);
         responseMessage.send();
@@ -423,10 +425,10 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       }
     }
 
-    public void sendMissingObjects(Set missingObjectIDs) {
+    public void sendMissingObjects(final Set missingObjectIDs) {
 
       if (missingObjectIDs.size() > 0) {
-        ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) this.channel
+        final ObjectsNotFoundMessage notFound = (ObjectsNotFoundMessage) this.channel
             .createMessage(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE);
         notFound.initialize(missingObjectIDs, this.batchID);
         notFound.send();
@@ -465,9 +467,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     private ObjectIDSet           missingObjects;
     private Map                   objects;
 
-    public LookupContext(ClientID clientID, ObjectRequestID requestID, ObjectIDSet lookupIDs, int maxRequestDepth,
-                         String requestingThreadName, boolean serverInitiated, Sink objectRequestSink,
-                         Sink respondObjectRequestSink) {
+    public LookupContext(final ClientID clientID, final ObjectRequestID requestID, final ObjectIDSet lookupIDs,
+                         final int maxRequestDepth, final String requestingThreadName, final boolean serverInitiated,
+                         final Sink objectRequestSink, final Sink respondObjectRequestSink) {
       this.clientID = clientID;
       this.requestID = requestID;
       this.lookupIDs = lookupIDs;
@@ -487,7 +489,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       return new ObjectIDSet();
     }
 
-    public void setResults(ObjectManagerLookupResults results) {
+    public void setResults(final ObjectManagerLookupResults results) {
       this.objects = results.getObjects();
       this.missingObjects = results.getMissingObjectIDs();
 
@@ -499,9 +501,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
         this.objectRequestSink.add(new ObjectRequestServerContextImpl(this.clientID, this.requestID, results
             .getLookupPendingObjectIDs(), this.requestingThreadName, -1, true));
       }
-      ResponseContext responseContext = new ResponseContext(this.clientID, this.objects.values(), this.lookupIDs,
-                                                            this.missingObjects, this.serverInitiated,
-                                                            this.maxRequestDepth);
+      final ResponseContext responseContext = new ResponseContext(this.clientID, this.objects.values(), this.lookupIDs,
+                                                                  this.missingObjects, this.serverInitiated,
+                                                                  this.maxRequestDepth);
       this.respondObjectRequestSink.add(responseContext);
       if (logger.isDebugEnabled()) {
         logger.debug("Adding to respondSink , clientID = " + this.clientID + " , requestID = " + this.requestID + " "
@@ -553,8 +555,8 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     private final boolean     serverInitiated;
     private final int         maxRequestDepth;
 
-    public ResponseContext(ClientID requestedNodeID, Collection objs, ObjectIDSet requestedObjectIDs,
-                           ObjectIDSet missingObjectIDs, boolean serverInitiated, int maxDepth) {
+    public ResponseContext(final ClientID requestedNodeID, final Collection objs, final ObjectIDSet requestedObjectIDs,
+                           final ObjectIDSet missingObjectIDs, final boolean serverInitiated, final int maxDepth) {
       this.requestedNodeID = requestedNodeID;
       this.objs = objs;
       this.requestedObjectIDs = requestedObjectIDs;

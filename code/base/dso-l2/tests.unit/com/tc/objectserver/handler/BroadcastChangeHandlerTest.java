@@ -42,6 +42,7 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
@@ -276,6 +277,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     public Stage getStage(String name) {
       return new TestStage();
+    }
+
+    public ServerMapRequestManager getServerTCMapRequestManager() {
+      throw new ImplementMe();
     }
 
   }

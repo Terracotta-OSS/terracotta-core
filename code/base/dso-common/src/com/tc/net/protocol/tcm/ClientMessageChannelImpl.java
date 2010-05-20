@@ -36,8 +36,8 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   private final SessionProvider       sessionProvider;
   private volatile SessionID          channelSessionID = SessionID.NULL_ID;
 
-  protected ClientMessageChannelImpl(TCMessageFactory msgFactory, TCMessageRouter router,
-                                     SessionProvider sessionProvider, NodeID remoteNodeID) {
+  protected ClientMessageChannelImpl(final TCMessageFactory msgFactory, final TCMessageRouter router,
+                                     final SessionProvider sessionProvider, final NodeID remoteNodeID) {
     super(router, logger, msgFactory, remoteNodeID);
     this.msgFactory = msgFactory;
     this.cidProvider = new ChannelIDProviderImpl();
@@ -53,18 +53,22 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
     synchronized (status) {
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       ((MessageTransport) this.sendLayer).initConnectionID(new ConnectionID((((ClientID) getLocalNodeID()).toLong())));
-      NetworkStackID id = this.sendLayer.open();
+      final NetworkStackID id = this.sendLayer.open();
       channelOpened();
       this.channelID = new ChannelID(id.toLong());
       setLocalNodeID(new ClientID(id.toLong()));
       this.cidProvider.setChannelID(this.channelID);
-      this.channelSessionID = sessionProvider.getSessionID(getRemoteNodeID());
+      this.channelSessionID = this.sessionProvider.getSessionID(getRemoteNodeID());
       return id;
     }
   }
 
-  public void addClassMapping(TCMessageType type, Class msgClass) {
-    msgFactory.addClassMapping(type, msgClass);
+  public void addClassMapping(final TCMessageType type, final Class msgClass) {
+    this.msgFactory.addClassMapping(type, msgClass);
+  }
+
+  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
+    this.msgFactory.addClassMapping(type, messageFactory);
   }
 
   public ChannelID getChannelID() {
@@ -79,7 +83,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   public int getConnectCount() {
-    return connectCount;
+    return this.connectCount;
   }
 
   public int getConnectAttemptCount() {
@@ -91,48 +95,48 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
    */
   @Override
   public void send(final TCNetworkMessage message) {
-    if (channelSessionID == ((DSOMessageBase) message).getLocalSessionID()) {
+    if (this.channelSessionID == ((DSOMessageBase) message).getLocalSessionID()) {
       super.send(message);
     } else {
-      logger.info("Drop old message: " + ((DSOMessageBase) message).getMessageType() + " Expected " + channelSessionID
-                  + " but got " + ((DSOMessageBase) message).getLocalSessionID());
+      logger.info("Drop old message: " + ((DSOMessageBase) message).getMessageType() + " Expected "
+                  + this.channelSessionID + " but got " + ((DSOMessageBase) message).getLocalSessionID());
     }
   }
 
   @Override
-  public void notifyTransportConnected(MessageTransport transport) {
+  public void notifyTransportConnected(final MessageTransport transport) {
     super.notifyTransportConnected(transport);
-    connectCount++;
+    this.connectCount++;
   }
 
   @Override
-  public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
+  public void notifyTransportDisconnected(final MessageTransport transport, final boolean forcedDisconnect) {
     // Move channel to new session
-    channelSessionID = sessionProvider.nextSessionID(getRemoteNodeID());
-    logger.info("ClientMessageChannel moves to " + channelSessionID);
-    this.fireTransportDisconnectedEvent();
+    this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
+    logger.info("ClientMessageChannel moves to " + this.channelSessionID);
+    fireTransportDisconnectedEvent();
   }
 
   @Override
-  public void notifyTransportConnectAttempt(MessageTransport transport) {
+  public void notifyTransportConnectAttempt(final MessageTransport transport) {
     super.notifyTransportConnectAttempt(transport);
-    connectAttemptCount++;
+    this.connectAttemptCount++;
   }
 
   @Override
-  public void notifyTransportClosed(MessageTransport transport) {
+  public void notifyTransportClosed(final MessageTransport transport) {
     //
   }
 
   public ChannelIDProvider getChannelIDProvider() {
-    return cidProvider;
+    return this.cidProvider;
   }
 
   private static class ChannelIDProviderImpl implements ChannelIDProvider {
 
     private ChannelID channelID = ChannelID.NULL_ID;
 
-    private synchronized void setChannelID(ChannelID channelID) {
+    private synchronized void setChannelID(final ChannelID channelID) {
       this.channelID = channelID;
     }
 
@@ -144,7 +148,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
 
   // for testing purpose
   protected SessionID getSessionID() {
-    return channelSessionID;
+    return this.channelSessionID;
   }
 
 }

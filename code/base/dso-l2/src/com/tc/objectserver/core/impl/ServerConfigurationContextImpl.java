@@ -11,6 +11,7 @@ import com.tc.object.net.ChannelStats;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
+import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -32,6 +33,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
 
   private final ObjectManager                  objectManager;
   private final ObjectRequestManager           objectRequestManager;
+  private final ServerMapRequestManager      serverTCMapRequestManager;
   private final LockManager                    lockManager;
   private final DSOChannelManager              channelManager;
   private final ClientStateManager             clientStateManager;
@@ -47,7 +49,9 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ServerClusterMetaDataManager   serverClusterMetaDataManager;
 
   public ServerConfigurationContextImpl(final StageManager stageManager, final ObjectManager objectManager,
-                                        final ObjectRequestManager objectRequestManager, final ManagedObjectStore objectStore,
+                                        final ObjectRequestManager objectRequestManager, 
+                                        final ServerMapRequestManager serverTCMapRequestManager,
+                                        final ManagedObjectStore objectStore,
                                         final LockManager lockManager, final DSOChannelManager channelManager,
                                         final ClientStateManager clientStateManager,
                                         final ServerTransactionManager transactionManager,
@@ -61,6 +65,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
+    this.serverTCMapRequestManager = serverTCMapRequestManager;
     this.objectStore = objectStore;
     this.lockManager = lockManager;
     this.channelManager = channelManager;
@@ -86,6 +91,10 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
 
   public ObjectRequestManager getObjectRequestManager() {
     return objectRequestManager;
+  }
+
+  public ServerMapRequestManager getServerTCMapRequestManager() {
+    return serverTCMapRequestManager;
   }
 
   public LockManager getLockManager() {

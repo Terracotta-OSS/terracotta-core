@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
@@ -9,10 +10,12 @@ public interface ClientMessageChannel extends MessageChannel {
 
   public void addClassMapping(TCMessageType type, Class msgClass);
 
+  public void addClassMapping(TCMessageType type, GeneratedMessageFactory messageFactory);
+
   public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink);
 
   public void routeMessageType(TCMessageType type, TCMessageSink sink);
-  
+
   public void unrouteMessageType(TCMessageType type);
 
   public int getConnectCount();
@@ -20,5 +23,4 @@ public interface ClientMessageChannel extends MessageChannel {
   public int getConnectAttemptCount();
 
   public ChannelIDProvider getChannelIDProvider();
-  
 }

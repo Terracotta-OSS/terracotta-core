@@ -57,7 +57,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head == null;
   }
 
-  public void addFirst(E first) {
+  public void addFirst(final E first) {
     first.setNext(this.head);
     this.head = first;
     if (this.tail == null) {
@@ -67,7 +67,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
 
   public E removeFirst() {
     if (this.head == null) { throw new NoSuchElementException(); }
-    E first = this.head;
+    final E first = this.head;
     this.head = first.setNext(null);
     if (this.tail == first) {
       this.tail = null;
@@ -80,7 +80,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.head;
   }
 
-  public void addLast(E last) {
+  public void addLast(final E last) {
     if (this.tail == null) {
       addFirst(last);
       return;
@@ -110,33 +110,33 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
     return this.tail;
   }
 
-  public E remove(E obj) {
+  public E remove(final E obj) {
     E current = null;
-    E next = head;
-    
+    E next = this.head;
+
     while (next != null) {
-      E prev = current;
+      final E prev = current;
       current = next;
       next = next.getNext();
-      
+
       if (current == obj || obj.equals(current)) {
-        //remove
+        // remove
         if (prev == null) {
-          head = current.setNext(null);
+          this.head = current.setNext(null);
         } else {
           prev.setNext(current.setNext(null));
         }
         if (next == null) {
-          tail = prev;
+          this.tail = prev;
         }
-        
+
         return current;
       }
     }
-    
+
     return null;
   }
-  
+
   public SinglyLinkedListIterator<E> iterator() {
     return new ListIterator();
   }
@@ -168,7 +168,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       return this.current;
     }
 
-    public void addNext(E e) {
+    public void addNext(final E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.next);
       this.current.setNext(e);
@@ -178,7 +178,7 @@ public class SinglyLinkedList<E extends SinglyLinkedList.LinkedNode<E>> implemen
       this.next = e;
     }
 
-    public void addPrevious(E e) {
+    public void addPrevious(final E e) {
       if (this.current == null || this.current == this.prev) { throw new IllegalStateException(); }
       e.setNext(this.current);
       if (this.prev == null) {

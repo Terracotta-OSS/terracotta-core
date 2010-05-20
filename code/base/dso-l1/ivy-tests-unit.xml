@@ -4,6 +4,7 @@
   
   <dependencies defaultconf="default">
     <dependency name="ant-launcher" rev="1.7.1" org="org.apache.ant"/>
+    <dependency name="mockito-all" rev="1.8.2" org="org.mockito"/>  
   </dependencies>
   
 </ivy-module>

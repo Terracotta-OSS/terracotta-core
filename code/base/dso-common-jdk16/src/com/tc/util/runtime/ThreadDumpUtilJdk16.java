@@ -39,8 +39,8 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
           sb.append("\tat ");
           sb.append(stea[j].toString());
           sb.append('\n');
-          for (MonitorInfo monitorInfo : monitorInfos) {
-            StackTraceElement lockedFrame = monitorInfo.getLockedStackFrame();
+          for (final MonitorInfo monitorInfo : monitorInfos) {
+            final StackTraceElement lockedFrame = monitorInfo.getLockedStackFrame();
             if (lockedFrame != null && lockedFrame.equals(stea[j])) {
               sb.append("\t- locked <0x");
               sb.append(Integer.toHexString(monitorInfo.getIdentityHashCode()));
@@ -57,7 +57,7 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
         }
         sb.append('\n');
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       e.printStackTrace();
       sb.append(e.toString());
     }
@@ -105,16 +105,15 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
     sb.append('\n');
   }
 
-  private static String threadLockedSynchronizers(ThreadInfo threadInfo) {
+  private static String threadLockedSynchronizers(final ThreadInfo threadInfo) {
     final String NO_SYNCH_INFO = "no locked synchronizers information available\n";
     if (null == threadInfo) { return NO_SYNCH_INFO; }
     try {
-      LockInfo[] lockInfos = threadInfo.getLockedSynchronizers();
+      final LockInfo[] lockInfos = threadInfo.getLockedSynchronizers();
       if (lockInfos.length > 0) {
-        StringBuffer lockedSynchBuff = new StringBuffer();
+        final StringBuffer lockedSynchBuff = new StringBuffer();
         lockedSynchBuff.append("\nLocked Synchronizers: \n");
-        for (int i = 0; i < lockInfos.length; i++) {
-          LockInfo lockInfo = lockInfos[i];
+        for (final LockInfo lockInfo : lockInfos) {
           lockedSynchBuff.append(lockInfo.getClassName()).append(" <").append(lockInfo.getIdentityHashCode())
               .append("> \n");
         }
@@ -122,12 +121,12 @@ public class ThreadDumpUtilJdk16 extends ThreadDumpUtil {
       } else {
         return "";
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       return NO_SYNCH_INFO;
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     System.out.println(getThreadDump());
   }
 

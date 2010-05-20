@@ -10,6 +10,7 @@ import com.tc.net.protocol.TestClientMessageChannel;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.MockMessageChannel;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageType;
@@ -29,6 +30,8 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
+import com.tc.object.msg.ServerMapMessageFactory;
+import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.session.SessionID;
 
 public class MockChannel implements DSOClientMessageChannel {
@@ -113,7 +116,7 @@ public class MockChannel implements DSOClientMessageChannel {
   public GroupID[]                               groups      = new GroupID[] { new GroupID(0) };
 
   public CompletedTransactionLowWaterMarkMessageFactory getCompletedTransactionLowWaterMarkMessageFactory() {
-    return nullFactory;
+    return this.nullFactory;
   }
 
   private class NullCompletedTransactionLowWaterMarkMessageFactory implements
@@ -128,10 +131,22 @@ public class MockChannel implements DSOClientMessageChannel {
   }
 
   public GroupID[] getGroupIDs() {
-    return groups;
+    return this.groups;
   }
 
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory() {
+    throw new ImplementMe();
+  }
+
+  public ServerMapRequestMessage newServerTCMapRequestMessage(final NodeID nodeID) {
+    throw new ImplementMe();
+  }
+
+  public void addClassMapping(final TCMessageType messageType, final GeneratedMessageFactory generatedMessageFactory) {
+    throw new ImplementMe();
+  }
+
+  public ServerMapMessageFactory getServerMapMessageFactory() {
     throw new ImplementMe();
   }
 

@@ -138,14 +138,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.collector.stop();
 
     // flush the cache to stable persistence.
-    Set<ManagedObject> toFlush = new HashSet<ManagedObject>();
+    final Set<ManagedObject> toFlush = new HashSet<ManagedObject>();
     for (final ManagedObjectReference ref : this.references.values()) {
-      ManagedObject obj = ref.getObject();
+      final ManagedObject obj = ref.getObject();
       if (!obj.isNew()) {
         toFlush.add(obj);
       }
     }
-    PersistenceTransaction tx = newTransaction();
+    final PersistenceTransaction tx = newTransaction();
     flushAllAndCommit(tx, toFlush);
   }
 
@@ -160,8 +160,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     try {
 
-      StringBuffer rootBuff = new StringBuffer();
-      for (Iterator rootIter = getRootNames(); rootIter.hasNext();) {
+      final StringBuffer rootBuff = new StringBuffer();
+      for (final Iterator rootIter = getRootNames(); rootIter.hasNext();) {
         rootBuff.append(rootIter.next());
         if (rootIter.hasNext()) {
           rootBuff.append(",");
@@ -169,7 +169,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       out.indent().print("roots: " + rootBuff.toString()).println().flush();
 
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       logger.error("exception printing roots in ObjectManagerImpl", t);
     }
 
@@ -183,8 +183,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public boolean lookupObjectsAndSubObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext,
                                                final int maxReachableObjects) {
-    // maxReachableObjects is at least 1 so that addReachableObjectsIfNecessary does the right thing
-    return lookupObjectsForOptionallyCreate(nodeID, responseContext, maxReachableObjects <= 0 ? 1 : maxReachableObjects);
+    return lookupObjectsForOptionallyCreate(nodeID, responseContext, maxReachableObjects);
   }
 
   public boolean lookupObjectsFor(final NodeID nodeID, final ObjectManagerResultsContext responseContext) {
@@ -234,11 +233,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private ManagedObject lookup(final ObjectID id, final boolean missingOk, final boolean lookupNewObjects) {
     syncAssertNotInShutdown();
 
-    WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk, lookupNewObjects);
-    ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
+    final WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk, lookupNewObjects);
+    final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
     basicLookupObjectsFor(ClientID.NULL_ID, context, -1);
 
-    ManagedObject mo = waitContext.getLookedUpObject();
+    final ManagedObject mo = waitContext.getLookedUpObject();
     if (mo == null) {
       Assert.assertTrue(missingOk);
     }
@@ -280,7 +279,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       rv = initiateFaultingFor(id, context.removeOnRelease());
     } else if (rv instanceof FaultingManagedObjectReference) {
       // Check to see if the retrieve was complete and the Object is missing
-      FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
+      final FaultingManagedObjectReference fmr = (FaultingManagedObjectReference) rv;
       if (!fmr.isFaultingInProgress()) {
         this.references.remove(id);
         logger.warn("Request for non-existent object : " + id + " context = " + context);
@@ -310,7 +309,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private ManagedObjectReference initiateFaultingFor(final ObjectID id, final boolean removeOnRelease) {
     // Request Faulting in a different stage and give back a "Referenced" proxy
-    ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, removeOnRelease);
+    final ManagedObjectFaultingContext mofc = new ManagedObjectFaultingContext(id, removeOnRelease);
     this.faultSink.add(mofc);
 
     // don't account for a cache "miss" unless this was a real request
@@ -322,7 +321,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   public synchronized void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
     if (mo == null) {
       FaultingManagedObjectReference fmor;
-      ManagedObjectReference mor = this.references.get(oid);
+      final ManagedObjectReference mor = this.references.get(oid);
       if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
         // Format
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
@@ -331,7 +330,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       fmor.faultingFailed();
     } else {
       Assert.assertEquals(oid, mo.getID());
-      ManagedObjectReference mor = this.references.remove(oid);
+      final ManagedObjectReference mor = this.references.remove(oid);
       if (mor == null || !(mor instanceof FaultingManagedObjectReference) || !oid.equals(mor.getObjectID())) {
         // Format
         throw new AssertionError("ManagedObjectReference is not what was expected : " + mor + " oid : " + oid);
@@ -350,7 +349,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void preFetchObjects(final Set<ObjectID> oids) {
     for (final ObjectID id : oids) {
-      ManagedObjectReference rv = getReference(id);
+      final ManagedObjectReference rv = getReference(id);
       if (rv == null) {
         // This object is not in the cache, initiate faulting for the object
         if (++this.preFetchedCount % 1000 == 0) {
@@ -365,14 +364,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private ManagedObjectReference addNewReference(final ManagedObject obj, final boolean isRemoveOnRelease)
       throws AssertionError {
-    ManagedObjectReference newReference = obj.getReference();
+    final ManagedObjectReference newReference = obj.getReference();
     newReference.setRemoveOnRelease(isRemoveOnRelease);
 
     return addNewReference(newReference);
   }
 
   private ManagedObjectReference addNewReference(final ManagedObjectReference newReference) {
-    Object oldRef = this.references.put(newReference.getObjectID(), newReference);
+    final Object oldRef = this.references.put(newReference.getObjectID(), newReference);
     if (oldRef != null) { throw new AssertionError("Object was not null. Reference already present : old = " + oldRef
                                                    + " : new = " + newReference); }
     Assert.assertTrue(newReference.getNext() == null && newReference.getPrevious() == null);
@@ -388,12 +387,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     while (this.collector.isPausingOrPaused()) {
       try {
         this.wait();
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         logger.error(e);
       }
     }
     for (final Object cand : removalCandidates) {
-      ManagedObjectReference removalCandidate = (ManagedObjectReference) cand;
+      final ManagedObjectReference removalCandidate = (ManagedObjectReference) cand;
       // It is possible that before the cache evictor has a chance to mark the reference, the DGC could come and remove
       // the reference, hence we check in references map again
       if (removalCandidate != null && !removalCandidate.isReferenced() && !removalCandidate.isNew()
@@ -420,15 +419,15 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private void evicted(final Collection managedObjects) {
     synchronized (this) {
       this.checkedOutCount -= managedObjects.size();
-      for (Iterator i = managedObjects.iterator(); i.hasNext();) {
-        ManagedObject mo = (ManagedObject) i.next();
-        ObjectID oid = mo.getID();
-        Object o = this.references.remove(oid);
+      for (final Iterator i = managedObjects.iterator(); i.hasNext();) {
+        final ManagedObject mo = (ManagedObject) i.next();
+        final ObjectID oid = mo.getID();
+        final Object o = this.references.remove(oid);
         if (o == null) {
           logger.warn("Object ID : " + mo.getID()
                       + " was mapped to null but should have been mapped to a reference of  " + mo);
         } else {
-          ManagedObjectReference ref = (ManagedObjectReference) o;
+          final ManagedObjectReference ref = (ManagedObjectReference) o;
           if (isBlocked(oid)) {
             ref.unmarkReference();
             addNewReference(mo, ref.isRemoveOnRelease());
@@ -444,11 +443,11 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private synchronized boolean basicLookupObjectsFor(final NodeID nodeID, final ObjectManagerLookupContext context,
                                                      final int maxReachableObjects) {
-    Set<ManagedObjectReference> objects = createNewSet();
+    final Set<ManagedObjectReference> objects = createNewSet();
 
     final Set<ObjectID> newObjectIDs = context.getNewObjectIDs();
     boolean available = true;
-    Set<ObjectID> ids = context.getLookupIDs();
+    final Set<ObjectID> ids = context.getLookupIDs();
     for (final ObjectID id : ids) {
       if (context.isMissingObject(id)) {
         // If we already know the object is missing, don't initiate yet another lookup. this is to avoid repeated
@@ -459,7 +458,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // We don't check available flag before doing calling getOrLookupReference() for two reasons.
       // 1) To get the right hit/miss count and
       // 2) to Fault objects that are not available
-      ManagedObjectReference reference = getOrLookupReference(context, id);
+      final ManagedObjectReference reference = getOrLookupReference(context, id);
       if (reference == null) {
         continue;
       } else if (available && (reference.isReferenced() || (reference.isNew() && !newObjectIDs.contains(id)))) {
@@ -474,10 +473,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     if (available) {
-      ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
-      ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(processObjectsRequest(objects),
-                                                                              processLater, context
-                                                                                  .getMissingObjectIDs());
+      final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects);
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(processObjectsRequest(objects),
+                                                                                    processLater, context
+                                                                                        .getMissingObjectIDs());
       context.setResults(results);
     } else {
       context.makeOldRequest();
@@ -487,7 +486,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public synchronized void createNewObjects(final Set<ObjectID> newObjectIDs) {
     for (final ObjectID oid : newObjectIDs) {
-      ManagedObject mo = new ManagedObjectImpl(oid);
+      final ManagedObject mo = new ManagedObjectImpl(oid);
       createObject(mo);
     }
   }
@@ -495,12 +494,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private ObjectIDSet addReachableObjectsIfNecessary(final NodeID nodeID, final int maxReachableObjects,
                                                      final Set<ManagedObjectReference> objects) {
     if (maxReachableObjects <= 0) { return TCCollections.EMPTY_OBJECT_ID_SET; }
-    ManagedObjectTraverser traverser = new ManagedObjectTraverser(maxReachableObjects);
+    final ManagedObjectTraverser traverser = new ManagedObjectTraverser(maxReachableObjects);
     Set<ManagedObjectReference> lookedUpObjects = objects;
     do {
       traverser.traverse(lookedUpObjects);
       lookedUpObjects = new HashSet<ManagedObjectReference>();
-      Set<ObjectID> lookupObjectIDs = traverser.getObjectsToLookup();
+      final Set<ObjectID> lookupObjectIDs = traverser.getObjectsToLookup();
       if (lookupObjectIDs.isEmpty()) {
         break;
       }
@@ -509,7 +508,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         if (objects.size() >= maxReachableObjects) {
           break;
         }
-        ManagedObjectReference newRef = getReference(id);
+        final ManagedObjectReference newRef = getReference(id);
         // Note : Objects are looked up only if it is in the memory and not referenced
         if (newRef != null && !newRef.isReferenced() && !newRef.isNew()) {
           if (objects.add(newRef)) {
@@ -589,7 +588,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         this.references.put(id, ref);
         try {
           wait();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
         ref = this.references.remove(id);
@@ -623,7 +622,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public synchronized ObjectIDSet getObjectIDsInCache() {
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.addAll(this.references.keySet());
     return ids;
   }
@@ -637,10 +636,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return references_size();
   }
 
-  public Set<ObjectID> getObjectReferencesFrom(ObjectID id, boolean cacheOnly) {
+  public Set<ObjectID> getObjectReferencesFrom(final ObjectID id, final boolean cacheOnly) {
     synchronized (this) {
       if (this.noReferencesIDStore.hasNoReferences(id)) { return TCCollections.EMPTY_OBJECT_ID_SET; }
-      ManagedObjectReference mor = getReference(id);
+      final ManagedObjectReference mor = getReference(id);
       if ((mor == null && cacheOnly) || (mor != null && mor.isNew())) { // OK to inspect isNew even if its checkedout.
         // Object either not in cache or is a new object, return emtpy set
         return TCCollections.EMPTY_OBJECT_ID_SET;
@@ -654,8 +653,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     // The object is either not in the cache or someone else has checked it out, do a regular look and wait for the
     // object.
     throttleIfNecessary();
-    ManagedObject mo = lookup(id, false, true);
-    Set references2Return = mo.getObjectReferences();
+    final ManagedObject mo = lookup(id, false, true);
+    final Set references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
   }
@@ -678,7 +677,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void basicRelease(final ManagedObject object) {
-    ManagedObjectReference mor = object.getReference();
+    final ManagedObjectReference mor = object.getReference();
     updateNewFlagAndCreateIfNecessary(object);
     removeReferenceIfNecessary(mor);
     unmarkReferenced(mor);
@@ -686,7 +685,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void basicReleaseReadOnly(final ManagedObject object) {
-    ManagedObjectReference mor = object.getReference();
+    final ManagedObjectReference mor = object.getReference();
     removeReferenceIfNecessary(mor);
     unmarkReferenced(mor);
     makeUnBlocked(object.getID());
@@ -711,7 +710,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         logger.error(mor + " is DIRTY");
         throw new AssertionError(mor + " is DIRTY");
       }
-      Object removed = this.references.remove(mor.getObjectID());
+      final Object removed = this.references.remove(mor.getObjectID());
       Assert.assertNotNull(removed);
     }
   }
@@ -734,14 +733,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       try {
         this.wait(10000);
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         throw new AssertionError(e);
       }
     }
   }
 
   public void notifyGCComplete(final GCResultContext gcResult) {
-    Set<ObjectID> toDelete = gcResult.getGCedObjectIDs();
+    final Set<ObjectID> toDelete = gcResult.getGCedObjectIDs();
     synchronized (this) {
       removeAllObjectsByID(toDelete);
       // Process pending, since we disabled process pending while GC pause was initiate.
@@ -763,14 +762,14 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   // This method is for tests only
   public synchronized boolean isReferenced(final ObjectID id) {
-    ManagedObjectReference reference = getReference(id);
+    final ManagedObjectReference reference = getReference(id);
     return reference != null && reference.isReferenced();
   }
 
   // This method is public for testing purpose
   public synchronized void createObject(final ManagedObject object) {
     syncAssertNotInShutdown();
-    ObjectID oid = object.getID();
+    final ObjectID oid = object.getID();
     Assert.eval(oid.toLong() != -1);
     // Not adding to the store yet since this transaction containing the new objects is not yet applied.
     // objectStore.addNewObject(object);
@@ -794,7 +793,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   public void createRoot(final String rootName, final ObjectID id) {
     syncAssertNotInShutdown();
-    PersistenceTransaction tx = newTransaction();
+    final PersistenceTransaction tx = newTransaction();
     this.objectStore.addNewRoot(tx, rootName, id);
     tx.commit();
     this.stats.newObjectCreated();
@@ -819,7 +818,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private Map<ObjectID, ManagedObject> processObjectsRequest(final Collection<ManagedObjectReference> objects) {
-    Map<ObjectID, ManagedObject> results = new HashMap<ObjectID, ManagedObject>();
+    final Map<ObjectID, ManagedObject> results = new HashMap<ObjectID, ManagedObject>();
     for (final ManagedObjectReference mor : objects) {
       Assert.assertNotNull(mor);
       if (!mor.isReferenced()) {
@@ -835,7 +834,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private void processPendingLookups() {
-    List<Pending> lp = this.pending.getAndResetPendingRequests();
+    final List<Pending> lp = this.pending.getAndResetPendingRequests();
     for (final Pending p : lp) {
       basicLookupObjectsFor(p.getNodeID(), p.getRequestContext(), p.getMaxReachableObjects());
     }
@@ -871,8 +870,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void evictCache(final CacheStats stat) {
-    int size = references_size();
-    int toEvict = stat.getObjectCountToEvict(size);
+    final int size = references_size();
+    final int toEvict = stat.getObjectCountToEvict(size);
     if (toEvict <= 0) { return; }
 
     // This could be a costly call, so call just once
@@ -886,9 +885,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       updateFlushStats(toFlush, removed);
     }
 
-    int evicted = (toFlush.size() + removed.size());
+    final int evicted = (toFlush.size() + removed.size());
 
-    stats.flushed(evicted);
+    this.stats.flushed(evicted);
 
     // Let DGC work for us
     removed = null;
@@ -906,7 +905,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void updateFlushStats(final Collection<ManagedObject> toFlush,
                                 final Collection<ManagedObjectReference> removedObjects) {
-    Iterator<ManagedObject> flushIter = toFlush.iterator();
+    final Iterator<ManagedObject> flushIter = toFlush.iterator();
     while (flushIter.hasNext()) {
       String className = flushIter.next().getManagedObjectState().getClassName();
       if (className == null) {
@@ -914,7 +913,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       }
       this.objectStatsRecorder.updateFlushStats(className);
     }
-    Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
+    final Iterator<ManagedObjectReference> removedIter = removedObjects.iterator();
     while (removedIter.hasNext()) {
       String className = removedIter.next().getObject().getManagedObjectState().getClassName();
       if (className == null) {
@@ -930,9 +929,9 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private void initateFlushRequest(final Collection toFlush) {
     this.flushCount.increment(toFlush.size());
-    for (Iterator i = toFlush.iterator(); i.hasNext();) {
+    for (final Iterator i = toFlush.iterator(); i.hasNext();) {
       int count = 0;
-      ManagedObjectFlushingContext mofc = new ManagedObjectFlushingContext();
+      final ManagedObjectFlushingContext mofc = new ManagedObjectFlushingContext();
       while (count < MAX_COMMIT_SIZE && i.hasNext()) {
         mofc.addObjectToFlush(i.next());
         count++;
@@ -943,8 +942,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   public void flushAndEvict(final List objects2Flush) {
-    PersistenceTransaction tx = newTransaction();
-    int size = objects2Flush.size();
+    final PersistenceTransaction tx = newTransaction();
+    final int size = objects2Flush.size();
     flushAllAndCommit(tx, objects2Flush);
     evicted(objects2Flush);
     this.flushCount.decrement(size);
@@ -1041,7 +1040,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       while (!this.resultSet) {
         try {
           wait();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
       }
@@ -1063,7 +1062,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     public synchronized void setResults(final ObjectManagerLookupResults results) {
       this.resultSet = true;
       assertMissingObjects(results.getMissingObjectIDs());
-      Map objects = results.getObjects();
+      final Map objects = results.getObjects();
       Assert.assertTrue(objects.size() == 0 || objects.size() == 1);
       if (objects.size() == 1) {
         this.result = (ManagedObject) objects.get(this.lookupID);
@@ -1139,7 +1138,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public void makeUnBlocked(final ObjectID id) {
-      List<Pending> blockedRequests = this.blocked.remove(id);
+      final List<Pending> blockedRequests = this.blocked.remove(id);
       if (blockedRequests != null) {
         this.pending.addAll(blockedRequests);
         this.blockedCount -= blockedRequests.size();
@@ -1147,7 +1146,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public List<Pending> getAndResetPendingRequests() {
-      List<Pending> rv = this.pending;
+      final List<Pending> rv = this.pending;
       this.pending = new ArrayList<Pending>();
       return rv;
     }

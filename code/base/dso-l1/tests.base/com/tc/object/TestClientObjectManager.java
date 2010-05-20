@@ -75,7 +75,7 @@ public class TestClientObjectManager implements ClientObjectManager {
   }
 
   private synchronized TCObject lookup(final Object obj) {
-    TCObject rv = (TCObject) this.object2TCObject.get(obj);
+    final TCObject rv = (TCObject) this.object2TCObject.get(obj);
     return rv;
   }
 
@@ -209,7 +209,7 @@ public class TestClientObjectManager implements ClientObjectManager {
     throw new ImplementMe();
   }
 
-  public void preFetchObject(ObjectID id) {
+  public void preFetchObject(final ObjectID id) {
     throw new ImplementMe();
   }
 }

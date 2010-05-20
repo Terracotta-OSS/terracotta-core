@@ -35,120 +35,124 @@ import java.util.Collection;
 public class ManagerImplTest extends BaseDSOTestCase {
 
   public void testClassAutolocksIgnored() throws Exception {
-    ClientObjectManager objMgr = new ObjMgr();
-    ClientLockManager lockMgr = new LockMgr();
+    final ClientObjectManager objMgr = new ObjMgr();
+    final ClientLockManager lockMgr = new LockMgr();
 
-    Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, this.configHelper(), null);
+    final Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, configHelper(), null);
 
-    LockID classLock = manager.generateLockIdentifier(getClass());
+    final LockID classLock = manager.generateLockIdentifier(getClass());
     manager.lock(classLock, LockLevel.WRITE);
     manager.unlock(classLock, LockLevel.WRITE);
   }
 
   private static class LockMgr implements ClientLockManager {
 
-    public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
+    public void award(final NodeID node, final SessionID session, final LockID lock, final ThreadID thread,
+                      final ServerLockLevel level) {
       throw new ImplementMe();
     }
 
-    public void info(LockID lock, ThreadID requestor, Collection<ClientServerExchangeLockContext> contexts) {
-      throw new ImplementMe();
-
-    }
-
-    public void notified(LockID lock, ThreadID thread) {
+    public void info(final LockID lock, final ThreadID requestor,
+                     final Collection<ClientServerExchangeLockContext> contexts) {
       throw new ImplementMe();
 
     }
 
-    public void recall(LockID lock, ServerLockLevel level, int lease) {
+    public void notified(final LockID lock, final ThreadID thread) {
       throw new ImplementMe();
 
     }
 
-    public void refuse(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
+    public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
       throw new ImplementMe();
 
     }
 
-    public LockID generateLockIdentifier(String str) {
+    public void refuse(final NodeID node, final SessionID session, final LockID lock, final ThreadID thread,
+                       final ServerLockLevel level) {
+      throw new ImplementMe();
+
+    }
+
+    public LockID generateLockIdentifier(final String str) {
       throw new ImplementMe();
     }
 
-    public LockID generateLockIdentifier(Object obj) {
+    public LockID generateLockIdentifier(final Object obj) {
       throw new ImplementMe();
     }
 
-    public LockID generateLockIdentifier(Object obj, String field) {
+    public LockID generateLockIdentifier(final Object obj, final String field) {
       throw new ImplementMe();
     }
 
-    public int globalHoldCount(LockID lock, LockLevel level) {
+    public int globalHoldCount(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public int globalPendingCount(LockID lock) {
+    public int globalPendingCount(final LockID lock) {
       throw new ImplementMe();
     }
 
-    public int globalWaitingCount(LockID lock) {
+    public int globalWaitingCount(final LockID lock) {
       throw new ImplementMe();
     }
 
-    public boolean isLocked(LockID lock, LockLevel level) {
+    public boolean isLocked(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public boolean isLockedByCurrentThread(LockID lock, LockLevel level) {
+    public boolean isLockedByCurrentThread(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public int localHoldCount(LockID lock, LockLevel level) {
+    public int localHoldCount(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public void lock(LockID lock, LockLevel level) {
+    public void lock(final LockID lock, final LockLevel level) {
       throw new AssertionError();
     }
 
-    public void lockInterruptibly(LockID lock, LockLevel level) {
+    public void lockInterruptibly(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public Notify notify(LockID lock, Object waitObject) {
+    public Notify notify(final LockID lock, final Object waitObject) {
       throw new ImplementMe();
     }
 
-    public Notify notifyAll(LockID lock, Object waitObject) {
+    public Notify notifyAll(final LockID lock, final Object waitObject) {
       throw new ImplementMe();
 
     }
 
-    public boolean tryLock(LockID lock, LockLevel level) {
+    public boolean tryLock(final LockID lock, final LockLevel level) {
       throw new ImplementMe();
     }
 
-    public boolean tryLock(LockID lock, LockLevel level, long timeout) {
+    public boolean tryLock(final LockID lock, final LockLevel level, final long timeout) {
       throw new ImplementMe();
     }
 
-    public void unlock(LockID lock, LockLevel level) {
+    public void unlock(final LockID lock, final LockLevel level) {
       throw new AssertionError();
     }
 
-    public void wait(LockID lock, Object waitObject) {
+    public void wait(final LockID lock, final Object waitObject) {
       throw new ImplementMe();
     }
 
-    public void wait(LockID lock, Object waitObject, long timeout) {
+    public void wait(final LockID lock, final Object waitObject, final long timeout) {
       throw new ImplementMe();
     }
 
-    public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
+    public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                    final ClientHandshakeMessage handshakeMessage) {
       throw new ImplementMe();
     }
 
-    public void pause(NodeID remoteNode, int disconnected) {
+    public void pause(final NodeID remoteNode, final int disconnected) {
       throw new ImplementMe();
     }
 
@@ -156,7 +160,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void unpause(NodeID remoteNode, int disconnected) {
+    public void unpause(final NodeID remoteNode, final int disconnected) {
       throw new ImplementMe();
     }
 
@@ -164,17 +168,17 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void pinLock(LockID lock) {
+    public void pinLock(final LockID lock) {
       throw new ImplementMe();
 
     }
 
-    public void unpinLock(LockID lock) {
+    public void unpinLock(final LockID lock) {
       throw new ImplementMe();
 
     }
 
-    public boolean isLockedByCurrentThread(LockLevel level) {
+    public boolean isLockedByCurrentThread(final LockLevel level) {
       throw new ImplementMe();
     }
 
@@ -320,10 +324,8 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
     }
 
-    public void preFetchObject(ObjectID id) {
+    public void preFetchObject(final ObjectID id) {
       throw new ImplementMe();
     }
-
   }
-
 }

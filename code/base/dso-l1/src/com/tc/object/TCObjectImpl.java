@@ -87,7 +87,7 @@ public abstract class TCObjectImpl implements TCObject {
     this.peerObject = pojo;
     Object realPojo;
     if ((realPojo = this.peerObject.get()) instanceof Manageable) {
-      Manageable m = (Manageable) realPojo;
+      final Manageable m = (Manageable) realPojo;
       m.__tc_managed(this);
     }
   }
@@ -109,20 +109,20 @@ public abstract class TCObjectImpl implements TCObject {
    */
   public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
     synchronized (getResolveLock()) {
-      boolean isNewLoad = isNull();
+      final boolean isNewLoad = isNull();
       createPeerObjectIfNecessary(from);
 
-      Object po = getPeerObject();
+      final Object po = getPeerObject();
       if (po == null) { return; }
       try {
         this.tcClazz.hydrate(this, from, po, force);
         if (isNewLoad) {
           performOnLoadActionIfNecessary(po);
         }
-      } catch (ClassNotFoundException e) {
+      } catch (final ClassNotFoundException e) {
         logger.warn("Re-throwing Exception: ", e);
         throw e;
-      } catch (IOException e) {
+      } catch (final IOException e) {
         logger.warn("Re-throwing Exception: ", e);
         throw new DNAException(e);
       }
@@ -130,7 +130,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   private void performOnLoadActionIfNecessary(final Object pojo) {
-    TCClass tcc = getTCClass();
+    final TCClass tcc = getTCClass();
     if (tcc.hasOnLoadInjection() || tcc.hasOnLoadExecuteScript() || tcc.hasOnLoadMethod()) {
       String eval = "";
 
@@ -158,27 +158,27 @@ public abstract class TCObjectImpl implements TCObject {
       }
 
       try {
-        Interpreter i = new Interpreter();
+        final Interpreter i = new Interpreter();
         i.setClassLoader(tcc.getPeerClass().getClassLoader());
         i.set("self", pojo);
         i.eval("setAccessibility(true)");
         i.eval(eval);
-      } catch (ParseException e) {
+      } catch (final ParseException e) {
         // Error Parsing script. Use e.getMessage() instead of e.getErrorText() when there is a ParseException because
         // expectedTokenSequences in ParseException could be null and thus, may throw a NullPointerException when
         // calling
         // e.getErrorText().
         consoleLogger.error("Unable to parse OnLoad script: " + pojo.getClass() + " error: " + e.getMessage()
                             + " stack: " + e.getScriptStackTrace());
-      } catch (EvalError e) {
+      } catch (final EvalError e) {
         // General Error evaluating script
         Throwable cause = null;
         if (e instanceof TargetError) {
           cause = ((TargetError) e).getTarget();
         }
 
-        String errorMsg = "OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
-                          + " line: " + e.getErrorLineNumber() + "; " + e.getMessage();
+        final String errorMsg = "OnLoad execute script failed for: " + pojo.getClass() + " error: " + e.getErrorText()
+                                + " line: " + e.getErrorLineNumber() + "; " + e.getMessage();
 
         if (cause != null) {
           consoleLogger.error(errorMsg, cause);
@@ -226,13 +226,13 @@ public abstract class TCObjectImpl implements TCObject {
 
   public void setValue(final String fieldName, final Object obj) {
     try {
-      TransparentAccess ta = (TransparentAccess) getPeerObject();
+      final TransparentAccess ta = (TransparentAccess) getPeerObject();
       if (ta == null) {
         // Object was GC'd so return which should lead to a re-retrieve
         return;
       }
       clearReference(fieldName);
-      TCField field = getTCClass().getField(fieldName);
+      final TCField field = getTCClass().getField(fieldName);
       if (field == null) {
         logger.warn("Data for field:" + fieldName + " was recieved but that field does not exist in class:");
         return;
@@ -244,7 +244,7 @@ public abstract class TCObjectImpl implements TCObject {
         // clean this up
         ta.__tc_setfield(field.getName(), obj);
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // TODO: More elegant exception handling.
       throw new com.tc.object.dna.api.DNAException(e);
     }
@@ -262,7 +262,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   private int basicClearReferences(final int toClear) {
     try {
-      Object po = getPeerObject();
+      final Object po = getPeerObject();
       Assert.assertFalse(isNew()); // Shouldn't clear new Objects
       if (po == null) { return 0; }
       return clearReferences(po, toClear);
@@ -321,7 +321,7 @@ public abstract class TCObjectImpl implements TCObject {
 
   public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     try {
-      this.markAccessed();
+      markAccessed();
       if (index == NULL_INDEX) {
         // Assert.eval(fieldname.indexOf('.') >= 0);
         clearReference(fieldname);
@@ -329,14 +329,14 @@ public abstract class TCObjectImpl implements TCObject {
         clearArrayReference(index);
       }
       getObjectManager().getTransactionManager().fieldChanged(this, classname, fieldname, newValue, index);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       Util.printLogAndRethrowError(t, logger);
     }
   }
 
   public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
                                          final int index) {
-    String fieldname = this.tcClazz.getFieldNameByOffset(fieldOffset);
+    final String fieldname = this.tcClazz.getFieldNameByOffset(fieldOffset);
     objectFieldChanged(classname, fieldname, newValue, index);
   }
 
@@ -382,7 +382,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
-    this.markAccessed();
+    markAccessed();
     for (int i = 0; i < length; i++) {
       clearArrayReference(startPos + i);
     }
@@ -390,7 +390,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
-    this.markAccessed();
+    markAccessed();
     getObjectManager().getTransactionManager().arrayChanged(this, startPos, array, length);
   }
 
@@ -457,7 +457,7 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public final synchronized boolean canEvict() {
-    boolean canEvict = isEvictable() && !this.tcClazz.isNotClearable() && !(isNew() || isEvictionInProgress());
+    final boolean canEvict = isEvictable() && !this.tcClazz.isNotClearable() && !(isNew() || isEvictionInProgress());
     if (canEvict) {
       setEvictionInProgress(true);
     }
@@ -467,7 +467,7 @@ public abstract class TCObjectImpl implements TCObject {
   protected abstract boolean isEvictable();
 
   public ToggleableStrongReference getOrCreateToggleRef() {
-    Object peer = getPeerObject();
+    final Object peer = getPeerObject();
     if (peer == null) { throw new AssertionError("cannot create a toggle reference if peer object is gone"); }
 
     return getObjectManager().getOrCreateToggleRef(this.objectID, peer);

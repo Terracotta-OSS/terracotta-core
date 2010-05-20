@@ -324,5 +324,4 @@ public interface ClientObjectManager extends ApplicatorObjectManager {
    * @return the weak reference
    */
   WeakReference newWeakObjectReference(ObjectID objectID, Object peer);
-
 }

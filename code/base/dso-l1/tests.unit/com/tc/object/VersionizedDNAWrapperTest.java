@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
@@ -24,19 +25,19 @@ import junit.framework.TestCase;
 public class VersionizedDNAWrapperTest extends TestCase {
 
   public void testResettingDNACursor() throws Exception {
-    TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
     final ObjectID id = new ObjectID(1);
     final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
 
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
-    ClassProvider classProvider = new MockClassProvider();
-    DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, "loader description");
-    PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
-    LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
-    PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ClassProvider classProvider = new MockClassProvider();
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, "loader description");
+    final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
+    final LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
+    final PhysicalAction action3 = new PhysicalAction("class.field2", new ObjectID(3), true);
     dnaWriter.setParentObjectID(pid);
     dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
     dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
@@ -44,8 +45,8 @@ public class VersionizedDNAWrapperTest extends TestCase {
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();
 
-    TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
-    DNAImpl dna = createDNAImpl(serializer, true);
+    final TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    final DNAImpl dna = createDNAImpl(serializer, true);
     assertSame(dna, dna.deserializeFrom(in));
     assertEquals(0, in.available());
 
@@ -54,12 +55,12 @@ public class VersionizedDNAWrapperTest extends TestCase {
     try {
       vdna.getCursor().reset();
       assertTrue(false);
-    } catch (UnsupportedOperationException use) {
+    } catch (final UnsupportedOperationException use) {
       // this is expected
     }
 
     vdna = new VersionizedDNAWrapper(dna, 10, true);
-    DNACursor cursor = vdna.getCursor();
+    final DNACursor cursor = vdna.getCursor();
     cursor.reset();
     assertTrue(cursor.next(encoding));
     compareAction(action1, cursor.getPhysicalAction());
@@ -86,21 +87,22 @@ public class VersionizedDNAWrapperTest extends TestCase {
     assertFalse(cursor.next(encoding));
   }
 
-  protected DNAImpl createDNAImpl(ObjectStringSerializer serializer, boolean b) {
+  protected DNAImpl createDNAImpl(final ObjectStringSerializer serializer, final boolean b) {
     return new DNAImpl(serializer, b);
   }
 
-  protected DNAWriter createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
-                                      ObjectStringSerializer serializer, DNAEncoding encoding, String string) {
+  protected DNAWriter createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
+                                      final ObjectStringSerializer serializer, final DNAEncoding encoding,
+                                      final String string) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", false);
   }
 
-  private void compareAction(LogicalAction expect, LogicalAction actual) {
+  private void compareAction(final LogicalAction expect, final LogicalAction actual) {
     assertEquals(expect.getMethod(), actual.getMethod());
     assertTrue(Arrays.equals(expect.getParameters(), actual.getParameters()));
   }
 
-  private void compareAction(PhysicalAction expect, PhysicalAction actual) {
+  private void compareAction(final PhysicalAction expect, final PhysicalAction actual) {
     assertEquals(expect.getFieldName(), actual.getFieldName());
     assertEquals(expect.getObject(), actual.getObject());
     assertEquals(expect.isReference(), actual.isReference());

@@ -407,7 +407,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     flags.put(HONOR_TRANSIENT_KEY, b);
     return this;
   }
-  
+
   public boolean isIgnoreRewrite() {
     Boolean flag = flags.get(IGNORE_REWRITE_KEY);
     if (flag == null) return false;
@@ -418,7 +418,7 @@ public class TransparencyClassSpecImpl implements TransparencyClassSpec {
     flags.put(IGNORE_REWRITE_KEY, b);
     return this;
   }
-
+  
   public TransparencyClassSpec setCallConstructorOnLoad(final boolean b) {
     onLoad.setToCallConstructorOnLoad(b);
     return this;

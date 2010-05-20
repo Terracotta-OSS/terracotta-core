@@ -20,9 +20,9 @@ public class ObjectRequestServerContextImpl implements ObjectRequestServerContex
   private final int                 requestDepth;
   private final boolean             serverInitiated;
 
-  public ObjectRequestServerContextImpl(ClientID requestNodeID, ObjectRequestID objectRequestID,
-                                        SortedSet<ObjectID> lookupObjectIDs, String requestingThreadName,
-                                        int requestDepth, boolean serverInitiated) {
+  public ObjectRequestServerContextImpl(final ClientID requestNodeID, final ObjectRequestID objectRequestID,
+                                        final SortedSet<ObjectID> lookupObjectIDs, final String requestingThreadName,
+                                        final int requestDepth, final boolean serverInitiated) {
     this.requestDepth = requestDepth;
     this.requestedNodeID = requestNodeID;
     this.objectRequestID = objectRequestID;

@@ -10,25 +10,25 @@ public class LockIdFactory {
 
   private final Manager mgr;
 
-  public LockIdFactory(Manager mgr) {
+  public LockIdFactory(final Manager mgr) {
     this.mgr = mgr;
   }
 
-  public LockID generateLockIdentifier(Object obj) {
+  public LockID generateLockIdentifier(final Object obj) {
     if (obj instanceof String) {
       return generateLockIdentifier((String) obj);
     } else {
-      TCObjectExternal tco = mgr.lookupExistingOrNull(obj);
+      final TCObjectExternal tco = this.mgr.lookupExistingOrNull(obj);
       if (tco != null) {
         if (tco.autoLockingDisabled()) {
           return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
         } else {
           return new DsoLockID(tco.getObjectID());
         }
-      } else if (mgr.isLiteralAutolock(obj)) {
+      } else if (this.mgr.isLiteralAutolock(obj)) {
         try {
-          return new DsoLiteralLockID(mgr, obj);
-        } catch (IllegalArgumentException e) {
+          return new DsoLiteralLockID(this.mgr, obj);
+        } catch (final IllegalArgumentException e) {
           return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
         }
       } else {
@@ -37,12 +37,12 @@ public class LockIdFactory {
     }
   }
 
-  public LockID generateLockIdentifier(Object obj, String fieldName) {
+  public LockID generateLockIdentifier(final Object obj, final String fieldName) {
     TCObjectExternal tco;
     if (obj instanceof TCObjectExternal) {
       tco = (TCObjectExternal) obj;
     } else {
-      tco = mgr.lookupExistingOrNull(obj);
+      tco = this.mgr.lookupExistingOrNull(obj);
     }
 
     if ((tco == null) || tco.autoLockingDisabled()) {
@@ -52,7 +52,7 @@ public class LockIdFactory {
     }
   }
 
-  public LockID generateLockIdentifier(String str) {
+  public LockID generateLockIdentifier(final String str) {
     return new StringLockID(str);
   }
 }

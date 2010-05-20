@@ -882,7 +882,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       };
 
-      if (remote.isTransactionsForLockFlushed(lock, callback)) {
+      if (remote.asyncFlush(lock, callback)) {
         return recallCommit(remote);
       } else {
         return greediness.recallInProgress();

@@ -7,6 +7,7 @@ package com.tc.object.gtx;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.object.RemoteServerMapManager;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.RemoteTransactionManager;
@@ -34,13 +35,17 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
   private final RemoteTransactionManager remoteTransactionManager;
   private int                            ignoredCount         = 0;
 
-  public ClientGlobalTransactionManagerImpl(RemoteTransactionManager remoteTransactionManager) {
+  private final RemoteServerMapManager   remoteServerMapManager;
+
+  public ClientGlobalTransactionManagerImpl(final RemoteTransactionManager remoteTransactionManager,
+                                            final RemoteServerMapManager serverMapManager) {
     this.remoteTransactionManager = remoteTransactionManager;
+    this.remoteServerMapManager = serverMapManager;
   }
 
   // For testing
   public synchronized int size() {
-    return applied.size();
+    return this.applied.size();
   }
 
   // For testing
@@ -48,23 +53,23 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     return ALLOWED_LWM_DELTA;
   }
 
-  public synchronized boolean startApply(NodeID committerID, TransactionID transactionID, GlobalTransactionID gtxID,
-                                         NodeID remoteGroupID) {
+  public synchronized boolean startApply(final NodeID committerID, final TransactionID transactionID,
+                                         final GlobalTransactionID gtxID, final NodeID remoteGroupID) {
     if (gtxID.lessThan(getLowGlobalTransactionIDWatermark())) {
       // formatting
       throw new UnknownTransactionError("Attempt to apply a transaction lower than the low watermark: gtxID = " + gtxID
                                         + ", low watermark = " + getLowGlobalTransactionIDWatermark());
     }
-    ServerTransactionID serverTransactionID = new ServerTransactionID(committerID, transactionID);
-    globalTransactionIDs.put(gtxID, serverTransactionID);
-    return applied.add(serverTransactionID);
+    final ServerTransactionID serverTransactionID = new ServerTransactionID(committerID, transactionID);
+    this.globalTransactionIDs.put(gtxID, serverTransactionID);
+    return this.applied.add(serverTransactionID);
   }
 
   public synchronized GlobalTransactionID getLowGlobalTransactionIDWatermark() {
-    return lowWatermark;
+    return this.lowWatermark;
   }
 
-  public synchronized void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID) {
+  public synchronized void setLowWatermark(final GlobalTransactionID lowWatermark, final NodeID nodeID) {
     if (this.lowWatermark.toLong() > lowWatermark.toLong()) {
       // XXX::This case is possible when the server crashes, Eventually the server will catch up
       logger.warn("Low water mark lower than exisiting one : mine : " + this.lowWatermark + " server sent : "
@@ -72,34 +77,36 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
       return;
     }
     if (this.lowWatermark.toLong() + ALLOWED_LWM_DELTA > lowWatermark.toLong()) {
-      if (ignoredCount++ > ALLOWED_LWM_DELTA * 100) {
+      if (this.ignoredCount++ > ALLOWED_LWM_DELTA * 100) {
         logger.warn("Current Low water Mark = " + this.lowWatermark + " Server sent " + lowWatermark);
-        logger.warn("Server didnt send a Low water mark higher than ALLOWED_LWM_DELTA for " + ignoredCount
-                    + " times. applied.size() = " + applied.size() + " Resetting count.");
-        ignoredCount = 0;
+        logger.warn("Server didnt send a Low water mark higher than ALLOWED_LWM_DELTA for " + this.ignoredCount
+                    + " times. applied.size() = " + this.applied.size() + " Resetting count.");
+        this.ignoredCount = 0;
       }
       return;
     }
     this.ignoredCount = 0;
     this.lowWatermark = lowWatermark;
-    Map toDelete = globalTransactionIDs.headMap(lowWatermark);
-    for (Iterator i = toDelete.entrySet().iterator(); i.hasNext();) {
-      Entry e = (Entry) i.next();
-      ServerTransactionID stxID = (ServerTransactionID) e.getValue();
+    final Map toDelete = this.globalTransactionIDs.headMap(lowWatermark);
+    for (final Iterator i = toDelete.entrySet().iterator(); i.hasNext();) {
+      final Entry e = (Entry) i.next();
+      final ServerTransactionID stxID = (ServerTransactionID) e.getValue();
       i.remove();
-      applied.remove(stxID);
+      this.applied.remove(stxID);
     }
   }
 
-  public void flush(LockID lockID) {
-    remoteTransactionManager.flush(lockID);
+  public void flush(final LockID lockID) {
+    this.remoteServerMapManager.flush(lockID);
+    this.remoteTransactionManager.flush(lockID);
   }
 
-  public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
-    remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
+  public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {
+    this.remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
-  
-  public boolean isTransactionsForLockFlushed(LockID lockID, LockFlushCallback callback) {
-    return remoteTransactionManager.isTransactionsForLockFlushed(lockID, callback);
+
+  public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
+    this.remoteServerMapManager.flush(lockID);
+    return this.remoteTransactionManager.asyncFlush(lockID, callback);
   }
 }

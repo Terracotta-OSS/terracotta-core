@@ -68,6 +68,10 @@ public final class TCMessageType {
   public static final int           TYPE_NODE_META_DATA_RESPONSE_MESSAGE            = 53;
   public static final int           TYPE_STRIPE_ID_MAP_MESSAGE                      = 54;
   public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE    = 55;
+  public static final int           TYPE_GET_VALUE_SERVER_MAP_REQUEST_MESSAGE       = 56;
+  public static final int           TYPE_GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE      = 57;
+  public static final int           TYPE_GET_SIZE_SERVER_MAP_REQUEST_MESSAGE        = 58;
+  public static final int           TYPE_GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE       = 59;
 
   public static final TCMessageType PING_MESSAGE                                    = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                    = new TCMessageType();
@@ -109,7 +113,11 @@ public final class TCMessageType {
   public static final TCMessageType NODE_META_DATA_MESSAGE                          = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_RESPONSE_MESSAGE                 = new TCMessageType();
   public static final TCMessageType STRIPE_ID_MAP_MESSAGE                           = new TCMessageType();
-  public static final TCMessageType SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE            = new TCMessageType();
+  public static final TCMessageType SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE         = new TCMessageType();
+  public static final TCMessageType GET_VALUE_SERVER_MAP_REQUEST_MESSAGE            = new TCMessageType();
+  public static final TCMessageType GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE           = new TCMessageType();
+  public static final TCMessageType GET_SIZE_SERVER_MAP_REQUEST_MESSAGE             = new TCMessageType();
+  public static final TCMessageType GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE            = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);
@@ -120,16 +128,16 @@ public final class TCMessageType {
   }
 
   public int getType() {
-    return type;
+    return this.type;
   }
 
   public String getTypeName() {
-    return typeName;
+    return this.typeName;
   }
 
   @Override
   public String toString() {
-    return typeName + " (" + type + ")";
+    return this.typeName + " (" + this.type + ")";
   }
 
   // //////////////////////////////////////////////////////
@@ -159,13 +167,13 @@ public final class TCMessageType {
 
   @Override
   public int hashCode() {
-    return this.typeName.hashCode() + type;
+    return this.typeName.hashCode() + this.type;
   }
 
   @Override
   public boolean equals(final Object obj) {
     if (obj instanceof TCMessageType) {
-      TCMessageType other = (TCMessageType) obj;
+      final TCMessageType other = (TCMessageType) obj;
       return this.typeName.equals(other.typeName) && (this.type == other.type);
     }
     return false;
@@ -178,15 +186,15 @@ public final class TCMessageType {
    * validating the message type numbers dynamically. Maybe I need more some coffee
    */
   private static TCMessageType[] init() throws IllegalArgumentException, IllegalAccessException {
-    Field[] fields = TCMessageType.class.getDeclaredFields();
+    final Field[] fields = TCMessageType.class.getDeclaredFields();
 
-    Map mtFields = new HashMap();
-    Map intFields = new HashMap();
+    final Map mtFields = new HashMap();
+    final Map intFields = new HashMap();
 
     for (final Field field : fields) {
       final String fName = field.getName();
 
-      int modifiers = field.getModifiers();
+      final int modifiers = field.getModifiers();
 
       // disallow public non-final fields
       if (Modifier.isPublic(modifiers) && !Modifier.isFinal(modifiers)) { throw new RuntimeException(
@@ -194,8 +202,8 @@ public final class TCMessageType {
                                                                                                          + fName
                                                                                                          + " must be final if public"); }
 
-      boolean shouldInspect = Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers)
-                              && Modifier.isFinal(modifiers);
+      final boolean shouldInspect = Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers)
+                                    && Modifier.isFinal(modifiers);
 
       if (!shouldInspect) {
         continue;
@@ -220,7 +228,7 @@ public final class TCMessageType {
           throw new RuntimeException("TCMessageType: Illegal integer field name: " + fName);
         }
 
-        Integer value = (Integer) field.get(TCMessageType.class);
+        final Integer value = (Integer) field.get(TCMessageType.class);
 
         intFields.put(fName, value);
       }
@@ -242,7 +250,7 @@ public final class TCMessageType {
       type.setType(val);
       type.setTypeName(name);
 
-      Object prev = typeMap.put(type.getType(), type);
+      final Object prev = typeMap.put(type.getType(), type);
       if (prev != null) {
         // make formatter sane
         throw new RuntimeException("TCMessageType: Duplicate message types defined for message number: "
@@ -258,7 +266,7 @@ public final class TCMessageType {
     }
 
     if (!intFields.isEmpty()) {
-      String unused = Util.enumerateArray(intFields.keySet().toArray());
+      final String unused = Util.enumerateArray(intFields.keySet().toArray());
       throw new RuntimeException("TCMessageType: Unused integer constants (please remove): " + unused);
     }
 
@@ -267,8 +275,8 @@ public final class TCMessageType {
 
     Arrays.sort(rv, new Comparator() {
       public int compare(final Object o1, final Object o2) {
-        int i1 = ((TCMessageType) o1).getType();
-        int i2 = ((TCMessageType) o2).getType();
+        final int i1 = ((TCMessageType) o1).getType();
+        final int i2 = ((TCMessageType) o2).getType();
 
         if (i1 < i2) {
           return -1;
@@ -292,7 +300,7 @@ public final class TCMessageType {
   static {
     try {
       allTypes = init();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       e.printStackTrace();
       throw new TCRuntimeException(e);
     }

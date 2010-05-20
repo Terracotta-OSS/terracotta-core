@@ -347,7 +347,8 @@ public interface TCObject extends Cacheable, TCObjectExternal {
   public ToggleableStrongReference getOrCreateToggleRef();
 
   /**
-   * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits this object)
+   * Unset the "is new" flag. This should only be done by one thread ever (namely the thread that first ever commits
+   * this object)
    */
   public void setNotNew();
 

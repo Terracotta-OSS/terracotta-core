@@ -11,6 +11,7 @@ import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
@@ -25,6 +26,7 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
+import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -33,6 +35,8 @@ import java.net.UnknownHostException;
 public interface DSOClientMessageChannel {
 
   public void addClassMapping(TCMessageType messageType, Class messageClass);
+
+  public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory);
 
   public ClientIDProvider getClientIDProvider();
 
@@ -56,6 +60,8 @@ public interface DSOClientMessageChannel {
   public RequestRootMessageFactory getRequestRootMessageFactory();
 
   public RequestManagedObjectMessageFactory getRequestManagedObjectMessageFactory();
+
+  public ServerMapMessageFactory getServerMapMessageFactory();
 
   public ObjectIDBatchRequestMessageFactory getObjectIDBatchRequestMessageFactory();
 

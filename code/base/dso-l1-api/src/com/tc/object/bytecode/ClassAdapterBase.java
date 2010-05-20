@@ -94,8 +94,8 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     return getTransparencyClassSpec().isRootInThisClass(fieldInfo);
   }
 
-  public ClassAdapterBase(ClassInfo classInfo, TransparencyClassSpec spec2, ClassVisitor delegate,
-                          ClassLoader caller, Portability p) {
+  public ClassAdapterBase(ClassInfo classInfo, TransparencyClassSpec spec2, ClassVisitor delegate, ClassLoader caller,
+                          Portability p) {
     super(delegate);
     this.portability = p;
     this.spec = new InstrumentationSpec(classInfo, spec2, caller);
@@ -146,7 +146,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     }
 
     // always add a known definition for this field if it already exists
-    if (MANAGED_FIELD_NAME.equals(name)) { return null; }
+    if (MANAGED_FIELD_NAME.equals(name) && !getTransparencyClassSpec().isIgnoreRewrite()) { return null; }
 
     spec.recordExistingFields(name, desc, signature);
 
@@ -165,7 +165,7 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     MethodVisitor mv;
 
     // always add a known implementation for these methods even if they already exist
-    if (ALWAYS_REWRITE_IF_PRESENT.contains(name + desc)) { return null; }
+    if (ALWAYS_REWRITE_IF_PRESENT.contains(name + desc) && !getTransparencyClassSpec().isIgnoreRewrite()) { return null; }
 
     spec.recordExistingMethods(name, desc, signature);
 
@@ -219,8 +219,10 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     if (spec.isManagedFieldNeeded()) {
       addCachedManagedMethods();
 
-      super.visitField(ACC_PRIVATE | ACC_VOLATILE | ACC_TRANSIENT | ACC_SYNTHETIC, MANAGED_FIELD_NAME,
-                       MANAGED_FIELD_TYPE, null, null);
+      if (shouldAddField(MANAGED_FIELD_NAME + MANAGED_FIELD_TYPE)) {
+        super.visitField(ACC_PRIVATE | ACC_VOLATILE | ACC_TRANSIENT | ACC_SYNTHETIC, MANAGED_FIELD_NAME,
+                         MANAGED_FIELD_TYPE, null, null);
+      }
     }
 
     basicVisitEnd();
@@ -301,38 +303,47 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
 
   private void addCachedManagedMethods() {
     if (spec.isManagedMethodsNeeded()) {
-      // add getter
-      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "()" + MANAGED_FIELD_TYPE, null,
-                                           null);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-      mv.visitInsn(ARETURN);
-      mv.visitMaxs(0, 0);
-      mv.visitEnd();
 
-      // add setter
-      mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "(" + MANAGED_FIELD_TYPE + ")V", null, null);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitVarInsn(ALOAD, 1);
-      mv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-      mv.visitInsn(RETURN);
-      mv.visitMaxs(0, 0);
-      mv.visitEnd();
+      if (shouldAddMethod(MANAGED_METHOD + "()" + MANAGED_FIELD_TYPE)) {
+        // add getter
+        MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "()" + MANAGED_FIELD_TYPE,
+                                             null, null);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+      }
 
-      // add isManaged() method
-      // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
-      mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION, null, null);
-      mv.visitVarInsn(ALOAD, 0);
-      mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
-      Label l1 = new Label();
-      mv.visitJumpInsn(IFNULL, l1);
-      mv.visitInsn(ICONST_1);
-      mv.visitInsn(IRETURN);
-      mv.visitLabel(l1);
-      mv.visitInsn(ICONST_0);
-      mv.visitInsn(IRETURN);
-      mv.visitMaxs(1, 1);
-      mv.visitEnd();
+      if (shouldAddMethod(MANAGED_METHOD + "(" + MANAGED_FIELD_TYPE + ")V")) {
+        // add setter
+        MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_METHOD, "(" + MANAGED_FIELD_TYPE
+                                                                                         + ")V", null, null);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitFieldInsn(PUTFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+      }
+
+      if (shouldAddMethod(IS_MANAGED_METHOD + IS_MANAGED_DESCRIPTION)) {
+        // add isManaged() method
+        // XXX::FIXME:: This method need to handle TCClonableObjects and TCNonDistributableObjects
+        MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, IS_MANAGED_METHOD, IS_MANAGED_DESCRIPTION,
+                                             null, null);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, spec.getClassNameSlashes(), MANAGED_FIELD_NAME, MANAGED_FIELD_TYPE);
+        Label l1 = new Label();
+        mv.visitJumpInsn(IFNULL, l1);
+        mv.visitInsn(ICONST_1);
+        mv.visitInsn(IRETURN);
+        mv.visitLabel(l1);
+        mv.visitInsn(ICONST_0);
+        mv.visitInsn(IRETURN);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+      }
     }
   }
 
@@ -341,8 +352,9 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
    * hashmap
    */
   private void addRetrieveValuesMethod() {
-    if (spec.isValuesGetterMethodNeeded()) {
-      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, VALUES_GETTER, VALUES_GETTER_DESCRIPTION, null, null);
+    if (spec.isValuesGetterMethodNeeded() && shouldAddMethod(VALUES_GETTER + VALUES_GETTER_DESCRIPTION)) {
+      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, VALUES_GETTER, VALUES_GETTER_DESCRIPTION, null,
+                                           null);
       if (!portability.isInstrumentationNotNeeded(spec.getSuperClassNameDots())
           && getTransparencyClassSpec().hasPhysicallyPortableSpecs(
                                                                    AsmClassInfo.getClassInfo(spec
@@ -370,10 +382,19 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
     }
   }
 
+  private boolean shouldAddMethod(String nameAndDesc) {
+    return !getTransparencyClassSpec().isIgnoreRewrite() || !spec.hasMethod(nameAndDesc);
+  }
+
+  private boolean shouldAddField(String nameAndDesc) {
+    return !getTransparencyClassSpec().isIgnoreRewrite() || !spec.hasField(nameAndDesc);
+  }
+
   private void addRetrieveManagedValueMethod() {
-    if (spec.isManagedValuesGetterMethodNeeded()) {
+    if (spec.isManagedValuesGetterMethodNeeded()
+        && shouldAddMethod(MANAGED_VALUES_GETTER + MANAGED_VALUES_GETTER_DESCRIPTION)) {
       MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_VALUES_GETTER,
-                                     MANAGED_VALUES_GETTER_DESCRIPTION, null, null);
+                                           MANAGED_VALUES_GETTER_DESCRIPTION, null, null);
 
       for (Iterator i = fields.keySet().iterator(); i.hasNext();) {
         String fieldName = (String) i.next();
@@ -415,8 +436,9 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
    * Creates a method that allows the setting of any field in this class or it's super classes.
    */
   private void addSetValueMethod() {
-    if (spec.isValuesSetterMethodNeeded()) {
-      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, VALUES_SETTER, VALUES_SETTER_DESCRIPTION, null, null);
+    if (spec.isValuesSetterMethodNeeded() && shouldAddMethod(VALUES_SETTER + VALUES_SETTER_DESCRIPTION)) {
+      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, VALUES_SETTER, VALUES_SETTER_DESCRIPTION, null,
+                                           null);
       Label l1 = new Label();
       for (Iterator i = fields.keySet().iterator(); i.hasNext();) {
         String fieldName = (String) i.next();
@@ -463,9 +485,10 @@ public abstract class ClassAdapterBase extends ClassAdapter implements Opcodes {
   }
 
   private void addSetManagedValueMethod() {
-    if (spec.isManagedValuesSetterMethodNeeded()) {
-      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_VALUES_SETTER, VALUES_SETTER_DESCRIPTION,
-                                     null, null);
+    if (spec.isManagedValuesSetterMethodNeeded()
+        && shouldAddMethod(MANAGED_VALUES_SETTER + VALUES_SETTER_DESCRIPTION)) {
+      MethodVisitor mv = super.visitMethod(ACC_PUBLIC | ACC_SYNTHETIC, MANAGED_VALUES_SETTER,
+                                           VALUES_SETTER_DESCRIPTION, null, null);
 
       Label l1 = new Label();
       for (Iterator i = fields.keySet().iterator(); i.hasNext();) {
