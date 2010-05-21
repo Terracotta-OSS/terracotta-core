@@ -146,6 +146,11 @@
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.google.collections</groupId>
+      <artifactId>google-collections</artifactId>
+    </dependency>
+
     
     <!-- SIGAR dependencies -->
     <dependency>
