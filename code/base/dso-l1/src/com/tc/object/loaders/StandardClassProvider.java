@@ -57,17 +57,17 @@ public class StandardClassProvider implements ClassProvider {
 
   private final RuntimeLogger                                runtimeLogger;
 
-  public StandardClassProvider(final RuntimeLogger runtimeLogger) {
+  public StandardClassProvider(RuntimeLogger runtimeLogger) {
     this.runtimeLogger = runtimeLogger;
   }
 
-  public ClassLoader getClassLoader(final LoaderDescription desc) {
+  public ClassLoader getClassLoader(LoaderDescription desc) {
     final ClassLoader rv = lookupLoader(desc);
     if (rv == null) { throw new IllegalArgumentException("No registered loader for description: " + desc); }
     return rv;
   }
 
-  public Class getClassFor(final String className, final LoaderDescription desc) throws ClassNotFoundException {
+  public Class getClassFor(final String className, LoaderDescription desc) throws ClassNotFoundException {
     final ClassLoader loader = lookupLoader(desc);
 
     if (loader == null) { throw new ClassNotFoundException(
@@ -87,10 +87,10 @@ public class StandardClassProvider implements ClassProvider {
 
     try {
       return Class.forName(className, false, loader);
-    } catch (final ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       if (loader instanceof BytecodeProvider) {
-        final BytecodeProvider provider = (BytecodeProvider) loader;
-        final byte[] bytes = provider.__tc_getBytecodeForClass(className);
+        BytecodeProvider provider = (BytecodeProvider) loader;
+        byte[] bytes = provider.__tc_getBytecodeForClass(className);
         if (bytes != null && bytes.length != 0) { return AsmHelper.defineClass(loader, bytes, className); }
       }
       throw e;
@@ -102,7 +102,7 @@ public class StandardClassProvider implements ClassProvider {
    * @param appGroup an appGroup to support sharing roots between apps, or null if no sharing is desired. The empty
    *        string will be replaced with null.
    */
-  public void registerNamedLoader(final NamedClassLoader loader, String appGroup) {
+  public void registerNamedLoader(NamedClassLoader loader, String appGroup) {
     final String name = getName(loader);
 
     final WeakReference<NamedClassLoader> prevRef;
@@ -114,57 +114,57 @@ public class StandardClassProvider implements ClassProvider {
     }
 
     synchronized (this) {
-      prevRef = this.loaders.put(name, new WeakReference<NamedClassLoader>(loader));
-      this.loaderDescriptions.put(name, new LoaderDescription(appGroup, name));
+      prevRef = loaders.put(name, new WeakReference<NamedClassLoader>(loader));
+      loaderDescriptions.put(name, new LoaderDescription(appGroup, name));
 
       if (appGroup != null) {
-        Set<String> descs = this.appGroups.get(appGroup);
+        Set<String> descs = appGroups.get(appGroup);
         if (descs == null) {
           descs = new HashSet<String>();
-          this.appGroups.put(appGroup, descs);
+          appGroups.put(appGroup, descs);
         }
         descs.add(name);
 
         // Adding a loader to an app group could change any child relationships in the group
         updateAllChildRelationships(appGroup);
       } else {
-        this.loaderChildren.put(name, Collections.EMPTY_SET);
+        loaderChildren.put(name, Collections.EMPTY_SET);
 
         if (ISOLATION.equals(name)) {
-          this.isolationClassLoader = loader;
+          isolationClassLoader = loader;
         }
       }
 
     }
 
-    final NamedClassLoader prev = prevRef == null ? null : (NamedClassLoader) prevRef.get();
+    NamedClassLoader prev = prevRef == null ? null : (NamedClassLoader) prevRef.get();
 
-    if (this.runtimeLogger.getNamedLoaderDebug()) {
-      this.runtimeLogger.namedLoaderRegistered(loader, name, appGroup, prev);
+    if (runtimeLogger.getNamedLoaderDebug()) {
+      runtimeLogger.namedLoaderRegistered(loader, name, appGroup, prev);
     }
   }
 
-  public LoaderDescription getLoaderDescriptionFor(final Class clazz) {
+  public LoaderDescription getLoaderDescriptionFor(Class clazz) {
     return getLoaderDescriptionFor(clazz.getClassLoader());
   }
 
-  public LoaderDescription getLoaderDescriptionFor(final ClassLoader loader) {
+  public LoaderDescription getLoaderDescriptionFor(ClassLoader loader) {
     if (loader == null) { return BOOT_DESC; }
     if (loader instanceof NamedClassLoader) {
-      final String name = getName((NamedClassLoader) loader);
-      return this.loaderDescriptions.get(name);
+      String name = getName((NamedClassLoader) loader);
+      return loaderDescriptions.get(name);
     }
     throw handleMissingLoader(loader);
   }
 
-  private static String getName(final NamedClassLoader loader) {
-    final String name = loader.__tc_getClassLoaderName();
+  private static String getName(NamedClassLoader loader) {
+    String name = loader.__tc_getClassLoaderName();
     if (name == null || name.length() == 0) { throw new AssertionError("Invalid name [" + name + "] from loader "
                                                                        + loader); }
     return name;
   }
 
-  private RuntimeException handleMissingLoader(final ClassLoader loader) {
+  private RuntimeException handleMissingLoader(ClassLoader loader) {
     if ("org.apache.jasper.servlet.JasperLoader".equals(loader.getClass().getName())) {
       // try to give a better error message if you're trying to share a JSP
       return new RuntimeException("JSP instances (and inner classes there of) cannot be distributed, loader = "
@@ -173,12 +173,12 @@ public class StandardClassProvider implements ClassProvider {
     return new RuntimeException("No loader description for " + loader);
   }
 
-  private boolean isBootLoader(final String desc) {
+  private boolean isBootLoader(String desc) {
     // EXT and SYSTEM get registered at startup like normal loaders; no need to special-case
     return BOOT.equals(desc); // || EXT.equals(desc) || SYSTEM.equals(desc);
   }
 
-  private ClassLoader lookupLoader(final LoaderDescription desc) {
+  private ClassLoader lookupLoader(LoaderDescription desc) {
     if (isBootLoader(desc.name())) {
       return SystemLoaderHolder.loader;
     } else {
@@ -191,52 +191,54 @@ public class StandardClassProvider implements ClassProvider {
    * <p>
    * This method must be externally synchronized on 'this'.
    */
-  private ClassLoader lookupLoaderWithAppGroup(final LoaderDescription desc) {
+  private ClassLoader lookupLoaderWithAppGroup(LoaderDescription desc) {
     // Testing support: allow substitution of IsolationClassLoader for system classloader,
     // unless they were explicitly registered within app-groups.
     if (SYSTEM.equals(desc.name()) && null == desc.appGroup()) {
-      if (null != this.isolationClassLoader) { return (ClassLoader) this.isolationClassLoader; }
-    } else if (ISOLATION.equals(desc.name()) && null == desc.appGroup()
-               && null == this.loaderDescriptions.get(desc.name())) { return SystemLoaderHolder.loader; }
+      if (null != isolationClassLoader) { return (ClassLoader) isolationClassLoader; }
+    } else if (ISOLATION.equals(desc.name()) && null == desc.appGroup() && null == loaderDescriptions.get(desc.name())) { return SystemLoaderHolder.loader; }
 
     while (true) {
       ClassLoader loader;
 
-      // if (the DNA specifies an app-group,
-      // and there is a loader that exactly matches both the app-group and the name,
-      // and there is exactly one loader registered in that app-group that is a *child* of the exact match) {
-      // use the child;
-      // }
       Set<String> appGroupLoaders = null;
       if (desc.appGroup() != null) {
-        appGroupLoaders = this.appGroups.get(desc.appGroup());
-        if (appGroupLoaders != null && appGroupLoaders.contains(desc.name())) {
-          final Set<String> children = this.loaderChildren.get(desc.name());
-          // Clean up GC'ed children before deciding that there is exactly one
-          ClassLoader firstChild = null;
-          boolean exactlyOne = false;
-          for (final String child : children) {
-            loader = lookupLoaderByName(child);
-            Assert.assertNotNull(loader); // invariant: loaderChildren only contains valid loader names
-            if (loader != REMOVED) {
-              if (firstChild == null) {
-                // keep a ref so it doesn't get GC'ed before we come back to it
-                firstChild = loader;
-                exactlyOne = true;
-              } else {
-                // no point in looking further; there are at least two non-GC'ed children
-                exactlyOne = false;
-                break;
+        appGroupLoaders = appGroups.get(desc.appGroup());
+
+        if (appGroupLoaders != null) {
+          // if (the DNA specifies an app-group,
+          // and there is a loader that exactly matches both the app-group and the name,
+          // and there is exactly one loader registered in that app-group that is a *child* of the exact match) {
+          // use the child;
+          // }
+          if (appGroupLoaders.contains(desc.name())) {
+            Set<String> children = loaderChildren.get(desc.name());
+            // Clean up GC'ed children before deciding that there is exactly one
+            ClassLoader firstChild = null;
+            boolean exactlyOne = false;
+            for (String child : children) {
+              loader = lookupLoaderByName(child);
+              Assert.assertNotNull(loader); // invariant: loaderChildren only contains valid loader names
+              if (loader != REMOVED) {
+                if (firstChild == null) {
+                  // keep a ref so it doesn't get GC'ed before we come back to it
+                  firstChild = loader;
+                  exactlyOne = true;
+                } else {
+                  // no point in looking further; there are at least two non-GC'ed children
+                  exactlyOne = false;
+                  break;
+                }
               }
             }
+            if (exactlyOne) { return firstChild; }
           }
-          if (exactlyOne) { return firstChild; }
 
-          // there might not be an observable parent/child relationship. If there is exactly one loader in the app-grpip
-          // that is not a "standard" loader, select it
-          final Set<String> copy = new HashSet<String>(appGroupLoaders);
-          for (final Iterator<String> iter = copy.iterator(); iter.hasNext();) {
-            final String name = iter.next();
+          // there might not be an observable parent/child relationship. If there is exactly
+          // one loader in the app-group that is not a "standard" loader, select it
+          Set<String> copy = new HashSet<String>(appGroupLoaders);
+          for (Iterator<String> iter = copy.iterator(); iter.hasNext();) {
+            String name = iter.next();
             if (name.startsWith(Namespace.STANDARD_NAMESPACE)) {
               iter.remove();
             }
@@ -285,24 +287,24 @@ public class StandardClassProvider implements ClassProvider {
    * 
    * @param appGroup must be non-null and non-empty
    */
-  private void updateAllChildRelationships(final String appGroup) {
-    final Set<String> descs = this.appGroups.get(appGroup);
-    final Map<NamedClassLoader, Set<NamedClassLoader>> loaderToChildren = new HashMap<NamedClassLoader, Set<NamedClassLoader>>();
+  private void updateAllChildRelationships(String appGroup) {
+    Set<String> descs = appGroups.get(appGroup);
+    Map<NamedClassLoader, Set<NamedClassLoader>> loaderToChildren = new HashMap<NamedClassLoader, Set<NamedClassLoader>>();
 
     // For each loader in the appgroup, add an empty set to loaderToChildren.
     // This way childToParents.keys() identifies all the loaders in the app group.
-    for (final String desc : descs) {
-      final ClassLoader loader = lookupLoaderByName(desc);
+    for (String desc : descs) {
+      ClassLoader loader = lookupLoaderByName(desc);
       if (loader != null) {
         loaderToChildren.put((NamedClassLoader) loader, new HashSet<NamedClassLoader>());
       }
     }
 
     // For each loader in the appgroup, find any parents also in the group, and add it as a child
-    for (final NamedClassLoader loader : loaderToChildren.keySet()) {
+    for (NamedClassLoader loader : loaderToChildren.keySet()) {
       ClassLoader parent = ((ClassLoader) loader).getParent();
       while (parent != null) {
-        final Set<NamedClassLoader> children = loaderToChildren.get(parent);
+        Set<NamedClassLoader> children = loaderToChildren.get(parent);
         if (children != null) {
           children.add(loader);
         }
@@ -311,14 +313,14 @@ public class StandardClassProvider implements ClassProvider {
     }
 
     // Update the loaderChildren map
-    for (final Map.Entry<NamedClassLoader, Set<NamedClassLoader>> entry : loaderToChildren.entrySet()) {
-      final String desc = getName(entry.getKey());
-      final Set<NamedClassLoader> children = entry.getValue();
-      final Set<String> childrenNames = new HashSet<String>();
-      for (final NamedClassLoader child : children) {
+    for (Map.Entry<NamedClassLoader, Set<NamedClassLoader>> entry : loaderToChildren.entrySet()) {
+      String desc = getName(entry.getKey());
+      Set<NamedClassLoader> children = entry.getValue();
+      Set<String> childrenNames = new HashSet<String>();
+      for (NamedClassLoader child : children) {
         childrenNames.add(getName(child));
       }
-      this.loaderChildren.put(desc, childrenNames);
+      loaderChildren.put(desc, childrenNames);
     }
   }
 
@@ -336,9 +338,9 @@ public class StandardClassProvider implements ClassProvider {
    * @return null if the requested loader has not been registered, or {@link #REMOVED} if the requested loader was
    *         registered but has been GC'ed.
    */
-  private ClassLoader lookupLoaderByName(final String name) {
+  private ClassLoader lookupLoaderByName(String name) {
     final ClassLoader rv;
-    final WeakReference<NamedClassLoader> ref = this.loaders.get(name);
+    WeakReference<NamedClassLoader> ref = loaders.get(name);
     if (ref != null) {
       rv = (ClassLoader) ref.get();
       if (rv == null) {
@@ -357,13 +359,13 @@ public class StandardClassProvider implements ClassProvider {
    * <p>
    * This method must be externally synchronized on 'this'.
    */
-  private void removeFromMaps(final String name) {
-    this.loaders.remove(name);
-    this.loaderDescriptions.remove(name);
-    this.loaderChildren.remove(name);
-    for (final Entry<String, Set<String>> entry : this.appGroups.entrySet()) {
-      final Set<String> names = entry.getValue();
-      final boolean removed = names.remove(name);
+  private void removeFromMaps(String name) {
+    loaders.remove(name);
+    loaderDescriptions.remove(name);
+    loaderChildren.remove(name);
+    for (Entry<String, Set<String>> entry : appGroups.entrySet()) {
+      Set<String> names = entry.getValue();
+      boolean removed = names.remove(name);
       if (removed) {
         // this loader was in an appGroup, so update that group's uniqueChild status
         updateAllChildRelationships(entry.getKey());
@@ -382,30 +384,30 @@ public class StandardClassProvider implements ClassProvider {
    */
   synchronized String checkIntegrity() {
     // loaderDescriptions, loaderChildren, and loaders should each have exactly one entry per loader
-    if (this.loaderDescriptions.size() != this.loaders.size()) { return "Map sizes differ: loaderDescriptions.size() = "
-                                                                        + this.loaderDescriptions.size()
-                                                                        + ", loaders.size() = " + this.loaders.size(); }
-    if (this.loaderChildren.size() != this.loaders.size()) { return "Map sizes differ: loaderChildren.size() = "
-                                                                    + this.loaderChildren.size()
-                                                                    + ", loaders.size() = " + this.loaders.size(); }
+    if (loaderDescriptions.size() != loaders.size()) { return "Map sizes differ: loaderDescriptions.size() = "
+                                                              + loaderDescriptions.size() + ", loaders.size() = "
+                                                              + loaders.size(); }
+    if (loaderChildren.size() != loaders.size()) { return "Map sizes differ: loaderChildren.size() = "
+                                                          + loaderChildren.size() + ", loaders.size() = "
+                                                          + loaders.size(); }
 
     // Every entry in every value of loaderChildren should be the name of another loader
-    for (final Entry<String, Set<String>> entry : this.loaderChildren.entrySet()) {
-      final Set<String> children = entry.getValue();
-      for (final String child : children) {
-        if (!this.loaders.containsKey(child)) { return "loaderChildren[" + entry.getKey()
-                                                       + "] contains unrecognized child [" + child + "]"; }
+    for (Entry<String, Set<String>> entry : loaderChildren.entrySet()) {
+      Set<String> children = entry.getValue();
+      for (String child : children) {
+        if (!loaders.containsKey(child)) { return "loaderChildren[" + entry.getKey()
+                                                  + "] contains unrecognized child [" + child + "]"; }
       }
     }
 
     // Every value of appGroups should be a Set<String>, and every value in the set should
     // be the name of another loader
-    for (final Entry<String, Set<String>> entry : this.appGroups.entrySet()) {
-      final Set<String> loadersInGroup = entry.getValue();
+    for (Entry<String, Set<String>> entry : appGroups.entrySet()) {
+      Set<String> loadersInGroup = entry.getValue();
       if (loadersInGroup == null) { return "appGroups[" + entry.getKey() + "] contained a null value"; }
-      for (final String name : loadersInGroup) {
-        if (!this.loaders.containsKey(name)) { return "appGroups[" + entry.getKey()
-                                                      + "] pointed to unrecognized name [" + name + "]"; }
+      for (String name : loadersInGroup) {
+        if (!loaders.containsKey(name)) { return "appGroups[" + entry.getKey() + "] pointed to unrecognized name ["
+                                                 + name + "]"; }
       }
     }
 
@@ -418,7 +420,7 @@ public class StandardClassProvider implements ClassProvider {
    * @return true if dangling weak references are found
    */
   synchronized boolean checkWeakReferences() {
-    for (final WeakReference<NamedClassLoader> ref : this.loaders.values()) {
+    for (WeakReference<NamedClassLoader> ref : loaders.values()) {
       if (null == ref.get()) { return true; }
     }
     return false;
