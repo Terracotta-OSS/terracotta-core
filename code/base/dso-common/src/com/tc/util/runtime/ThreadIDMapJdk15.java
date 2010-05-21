@@ -4,31 +4,26 @@
  */
 package com.tc.util.runtime;
 
+import com.google.common.collect.MapMaker;
+
 import com.tc.object.locks.ThreadID;
-import com.tc.util.Assert;
 
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class ThreadIDMapJdk15 implements ThreadIDMap {
-  private final Map<Thread, Long> threadIDMap    = new WeakHashMap<Thread, Long>();
-  private final Map<Long, ThreadID>   id2ThreadIDMap = new WeakHashMap<Long, ThreadID>();
-
+  private final Map<Long, ThreadID> id2ThreadIDMap = new MapMaker().weakValues().makeMap();
+  
   public synchronized void addTCThreadID(final ThreadID tcThreadID) {
-    final Thread currentThread = Thread.currentThread();
-    final Long javaThreadID = new Long(currentThread.getId());
-    Object prev = threadIDMap.put(currentThread, javaThreadID);
-    Assert.assertNull(javaThreadID + " should not exist before", prev);
-    prev = this.id2ThreadIDMap.put(javaThreadID, tcThreadID);
+    id2ThreadIDMap.put(Long.valueOf(Thread.currentThread().getId()), tcThreadID);
   }
 
-  public synchronized ThreadID getTCThreadID(final Long javaThreadID) {
-    return this.id2ThreadIDMap.get(javaThreadID);
+  public synchronized ThreadID getTCThreadID(final Long javaThreadId) {
+    return id2ThreadIDMap.get(javaThreadId);
   }
 
   /** For testing only - not in interface */
   public synchronized int getSize() {
-    return this.threadIDMap.size();
+    return id2ThreadIDMap.size();
   }
 
 }

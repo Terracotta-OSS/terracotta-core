@@ -5,6 +5,7 @@
     <dependency name="bsh" rev="2.0b4" org="org.beanshell"/>
     <dependency name="commons-cli" rev="1.1" org="commons-cli"/>
     <dependency name="commons-collections" rev="3.2.1" org="commons-collections"/>
+    <dependency name="google-collections" rev="1.0" org="com.google.collections"/>
     <dependency name="commons-io" rev="1.2" org="commons-io"/>
     <dependency name="commons-lang" rev="2.0" org="commons-lang"/>
     <dependency name="commons-logging" rev="1.0.3" org="commons-logging"/>

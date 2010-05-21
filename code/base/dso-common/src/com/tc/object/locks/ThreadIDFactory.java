@@ -3,10 +3,12 @@
  */
 package com.tc.object.locks;
 
-import java.util.WeakHashMap;
+import com.google.common.collect.MapMaker;
+
+import java.util.Map;
 
 public class ThreadIDFactory {
-  private static final WeakHashMap<Long, ThreadID> threadIDMap = new WeakHashMap<Long, ThreadID>();
+  private static final Map<Long, ThreadID> threadIDMap = new MapMaker().weakValues().makeMap();
 
   public ThreadID getOrCreate(long tid) {
     ThreadID threadID = threadIDMap.get(tid);
