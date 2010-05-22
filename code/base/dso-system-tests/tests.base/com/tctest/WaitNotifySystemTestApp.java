@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest;
 
@@ -214,7 +215,7 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
     // start up another taker and putter locally. Do this for two reasons:
     // 1) Taker/Putter choice is made randomly, thus it is possible that there are only putters or takers out there
     // 2) To force some wait/notify in the intra-VM context
-    Thread extraTaker = new Thread( new Runnable() {
+    Thread extraTaker = new Thread(new Runnable() {
       public void run() {
         try {
           runTaker(extraTakerID);
@@ -308,7 +309,9 @@ public class WaitNotifySystemTestApp extends AbstractTransparentApp {
         final int lastCount = workers.size();
         log("waiting for workers " + workers.size());
         workers.wait();
-        if (lastCount == workers.size()) { throw new Error("Size didn't change!!!"); }
+        if (lastCount == workers.size()) {
+          log("Size=" + lastCount + " didn't change!!!");
+        }
       }
     }
   }
