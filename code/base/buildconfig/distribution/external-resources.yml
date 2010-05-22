@@ -8,14 +8,6 @@ default_repos:
   - http://repo1.maven.org/maven2
 
 artifacts:
-  - maven_artifact: true
-    groupId: org.terracotta
-    artifactId: terracotta-express-runtime
-    version: 1.0.0-SNAPSHOT
-    classifier: javadoc
-    destination: common/apidocs
-    explode: true
-
 # begin ehcache samples
   - maven_artifact: true
     groupId: org.terracotta.samples.ehcache

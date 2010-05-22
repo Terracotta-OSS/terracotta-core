@@ -13,3 +13,11 @@ artifacts:
     artifactId: terracotta-express-runtime
     version: 1.0.0-SNAPSHOT
     destination: common
+    
+  - maven_artifact: true
+    groupId: org.terracotta
+    artifactId: terracotta-express-runtime
+    version: 1.0.0-SNAPSHOT
+    classifier: javadoc
+    destination: common/docs/javadoc
+    explode: true

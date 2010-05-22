@@ -3,6 +3,8 @@ default_repos:
   - http://kong/repo/snapshots
   - http://kong/repo/staging
   - http://kong/repo/releases
+  - http://kong/repo/ee-snapshots
+  - http://kong/repo/ee-releases
   - http://www.terracotta.org/download/reflector/snapshots
   - http://www.terracotta.org/download/reflector/releases
   - http://repo1.maven.org/maven2
@@ -13,3 +15,11 @@ artifacts:
     artifactId: terracotta-express-runtime-ee
     version: 1.0.0-SNAPSHOT
     destination: common
+  
+  - maven_artifact: true
+    groupId: org.terracotta
+    artifactId: terracotta-express-runtime-ee
+    version: 1.0.0-SNAPSHOT
+    classifier: javadoc
+    destination: common/docs/javadoc
+    explode: true
