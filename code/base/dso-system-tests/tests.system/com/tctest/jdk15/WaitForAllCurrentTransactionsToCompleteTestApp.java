@@ -4,6 +4,8 @@
  */
 package com.tctest.jdk15;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.object.bytecode.ManagerUtil;
@@ -30,6 +32,7 @@ import javax.management.ObjectName;
  * Exercise ManagerUtil.waitForAllCurrentTransactionsToComplete() to see if screw up anything
  */
 public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTransparentApp {
+  private static final TCLogger     logger              = TCLogging.getLogger("com.tc.WaitForAllCurrentTransactionsToComplete");
   private static final int          DEFAULT_NUM_OF_PUT  = 1234;
   private static final int          DEFAULT_NUM_OF_LOOP = 5;
   public static final String        JMX_PORT            = "jmx-port";
@@ -52,7 +55,7 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
     numOfPut = DEFAULT_NUM_OF_PUT;
     numOfLoop = DEFAULT_NUM_OF_LOOP;
 
-    System.err.println("***** setting numOfPut=[" + numOfPut + "] numOfLoop=[" + numOfLoop + "]");
+    logger.info("***** setting numOfPut=[" + numOfPut + "] numOfLoop=[" + numOfLoop + "]");
   }
 
   public void run() {
@@ -63,11 +66,15 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
         if (index == 0) {
           doPut();
           Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
+          logger.info("XXX Txns in the system");
+          getPendingTransactionsCount();
           waitTxnComplete();
+          logger.info("XXX Txns in the system, after txn complete");
           Assert.assertEquals(0, getPendingTransactionsCount());
         } else {
           // sleep here to let index 0 thread to complete job first without introduce transaction by barrier
-          ThreadUtil.reallySleep(1000);
+          ThreadUtil.reallySleep(2000);
+          logger.info("XXX Client-" + ManagerUtil.getClientID() + " wakeup");
         }
         barrier.await();
         if (index != 0) {
@@ -86,8 +93,8 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
   private void waitTxnComplete() {
     long now = System.currentTimeMillis();
     ManagerUtil.waitForAllCurrentTransactionsToComplete();
-    System.out.println("XXX Client-" + ManagerUtil.getClientID() + " waitForAllCurrentTransactionsToComplete took "
-                       + (System.currentTimeMillis() - now) + "ms");
+    logger.info("XXX Client-" + ManagerUtil.getClientID() + " waitForAllCurrentTransactionsToComplete took "
+                + (System.currentTimeMillis() - now) + "ms");
   }
 
   private long getPendingTransactionsCount() {
@@ -104,11 +111,11 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
 
     long l = -1;
     for (ObjectName o : map.keySet()) {
-      System.out.println("Pending Tranaction count for " + o + " size: " + map.get(o));
+      logger.info("Pending Tranaction count for " + o + " size: " + map.get(o));
       String cid = o.getKeyProperty("channelID");
       if (cid.equals(ManagerUtil.getClientID())) {
         l = map.get(o);
-        System.out.println("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
+        logger.info("XXX Pending Tranaction count for channleID=" + cid + " size: " + l);
       }
     }
     return l;
