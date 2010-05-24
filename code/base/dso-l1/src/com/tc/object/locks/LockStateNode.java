@@ -15,17 +15,17 @@ import java.util.concurrent.locks.LockSupport;
 
 abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNode> {
 
-  private static final Timer LOCK_TIMER    = new Timer("LockStateNode Timer", true);
-  
+  private static final Timer LOCK_TIMER = new Timer("LockStateNode Timer", true);
+
   private final ThreadID     owner;
-  
+
   private LockStateNode      next;
 
   LockStateNode(ThreadID owner) {
     this.owner = owner;
     this.next = null;
   }
-  
+
   /**
    * @throws InterruptedException can be thrown by certain subclasses
    */
@@ -47,17 +47,17 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
   void unpark() {
     throw new AssertionError();
   }
-  
+
   ThreadID getOwner() {
     return owner;
   }
-  
+
   LockAcquireResult allowsHold(LockHold newHold) {
     return LockAcquireResult.UNKNOWN;
   }
-  
+
   abstract ClientServerExchangeLockContext toContext(LockID lock, ClientID node);
-  
+
   public LockStateNode getNext() {
     return next;
   }
@@ -67,7 +67,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     next = newNext;
     return old;
   }
-  
+
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -77,41 +77,35 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return false;
     }
   }
-  
+
   public String toString() {
     return getClass().getSimpleName() + " : " + owner;
   }
-  
+
   static class LockHold extends LockStateNode {
     private final LockLevel level;
-    
+
     LockHold(ThreadID owner, LockLevel level) {
       super(owner);
       this.level = level;
     }
-    
+
     LockLevel getLockLevel() {
       return level;
     }
-    
+
     @Override
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner())) {
-        if (this.getLockLevel().isWrite()) {
-          return LockAcquireResult.SUCCESS;
-        }
-        if (newHold.getLockLevel().isRead()) {
-          return LockAcquireResult.SHARED_SUCCESS;
-        }
+        if (this.getLockLevel().isWrite()) { return LockAcquireResult.SUCCESS; }
+        if (newHold.getLockLevel().isRead()) { return LockAcquireResult.SHARED_SUCCESS; }
       } else {
-        if (this.getLockLevel().isWrite() || newHold.getLockLevel().isWrite()) {
-          return LockAcquireResult.FAILURE;
-        }
+        if (this.getLockLevel().isWrite() || newHold.getLockLevel().isWrite()) { return LockAcquireResult.FAILURE; }
       }
-      
+
       return LockAcquireResult.UNKNOWN;
     }
-    
+
     @Override
     public boolean equals(Object o) {
       if (o == this) {
@@ -122,7 +116,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         return false;
       }
     }
-    
+
     @Override
     public int hashCode() {
       return (5 * super.hashCode()) ^ (7 * level.hashCode());
@@ -136,42 +130,44 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
-        case READ: return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
-        case WRITE: return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
+        case READ:
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_READ);
+        case WRITE:
+          return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.HOLDER_WRITE);
       }
       throw new AssertionError();
     }
   }
-  
+
   static class PendingLockHold extends LockStateNode {
     private final LockLevel  level;
     private final Thread     javaThread;
-    private volatile boolean delegates = true;
-    
-    volatile boolean responded = false;
-    volatile boolean awarded   = false;
-    
-    private volatile String delegationMethod = "Not Delegated";
-    
+    private volatile boolean delegates        = true;
+
+    volatile boolean         responded        = false;
+    volatile boolean         awarded          = false;
+
+    private volatile String  delegationMethod = "Not Delegated";
+
     PendingLockHold(ThreadID owner, LockLevel level) {
       super(owner);
       this.javaThread = Thread.currentThread();
       this.level = level;
     }
-    
+
     LockLevel getLockLevel() {
       return level;
     }
-    
+
     Thread getJavaThread() {
       return javaThread;
     }
-    
+
     void park() {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
       LockSupport.park();
     }
-    
+
     void unpark() {
       LockSupport.unpark(javaThread);
     }
@@ -182,20 +178,20 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     void delegated(String method) {
       if (delegates) {
-        delegationMethod = method;        
+        delegationMethod = method;
       }
       delegates = false;
     }
-    
+
     void refused() {
-      //no-op
+      // no-op
     }
 
     void awarded() {
       awarded = true;
       responded = true;
     }
-    
+
     boolean isRefused() {
       return false;
     }
@@ -203,19 +199,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     boolean isAwarded() {
       return responded && awarded;
     }
-    
+
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner()) && getLockLevel().equals(newHold.getLockLevel())) {
-        if (isAwarded()) {
-          return LockAcquireResult.SUCCESS;
-        }
-        if (isRefused()) {
-          return LockAcquireResult.FAILURE;
-        }
+        if (isAwarded()) { return LockAcquireResult.SUCCESS; }
+        if (isRefused()) { return LockAcquireResult.FAILURE; }
       }
       return LockAcquireResult.UNKNOWN;
     }
-    
+
     public boolean equals(Object o) {
       if (o == this) {
         return true;
@@ -225,15 +217,16 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         return false;
       }
     }
-    
+
     public int hashCode() {
       return (5 * super.hashCode()) ^ (7 * level.hashCode());
     }
-        
+
     public String toString() {
-      return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded() + ", refused=" + isRefused() + ", " + delegationMethod;
+      return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded()
+             + ", refused=" + isRefused() + ", " + delegationMethod;
     }
-    
+
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       if (isAwarded()) {
@@ -253,12 +246,16 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
       throw new AssertionError();
     }
+
+    public void allowDelegation() {
+      delegates = true;
+    }
   }
-  
+
   static class PendingTryLockHold extends PendingLockHold {
-    
-    private final long       waitTime;
-    
+
+    private final long waitTime;
+
     PendingTryLockHold(ThreadID owner, LockLevel level, long timeout) {
       super(owner, level);
       this.waitTime = timeout;
@@ -267,7 +264,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     long getTimeout() {
       return waitTime;
     }
-    
+
     @Override
     boolean isRefused() {
       return responded && !awarded;
@@ -284,7 +281,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
       LockSupport.parkNanos(timeout * 1000000L);
     }
-    
+
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       if (isAwarded()) {
@@ -297,9 +294,11 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       } else {
         switch (ServerLockLevel.fromClientLockLevel(getLockLevel())) {
           case READ:
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_READ, getTimeout());
+            return new ClientServerExchangeLockContext(lock, node, getOwner(),
+                                                       ServerLockContext.State.TRY_PENDING_READ, getTimeout());
           case WRITE:
-            return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
+            return new ClientServerExchangeLockContext(lock, node, getOwner(),
+                                                       ServerLockContext.State.TRY_PENDING_WRITE, getTimeout());
         }
       }
       throw new AssertionError();
@@ -310,12 +309,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return super.toString() + ", timeout=" + getTimeout();
     }
   }
-  
+
   static class MonitorBasedPendingLockHold extends PendingLockHold {
 
     private final Object waitObject;
     private boolean      unparked = false;
-    
+
     MonitorBasedPendingLockHold(ThreadID owner, LockLevel level, Object waitObject) {
       super(owner, level);
       if (waitObject == null) {
@@ -324,7 +323,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         this.waitObject = waitObject;
       }
     }
-    
+
     @Override
     void park() {
       synchronized (waitObject) {
@@ -347,19 +346,19 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         waitObject.notifyAll();
       }
     }
-    
+
     @Override
     boolean canDelegate() {
       return false;
     }
   }
-  
+
   static class LockWaiter extends LockStateNode {
-    
+
     private final Object                 waitObject;
     private final long                   waitTime;
     private final Stack<PendingLockHold> reacquires;
-    
+
     LockWaiter(ThreadID owner, Object waitObject, Stack<LockHold> holds, long timeout) {
       super(owner);
       if (waitObject == null) {
@@ -367,15 +366,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       } else {
         this.waitObject = waitObject;
       }
-      
+
       this.reacquires = new Stack<PendingLockHold>();
       for (LockHold hold : holds) {
         reacquires.add(new MonitorBasedPendingLockHold(owner, hold.getLockLevel(), this.waitObject));
       }
-      
+
       this.waitTime = timeout;
     }
-    
+
     long getTimeout() {
       return waitTime;
     }
@@ -383,7 +382,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     Stack<PendingLockHold> getReacquires() {
       return reacquires;
     }
-    
+
     void park() throws InterruptedException {
       synchronized (waitObject) {
         waitObject.wait();
@@ -395,18 +394,19 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         waitObject.wait(timeout);
       }
     }
-    
+
     void unpark() {
-      //this is a slight hack to avoiding blocking the stage thread
+      // this is a slight hack to avoiding blocking the stage thread
       LOCK_TIMER.schedule(new TimerTask() {
-        @Override public void run() {
+        @Override
+        public void run() {
           synchronized (waitObject) {
             waitObject.notifyAll();
           }
         }
       }, 0);
     }
-    
+
     public boolean equals(Object o) {
       if (o == this) {
         return true;
@@ -416,14 +416,14 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         return false;
       }
     }
-    
+
     public int hashCode() {
       return super.hashCode();
     }
-    
+
     @Override
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.WAITER, getTimeout());
     }
-  }  
+  }
 }

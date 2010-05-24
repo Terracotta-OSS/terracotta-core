@@ -765,6 +765,29 @@ public class ClientLockTest extends TestCase {
     Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));    
   }
   
+  public void testGreedyWriteOnReadRecall() {
+    ClientLock lock = getFreshClientLock();
+    
+    try {
+      checkLockQueryMethods(lock, 0, 0);
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);      
+      checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
+      
+      lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
+      checkLockQueryMethods(lock, 0, 0);
+      
+      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT), ServerLockLevel.READ, 0);
+      
+      lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
+      checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.READ));
+      
+      lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
+      checkLockQueryMethods(lock, 0, 0);
+    } catch (GarbageLockException e) {
+      Assert.failure("Unexpected Exception ", e);
+    }
+  }
+  
   static LockHold hold(ThreadID thread, LockLevel level) {
     return new LockHold(thread, level);
   }

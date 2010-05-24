@@ -11,6 +11,7 @@ import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.objectserver.locks.context.LinkedServerLockContext;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -94,7 +95,11 @@ public final class ServerLockImpl extends AbstractServerLock {
           awardLockGreedily(helper, request);
           // recall if it has pending requests from other clients
           if (hasPendingRequestsFromOtherClients(request.getClientID())) {
-            recall(ServerLockLevel.WRITE, helper);
+            if (hasPendingWrites()) {
+              recall(ServerLockLevel.WRITE, helper);
+            } else {
+              recall(ServerLockLevel.READ, helper);
+            }
           }
         }
         break;
@@ -179,18 +184,37 @@ public final class ServerLockImpl extends AbstractServerLock {
 
     recordLockReleaseStat(cid, ThreadID.VM_ID, helper);
 
+    boolean hasGreedyReadHolder = false;
+
     for (ClientServerExchangeLockContext cselc : serverLockContexts) {
       switch (cselc.getState().getType()) {
         case GREEDY_HOLDER:
-          throw new IllegalArgumentException("Greedy type not allowed here");
+          // This is the case when a client holds a greedy write and a read recall is made
+          // In such a case we would add this client as a GREEDY READ, process pending requests
+          // and award all the read requests the lock they need.
+          // However we need to make sure that the client side only sends GREEDY HOLDER (READ)
+          // in its recallCommit message when it holds a greedy write lock.
+          // Also a recallCommit message containing a GREEDY HOLDER (READ) cannot have any
+          // other holders, pending or try pending contexts.
+          // See ClientLockImpl for more details
+          Assert.assertEquals(State.GREEDY_HOLDER_READ, cselc.getState());
+          hasGreedyReadHolder = true;
+          LinkedServerLockContext request = new LinkedServerLockContext(cid, ThreadID.VM_ID);
+          request.setState(helper.getContextStateMachine(), State.PENDING_READ);
+          awardLockGreedily(helper, request, false);
+          processPendingRequests(helper);
+          break;
         case HOLDER:
+          Assert.assertFalse(hasGreedyReadHolder);
           awardLock(helper, createPendingContext(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), helper),
                     false);
           break;
         case PENDING:
+          Assert.assertFalse(hasGreedyReadHolder);
           queue(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), Type.PENDING, -1, helper);
           break;
         case TRY_PENDING:
+          Assert.assertFalse(hasGreedyReadHolder);
           if (cselc.timeout() <= 0) {
             cannotAward(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), helper);
           } else {
@@ -210,7 +234,11 @@ public final class ServerLockImpl extends AbstractServerLock {
     }
 
     if (hasGreedyHolders() && !isRecalled && hasPendingRequests()) {
-      recall(ServerLockLevel.WRITE, helper);
+      if (hasPendingWrites()) {
+        recall(ServerLockLevel.WRITE, helper);
+      } else {
+        recall(ServerLockLevel.READ, helper);
+      }
     }
 
     // Also check if the lock can be removed

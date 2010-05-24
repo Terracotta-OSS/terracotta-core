@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -386,7 +387,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    */
   public synchronized boolean recall(final RemoteLockManager remote, final ServerLockLevel interest, int lease) {
     // transition the greediness state
-    greediness = greediness.recalled(this, lease);
+    greediness = greediness.recalled(this, lease, interest);
 
     if (greediness.isRecalled()) {
       greediness = doRecall(remote);
@@ -896,18 +897,29 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (greediness.isFree()) {
       return greediness;
     } else {
-      Collection<ClientServerExchangeLockContext> contexts = getFilteredStateSnapshot(remote.getClientID(), false);
+      Collection<ClientServerExchangeLockContext> contexts = getRecallCommitStateSnapshot(remote.getClientID());
 
+      ClientGreediness postRecallCommitGreediness = greediness.recallCommitted();
       for (LockStateNode node : this) {
         if (node instanceof PendingLockHold) {
-          // these nodes have now contacted the server
-          ((PendingLockHold) node).delegated("Attached To Recall Commit Message...");
+          if (postRecallCommitGreediness.isGreedy()) {
+            ((PendingLockHold) node).allowDelegation();
+          } else {
+            // these nodes have now contacted the server
+            ((PendingLockHold) node).delegated("Attached To Recall Commit Message...");
+          }
         }
       }
 
       remote.recallCommit(lock, contexts);
 
-      return greediness.recallCommitted();
+      greediness = greediness.recallCommitted();
+
+      if (greediness.isGreedy()) {
+        unparkFirstQueuedAcquire();
+      }
+
+      return greediness;
     }
   }
 
@@ -992,6 +1004,28 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     legacyState.addAll(pends.values());
 
     return legacyState;
+  }
+
+  private synchronized Collection<ClientServerExchangeLockContext> getRecallCommitStateSnapshot(ClientID client) {
+    ClientGreediness postRecallGreediness = greediness.recallCommitted();
+    if (postRecallGreediness.isGreedy()) {
+      List<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
+      contexts.add(postRecallGreediness.toContext(lock, client));
+
+      for (ClientServerExchangeLockContext context : getStateSnapshot(client)) {
+        switch (context.getState()) {
+          case WAITER:
+            contexts.add(context);
+            break;
+          default:
+            break;
+        }
+      }
+
+      return contexts;
+    } else {
+      return getFilteredStateSnapshot(client, false);
+    }
   }
 
   public synchronized String toString() {
