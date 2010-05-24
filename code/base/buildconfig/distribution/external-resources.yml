@@ -104,12 +104,6 @@ artifacts:
 
 # begin express products
   - maven_artifact: true
-    groupId: net.sf.ehcache
-    artifactId: ehcache-terracotta
-    version: 2.2.0-SNAPSHOT
-    destination: ehcache
-
-  - maven_artifact: true
     groupId: org.terracotta.quartz
     artifactId: quartz-terracotta
     version: 1.2.0-SNAPSHOT
