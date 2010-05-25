@@ -30,10 +30,10 @@ public interface TCPropertiesConsts {
    * Description : This section contains the defaults for the cache manager for the L2
    * enabled             : Enable/disable L2's cache manager
    * logging.enabled     : Enable/disable L2's cache manager logging
-   * leastCount          : Minimum increase in the % usage of memory for starting eviction 
+   * leastCount          : Minimum increase in the % usage of memory for starting eviction
    *                       once the threshold value specified of memory used is reached
    * percentageToEvict   : % of memory to evict once it reaches threshold
-   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis 
+   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis
    * criticalThreshold   : % of memory used after which memory manager will evict aggressively
    * threshold           : % of memory used after which eviction may start
    * monitorOldGenOnly   : Only monitor old gen objects
@@ -60,8 +60,8 @@ public interface TCPropertiesConsts {
    * logging.printStats           : Enables/disables logging for tx stats
    * logging.printCommits         : Enables/disables logging for tx commits
    * logging.printBroadCastStats  : Enables/disables logging for tx Broadcasts
-   * passive.throttle.enabled     : Enables/disables throttling of active from Passive when 
-   *                                the number of pending txns reaches the threshold 
+   * passive.throttle.enabled     : Enables/disables throttling of active from Passive when
+   *                                the number of pending txns reaches the threshold
    * passive.throttle.threshold   : Number of pending transactions after which passive will
    *                                throttle the active
    * passive.throttle.maxSleepSeconds  : Sleep time for active when passive throttles it
@@ -118,11 +118,11 @@ public interface TCPropertiesConsts {
    *                                  objects to the passive
    * dgc.throttle.timeInMillis     - Throttle time for dgc for each cycle for every requestsPerThrottle
    *                                 requests for references from object manager
-   * l2.objectmanager.persistor.measure.performance - Enable/disable logging for object manager persistor                                 
+   * l2.objectmanager.persistor.measure.performance - Enable/disable logging for object manager persistor
    * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
    *                                 from object manager after which dgc will throttle
    * dgc.faulting.optimization      - This property will not fault in objects that has no references during DGC mark stage
-   *                                   0 - disable faulting optimization 
+   *                                   0 - disable faulting optimization
    *                                   1 - enabled with standard implementation (continous oids)
    *                                   2 - enabled with compressed implementation (spare oids)
    * dgc.enterpriseMarkStageInterval - The time between tokens are sent to see if each L2 finished marking (collect/rescue).
@@ -130,7 +130,7 @@ public interface TCPropertiesConsts {
    * dgc.young.enabled              - Enables/Disables the young gen collector
    * dgc.young.frequencyInMillis    - The time in millis between each young gen collection.
    *                                  (default : 1 min, not advisable to run more frequently)
-   * l2.data.backup.throttle.timeInMillis - time to sleep between copying of each file from the db while taking backup                             
+   * l2.data.backup.throttle.timeInMillis - time to sleep between copying of each file from the db while taking backup
    * </code>
    ********************************************************************************************************************/
 
@@ -170,7 +170,7 @@ public interface TCPropertiesConsts {
    * Description : This section contains configuration for SEDA stages for L2
    * commitstage.threads                : Number of seda commit stage thread
    * faultstage.threads                 : Number of seda fault stage thread
-   * managedobjectrequeststage.threads  : Number of threads for object request seda stage 
+   * managedobjectrequeststage.threads  : Number of threads for object request seda stage
    *                                      (experimental, do not change)
    * managedobjectresponsestage.threads : Number of threads for object response seda stage
    * flushstage.threads                 : Number of threads for flusing of objects to disk
@@ -244,7 +244,7 @@ public interface TCPropertiesConsts {
    * Section : Network HA (nha)
    * Description : If Networked HA is enabled then these values take effect
    * tcgroupcomm.handshake.timeout        - tc-group-comm handshake timeout milliseconds
-   * tcgroupcomm.response.timelimit       - tc-group-comm message response timelimit millisecon RuntimeException 
+   * tcgroupcomm.response.timelimit       - tc-group-comm message response timelimit millisecon RuntimeException
    *                                        thrown after timelimit
    * tcgroupcomm.discovery.interval       - tc-group-comm member discovery interval milliseconds
    * tcgroupcomm.reconnect.timeout        - L2-L2 reconnect windows in milliseconds
@@ -349,10 +349,10 @@ public interface TCPropertiesConsts {
    * Description : This section contains the defaults for the cache manager for the L1
    * enabled             : Enable/disable L2's cache manager
    * logging.enabled     : Enable/disable L2's cache manager logging
-   * leastCount          : Minimum increase in the % usage of memory for starting eviction 
+   * leastCount          : Minimum increase in the % usage of memory for starting eviction
    *                       once the threshold value specified of memory used is reached
    * percentageToEvict   : % of memory to evict once it reaches threshold
-   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis 
+   * sleepInterval       : Initial sleep time between each cycles of memory usage analysis
    * criticalThreshold   : % of memory used after which memory manager will evict aggressively
    * threshold           : % of memory used after which eviction may start
    * monitorOldGenOnly   : Only monitor old gen objects
@@ -469,11 +469,11 @@ public interface TCPropertiesConsts {
    * <code>
    * Section : L1 Object Manager Properties
    * Description : This section contains the defaults for the Object manager for the L1
-   * remote.maxDNALRUSize    : Count of dnas after which l1s will remove unrequested object 
+   * remote.maxDNALRUSize    : Count of dnas after which l1s will remove unrequested object
    * remote.logging.enabled  : Enable/disable logging of remote object manager
    * remote.maxRequestSentImmediately
    *                         : Maximum number of requests send immediately after which it will be batched
-   * objectid.request.size   : Number of object ids requested at once from L2 for creating 
+   * objectid.request.size   : Number of object ids requested at once from L2 for creating
    *                           new objects
    * flush.logging.enabled   : Enable/disable object's flush logging
    * fault.logging.enabled   : Enable/disable object's fault logging
@@ -507,7 +507,7 @@ public interface TCPropertiesConsts {
    * stage.monitor.delay                  : long            - frequency in milliseconds
    * bytebuffer.pooling.enabled           : Enable/disable tc byte buffer pooling
    * bytebuffer.common.pool.maxcount      : Max size of pool for tc byte buffer
-   * bytebuffer.threadlocal.pool.maxcount : Thread pool size 
+   * bytebuffer.threadlocal.pool.maxcount : Thread pool size
    * </code>
    ********************************************************************************************************************/
   public static final String   TC_STAGE_MONITOR_ENABLED                                      = "tc.stage.monitor.enabled";
@@ -568,6 +568,7 @@ public interface TCPropertiesConsts {
   public static final String   SESSION_DEBUG_INVALIDATE                                      = "session.debug.invalidate";
   public static final String   SESSION_DEBUG_SESSIONS                                        = "session.debug.sessions";
   public static final String   SESSION_VHOSTS_EXCLUDED                                       = "session.vhosts.excluded";
+  public static final String   SESSION_STATISTICS_ENABLED                                    = "session.statistics.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -585,10 +586,10 @@ public interface TCPropertiesConsts {
    *                              CacheManager.singleton will be configured as roots.
    *  logging.enabled           : Enable/disable ehcache logging
    *  evictor.logging.enabled   : Enable/disable evictor's logging
-   *  concurrency               : Specifies the number of internal segments and gates the maximum 
-   *                              number of possible concurrent writers to the cache at one time.  
-   *                              There is memory and management overhead associated with each 
-   *                              segment. It is best for the hash function used in tim-ehcache 
+   *  concurrency               : Specifies the number of internal segments and gates the maximum
+   *                              number of possible concurrent writers to the cache at one time.
+   *                              There is memory and management overhead associated with each
+   *                              segment. It is best for the hash function used in tim-ehcache
    *                              if the concurrency is a power of 2.
    *  evictor.pool.size         : Thread pool size for evictor
    *  global.eviction.enable    : Enable/disable global eviction from the cache
@@ -616,11 +617,11 @@ public interface TCPropertiesConsts {
   public static final String   EHCAHCE_LOCK_WRITELEVEL                                       = "ehcache.lock.writeLevel";
 
   /*********************************************************************************************************************
-   * <code> 
+   * <code>
    * Section : L1 Lock Manager Properties
    * Description       : This section contains the defaults for the client lock manager for the L1
-   * striped.count     : striping count for l1 lock manager 
-   * timeout.interval  : time after which an unused lock will be a candidate for lock GC 
+   * striped.count     : striping count for l1 lock manager
+   * timeout.interval  : time after which an unused lock will be a candidate for lock GC
    * </code>
    ********************************************************************************************************************/
   public static final String   L1_LOCKMANAGER_STRIPED_COUNT                                  = "l1.lockmanager.striped.count";
@@ -661,13 +662,13 @@ public interface TCPropertiesConsts {
   public static final String   NET_CORE_TCP_NO_DELAY                                         = "net.core.tcpnodelay";
 
   /*********************************************************************************************************************
-   * <code> Section : 
+   * <code> Section :
    * CVT cvt.retriever.notification.interval  - Interval between log file messages when the CVT
-   *                                            retriever is running (in seconds) 
-   * cvt.statistics.logging.interval          - Interval between logging of statistics data (in seconds). 
+   *                                            retriever is running (in seconds)
+   * cvt.statistics.logging.interval          - Interval between logging of statistics data (in seconds).
    * cvt.buffer.randomsuffix.enabled          - If true, add a random suffix when a buffer is created
-   * cvt.store.randomsuffix.enabled           - If true, add a random suffix when a store is created 
-   * cvt.rest.interface.enabled               - If false, the REST interface for the CVT will be disabled. True by default 
+   * cvt.store.randomsuffix.enabled           - If true, add a random suffix when a store is created
+   * cvt.rest.interface.enabled               - If false, the REST interface for the CVT will be disabled. True by default
    * cvt.client.fail.buffer.open              - If true, always fail the open of the CVT statistics buffer on a client. This is
    *                                            supposed to be used by tests. False by default
    * </code>
@@ -788,8 +789,8 @@ public interface TCPropertiesConsts {
 
   /*********************************************************************************************************************
    * <code>
-   * l2.dump.on.exception.timeout - After get an uncaught exception, the server takes a dump. If the dump doesn't 
-   * happen within this timeout the server will exit (in seconds).   
+   * l2.dump.on.exception.timeout - After get an uncaught exception, the server takes a dump. If the dump doesn't
+   * happen within this timeout the server will exit (in seconds).
    * </code>
    ********************************************************************************************************************/
   public static final String   L2_DUMP_ON_EXCEPTION_TIMEOUT                                  = "l2.dump.on.exception.timeout";

@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
-public class TCPropertiesContsTest extends TCTestCase {
+public class TCPropertiesConstsTest extends TCTestCase {
 
   // This file resides in src.resource/com/tc/properties directory
   private static final String      DEFAULT_TC_PROPERTIES_FILE = "tc.properties";
