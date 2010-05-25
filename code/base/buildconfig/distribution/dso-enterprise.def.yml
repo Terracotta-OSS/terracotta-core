@@ -26,13 +26,13 @@ bundled_components:
       documentations:
         notices:
           - README
-          - releasenotes
-          - thirdpartylicenses
-          - disclaimer
-          - license
+          - RELEASE-NOTES
+          - THIRD-PARTY-LICENSES
+          - DISCLAIMER
+          - LICENSE
           - INSTALL
         guides:
-          - TerracottaQuickStart
+          - QUICK-START
   - express-base:
       documentations:
         install_directory: docs
