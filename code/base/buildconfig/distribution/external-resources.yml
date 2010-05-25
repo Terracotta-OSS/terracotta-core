@@ -75,12 +75,12 @@ artifacts:
   - maven_artifact: false
     name: CHANGELOG.txt
     destination: Ehcache
-    url: https://svn.terracotta.org/repo/ehcache/trunk/core/src/assemble/CHANGELOG.txt
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/CHANGELOG.txt
     
   - maven_artifact: false
     name: EHCACHE-CORE-LICENSE.txt
     destination: Ehcache
-    url: https://svn.terracotta.org/repo/ehcache/trunk/core/src/assemble/LICENSE.txt
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/LICENSE.txt
 
   - maven_artifact: false
     name: ehcache.xml
