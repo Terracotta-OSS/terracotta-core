@@ -95,11 +95,11 @@ artifacts:
 
 # begin QUARTZ
   - maven_artifact: false
-    name: quartz-1.8.0.tar.gz
+    name: quartz-1.8.1.tar.gz
     destination: Quartz 
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/quartz/quartz-1.8.0.tar.gz
+    url: http://download.terracotta.org/nightly/quartz/quartz-1.8.1-SNAPSHOT.tar.gz
 # end QUARTZ
 
 # begin express products
