@@ -28,4 +28,4 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta-ee
     version: 2.2.0-SNAPSHOT
-    destination: ehcache
+    destination: Ehcache

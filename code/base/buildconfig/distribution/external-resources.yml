@@ -15,7 +15,7 @@ artifacts:
     classifier: distribution
     version: 3.3.0-SNAPSHOT
     type: tar.gz
-    destination: ehcache/samples/colorcache
+    destination: Ehcache/samples/colorcache
     explode: true
     remove_root_folder: true
     is_demo: true
@@ -26,7 +26,7 @@ artifacts:
     classifier: distribution
     version: 3.3.0-SNAPSHOT
     type: tar.gz
-    destination: ehcache/samples/hibernate
+    destination: Ehcache/samples/hibernate
     explode: true
     remove_root_folder: true
     is_demo: true
@@ -37,14 +37,14 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     version: 2.1.1-SNAPSHOT
-    destination: ehcache
+    destination: Ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
     version: 2.1.1-SNAPSHOT
-    destination: ehcache/javadoc
+    destination: Ehcache/javadoc
     explode: true
     
   - maven_artifact: true
@@ -52,51 +52,51 @@ artifacts:
     artifactId: ehcache-core
     classifier: sources
     version: 2.1.1-SNAPSHOT
-    destination: ehcache/src
+    destination: Ehcache/src
     explode: true
     
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-api
     version: 1.5.11
-    destination: ehcache
+    destination: Ehcache
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
     version: 1.5.11
-    destination: ehcache    
+    destination: Ehcache    
     
   - maven_artifact: false
     name: README.html
-    destination: ehcache
+    destination: Ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html
     
   - maven_artifact: false
     name: CHANGELOG.txt
-    destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/CHANGELOG.txt
+    destination: Ehcache
+    url: https://svn.terracotta.org/repo/ehcache/trunk/core/src/assemble/CHANGELOG.txt
     
   - maven_artifact: false
-    name: EHCACHE_CORE_LICENSE.txt
-    destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE_CORE_LICENSE.txt  
+    name: EHCACHE-CORE-LICENSE.txt
+    destination: Ehcache
+    url: https://svn.terracotta.org/repo/ehcache/trunk/core/src/assemble/LICENSE.txt
 
   - maven_artifact: false
     name: ehcache.xml
-    destination: ehcache
+    destination: Ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml
     
   - maven_artifact: false
     name: ehcache.xsd
-    destination: ehcache
+    destination: Ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xsd
 # end EHCACHE
 
 # begin QUARTZ
   - maven_artifact: false
     name: quartz-1.8.0.tar.gz
-    destination: quartz 
+    destination: Quartz 
     explode: true
     remove_root_folder: true
     url: http://download.terracotta.org/quartz/quartz-1.8.0.tar.gz
@@ -107,12 +107,12 @@ artifacts:
     groupId: org.terracotta.quartz
     artifactId: quartz-terracotta
     version: 1.2.0-SNAPSHOT
-    destination: quartz
+    destination: Quartz
 
   - maven_artifact: true
     groupId: org.terracotta.session
     artifactId: terracotta-session
     version: 1.1.0-SNAPSHOT
-    destination: sessions
+    destination: Sessions
 #end
 
