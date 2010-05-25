@@ -4,9 +4,7 @@
  */
 package com.tc.object;
 
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
-
+import com.google.common.collect.MapMaker;
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
 import com.tc.exception.TCRuntimeException;
@@ -77,67 +75,70 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     Evictable, PrettyPrintable {
 
-  private static final long                    CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
+  private static final long                     CONCURRENT_LOOKUP_TIMED_WAIT = 1000;
   // REFERENCE_MAP_SEG must be power of 2
-  private static final int                     REFERENCE_MAP_SEGS           = 32;
-  private static final State                   PAUSED                       = new State("PAUSED");
-  private static final State                   RUNNING                      = new State("RUNNING");
-  private static final State                   STARTING                     = new State("STARTING");
+  private static final int                      REFERENCE_MAP_SEGS           = 32;
+  private static final State                    PAUSED                       = new State("PAUSED");
+  private static final State                    RUNNING                      = new State("RUNNING");
+  private static final State                    STARTING                     = new State("STARTING");
 
-  private static final TCLogger                staticLogger                 = TCLogging
-                                                                                .getLogger(ClientObjectManager.class);
+  private static final TCLogger                 staticLogger                 = TCLogging
+                                                                                 .getLogger(ClientObjectManager.class);
 
-  private static final long                    POLL_TIME                    = 1000;
-  private static final long                    STOP_WAIT                    = POLL_TIME * 3;
+  private static final long                     POLL_TIME                    = 1000;
+  private static final long                     STOP_WAIT                    = POLL_TIME * 3;
 
-  private static final int                     NO_DEPTH                     = 0;
+  private static final int                      NO_DEPTH                     = 0;
 
-  private static final int                     COMMIT_SIZE                  = 100;
+  private static final int                      COMMIT_SIZE                  = 100;
 
-  private State                                state                        = RUNNING;
-  private final Object                         shutdownLock                 = new Object();
-  private final Map                            roots                        = new HashMap();
-  private final Map                            idToManaged                  = new HashMap();
-  private final StripedReferenceIdentityMap    pojoToManaged                = new StripedReferenceIdentityMap(
-                                                                                                              REFERENCE_MAP_SEGS);
-  private final ClassProvider                  classProvider;
-  private final RemoteObjectManager            remoteObjectManager;
-  private final EvictionPolicy                 cache;
-  private final Traverser                      traverser;
-  private final TraverseTest                   traverseTest;
-  private final DSOClientConfigHelper          clientConfiguration;
-  private final TCClassFactory                 clazzFactory;
-  private final Set                            rootLookupsInProgress        = new HashSet();
-  private final ObjectIDProvider               idProvider;
-  private final TCObjectFactory                factory;
+  private State                                 state                        = RUNNING;
+  private final Object                          shutdownLock                 = new Object();
+  private final Map                             roots                        = new HashMap();
+  private final Map                             idToManaged                  = new HashMap();
+  private final ConcurrentMap<Object, TCObject> pojoToManaged                = new MapMaker()
+                                                                                 .concurrencyLevel(REFERENCE_MAP_SEGS)
+                                                                                 .weakKeys().makeMap();
 
-  private ClientTransactionManager             txManager;
+  private final ClassProvider                   classProvider;
+  private final RemoteObjectManager             remoteObjectManager;
+  private final EvictionPolicy                  cache;
+  private final Traverser                       traverser;
+  private final TraverseTest                    traverseTest;
+  private final DSOClientConfigHelper           clientConfiguration;
+  private final TCClassFactory                  clazzFactory;
+  private final Set                             rootLookupsInProgress        = new HashSet();
+  private final ObjectIDProvider                idProvider;
+  private final TCObjectFactory                 factory;
 
-  private StoppableThread                      reaper                       = null;
-  private final TCLogger                       logger;
-  private final RuntimeLogger                  runtimeLogger;
-  private final NonPortableEventContextFactory appEventContextFactory;
+  private ClientTransactionManager              txManager;
 
-  private final Portability                    portability;
-  private final DSOClientMessageChannel        channel;
-  private final ToggleableReferenceManager     referenceManager;
-  private final ReferenceQueue                 referenceQueue               = new ReferenceQueue();
+  private StoppableThread                       reaper                       = null;
+  private final TCLogger                        logger;
+  private final RuntimeLogger                   runtimeLogger;
+  private final NonPortableEventContextFactory  appEventContextFactory;
 
-  private final boolean                        sendErrors                   = System.getProperty("project.name") != null;
+  private final Portability                     portability;
+  private final DSOClientMessageChannel         channel;
+  private final ToggleableReferenceManager      referenceManager;
+  private final ReferenceQueue                  referenceQueue               = new ReferenceQueue();
 
-  private final Map                            objectLatchStateMap          = new HashMap();
-  private final ThreadLocal                    localLookupContext           = new ThreadLocal() {
+  private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
-                                                                              @Override
-                                                                              protected synchronized Object initialValue() {
-                                                                                return new LocalLookupContext();
-                                                                              }
+  private final Map                             objectLatchStateMap          = new HashMap();
+  private final ThreadLocal                     localLookupContext           = new ThreadLocal() {
 
-                                                                            };
+                                                                               @Override
+                                                                               protected synchronized Object initialValue() {
+                                                                                 return new LocalLookupContext();
+                                                                               }
+
+                                                                             };
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
@@ -1303,69 +1304,6 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private interface PostCreateMethodGatherer {
     Map<Object, List<Method>> getPostCreateMethods();
-  }
-
-  /**
-   * Striping ReferenceIdentityMap for performance
-   */
-  private static class StripedReferenceIdentityMap {
-    private final int                    indexMask;
-    private final ReferenceIdentityMap[] stripes;
-
-    public StripedReferenceIdentityMap(final int numberOfStripes) {
-
-      if (Integer.bitCount(numberOfStripes) != 1) { throw new RuntimeException("numberOfStripes must be power of 2 "
-                                                                               + numberOfStripes); }
-
-      this.indexMask = numberOfStripes - 1;
-      this.stripes = new ReferenceIdentityMap[numberOfStripes];
-      for (int i = 0; i < numberOfStripes; ++i) {
-        this.stripes[i] = new ReferenceIdentityMap(AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
-      }
-    }
-
-    private ReferenceIdentityMap getStripe(final Object key) {
-      final int index = hash(key) & this.indexMask;
-      return this.stripes[index];
-    }
-
-    public TCObject get(final Object key) {
-      final ReferenceIdentityMap stripe = getStripe(key);
-      synchronized (stripe) {
-        return (TCObject) stripe.get(key);
-      }
-    }
-
-    public TCObject put(final Object key, final TCObject tco) {
-      final ReferenceIdentityMap stripe = getStripe(key);
-      synchronized (stripe) {
-        return (TCObject) stripe.put(key, tco);
-      }
-    }
-
-    public int size() {
-      int s = 0;
-      for (int i = 0; i <= this.indexMask; ++i) {
-        final ReferenceIdentityMap stripe = this.stripes[i];
-        synchronized (stripe) {
-          s += stripe.size();
-        }
-      }
-      return s;
-    }
-
-    // this is an identity map - we must use the identityHashCode.
-    // Object.hashCode() <==> Object.equals()
-    // System.identityHashCode() <==> ==
-    private int hash(final Object key) {
-      int h = System.identityHashCode(key);
-      h += ~(h << 9);
-      h ^= (h >>> 14);
-      h += (h << 4);
-      h ^= (h >>> 10);
-      return h;
-    }
-
   }
 
 }
