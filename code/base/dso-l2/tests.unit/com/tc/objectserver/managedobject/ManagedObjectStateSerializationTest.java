@@ -293,9 +293,9 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
   public void testLinkedBlockingQueue() throws Exception {
     final String className = "java.util.concurrent.LinkedBlockingQueue";
-    final String TAKE_LOCK_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.takeLock";
-    final String PUT_LOCK_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.putLock";
-    final String CAPACITY_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.capacity";
+    final String TAKE_LOCK_FIELD_NAME = "takeLock";
+    final String PUT_LOCK_FIELD_NAME = "putLock";
+    final String CAPACITY_FIELD_NAME = "capacity";
 
     final TestDNACursor cursor = new TestDNACursor();
 

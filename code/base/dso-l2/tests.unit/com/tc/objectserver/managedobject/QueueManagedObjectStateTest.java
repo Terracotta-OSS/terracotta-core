@@ -11,9 +11,9 @@ import com.tc.util.Assert;
 
 public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState {
   String className = "java.util.concurrent.LinkedBlockingQueue";
-  String TAKE_LOCK_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.takeLock";
-  String PUT_LOCK_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.putLock";
-  String CAPACITY_FIELD_NAME = "java.util.concurrent.LinkedBlockingQueue.capacity";
+  String TAKE_LOCK_FIELD_NAME = "takeLock";
+  String PUT_LOCK_FIELD_NAME = "putLock";
+  String CAPACITY_FIELD_NAME = "capacity";
   final byte type = ManagedObjectState.QUEUE_TYPE;
   
   public void basicTestQueue(TestDNACursor cursor, int objCount, int actionCount) throws Exception {
