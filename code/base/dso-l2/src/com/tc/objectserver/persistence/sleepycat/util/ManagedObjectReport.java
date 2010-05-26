@@ -68,7 +68,6 @@ public class ManagedObjectReport extends BaseUtility {
 
       for (Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
         ObjectID mid = (ObjectID) r.next();
-        totalCounter.increment();
         if (mid == null) {
           log("reference objectID is null and parent: ");
           log(managedObject.toString());
