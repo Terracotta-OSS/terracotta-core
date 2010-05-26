@@ -30,7 +30,6 @@ import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.objectserver.api.NullServerMapRequestManager;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
@@ -117,7 +116,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                    DSOChannelManager channelManager,
                                                                    Sink respondToServerTCMapSink,
                                                                    Sink managedObjectRequestSink) {
-    return new NullServerMapRequestManager();
+    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink, managedObjectRequestSink);
   }
 
 
