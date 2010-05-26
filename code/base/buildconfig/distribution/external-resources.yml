@@ -95,7 +95,7 @@ artifacts:
 
 # begin QUARTZ
   - maven_artifact: false
-    name: quartz-1.8.1.tar.gz
+    name: quartz.tar.gz
     destination: Quartz 
     explode: true
     remove_root_folder: true
