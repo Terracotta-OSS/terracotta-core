@@ -58,6 +58,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -191,7 +192,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       // classloader subclass that overrides loadClass(String)
       final boolean needsClassLoaderInstrumentation = needsClassLoaderInstrumentation(classInfo);
-      
+
       if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters && !needsClassLoaderInstrumentation) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
@@ -208,7 +209,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         clReader.accept(clVisitor, ClassReader.SKIP_FRAMES);
         context.setCurrentBytecode(clWriter.toByteArray());
       }
-        
+
       // handle replacement classes
       ClassReplacementMapping mapping = m_configHelper.getClassReplacementMapping();
       final Replacement replacement = mapping.getReplacement(className, loader);
@@ -359,22 +360,25 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
       // ------------------------------------------------
       // -- Phase class config-based - Add custom adapters based on class configuration
-      final boolean hasClassConfigBasedCustomAdapters;
+      Collection<ClassAdapterFactory> factories = Collections.EMPTY_LIST;
       synchronized (m_configHelper) {
-        hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
+        boolean hasClassConfigBasedCustomAdapters = m_configHelper.addClassConfigBasedAdapters(classInfo);
 
         // ------------------------------------------------
         // -- Phase DSO -- DSO clustering
         if (hasCustomAdapters || hasClassConfigBasedCustomAdapters) {
-          Collection<ClassAdapterFactory> factories = m_configHelper.getCustomAdapters(classInfo);
-          for (ClassAdapterFactory factory : factories) {
-            final ClassReader reader = new ClassReader(context.getCurrentBytecode());
-            final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
-            ClassVisitor adapter = factory.create(writer, context.getLoader());
-            reader.accept(adapter, ClassReader.SKIP_FRAMES);
-            context.setCurrentBytecode(writer.toByteArray());
-          }
+          factories = m_configHelper.getCustomAdapters(classInfo);
         }
+      }
+
+      // These class adapters are not run the synchronized(m_configHelper) block above since additional classloading in
+      // the adapter(s) can cause a deadlock
+      for (ClassAdapterFactory factory : factories) {
+        final ClassReader reader = new ClassReader(context.getCurrentBytecode());
+        final ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS);
+        ClassVisitor adapter = factory.create(writer, context.getLoader());
+        reader.accept(adapter, ClassReader.SKIP_FRAMES);
+        context.setCurrentBytecode(writer.toByteArray());
       }
 
       if (isDsoAdaptable) {
@@ -424,14 +428,12 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
   private static boolean needsClassLoaderInstrumentation(final ClassInfo classInfo) {
     for (ClassInfo c = classInfo; c != null; c = c.getSuperclass()) {
       if ("java.lang.ClassLoader".equals(c.getName())) {
-        //found ClassLoader in the heirarchy of subclasses, now check for a definition of loadClass in this class
+        // found ClassLoader in the heirarchy of subclasses, now check for a definition of loadClass in this class
         for (MethodInfo m : classInfo.getMethods()) {
-          if ("loadClass".equals(m.getName()) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(m.getSignature())) {
-            return true;
-          }
+          if ("loadClass".equals(m.getName()) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(m.getSignature())) { return true; }
         }
         return false;
-        
+
       }
     }
     return false;
