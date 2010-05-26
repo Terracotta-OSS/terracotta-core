@@ -13,7 +13,7 @@ bundled_demos:
         - sharededitor
         - sharedqueue
   - sessions:
-      install_directory: Sessions/samples
+      install_directory: sessions/samples
       manifest:
         - cart
         - tasklist
@@ -127,7 +127,7 @@ postscripts:
   - make-srcdocs:
       args:
         - platform/samples/pojo
-        - Sessions/samples         
+        - sessions/samples
   - maven-deploy:
       args:
         - artifact_count: 5
