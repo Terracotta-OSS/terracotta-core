@@ -139,6 +139,7 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     PrettyPrinter rv = out;
     out = out.println(getClass().getName()).duplicateAndIndent();
+    out = out.println("object count: " + objectPersistor.getObjectCount()).duplicateAndIndent();
     return rv;
   }
 
