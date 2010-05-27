@@ -24,6 +24,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -61,6 +62,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private final SampledCounter                 faultRate;
   private final Counter                        pendingTransactions;
   private final SynchronizedLong               sequenceNumber          = new SynchronizedLong(0L);
+  private final SampledCumulativeCounter serverMapGetSizeRequestsCounter;
+  private final SampledCumulativeCounter serverMapGetValueRequestsCounter;
   private final ClientID                       clientID;
   private final ClientStateManager             stateManager;
 
@@ -88,6 +91,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.flushRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_FLUSH_RATE);
     this.faultRate = (SampledCounter) channelStats.getCounter(channel, ChannelStats.OBJECT_REQUEST_RATE);
     this.pendingTransactions = channelStats.getCounter(channel, ChannelStats.PENDING_TRANSACTIONS);
+    this.serverMapGetSizeRequestsCounter = (SampledCumulativeCounter) channelStats.getCounter(channel, ChannelStats.SERVER_MAP_GET_SIZE_REQUESTS);
+    this.serverMapGetValueRequestsCounter = (SampledCumulativeCounter) channelStats.getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
 
     this.l1InfoBeanName = getTunneledBeanName(L1MBeanNames.L1INFO_PUBLIC);
     this.instrumentationLoggingBeanName = getTunneledBeanName(L1MBeanNames.INSTRUMENTATION_LOGGING_PUBLIC);
@@ -250,6 +255,22 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   public long getPendingTransactionsCount() {
     return pendingTransactions.getValue();
+  }
+
+  public long getServerMapGetSizeRequestsCount() {
+    return serverMapGetSizeRequestsCounter.getCumulativeValue();
+  }
+
+  public long getServerMapGetSizeRequestsRate() {
+    return serverMapGetSizeRequestsCounter.getMostRecentSample().getCounterValue();
+  }
+
+  public long getServerMapGetValueRequestsCount() {
+    return serverMapGetValueRequestsCounter.getCumulativeValue();
+  }
+
+  public long getServerMapGetValueRequestsRate() {
+    return serverMapGetValueRequestsCounter.getMostRecentSample().getCounterValue();
   }
 
   public Number[] getStatistics(final String[] names) {

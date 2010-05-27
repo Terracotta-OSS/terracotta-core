@@ -7,23 +7,26 @@ package com.tc.objectserver.core.api;
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.objectserver.impl.ObjectManagerStatsImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
 public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
-  private final SampledCounter         faultCounter;
-  private final SampledCounter         flushCounter;
-  private final SampledCounter         txnCounter;
-  private final ObjectManagerStatsImpl objMgrStats;
+  private final SampledCounter           faultCounter;
+  private final SampledCounter           flushCounter;
+  private final SampledCounter           txnCounter;
+  private final ObjectManagerStatsImpl   objMgrStats;
 
-  private final SampledCounter         broadcastCounter;
-  private final SampledCounter         l2FaultFromDiskCounter;
-  private final SampledCounter         time2FaultFromDisk;
-  private final SampledCounter         time2Add2ObjMgr;
-  private final SampledCounter         globalLockCounter;
-  private final SampledCounter         globalLockRecallCounter;
-  private final SampledRateCounter     changesPerBroadcast;
-  private final SampledRateCounter     transactionSizeCounter;
+  private final SampledCounter           broadcastCounter;
+  private final SampledCounter           l2FaultFromDiskCounter;
+  private final SampledCounter           time2FaultFromDisk;
+  private final SampledCounter           time2Add2ObjMgr;
+  private final SampledCounter           globalLockCounter;
+  private final SampledCounter           globalLockRecallCounter;
+  private final SampledRateCounter       changesPerBroadcast;
+  private final SampledRateCounter       transactionSizeCounter;
+  private SampledCumulativeCounter serverMapGetSizeRequestsCounter;
+  private SampledCumulativeCounter serverMapGetValueRequestsCounter;
 
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
@@ -43,6 +46,16 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.changesPerBroadcast = changesPerBroadcast;
     this.transactionSizeCounter = transactionSizeCounter;
     this.globalLockCounter = globalLockCounter;
+  }
+  
+  public DSOGlobalServerStatsImpl serverMapGetSizeRequestsCounter(final SampledCumulativeCounter counter) {
+    this.serverMapGetSizeRequestsCounter = counter;
+    return this;
+  }
+  
+  public DSOGlobalServerStatsImpl serverMapGetValueRequestsCounter(final SampledCumulativeCounter counter) {
+    this.serverMapGetValueRequestsCounter = counter;
+    return this;
   }
 
   public SampledCounter getObjectFlushCounter() {
@@ -91,6 +104,14 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCounter getGlobalLockCounter() {
     return this.globalLockCounter;
+  }
+
+  public SampledCumulativeCounter getServerMapGetSizeRequestsCounter() {
+    return serverMapGetSizeRequestsCounter;
+  }
+
+  public SampledCumulativeCounter getServerMapGetValueRequestsCounter() {
+    return serverMapGetValueRequestsCounter;
   }
 
 }

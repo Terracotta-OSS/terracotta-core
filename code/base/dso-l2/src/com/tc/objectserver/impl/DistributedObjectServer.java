@@ -257,6 +257,8 @@ import com.tc.stats.counter.CounterManager;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
+import com.tc.stats.counter.sampled.SampledCumulativeCounter;
+import com.tc.stats.counter.sampled.SampledCumulativeCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.util.Assert;
@@ -662,6 +664,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
+    final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300, true, 0L);
     final SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
     final SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
@@ -808,14 +811,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledRateCounterConfig);
     final SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
+    final SampledCumulativeCounter globalServerMapGetSizeRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
+    .createCounter(sampledCumulativeCounterConfig);
+    final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
+    .createCounter(sampledCumulativeCounterConfig);
 
-    final DSOGlobalServerStats serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
+    final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
                                                                           globalObjectFaultCounter, globalTxnCounter,
                                                                           objMgrStats, broadcastCounter,
                                                                           l2FaultFromDisk, time2FaultFromDisk,
                                                                           time2Add2ObjMgr, globalLockRecallCounter,
                                                                           changesPerBroadcast, transactionSizeCounter,
                                                                           globalLockCount);
+    serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
+        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -900,8 +909,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
                      this.l2Properties.getInt("seda.managedobjectresponsestage.threads"), maxStageSize);
 
-    final Stage serverMapRequestStage = stageManager.createStage(ServerConfigurationContext.SERVER_MAP_REQUEST_STAGE,
-                                                                 new ServerMapRequestHandler(), 8, maxStageSize);
+    final Stage serverMapRequestStage = stageManager
+        .createStage(ServerConfigurationContext.SERVER_MAP_REQUEST_STAGE,
+                     new ServerMapRequestHandler(globalServerMapGetSizeRequestsCounter,
+                                                 globalServerMapGetValueRequestsCounter), 8, maxStageSize);
     final Stage respondToServerTCMapStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
                      maxStageSize);

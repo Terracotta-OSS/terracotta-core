@@ -9,6 +9,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerMapRequestType;
 import com.tc.object.TestRequestManagedObjectMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.object.net.TestDSOChannelManager;
@@ -43,8 +44,7 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     TestSink respondSink = new TestSink();
     ObjectRequestManagerImpl objectRequestManager = new ObjectRequestManagerImpl(objectManager, channelManager,
                                                                                  clientStateManager, requestSink,
-                                                                                 respondSink,
-                                                                                 new ObjectStatsRecorder());
+                                                                                 respondSink, new ObjectStatsRecorder());
 
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.setObjectRequestManager(objectRequestManager);
@@ -115,6 +115,10 @@ public class ManagedObjectRequestHandlerTest extends TestCase {
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
       throw new ImplementMe();
 
+    }
+
+    public void notifyServerMapRequest(ServerMapRequestType type, MessageChannel channel, int numRequests) {
+      throw new ImplementMe();
     }
   }
 

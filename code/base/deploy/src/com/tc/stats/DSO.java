@@ -446,6 +446,70 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  public long getGlobalServerMapGetSizeRequestsCount() {
+    return getStats().getGlobalServerMapGetSizeRequestsCount();
+  }
+
+  public long getGlobalServerMapGetSizeRequestsRate() {
+    return getStats().getGlobalServerMapGetSizeRequestsRate();
+  }
+
+  public long getGlobalServerMapGetValueRequestsCount() {
+    return getStats().getGlobalServerMapGetValueRequestsCount();
+  }
+
+  public long getGlobalServerMapGetValueRequestsRate() {
+    return getStats().getGlobalServerMapGetValueRequestsRate();
+  }
+
+  public Map<ObjectName, Long> getServerMapGetSizeRequestsCount() {
+    Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getServerMapGetSizeRequestsCount());
+      }
+    }
+    return result;
+  }
+
+  public Map<ObjectName, Long> getServerMapGetSizeRequestsRate() {
+    Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getServerMapGetSizeRequestsRate());
+      }
+    }
+    return result;
+  }
+
+  public Map<ObjectName, Long> getServerMapGetValueRequestsCount() {
+    Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getServerMapGetValueRequestsCount());
+      }
+    }
+    return result;
+  }
+
+  public Map<ObjectName, Long> getServerMapGetValueRequestsRate() {
+    Map<ObjectName, Long> result = new HashMap<ObjectName, Long>();
+    synchronized (clientObjectNames) {
+      Iterator<ObjectName> iter = clientObjectNames.iterator();
+      while (iter.hasNext()) {
+        ObjectName clientBeanName = iter.next();
+        result.put(clientBeanName, clientMap.get(clientBeanName).getServerMapGetValueRequestsRate());
+      }
+    }
+    return result;
+  }
+
   public boolean isResident(NodeID node, ObjectID oid) {
     return clientStateManager.hasReference(node, oid);
   }

@@ -25,5 +25,13 @@ public interface DSOStats {
   long getTransactionSizeRate();
 
   long getBroadcastRate();
+  
+  long getGlobalServerMapGetSizeRequestsCount();
+
+  long getGlobalServerMapGetValueRequestsCount();
+
+  long getGlobalServerMapGetSizeRequestsRate();
+
+  long getGlobalServerMapGetValueRequestsRate();
 
 }

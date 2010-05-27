@@ -6,6 +6,7 @@ package com.tc.object.net;
 
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.object.ServerMapRequestType;
 import com.tc.stats.StatsConfig;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterManager;
@@ -91,6 +92,25 @@ public class ChannelStatsImpl implements ChannelStats, DSOChannelManagerEventLis
       getCounter(channel, PENDING_TRANSACTIONS).decrement();
     } catch (NoSuchChannelException e) {
       //
+    }
+  }
+
+  public void notifyServerMapRequest(final ServerMapRequestType type, final MessageChannel channel,
+                                     final int numRequests) {
+    Counter counter = null;
+    switch (type) {
+      case GET_SIZE:
+        counter = getCounter(channel, ChannelStats.SERVER_MAP_GET_SIZE_REQUESTS);
+        break;
+      case GET_VALUE_FOR_KEY:
+        counter = getCounter(channel, ChannelStats.SERVER_MAP_GET_VALUE_REQUESTS);
+        break;
+
+      default:
+        break;
+    }
+    if (counter != null) {
+      counter.increment(numRequests);
     }
   }
 

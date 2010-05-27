@@ -94,5 +94,23 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     return result;
   }
 
+  public long getGlobalServerMapGetSizeRequestsCount() {
+    return serverStats.getServerMapGetSizeRequestsCounter().getCumulativeValue();
+  }
+
+  public long getGlobalServerMapGetSizeRequestsRate() {
+    return serverStats.getServerMapGetSizeRequestsCounter().getMostRecentSample().getCounterValue();
+  }
+
+  public long getGlobalServerMapGetValueRequestsCount() {
+    return serverStats.getServerMapGetValueRequestsCounter().getCumulativeValue();
+  }
+
+  public long getGlobalServerMapGetValueRequestsRate() {
+    return serverStats.getServerMapGetValueRequestsCounter().getMostRecentSample().getCounterValue();
+  }
+  
+  
+
  
 }

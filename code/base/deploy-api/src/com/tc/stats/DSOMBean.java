@@ -73,4 +73,12 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
 
   Map<ObjectName, Object> invoke(Set<ObjectName> onSet, String operation, long timeout, TimeUnit unit, Object[] args,
                                  String[] sigs);
+
+  Map<ObjectName, Long> getServerMapGetSizeRequestsCount();
+
+  Map<ObjectName, Long> getServerMapGetValueRequestsCount();
+
+  Map<ObjectName, Long> getServerMapGetSizeRequestsRate();
+
+  Map<ObjectName, Long> getServerMapGetValueRequestsRate();
 }

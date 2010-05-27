@@ -6,6 +6,7 @@ package com.tc.objectserver.core.api;
 
 import com.tc.objectserver.api.ObjectManagerStats;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.stats.counter.sampled.SampledCumulativeCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 
 public interface DSOGlobalServerStats {
@@ -33,4 +34,8 @@ public interface DSOGlobalServerStats {
   SampledRateCounter getTransactionSizeCounter();
 
   SampledCounter getGlobalLockCounter();
+  
+  SampledCumulativeCounter getServerMapGetSizeRequestsCounter();
+
+  SampledCumulativeCounter getServerMapGetValueRequestsCounter();
 }

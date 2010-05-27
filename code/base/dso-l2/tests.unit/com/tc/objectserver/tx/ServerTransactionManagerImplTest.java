@@ -12,6 +12,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ObjectID;
+import com.tc.object.ServerMapRequestType;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionIDAlreadySetException;
@@ -574,6 +575,10 @@ public class ServerTransactionManagerImplTest extends TestCase {
     }
 
     public void notifyTransactionBroadcastedTo(NodeID nodeID) {
+      // NOP
+    }
+
+    public void notifyServerMapRequest(ServerMapRequestType type, MessageChannel channel, int numRequests) {
       // NOP
     }
 

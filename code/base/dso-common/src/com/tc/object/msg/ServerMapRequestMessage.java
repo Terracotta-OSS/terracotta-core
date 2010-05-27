@@ -5,6 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.ServerMapRequestType;
 
 public interface ServerMapRequestMessage extends EventContext {
@@ -16,4 +17,6 @@ public interface ServerMapRequestMessage extends EventContext {
   public ServerMapRequestType getRequestType();
 
   public int getRequestCount();
+  
+  public MessageChannel getChannel();
 }
