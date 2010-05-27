@@ -602,6 +602,9 @@ public interface TCPropertiesConsts {
    *                              in the case of read-only or single-threaded cache usage.
    *  writeLevel                : The lock level used during cache write operations.  Allowed values are
    *                              WRITE (default), and CONCURRENT.  WRITE is strongly recommended.
+   *  storageStrategy.dcv2.localcache.enabled
+   *                            : The property enabled/disables the local cache when ehcache has a 
+   *                              storage strategy of DCV2
    * </code>
    ********************************************************************************************************************/
   public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                            = "ehcache.clusterAllCacheManagers";
@@ -615,7 +618,7 @@ public interface TCPropertiesConsts {
   public static final String   EHCAHCE_GLOBAL_EVICTION_REST_TIMEMILLS                        = "ehcache.global.eviction.rest.timeMillis";
   public static final String   EHCAHCE_LOCK_READLEVEL                                        = "ehcache.lock.readLevel";
   public static final String   EHCAHCE_LOCK_WRITELEVEL                                       = "ehcache.lock.writeLevel";
-
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED               = "ehcache.storageStrategy.dcv2.localcache.enabled";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Lock Manager Properties

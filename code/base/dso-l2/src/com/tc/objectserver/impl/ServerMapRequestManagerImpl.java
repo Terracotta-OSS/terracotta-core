@@ -185,7 +185,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       lookupIDs.add(valueID);
       this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
                                                                            lookupIDs, Thread.currentThread().getName(),
-                                                                           -1, true));
+                                                                           1, true));
     }
   }
 
