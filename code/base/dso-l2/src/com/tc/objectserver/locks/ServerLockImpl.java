@@ -12,6 +12,7 @@ import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
 import com.tc.objectserver.locks.context.LinkedServerLockContext;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -378,5 +379,19 @@ public final class ServerLockImpl extends AbstractServerLock {
           return;
       }
     }
+  }
+
+  @Override
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out = super.prettyPrint(out);
+    out.print("isRecalled=" + isRecalled).flush();
+    return out;
+  }
+
+  @Override
+  public String toString() {
+    String rv = super.toString();
+    rv = rv + "\n" + "isRecalled=" + isRecalled;
+    return rv;
   }
 }
