@@ -53,7 +53,7 @@ public class TCLogging {
 
   private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 
-  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracottatech",
+  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracotta", "com.terracottatech",
       "org.terracotta"                                                };
 
   private static final String       CUSTOMER_LOGGER_NAMESPACE          = "com.terracottatech";
