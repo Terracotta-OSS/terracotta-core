@@ -25,6 +25,7 @@ import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.ClassLoaderPreProcessorImpl;
 import com.tc.object.bytecode.hook.DSOContext;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.object.config.UnverifiedBootJarException;
 import com.tc.object.loaders.ClassProvider;
@@ -186,6 +187,9 @@ public class DSOContextImpl implements DSOContext {
     }
 
     //do a pre-emptive class load since this path gets nested inside other classloads...
+    if (configHelper instanceof StandardDSOClientConfigHelper) {
+      ((StandardDSOClientConfigHelper) configHelper).addClassResource("non.existent.Class", null, false);
+    }
     getClassResource("non.existent.Class", getClass().getClassLoader(), true);
   }
 
