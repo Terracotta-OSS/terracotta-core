@@ -36,24 +36,28 @@ public class RemoteJMXProcessor implements Sink {
   }
 
   public void add(final EventContext context) {
-    executor.execute(new Runnable() {
-      public void run() {
-        CallbackExecuteContext callbackContext = (CallbackExecuteContext) context;
+    final CallbackExecuteContext callbackContext = (CallbackExecuteContext) context;
 
-        Thread currentThread = Thread.currentThread();
-        ClassLoader prevLoader = currentThread.getContextClassLoader();
-        currentThread.setContextClassLoader(callbackContext.getThreadContextLoader());
+    try {
+      executor.execute(new Runnable() {
+        public void run() {
+          Thread currentThread = Thread.currentThread();
+          ClassLoader prevLoader = currentThread.getContextClassLoader();
+          currentThread.setContextClassLoader(callbackContext.getThreadContextLoader());
 
-        try {
-          Message result = callbackContext.getCallback().execute(callbackContext.getRequest());
-          callbackContext.getFuture().set(result);
-        } catch (Throwable t) {
-          callbackContext.getFuture().setException(t);
-        } finally {
-          currentThread.setContextClassLoader(prevLoader);
+          try {
+            Message result = callbackContext.getCallback().execute(callbackContext.getRequest());
+            callbackContext.getFuture().set(result);
+          } catch (Throwable t) {
+            callbackContext.getFuture().setException(t);
+          } finally {
+            currentThread.setContextClassLoader(prevLoader);
+          }
         }
-      }
-    });
+      });
+    } catch (Throwable t) {
+      callbackContext.getFuture().setException(t);
+    }
   }
 
   public boolean addLossy(EventContext context) {
