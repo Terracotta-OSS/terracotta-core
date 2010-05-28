@@ -26,7 +26,7 @@ public class MapOfCollectionsTestApp extends AbstractTransparentApp {
   private final CyclicBarrier                           barrier;
   private final static int                              RANGE      = 10000;
   private final static int                              SIZE       = 50;
-  private final static int                              LOOP_COUNT = 5000;
+  private final static int                              LOOP_COUNT = 4000;
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
     String testClass = MapOfCollectionsTestApp.class.getName();
