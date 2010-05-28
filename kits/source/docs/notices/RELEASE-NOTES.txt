@@ -1,8 +1,8 @@
 Terracotta Trunk/3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
 ===================================================
 
-Release Notes: http://www.terracotta.org/kit/reflector?kitID=3.2.1&pageID=ReleaseNotes
-Documentation: http://www.terracotta.org/kit/reflector?kitID=3.2.1&pageID=Documentation
+Release Notes: http://www.terracotta.org/kit/reflector?kitID=3.3.0&pageID=BetaReleaseNotes
+Documentation: http://www.terracotta.org/kit/reflector?kitID=3.3.0&pageID=Documentation
 Forums:        http://forums.terracotta.org/forums/forums/list.page
 Mailing Lists: http://lists.terracotta.org
 Support:       http://www.terracotta.org/web/display/enterprise/Support
