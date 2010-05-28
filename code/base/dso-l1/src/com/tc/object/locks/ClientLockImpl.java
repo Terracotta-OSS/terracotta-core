@@ -1011,17 +1011,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (postRecallGreediness.isGreedy()) {
       List<ClientServerExchangeLockContext> contexts = new ArrayList<ClientServerExchangeLockContext>();
       contexts.add(postRecallGreediness.toContext(lock, client));
-
-      for (ClientServerExchangeLockContext context : getStateSnapshot(client)) {
-        switch (context.getState()) {
-          case WAITER:
-            contexts.add(context);
-            break;
-          default:
-            break;
-        }
-      }
-
       return contexts;
     } else {
       return getFilteredStateSnapshot(client, false);
