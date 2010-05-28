@@ -74,7 +74,7 @@ public class ManagedObjectStateFactory {
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
     // XXX: hack to support CDM in tim-concurrent-collections.
-    classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedMapDso", Byte
+    classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso", Byte
         .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
     // XXX: hack to support CDMServerMap in tim-concurrent-collections.
     classNameToStateMap.put("org.terracotta.collections.ConcurrentDistributedServerMapDso", Byte

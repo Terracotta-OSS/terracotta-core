@@ -343,7 +343,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
   // XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
   public void testConcurrentDistributedMap() throws Exception {
-    final String className = "org.terracotta.collections.ConcurrentDistributedMapDso";
+    final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedMapDso";
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor
