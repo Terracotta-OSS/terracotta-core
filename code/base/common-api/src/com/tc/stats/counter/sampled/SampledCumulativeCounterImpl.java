@@ -11,12 +11,7 @@ public class SampledCumulativeCounterImpl extends SampledCounterImpl implements 
 
   public SampledCumulativeCounterImpl(SampledCounterConfig config) {
     super(config);
-  }
-
-  @Override
-  protected void init() {
-    super.init();
-    cumulativeCount = new AtomicLong();
+    cumulativeCount = new AtomicLong(config.getInitialValue());
   }
 
   public long getCumulativeValue() {
@@ -28,15 +23,27 @@ public class SampledCumulativeCounterImpl extends SampledCounterImpl implements 
   }
 
   @Override
-  protected long getAndResetIfNecessary() {
-    final long sample;
-    if (resetOnSample) {
-      sample = getAndReset();
-      cumulativeCount.addAndGet(sample);
-    } else {
-      sample = getValue();
-    }
-    return sample;
+  public long decrement() {
+    cumulativeCount.decrementAndGet();
+    return super.decrement();
+  }
+
+  @Override
+  public long decrement(long amount) {
+    cumulativeCount.addAndGet(amount * -1);
+    return super.decrement(amount);
+  }
+
+  @Override
+  public long increment() {
+    cumulativeCount.incrementAndGet();
+    return super.increment();
+  }
+
+  @Override
+  public long increment(long amount) {
+    cumulativeCount.addAndGet(amount);
+    return super.increment(amount);
   }
 
 }

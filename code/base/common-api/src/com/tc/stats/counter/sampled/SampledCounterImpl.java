@@ -28,13 +28,8 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
         recordSample();
       }
     };
-
-    init();
+    
     recordSample();
-  }
-
-  protected void init() {
-    //
   }
 
   public TimeStampedCounterValue getMostRecentSample() {
@@ -56,20 +51,15 @@ public class SampledCounterImpl extends CounterImpl implements SampledCounter {
   }
 
   void recordSample() {
-    final long sample = getAndResetIfNecessary();
-
-    final long now = System.currentTimeMillis();
-    mostRecentSample = new TimeStampedCounterValue(now, sample);
-  }
-
-  protected long getAndResetIfNecessary() {
     final long sample;
     if (resetOnSample) {
       sample = getAndReset();
     } else {
       sample = getValue();
     }
-    return sample;
+
+    final long now = System.currentTimeMillis();
+    mostRecentSample = new TimeStampedCounterValue(now, sample);
   }
 
   public long getAndReset() {
