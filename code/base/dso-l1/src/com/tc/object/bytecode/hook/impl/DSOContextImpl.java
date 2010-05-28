@@ -188,7 +188,11 @@ public class DSOContextImpl implements DSOContext {
 
     //do a pre-emptive class load since this path gets nested inside other classloads...
     if (configHelper instanceof StandardDSOClientConfigHelper) {
-      ((StandardDSOClientConfigHelper) configHelper).addClassResource("non.existent.Class", null, false);
+      try {
+        ((StandardDSOClientConfigHelper) configHelper).addClassResource("non.existent.Class", new URL("file:///not/a/real/file"), false);
+      } catch (MalformedURLException e) {
+        e.printStackTrace();
+      }
     }
     getClassResource("non.existent.Class", getClass().getClassLoader(), true);
   }
