@@ -42,7 +42,7 @@
       <res id="Installer.image.6" src="../izpack/Start.png" />
       <res id="Heading.image" src="../izpack/logo_rgb_padded.png"/>
       <res id="LicencePanel.licence" src="LICENSE.txt" />
-      <res id="InfoPanel.info" src="README.TXT" />
+      <res id="InfoPanel.info" src="README.txt" />
       <res src="../izpack/windows_shortcuts.xml" id="shortcutSpec.xml" />
       <res src="../izpack/unix_shortcuts.xml" id="Unix_shortcutSpec.xml" />
       <res id="SimpleMessageFinishPanel.message" src="../izpack/finish_message.txt" />
