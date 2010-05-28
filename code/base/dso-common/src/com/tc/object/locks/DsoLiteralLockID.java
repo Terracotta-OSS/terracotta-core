@@ -208,6 +208,10 @@ public class DsoLiteralLockID implements LockID {
     }
   }
   
+  public int compareTo(Object o) {
+    throw new ClassCastException("DsoLiteralLockID instances can't be compared");
+  }
+
   private static Object translateLiteral(Manager mgr, Object literal) throws IllegalArgumentException {
     LiteralValues type = LiteralValues.valueFor(literal);
     switch (type) {

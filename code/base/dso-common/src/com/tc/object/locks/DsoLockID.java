@@ -65,4 +65,21 @@ public class DsoLockID implements LockID {
   public ObjectID getObjectID() {
     return new ObjectID(objectId);
   }
+  
+  public int compareTo(Object o) {
+    if (o instanceof DsoLockID) {
+      DsoLockID other = (DsoLockID)o;
+      if (this.objectId < other.objectId) {
+        return -1;
+      } else if (this.objectId > other.objectId) {
+        return 1;
+      } else {
+        return 0;
+      }
+    } else if (o instanceof LockID) {
+      return toString().compareTo(o.toString());
+    }
+    
+    throw new ClassCastException(o + " is not an instance of LockID");
+  }
 }

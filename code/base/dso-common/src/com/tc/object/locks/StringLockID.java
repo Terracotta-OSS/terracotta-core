@@ -56,6 +56,17 @@ public class StringLockID implements LockID {
     }
     return false;
   }
+  
+  public int compareTo(Object o) {
+    if (o instanceof StringLockID) {
+      StringLockID other = (StringLockID)o;
+      return id.compareTo(other.id);
+    } else if (o instanceof LockID) {
+      return toString().compareTo(o.toString());
+    }
+    
+    throw new ClassCastException(o + " is not an instance of LockID");
+  }
 
   public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.id = serialInput.readString();
