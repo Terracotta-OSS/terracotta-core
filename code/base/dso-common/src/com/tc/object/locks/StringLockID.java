@@ -62,6 +62,9 @@ public class StringLockID implements LockID {
       StringLockID other = (StringLockID)o;
       return id.compareTo(other.id);
     } else if (o instanceof LockID) {
+      if (((LockID)o).getLockType() == LockIDType.DSO_LITERAL) {
+        throw new ClassCastException("Can't compare LiteralLockID types.");
+      }
       return toString().compareTo(o.toString());
     }
     
