@@ -75,6 +75,8 @@ public class ThreadDump {
 
     for (int i = 0; i < iterations; i++) {
       for (PID pid : pids) {
+        System.err.println("Requesting dump for PID " + pid.getPid());
+
         if (Os.isWindows()) {
           doWindowsDump(pid);
         } else {
