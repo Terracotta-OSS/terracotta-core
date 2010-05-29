@@ -56,7 +56,7 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
   public boolean isMultipleServerTest() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
   }
-  
+
 
   protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager);
 

@@ -38,6 +38,12 @@ public abstract class MultipleServerManager {
     throw new ImplementMe();
   }
   
+  public abstract int getDsoPort();
+  
+  public abstract int getJMXPort();
+
+  public abstract int getL2GroupPort();
+  
   public abstract String getConfigFileLocation();
 
 }

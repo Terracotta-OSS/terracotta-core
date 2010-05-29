@@ -252,4 +252,16 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   public String getConfigFileLocation() {
     return configFileLocation;
   }
+  
+  public int getDsoPort() {
+    return activePassiveServerManagers[0].getDsoPort();
+  }
+  
+  public int getJMXPort() {
+    return activePassiveServerManagers[0].getJMXPort();
+  }
+
+  public int getL2GroupPort() {
+    return activePassiveServerManagers[0].getL2GroupPort();
+  }
 }

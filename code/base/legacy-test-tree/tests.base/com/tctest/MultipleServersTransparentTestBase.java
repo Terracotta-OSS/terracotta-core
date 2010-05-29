@@ -69,4 +69,17 @@ public abstract class MultipleServersTransparentTestBase extends TransparentTest
   public String getConfigFileLocation() {
     return multipleServerManager.getConfigFileLocation();
   }
+  
+  public int getDsoPort() {
+    return multipleServerManager.getDsoPort();
+  }
+  
+  public int getJMXPort() {
+    return multipleServerManager.getJMXPort();
+  }
+
+  public int getL2GroupPort() {
+    return multipleServerManager.getL2GroupPort();
+  }
+  
 }

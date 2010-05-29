@@ -285,7 +285,19 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       }
     }
   }
+  
+  public int getDsoPort() {
+    return dsoPorts[0];
+  }
+  
+  public int getJMXPort() {
+    return jmxPorts[0];
+  }
 
+  public int getL2GroupPort() {
+    return l2GroupPorts[0];
+  }
+  
   private boolean isUnusedPort(int port) {
     boolean unused = true;
     for (int i = 0; i < dsoPorts.length; i++) {
