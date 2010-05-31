@@ -41,6 +41,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
   private final DsoClusterTopologyImpl           topology             = new DsoClusterTopologyImpl();
   private final List<DsoClusterListener>         listeners            = new CopyOnWriteArrayList<DsoClusterListener>();
+  private final Object                           nodeJoinsClusterSync = new Object();
 
   private final ReentrantReadWriteLock           stateLock            = new ReentrantReadWriteLock();
   private final ReentrantReadWriteLock.ReadLock  stateReadLock        = stateLock.readLock();
@@ -264,6 +265,25 @@ public class DsoClusterImpl implements DsoClusterInternal {
       stateReadLock.unlock();
     }
   }
+  
+  public DsoNode waitUntilNodeJoinsCluster() {
+    try {
+      synchronized (nodeJoinsClusterSync) {
+        while (currentNode == null) {
+          nodeJoinsClusterSync.wait();
+        }
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return currentNode;
+  }
+  
+  private void notifyWaiters() {
+    synchronized (nodeJoinsClusterSync) {
+      nodeJoinsClusterSync.notifyAll();
+    }
+  }
 
   public void fireThisNodeJoined(final NodeID nodeId, final NodeID[] clusterMembers) {
     stateWriteLock.lock();
@@ -280,6 +300,9 @@ public class DsoClusterImpl implements DsoClusterInternal {
       }
     } finally {
       stateWriteLock.unlock();
+      if (currentNode != null) {
+        notifyWaiters();
+      }
     }
 
     fireNodeJoined(nodeId);

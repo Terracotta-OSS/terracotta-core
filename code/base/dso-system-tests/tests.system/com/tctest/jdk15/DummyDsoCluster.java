@@ -61,5 +61,9 @@ public class DummyDsoCluster implements DsoCluster {
     throw new ImplementMe();
 
   }
+  
+  public DsoNode waitUntilNodeJoinsCluster() {
+    throw new ImplementMe();
+  }
 
 }

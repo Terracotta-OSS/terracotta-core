@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.test.TCTestCase;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tcclient.cluster.DsoNode;
 import com.tcclient.cluster.DsoNodeInternal;
 import com.tcclient.cluster.DsoNodeMetaData;
@@ -22,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DsoClusterTest extends TCTestCase {
 
@@ -254,6 +256,24 @@ public class DsoClusterTest extends TCTestCase {
     cluster.fireThisNodeLeft();
   }
 
+  public void testWaitUntilNodeJoinsCluster() {
+    final ClientID thisNodeId = new ClientID(1);
+
+    TimingRunnable targetRunnable = new TimingRunnable(cluster, thisNodeId);
+    new Thread(targetRunnable).start();
+    ThreadUtil.reallySleep(2000);
+    cluster.fireThisNodeJoined(thisNodeId, new ClientID[] { new ClientID(2) });
+    assertNotNull(cluster.getCurrentNode());
+    assertEquals(thisNodeId.toString(), cluster.getCurrentNode().getId());
+
+    targetRunnable.waitUntilFinished();
+    assertTrue("waitUntilNodeJoinsCluster must return after node joins", targetRunnable.isFinished());
+    assertTrue("Waiting thread should return after approx. 2 secs (actual:" + targetRunnable.getElapsedTimeMillis()
+               + ")", targetRunnable.getElapsedTimeMillis() + 100 >= 2000);
+    assertEquals("DsoNode returned from waitUntilNodeJoinsCluster should be same as cluster.getCurrentNode", cluster
+        .getCurrentNode(), targetRunnable.getNode());
+  }
+
   private static class TestEventListener implements DsoClusterListener {
 
     public LinkedList<String> events = new LinkedList<String>();
@@ -300,5 +320,50 @@ public class DsoClusterTest extends TCTestCase {
     public void operationsEnabled(final DsoClusterEvent event) {
       throw new RuntimeException("operationsEnabled");
     }
+  }
+
+  private static class TimingRunnable implements Runnable {
+    private long                 elapsedTimeMillis = 0;
+    private final AtomicBoolean  finished          = new AtomicBoolean(false);
+    private final DsoClusterImpl cluster;
+    private final ClientID       expectedNode;
+    private DsoNode              node;
+
+    public TimingRunnable(DsoClusterImpl cluster, ClientID expectedNode) {
+      super();
+      this.cluster = cluster;
+      this.expectedNode = expectedNode;
+    }
+
+    public void waitUntilFinished() {
+      while (!finished.get()) {
+        System.out
+            .println(Thread.currentThread().getName()
+                     + ": waiting until other thread returns from waitUntilNodeJoinsCluster(). Sleeping for 1 sec...");
+        ThreadUtil.reallySleep(1000);
+      }
+      System.out.println(Thread.currentThread().getName() + ": target runnable finished");
+    }
+
+    public void run() {
+      long start = System.currentTimeMillis();
+      node = cluster.waitUntilNodeJoinsCluster();
+      assertEquals(expectedNode.toString(), node.getId());
+      elapsedTimeMillis = System.currentTimeMillis() - start;
+      finished.set(true);
+    }
+
+    public long getElapsedTimeMillis() {
+      return elapsedTimeMillis;
+    }
+
+    public boolean isFinished() {
+      return finished.get();
+    }
+
+    public DsoNode getNode() {
+      return node;
+    }
+
   }
 }
