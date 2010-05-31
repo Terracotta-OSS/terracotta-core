@@ -86,10 +86,10 @@ public class ManagedObjectStateFactory {
                             new Byte(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
                             new Byte(ManagedObjectState.LIST_TYPE));
-    // XXX: Hack for async toolkit
+    // XXX: Hack for terracotta toolkit
     classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
     classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue", new Byte(ManagedObjectState.QUEUE_TYPE));
-
+    classNameToStateMap.put("org.terracotta.collections.TerracottaList", new Byte(ManagedObjectState.LIST_TYPE));
   }
 
   private ManagedObjectStateFactory(final ManagedObjectChangeListenerProvider listenerProvider,
