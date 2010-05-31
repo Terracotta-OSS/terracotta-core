@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MutateDGCValidateTestApp extends ServerCrashingAppBase {
-  private ServerControl       serverControl;
+  private final ServerControl       serverControl;
   public static List<Integer> rootList;
   private static final int    OBJECT_COUNT = 5000;
 
@@ -28,6 +28,7 @@ public class MutateDGCValidateTestApp extends ServerCrashingAppBase {
     serverControl = config.getServerControl();
   }
 
+  @Override
   protected void runTest() throws Throwable {
     rootList = new ArrayList<Integer>();
     ExtraL1ProcessControl client = spawnNewClientAndWaitForCompletion("1", WorkOnList.class);
@@ -41,6 +42,7 @@ public class MutateDGCValidateTestApp extends ServerCrashingAppBase {
     startServer();
 
     validate();
+    System.out.println("Test finished.");
   }
 
   private void performDGC() {
@@ -61,19 +63,23 @@ public class MutateDGCValidateTestApp extends ServerCrashingAppBase {
   }
 
   private void crashServer() {
+    System.out.println("XXX crashing the server...");
     try {
       serverControl.crash();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    System.out.println("XXX server crashed...");
   }
 
   private void startServer() {
+    System.out.println("XXX starting the server...");
     try {
       serverControl.start();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+    System.out.println("XXX server started...");
   }
 
   public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
