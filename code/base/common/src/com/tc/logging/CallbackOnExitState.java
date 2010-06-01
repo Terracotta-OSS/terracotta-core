@@ -5,8 +5,8 @@
 package com.tc.logging;
 
 public class CallbackOnExitState {
-  private boolean         restartNeeded = false;
-  private final Throwable throwable;
+  private volatile boolean restartNeeded = false;
+  private final Throwable  throwable;
 
   public CallbackOnExitState(Throwable t) {
     this.throwable = t;
@@ -22,5 +22,10 @@ public class CallbackOnExitState {
 
   public boolean isRestartNeeded() {
     return this.restartNeeded;
+  }
+
+  @Override
+  public String toString() {
+    return "CallbackOnExitState[Throwable: " + throwable.getClass() + "; RestartNeeded: " + isRestartNeeded() + "]";
   }
 }

@@ -158,6 +158,7 @@ public class ThrowableHandler {
   private void exit(CallbackOnExitState throwableState) {
     boolean autoRestart = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_AUTORESTART);
 
+    logger.info("ExitState : " + throwableState + "; AutoRestart: " + autoRestart);
     if (autoRestart && throwableState.isRestartNeeded()) {
       exit(ServerExitStatus.EXITCODE_RESTART_REQUEST);
     } else {
