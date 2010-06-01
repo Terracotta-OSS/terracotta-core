@@ -326,6 +326,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     clearAdaptableCache();
   }
+  
+  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile) {
+    IncludeOnLoad onLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, methodToCallOnLoad);
+    addInstrumentationDescriptor(new IncludedInstrumentedClass(expression, honorTransient, honorVolatile, onLoad));
+
+    clearAdaptableCache();
+  }
 
   public void addIncludeAndLockIfRequired(final String expression, final boolean honorTransient,
                                           final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile,

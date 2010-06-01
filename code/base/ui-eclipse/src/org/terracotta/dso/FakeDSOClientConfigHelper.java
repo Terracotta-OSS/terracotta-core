@@ -99,7 +99,11 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
                                 final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     /**/
   }
-
+  
+  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile) {
+    /**/
+  }
+  
   public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
     /**/
   }
