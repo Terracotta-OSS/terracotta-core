@@ -9,7 +9,7 @@ class MavenDeploy
     @snapshot = options.boolean(:snapshot)
   end
 
-  def deploy_file(file, group_id, artifact_id, version, pom_file = nil, packaging = nil, dry_run = false)
+  def deploy_file(file, group_id, artifact_id, classifier, version, pom_file = nil, packaging = nil, dry_run = false)
     unless File.exist?(file)
       raise("Bad 'file' argument passed to deploy_file.  File does not exist: #{file}")
     end
@@ -47,6 +47,10 @@ class MavenDeploy
       command_args['generatePom'] = @generate_pom
     end
 
+    if classifier
+      command_args['classifier'] = classifier
+    end
+    
     if @repository_url.downcase == 'local'
       command << 'install:install-file'
     else
