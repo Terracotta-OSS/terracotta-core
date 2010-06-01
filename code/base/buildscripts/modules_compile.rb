@@ -152,7 +152,8 @@ class BuildModule
         maven = MavenDeploy.new(:repository_url => repo,
           :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
           :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
-        maven.deploy_file(module_info.jarfile.to_s, MODULES_GROUP_ID, module_info.artifact_id, module_info.version)
+        classifier = nil # no classifier
+        maven.deploy_file(module_info.jarfile.to_s, MODULES_GROUP_ID, module_info.artifact_id, module_info.version, classifier)
       end
     end
   end
