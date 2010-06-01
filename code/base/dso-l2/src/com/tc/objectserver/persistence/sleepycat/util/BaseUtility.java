@@ -35,6 +35,7 @@ public abstract class BaseUtility {
   }
 
   private void initPersistors(int persistorCount) throws Exception {
+    ManagedObjectStateFactory.disableSingleton(true);
     for (int i = 1; i <= persistorCount; i++) {
       sleepycatPersistorMap.put(new Integer(i), createPersistor(i));
     }
