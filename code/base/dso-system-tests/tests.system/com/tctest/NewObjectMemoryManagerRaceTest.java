@@ -31,6 +31,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -171,7 +172,7 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
 
     /**
      * One client will create lots of objects that have non-null fields and add them to a shared queue.
-     *
+     * 
      * @throws InterruptedException
      */
     void createNewObjects() {
@@ -189,8 +190,8 @@ public class NewObjectMemoryManagerRaceTest extends ServerCrashingTestBase {
         jvmArgs.add("-Dcom.tc.l1.cachemanager.threshold=1");
 
         ExtraL1ProcessControl client = new ExtraL1ProcessControl(getHostName(), getPort(), External.class,
-                                                                 getConfigFilePath(), new String[] {}, workingDir,
-                                                                 jvmArgs);
+                                                                 getConfigFilePath(), Collections.EMPTY_LIST,
+                                                                 workingDir, jvmArgs);
         client.setJavaHome(new File(System.getProperty("java.home")));
         client.start();
         int exitCode = client.waitFor();

@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -122,8 +123,8 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
           File workDir = new File(getTempDirectory(), "my-client-2");
           workDir.mkdirs();
           ExtraL1ProcessControl client = new ExtraL1ProcessControl("localhost", currentActiveDsoPort,
-                                                                   DEV3688Worker.class, configFile, new String[0],
-                                                                   workDir, jvmArgs);
+                                                                   DEV3688Worker.class, configFile,
+                                                                   Collections.EMPTY_LIST, workDir, jvmArgs);
           client.start();
           client.mergeSTDERR();
           client.mergeSTDOUT();

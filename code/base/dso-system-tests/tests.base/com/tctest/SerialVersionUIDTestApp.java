@@ -101,7 +101,7 @@ public class SerialVersionUIDTestApp extends AbstractTransparentApp {
       out.write(serialize(new WithoutUID()));
       out.close();
 
-      LinkedJavaProcess process = new LinkedJavaProcess(ExternalSerialize.class.getName(), new String[] { fileName });
+      LinkedJavaProcess process = new LinkedJavaProcess(ExternalSerialize.class.getName(), Arrays.asList(fileName));
       process.start();
 
       process.STDIN().close();

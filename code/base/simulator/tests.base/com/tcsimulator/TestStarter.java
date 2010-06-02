@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tcsimulator;
 
@@ -13,9 +14,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 public class TestStarter {
 
@@ -62,14 +64,15 @@ public class TestStarter {
       for (Iterator i = containerSpecs.iterator(); i.hasNext();) {
         ContainerSpec containerSpec = (ContainerSpec) i.next();
         println("Found containerSpec: " + containerSpec);
-        LinkedJavaProcess proc = new LinkedJavaProcess(ContainerBuilder.class.getName(), new String[] { containerSpec
-            .getVmName() });
+        LinkedJavaProcess proc = new LinkedJavaProcess(ContainerBuilder.class.getName(), Arrays.asList(containerSpec
+            .getVmName()));
         String fileSeparator = System.getProperty("file.separator");
 
         File terracottaDist = new File(new File(containerSpec.getTestHome()).getAbsoluteFile(), "terracotta");
-        File dsoJava = new File(terracottaDist.getAbsolutePath() + fileSeparator + "bin" + fileSeparator + "dso-java.sh");
+        File dsoJava = new File(terracottaDist.getAbsolutePath() + fileSeparator + "bin" + fileSeparator
+                                + "dso-java.sh");
 
-        Collection jvmArgs = new HashSet();
+        List<String> jvmArgs = new ArrayList<String>();
         for (Iterator iter = containerSpec.getJvmOpts().iterator(); iter.hasNext();) {
           String next = (String) iter.next();
           if (!next.equals(ArgParser.getUndefinedString())) {
@@ -84,7 +87,7 @@ public class TestStarter {
           jvmArgs.add("-Xrunjdwp:transport=dt_socket,address=" + (8000 + debugPortOffset) + ",server=y,suspend=y");
           debugPortOffset++;
         }
-        Collection environment = new HashSet();
+        List<String> environment = new ArrayList<String>();
         if ("Mac OS X".equals(System.getProperty("os.name")) || "Linux".equals(System.getProperty("os.name"))) {
           environment.add("TC_JAVA_HOME=" + System.getProperty("java.home"));
         }
@@ -92,8 +95,8 @@ public class TestStarter {
         File dir = new File(containerSpec.getTestHome(), containerSpec.getVmName());
         dir.mkdir();
         proc.setDirectory(dir);
-        proc.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
-        proc.setEnvironment((String[]) environment.toArray(new String[environment.size()]));
+        proc.addAllJvmArgs(jvmArgs);
+        proc.setEnvironment(environment);
         proc.start();
         proc.mergeSTDERR();
         proc.mergeSTDOUT();

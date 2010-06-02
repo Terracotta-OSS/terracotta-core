@@ -5,7 +5,6 @@
 package com.tcverify;
 
 import org.apache.commons.io.output.TeeOutputStream;
-import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
@@ -35,6 +34,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -93,11 +93,9 @@ public class DSOVerifierTest extends TCTestCase {
   }
 
   public void test() throws Exception {
-    LinkedJavaProcess p1 = new LinkedJavaProcess(getMainClass(), new String[] { "1", "2" });
-    p1.setJavaArguments(getJvmArgs());
+    LinkedJavaProcess p1 = new LinkedJavaProcess(getMainClass(), Arrays.asList("1", "2"), getJvmArgs());
 
-    LinkedJavaProcess p2 = new LinkedJavaProcess(getMainClass(), new String[] { "2", "1" });
-    p2.setJavaArguments(getJvmArgs());
+    LinkedJavaProcess p2 = new LinkedJavaProcess(getMainClass(), Arrays.asList("2", "1"), getJvmArgs());
 
     p1.start();
     p2.start();
@@ -154,7 +152,7 @@ public class DSOVerifierTest extends TCTestCase {
     return DSOVerifier.class.getName();
   }
 
-  protected String[] getJvmArgs() {
+  protected List<String> getJvmArgs() {
     String bootclasspath = "-Xbootclasspath/p:" + TestConfigObject.getInstance().normalBootJar();
 
     List<String> args = new ArrayList<String>();
@@ -166,9 +164,8 @@ public class DSOVerifierTest extends TCTestCase {
 
     args.addAll(getExtraJvmArgs());
 
-    String[] rv = args.toArray(new String[args.size()]);
-    System.out.println("JVM args: " + ArrayUtils.toString(rv));
-    return rv;
+    System.out.println("JVM args: " + args);
+    return args;
   }
 
   protected Collection<String> getExtraJvmArgs() {

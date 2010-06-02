@@ -20,6 +20,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ClusterMetaDataAfterNodeLeftTestApp extends AbstractTransparentApp {
@@ -38,7 +39,7 @@ public class ClusterMetaDataAfterNodeLeftTestApp extends AbstractTransparentApp 
   private final ClusterEventsTestState state       = new ClusterEventsTestState();
 
   public ClusterMetaDataAfterNodeLeftTestApp(final String appId, final ApplicationConfig config,
-                              final ListenerProvider listenerProvider) {
+                                             final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
     cluster.addClusterListener(state.getListenerForNode(cluster.getCurrentNode()));
@@ -100,8 +101,9 @@ public class ClusterMetaDataAfterNodeLeftTestApp extends AbstractTransparentApp 
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class, configFile
-        .getAbsolutePath(), new String[] {String.valueOf(id)}, workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class,
+                                                             configFile.getAbsolutePath(), Arrays.asList(String
+                                                                 .valueOf(id)), workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();

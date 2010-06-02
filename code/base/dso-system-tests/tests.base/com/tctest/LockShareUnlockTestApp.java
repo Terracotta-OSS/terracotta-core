@@ -13,6 +13,7 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,11 +26,11 @@ public class LockShareUnlockTestApp extends AbstractErrorCatchingTransparentApp 
   public static final String      PORT_NUMBER = "port-number";
   public static final String      HOST_NAME   = "host-name";
   public static final String      JMX_PORT    = "jmx-port";
-  
-  private static Set<Object> root = new HashSet<Object>();
+
+  private static Set<Object>      root        = new HashSet<Object>();
 
   private final ApplicationConfig appConfig;
-  
+
   public LockShareUnlockTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.appConfig = config;
@@ -44,7 +45,8 @@ public class LockShareUnlockTestApp extends AbstractErrorCatchingTransparentApp 
 
     List<String> jvmArgs = new ArrayList<String>();
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, LockShareUnlockTestApp.class,
-                                                             configFile.getAbsolutePath(), new String[0], workingDir, jvmArgs);
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
+                                                             workingDir, jvmArgs);
     client.start();
     System.err.println("Started New Client");
     client.mergeSTDERR();
@@ -54,23 +56,23 @@ public class LockShareUnlockTestApp extends AbstractErrorCatchingTransparentApp 
     int exitCode = client.waitFor();
     Assert.assertTrue("Client terminated with failure", exitCode != 0);
   }
-  
+
   public static void main(String[] args) {
     System.err.println("Testing : [UnbalancedRead, Write]");
     testUnbalancedReadWrite();
-    
+
     System.err.println("Testing : [UnbalancedWrite, Write]");
     testUnbalancedWriteWrite();
     Assert.fail();
   }
-  
+
   private static void testUnbalancedReadWrite() {
     Object o = new Object();
     synchronized (o) {
       addToRoot(o);
     }
   }
-  
+
   private static void testUnbalancedWriteWrite() {
     Object o = new Object();
     try {

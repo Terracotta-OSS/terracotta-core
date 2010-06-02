@@ -22,6 +22,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +127,7 @@ public class ClusterMetaDataOrphanedValuesTestApp extends AbstractTransparentApp
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir, jvmArgs);
+        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();

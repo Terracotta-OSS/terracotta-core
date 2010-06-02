@@ -27,6 +27,7 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -187,8 +188,9 @@ public class BroadcastDisconnectingClientTest extends ServerCrashingTestBase {
       List jvmArgs = new ArrayList();
       addTestTcPropertiesFile(jvmArgs);
       ExtraL1ProcessControl client = new ExtraL1ProcessControl(getHostName(), getPort(), DisconnectingALClient.class,
-                                                               getConfigFilePath(), new String[] { "" + id,
-                                                                   "" + duration }, workingDir, jvmArgs);
+                                                               getConfigFilePath(), Arrays.asList("" + id, ""
+                                                                                                           + duration),
+                                                               workingDir, jvmArgs);
       client.start();
       return client;
     }

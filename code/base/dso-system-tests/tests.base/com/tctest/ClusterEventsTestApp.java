@@ -19,6 +19,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ClusterEventsTestApp extends AbstractTransparentApp {
@@ -131,8 +132,9 @@ public class ClusterEventsTestApp extends AbstractTransparentApp {
 
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, ClusterEventsL1Client.class,
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
+                                                             workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();

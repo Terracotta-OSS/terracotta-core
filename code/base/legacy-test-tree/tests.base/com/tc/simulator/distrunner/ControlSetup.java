@@ -6,8 +6,8 @@ package com.tc.simulator.distrunner;
 
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.objectserver.control.ExtraProcessServerControl;
-import com.tc.objectserver.control.ServerControl;
 import com.tc.objectserver.control.ExtraProcessServerControl.DebugParams;
+import com.tc.objectserver.control.ServerControl;
 import com.tcsimulator.ConfigWriter;
 import com.tcsimulator.ProcessFactory;
 import com.tcsimulator.Sandbox;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public class ControlSetup {
@@ -67,9 +68,9 @@ public class ControlSetup {
     ProcessFactory procFactory = new ProcessFactory(sandbox, this.controlServerSpec);
 
     if (this.startWithDSO) {
-      this.setupProcess = procFactory.newDSOJavaProcessInstance(Setup.class.getName(), args, debugSetup);
+      this.setupProcess = procFactory.newDSOJavaProcessInstance(Setup.class.getName(), Arrays.asList(args), debugSetup);
     } else {
-      this.setupProcess = procFactory.newJavaProcessInstance(Setup.class.getName(), args, debugSetup, javaHome);
+      this.setupProcess = procFactory.newJavaProcessInstance(Setup.class.getName(), Arrays.asList(args), debugSetup, javaHome);
     }
   }
 

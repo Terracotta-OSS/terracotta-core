@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -82,8 +84,8 @@ public class Setup {
     }
     ProcessFactory procFactory = new ProcessFactory(sandbox, testServerSpec);
 
-    this.testSetupProcess = procFactory.newDSOJavaProcessInstance(TestSetup.class.getName(), args, debugTestSetup);
-    this.testStarterProcess = procFactory.newDSOJavaProcessInstance(TestStarter.class.getName(), new String[] {},
+    this.testSetupProcess = procFactory.newDSOJavaProcessInstance(TestSetup.class.getName(), Arrays.asList(args), debugTestSetup);
+    this.testStarterProcess = procFactory.newDSOJavaProcessInstance(TestStarter.class.getName(), Collections.EMPTY_LIST,
                                                                     debugTestStarter);
     if (this.isServerMachine) {
       List clientSpecsCopy = new ArrayList();

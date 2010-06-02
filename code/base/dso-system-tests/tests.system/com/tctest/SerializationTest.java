@@ -419,8 +419,8 @@ public class SerializationTest extends BaseDSOTestCase {
     fos.write(serialize(m));
     fos.close();
 
-    LinkedJavaProcess process = new LinkedJavaProcess(ExternalSerializer.class.getName(), new String[] {
-        out.getAbsolutePath(), in.getAbsolutePath() });
+    LinkedJavaProcess process = new LinkedJavaProcess(ExternalSerializer.class.getName(), Arrays.asList(out
+        .getAbsolutePath(), in.getAbsolutePath()));
     process.start();
 
     process.STDIN().close();

@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 
@@ -204,9 +205,10 @@ public class ClusterMemberhipEventsTest extends BaseDSOTestCase {
     File configFile = saveToFile(configBuilder.newInputStream());
     jvmArgs.add("-Dtc.node-name=node" + clientIndex);
     jvmArgs.add("-Dtc.config=" + configFile.getAbsolutePath());
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl("localhost", dsoPort, MailBox.class, configFile
-        .getAbsolutePath(), new String[] { "" + clientIndex, "" + numOfClients }, getWorkDir("l1client" + clientIndex),
-                                                             jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl("localhost", dsoPort, MailBox.class,
+                                                             configFile.getAbsolutePath(),
+                                                             Arrays.asList("" + clientIndex, "" + numOfClients),
+                                                             getWorkDir("l1client" + clientIndex), jvmArgs);
     return client;
   }
 

@@ -75,7 +75,7 @@ public class ExternalDsoClient {
   public void start() throws IOException {
     logOutputStream = new FileOutputStream(clientLog);
     process = createLinkedJavaProcess();
-    process.setJavaArguments((String[]) jvmArgs.toArray(new String[jvmArgs.size()]));
+    process.addAllJvmArgs(jvmArgs);
     process.start();
     StreamCopier outCopier = new StreamCopier(process.STDOUT(), logOutputStream);
     StreamCopier errCopier = new StreamCopier(process.STDERR(), logOutputStream);
@@ -85,7 +85,7 @@ public class ExternalDsoClient {
   }
 
   private LinkedJavaProcess createLinkedJavaProcess() {
-    LinkedJavaProcess p = new LinkedJavaProcess(clientClass.getName(), (String[]) args.toArray(new String[0]));
+    LinkedJavaProcess p = new LinkedJavaProcess(clientClass.getName(),  args);
     p.setDirectory(workingDir);
     return p;
   }

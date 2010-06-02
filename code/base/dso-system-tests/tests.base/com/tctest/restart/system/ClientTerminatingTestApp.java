@@ -16,6 +16,7 @@ import com.tctest.ServerCrashingAppBase;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -74,8 +75,8 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
         System.err.println(this + "Creating Client with args " + id + " , " + toAdd);
         List jvmArgs = new ArrayList();
         addTestTcPropertiesFile(jvmArgs);
-        client = new ExtraL1ProcessControl(getHostName(), getPort(), Client.class, getConfigFilePath(), new String[] {
-            "" + id, "" + toAdd, "" + forceKill }, workingDir, jvmArgs);
+        client = new ExtraL1ProcessControl(getHostName(), getPort(), Client.class, getConfigFilePath(),
+                                           Arrays.asList("" + id, "" + toAdd, "" + forceKill), workingDir, jvmArgs);
         client.start();
         int exitCode = client.waitFor();
         if (exitCode == 0) {
@@ -133,9 +134,8 @@ public class ClientTerminatingTestApp extends ServerCrashingAppBase {
     }
 
     public static void main(String args[]) {
-      if (args.length < 2 || args.length > 3) {
-        throw new AssertionError("Usage : Client <id> <num of increments> [shouldForceKill]");
-      }
+      if (args.length < 2 || args.length > 3) { throw new AssertionError(
+                                                                         "Usage : Client <id> <num of increments> [shouldForceKill]"); }
 
       boolean shouldForceKill;
       if (args.length == 3 && args[2] != null && !args[2].equals("")) {

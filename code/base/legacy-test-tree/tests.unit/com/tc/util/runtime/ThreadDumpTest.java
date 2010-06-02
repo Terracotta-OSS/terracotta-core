@@ -24,14 +24,14 @@ public class ThreadDumpTest extends TCTestCase {
   public void testDump() throws IOException, InterruptedException {
     LinkedJavaProcess process = new LinkedJavaProcess(ThreadDump.class.getName());
 
-    List args = new ArrayList();
+    List args = new ArrayList<String>();
     args.add("-D" + TestConfigObject.TC_BASE_DIR + "=" + System.getProperty(TestConfigObject.TC_BASE_DIR));
     args.add("-D" + TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME + "="
              + System.getProperty(TestConfigObject.PROPERTY_FILE_LIST_PROPERTY_NAME));
     if (Vm.isIBM()) {
       args.add("-Xdump:java:file=-");
     }
-    process.setJavaArguments((String[]) args.toArray(new String[args.size()]));
+    process.addAllJvmArgs(args);
 
     System.err.println("JAVA ARGS: " + args);
 

@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
@@ -83,7 +84,7 @@ public class InvalidClassBytesTest extends TransparentTestBase {
       jvmArgs.add("-javaagent:" + cfg.getAttribute("agent"));
 
       ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, portNumber, Client.class, configFile,
-                                                               new String[] {}, workingDir, jvmArgs);
+                                                               Collections.EMPTY_LIST, workingDir, jvmArgs);
       client.start();
 
       int exit = client.waitFor();

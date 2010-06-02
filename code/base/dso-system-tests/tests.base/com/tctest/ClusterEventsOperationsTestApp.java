@@ -19,23 +19,24 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ClusterEventsOperationsTestApp extends AbstractTransparentApp {
 
-  public static final String      CONFIG_FILE = "config-file";
-  public static final String      PORT_NUMBER = "port-number";
-  public static final String      HOST_NAME   = "host-name";
+  public static final String              CONFIG_FILE = "config-file";
+  public static final String              PORT_NUMBER = "port-number";
+  public static final String              HOST_NAME   = "host-name";
 
-  private final ApplicationConfig config;
+  private final ApplicationConfig         config;
 
   @InjectedDsoInstance
-  private DsoCluster              cluster;
+  private DsoCluster                      cluster;
 
-  private final ClusterEventsTestListener listener = new ClusterEventsTestListener();
+  private final ClusterEventsTestListener listener    = new ClusterEventsTestListener();
 
   public ClusterEventsOperationsTestApp(final String appId, final ApplicationConfig config,
-                              final ListenerProvider listenerProvider) {
+                                        final ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
     this.config = config;
     cluster.addClusterListener(listener);
@@ -122,7 +123,7 @@ public class ClusterEventsOperationsTestApp extends AbstractTransparentApp {
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
-                                                             configFile.getAbsolutePath(), new String[0],
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
                                                              workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();

@@ -22,6 +22,7 @@ import com.tctest.runner.AbstractTransparentApp;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.management.MBeanServerConnection;
@@ -56,12 +57,12 @@ public class ClientAbscondAfterServerCrashTestApp extends AbstractTransparentApp
     List jvmArgs = new ArrayList();
     client1 = new ExtraL1ProcessControl(appConfig.getAttribute(HOST_NAME), Integer.parseInt(appConfig
         .getAttribute(DSO_PORT)), AbscondingClient.class, new File(appConfig.getAttribute(CONFIG_FILE))
-        .getAbsolutePath(), new String[] { "AbscondingClient" }, new File(appConfig.getAttribute(CLIENT1_SPACE)),
+        .getAbsolutePath(), Arrays.asList("AbscondingClient"), new File(appConfig.getAttribute(CLIENT1_SPACE)),
                                         jvmArgs);
 
     client2 = new ExtraL1ProcessControl(appConfig.getAttribute(HOST_NAME), Integer.parseInt(appConfig
         .getAttribute(DSO_PORT)), AbscondingClient.class, new File(appConfig.getAttribute(CONFIG_FILE))
-        .getAbsolutePath(), new String[] { "Resident Client" }, new File(appConfig.getAttribute(CLIENT2_SPACE)),
+        .getAbsolutePath(), Arrays.asList("Resident Client"), new File(appConfig.getAttribute(CLIENT2_SPACE)),
                                         jvmArgs);
 
     try {

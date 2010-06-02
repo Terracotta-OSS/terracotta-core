@@ -31,6 +31,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -108,12 +109,12 @@ public class RogueClientTestApp extends AbstractTransparentApp {
         if (nodeRunner % 2 == 0) {
           // make a producer
           client = new ExtraL1ProcessControl(hostName, portNumber, L1Client.class, configFile.getAbsolutePath(),
-                                             new String[] { "" + nodeRunner, "" + TYPE_PRODUCER }, workingDir, jvmArgs);
+                                             Arrays.asList("" + nodeRunner, "" + TYPE_PRODUCER), workingDir, jvmArgs);
           client.start();
         } else {
           // make a consumer
           client = new ExtraL1ProcessControl(hostName, portNumber, L1Client.class, configFile.getAbsolutePath(),
-                                             new String[] { "" + nodeRunner, "" + TYPE_CONSUMER }, workingDir, jvmArgs);
+                                             Arrays.asList("" + nodeRunner, "" + TYPE_CONSUMER), workingDir, jvmArgs);
           client.start();
         }
       } catch (Exception e) {

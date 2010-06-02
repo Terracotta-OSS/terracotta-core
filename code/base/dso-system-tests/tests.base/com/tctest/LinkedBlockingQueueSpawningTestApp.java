@@ -20,6 +20,7 @@ import com.tctest.runner.AbstractTransparentApp;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -103,7 +104,7 @@ public class LinkedBlockingQueueSpawningTestApp extends AbstractTransparentApp {
     List jvmArgs = new ArrayList();
     addTestTcPropertiesFile(jvmArgs);
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, clientClass, configFile.getAbsolutePath(),
-                                                             new String[0], workingDir, jvmArgs);
+                                                             Collections.EMPTY_LIST, workingDir, jvmArgs);
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();

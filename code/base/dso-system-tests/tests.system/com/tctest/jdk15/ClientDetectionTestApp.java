@@ -23,6 +23,7 @@ import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -117,7 +118,7 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
 
     List jvmArgs = new ArrayList();
     ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), new String[0], workingDir, jvmArgs);
+        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
     client.start();
 
     client.mergeSTDERR();
