@@ -165,6 +165,7 @@ postscripts:
           artifact: terracotta
           classifier: sources
           srcfile: build/sources/terracotta-sources.jar
+          pom: poms/terracotta-pom.xml
         - groupId: org.terracotta
           artifact: terracotta
           file: lib/tc.jar
@@ -194,6 +195,7 @@ postscripts:
           artifact: test-api
           classifier: sources
           srcfile: build/sources/test-api-sources.jar
+          pom: poms/terracotta-test-api-pom.xml
         - groupId: org.terracotta.api
           artifact: test-api
           file: api-jars/test-api.jar
