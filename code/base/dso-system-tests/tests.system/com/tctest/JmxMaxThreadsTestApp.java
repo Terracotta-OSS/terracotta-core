@@ -30,7 +30,7 @@ public class JmxMaxThreadsTestApp extends AbstractTransparentApp {
 
   public void run() {
     // Create threads and get l1 infos
-    int noOfThreads = 25;
+    int noOfThreads = 20;
 
     Thread[] threads = new Thread[noOfThreads];
     for (int i = 0; i < noOfThreads; i++) {
