@@ -160,7 +160,11 @@ postscripts:
         - groupId: org.terracotta
           artifact: terracotta-l1-parent
           srcfile: poms/terracotta-l1-parent-pom.xml
-          pom: poms/terracotta-l1-parent-pom.xml        
+          pom: poms/terracotta-l1-parent-pom.xml       
+        - groupId: org.terracotta
+          artifact: terracotta
+          classifier: sources
+          srcfile: build/sources/terracotta-sources.jar
         - groupId: org.terracotta
           artifact: terracotta
           file: lib/tc.jar
@@ -168,10 +172,6 @@ postscripts:
           inject: 
             - lib/resources/build-data.txt
             - lib/resources/tim-get.properties
-        - groupId: org.terracotta
-          artifact: terracotta
-          classifier: sources
-          srcfile: build/sources/terracotta-sources.jar
         - groupId: org.terracotta
           artifact: terracotta-l1
           file: api-jars/terracotta-l1.jar
@@ -192,12 +192,12 @@ postscripts:
           pom: poms/tcstats-pom.xml
         - groupId: org.terracotta.api
           artifact: test-api
+          classifier: sources
+          srcfile: build/sources/test-api-sources.jar
+        - groupId: org.terracotta.api
+          artifact: test-api
           file: api-jars/test-api.jar
           pom: poms/terracotta-test-api-pom.xml
           inject: 
             - lib/resources/build-data.txt
-        - groupId: org.terracotta.api
-          artifact: test-api
-          classifier: sources
-          srcfile: build/sources/test-api-sources.jar
   - delete-api-jars
