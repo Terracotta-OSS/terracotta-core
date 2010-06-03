@@ -126,7 +126,8 @@ public class VerifierClient implements Runnable {
       sendVerifier.putMessage(msg);
 
       synchronized (sentCallbacks) {
-        sentCallbacks.put(msg, new SetOnceFlag());
+        Object o = sentCallbacks.put(msg, new SetOnceFlag());
+        Assert.eval("There is a msg already in map; old = " + o + "; new = " + msg, (o == null));
       }
 
       msg.setSentCallback(new Runnable() {
@@ -153,10 +154,12 @@ public class VerifierClient implements Runnable {
     conn.close(TIMEOUT);
 
     // make sure that the sent callback was called once and only once for each message
-    for (final Iterator iter = sentCallbacks.values().iterator(); iter.hasNext();) {
-      SetOnceFlag sent = (SetOnceFlag) iter.next();
-      Assert.eval(sent.isSet());
-      iter.remove();
+    synchronized (sentCallbacks) {
+      for (final Iterator iter = sentCallbacks.values().iterator(); iter.hasNext();) {
+        SetOnceFlag sent = (SetOnceFlag) iter.next();
+        Assert.eval(sent.isSet());
+        iter.remove();
+      }
     }
 
     checkForError();
@@ -166,8 +169,10 @@ public class VerifierClient implements Runnable {
     // must use a multiple of 8 for the data in this message. Data is <id><counter><id><counter>....where id and
     // counter are both 4 byte ints
     int extra = 8 + (8 * random.nextInt(13));
-    TCByteBuffer data[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096 * dataSize
-                                                                                     + (this.addExtra == true ? extra : 0));
+    TCByteBuffer data[] = TCByteBufferFactory.getFixedSizedInstancesForLength(false, 4096
+                                                                                     * dataSize
+                                                                                     + (this.addExtra == true ? extra
+                                                                                         : 0));
 
     if (this.dataSize == 0 && this.addExtra) {
       Assert.assertEquals(1, data.length);
