@@ -10,6 +10,7 @@ if [ "$JAVA_HOME" = "" ]; then
   exit 1
 fi
 
+unset CDPATH
 root=`dirname $0`/..
 root=`cd $root && pwd`
 

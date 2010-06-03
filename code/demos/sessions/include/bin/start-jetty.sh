@@ -17,6 +17,7 @@ if [ "$jetty_instance" = "" ]; then
   exit 1
 fi
 
+unset CDPATH
 root=`dirname $0`/..
 root=`cd $root && pwd`
 jetty_work_dir=$root/jetty6.1/$jetty_instance
