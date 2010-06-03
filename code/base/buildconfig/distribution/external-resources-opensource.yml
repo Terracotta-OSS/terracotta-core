@@ -21,3 +21,9 @@ artifacts:
     classifier: javadoc
     destination: common/docs/javadoc
     explode: true
+
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-terracotta
+    version: 2.2.0-SNAPSHOT
+    destination: ehcache
