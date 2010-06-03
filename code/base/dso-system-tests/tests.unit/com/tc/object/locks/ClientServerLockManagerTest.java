@@ -36,7 +36,8 @@ public class ClientServerLockManagerTest extends TestCase {
     glue = new ClientServerLockManagerGlue(sessionManager, sink, new NonGreedyLockPolicyFactory());
     threadManager = new ManualThreadIDManager();
     clientLockManager = new ClientLockManagerImpl(new NullTCLogger(), sessionManager, glue, threadManager,
-                                                  new NullClientLockManagerConfig(), ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
+                                                  new NullClientLockManagerConfig(),
+                                                  ClientLockStatManager.NULL_CLIENT_LOCK_STAT_MANAGER);
 
     serverLockManager = new LockManagerImpl(sink, new NullChannelManager(), new NonGreedyLockPolicyFactory());
     glue.set(clientLockManager, serverLockManager);
@@ -254,7 +255,9 @@ public class ClientServerLockManagerTest extends TestCase {
       public void run() {
         try {
           threadManager.setThreadID(tx1);
+          System.out.println("1st thread going to wait on lock id = " + lockID1 + " thread = " + tx1);
           clientLockManager.wait(lockID1, null);
+          System.out.println("1st thread Wait over for lock id = " + lockID1 + " thread = " + tx1);
         } catch (InterruptedException ie) {
           handleExceptionForTest(ie);
         }
@@ -263,16 +266,26 @@ public class ClientServerLockManagerTest extends TestCase {
     waitCallThread.start();
 
     threadManager.setThreadID(tx2);
+    System.out.println("2nd thread trying to acquire lock = " + lockID1 + " thread = " + tx2);
     clientLockManager.lock(lockID1, LockLevel.WRITE);
+
     /*
      * Since this call is no longer in Lock manager, forced to call the server lock manager directly
      * clientLockManager.notify(lockID1,tx2, true);
      */
+
+    System.out.println("2nd thread got the lock and trying to notify = " + lockID1 + " thread = " + tx2);
+
     glue.notify(lockID1, tx2, true);
+
+    System.out.println("2nd thread unlocking = " + lockID1 + " thread = " + tx2);
+
     clientLockManager.unlock(lockID1, LockLevel.WRITE);
 
+    System.out.println("2nd thread unlocked = " + lockID1 + " thread = " + tx2);
+
     waitCallThread.join();
-    
+
     threadManager.setThreadID(tx1);
 
     LockMBean[] lockBeans2 = serverLockManager.getAllLocks();
