@@ -186,7 +186,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
 
       if (flush) {
-        remote.flush(lock);
+        remote.flush(lock, greediness.getFlushLevel());
         waiter = releaseAllAndPushWaiter(remote, thread, waitObject, timeout);
       }
 
@@ -531,7 +531,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       }
 
-      remote.flush(lock);
+      remote.flush(lock, greediness.getFlushLevel());
 
       synchronized (this) {
         if (greediness.isRecalled() && canRecallNow()) {
@@ -620,7 +620,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
 
     if (flushOnUnlock(unlock)) {
-      remote.flush(lock);
+      remote.flush(lock, greediness.getFlushLevel());
     }
     return release(remote, unlock);
   }
@@ -883,7 +883,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       };
 
-      if (remote.asyncFlush(lock, callback)) {
+      if (remote.asyncFlush(lock, callback, greediness.getFlushLevel())) {
         return recallCommit(remote);
       } else {
         return greediness.recallInProgress();

@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.RemoteServerMapManager;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -96,8 +97,10 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     }
   }
 
-  public void flush(final LockID lockID) {
-    this.remoteServerMapManager.flush(lockID);
+  public void flush(final LockID lockID, ServerLockLevel level) {
+    if (level == ServerLockLevel.WRITE) {
+      this.remoteServerMapManager.flush(lockID);
+    }
     this.remoteTransactionManager.flush(lockID);
   }
 
@@ -105,8 +108,10 @@ public class ClientGlobalTransactionManagerImpl implements ClientGlobalTransacti
     this.remoteTransactionManager.waitForServerToReceiveTxnsForThisLock(lock);
   }
 
-  public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback) {
-    this.remoteServerMapManager.flush(lockID);
+  public boolean asyncFlush(final LockID lockID, final LockFlushCallback callback, ServerLockLevel level) {
+    if (level == ServerLockLevel.WRITE) {
+      this.remoteServerMapManager.flush(lockID);
+    }
     return this.remoteTransactionManager.asyncFlush(lockID, callback);
   }
 }

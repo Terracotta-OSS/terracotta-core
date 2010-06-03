@@ -39,12 +39,12 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
     return this.clientIdProvider.getClientID();
   }
 
-  public void flush(final LockID lock) {
-    this.globalTxManager.flush(lock);
+  public void flush(final LockID lock, ServerLockLevel level) {
+    this.globalTxManager.flush(lock, level);
   }
 
-  public boolean asyncFlush(final LockID lock, final LockFlushCallback callback) {
-    return this.globalTxManager.asyncFlush(lock, callback);
+  public boolean asyncFlush(final LockID lock, final LockFlushCallback callback, ServerLockLevel level) {
+    return this.globalTxManager.asyncFlush(lock, callback, level);
   }
 
   public void waitForServerToReceiveTxnsForThisLock(final LockID lock) {

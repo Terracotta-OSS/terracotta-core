@@ -79,11 +79,11 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
     serverLockManager.recallCommit(lockID, clientID, contexts);
   }
 
-  public void flush(LockID lockID) {
+  public void flush(LockID lockID, ServerLockLevel level) {
     return;
   }
 
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, ServerLockLevel level) {
     return true;
   }
 

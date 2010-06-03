@@ -867,7 +867,7 @@ public class ClientLockTest extends TestCase {
       this.legal = Arrays.asList(legal);
     }
     
-    public void flush(LockID lock) {
+    public void flush(LockID lock, ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.FLUSH));
     }
 
@@ -879,7 +879,7 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.INTERRUPT));
     }
 
-    public boolean asyncFlush(LockID lock, LockFlushCallback callback) {
+    public boolean asyncFlush(LockID lock, LockFlushCallback callback, ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.TXN_FLUSHED));
       return true;
     }

@@ -8,6 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -22,7 +23,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
     throw new ImplementMe();
   }
 
-  public void flush(LockID lockID) {
+  public void flush(LockID lockID, ServerLockLevel level) {
     flushCalls.put(lockID);
   }
 
@@ -34,7 +35,7 @@ public class TestClientGlobalTransactionManager implements ClientGlobalTransacti
     throw new ImplementMe();
   }
 
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback) {
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, ServerLockLevel level) {
     return true;
   }
 

@@ -7,12 +7,13 @@ package com.tc.object.gtx;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.tx.TransactionID;
 
 public interface ClientGlobalTransactionManager extends GlobalTransactionManager {
   public void setLowWatermark(GlobalTransactionID lowWatermark, NodeID nodeID);
 
-  public void flush(LockID lockID);
+  public void flush(LockID lockID, ServerLockLevel lockLevel);
 
   public boolean startApply(NodeID clientID, TransactionID transactionID, GlobalTransactionID globalTransactionID,
                             NodeID remoteGroupID);
@@ -22,7 +23,7 @@ public interface ClientGlobalTransactionManager extends GlobalTransactionManager
    */
   public int size();
 
-  public boolean asyncFlush(LockID lockID, LockFlushCallback callback);
+  public boolean asyncFlush(LockID lockID, LockFlushCallback callback, ServerLockLevel lockLevel);
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock);
 }

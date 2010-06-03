@@ -59,6 +59,11 @@ enum ClientGreediness {
     ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       throw new AssertionError("Garbage locks have no exchange context representation.");
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
+    }
   },
 
   FREE {
@@ -117,6 +122,11 @@ enum ClientGreediness {
 
     ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return null;
+    }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
     }
   },
 
@@ -184,6 +194,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
+    }
   },
 
   GREEDY_WRITE {
@@ -242,6 +257,11 @@ enum ClientGreediness {
     ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
+    }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
     }
   },
 
@@ -302,6 +322,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
+    }
   },
 
   RECALLED_WRITE {
@@ -361,6 +386,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
+    }
   },
 
   READ_RECALL_IN_PROGRESS {
@@ -415,6 +445,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_READ);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
+    }
   },
 
   WRITE_RECALL_IN_PROGRESS {
@@ -468,6 +503,11 @@ enum ClientGreediness {
     ClientServerExchangeLockContext toContext(LockID lock, ClientID client) {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
+    }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.WRITE;
     }
   },
 
@@ -534,6 +574,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.READ;
+    }
   },
 
   WRITE_RECALL_FOR_READ_IN_PROGRESS {
@@ -594,6 +639,11 @@ enum ClientGreediness {
       return new ClientServerExchangeLockContext(lock, client, ThreadID.VM_ID,
                                                  ServerLockContext.State.GREEDY_HOLDER_WRITE);
     }
+
+    @Override
+    public ServerLockLevel getFlushLevel() {
+      return ServerLockLevel.READ;
+    }
   };
 
   abstract boolean canAward(LockLevel level) throws GarbageLockException;
@@ -609,6 +659,8 @@ enum ClientGreediness {
   abstract boolean isRecallInProgress();
 
   abstract boolean isGarbage();
+
+  abstract ServerLockLevel getFlushLevel();
 
   /**
    * @throws GarbageLockException thrown if in a garbage state
@@ -640,5 +692,5 @@ enum ClientGreediness {
     throw new AssertionError("marking as garbage while in unexpected state (" + this + ")");
   }
 
-  abstract ClientServerExchangeLockContext toContext(LockID lock, ClientID client);  
+  abstract ClientServerExchangeLockContext toContext(LockID lock, ClientID client);
 }
