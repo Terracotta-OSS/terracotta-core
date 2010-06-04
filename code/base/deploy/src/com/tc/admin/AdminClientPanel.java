@@ -17,6 +17,7 @@ import com.tc.admin.common.IComponentProvider;
 import com.tc.admin.common.PrefsHelper;
 import com.tc.admin.common.WindowHelper;
 import com.tc.admin.common.XAbstractAction;
+import com.tc.admin.common.XButton;
 import com.tc.admin.common.XCheckBox;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XFrame;
@@ -40,8 +41,11 @@ import com.tc.util.ProductInfo;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.HeadlessException;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.HierarchyEvent;
@@ -69,10 +73,14 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.prefs.Preferences;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -98,28 +106,33 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 
 public class AdminClientPanel extends XContainer implements AdminClientController, PropertyChangeListener {
-  private final IAdminClientContext    adminClientContext;
-  protected NavTree                    tree;
-  protected XContainer                 nodeView;
-  protected ClusterNode                selectedClusterNode;
-  protected LogsPanel                  logsPanel;
-  protected LogPane                    logArea;
-  protected XTextField                 statusLine;
-  protected UndoAction                 undoCmd;
-  protected RedoAction                 redoCmd;
-  protected UndoManager                undoManager;
-  protected NewClusterAction           newClusterAction;
-  protected HelpAction                 helpAction;
-  protected UpdateCheckerControlAction updateCheckerControlAction;
-  protected JCheckBoxMenuItem          updateCheckerToggle;
-  protected UpdateCheckerAction        updateCheckerAction;
-  protected VersionCheckControlAction  versionCheckAction;
-  protected JCheckBoxMenuItem          versionCheckToggle;
-  protected AboutAction                aboutAction;
-  protected OptionsAction              optionsAction;
+  private final IAdminClientContext          adminClientContext;
+  protected NavTree                          tree;
+  protected XContainer                       nodeView;
+  protected ClusterNode                      selectedClusterNode;
+  protected LogsPanel                        logsPanel;
+  protected LogPane                          logArea;
+  protected XTextField                       statusLine;
+  protected UndoAction                       undoCmd;
+  protected RedoAction                       redoCmd;
+  protected UndoManager                      undoManager;
+  protected NewClusterAction                 newClusterAction;
+  protected HelpAction                       helpAction;
+  protected UpdateCheckerControlAction       updateCheckerControlAction;
+  protected JCheckBoxMenuItem                updateCheckerToggle;
+  protected UpdateCheckerAction              updateCheckerAction;
+  protected VersionCheckControlAction        versionCheckAction;
+  protected JCheckBoxMenuItem                versionCheckToggle;
+  protected AboutAction                      aboutAction;
+  protected OptionsAction                    optionsAction;
+  private FeatureSelectorAction              sessionSelectorAction;
+  private FeatureSelectorAction              quartzSelectorAction;
+  private FeatureSelectorAction              hibernateSelectorAction;
+  private FeatureSelectorAction              ehcacheSelectorAction;
+  private Map<String, FeatureSelectorAction> selectorActionMap;
 
-  public static final String           UNDO = "Undo";
-  public static final String           REDO = "Redo";
+  public static final String                 UNDO = "Undo";
+  public static final String                 REDO = "Redo";
 
   public AdminClientPanel(IAdminClientContext adminClientContext) {
     super(new BorderLayout());
@@ -127,11 +140,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     this.adminClientContext = adminClientContext;
     adminClientContext.setAdminClientController(this);
 
-    tree = new NavTree();
+    XContainer leftSide = createLeftSide();
     nodeView = new XContainer(new BorderLayout());
-
-    XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, new XScrollPane(tree), nodeView);
-    leftSplitter.setDefaultDividerLocation(0.23);
+    XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSide, nodeView);
+    leftSide.setMinimumSize(leftSide.getPreferredSize());
+    leftSplitter.setDefaultDividerLocation(0);
     leftSplitter.setName("LeftSplitter");
     leftSplitter.setPreferences(getPreferences().node(leftSplitter.getName()));
 
@@ -181,6 +194,63 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     }
   }
 
+  private XContainer createLeftSide() {
+    XContainer result = new XContainer(new BorderLayout());
+    XContainer buttonPanel = new XContainer(new GridLayout(1, 0));
+
+    ehcacheSelectorAction = new FeatureSelectorAction("Ehcache", "/com/tc/admin/icons/ehcache-logo-icon.png",
+                                                      "/com/tc/admin/icons/ehcache-logo-icon-disabled.png", "Ehcache");
+    buttonPanel.add(ehcacheSelectorAction.createButton());
+
+    hibernateSelectorAction = new FeatureSelectorAction("Hibernate", "/com/tc/admin/icons/hibernate-caching.png",
+                                                        "/com/tc/admin/icons/hibernate-caching-disabled.png",
+                                                        "Hibernate");
+    buttonPanel.add(hibernateSelectorAction.createButton());
+
+    quartzSelectorAction = new FeatureSelectorAction("Quartz", "/com/tc/admin/icons/quartz.png",
+                                                     "/com/tc/admin/icons/quartz-disabled.png", "Quartz");
+    buttonPanel.add(quartzSelectorAction.createButton());
+
+    sessionSelectorAction = new FeatureSelectorAction("Sessions", "/com/tc/admin/icons/web-sessions.jpg",
+                                                      "/com/tc/admin/icons/web-sessions-disabled.jpg", "Sessions");
+    buttonPanel.add(sessionSelectorAction.createButton());
+
+    result.add(buttonPanel, BorderLayout.NORTH);
+    result.add(new XScrollPane(tree = new NavTree()), BorderLayout.CENTER);
+    result.setMinimumSize(result.getPreferredSize());
+
+    selectorActionMap = new HashMap<String, FeatureSelectorAction>();
+    selectorActionMap.put(sessionSelectorAction.getName(), sessionSelectorAction);
+    selectorActionMap.put(quartzSelectorAction.getName(), quartzSelectorAction);
+    selectorActionMap.put(hibernateSelectorAction.getName(), hibernateSelectorAction);
+    selectorActionMap.put(ehcacheSelectorAction.getName(), ehcacheSelectorAction);
+
+    return result;
+  }
+
+  public void activeFeatureAdded(String featureName) {
+    FeatureSelectorAction fse = selectorActionMap.get(featureName);
+    if (fse != null) {
+      fse.setEnabled(true);
+    }
+  }
+
+  public void activeFeatureRemoved(String featureName) {
+    FeatureSelectorAction fse = selectorActionMap.get(featureName);
+    if (fse != null) {
+      fse.setEnabled(false);
+    }
+  }
+
+  private void updateFeatureSelectors() {
+    if (selectedClusterNode != null) {
+      sessionSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Sessions") != null);
+      quartzSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Quartz") != null);
+      hibernateSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Hibernate") != null);
+      ehcacheSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Ehcache") != null);
+    }
+  }
+
   private void registerOptions() {
     adminClientContext.registerOption(new RuntimeStatsOption(adminClientContext));
   }
@@ -210,6 +280,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       if (path != null && path.getPathCount() > 1) {
         setSelectedClusterNode((ClusterNode) path.getPathComponent(1));
       }
+
+      updateFeatureSelectors();
     }
   }
 
@@ -958,6 +1030,83 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
   public void removeClusterLog(IClusterModel clusterModel) {
     logsPanel.remove(clusterModel);
+  }
+
+  class FeatureSelectorAction extends XAbstractAction implements HyperlinkListener {
+    private boolean      enabled;
+    private final Icon   icon;
+    private final Icon   disabledIcon;
+    private XButton      btn;
+    private final String page;
+
+    FeatureSelectorAction(String name, String iconPath, String disabledIconPath, String page) {
+      super(name);
+      icon = new ImageIcon(getClass().getResource(iconPath));
+      disabledIcon = new ImageIcon(getClass().getResource(disabledIconPath));
+      enabled = true;
+      this.page = page;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
+      btn.setIcon(enabled ? icon : disabledIcon);
+    }
+
+    XButton createButton() {
+      btn = new XButton(this);
+      btn.setIcon(icon);
+      btn.setVerticalTextPosition(SwingConstants.BOTTOM);
+      btn.setHorizontalTextPosition(SwingConstants.CENTER);
+      btn.setMargin(new Insets(3, 3, 3, 3));
+      return btn;
+    }
+
+    public void actionPerformed(ActionEvent ae) {
+      if (enabled) {
+        XRootNode root = (XRootNode) tree.getModel().getRoot();
+        selectNode(root, getName());
+      } else {
+        showPage();
+      }
+    }
+
+    private void showPage() {
+      final XContainer msg = new XContainer(new BorderLayout());
+      XTextPane textPane = new XTextPane();
+      msg.add(new XScrollPane(textPane));
+      textPane.addPropertyChangeListener("page", new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent pce) {
+          JOptionPane.showMessageDialog(AdminClientPanel.this, msg);
+        }
+      });
+      try {
+        textPane.setPage(getClass().getResource(page + ".html"));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      textPane.setEditable(false);
+      textPane.addHyperlinkListener(this);
+    }
+
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      XTextPane textPane = (XTextPane) e.getSource();
+      HyperlinkEvent.EventType type = e.getEventType();
+      Element elem = e.getSourceElement();
+
+      if (elem == null || type == HyperlinkEvent.EventType.ENTERED || type == HyperlinkEvent.EventType.EXITED) { return; }
+
+      if (textPane.getCursor().getType() != Cursor.WAIT_CURSOR) {
+        AttributeSet anchor = (AttributeSet) elem.getAttributes().getAttribute(HTML.Tag.A);
+        String url = (String) anchor.getAttribute(HTML.Attribute.HREF);
+        BrowserLauncher.openURL(url);
+
+        JDialog dialog = (JDialog) SwingUtilities.getAncestorOfClass(JDialog.class, textPane);
+        if (dialog != null) {
+          dialog.setVisible(false);
+        }
+      }
+    }
   }
 
   public UndoManager getUndoManager() {

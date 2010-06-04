@@ -497,7 +497,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         AdminClientController controller = adminClientContext.getAdminClientController();
         nodeStructureChanged();
         controller.expand(this);
-        controller.expandAll(topologyNode);
+        controller.expand(topologyNode);
       }
     } catch (Throwable t) {
       adminClientContext.log(t);
@@ -509,10 +509,10 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   TopologyNode topologyNode;
 
   protected void addChildren() {
-    add(topologyNode = createTopologyNode());
     featuresNode = createFeaturesNode();
-    add(createPlatformNode());
     add(createMonitoringNode());
+    add(topologyNode = createTopologyNode());
+    add(createPlatformNode());
   }
 
   private FeaturesNode featuresNode;

@@ -4,6 +4,7 @@
  */
 package com.tc.admin.common;
 
+import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
@@ -22,5 +23,9 @@ public class XButton extends JButton {
 
   public XButton(Icon icon) {
     super(icon);
+  }
+
+  public XButton(Action action) {
+    super(action);
   }
 }

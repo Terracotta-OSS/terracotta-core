@@ -155,19 +155,38 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     }
   }
 
+  private void testAddToParent() {
+    if (getParent() == null) {
+      clusterNode.insertChild(this, 0);
+    }
+  }
+
+  private void testRemoveFromParent() {
+    if (getChildCount() == 0) {
+      noTearDown = true;
+      clusterNode.removeChild(this);
+      noTearDown = false;
+    }
+  }
+
   private void handlePresentationReady(FeatureNode featureNode) {
+    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class, clusterNode
+        .getComponent());
+
     if (featureNode.isPresentationReady()) {
-      if (getParent() == null) {
-        clusterNode.insertChild(this, 1);
-      }
+      testAddToParent();
       adminClientContext.getAdminClientController().expand(this);
       addChild(featureNode);
       adminClientContext.getAdminClientController().expand(featureNode);
-    } else if (isNodeChild(featureNode)) {
-      removeChild(featureNode);
-      if (getChildCount() == 0) {
-        clusterNode.removeChild(this);
+      if (acp != null) {
+        acp.activeFeatureAdded(featureNode.getName());
       }
+    } else if (isNodeChild(featureNode)) {
+      featureNode.removeNoTearDown();
+      if (acp != null) {
+        acp.activeFeatureRemoved(featureNode.getName());
+      }
+      testRemoveFromParent();
     }
   }
 
