@@ -24,6 +24,7 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
   private final static byte MESSAGE_TYPE         = 1;
   private final static byte NODE_ID              = 2;
   private final static byte HANDSHAKE_MESSAGE_ID = 3;
+  private final static int  HANDSHAKE_ACK        = 2;
   private final static int  HANDSHAKE_OK         = 1;
   private final static int  HANDSHAKE_DENY       = 0;
   private byte              messageType;
@@ -40,6 +41,11 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
+  public void initializeAck() {
+    this.messageType = HANDSHAKE_MESSAGE_ID;
+    this.message = HANDSHAKE_ACK;
+  }
+
   public void initializeOk() {
     this.messageType = HANDSHAKE_MESSAGE_ID;
     this.message = HANDSHAKE_OK;
@@ -53,6 +59,11 @@ public class TCGroupHandshakeMessage extends DSOMessageBase {
   public boolean isOkMessage() {
     Assert.eval(this.messageType == HANDSHAKE_MESSAGE_ID);
     return (this.message == HANDSHAKE_OK);
+  }
+  
+  public boolean isAckMessage() {
+    Assert.eval(this.messageType == HANDSHAKE_MESSAGE_ID);
+    return (this.message == HANDSHAKE_ACK);
   }
 
   public ServerID getNodeID() {
