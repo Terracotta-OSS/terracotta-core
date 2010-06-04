@@ -222,7 +222,7 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
     // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
     // avoided
     int written = 0;
-    Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_COMMITTED);
+    Cursor c = db.openCursor(persistor.pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     byte idb[] = Conversion.long2Bytes(id);
     DatabaseEntry key = new DatabaseEntry();
     key.setData(idb);
@@ -308,7 +308,6 @@ public class SleepycatPersistableMap implements Map, PersistableCollection {
             Object mkey = persistor.deserialize(idb.length, key.getData());
             Object mvalue = persistor.deserialize(value.getData());
             map.put(mkey, mvalue);
-            // System.err.println("map.put() = " + mkey + " , " + mvalue);
           } else {
             break;
           }
