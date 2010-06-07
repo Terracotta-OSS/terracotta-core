@@ -17,6 +17,7 @@ import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.ServerLockContextBean;
 import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 
 import junit.framework.TestCase;
 
@@ -283,15 +284,16 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.unlock(lockID1, LockLevel.WRITE);
 
     System.out.println("2nd thread unlocked = " + lockID1 + " thread = " + tx2);
-
-    waitCallThread.join();
-
-    threadManager.setThreadID(tx1);
-
+    
+    ThreadUtil.reallySleep(3000);
     LockMBean[] lockBeans2 = serverLockManager.getAllLocks();
     for (LockMBean lockBean : lockBeans2) {
       System.out.println("Lock on the server " + lockBean);
     }
+
+    waitCallThread.join();
+
+    threadManager.setThreadID(tx1);
 
     Assert.assertTrue(clientLockManager.isLockedByCurrentThread(lockID1, LockLevel.WRITE));
     Assert.assertTrue(clientLockManager.isLockedByCurrentThread(lockID1, LockLevel.READ));

@@ -68,10 +68,11 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   }
 
   public void wait(LockID lockID, ThreadID threadID, long timeout) {
-    if (timeout < 0) {
-      serverLockManager.wait(lockID, clientID, threadID, -1);
-    } else {
+    if (timeout > 0) {
       serverLockManager.wait(lockID, clientID, threadID, timeout);
+    } else {
+      System.out.println("Going to wait on lock id " + lockID + " threadId=" + threadID + " timeout=" + timeout);
+      serverLockManager.wait(lockID, clientID, threadID, 0);
     }
   }
 
@@ -138,8 +139,9 @@ public class ClientServerLockManagerGlue implements RemoteLockManager, Runnable 
   public void notify(LockID lockID1, ThreadID tx2, boolean all) {
     NotifiedWaiters waiters = new NotifiedWaiters();
     NotifyAction action = all ? NotifyAction.ALL : NotifyAction.ONE;
-    serverLockManager.notify(lockID1, clientID, tx2, action, waiters);
+    waiters = serverLockManager.notify(lockID1, clientID, tx2, action, waiters);
     Set s = waiters.getNotifiedFor(clientID);
+    System.out.println("Notified waiters " + waiters + " lockID = " + lockID1 + " threadID=" + tx2);
     for (Iterator i = s.iterator(); i.hasNext();) {
       ClientServerExchangeLockContext lc = (ClientServerExchangeLockContext) i.next();
       clientLockManager.notified(lc.getLockID(), lc.getThreadID());
