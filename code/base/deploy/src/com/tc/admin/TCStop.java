@@ -18,6 +18,7 @@ import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -185,6 +186,12 @@ public class TCStop {
     if (mbsc != null) {
       TCServerInfoMBean tcServerInfo = (TCServerInfoMBean) TerracottaManagement
           .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
+      // wait a bit for server to be ready for shutdown
+      int count = 10;
+      while(!tcServerInfo.isShutdownable() && --count > 0) {
+        consoleLogger.warn("Waiting for server to be shutdownable...");
+        ThreadUtil.reallySleep(1000);
+      }
       try {
         tcServerInfo.shutdown();
       } finally {
