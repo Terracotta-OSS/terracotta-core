@@ -236,7 +236,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       theReadySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
       theReadySet.add(L2MBeanNames.LOGGER);
       theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
-      theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
+      // theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
       theReadySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
     }
   }
@@ -1511,7 +1511,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     DSOMBean theDsoBean = getDSOBean();
     return theDsoBean != null ? theDsoBean.getGarbageCollectorStats() : EMPTY_GCSTATS_ARRAY;
   }
-  
+
   public synchronized List<TerracottaOperatorEvent> getOperatorEvents() {
     DSOMBean theDsoBean = getDSOBean();
     return theDsoBean != null ? theDsoBean.getOperatorEvents() : new ArrayList<TerracottaOperatorEvent>();
