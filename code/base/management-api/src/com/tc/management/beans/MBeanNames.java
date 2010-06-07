@@ -14,11 +14,16 @@ import javax.management.ObjectName;
 public class MBeanNames {
 
   public static final ObjectName L1DUMPER_INTERNAL;
+  public static final ObjectName OPERATOR_EVENTS_PUBLIC;
 
   static {
     try {
       L1DUMPER_INTERNAL = TerracottaManagement.createObjectName(Type.DsoClient, Subsystem.None, null,
                                                                 "DSO Client Dump Bean", TerracottaManagement.MBeanDomain.INTERNAL);
+      
+      OPERATOR_EVENTS_PUBLIC = TerracottaManagement.createObjectName(Type.TcOperatorEvents, Subsystem.None, null,
+                                                                     "Terracotta Operator Events Bean",
+                                                                     TerracottaManagement.MBeanDomain.PUBLIC);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException(mone);
     } catch (NullPointerException npe) {

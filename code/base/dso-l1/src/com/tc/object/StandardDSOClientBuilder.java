@@ -254,6 +254,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                             distributedObjectClient, mBeanSpecs);
   }
 
+  public void registerForOperatorEvents(TCLogger dsoLogger, L1Management management) {
+    // NOP
+  }
+
   public TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                              final DNAEncoding dnaEncoding,
                                              final Manager manager,

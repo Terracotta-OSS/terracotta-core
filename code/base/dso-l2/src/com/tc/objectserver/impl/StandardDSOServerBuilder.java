@@ -53,6 +53,7 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
+import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -64,9 +65,9 @@ import java.net.InetAddress;
 import java.util.List;
 
 public class StandardDSOServerBuilder implements DSOServerBuilder {
-  private final HaConfig haConfig;
-  private final GroupID  thisGroupID;
-  private final TCLogger logger;
+  private final HaConfig   haConfig;
+  private final GroupID    thisGroupID;
+  protected final TCLogger logger;
 
   public StandardDSOServerBuilder(HaConfig haConfig, TCLogger logger) {
     this.logger = logger;
@@ -196,5 +197,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                          ServerConnectionValidator serverConnectionValidator) throws Exception {
     return new L2Management(tcServerInfoMBean, lockStatisticsMBean, statisticsAgentSubSystem, statisticsGateway,
                             configSetupManager, distributedObjectServer, bind, jmxPort, remoteEventsSink);
+  }
+
+  public void registerForOperatorEvents(L2Management l2Management,
+                                        TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider) {
+    // NOP
   }
 }

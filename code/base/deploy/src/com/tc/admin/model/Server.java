@@ -15,6 +15,7 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
+import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
@@ -25,6 +26,7 @@ import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
+import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
@@ -83,6 +85,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected Map<ObjectName, DSOClient>    clientMap;
   private ClientChangeListener            clientChangeListener;
   protected EventListenerList             listenerList;
+  protected OperatorEventsListener        operatorEventsListener;
   protected List<DSOClient>               pendingClients;
   protected Exception                     connectException;
   protected TCServerInfoMBean             serverInfoBean;
@@ -206,6 +209,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     startTime = activateTime = -1;
     displayLabel = connectManager.toString();
     listenerList = new EventListenerList();
+    operatorEventsListener = new OperatorEventsListener(listenerList);
     logListener = new LogListener();
     pendingClients = new ArrayList<DSOClient>();
     clients = new ArrayList<DSOClient>();
@@ -232,6 +236,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       theReadySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
       theReadySet.add(L2MBeanNames.LOGGER);
       theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
+      theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
       theReadySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
     }
   }
@@ -973,6 +978,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         initLockProfilerBean();
       } else if (beanName.equals(L2MBeanNames.TC_SERVER_INFO)) {
         initServerInfoBean();
+      } else if (beanName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
+        initOperatorEventsBean();
       }
 
       synchronized (this) {
@@ -987,6 +994,17 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (cc != null) {
       try {
         cc.addNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
+      } catch (Exception e) {
+        /**/
+      }
+    }
+  }
+
+  private void initOperatorEventsBean() {
+    ConnectionContext cc = getConnectionContext();
+    if (cc != null) {
+      try {
+        cc.addNotificationListener(MBeanNames.OPERATOR_EVENTS_PUBLIC, this.operatorEventsListener);
       } catch (Exception e) {
         /**/
       }
@@ -1031,7 +1049,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private synchronized DSOClient addClient(ObjectName clientBeanName) {
     assertGroupLeader();
 
-    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel);
+    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel, operatorEventsListener);
     client.addPropertyChangeListener(clientChangeListener);
     clients.add(client);
     // Don't notify the client's existence until it's ready
@@ -1493,13 +1511,26 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     DSOMBean theDsoBean = getDSOBean();
     return theDsoBean != null ? theDsoBean.getGarbageCollectorStats() : EMPTY_GCSTATS_ARRAY;
   }
+  
+  public synchronized List<TerracottaOperatorEvent> getOperatorEvents() {
+    DSOMBean theDsoBean = getDSOBean();
+    return theDsoBean != null ? theDsoBean.getOperatorEvents() : new ArrayList<TerracottaOperatorEvent>();
+  }
 
   public void addDGCListener(DGCListener listener) {
     listenerList.add(DGCListener.class, listener);
   }
 
+  public void addTerracottaOperatorEventsListener(TerracottaOperatorEventsListener listener) {
+    listenerList.add(TerracottaOperatorEventsListener.class, listener);
+  }
+
   public void removeDGCListener(DGCListener listener) {
     listenerList.remove(DGCListener.class, listener);
+  }
+
+  public void removeTerracottaOperatorEventsListener(TerracottaOperatorEventsListener listener) {
+    listenerList.remove(TerracottaOperatorEventsListener.class, listener);
   }
 
   private void fireStatusUpdated(GCStats gcStats) {

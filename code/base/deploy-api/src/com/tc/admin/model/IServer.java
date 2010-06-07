@@ -9,10 +9,12 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.stats.DSOClassInfo;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -161,10 +163,16 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   DSOClassInfo[] getClassInfo();
 
   GCStats[] getGCStats();
+  
+  List<TerracottaOperatorEvent> getOperatorEvents();
 
   void addDGCListener(DGCListener listener);
 
+  void addTerracottaOperatorEventsListener(TerracottaOperatorEventsListener listener);
+
   void removeDGCListener(DGCListener listener);
+
+  void removeTerracottaOperatorEventsListener(TerracottaOperatorEventsListener listener);
 
   void runGC();
 

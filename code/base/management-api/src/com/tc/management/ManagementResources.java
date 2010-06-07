@@ -89,4 +89,8 @@ class ManagementResources {
   String getNoneSubsystem() {
     return TerracottaManagement.quoteIfNecessary(resources.getString("subsystem.none"));
   }
+
+  public String getTerracottaOperatorEventType() {
+    return TerracottaManagement.quoteIfNecessary(resources.getString("type.tc-operator-events"));
+  }
 }

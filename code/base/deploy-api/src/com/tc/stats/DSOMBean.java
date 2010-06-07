@@ -10,8 +10,10 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.statistics.StatisticData;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,8 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
   ManagedObjectFacade lookupFacade(ObjectID objectID, int limit) throws NoSuchObjectException;
 
   Map<ObjectName, Integer> getClientLiveObjectCount();
+  
+  List<TerracottaOperatorEvent> getOperatorEvents();
 
   int getLiveObjectCount();
 

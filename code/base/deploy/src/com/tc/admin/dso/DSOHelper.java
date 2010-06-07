@@ -24,6 +24,7 @@ public class DSOHelper extends BaseHelper {
   private Icon                   clusteredHeapIcon;
   private Icon                   platformIcon;
   private Icon                   monitoringIcon;
+  private Icon                   operatorEventIcon;
 
   private DSOHelper() {/**/
   }
@@ -102,4 +103,13 @@ public class DSOHelper extends BaseHelper {
     return featuresIcon;
   }
 
+  public Icon getOperatorEventIcon() {
+    if (operatorEventIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bell.png");
+      if (url != null) {
+        operatorEventIcon = new ImageIcon(url);
+      }
+    }
+    return operatorEventIcon;
+  }
 }

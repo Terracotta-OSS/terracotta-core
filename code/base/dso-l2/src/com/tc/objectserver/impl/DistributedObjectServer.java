@@ -42,8 +42,10 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
+import com.tc.logging.OperatorEventsLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.L2LockStatsManager;
 import com.tc.management.L2Management;
@@ -217,6 +219,8 @@ import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManagerImpl;
 import com.tc.objectserver.tx.TransactionalStagesCoordinatorImpl;
+import com.tc.operatorevent.DsoOperatorEventHistoryProvider;
+import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
@@ -316,6 +320,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
   protected GCStatsEventPublisher                gcStatsEventPublisher;
+  private TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
   private ObjectManagerImpl                      objectManager;
@@ -406,6 +411,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
+
+    TerracottaOperatorEventLogging.setNodeIdProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
+        .serverName().getString()));
+
     final L2LockStatsManager lockStatsManager = new L2LockStatisticsManagerImpl();
 
     final List<PostInit> toInit = new ArrayList<PostInit>();
@@ -461,7 +470,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     NIOWorkarounds.solaris10Workaround();
-    
+
     // start the JMX server
     try {
       startJMXServer(bind, this.configSetupManager.commonl2Config().jmxPort().getInt(), new RemoteJMXProcessor());
@@ -471,7 +480,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       logger.error(msg, e);
       System.exit(-1);
     }
-    
+
     this.configSetupManager.commonl2Config().changesInItemIgnored(this.configSetupManager.commonl2Config().dataPath());
     l2DSOConfig.changesInItemIgnored(l2DSOConfig.persistenceMode());
     final PersistenceMode persistenceMode = (PersistenceMode) l2DSOConfig.persistenceMode().getObject();
@@ -536,7 +545,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                   .dataPath().getFile(), this.objectStatsRecorder);
       sraBdb = new SRABerkeleyDB((SleepycatPersistor) this.persistor);
 
-      
       l2Management.init(dbenv);
       // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
       // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
@@ -548,6 +556,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       // if (useMemoryStore) {
       // persistor = new MemoryStorePersistor(TCLogging.getLogger(MemoryStorePersistor.class));
       // }
+
+      // register the terracotta operator event logger
+      this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
+      this.serverBuilder.registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider);
 
       final String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
@@ -946,13 +958,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
                                                           new JMXEventsHandler(appEvents), 1, maxStageSize);
 
+    OperatorEventsLogger l1OperatorEventsLogger = new OperatorEventsLogger(logger);
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
-                                                                 new ClientConnectEventHandler(this.statisticsGateway),
+                                                                 new ClientConnectEventHandler(this.statisticsGateway,
+                                                                                               l1OperatorEventsLogger),
                                                                  1, maxStageSize);
 
     final Stage jmxRemoteDisconnectStage = stageManager
         .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE,
-                     new ClientConnectEventHandler(this.statisticsGateway), 1, maxStageSize);
+                     new ClientConnectEventHandler(this.statisticsGateway, l1OperatorEventsLogger), 1, maxStageSize);
 
     cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
@@ -1479,9 +1493,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public GCStatsEventPublisher getGcStatsEventPublisher() {
     return this.gcStatsEventPublisher;
   }
+  
+  public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {
+    return this.operatorEventHistoryProvider;
+  }
 
-  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink)
-      throws Exception {
+  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }

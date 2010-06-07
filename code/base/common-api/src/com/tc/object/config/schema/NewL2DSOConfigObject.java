@@ -31,6 +31,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   private final IntConfigItem     l2GroupPort;
   private final IntConfigItem     clientReconnectWindow;
   private final StringConfigItem  host;
+  private final StringConfigItem  serverName;
   private final StringConfigItem  bind;
 
   public NewL2DSOConfigObject(ConfigContext context) {
@@ -39,6 +40,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.context.ensureRepositoryProvides(Server.class);
 
     this.persistenceMode = new XPathBasedConfigItem(this.context, "dso/persistence/mode") {
+      @Override
       protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
         if (xmlObject == null) return null;
         if (((PersistenceMode) xmlObject).enumValue() == PersistenceMode.TEMPORARY_SWAP_ONLY) return com.tc.object.config.schema.PersistenceMode.TEMPORARY_SWAP_ONLY;
@@ -58,6 +60,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
         : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
     this.l2GroupPort = this.context.intItem("l2-group-port", defaultGroupPort, true);
     this.host = this.context.stringItem("@host");
+    this.serverName = this.context.stringItem("@name");
     this.bind = this.context.stringItem("@bind");
   }
 
@@ -71,6 +74,10 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
 
   public StringConfigItem host() {
     return host;
+  }
+  
+  public StringConfigItem serverName() {
+    return this.serverName;
   }
 
   public ConfigItem persistenceMode() {

@@ -25,6 +25,7 @@ import com.tc.logging.ClientIDLoggerProvider;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.logging.ThreadDumpHandler;
 import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
@@ -425,6 +426,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     stageManager.setLoggerProvider(cidLoggerProvider);
 
     DSO_LOGGER.debug("Created channel.");
+    
+    TerracottaOperatorEventLogging.setNodeIdProvider(new ClientNameProvider(this.channel));
 
     final ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(this.runtimeLogger);
 
@@ -529,6 +532,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
                                                                                         this.config.getUUID());
 
+
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger, this.manager
                                                                      .getInstrumentationLogger(), this.config
@@ -536,6 +540,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                      .getMBeanSpecs());
     this.l1Management.start(this.createDedicatedMBeanServer);
 
+    // register the terracotta operator event logger
+    this.dsoClientBuilder.registerForOperatorEvents(DSO_LOGGER, this.l1Management);
+    
     // Setup the lock manager
     final ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
     this.lockManager = this.dsoClientBuilder.createLockManager(this.channel, new ClientIDLogger(this.channel
@@ -791,7 +798,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final String infoMsg = "Connection successfully established to server at " + remoteAddress;
     CONSOLE_LOGGER.info(infoMsg);
     DSO_LOGGER.info(infoMsg);
-
+    
     if (this.statisticsAgentSubSystem.isActive()) {
       this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
                                                                   + this.channel.channel().getChannelID().toLong());
