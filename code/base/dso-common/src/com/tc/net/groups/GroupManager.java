@@ -40,7 +40,7 @@ public interface GroupManager extends PrettyPrintable {
 
   public void setZapNodeRequestProcessor(ZapNodeRequestProcessor processor);
 
-  public boolean isConnectionToNodeActive(NodeID sid);
+  public boolean isNodeConnected(NodeID sid);
 
   public boolean isServerConnected(String nodeName);
 

@@ -98,7 +98,7 @@ public class TestGroupManager implements GroupManager {
     // NOP
   }
 
-  public boolean isConnectionToNodeActive(NodeID sid) {
+  public boolean isNodeConnected(NodeID sid) {
     return true;
   }
 

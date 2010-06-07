@@ -154,8 +154,8 @@ public class VirtualTCGroupManagerImpl implements GroupManager, GroupEventsListe
     }
   }
 
-  public boolean isConnectionToNodeActive(NodeID sid) {
-    return groupManager.isConnectionToNodeActive(sid);
+  public boolean isNodeConnected(NodeID sid) {
+    return groupManager.isNodeConnected(sid);
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
