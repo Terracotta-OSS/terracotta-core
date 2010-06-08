@@ -5,6 +5,7 @@
 package com.tc.admin.model;
 
 import com.tc.admin.ConnectionContext;
+import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.model.IClusterModel.PollScope;
 import com.tc.management.beans.l1.L1InfoMBean;
@@ -25,6 +26,7 @@ import java.util.zip.ZipInputStream;
 import javax.management.Attribute;
 import javax.management.AttributeChangeNotification;
 import javax.management.AttributeList;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.MalformedObjectNameException;
 import javax.management.Notification;
@@ -101,8 +103,15 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
         .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
     addMBeanNotificationListener(delegate.getRuntimeOutputOptionsBeanName(), this, "RuntimeOutputOptionsMBean");
 
-    addMBeanNotificationListener(delegate.getL1OperatorEventsBeanName(), this.operatorEventsListener,
-                                 "L1OperatorEventsMbean");
+    try {
+      addMBeanNotificationListener(delegate.getL1OperatorEventsBeanName(), this.operatorEventsListener,
+                                   "L1OperatorEventsMbean");
+    } catch (Exception e) {
+      Throwable cause = ExceptionHelper.getRootCause(e);
+      if (!(cause instanceof InstanceNotFoundException)) {
+        cause.printStackTrace();
+      }
+    }
 
     fireTunneledBeansRegistered();
   }
