@@ -70,6 +70,8 @@ public class TopologyVerifier {
 
     if (!isGroupNameSame()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
 
+    if (!isHaModeSame()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
+
     if (isMemberMovedToDifferentGroup()) { return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE; }
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
@@ -132,6 +134,24 @@ public class TopologyVerifier {
     }
 
     return areGroupNamesSame;
+  }
+
+  private boolean isHaModeSame() {
+    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroups().getMirrorGroupArray();
+    for (MirrorGroup newGroupInfo : newGroupsInfo) {
+      String groupName = newGroupInfo.getGroupName();
+      for (String member : newGroupInfo.getMembers().getMemberArray()) {
+        ActiveServerGroupConfig oldAsgc = this.oldGroupsInfo.getActiveServerGroupForL2(member);
+        if (oldAsgc != null) {
+          if (!newGroupInfo.getHa().getMode().equals(oldAsgc.getHa().getHa().getMode())) {
+            logger.warn("The mirror group " + groupName + " High Availability mode has changed.");
+            return false;
+          }
+          break;
+        }
+      }
+    }
+    return true;
   }
 
   private TopologyReloadStatus checkExistingServerConfigIsSame() {
