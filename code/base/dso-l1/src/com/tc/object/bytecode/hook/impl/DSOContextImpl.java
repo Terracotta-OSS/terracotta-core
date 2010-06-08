@@ -110,8 +110,9 @@ public class DSOContextImpl implements DSOContext {
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(config);
     Manager manager = new ManagerImpl(configHelper, l2Connection);
+    DSOContext context = createContext(configHelper, manager);
     manager.init();
-    return createContext(configHelper, manager);
+    return context;
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
