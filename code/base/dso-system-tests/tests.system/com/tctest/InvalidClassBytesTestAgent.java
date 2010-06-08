@@ -13,8 +13,14 @@ import java.util.Arrays;
 
 public class InvalidClassBytesTestAgent implements ClassFileTransformer {
 
-  public static final byte[] MAGIC = new byte[] { 6, 6, 6 };
-  public static final byte[] REAL  = getRealBytes();
+  private static final Thread MAIN_THREAD;
+
+  public static final byte[]  MAGIC = new byte[] { 6, 6, 6 };
+  public static final byte[]  REAL  = getRealBytes();
+
+  static {
+    MAIN_THREAD = Thread.currentThread();
+  }
 
   public static void premain(String agentArgs, Instrumentation inst) {
     inst.addTransformer(new InvalidClassBytesTestAgent());
@@ -39,7 +45,7 @@ public class InvalidClassBytesTestAgent implements ClassFileTransformer {
   public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
                           ProtectionDomain protectionDomain, byte[] classfileBuffer) {
     // avoid deadlocks (MNK-1259, MNK-1259, et. al)
-    if (!"main".equals(Thread.currentThread().getName())) { return null; }
+    if (Thread.currentThread() != MAIN_THREAD) { return null; }
 
     if (Arrays.equals(MAGIC, classfileBuffer)) {
       System.err.println("\nMagic found!\n");
