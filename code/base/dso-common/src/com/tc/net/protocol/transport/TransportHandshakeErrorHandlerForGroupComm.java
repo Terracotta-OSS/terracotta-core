@@ -17,9 +17,4 @@ public class TransportHandshakeErrorHandlerForGroupComm implements TransportHand
     // top layer at TCGroupMemberDiscoveryStatic to terminate connection
   }
 
-  public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-    consoleLogger.error(e);
-    consoleLogger.error(m);
-  }
-
 }

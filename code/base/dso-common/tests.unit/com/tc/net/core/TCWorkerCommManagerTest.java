@@ -53,7 +53,7 @@ import java.util.Collections;
 
 public class TCWorkerCommManagerTest extends TCTestCase {
   TCLogger    logger               = TCLogging.getLogger(TCWorkerCommManager.class);
-  private int L1_RECONNECT_TIMEOUT = 15000;
+  private final int L1_RECONNECT_TIMEOUT = 15000;
 
   private ClientMessageTransport createClient(String clientName, int serverPort) {
     CommunicationsManager commsMgr = new CommunicationsManagerImpl(clientName + "CommsMgr", new NullMessageMonitor(),
@@ -423,11 +423,6 @@ public class TCWorkerCommManagerTest extends TCTestCase {
 
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
         new ImplementMe(e.toString()).printStackTrace();
-      }
-
-      public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-        throw new ImplementMe();
-
       }
 
     };

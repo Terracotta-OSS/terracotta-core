@@ -79,6 +79,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
   private int                                    callbackPort         = TransportHandshakeMessage.NO_CALLBACK_PORT;
   private NetworkListener                        callbackportListener = null;
   private final TransportHandshakeErrorHandler   handshakeErrHandler;
+  private final String                           commsMgrName;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -125,7 +126,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                    ConnectionPolicy connectionPolicy, int workerCommCount,
                                    HealthCheckerConfig healthCheckerConf,
                                    TransportHandshakeErrorHandler transportHandshakeErrorHandler) {
-
+    this.commsMgrName = commsMgrName;
     this.monitor = monitor;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
@@ -310,8 +311,7 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                                 this.transportMessageFactory, connectionIdFactory,
                                                                 this.connectionPolicy,
                                                                 new WireProtocolAdaptorFactoryImpl(httpSink),
-
-                                                                wireProtocolMessageSink, licenseLock);
+                                                                wireProtocolMessageSink, licenseLock, this.commsMgrName);
     return connectionManager.createListener(addr, stackProvider, Constants.DEFAULT_ACCEPT_QUEUE_DEPTH, resueAddr);
   }
 

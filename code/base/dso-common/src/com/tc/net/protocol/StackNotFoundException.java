@@ -13,7 +13,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 public class StackNotFoundException extends Exception {
 
   public StackNotFoundException(ConnectionID connectionId, TCSocketAddress socketAddress) {
-    super(connectionId + " not found. Connection attempts from the Terracotta client at " + socketAddress
+    super(connectionId + " not found. Connection attempts from the Terracotta node at " + socketAddress
           + " are being rejected by the Terracotta server array.");
   }
 }

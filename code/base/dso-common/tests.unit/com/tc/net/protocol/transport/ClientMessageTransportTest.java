@@ -46,6 +46,7 @@ public class ClientMessageTransportTest extends TCTestCase {
   private MessageTransportFactory            transportFactory;
   private final int                          timeout    = 3000;
 
+  @Override
   public void setUp() {
     DefaultConnectionIdFactory connectionIDProvider = new DefaultConnectionIdFactory();
     this.connectionId = connectionIDProvider.nextConnectionId();
@@ -263,10 +264,6 @@ public class ClientMessageTransportTest extends TCTestCase {
     private boolean stackLayerMismatch = false;
 
     public void handleHandshakeError(TransportHandshakeErrorContext e) {
-      if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
-    }
-
-    public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
       if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) stackLayerMismatch = true;
     }
 

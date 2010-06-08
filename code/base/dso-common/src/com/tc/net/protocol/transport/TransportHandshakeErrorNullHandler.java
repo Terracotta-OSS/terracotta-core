@@ -11,8 +11,4 @@ public class TransportHandshakeErrorNullHandler implements TransportHandshakeErr
     // NOP
   }
 
-  public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-    // NOP
-  }
-
 }

@@ -322,10 +322,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.handshakeErrorHandler.handleHandshakeError(e);
   }
 
-  protected void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-    this.handshakeErrorHandler.handleHandshakeError(e, m);
-  }
-
   protected TCConnection getConnection() {
     return connection;
   }
@@ -416,6 +412,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
     this.remoteCallbackPort = remoteCallbackPort;
   }
 
+  @Override
   public void initConnectionID(ConnectionID cid) {
     connectionId = cid;
   }

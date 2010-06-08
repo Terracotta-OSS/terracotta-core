@@ -17,7 +17,9 @@ import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.StackNotFoundException;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.ChannelID;
+import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.ServerMessageChannelFactory;
+import com.tc.net.protocol.tcm.msgs.CommsMessageFactory;
 import com.tc.util.Assert;
 
 import java.util.ArrayList;
@@ -45,7 +47,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   private final TCLogger                         logger;
   private final TCLogger                         consoleLogger      = CustomerLogging.getConsoleLogger();
   private final ReentrantLock                    licenseLock;
+  private final String                           commsMgrName;
 
+  // used only in test
   public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
                              ServerMessageChannelFactory channelFactory,
                              MessageTransportFactory messageTransportFactory,
@@ -53,7 +57,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory, ReentrantLock licenseLock) {
     this(logger, initialConnectionIDs, harnessFactory, channelFactory, messageTransportFactory,
-         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock);
+         handshakeMessageFactory, connectionIdFactory, connectionPolicy, wireProtocolAdaptorFactory, null, licenseLock,
+         CommunicationsManager.COMMSMGR_SERVER);
   }
 
   public ServerStackProvider(TCLogger logger, Set initialConnectionIDs, NetworkStackHarnessFactory harnessFactory,
@@ -62,7 +67,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
                              TransportHandshakeMessageFactory handshakeMessageFactory,
                              ConnectionIDFactory connectionIdFactory, ConnectionPolicy connectionPolicy,
                              WireProtocolAdaptorFactory wireProtocolAdaptorFactory,
-                             WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock) {
+                             WireProtocolMessageSink wireProtoMsgSink, ReentrantLock licenseLock,
+                             final String commsMgrName) {
     this.messageTransportFactory = messageTransportFactory;
     this.connectionPolicy = connectionPolicy;
     this.wireProtocolAdaptorFactory = wireProtocolAdaptorFactory;
@@ -76,6 +82,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.logger = logger;
     Assert.assertNotNull(licenseLock);
     this.licenseLock = licenseLock;
+    this.commsMgrName = commsMgrName;
     for (Iterator i = initialConnectionIDs.iterator(); i.hasNext();) {
       ConnectionID connectionID = (ConnectionID) i.next();
       logger.info("Preparing comms stack for previously connected client: " + connectionID);
@@ -125,14 +132,18 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
   }
 
   private TransportHandshakeErrorHandler createHandshakeErrorHandler() {
+    if(this.commsMgrName.equals(CommunicationsManager.COMMSMGR_GROUPS)){
+      return new TransportHandshakeErrorHandler(){
+        public void handleHandshakeError(TransportHandshakeErrorContext e) {
+          logger.info(e.getMessage());
+        }
+      };
+    }
+    
     return new TransportHandshakeErrorHandler() {
 
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
         consoleLogger.info(e.getMessage());
-        logger.info(e.getMessage());
-      }
-
-      public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
         logger.info(e.getMessage());
       }
 
@@ -188,7 +199,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     if (wireProtoMsgsink != null) {
       return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(wireProtoMsgsink);
     } else {
-      MessageSink sink = new MessageSink(createHandshakeErrorHandler());
+      MessageSink sink = new MessageSink(createHandshakeErrorHandler(), this.commsMgrName);
       return this.wireProtocolAdaptorFactory.newWireProtocolAdaptor(sink);
     }
   }
@@ -199,12 +210,14 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   class MessageSink implements WireProtocolMessageSink {
     private final TransportHandshakeErrorHandler handshakeErrorHandler;
+    private final String                         commsManagerName;
     private volatile boolean                     isSynReceived    = false;
     private volatile boolean                     isHandshakeError = false;
     private volatile MessageTransport            transport;
 
-    private MessageSink(TransportHandshakeErrorHandler handshakeErrorHandler) {
+    private MessageSink(TransportHandshakeErrorHandler handshakeErrorHandler, String commsMgrName) {
       this.handshakeErrorHandler = handshakeErrorHandler;
+      this.commsManagerName = commsMgrName;
     }
 
     public void putMessage(WireProtocolMessage message) {
@@ -232,14 +245,8 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handleSyn((SynMessage) message);
           isSynced = true;
         } catch (StackNotFoundException e) {
-          handleHandshakeError(new TransportHandshakeErrorContext(
-                                                                  "Client Cannot Reconnect "
-                                                                      + e.getMessage()
-                                                                      + " Restart the client to allow it to rejoin the cluster."
-                                                                      + " Many client reconnection failures can be avoided by"
-                                                                      + " configuring the Terracotta server array for \"permanent-store\""
-                                                                      + " and tuning reconnection parameters. For more information,"
-                                                                      + " see http://www.terracotta.org/kit/reflector?kitID=default&pageID=HA", e));
+          String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName, new Object[] { e.getMessage() });
+          handleHandshakeError(new TransportHandshakeErrorContext(errorMessage, e));
         }
       }
       return isSynced;

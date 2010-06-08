@@ -24,17 +24,4 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     // at top layer DistributedObjectClient to kill this client
   }
 
-  public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-    consoleLogger.error(e);
-    consoleLogger.error(m);
-    new Exception().printStackTrace();
-    consoleLogger.error("I'm crashing the client!");
-    try {
-      Thread.sleep(30 * 1000);
-    } catch (InterruptedException e1) {
-      e1.printStackTrace();
-    }
-    // at top layer DistributedObjectClient to kill this client
-  }
-
 }

@@ -10,6 +10,4 @@ public interface TransportHandshakeErrorHandler {
 
   void handleHandshakeError(TransportHandshakeErrorContext e);
 
-  void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m);
-
 }

@@ -18,9 +18,9 @@ import com.tc.object.session.SessionProvider;
  */
 public interface CommunicationsManager {
 
-  String COMMSMGR_GROUPS = "L2_L2";
-  String COMMSMGR_SERVER = "L2_L1";
-  String COMMSMGR_CLIENT = "L1_L2";
+  String       COMMSMGR_GROUPS      = "L2_L2";
+  String       COMMSMGR_SERVER      = "L2_L1";
+  String       COMMSMGR_CLIENT      = "L1_L2";
 
   public TCConnectionManager getConnectionManager();
 

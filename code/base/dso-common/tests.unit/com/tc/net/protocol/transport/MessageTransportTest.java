@@ -48,6 +48,7 @@ public class MessageTransportTest extends TCTestCase {
   private TransportHandshakeMessageFactory transportHandshakeMessageFactory;
   private MockTCConnection                 serverConnection;
 
+  @Override
   public void setUp() throws Exception {
     this.clientResponderReceivedQueue = new LinkedQueue();
     this.clientResponderSentQueue = new LinkedQueue();
@@ -76,6 +77,7 @@ public class MessageTransportTest extends TCTestCase {
     lsnr.start(Collections.EMPTY_SET);
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     assertTrue(this.clientErrorRef.get() == null);
@@ -256,11 +258,6 @@ public class MessageTransportTest extends TCTestCase {
 
       public void handleHandshakeError(TransportHandshakeErrorContext e) {
         new ImplementMe(e.toString()).printStackTrace();
-      }
-
-      public void handleHandshakeError(TransportHandshakeErrorContext e, TransportHandshakeMessage m) {
-        throw new ImplementMe();
-
       }
 
     };
