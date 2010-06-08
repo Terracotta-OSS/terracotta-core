@@ -360,7 +360,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
   }
 
   public void testConcurrentDistributedServerMap() throws Exception {
-    final String className = "org.terracotta.collections.ConcurrentDistributedServerMapDso";
+    final String className = "com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso";
     final TestDNACursor cursor = new TestDNACursor();
 
     cursor
