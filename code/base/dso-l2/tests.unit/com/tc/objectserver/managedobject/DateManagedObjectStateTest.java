@@ -5,13 +5,14 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.SerializationUtil;
+import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 
 public class DateManagedObjectStateTest extends AbstractTestManagedObjectState {
-  
+
   public void testObjectDate() throws Exception {
-    String className = "java.util.Date";
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.util.Date";
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.SET_TIME, new Long[] { new Long(System.currentTimeMillis()) });
     cursor.addLogicalAction(SerializationUtil.SET_NANOS, new Integer[] { new Integer(0) });

@@ -9,6 +9,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.util.Assert;
 
 import java.io.IOException;
@@ -80,9 +81,9 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     }
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     dehydrateFields(objectID, writer);
-    super.dehydrate(objectID, writer);
+    super.dehydrate(objectID, writer, type);
   }
 
   private void dehydrateFields(ObjectID objectID, DNAWriter writer) {

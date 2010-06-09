@@ -1,11 +1,11 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
-import com.tc.object.bytecode.NotClearable;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -13,8 +13,7 @@ import java.io.ObjectOutput;
 import java.util.Map;
 import java.util.Set;
 
-// XXX: This is a rather ugly hack to get around the requirements of tim-concurrent-collections.
-public class ConcurrentDistributedMapManagedObjectState extends PartialMapManagedObjectState implements NotClearable {
+public class ConcurrentDistributedMapManagedObjectState extends PartialMapManagedObjectState {
   public static final String DSO_LOCK_TYPE_FIELDNAME = "dsoLockType";
   public static final String LOCK_STRATEGY_FIELDNAME = "lockStrategy";
 
@@ -78,14 +77,24 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
   }
 
   @Override
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
+    dehydrateFields(objectID, writer);
+    super.dehydrate(objectID, writer, type);
+  }
+
+  protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
     writer.addPhysicalAction(DSO_LOCK_TYPE_FIELDNAME, Integer.valueOf(this.dsoLockType));
     writer.addPhysicalAction(LOCK_STRATEGY_FIELDNAME, this.lockStrategy);
-    super.dehydrate(objectID, writer);
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
     final ConcurrentDistributedMapManagedObjectState cdmMos = new ConcurrentDistributedMapManagedObjectState(in);
     return cdmMos;
+  }
+
+  @Override
+  protected boolean basicEquals(final LogicalManagedObjectState o) {
+    final ConcurrentDistributedMapManagedObjectState mmo = (ConcurrentDistributedMapManagedObjectState) o;
+    return this.dsoLockType == mmo.dsoLockType && this.lockStrategy.equals(mmo.lockStrategy) && super.basicEquals(mmo);
   }
 }

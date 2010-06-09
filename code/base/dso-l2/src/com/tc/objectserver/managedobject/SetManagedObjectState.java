@@ -9,6 +9,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
@@ -72,7 +73,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     for (Iterator i = references.iterator(); i.hasNext();) {
       Object value = i.next();
       writer.addLogicalAction(SerializationUtil.ADD, new Object[] { value });

@@ -5,6 +5,7 @@
 package com.tc.objectserver.core.api;
 
 import com.tc.object.ObjectID;
+import com.tc.object.TestDNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
@@ -20,21 +21,21 @@ import java.util.Map;
 public class ManagedObjectTest extends TCTestCase {
 
   public void testBasics() throws Exception {
-    ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
-    ObjectID objectID = new ObjectID(1);
+    final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
+    final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
 
-    ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
 
     assertTrue(mo.isDirty());
     assertTrue(mo.isNew());
 
-    TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("field1", new ObjectID(1));
-    cursor.addPhysicalAction("field2", new Boolean(true));
-    cursor.addPhysicalAction("field3", new Character('c'));
-    TestDNA dna = new TestDNA(cursor);
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addPhysicalAction("field1", new ObjectID(1), true);
+    cursor.addPhysicalAction("field2", new Boolean(true), true);
+    cursor.addPhysicalAction("field3", new Character('c'), true);
+    final TestDNA dna = new TestDNA(cursor);
 
     Map instances = instanceMonitor.getInstanceCounts();
     assertEquals(0, instances.size());
@@ -50,15 +51,15 @@ public class ManagedObjectTest extends TCTestCase {
   }
 
   public void testApplyDNASameOrLowerVersion() throws Exception {
-    ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
-    ObjectID objectID = new ObjectID(1);
+    final ObjectInstanceMonitor instanceMonitor = new ObjectInstanceMonitorImpl();
+    final ObjectID objectID = new ObjectID(1);
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
 
-    ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
+    final ManagedObjectImpl mo = new ManagedObjectImpl(objectID);
 
-    TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("field1", new ObjectID(1));
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addPhysicalAction("field1", new ObjectID(1), true);
     TestDNA dna = new TestDNA(cursor);
     dna.version = 10;
 
@@ -69,7 +70,7 @@ public class ManagedObjectTest extends TCTestCase {
     try {
       mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
       failed = true;
-    } catch (AssertionError ae) {
+    } catch (final AssertionError ae) {
       // expected.
     }
     if (failed) { throw new AssertionError("Failed to fail !!!"); }
@@ -81,7 +82,7 @@ public class ManagedObjectTest extends TCTestCase {
       dna.isDelta = true;
       mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
       failed = true;
-    } catch (AssertionError ae) {
+    } catch (final AssertionError ae) {
       // expected.
     }
     if (failed) { throw new AssertionError("Failed to fail !!!"); }
@@ -91,29 +92,29 @@ public class ManagedObjectTest extends TCTestCase {
     dna.version = 15;
     dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
-    
-    long version = mo.getVersion();
+
+    final long version = mo.getVersion();
 
     // Apply in passive, ignore as true.
     dna = new TestDNA(cursor);
     dna.version = 5;
     dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
-    
+
     assertTrue(version == mo.getVersion());
-    
+
     dna = new TestDNA(cursor);
     dna.version = 15;
     dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
-    
+
     assertTrue(version == mo.getVersion());
-    
+
     dna = new TestDNA(cursor);
     dna.version = 17;
     dna.isDelta = true;
     mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
-    
+
     assertTrue(version < mo.getVersion());
   }
 

@@ -9,6 +9,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
+
 import com.tc.async.api.Sink;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
@@ -26,6 +29,8 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -49,11 +54,15 @@ public class ServerMapRequestManagerTest extends TestCase {
     final ArrayList requests = new ArrayList();
     requests.add(new ServerMapGetValueRequest(requestID, portableKey));
     serverMapRequestManager.requestValues(clientID, mapID, requests);
+    final Set<ObjectID> lookupIDs = new HashSet<ObjectID>();
+    lookupIDs.add(mapID);
 
-    final ServerMapRequestContext requestContext = new ServerMapRequestContext(clientID, mapID, requests,
-                                                                               respondToServerTCMapSink);
+    final ArgumentCaptor<ServerMapRequestContext> requestContextArg = ArgumentCaptor
+        .forClass(ServerMapRequestContext.class);
 
-    verify(objManager, atLeastOnce()).lookupObjectsFor(clientID, requestContext);
+    verify(objManager, atLeastOnce()).lookupObjectsFor(Matchers.eq(clientID), requestContextArg.capture());
+    assertEquals(clientID, requestContextArg.getValue().getClientID());
+    assertEquals(lookupIDs, requestContextArg.getValue().getLookupIDs());
 
     final ManagedObject mo = mock(ManagedObject.class);
     final ConcurrentDistributedServerMapManagedObjectState mos = mock(ConcurrentDistributedServerMapManagedObjectState.class);
@@ -115,10 +124,15 @@ public class ServerMapRequestManagerTest extends TestCase {
     serverTCMapRequestManager.requestValues(clientID, mapID, request1);
     serverTCMapRequestManager.requestValues(clientID, mapID, request2);
 
-    final ServerMapRequestContext requestContext = new ServerMapRequestContext(clientID, mapID, request1,
-                                                                               respondToServerTCMapSink);
+    final Set<ObjectID> lookupIDs = new HashSet<ObjectID>();
+    lookupIDs.add(mapID);
 
-    verify(objManager, atMost(1)).lookupObjectsFor(clientID, requestContext);
+    final ArgumentCaptor<ServerMapRequestContext> requestContextArg = ArgumentCaptor
+        .forClass(ServerMapRequestContext.class);
+
+    verify(objManager, atMost(1)).lookupObjectsFor(Matchers.eq(clientID), requestContextArg.capture());
+    assertEquals(clientID, requestContextArg.getValue().getClientID());
+    assertEquals(lookupIDs, requestContextArg.getValue().getLookupIDs());
 
     final ManagedObject mo = mock(ManagedObject.class);
     final ConcurrentDistributedServerMapManagedObjectState mos = mock(ConcurrentDistributedServerMapManagedObjectState.class);

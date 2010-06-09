@@ -5,6 +5,8 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,6 +30,17 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   @Override
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     // Nothing to add since nothing is required to be faulted in the L1
+  }
+
+  @Override
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
+    if (type == DNAType.L2_SYNC) {
+      // Write entire state info
+      super.dehydrate(objectID, writer, type);
+    } else if (type == DNAType.L1_FAULT) {
+      // Don't fault the references
+      dehydrateFields(objectID, writer);
+    }
   }
 
   @Override

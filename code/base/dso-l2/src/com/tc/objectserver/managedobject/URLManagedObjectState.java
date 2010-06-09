@@ -9,6 +9,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.Assert;
@@ -91,7 +92,7 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     writer.addLogicalAction(SerializationUtil.URL_SET, new Object[] { protocol, host, new Integer(port), authority, userInfo, path, query, ref });
   }
 

@@ -10,6 +10,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.util.Assert;
@@ -123,7 +124,7 @@ public class QueueManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     dehydrateFields(objectID, writer);
     dehydrateMembers(objectID, writer);
   }

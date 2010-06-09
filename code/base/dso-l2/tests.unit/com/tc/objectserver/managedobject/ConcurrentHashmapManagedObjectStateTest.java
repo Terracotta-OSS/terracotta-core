@@ -7,6 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.io.serializer.TCObjectInputStream;
 import com.tc.io.serializer.TCObjectOutputStream;
 import com.tc.object.ObjectID;
+import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 
 import java.io.ByteArrayInputStream;
@@ -18,36 +19,37 @@ public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManaged
 
   public void testSerialization() throws Exception {
 
-    String className = ConcurrentHashMap.class.getName();
+    final String className = ConcurrentHashMap.class.getName();
 
-    TestDNACursor cursor = new TestDNACursor();
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_MASK_FIELD_NAME, new Integer(10), false);
     cursor.addPhysicalAction(ConcurrentHashMapManagedObjectState.SEGMENT_SHIFT_FIELD_NAME, new Integer(20), false);
-    int segment_size = 512;
-    Object[] segments = new Object[segment_size];
+    final int segment_size = 512;
+    final Object[] segments = new Object[segment_size];
     for (int i = 0; i < segment_size; i++) {
       segments[i] = new ObjectID(2000 + i);
     }
     cursor.addArrayAction(segments);
 
-    ManagedObjectState state = createManagedObjectState(className, cursor);
+    final ManagedObjectState state = createManagedObjectState(className, cursor);
     state.apply(new ObjectID(1), cursor, new BackReferences());
 
-    ManagedObjectStateSerializer serializer = new ManagedObjectStateSerializer();
+    final ManagedObjectStateSerializer serializer = new ManagedObjectStateSerializer();
 
-    ByteArrayOutputStream baout = new ByteArrayOutputStream();
-    TCObjectOutputStream out = new TCObjectOutputStream(baout);
+    final ByteArrayOutputStream baout = new ByteArrayOutputStream();
+    final TCObjectOutputStream out = new TCObjectOutputStream(baout);
 
     serializer.serializeTo(state, out);
 
-    byte seralized[] = baout.toByteArray();
+    final byte seralized[] = baout.toByteArray();
     System.err.println("Serialized size = " + seralized.length);
 
-    ByteArrayInputStream bi = new ByteArrayInputStream(seralized);
-    TCObjectInputStream in = new TCObjectInputStream(bi);
+    final ByteArrayInputStream bi = new ByteArrayInputStream(seralized);
+    final TCObjectInputStream in = new TCObjectInputStream(bi);
 
-    ConcurrentHashMapManagedObjectState state2 = (ConcurrentHashMapManagedObjectState) serializer.deserializeFrom(in);
+    final ConcurrentHashMapManagedObjectState state2 = (ConcurrentHashMapManagedObjectState) serializer
+        .deserializeFrom(in);
     state2.setMap(new HashMap());
 
     assertEquals(state, state2);

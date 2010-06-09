@@ -114,46 +114,4 @@ public final class ServerMapRequestContext implements ObjectManagerResultsContex
   public boolean updateStats() {
     return true;
   }
-
-  @Override
-  public boolean equals(Object other) {
-
-    boolean equals = false;
-    if (other instanceof ServerMapRequestContext) {
-      ServerMapRequestContext context = (ServerMapRequestContext) other;
-
-      equals = requestType.equals(context.getRequestType()) && lookupIDs.equals(context.getLookupIDs())
-               && mapID.equals(context.getServerTCMapID()) && clientID.equals(context.getClientID());
-
-      if (getSizeRequestID != null) {
-        equals = equals && getSizeRequestID.equals(context.getSizeRequestID);
-      }
-
-      if (getValueRequests != null) {
-        equals = equals && getValueRequests.equals(context.getValueRequests);
-      }
-    }
-    return equals;
-  }
-
-  @Override
-  public int hashCode() {
-    int hashCode = 1;
-    
-    hashCode = (31 * requestType.hashCode()) + (31 * lookupIDs.hashCode()) +
-    (31 * mapID.hashCode()) + (31 * clientID.hashCode());
-    
-    if (getSizeRequestID != null) {
-      hashCode = hashCode + (31 * getSizeRequestID.hashCode());
-    }
-
-    if (getValueRequests != null) {
-      hashCode = hashCode + (31 * getValueRequests.hashCode());
-    }
-    
-    return hashCode;
-  }
-  
-  
-
 }

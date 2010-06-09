@@ -6,6 +6,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -67,8 +68,8 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
   }
 
   @Override
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
-    super.dehydrate(objectID, writer);
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
+    super.dehydrate(objectID, writer, type);
     writer.addPhysicalAction(CUSTOM_TTI_FIELD, Integer.valueOf(customTti));
     writer.addPhysicalAction(CUSTOM_TTL_FIELD, Integer.valueOf(customTtl));
   }

@@ -9,6 +9,7 @@ import com.tc.object.SerializationUtil;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -108,7 +109,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
     for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
       final Object key = entry.getKey();

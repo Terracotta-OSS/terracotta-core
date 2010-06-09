@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
@@ -234,7 +235,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     this.objectStatsRecorder.updateRequestStats(className);
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     synchronized (this) {
       out.indent().print("objectRequestCache: ").visit(this.objectRequestCache).flush();
@@ -366,17 +367,15 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
       return this.objectRequestMap.remove(reqObj);
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       out.duplicateAndIndent().indent().print(getClass().getName()).flush();
       out.duplicateAndIndent().indent().print("objectRequestMap").flush();
-      for (Iterator<Entry<RequestedObject, LinkedHashSet<ClientID>>> iter = this.objectRequestMap.entrySet().iterator(); iter
-          .hasNext();) {
-        StringBuilder strBuffer = new StringBuilder();
-        Entry<RequestedObject, LinkedHashSet<ClientID>> entry = iter.next();
+      for (final Entry<RequestedObject, LinkedHashSet<ClientID>> entry : this.objectRequestMap.entrySet()) {
+        final StringBuilder strBuffer = new StringBuilder();
         strBuffer.append(entry.getKey());
         strBuffer.append(", Requested by: ");
-        for (Iterator<ClientID> waitingClients = entry.getValue().iterator(); waitingClients.hasNext();) {
-          strBuffer.append(waitingClients.next() + ", ");
+        for (final ClientID clientID : entry.getValue()) {
+          strBuffer.append(clientID + ", ");
         }
         out.duplicateAndIndent().indent().print(strBuffer.toString()).flush();
       }
@@ -400,7 +399,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     }
 
     public void sendObject(final ManagedObject m) {
-      m.toDNA(this.out, this.serializer);
+      m.toDNA(this.out, this.serializer, DNAType.L1_FAULT);
       this.sendCount++;
       if (this.sendCount > 1000) {
         final RequestManagedObjectResponseMessage responseMessage = (RequestManagedObjectResponseMessage) this.channel
@@ -614,11 +613,11 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
     return this.objectManager.getRoots();
   }
 
-  public ManagedObjectFacade lookupFacade(ObjectID id, int limit) throws NoSuchObjectException {
+  public ManagedObjectFacade lookupFacade(final ObjectID id, final int limit) throws NoSuchObjectException {
     return this.objectManager.lookupFacade(id, limit);
   }
 
-  public ObjectID lookupRootID(String name) {
+  public ObjectID lookupRootID(final String name) {
     return this.objectManager.lookupRootID(name);
   }
 }

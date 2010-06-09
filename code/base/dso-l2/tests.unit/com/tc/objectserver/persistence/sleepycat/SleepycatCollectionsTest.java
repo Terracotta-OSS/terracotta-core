@@ -7,8 +7,8 @@ package com.tc.objectserver.persistence.sleepycat;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.core.api.TestDNACursor;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
@@ -39,21 +39,25 @@ public class SleepycatCollectionsTest extends TCTestCase {
   @Override
   public void setUp() throws Exception {
 
-    if (env != null) env.close();
-    File dbHome = newDBHome();
-    TCLogger logger = TCLogging.getLogger(getClass());
-    CustomSerializationAdapterFactory saf = new CustomSerializationAdapterFactory();
-    env = new DBEnvironment(true, dbHome);
-    persistor = new SleepycatPersistor(logger, env, saf);
-    ptp = persistor.getPersistenceTransactionProvider();
-    collectionsFactory = persistor.getPersistentCollectionFactory();
-    collectionsPersistor = persistor.getCollectionsPersistor();
+    if (this.env != null) {
+      this.env.close();
+    }
+    final File dbHome = newDBHome();
+    final TCLogger logger = TCLogging.getLogger(getClass());
+    final CustomSerializationAdapterFactory saf = new CustomSerializationAdapterFactory();
+    this.env = new DBEnvironment(true, dbHome);
+    this.persistor = new SleepycatPersistor(logger, this.env, saf);
+    this.ptp = this.persistor.getPersistenceTransactionProvider();
+    this.collectionsFactory = this.persistor.getPersistentCollectionFactory();
+    this.collectionsPersistor = this.persistor.getCollectionsPersistor();
   }
 
   // XXX:: Check SleepycatSerializationTest if you want know why its done like this or ask Orion.
   private File newDBHome() throws IOException {
     File file;
-    if (tempDirectory == null) tempDirectory = getTempDirectory();
+    if (tempDirectory == null) {
+      tempDirectory = getTempDirectory();
+    }
     ++dbHomeCounter;
     for (file = new File(tempDirectory, "db" + dbHomeCounter); file.exists(); ++dbHomeCounter) {
       //
@@ -65,35 +69,35 @@ public class SleepycatCollectionsTest extends TCTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    persistor = null;
-    ptp = null;
-    env = null;
+    this.persistor = null;
+    this.ptp = null;
+    this.env = null;
   }
 
   public void testSleepycatPersistableMap() throws Exception {
-    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), persistor);
-    ObjectID id = new ObjectID(1);
-    MapManagedObjectState state1 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
+    ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), this.persistor);
+    final ObjectID id = new ObjectID(1);
+    final MapManagedObjectState state1 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(id, ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
-    SleepycatPersistableMap sMap = (SleepycatPersistableMap) state1.getPersistentCollection();
+    final SleepycatPersistableMap sMap = (SleepycatPersistableMap) state1.getPersistentCollection();
     addToMap(sMap);
-    Map localMap = new HashMap();
+    final Map localMap = new HashMap();
     addToMap(localMap);
     equals(localMap, sMap);
 
-    PersistenceTransaction tx = ptp.newTransaction();
-    collectionsPersistor.saveCollections(tx, state1);
+    PersistenceTransaction tx = this.ptp.newTransaction();
+    this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
-    MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
+    tx = this.ptp.newTransaction();
+    final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
     SleepycatPersistableMap sMap2 = (SleepycatPersistableMap) state2.getPersistentCollection();
     tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -102,14 +106,14 @@ public class SleepycatCollectionsTest extends TCTestCase {
     addMoreMaps(state1);
 
     System.err.println(" Loading map again ....");
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
 
     System.err.println(" Loading different map ....");
-    tx = ptp.newTransaction();
-    SleepycatPersistableMap sMap3 = (SleepycatPersistableMap) state1.getPersistentCollection();
+    tx = this.ptp.newTransaction();
+    final SleepycatPersistableMap sMap3 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap3);
 
@@ -117,12 +121,12 @@ public class SleepycatCollectionsTest extends TCTestCase {
     addToMap(localMap, 2);
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
-    collectionsPersistor.saveCollections(tx, state1);
+    tx = this.ptp.newTransaction();
+    this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -131,12 +135,12 @@ public class SleepycatCollectionsTest extends TCTestCase {
     addAndRemoveFromMap(localMap);
     Assert.assertEquals(localMap, sMap);
 
-    tx = ptp.newTransaction();
-    collectionsPersistor.saveCollections(tx, state1);
+    tx = this.ptp.newTransaction();
+    this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -145,37 +149,37 @@ public class SleepycatCollectionsTest extends TCTestCase {
     addRemoveClearFromMap(localMap);
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
-    collectionsPersistor.saveCollections(tx, state1);
+    tx = this.ptp.newTransaction();
+    this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
 
-    tx = ptp.newTransaction();
-    Assert.assertTrue(collectionsPersistor.deleteCollection(tx, id));
+    tx = this.ptp.newTransaction();
+    Assert.assertTrue(this.collectionsPersistor.deleteCollection(tx, id));
     tx.commit();
-    
-    tx = ptp.newTransaction();
+
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     sMap2.clear();
     tx.commit();
 
-    tx = ptp.newTransaction();
+    tx = this.ptp.newTransaction();
     sMap2 = (SleepycatPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = ptp.newTransaction();
-    Assert.assertFalse(collectionsPersistor.deleteCollection(tx, id));
+    tx = this.ptp.newTransaction();
+    Assert.assertFalse(this.collectionsPersistor.deleteCollection(tx, id));
     tx.commit();
 
   }
 
-  private void equals(Map m1, Map m2) {
+  private void equals(final Map m1, final Map m2) {
     Assert.assertEquals(m1.size(), m2.size());
     Assert.assertEquals(m1, m2);
     equals(m1.keySet(), m2.keySet());
@@ -184,33 +188,33 @@ public class SleepycatCollectionsTest extends TCTestCase {
   }
 
   // This implementation does not care about the order
-  private void equals(Collection c1, Collection c2) {
+  private void equals(final Collection c1, final Collection c2) {
     Assert.assertEquals(c1.size(), c2.size());
     Assert.assertTrue(c1.containsAll(c2));
     Assert.assertTrue(c2.containsAll(c1));
   }
 
-  private void equals(Set s1, Set s2) {
+  private void equals(final Set s1, final Set s2) {
     Assert.assertEquals(s1, s2);
     equals(Arrays.asList(s1.toArray()), Arrays.asList(s2.toArray()));
   }
 
-  private void addMoreMaps(ManagedObjectState state) throws IOException, TCDatabaseException {
+  private void addMoreMaps(final ManagedObjectState state) throws IOException, TCDatabaseException {
     for (int j = 20; j < 40; j++) {
-      ObjectID id = new ObjectID(j);
-      SleepycatPersistableMap sMap = (SleepycatPersistableMap) collectionsFactory.createPersistentMap(id);
+      final ObjectID id = new ObjectID(j);
+      final SleepycatPersistableMap sMap = (SleepycatPersistableMap) this.collectionsFactory.createPersistentMap(id);
       addToMap(sMap);
-      PersistenceTransaction tx = ptp.newTransaction();
-      collectionsPersistor.saveCollections(tx, state);
+      final PersistenceTransaction tx = this.ptp.newTransaction();
+      this.collectionsPersistor.saveCollections(tx, state);
       tx.commit();
     }
   }
 
-  private void addToMap(Map map) {
+  private void addToMap(final Map map) {
     addToMap(map, 1);
   }
 
-  private void addToMap(Map map, int increCount) {
+  private void addToMap(final Map map, final int increCount) {
     int j = 0;
     for (int i = 0; i < 50; i++, j += increCount) {
       map.put(new ObjectID(j), new ObjectID(100 + j));
@@ -220,7 +224,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     }
   }
 
-  private void addAndRemoveFromMap(Map map) {
+  private void addAndRemoveFromMap(final Map map) {
     int j = 50;
     for (int i = 0; i < 50; i++, j++) {
       map.put(new ObjectID(j), new ObjectID(100 + j));
@@ -234,7 +238,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     }
   }
 
-  private void addRemoveClearFromMap(Map map) {
+  private void addRemoveClearFromMap(final Map map) {
     int j = 100;
     for (int i = 0; i < 50; i++, j++) {
       map.put(new ObjectID(j), new ObjectID(100 + j));

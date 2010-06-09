@@ -27,48 +27,48 @@ import java.util.Map.Entry;
  */
 public class HashMapApplicator extends BaseApplicator {
 
-  public HashMapApplicator(DNAEncoding encoding, TCLogger logger) {
+  public HashMapApplicator(final DNAEncoding encoding, final TCLogger logger) {
     super(encoding, logger);
   }
 
-  public TraversedReferences getPortableObjects(Object pojo, TraversedReferences addTo) {
-    Map m = (Map) pojo;
+  public TraversedReferences getPortableObjects(final Object pojo, final TraversedReferences addTo) {
+    final Map m = (Map) pojo;
     filterPortableObjects(m.keySet(), addTo);
     filterPortableObjects(m.values(), addTo);
     return addTo;
   }
 
-  private void filterPortableObjects(Collection objects, TraversedReferences addTo) {
-    for (Iterator i = objects.iterator(); i.hasNext();) {
-      Object o = i.next();
+  private void filterPortableObjects(final Collection objects, final TraversedReferences addTo) {
+    for (final Iterator i = objects.iterator(); i.hasNext();) {
+      final Object o = i.next();
       if (o != null && isPortableReference(o.getClass())) {
         addTo.addAnonymousReference(o);
       }
     }
   }
 
-  public void hydrate(ApplicatorObjectManager objectManager, TCObjectExternal TCObjectExternal, DNA dna, Object po)
-      throws IOException, ClassNotFoundException {
-    DNACursor cursor = dna.getCursor();
+  public void hydrate(final ApplicatorObjectManager objectManager, final TCObjectExternal TCObjectExternal,
+                      final DNA dna, final Object po) throws IOException, ClassNotFoundException {
+    final DNACursor cursor = dna.getCursor();
 
-    while (cursor.next(encoding)) {
-      LogicalAction action = cursor.getLogicalAction();
-      int method = action.getMethod();
-      Object[] params = action.getParameters();
+    while (cursor.next(this.encoding)) {
+      final LogicalAction action = cursor.getLogicalAction();
+      final int method = action.getMethod();
+      final Object[] params = action.getParameters();
       apply(objectManager, po, method, params);
     }
   }
 
-  protected void apply(ApplicatorObjectManager objectManager, Object po, int method, Object[] params)
-      throws ClassNotFoundException {
-    Map m = (Map) po;
+  protected void apply(final ApplicatorObjectManager objectManager, final Object po, final int method,
+                       final Object[] params) throws ClassNotFoundException {
+    final Map m = (Map) po;
     switch (method) {
       case SerializationUtil.PUT:
-        Object k = getKey(params);
-        Object v = getValue(params);
-        Object pkey = getObjectForKey(objectManager, k);
+        final Object k = getKey(params);
+        final Object v = getValue(params);
+        final Object pkey = getObjectForKey(objectManager, k);
 
-        Object value = getObjectForValue(objectManager, v);
+        final Object value = getObjectForValue(objectManager, v);
 
         if (m instanceof TCMap) {
           ((TCMap) m).__tc_applicator_put(pkey, value);
@@ -78,7 +78,8 @@ public class HashMapApplicator extends BaseApplicator {
 
         break;
       case SerializationUtil.REMOVE:
-        Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0]) : params[0];
+        final Object rkey = params[0] instanceof ObjectID ? objectManager.lookupObject((ObjectID) params[0])
+            : params[0];
         if (m instanceof TCMap) {
           ((TCMap) m).__tc_applicator_remove(rkey);
         } else {
@@ -99,32 +100,34 @@ public class HashMapApplicator extends BaseApplicator {
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForValue(ApplicatorObjectManager objectManager, Object v) throws ClassNotFoundException {
+  protected Object getObjectForValue(final ApplicatorObjectManager objectManager, final Object v)
+      throws ClassNotFoundException {
     return (v instanceof ObjectID ? objectManager.lookupObject((ObjectID) v) : v);
   }
 
   // This can be overridden by subclass if you want different behavior.
-  protected Object getObjectForKey(ApplicatorObjectManager objectManager, Object k) throws ClassNotFoundException {
+  protected Object getObjectForKey(final ApplicatorObjectManager objectManager, final Object k)
+      throws ClassNotFoundException {
     return (k instanceof ObjectID ? objectManager.lookupObject((ObjectID) k) : k);
   }
 
-  private Object getValue(Object[] params) {
+  private Object getValue(final Object[] params) {
     // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
     return params.length == 3 ? params[2] : params[1];
   }
 
-  private Object getKey(Object[] params) {
+  private Object getKey(final Object[] params) {
     return params.length == 3 ? params[1] : params[0];
   }
 
-  public void dehydrate(ApplicatorObjectManager objectManager, TCObjectExternal TCObjectExternal, DNAWriter writer,
-                        Object pojo) {
+  public void dehydrate(final ApplicatorObjectManager objectManager, final TCObjectExternal TCObjectExternal,
+                        final DNAWriter writer, final Object pojo) {
 
-    Map map = (Map) pojo;
-    for (Iterator i = map.entrySet().iterator(); i.hasNext();) {
-      Entry entry = (Entry) i.next();
-      Object key = entry.getKey();
-      Object value = entry.getValue();
+    final Map map = (Map) pojo;
+    for (final Iterator i = map.entrySet().iterator(); i.hasNext();) {
+      final Entry entry = (Entry) i.next();
+      final Object key = entry.getKey();
+      final Object value = entry.getValue();
 
       if (!objectManager.isPortableInstance(key)) {
         continue;
@@ -144,7 +147,7 @@ public class HashMapApplicator extends BaseApplicator {
     }
   }
 
-  public Object getNewInstance(ApplicatorObjectManager objectManager, DNA dna) throws IOException,
+  public Object getNewInstance(final ApplicatorObjectManager objectManager, final DNA dna) throws IOException,
       ClassNotFoundException {
     if (false) { throw new IOException(); } // silence compiler warning
     if (false) { throw new ClassNotFoundException(); } // silence compiler warning

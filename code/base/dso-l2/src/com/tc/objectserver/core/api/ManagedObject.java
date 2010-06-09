@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.api;
 
@@ -7,6 +8,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -17,9 +19,6 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
 import java.util.Set;
 
-/**
- * @author steve
- */
 public interface ManagedObject {
 
   public ObjectID getID();
@@ -28,10 +27,10 @@ public interface ManagedObject {
 
   public Set getObjectReferences();
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA)
-      throws DNAException;
+  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
+                    boolean ignoreIfOlderDNA) throws DNAException;
 
-  public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer);
+  public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer, DNAType type);
 
   public boolean isDirty();
 
@@ -40,7 +39,7 @@ public interface ManagedObject {
   public ManagedObjectFacade createFacade(int limit);
 
   public boolean isNew();
-  
+
   public void setIsNew(boolean isNew);
 
   public ManagedObjectState getManagedObjectState();

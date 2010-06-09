@@ -4,18 +4,19 @@
  */
 package com.tctest;
 
+import com.tc.object.TestDNACursor;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ManagedObjectStateSerializationTestBase;
 
 public class ManagedObjectStateSerialization15Test extends ManagedObjectStateSerializationTestBase {
 
   public void testEnum() throws Exception {
-    String className = "java.lang.Enum";
-    State state = State.RUN;
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.lang.Enum";
+    final State state = State.RUN;
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLiteralAction(state);
-    ManagedObjectState managedObjectState = applyValidation(className, cursor);
+    final ManagedObjectState managedObjectState = applyValidation(className, cursor);
     serializationValidation(managedObjectState, cursor, ManagedObjectState.LITERAL_TYPE);
   }
 
@@ -30,7 +31,7 @@ public class ManagedObjectStateSerialization15Test extends ManagedObjectStateSer
 
     private int stateNum;
 
-    State(int stateNum) {
+    State(final int stateNum) {
       this.stateNum = stateNum;
     }
 
@@ -38,7 +39,7 @@ public class ManagedObjectStateSerialization15Test extends ManagedObjectStateSer
       return this.stateNum;
     }
 
-    public void setStateNum(int stateNum) {
+    public void setStateNum(final int stateNum) {
       this.stateNum = stateNum;
     }
   }

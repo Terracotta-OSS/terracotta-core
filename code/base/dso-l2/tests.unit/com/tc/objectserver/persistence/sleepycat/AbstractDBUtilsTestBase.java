@@ -7,13 +7,13 @@ package com.tc.objectserver.persistence.sleepycat;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
+import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
-import com.tc.objectserver.core.api.TestDNACursor;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
@@ -45,153 +45,156 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
   protected static class SampleDNA1 extends AbstractSampleDNA1 {
 
-    public SampleDNA1(DNACursor cursor, long version, boolean isDelta) {
+    public SampleDNA1(final DNACursor cursor, final long version, final boolean isDelta) {
       super("Sample1", cursor, version, isDelta);
     }
   }
 
   protected static class SampleDNA2 extends AbstractSampleDNA1 {
 
-    public SampleDNA2(DNACursor cursor, long version, boolean isDelta) {
+    public SampleDNA2(final DNACursor cursor, final long version, final boolean isDelta) {
       super("Sample2", cursor, version, isDelta);
     }
   }
 
+  @Override
   public void setUp() throws Exception {
     reset();
   }
 
+  @Override
   public void tearDown() throws Exception {
 
-    rootIDs = null;
-    rootNames = null;
-    mos = null;
+    this.rootIDs = null;
+    this.rootNames = null;
+    this.mos = null;
   }
 
   protected void reset() {
-    rootIDs = new HashSet();
-    rootNames = new HashSet();
-    mos = new HashSet();
-    imo = new ObjectInstanceMonitorImpl();
-    transactionSequence = 0;
-    objectIDSequence = 0;
-    version = 1;
-    dnaRequestCount = 0;
-
+    this.rootIDs = new HashSet();
+    this.rootNames = new HashSet();
+    this.mos = new HashSet();
+    this.imo = new ObjectInstanceMonitorImpl();
+    this.transactionSequence = 0;
+    this.objectIDSequence = 0;
+    this.version = 1;
+    this.dnaRequestCount = 0;
 
   }
 
-  protected void populateSleepycatDB(SleepycatPersistor sleepycatPersistor) {
-    PersistenceTransactionProvider persistenceTransactionProvider = sleepycatPersistor
+  protected void populateSleepycatDB(final SleepycatPersistor sleepycatPersistor) {
+    final PersistenceTransactionProvider persistenceTransactionProvider = sleepycatPersistor
         .getPersistenceTransactionProvider();
-    ManagedObjectPersistor mop = sleepycatPersistor.getManagedObjectPersistor();
-    PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
+    final ManagedObjectPersistor mop = sleepycatPersistor.getManagedObjectPersistor();
+    final PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
 
-    String rootOne = "rootName";
-    ObjectID rootID = newObjectID();
+    final String rootOne = "rootName";
+    final ObjectID rootID = newObjectID();
 
     // add some roots and objects
     addRoot(mop, ptx, rootOne, rootID);
 
     for (int i = 0; i < 100; i++) {
-      ObjectID oid = newObjectID();
+      final ObjectID oid = newObjectID();
       // addRoot(mop, ptx, "foo" + i, oid);
-      ManagedObject mo = newManagedObject(oid, i);
+      final ManagedObject mo = newManagedObject(oid, i);
       assertTrue(mo.isDirty());
-      mos.add(mo);
+      this.mos.add(mo);
     }
-    mop.saveAllObjects(ptx, mos);
+    mop.saveAllObjects(ptx, this.mos);
 
-    ManagedObject mo = newPhysicalObject(newObjectID());
+    final ManagedObject mo = newPhysicalObject(newObjectID());
     mop.saveObject(ptx, mo);
-    mos.add(mo);
+    this.mos.add(mo);
 
     ptx.commit();
 
     assertEquals(rootID, mop.loadRootID(rootOne));
     assertNotSame(rootID, mop.loadRootID(rootOne));
-    assertEquals(rootIDs, mop.loadRoots());
-    assertEquals(rootNames, mop.loadRootNames());
+    assertEquals(this.rootIDs, mop.loadRoots());
+    assertEquals(this.rootNames, mop.loadRootNames());
 
-    for (Iterator i = mos.iterator(); i.hasNext();) {
-      ManagedObjectImpl test = (ManagedObjectImpl) i.next();
-      ManagedObjectImpl loaded = (ManagedObjectImpl) mop.loadObjectByID(test.getID());
+    for (final Iterator i = this.mos.iterator(); i.hasNext();) {
+      final ManagedObjectImpl test = (ManagedObjectImpl) i.next();
+      final ManagedObjectImpl loaded = (ManagedObjectImpl) mop.loadObjectByID(test.getID());
       assertFalse(test.isDirty());
       assertFalse(loaded.isDirty());
       assertFalse(loaded.isNew());
       assertTrue(test.isEqual(loaded));
       assertNotSame(test, loaded);
       assertNotSame(mop.loadObjectByID(test.getID()), mop.loadObjectByID(test.getID()));
-      loaded.apply(newPhysicalDNA(true), new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(), this.imo,
+                   false);
     }
   }
 
-  private ManagedObject newManagedObject(ObjectID oid, int i) {
+  private ManagedObject newManagedObject(final ObjectID oid, final int i) {
     return newPhysicalObject(oid);
 
   }
 
-  private void addRoot(ManagedObjectPersistor mop, PersistenceTransaction ptx, String rootName, ObjectID objectID) {
+  private void addRoot(final ManagedObjectPersistor mop, final PersistenceTransaction ptx, final String rootName,
+                       final ObjectID objectID) {
     mop.addRoot(ptx, rootName, objectID);
-    rootIDs.add(objectID);
-    rootNames.add(rootName);
+    this.rootIDs.add(objectID);
+    this.rootNames.add(rootName);
   }
 
   private ObjectID newObjectID() {
-    return new ObjectID(++objectIDSequence);
+    return new ObjectID(++this.objectIDSequence);
   }
 
-  private ManagedObject newPhysicalObject(ObjectID objectID) {
-    ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
-    DNA dna = newPhysicalDNA(false);
+  private ManagedObject newPhysicalObject(final ObjectID objectID) {
+    final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
+    final DNA dna = newPhysicalDNA(false);
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++transactionSequence), new BackReferences(), imo, false);
+    rv.apply(dna, new TransactionID(++this.transactionSequence), new BackReferences(), this.imo, false);
     return rv;
   }
 
-  private DNA newPhysicalDNA(boolean delta) {
-    TestDNACursor cursor = new TestDNACursor();
-    cursor.addPhysicalAction("stringField", "Foo");
-    cursor.addPhysicalAction("referenceField", newObjectID());
-    dnaRequestCount++;
+  private DNA newPhysicalDNA(final boolean delta) {
+    final TestDNACursor cursor = new TestDNACursor();
+    cursor.addPhysicalAction("stringField", "Foo", true);
+    cursor.addPhysicalAction("referenceField", newObjectID(), true);
+    this.dnaRequestCount++;
 
     DNA dna = null;
-    if (dnaRequestCount == 1) {
+    if (this.dnaRequestCount == 1) {
       cursor.reset();
-      dna = new SampleDNA1(cursor, version++, delta);
+      dna = new SampleDNA1(cursor, this.version++, delta);
     }
-    if (dnaRequestCount == 2) {
+    if (this.dnaRequestCount == 2) {
       cursor.reset();
-      dna = new SampleDNA2(cursor, version++, delta);
+      dna = new SampleDNA2(cursor, this.version++, delta);
     }
-    if (dnaRequestCount == 3) {
+    if (this.dnaRequestCount == 3) {
       cursor.reset();
-      dna = new SampleDNA3(cursor, version++, delta);
+      dna = new SampleDNA3(cursor, this.version++, delta);
     }
-    if (dnaRequestCount == 4) {
+    if (this.dnaRequestCount == 4) {
       cursor.reset();
-      dna = new SampleDNA4(cursor, version++, delta);
+      dna = new SampleDNA4(cursor, this.version++, delta);
     }
-    if (dnaRequestCount == 5) {
+    if (this.dnaRequestCount == 5) {
       cursor.reset();
-      dna = new SampleDNA5(cursor, version++, delta);
-      dnaRequestCount = 0;
+      dna = new SampleDNA5(cursor, this.version++, delta);
+      this.dnaRequestCount = 0;
     }
 
     return dna;
   }
 
-  protected SleepycatPersistor getSleepycatPersistor(File dir) {
+  protected SleepycatPersistor getSleepycatPersistor(final File dir) {
     DBEnvironment env;
     SleepycatPersistor persistor = null;
     try {
       env = new DBEnvironment(true, dir);
-      SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
+      final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       final TestManagedObjectChangeListenerProvider managedObjectChangeListenerProvider = new TestManagedObjectChangeListenerProvider();
       persistor = new SleepycatPersistor(logger, env, serializationAdapterFactory);
       ManagedObjectStateFactory.disableSingleton(true);
       ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, persistor);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new AssertionError(e);
     }
     return persistor;
@@ -199,21 +202,21 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
   protected static class SampleDNA3 extends AbstractSampleDNA1 {
 
-    public SampleDNA3(DNACursor cursor, long version, boolean isDelta) {
+    public SampleDNA3(final DNACursor cursor, final long version, final boolean isDelta) {
       super("Sample3", cursor, version, isDelta);
     }
   }
 
   protected static class SampleDNA4 extends AbstractSampleDNA1 {
 
-    public SampleDNA4(DNACursor cursor, long version, boolean isDelta) {
+    public SampleDNA4(final DNACursor cursor, final long version, final boolean isDelta) {
       super("Sample4", cursor, version, isDelta);
     }
   }
 
   protected static class SampleDNA5 extends AbstractSampleDNA1 {
 
-    public SampleDNA5(DNACursor cursor, long version, boolean isDelta) {
+    public SampleDNA5(final DNACursor cursor, final long version, final boolean isDelta) {
       super("Sample5", cursor, version, isDelta);
     }
   }
@@ -227,7 +230,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     public boolean   isDelta;
     public String    loaderDesc     = "system.loader";
 
-    public AbstractSampleDNA1(String typeName, DNACursor cursor, long version, boolean isDelta) {
+    public AbstractSampleDNA1(final String typeName, final DNACursor cursor, final long version, final boolean isDelta) {
       this.typeName = typeName;
       this.cursor = cursor;
       this.version = version;
@@ -235,15 +238,15 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     }
 
     public String getTypeName() {
-      return typeName;
+      return this.typeName;
     }
 
     public ObjectID getObjectID() throws DNAException {
-      return objectID;
+      return this.objectID;
     }
 
     public DNACursor getCursor() {
-      return cursor;
+      return this.cursor;
     }
 
     public boolean hasLength() {
@@ -255,23 +258,23 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     }
 
     public String getDefiningLoaderDescription() {
-      return loaderDesc;
+      return this.loaderDesc;
     }
 
     public ObjectID getParentObjectID() throws DNAException {
-      return parentObjectID;
+      return this.parentObjectID;
     }
 
-    public void setHeaderInformation(ObjectID id, ObjectID parentID, String type, int length, long version)
-        throws DNAException {
+    public void setHeaderInformation(final ObjectID id, final ObjectID parentID, final String type, final int length,
+                                     final long version) throws DNAException {
       return;
     }
 
-    public void addPhysicalAction(String field, Object value) throws DNAException {
+    public void addPhysicalAction(final String field, final Object value) throws DNAException {
       return;
     }
 
-    public void addLogicalAction(int method, Object[] parameters) {
+    public void addLogicalAction(final int method, final Object[] parameters) {
       return;
     }
 
@@ -280,11 +283,12 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     }
 
     public boolean isDelta() {
-      return isDelta;
+      return this.isDelta;
     }
 
+    @Override
     public String toString() {
-      return "TestDNA(" + objectID + ", version = " + version + ")";
+      return "TestDNA(" + this.objectID + ", version = " + this.version + ")";
     }
   }
 
@@ -300,7 +304,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     super();
   }
 
-  public AbstractDBUtilsTestBase(String arg0) {
+  public AbstractDBUtilsTestBase(final String arg0) {
     super(arg0);
   }
 

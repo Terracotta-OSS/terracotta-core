@@ -24,13 +24,14 @@ import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.ObjectID;
+import com.tc.object.TestDNACursor;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
-import com.tc.objectserver.core.api.TestDNACursor;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
@@ -56,36 +57,40 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     //
   }
 
-  public void baseTestSendingReceivingMessagesStatic(long oidsCount) throws Exception {
+  public void baseTestSendingReceivingMessagesStatic(final long oidsCount) throws Exception {
     System.out.println("Test with ObjectIDs size " + oidsCount);
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), new InMemoryPersistor());
-    PortChooser pc = new PortChooser();
+    final PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();
     final int p2 = pc.chooseRandom2Port();
     final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1, TCSocketAddress.WILDCARD_IP),
         new Node(LOCALHOST, p2, p2 + 1, TCSocketAddress.WILDCARD_IP) };
 
-    StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1, stageManager1);
-    ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
+    final StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
+                                                            new QueueFactory());
+    final TCGroupManagerImpl gm1 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p1, p1 + 1,
+                                                          stageManager1);
+    final ConfigurationContext context1 = new ConfigurationContextImpl(stageManager1);
     stageManager1.startAll(context1, Collections.EMPTY_LIST);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
-    MyListener l1 = new MyListener();
+    final MyListener l1 = new MyListener();
     gm1.registerForMessages(ObjectSyncMessage.class, l1);
 
-    StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
-    TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2);
-    ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
+    final StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
+                                                            new QueueFactory());
+    final TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1,
+                                                          stageManager2);
+    final ConfigurationContext context2 = new ConfigurationContextImpl(stageManager2);
     stageManager2.startAll(context2, Collections.EMPTY_LIST);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));
-    MyListener l2 = new MyListener();
+    final MyListener l2 = new MyListener();
     gm2.registerForMessages(ObjectSyncMessage.class, l2);
 
-    Set<Node> nodeSet = new HashSet<Node>();
+    final Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, allNodes);
-    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    NodeID n1 = gm1.join(allNodes[0], nodeStore);
-    NodeID n2 = gm2.join(allNodes[1], nodeStore);
+    final NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+    final NodeID n1 = gm1.join(allNodes[0], nodeStore);
+    final NodeID n2 = gm2.join(allNodes[1], nodeStore);
 
     ThreadUtil.reallySleep(1000);
 
@@ -100,44 +105,43 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     baseTestSendingReceivingMessagesStatic(millionOids * 1);
   }
 
-  private ObjectSyncMessage createObjectSyncMessage(long oidsCount) {
+  private ObjectSyncMessage createObjectSyncMessage(final long oidsCount) {
 
-    NodeID nodeID = new ServerID("foo", "foobar".getBytes());
-    HashMap rootsMap = new HashMap();
+    final NodeID nodeID = new ServerID("foo", "foobar".getBytes());
+    final HashMap rootsMap = new HashMap();
     for (long i = 0; i < 10; ++i) {
       rootsMap.put("root" + i, new ObjectID(i));
     }
-    Sink sink = new MockSink();
-    ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
-    ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(
-                                                                                     nodeID,
-                                                                                     rootsMap,
-                                                                                     new ObjectIDSet(rootsMap.values()),
-                                                                                     true, sink, 100, 10);
-    TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    final Sink sink = new MockSink();
+    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
+    final ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap,
+                                                                                           new ObjectIDSet(rootsMap
+                                                                                               .values()), true, sink,
+                                                                                           100, 10);
+    final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     for (long i = 0; i < oidsCount; ++i) {
-      ManagedObject m = new ManagedObjectImpl(new ObjectID(i));
+      final ManagedObject m = new ManagedObjectImpl(new ObjectID(i));
       m.apply(new TestDNA(new TestDNACursor()), new TransactionID(i), new BackReferences(),
               new NullObjectInstanceMonitor(), true);
-      m.toDNA(out, objectStringSerializer);
+      m.toDNA(out, objectStringSerializer, DNAType.L2_SYNC);
     }
     managedObjectSyncContext.setDehydratedBytes(out.toArray(), (int) oidsCount, objectStringSerializer);
     managedObjectSyncContext.setSequenceID(11);
 
-    ObjectSyncMessage osm = ObjectSyncMessageFactory
+    final ObjectSyncMessage osm = ObjectSyncMessageFactory
         .createObjectSyncMessageFrom(managedObjectSyncContext, new ServerTransactionID(new ServerID("xyz", new byte[] {
             3, 4, 5 }), new TransactionID(99)));
     return osm;
   }
 
-  private void checkSendingReceivingMessages(TCGroupManagerImpl gm1, MyListener l1, TCGroupManagerImpl gm2,
-                                             MyListener l2, long oidsCount) {
+  private void checkSendingReceivingMessages(final TCGroupManagerImpl gm1, final MyListener l1,
+                                             final TCGroupManagerImpl gm2, final MyListener l2, final long oidsCount) {
     ThreadUtil.reallySleep(5 * 1000);
 
     final ObjectSyncMessage msg1 = createObjectSyncMessage(oidsCount);
     gm1.sendAll(msg1);
 
-    ObjectSyncMessage msg2 = (ObjectSyncMessage) l2.take();
+    final ObjectSyncMessage msg2 = (ObjectSyncMessage) l2.take();
 
     assertEquals(msg1.getDnaCount(), msg2.getDnaCount());
     assertEquals(msg1.getOids().size(), msg2.getOids().size());
@@ -145,7 +149,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final ObjectSyncMessage msg3 = createObjectSyncMessage(oidsCount);
     gm2.sendAll(msg3);
 
-    ObjectSyncMessage msg4 = (ObjectSyncMessage) l1.take();
+    final ObjectSyncMessage msg4 = (ObjectSyncMessage) l1.take();
 
     assertEquals(msg3.getDnaCount(), msg4.getDnaCount());
     assertEquals(msg3.getOids().size(), msg4.getOids().size());
@@ -155,7 +159,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
 
     NoExceptionLinkedQueue queue = new NoExceptionLinkedQueue();
 
-    public void messageReceived(NodeID fromNode, GroupMessage msg) {
+    public void messageReceived(final NodeID fromNode, final GroupMessage msg) {
       this.queue.put(msg);
     }
 

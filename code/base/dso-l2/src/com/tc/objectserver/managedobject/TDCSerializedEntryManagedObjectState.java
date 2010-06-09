@@ -10,6 +10,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
@@ -127,7 +128,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     return fields;
   }
   
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
     writer.addEntireArray(value);
     writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(createTime));
     writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));

@@ -6,6 +6,7 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.TestDNACursor;
 import com.tc.object.dna.impl.ClassLoaderInstance;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -375,6 +376,7 @@ public class ManagedObjectStateSerializationTest extends ManagedObjectStateSeria
 
     serializationValidation(state, cursor, ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
   }
+
   public interface MyProxyInf1 {
     public int getValue();
 

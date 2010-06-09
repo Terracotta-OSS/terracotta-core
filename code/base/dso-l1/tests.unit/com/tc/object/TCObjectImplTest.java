@@ -11,7 +11,6 @@ import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.field.TCFieldFactory;
 import com.tc.object.loaders.LoaderDescription;
-import com.tc.objectserver.core.api.TestDNAWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,15 +26,15 @@ import java.util.Map;
 public class TCObjectImplTest extends BaseDSOTestCase {
 
   public void tests() throws Exception {
-    TestClientObjectManager objectManager = new TestClientObjectManager();
-    TCClass clazz = new TestTCClass(objectManager);
-    TestObject to1 = new TestObject(null, null);
-    TestObject to2 = new TestObject("TestObject2", null);
-    ObjectID id1 = new ObjectID(1);
-    ObjectID id2 = new ObjectID(2);
+    final TestClientObjectManager objectManager = new TestClientObjectManager();
+    final TCClass clazz = new TestTCClass(objectManager);
+    final TestObject to1 = new TestObject(null, null);
+    final TestObject to2 = new TestObject("TestObject2", null);
+    final ObjectID id1 = new ObjectID(1);
+    final ObjectID id2 = new ObjectID(2);
     objectManager.add(id2, new TCObjectPhysical(id2, to2, clazz, false));
 
-    TCObjectImpl tcObj = new TCObjectPhysical(id1, to1, clazz, false);
+    final TCObjectImpl tcObj = new TCObjectPhysical(id1, to1, clazz, false);
     tcObj.resolveReference(TestObject.class.getName() + ".test1");
     tcObj.resolveReference(TestObject.class.getName() + ".test2");
     assertTrue(to1.test1 == null);// nothing should happen from that
@@ -67,16 +66,16 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     }
 
     public void __tc_getallfields(final Map map) {
-      map.put(getClass().getName() + "." + "test1", test1);
-      map.put(getClass().getName() + "." + "test2", test2);
+      map.put(getClass().getName() + "." + "test1", this.test1);
+      map.put(getClass().getName() + "." + "test2", this.test2);
     }
 
     public void __tc_setfield(final String fieldName, final Object value) {
       if (fieldName.equals(TestObject.class.getName() + ".test1")) {
-        test1 = (String) value;
+        this.test1 = (String) value;
       }
       if (fieldName.equals(TestObject.class.getName() + ".test2")) {
-        test2 = (TestObject) value;
+        this.test2 = (TestObject) value;
       }
     }
 
@@ -105,15 +104,15 @@ public class TCObjectImplTest extends BaseDSOTestCase {
 
     public TestTCClass(final TestClientObjectManager objectManager) throws Exception {
       this.objectManager = objectManager;
-      fieldFactory = new TCFieldFactory(configHelper());
-      Field[] flds = TestObject.class.getDeclaredFields();
-      for (Field fld : flds) {
-        fields.put(TestObject.class.getName() + "." + fld.getName(), fieldFactory.getInstance(this, fld));
+      this.fieldFactory = new TCFieldFactory(configHelper());
+      final Field[] flds = TestObject.class.getDeclaredFields();
+      for (final Field fld : flds) {
+        this.fields.put(TestObject.class.getName() + "." + fld.getName(), this.fieldFactory.getInstance(this, fld));
       }
     }
 
     public TCField[] getPortableFields() {
-      Collection fs = fields.values();
+      final Collection fs = this.fields.values();
       return (TCField[]) fs.toArray(new TCField[fs.size()]);
     }
 
@@ -134,8 +133,8 @@ public class TCObjectImplTest extends BaseDSOTestCase {
 
     public TCField getDeclaredField(final String name) {
       try {
-        return (TCField) fields.get(name);
-      } catch (Exception e) {
+        return (TCField) this.fields.get(name);
+      } catch (final Exception e) {
         throw new RuntimeException(e);
       }
     }
@@ -229,7 +228,7 @@ public class TCObjectImplTest extends BaseDSOTestCase {
     }
 
     public ClientObjectManager getObjectManager() {
-      return objectManager;
+      return this.objectManager;
     }
 
     public boolean isProxyClass() {

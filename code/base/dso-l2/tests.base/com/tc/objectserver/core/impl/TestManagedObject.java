@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
@@ -32,39 +33,38 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
  * @author steve
  */
 public class TestManagedObject implements ManagedObject, ManagedObjectReference, Serializable {
-  public final NoExceptionLinkedQueue    setTransientStateCalls   = new NoExceptionLinkedQueue();
+  public final NoExceptionLinkedQueue   setTransientStateCalls   = new NoExceptionLinkedQueue();
 
   public static final TestManagedObject NULL_TEST_MANAGED_OBJECT = new TestManagedObject(new ObjectID(-1));
-  private final ObjectID                 id;
-  private final ArrayList<ObjectID>      references;
-  public boolean                         isDirty;
-  public boolean                         isNew;
-  public boolean                         noReferences;
-  TLinkable                              next                     = null;
-  TLinkable                              previous                 = null;
+  private final ObjectID                id;
+  private final ArrayList<ObjectID>     references;
+  public boolean                        isDirty;
+  public boolean                        isNew;
+  public boolean                        noReferences;
+  TLinkable                             next                     = null;
+  TLinkable                             previous                 = null;
 
-  public TestManagedObject(ObjectID id, ArrayList<ObjectID> references) {
+  public TestManagedObject(final ObjectID id, final ArrayList<ObjectID> references) {
     this(id, references, false);
   }
 
-  public TestManagedObject(ObjectID id, ArrayList<ObjectID> references, boolean noReferences) {
+  public TestManagedObject(final ObjectID id, final ArrayList<ObjectID> references, final boolean noReferences) {
     this.id = id;
     this.references = references;
     this.noReferences = noReferences;
   }
 
-  public TestManagedObject(ObjectID id) {
+  public TestManagedObject(final ObjectID id) {
     this(id, new ArrayList<ObjectID>(), false);
   }
 
-  public void setReference(int index, ObjectID id) {
+  public void setReference(final int index, final ObjectID id) {
 
     if (index < this.references.size()) {
       this.references.set(index, id);
@@ -74,14 +74,15 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
   }
 
   public ObjectID getID() {
-    return id;
+    return this.id;
   }
 
   public synchronized Set<ObjectID> getObjectReferences() {
-    return new HashSet<ObjectID>(references);
+    return new HashSet<ObjectID>(this.references);
   }
 
-  public void apply(DNA dna, TransactionID txID, BackReferences includeIDs, ObjectInstanceMonitor imo) {
+  public void apply(final DNA dna, final TransactionID txID, final BackReferences includeIDs,
+                    final ObjectInstanceMonitor imo) {
     // do nothing
   }
 
@@ -89,15 +90,15 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return;
   }
 
-  public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer) {
+  public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType dnaType) {
     throw new ImplementMe();
   }
 
-  public void setObjectStore(ManagedObjectStore store) {
+  public void setObjectStore(final ManagedObjectStore store) {
     return;
   }
 
-  public ManagedObjectFacade createFacade(int limit) {
+  public ManagedObjectFacade createFacade(final int limit) {
     throw new ImplementMe();
   }
 
@@ -105,28 +106,26 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return this.isDirty;
   }
 
-  public void setIsDirty(boolean isDirty) {
+  public void setIsDirty(final boolean isDirty) {
     this.isDirty = isDirty;
   }
 
-  public synchronized void addReferences(Set<ObjectID> ids) {
-    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      ObjectID oid = iter.next();
+  public synchronized void addReferences(final Set<ObjectID> ids) {
+    for (final ObjectID oid : ids) {
       this.references.add(oid);
     }
   }
 
-  public synchronized void addReferences(Set<ObjectID> ids, ObjectManagerImpl[] objectManagers) {
-    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      ObjectID oid = iter.next();
+  public synchronized void addReferences(final Set<ObjectID> ids, final ObjectManagerImpl[] objectManagers) {
+    for (final ObjectID oid : ids) {
       this.references.add(oid);
       objectManagers[oid.getGroupID()].changed(null, null, oid);
     }
   }
 
-  public synchronized void removeReferences(Set<ObjectID> ids) {
-    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      this.references.remove(iter.next());
+  public synchronized void removeReferences(final Set<ObjectID> ids) {
+    for (final ObjectID objectID : ids) {
+      this.references.remove(objectID);
     }
   }
 
@@ -134,8 +133,8 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return this.isNew;
   }
 
-  public void setTransientState(ManagedObjectStateFactory stateFactory) {
-    setTransientStateCalls.put(stateFactory);
+  public void setTransientState(final ManagedObjectStateFactory stateFactory) {
+    this.setTransientStateCalls.put(stateFactory);
   }
 
   public ManagedObjectReference getReference() {
@@ -144,26 +143,26 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   boolean removeOnRelease;
 
-  public void setRemoveOnRelease(boolean removeOnRelease) {
+  public void setRemoveOnRelease(final boolean removeOnRelease) {
     this.removeOnRelease = removeOnRelease;
   }
 
   public boolean isRemoveOnRelease() {
-    return removeOnRelease;
+    return this.removeOnRelease;
   }
 
   boolean referenced = false;
 
   public void markReference() {
-    referenced = true;
+    this.referenced = true;
   }
 
   public void unmarkReference() {
-    referenced = false;
+    this.referenced = false;
   }
 
   public boolean isReferenced() {
-    return referenced;
+    return this.referenced;
   }
 
   public ManagedObject getObject() {
@@ -186,7 +185,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     throw new ImplementMe();
   }
 
-  public int accessCount(int accessed) {
+  public int accessCount(final int accessed) {
     throw new ImplementMe();
   }
 
@@ -198,33 +197,33 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return this.previous;
   }
 
-  public void setNext(TLinkable linkable) {
+  public void setNext(final TLinkable linkable) {
     this.next = linkable;
   }
 
-  public void setPrevious(TLinkable linkable) {
+  public void setPrevious(final TLinkable linkable) {
     this.previous = linkable;
   }
 
   public ManagedObjectState getManagedObjectState() {
-    return noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
+    return this.noReferences ? new NullNoReferencesManagedObjectState() : new NullManagedObjectState();
   }
 
   @Override
   public String toString() {
-    return "TestManagedObject[" + id + "]";
+    return "TestManagedObject[" + this.id + "]";
   }
 
   public boolean canEvict() {
     return true;
   }
 
-  public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
+  public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
-                    boolean ignoreIfOlderDNA) throws DNAException {
+  public void apply(final DNA dna, final TransactionID txnID, final BackReferences includeIDs,
+                    final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) throws DNAException {
     // TODO: do i need to implement this?
   }
 
@@ -232,7 +231,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     throw new ImplementMe();
   }
 
-  public void setIsNew(boolean newFlag) {
+  public void setIsNew(final boolean newFlag) {
     this.isNew = newFlag;
   }
 
@@ -248,23 +247,23 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     private final byte type = 0;
 
     @Override
-    protected boolean basicEquals(AbstractManagedObjectState o) {
+    protected boolean basicEquals(final AbstractManagedObjectState o) {
       throw new UnsupportedOperationException();
     }
 
-    public void addObjectReferencesTo(ManagedObjectTraverser traverser) {
+    public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
       throw new UnsupportedOperationException();
     }
 
-    public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) {
+    public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs) {
       throw new UnsupportedOperationException();
     }
 
-    public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit) {
+    public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
       throw new UnsupportedOperationException();
     }
 
-    public void dehydrate(ObjectID objectID, DNAWriter writer) {
+    public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType dnaType) {
       throw new UnsupportedOperationException();
     }
 
@@ -281,10 +280,10 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     }
 
     public byte getType() {
-      return type;
+      return this.type;
     }
 
-    public void writeTo(ObjectOutput o) {
+    public void writeTo(final ObjectOutput o) {
       throw new UnsupportedOperationException();
     }
   }

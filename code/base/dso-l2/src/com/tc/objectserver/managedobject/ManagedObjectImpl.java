@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectDNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.StorageDNAEncodingImpl;
@@ -230,10 +231,10 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   /**
    * Writes the data in the object to the DNA strand supplied.
    */
-  public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer) {
+  public void toDNA(final TCByteBufferOutputStream out, final ObjectStringSerializer serializer, final DNAType type) {
     final DNAWriter writer = new ObjectDNAWriterImpl(out, this.id, getClassname(), serializer, DNA_STORAGE_ENCODING,
                                                      getLoaderDescription(), this.version, false);
-    this.state.dehydrate(this.id, writer);
+    this.state.dehydrate(this.id, writer, type);
     writer.markSectionEnd();
     writer.finalizeHeader();
   }

@@ -6,21 +6,25 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.TestDNACursor;
+import com.tc.object.TestDNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
 
 public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
-  
+
   // override due to difference on dehydrate
-  protected void basicDehydrate(TestDNACursor cursor, int objCount, ManagedObjectState state) {
-    TestDNAWriter dnaWriter = new TestDNAWriter();
-    state.dehydrate(objectID, dnaWriter);
+  @Override
+  protected void basicDehydrate(final TestDNACursor cursor, final int objCount, final ManagedObjectState state) {
+    final TestDNAWriter dnaWriter = new TestDNAWriter();
+    state.dehydrate(this.objectID, dnaWriter, DNAType.L1_FAULT);
     Assert.assertEquals(objCount, dnaWriter.getActionCount());
   }
-  
+
   public void testObjectList1() throws Exception {
-    String className = "java.util.ArrayList";
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.util.ArrayList";
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
@@ -28,10 +32,10 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
 
     basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, 3);
   }
-  
+
   public void testObjectList2() throws Exception {
-    String className = "java.util.ArrayList";
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.util.ArrayList";
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });
@@ -42,11 +46,11 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList3() throws Exception {
-    String className = "java.util.ArrayList";
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.util.ArrayList";
+    final TestDNACursor cursor = new TestDNACursor();
 
-    for(int i = 0; i < 1000; ++i) {
-      cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(1000+i) });
+    for (int i = 0; i < 1000; ++i) {
+      cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(1000 + i) });
     }
     cursor.addLogicalAction(SerializationUtil.CLEAR, null);
 
@@ -54,8 +58,8 @@ public class ListManagedObjectStateTest extends AbstractTestManagedObjectState {
   }
 
   public void testObjectList4() throws Exception {
-    String className = "java.util.ArrayList";
-    TestDNACursor cursor = new TestDNACursor();
+    final String className = "java.util.ArrayList";
+    final TestDNACursor cursor = new TestDNACursor();
 
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2002) });
     cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(2003) });

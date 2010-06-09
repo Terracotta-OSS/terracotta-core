@@ -48,7 +48,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
 
   private boolean                      wasDeserialized      = false;
 
-  public DNAImpl(ObjectStringSerializer serializer, boolean createOutput) {
+  public DNAImpl(final ObjectStringSerializer serializer, final boolean createOutput) {
     this.serializer = serializer;
     this.createOutput = createOutput;
   }
@@ -58,7 +58,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   }
 
   // This method is there for debugging/logging stats. Should never be used otherwise.
-  public void setTypeClassName(String className) {
+  public void setTypeClassName(final String className) {
     if (this.typeName == null) {
       this.typeName = className;
     }
@@ -79,14 +79,14 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   public boolean next() throws IOException {
     try {
       return next(DNA_STORAGE_ENCODING);
-    } catch (ClassNotFoundException e) {
+    } catch (final ClassNotFoundException e) {
       // This shouldn't happen when expand is "false"
       throw Assert.failure("Internal error");
     }
   }
 
-  public boolean next(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    boolean hasNext = this.actionCount > 0;
+  public boolean next(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final boolean hasNext = this.actionCount > 0;
     if (hasNext) {
       parseNext(encoding);
       this.actionCount--;
@@ -96,8 +96,8 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     return hasNext;
   }
 
-  private void parseNext(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    byte recordType = this.input.readByte();
+  private void parseNext(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final byte recordType = this.input.readByte();
 
     switch (recordType) {
       case BaseDNAEncodingImpl.PHYSICAL_ACTION_TYPE:
@@ -128,40 +128,41 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
     // unreachable
   }
 
-  private void parseSubArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int startPos = this.input.readInt();
-    Object subArray = encoding.decode(this.input);
+  private void parseSubArray(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final int startPos = this.input.readInt();
+    final Object subArray = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(subArray, startPos);
   }
 
-  private void parseEntireArray(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    Object array = encoding.decode(this.input);
+  private void parseEntireArray(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final Object array = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(array);
   }
 
-  private void parseLiteralValue(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    Object value = encoding.decode(this.input);
+  private void parseLiteralValue(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final Object value = encoding.decode(this.input);
     this.currentAction = new LiteralAction(value);
   }
 
-  private void parseArrayElement(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int index = this.input.readInt();
-    Object value = encoding.decode(this.input);
+  private void parseArrayElement(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final int index = this.input.readInt();
+    final Object value = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
-  private void parsePhysical(DNAEncoding encoding, boolean isReference) throws IOException, ClassNotFoundException {
-    String fieldName = this.serializer.readFieldName(this.input);
+  private void parsePhysical(final DNAEncoding encoding, final boolean isReference) throws IOException,
+      ClassNotFoundException {
+    final String fieldName = this.serializer.readFieldName(this.input);
 
-    Object value = encoding.decode(this.input);
+    final Object value = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
   }
 
-  private void parseLogical(DNAEncoding encoding) throws IOException, ClassNotFoundException {
-    int method = this.input.readInt();
-    int paramCount = this.input.read();
+  private void parseLogical(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    final int method = this.input.readInt();
+    final int paramCount = this.input.read();
     if (paramCount < 0) { throw new AssertionError("Invalid param count:" + paramCount); }
-    Object[] params = new Object[paramCount];
+    final Object[] params = new Object[paramCount];
     for (int i = 0; i < params.length; i++) {
       params[i] = encoding.decode(this.input);
     }
@@ -183,7 +184,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   @Override
   public String toString() {
     try {
-      StringBuffer buf = new StringBuffer();
+      final StringBuffer buf = new StringBuffer();
       buf.append("DNAImpl\n");
       buf.append("{\n");
       buf.append("  type->" + getTypeName() + "\n");
@@ -195,7 +196,7 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
       buf.append("  deserialized?->" + this.wasDeserialized + "\n");
       buf.append("}\n");
       return buf.toString();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       return e.getMessage();
     }
   }
@@ -215,15 +216,15 @@ public class DNAImpl implements DNA, DNACursor, TCSerializable {
   /*
    * This methods is synchronized coz both broadcast stage and L2 sync objects stage accesses it simultaneously
    */
-  public synchronized void serializeTo(TCByteBufferOutput serialOutput) {
+  public synchronized void serializeTo(final TCByteBufferOutput serialOutput) {
     serialOutput.write(this.dataOut);
   }
 
-  public Object deserializeFrom(TCByteBufferInput serialInput) throws IOException {
+  public Object deserializeFrom(final TCByteBufferInput serialInput) throws IOException {
     this.wasDeserialized = true;
 
-    Mark mark = serialInput.mark();
-    int dnaLength = serialInput.readInt();
+    final Mark mark = serialInput.mark();
+    final int dnaLength = serialInput.readInt();
     if (dnaLength <= 0) { throw new IOException("Invalid length:" + dnaLength); }
 
     serialInput.tcReset(mark);

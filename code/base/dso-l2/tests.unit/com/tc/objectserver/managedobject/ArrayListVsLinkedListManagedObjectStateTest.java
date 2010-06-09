@@ -6,6 +6,9 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.TestDNACursor;
+import com.tc.object.TestDNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.util.Assert;
 
@@ -14,65 +17,66 @@ public class ArrayListVsLinkedListManagedObjectStateTest extends AbstractTestMan
   final int OBJ_COUNT = 50000;
 
   public void testCompareAdd() {
-    TestDNACursor cursor = new TestDNACursor();
-    add(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    add(cursor, this.OBJ_COUNT);
 
     long startTime = System.currentTimeMillis();
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
-    System.out.println("ArrayList.add for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime) + " ms.");
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
+    System.out.println("ArrayList.add for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+                       + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
-    System.out
-        .println("LinkedList.add for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime) + " ms.");
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+    System.out.println("LinkedList.add for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+                       + " ms.");
   }
 
   public void testCompareAddFirst() {
-    TestDNACursor cursor = new TestDNACursor();
-    addFirst(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    addFirst(cursor, this.OBJ_COUNT);
 
     long startTime = System.currentTimeMillis();
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
-    System.out.println("ArrayList.addFirst for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
+    System.out.println("ArrayList.addFirst for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
                        + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
-    System.out.println("LinkedList.addFirst for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
-                       + " ms.");
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+    System.out.println("LinkedList.addFirst for " + this.OBJ_COUNT + " took "
+                       + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
   public void testCompareAddAt() {
-    TestDNACursor cursor = new TestDNACursor();
-    addAt(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    addAt(cursor, this.OBJ_COUNT);
 
     long startTime = System.currentTimeMillis();
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
-    System.out.println("ArrayList.addAt for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
+    System.out.println("ArrayList.addAt for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
                        + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
-    System.out.println("LinkedList.addAt for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+    System.out.println("LinkedList.addAt for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
                        + " ms.");
   }
 
   public void testCompareClear() {
-    TestDNACursor cursor = new TestDNACursor();
-    add(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    add(cursor, this.OBJ_COUNT);
 
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
- 
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
+
     cursor.reset();
 
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
-  
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+
     cursor.reset();
 
     clear(cursor);
@@ -81,130 +85,131 @@ public class ArrayListVsLinkedListManagedObjectStateTest extends AbstractTestMan
 
     long startTime = System.currentTimeMillis();
     basicTestUnitArrayList(cursor, 0);
-    System.out.println("ArrayList.clear for " + OBJ_COUNT + " took "
-                       + (System.currentTimeMillis() - startTime)  + " ms.");
+    System.out.println("ArrayList.clear for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+                       + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
     bastTestUnitLinkedList(cursor, 0);
-    System.out.println("LinkedList.clear for " + OBJ_COUNT + " took "
-                       + (System.currentTimeMillis() - startTime) + " ms.");
+    System.out.println("LinkedList.clear for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+                       + " ms.");
 
   }
 
   public void testCompareRemoveFirst() {
-    TestDNACursor cursor = new TestDNACursor();
-    add(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    add(cursor, this.OBJ_COUNT);
 
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
 
     cursor.reset();
 
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
- 
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+
     cursor.reset();
 
-    removeFirst(cursor, OBJ_COUNT);
+    removeFirst(cursor, this.OBJ_COUNT);
 
     long startTime = System.currentTimeMillis();
     basicTestUnitArrayList(cursor, 0);
-    System.out.println("ArrayList.removeFirst for " + OBJ_COUNT + " took "
-                       + (System.currentTimeMillis() - startTime)  + " ms.");
+    System.out.println("ArrayList.removeFirst for " + this.OBJ_COUNT + " took "
+                       + (System.currentTimeMillis() - startTime) + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
     bastTestUnitLinkedList(cursor, 0);
-    System.out.println("LinkedList.removeFirst for " + OBJ_COUNT + " took "
+    System.out.println("LinkedList.removeFirst for " + this.OBJ_COUNT + " took "
                        + (System.currentTimeMillis() - startTime) + " ms.");
 
   }
 
   public void testCompareRemove() {
-    TestDNACursor cursor = new TestDNACursor();
-    add(cursor, OBJ_COUNT);
+    final TestDNACursor cursor = new TestDNACursor();
+    add(cursor, this.OBJ_COUNT);
 
-    basicTestUnitArrayList(cursor, OBJ_COUNT);
-
-    cursor.reset();
-
-    bastTestUnitLinkedList(cursor, OBJ_COUNT);
+    basicTestUnitArrayList(cursor, this.OBJ_COUNT);
 
     cursor.reset();
 
-    remove(cursor, OBJ_COUNT);
+    bastTestUnitLinkedList(cursor, this.OBJ_COUNT);
+
+    cursor.reset();
+
+    remove(cursor, this.OBJ_COUNT);
 
     long startTime = System.currentTimeMillis();
     basicTestUnitArrayList(cursor, 0);
-    System.out.println("ArrayList.remove for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+    System.out.println("ArrayList.remove for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
                        + " ms.");
 
     cursor.reset();
 
     startTime = System.currentTimeMillis();
     bastTestUnitLinkedList(cursor, 0);
-    System.out.println("LinkedList.remove for " + OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
+    System.out.println("LinkedList.remove for " + this.OBJ_COUNT + " took " + (System.currentTimeMillis() - startTime)
                        + " ms.");
 
   }
 
-  private void add(TestDNACursor cursor, int count) {
+  private void add(final TestDNACursor cursor, final int count) {
     for (int i = 1; i <= count; i++) {
       cursor.addLogicalAction(SerializationUtil.ADD, new Object[] { new ObjectID(i) });
     }
   }
 
-  private void addFirst(TestDNACursor cursor, int count) {
+  private void addFirst(final TestDNACursor cursor, final int count) {
     for (int i = 1; i <= count; i++) {
       cursor.addLogicalAction(SerializationUtil.ADD_FIRST, new Object[] { new ObjectID(i) });
     }
   }
 
-  private void addAt(TestDNACursor cursor, int count) {
+  private void addAt(final TestDNACursor cursor, final int count) {
     for (int i = 1; i <= count; i++) {
       cursor.addLogicalAction(SerializationUtil.ADD_AT, new Object[] { new Integer(i), new ObjectID(i) });
     }
   }
 
-  private void clear(TestDNACursor cursor) {
+  private void clear(final TestDNACursor cursor) {
     cursor.addLogicalAction(SerializationUtil.CLEAR, null);
   }
 
-  private void removeFirst(TestDNACursor cursor, int count) {
+  private void removeFirst(final TestDNACursor cursor, final int count) {
     for (int i = 1; i <= count; i++) {
       cursor.addLogicalAction(SerializationUtil.REMOVE_FIRST, null);
     }
   }
 
-  private void remove(TestDNACursor cursor, int count) {
+  private void remove(final TestDNACursor cursor, final int count) {
     for (int i = 1; i <= count; i++) {
       cursor.addLogicalAction(SerializationUtil.REMOVE, new Object[] { new ObjectID(i) });
     }
   }
 
-  private void bastTestUnitLinkedList(TestDNACursor cursor, int objCount) {
-    String className = "java.util.LinkedList";
+  private void bastTestUnitLinkedList(final TestDNACursor cursor, final int objCount) {
+    final String className = "java.util.LinkedList";
     try {
       basicTestUnit(className, ManagedObjectState.LINKED_LIST_TYPE, cursor, objCount);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void basicTestUnitArrayList(TestDNACursor cursor, int objCount) {
-    String className = "java.util.ArrayList";
+  private void basicTestUnitArrayList(final TestDNACursor cursor, final int objCount) {
+    final String className = "java.util.ArrayList";
     try {
       basicTestUnit(className, ManagedObjectState.LIST_TYPE, cursor, objCount);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   // override due to difference on dehydrate
-  protected void basicDehydrate(TestDNACursor cursor, int objCount, ManagedObjectState state) {
-    TestDNAWriter dnaWriter = new TestDNAWriter();
-    state.dehydrate(objectID, dnaWriter);
+  @Override
+  protected void basicDehydrate(final TestDNACursor cursor, final int objCount, final ManagedObjectState state) {
+    final TestDNAWriter dnaWriter = new TestDNAWriter();
+    state.dehydrate(this.objectID, dnaWriter, DNAType.L1_FAULT);
     Assert.assertEquals(objCount, dnaWriter.getActionCount());
   }
 

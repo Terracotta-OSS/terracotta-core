@@ -9,6 +9,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 import com.tc.util.Assert;
@@ -68,7 +69,7 @@ public class DateManagedObjectState extends LogicalManagedObjectState {
     return true;
   }
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     writer.addLogicalAction(SerializationUtil.SET_TIME, new Object[] { new Long(referenceTime) });
     writer.addLogicalAction(SerializationUtil.SET_NANOS, new Object[] { new Integer(referenceNanoTime) });
   }

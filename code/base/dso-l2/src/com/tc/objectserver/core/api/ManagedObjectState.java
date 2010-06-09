@@ -7,6 +7,7 @@ package com.tc.objectserver.core.api;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.managedobject.BackReferences;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -54,7 +55,7 @@ public interface ManagedObjectState {
 
   public void addObjectReferencesTo(ManagedObjectTraverser traverser);
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer);
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type);
 
   public ManagedObjectFacade createFacade(ObjectID objectID, String className, int limit);
 

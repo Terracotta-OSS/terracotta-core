@@ -12,6 +12,7 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.managedobject.bytecode.ClassNotCompatableException;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
@@ -150,7 +151,7 @@ public abstract class PhysicalManagedObjectState extends AbstractManagedObjectSt
    */
   protected abstract void writeObject(ObjectOutput out) throws IOException;
 
-  public void dehydrate(ObjectID objectID, DNAWriter writer) {
+  public void dehydrate(ObjectID objectID, DNAWriter writer, DNAType type) {
     ObjectID parentID = getParentID();
     if (!parentID.isNull()) {
       writer.setParentObjectID(parentID);
