@@ -301,7 +301,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         if (TerracottaManagement.matchAllTerracottaMBeans(id).apply(objName)) {
           if (beanNames.add(modifiedObjName)) {
             try {
-              MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName);
+              MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
               l2MBeanServer.registerMBean(mirror, modifiedObjName);
               l2MBeanServer.addNotificationListener(modifiedObjName, this.l1OperatorEventsLogger,
                                                     new OperatorEventsFilter(), null);

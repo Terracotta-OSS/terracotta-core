@@ -16,4 +16,6 @@ public interface MBeanMirror extends DynamicMBean {
   public MBeanServerConnection getMBeanServerConnection();
 
   public ObjectName getRemoteObjectName();
+
+  public ObjectName getLocalObjectName();
 }

@@ -25,12 +25,14 @@ import javax.management.ReflectionException;
 public class PlainMBeanMirror implements MBeanMirror {
   private final MBeanServerConnection mbsc;
   private final ObjectName            objectName;
+  private final ObjectName            localObjectName;
   private final MBeanInfo             mbeanInfo;
 
-  public PlainMBeanMirror(MBeanServerConnection mbsc, ObjectName objectName) throws IOException,
-      InstanceNotFoundException, IntrospectionException {
+  public PlainMBeanMirror(MBeanServerConnection mbsc, ObjectName objectName, ObjectName localObjectName)
+      throws IOException, InstanceNotFoundException, IntrospectionException {
     this.mbsc = mbsc;
     this.objectName = objectName;
+    this.localObjectName = localObjectName;
     try {
       this.mbeanInfo = mbsc.getMBeanInfo(objectName);
     } catch (ReflectionException e) {
@@ -48,6 +50,10 @@ public class PlainMBeanMirror implements MBeanMirror {
 
   public ObjectName getRemoteObjectName() {
     return objectName;
+  }
+
+  public ObjectName getLocalObjectName() {
+    return localObjectName;
   }
 
   public Object getAttribute(String name) throws AttributeNotFoundException, MBeanException, ReflectionException {

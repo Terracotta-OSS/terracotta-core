@@ -17,6 +17,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanNotificationInfo;
 import javax.management.MBeanServerConnection;
+import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
@@ -55,10 +56,23 @@ public class NotifyingMBeanMirror implements MBeanMirror, NotificationEmitter {
     return mirror.getMBeanInfo();
   }
 
+  private class NotificationIntercepter implements NotificationListener {
+    private final NotificationListener listener;
+
+    private NotificationIntercepter(NotificationListener listener) {
+      this.listener = listener;
+    }
+
+    public void handleNotification(Notification notification, Object handback) {
+      notification.setSource(mirror.getLocalObjectName());
+      listener.handleNotification(notification, handback);
+    }
+  }
+
   public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) {
     try {
-      mirror.getMBeanServerConnection().addNotificationListener(mirror.getRemoteObjectName(), listener, filter,
-                                                                handback);
+      mirror.getMBeanServerConnection()
+          .addNotificationListener(getRemoteObjectName(), new NotificationIntercepter(listener), filter, handback);
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
@@ -68,7 +82,7 @@ public class NotifyingMBeanMirror implements MBeanMirror, NotificationEmitter {
 
   public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
     try {
-      mirror.getMBeanServerConnection().removeNotificationListener(mirror.getRemoteObjectName(), listener);
+      mirror.getMBeanServerConnection().removeNotificationListener(getRemoteObjectName(), listener);
     } catch (RuntimeException e) {
       throw e;
     } catch (ListenerNotFoundException e) {
@@ -81,8 +95,7 @@ public class NotifyingMBeanMirror implements MBeanMirror, NotificationEmitter {
   public void removeNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback)
       throws ListenerNotFoundException {
     try {
-      mirror.getMBeanServerConnection().removeNotificationListener(mirror.getRemoteObjectName(), listener, filter,
-                                                                   handback);
+      mirror.getMBeanServerConnection().removeNotificationListener(getRemoteObjectName(), listener, filter, handback);
     } catch (RuntimeException e) {
       throw e;
     } catch (ListenerNotFoundException e) {
@@ -102,5 +115,9 @@ public class NotifyingMBeanMirror implements MBeanMirror, NotificationEmitter {
 
   public ObjectName getRemoteObjectName() {
     return mirror.getRemoteObjectName();
+  }
+
+  public ObjectName getLocalObjectName() {
+    return mirror.getLocalObjectName();
   }
 }

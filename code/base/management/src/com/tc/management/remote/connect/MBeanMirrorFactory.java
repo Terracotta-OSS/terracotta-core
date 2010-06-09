@@ -21,9 +21,9 @@ public class MBeanMirrorFactory {
     // there are no instances of this class
   }
 
-  public static MBeanMirror newMBeanMirror(MBeanServerConnection mbsc, ObjectName objectName) throws IOException,
-      InstanceNotFoundException, IntrospectionException {
-    MBeanMirror mirror = new PlainMBeanMirror(mbsc, objectName);
+  public static MBeanMirror newMBeanMirror(MBeanServerConnection mbsc, ObjectName objectName, ObjectName localObjectName)
+      throws IOException, InstanceNotFoundException, IntrospectionException {
+    MBeanMirror mirror = new PlainMBeanMirror(mbsc, objectName, localObjectName);
     if (mbsc.isInstanceOf(objectName, NotificationBroadcaster.class.getName())) mirror = new NotifyingMBeanMirror(
                                                                                                                   mirror);
     return mirror;
