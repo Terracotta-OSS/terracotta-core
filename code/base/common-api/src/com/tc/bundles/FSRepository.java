@@ -8,6 +8,7 @@ import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.knopflerfish.framework.VersionRange;
 
 import com.tc.logging.TCLogger;
 
@@ -17,6 +18,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FSRepository implements Repository {
 
@@ -31,9 +34,45 @@ public class FSRepository implements Repository {
   public Collection<URL> search(String groupId, String name, String version) {
     Collection<URL> paths = new ArrayList<URL>();
     String root = ResolverUtils.canonicalize(repoFile);
-    addIfValid(paths, OSGiToMaven.makeBundlePathname(root, groupId, name, version));
-    addIfValid(paths, OSGiToMaven.makeFlatBundlePathname(root, name, version, false));
+
+    VersionRange range = new VersionRange(version.replace('-', '.'));
+
+    for (File dir : getDirs(new File(OSGiToMaven.makeBundlePathnamePrefix(root, groupId, name)))) {
+      final Version ver;
+      try {
+        ver = Version.parse(dir.getName());
+      } catch (Exception e) {
+        logger.warn("Skipping " + dir.getAbsolutePath() + " in search", e);
+        continue;
+      }
+
+      if (range.withinRange(ver)) {
+        addIfValid(paths, OSGiToMaven.makeBundlePathname(root, groupId, name, dir.getName()));
+      }
+    }
+
+    // Allow for flat path modules layout
+    // NOTE: version range checking not done here (it should happen in the caller)
+    for (File file : new File(root).listFiles()) {
+      if (file.getName().startsWith(name)) {
+        addIfValid(paths, file.getAbsolutePath());
+      }
+    }
+
     return paths;
+  }
+
+  private Set<File> getDirs(File root) {
+    if (!root.isDirectory()) { return Collections.emptySet(); }
+
+    Set<File> rv = new HashSet<File>();
+    for (File dirEntry : root.listFiles()) {
+      if (dirEntry.isDirectory()) {
+        rv.add(dirEntry);
+      }
+    }
+
+    return rv;
   }
 
   private void addIfValid(Collection<URL> paths, String bundle) {

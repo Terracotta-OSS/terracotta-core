@@ -65,10 +65,10 @@ if not %errorlevel% == 0  (
   exit /b 1
 )
 
-rem packaging terracotta-express-runtime
-xcopy /y /q %tc_install_dir%\common\terracotta-express-runtime*.jar target\WEB-INF\lib 1> NUL
+rem packaging terracotta-toolkit-runtime
+xcopy /y /q %tc_install_dir%\common\terracotta-toolkit-*-runtime*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
-  echo Couldn't package terracotta-express-runtime. Do you have a complete kit?
+  echo Couldn't package terracotta-toolkit-runtime. Do you have a complete kit?
   exit /b 1
 )
 

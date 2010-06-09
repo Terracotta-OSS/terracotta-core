@@ -56,7 +56,7 @@
 
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-express-runtime</artifactId>
+      <artifactId>terracotta-toolkit-1.0-runtime</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>      
   </dependencies>
