@@ -15,6 +15,7 @@ import com.tc.net.protocol.GenericProtocolAdaptor;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -134,6 +135,7 @@ public class VerifierClient implements Runnable {
         public void run() {
           synchronized (sentCallbacks) {
             ((SetOnceFlag) sentCallbacks.get(msg)).set();
+            sentCallbacks.notify();
           }
         }
       });
@@ -157,7 +159,17 @@ public class VerifierClient implements Runnable {
     synchronized (sentCallbacks) {
       for (final Iterator iter = sentCallbacks.values().iterator(); iter.hasNext();) {
         SetOnceFlag sent = (SetOnceFlag) iter.next();
-        Assert.eval(sent.isSet());
+        int count = 0;
+        while (!sent.isSet()) {
+          count++;
+          System.out.println("XXX waiting for sent callback to be set " + iter);
+          if (count % 36 == 0) {
+            System.out.println("thread dump :" + ThreadDumpUtil.getThreadDump());
+            Assert.eval("XXX One of the sentCallback not set for long time", false);
+          }
+          ThreadUtil.reallySleep(5000);
+          sentCallbacks.wait();
+        }
         iter.remove();
       }
     }
