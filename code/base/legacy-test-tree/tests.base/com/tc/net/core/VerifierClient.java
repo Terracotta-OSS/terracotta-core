@@ -167,7 +167,6 @@ public class VerifierClient implements Runnable {
             System.out.println("thread dump :" + ThreadDumpUtil.getThreadDump());
             Assert.eval("XXX One of the sentCallback not set for long time", false);
           }
-          ThreadUtil.reallySleep(5000);
           sentCallbacks.wait();
         }
         iter.remove();
