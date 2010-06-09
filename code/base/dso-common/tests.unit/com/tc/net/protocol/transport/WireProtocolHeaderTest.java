@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.transport;
 
@@ -20,21 +21,21 @@ import junit.framework.TestCase;
 public class WireProtocolHeaderTest extends TestCase {
 
   private static byte[] goodHeader = { // make formatter pretty
-                                   (byte) 0x17, // version == 1, length = 28
+                                   (byte) 0x28, // version == 2, length = 32
                                    (byte) 2, // TOS == 2
                                    (byte) 3, // TTL == 3
-                                   (byte) 1, // Protocol == 1
+                                   (byte) 5, // Protocol == 5
                                    (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, // Magic num
                                    (byte) 0, (byte) 0, (byte) 0, (byte) 0xFF, // totalLen == 255
                                    (byte) 0, (byte) 0, (byte) 0, (byte) 0, // adler initially zero
                                    (byte) 0xFF, (byte) 1, (byte) 0xFF, (byte) 1, // source addr
                                    (byte) 1, (byte) 0xFF, (byte) 1, (byte) 0xFF, // dest addr
                                    (byte) 0xAA, (byte) 0x55, (byte) 0x55, (byte) 0xAA, // src/dest ports
+                                   (byte) 0x00, (byte) 0x05, (byte) 0xFF, (byte) 0xFF, // message count=5 and fill
                                    };
 
   static {
-    //IOFlavor.forceJDK13();
-
+    // IOFlavor.forceJDK13();
     Adler32 adler = new Adler32();
     adler.update(goodHeader);
     System.arraycopy(Conversion.uint2bytes(adler.getValue()), 0, goodHeader, 12, 4);
@@ -74,8 +75,8 @@ public class WireProtocolHeaderTest extends TestCase {
     header.setVersion((byte) 15);
     assertTrue(15 == header.getVersion());
 
-    header.setVersion(WireProtocolHeader.VERSION_1);
-    assertTrue(WireProtocolHeader.VERSION_1 == header.getVersion());
+    header.setVersion(WireProtocolHeader.VERSION_2);
+    assertTrue(WireProtocolHeader.VERSION_2 == header.getVersion());
 
     boolean exception = false;
 
@@ -115,19 +116,19 @@ public class WireProtocolHeaderTest extends TestCase {
 
     assertTrue(header.isChecksumValid());
 
-    assertTrue(header.getVersion() == 1);
-    assertTrue(header.getHeaderLength() == 7);
+    assertTrue(header.getVersion() == WireProtocolHeader.VERSION_2);
+    assertTrue(header.getHeaderLength() == 8);
     assertTrue(header.getTypeOfService() == 2);
     assertTrue(header.getTimeToLive() == 3);
 
     assertTrue(header.getTotalPacketLength() == 255);
-    assertTrue(header.getChecksum() == 1995114947);
+    assertTrue(header.getChecksum() == 2744585179L);
     assertTrue(Arrays.equals(header.getSourceAddress(), new byte[] { (byte) 0xFF, (byte) 1, (byte) 0xFF, (byte) 1 }));
     assertTrue(Arrays.equals(header.getDestinationAddress(),
                              new byte[] { (byte) 1, (byte) 0xFF, (byte) 1, (byte) 0xFF }));
     assertTrue(header.getSourcePort() == 43605);
     assertTrue(header.getDestinationPort() == 21930);
-
+    assertTrue(header.getMessageCount() == 5);
     assertTrue(header.getOptions().length == 0);
 
     try {

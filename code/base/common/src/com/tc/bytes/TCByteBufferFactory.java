@@ -155,11 +155,7 @@ public class TCByteBufferFactory {
 
     if (length == 0) { return EMPTY_BB_ARRAY; }
 
-    int numBuffers = length / fixedBufferSize;
-    if ((length % fixedBufferSize) != 0) {
-      numBuffers++;
-    }
-
+    int numBuffers = getBufferCountNeededForMessageSize(length);
     TCByteBuffer rv[] = new TCByteBuffer[numBuffers];
 
     if (disablePooling) {
@@ -179,6 +175,18 @@ public class TCByteBufferFactory {
     // ensureSpace(rv, length);
 
     return rv;
+  }
+
+  private static int getBufferCountNeededForMessageSize(final int length) {
+    int numBuffers = length / fixedBufferSize;
+    if ((length % fixedBufferSize) != 0) {
+      numBuffers++;
+    }
+    return numBuffers;
+  }
+
+  public static int getTotalBufferSizeNeededForMessageSize(final int length) {
+    return (getBufferCountNeededForMessageSize(length) * fixedBufferSize);
   }
 
   private static TCByteBuffer getFromPool(boolean direct) {

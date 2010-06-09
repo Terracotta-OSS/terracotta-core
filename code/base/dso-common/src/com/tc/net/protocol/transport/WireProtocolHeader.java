@@ -9,15 +9,16 @@ import com.tc.net.protocol.AbstractTCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.delivery.OOOProtocolMessage;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 /**
  * This class models the header portion of a TC wire protocol message. NOTE: This class makes no attempt to be thread
  * safe! All concurrent access must be syncronized
- *
+ * 
  * <pre>
  *        0                   1                   2                   3
- *        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *        0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |Version|   HL  |Type of Service|  Time to Live |    Protocol   |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -33,35 +34,40 @@ import com.tc.util.Conversion;
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |          Source Port          |      Destination Port         |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *        |          Message Count        |          Padding              |
+ *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *        |     Options                                |    Padding       |
  *        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * </pre>
- *
+ * 
  * @author teck
  */
 
-public class WireProtocolHeader extends AbstractTCNetworkHeader {
+public class WireProtocolHeader extends AbstractTCNetworkHeader implements Cloneable {
   public static final byte    VERSION_1                    = 1;
-  public static final byte[]  VALID_VERSIONS               = new byte[] { VERSION_1 };
+  public static final byte    VERSION_2                    = 2;
+  public static final byte[]  VALID_VERSIONS               = new byte[] { VERSION_1, VERSION_2 };
 
   public static final short   DEFAULT_TTL                  = 64;
+  public static final int     MAX_MESSAGE_COUNT            = 0xFFFF;
 
   public static final short   PROTOCOL_UNKNOWN             = 0;
   public static final short   PROTOCOL_TCM                 = 1;
   public static final short   PROTOCOL_TRANSPORT_HANDSHAKE = 2;
   public static final short   PROTOCOL_OOOP                = 3;
   public static final short   PROTOCOL_HEALTHCHECK_PROBES  = 4;
+  public static final short   PROTOCOL_MSGGROUP            = 5;
 
   private static final int    MAGIC_NUM                    = 0xAAAAAAAA;
 
   public static final short[] VALID_PROTOCOLS              = new short[] { PROTOCOL_TCM, PROTOCOL_TRANSPORT_HANDSHAKE,
-      PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES          };
+      PROTOCOL_OOOP, PROTOCOL_HEALTHCHECK_PROBES, PROTOCOL_MSGGROUP };
 
   // 15 32-bit words max
   static final short          MAX_LENGTH                   = 15 * 4;
 
-  // 7 32-bit words min
-  static final short          MIN_LENGTH                   = 7 * 4;
+  // 8 32-bit words min
+  static final short          MIN_LENGTH                   = 8 * 4;
 
   public static short getProtocolForMessageClass(TCNetworkMessage msg) {
     // TODO: is there a better way to do this (ie. not using instanceof)?
@@ -69,14 +75,14 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
       return PROTOCOL_TCM;
     } else if (msg instanceof OOOProtocolMessage) { return PROTOCOL_OOOP; }
 
-    throw new AssertionError("Unknown protocol");
+    return PROTOCOL_UNKNOWN;
   }
 
   public WireProtocolHeader() {
     super(MIN_LENGTH, MAX_LENGTH);
 
     setMagicNum(MAGIC_NUM);
-    setVersion(VERSION_1);
+    setVersion(VERSION_2);
     setHeaderLength((byte) (MIN_LENGTH / 4));
     setTimeToLive(DEFAULT_TTL);
     setTypeOfService(TypeOfService.DEFAULT_TOS.getByteValue());
@@ -132,6 +138,15 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
 
   public void setDestinationPort(int dstPort) {
     data.putUshort(26, dstPort);
+  }
+
+  public void setMessageCount(int count) {
+    Assert.eval(count <= MAX_MESSAGE_COUNT);
+    data.putUshort(28, count);
+  }
+
+  public int getMessageCount() {
+    return data.getUshort(28);
   }
 
   public int getMagicNum() {
@@ -296,6 +311,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
     buf.append(", Destination Port: ").append(getDestinationPort());
     buf.append("\n");
 
+    buf.append("Total Msg Count: " + getMessageCount());
+    buf.append("\n");
+
     String errMsg = "no message";
     boolean valid = true;
     try {
@@ -326,6 +344,9 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
       case PROTOCOL_TRANSPORT_HANDSHAKE: {
         return "TRANSPORT HANDSHAKE";
       }
+      case PROTOCOL_MSGGROUP: {
+        return "TRANSPORT MSGGROUP";
+      }
       default: {
         return "UNKNOWN (" + protocol + ")";
       }
@@ -349,4 +370,29 @@ public class WireProtocolHeader extends AbstractTCNetworkHeader {
     return proto == PROTOCOL_TRANSPORT_HANDSHAKE || proto == PROTOCOL_HEALTHCHECK_PROBES;
 
   }
+
+  public boolean isMessagesGrouped() {
+    return PROTOCOL_MSGGROUP == getProtocol();
+  }
+
+  @Override
+  protected Object clone() {
+    WireProtocolHeader rv = new WireProtocolHeader();
+    rv.setVersion(this.getVersion());
+    rv.setHeaderLength(this.getHeaderLength());
+    rv.setTypeOfService(this.getTypeOfService());
+    rv.setTimeToLive(this.getTimeToLive());
+    rv.setProtocol(this.getProtocol());
+
+    rv.setMagicNum(this.getMagicNum());
+    rv.setTotalPacketLength(this.getTotalPacketLength());
+    rv.computeChecksum();
+    rv.setSourceAddress(this.getSourceAddress());
+    rv.setDestinationAddress(this.getDestinationAddress());
+    rv.setSourcePort(this.getSourcePort());
+    rv.setDestinationPort(this.getDestinationPort());
+    rv.setMessageCount(this.getMessageCount());
+    return rv;
+  }
+
 }

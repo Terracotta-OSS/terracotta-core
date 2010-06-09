@@ -184,30 +184,6 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   // Do not override this method. Not a final method, as a test class is deriving it
   public void sendToConnection(TCNetworkMessage message) {
     if (message == null) throw new AssertionError("Attempt to send a null message.");
-    if (!(message instanceof WireProtocolMessage)) {
-      final TCNetworkMessage payload = message;
-
-      message = WireProtocolMessageImpl.wrapMessage(message, connection);
-      Assert.eval(message.getSentCallback() == null);
-
-      final Runnable callback = payload.getSentCallback();
-      if (callback != null) {
-        message.setSentCallback(new Runnable() {
-          public void run() {
-            callback.run();
-          }
-        });
-      }
-    }
-
-    WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
-
-    hdr.setSourceAddress(getSourceAddress());
-    hdr.setSourcePort(getSourcePort());
-    hdr.setDestinationAddress(getDestinationAddress());
-    hdr.setDestinationPort(getDestinationPort());
-    hdr.computeChecksum();
-
     connection.putMessage(message);
   }
 

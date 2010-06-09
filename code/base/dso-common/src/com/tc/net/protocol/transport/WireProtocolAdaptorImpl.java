@@ -13,6 +13,9 @@ import com.tc.net.protocol.AbstractTCProtocolAdaptor;
 import com.tc.net.protocol.TCNetworkHeader;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolException;
+import com.tc.util.Assert;
+
+import java.util.Iterator;
 
 /**
  * Connection adaptor to parse wire protocol messages
@@ -21,7 +24,6 @@ import com.tc.net.protocol.TCProtocolException;
  */
 public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implements WireProtocolAdaptor {
   private static final TCLogger         logger = TCLogging.getLogger(WireProtocolAdaptorImpl.class);
-
   private final WireProtocolMessageSink sink;
 
   protected WireProtocolAdaptorImpl(WireProtocolMessageSink sink) {
@@ -37,7 +39,20 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
       if (logger.isDebugEnabled()) {
         logger.debug("\nRECEIVE\n" + msg.toString());
       }
-      sink.putMessage(msg);
+      if (msg.getWireProtocolHeader().isMessagesGrouped()) {
+        WireProtocolGroupMessage wpmg = (WireProtocolGroupMessage) msg;
+        int msgCount = wpmg.getWireProtocolHeader().getMessageCount();
+        Assert.eval(msgCount > 1);
+
+        for (Iterator i = wpmg.getMessageIterator(); i.hasNext();) {
+          WireProtocolMessage wpm = (WireProtocolMessage) i.next();
+          sink.putMessage(wpm);
+        }
+        msg.getWireProtocolHeader().recycle();
+        // Individual messages are recycled on top layers only.
+      } else {
+        sink.putMessage(msg);
+      }
     }
     return;
   }
@@ -60,7 +75,11 @@ public class WireProtocolAdaptorImpl extends AbstractTCProtocolAdaptor implement
     if (wph.isHandshakeOrHealthCheckMessage()) {
       rv = new TransportMessageImpl(source, wph, data);
     } else {
-      rv = new WireProtocolMessageImpl(source, wph, data);
+      if (wph.getMessageCount() == 1) {
+        rv = new WireProtocolMessageImpl(source, wph, data);
+      } else {
+        rv = new WireProtocolGroupMessageImpl(source, wph, data);
+      }
     }
 
     return rv;
