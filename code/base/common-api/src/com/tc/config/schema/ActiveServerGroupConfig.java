@@ -11,7 +11,7 @@ public interface ActiveServerGroupConfig extends NewConfig {
 
   boolean isMember(String l2Name);
 
-  NewHaConfig getHa();
+  NewHaConfig getHaHolder();
 
   GroupID getGroupId();
   

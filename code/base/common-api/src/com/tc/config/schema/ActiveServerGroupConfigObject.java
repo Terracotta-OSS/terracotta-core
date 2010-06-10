@@ -51,7 +51,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     this.groupId = groupId;
   }
 
-  public NewHaConfig getHa() {
+  public NewHaConfig getHaHolder() {
     return this.haConfig;
   }
   

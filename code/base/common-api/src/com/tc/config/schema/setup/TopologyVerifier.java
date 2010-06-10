@@ -9,6 +9,7 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.server.ServerConnectionValidator;
+import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -143,7 +144,9 @@ public class TopologyVerifier {
       for (String member : newGroupInfo.getMembers().getMemberArray()) {
         ActiveServerGroupConfig oldAsgc = this.oldGroupsInfo.getActiveServerGroupForL2(member);
         if (oldAsgc != null) {
-          if (!newGroupInfo.getHa().getMode().equals(oldAsgc.getHa().getHa().getMode())) {
+          Ha newHa = newGroupInfo.getHa();
+          Ha oldHa = oldAsgc.getHaHolder().getHa();
+          if (!oldHa.getMode().equals(newHa.getMode())) {
             logger.warn("The mirror group " + groupName + " High Availability mode has changed.");
             return false;
           }

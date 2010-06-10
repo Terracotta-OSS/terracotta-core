@@ -31,7 +31,7 @@ public class ServerGroup {
   public ServerGroup(final ActiveServerGroupConfig group) {
     this.groupId = group.getGroupId();
     this.members = group.getMembers().getMemberArray();
-    this.haMode = group.getHa();
+    this.haMode = group.getHaHolder();
     this.nodes = new ConcurrentHashMap();
   }
 

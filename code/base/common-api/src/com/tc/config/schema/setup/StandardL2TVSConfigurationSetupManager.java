@@ -281,7 +281,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
       ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
       if (groupConfig != null) {
-        newHaConfig = groupConfig.getHa();
+        newHaConfig = groupConfig.getHaHolder();
       }
     }
     return newHaConfig;
@@ -529,7 +529,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
     for (ActiveServerGroupConfig element : groupArray) {
-      boolean isNwAP = element.getHa().isNetworkedActivePassive();
+      boolean isNwAP = element.getHaHolder().isNetworkedActivePassive();
       String[] members = element.getMembers().getMemberArray();
       for (String member : members) {
         serversToMode.put(member, isNwAP);
@@ -585,7 +585,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     int diskbasedHa = 0;
     ActiveServerGroupConfig[] asgcArray = activeServerGroupsConfig.getActiveServerGroupArray();
     for (ActiveServerGroupConfig asgc : asgcArray) {
-      if (asgc.getHa().isNetworkedActivePassive()) {
+      if (asgc.getHaHolder().isNetworkedActivePassive()) {
         ++networkedHa;
       } else {
         ++diskbasedHa;
