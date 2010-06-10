@@ -13,6 +13,7 @@ public class CachedItem {
   private final LockID            lockID;
   private final Object            key;
   private volatile Object         value;
+  private volatile boolean        accessed = true;
   private CachedItem              next;
 
   public CachedItem(final ConcurrentHashMap cache, final LockID lockID, final Object key, final Object value) {
@@ -35,10 +36,12 @@ public class CachedItem {
   }
 
   public Object getValue() {
+    this.accessed = true;
     return this.value;
   }
 
   public void clear() {
+    this.accessed = true;
     this.value = null;
   }
 
@@ -52,5 +55,15 @@ public class CachedItem {
 
   public void setNext(final CachedItem next) {
     this.next = next;
+  }
+
+  public boolean getAndClearAccessed() {
+    final boolean isAccessed = this.accessed;
+    this.accessed = false;
+    return isAccessed;
+  }
+
+  public void setAccessed() {
+    this.accessed = true;
   }
 }

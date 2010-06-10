@@ -18,48 +18,52 @@ import com.tc.object.session.SessionManager;
  * @author steve
  */
 public class LockResponseHandler extends AbstractEventHandler {
-  private static final TCLogger logger = TCLogging.getLogger(LockResponseHandler.class);
-  private com.tc.object.locks.ClientLockManager     lockManager;
-  private final SessionManager  sessionManager;
+  private static final TCLogger                 logger = TCLogging.getLogger(LockResponseHandler.class);
+  private com.tc.object.locks.ClientLockManager lockManager;
+  private final SessionManager                  sessionManager;
 
-  public LockResponseHandler(SessionManager sessionManager) {
+  public LockResponseHandler(final SessionManager sessionManager) {
     this.sessionManager = sessionManager;
   }
 
-  public void handleEvent(EventContext context) {
+  @Override
+  public void handleEvent(final EventContext context) {
     final LockResponseMessage msg = (LockResponseMessage) context;
     final SessionID sessionID = msg.getLocalSessionID();
-    if (!sessionManager.isCurrentSession(msg.getSourceNodeID(), sessionID)) {
-      logger.warn("Ignoring " + msg + " from a previous session:" + sessionID + ", " + sessionManager);
+    if (!this.sessionManager.isCurrentSession(msg.getSourceNodeID(), sessionID)) {
+      logger.warn("Ignoring " + msg + " from a previous session:" + sessionID + ", " + this.sessionManager);
       return;
     }
 
     switch (msg.getResponseType()) {
       case AWARD:
-        lockManager.award(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
+        this.lockManager.award(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg
+            .getLockLevel());
         return;
       case RECALL:
-        lockManager.recall(msg.getLockID(), msg.getLockLevel(), -1);
+        this.lockManager.recall(msg.getLockID(), msg.getLockLevel(), -1);
         return;
       case RECALL_WITH_TIMEOUT:
-        lockManager.recall(msg.getLockID(), msg.getLockLevel(), msg.getAwardLeaseTime());
+        this.lockManager.recall(msg.getLockID(), msg.getLockLevel(), msg.getAwardLeaseTime());
         return;
       case REFUSE:
-        lockManager.refuse(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg.getLockLevel());
+        this.lockManager.refuse(msg.getSourceNodeID(), msg.getLocalSessionID(), msg.getLockID(), msg.getThreadID(), msg
+            .getLockLevel());
         return;
       case WAIT_TIMEOUT:
-        lockManager.notified(msg.getLockID(), msg.getThreadID());
+        this.lockManager.notified(msg.getLockID(), msg.getThreadID());
         return;
       case INFO:
-        lockManager.info(msg.getLockID(), msg.getThreadID(), msg.getContexts());
+        this.lockManager.info(msg.getLockID(), msg.getThreadID(), msg.getContexts());
         return;
     }
     logger.error("Unknown lock response message: " + msg);
   }
 
-  public void initialize(ConfigurationContext context) {
+  @Override
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    ClientConfigurationContext ccc = (ClientConfigurationContext) context;
+    final ClientConfigurationContext ccc = (ClientConfigurationContext) context;
     this.lockManager = ccc.getLockManager();
   }
 

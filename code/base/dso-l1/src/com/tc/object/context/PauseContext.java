@@ -12,17 +12,17 @@ public class PauseContext implements EventContext {
   private final boolean isPause;
   private final NodeID  remoteNode;
 
-  public PauseContext(boolean isPause, NodeID remoteNode) {
+  public PauseContext(final boolean isPause, final NodeID remoteNode) {
     this.isPause = isPause;
     this.remoteNode = remoteNode;
   }
 
   public boolean getIsPause() {
-    return isPause;
+    return this.isPause;
   }
 
   public NodeID getRemoteNode() {
-    return remoteNode;
+    return this.remoteNode;
   }
 
 }

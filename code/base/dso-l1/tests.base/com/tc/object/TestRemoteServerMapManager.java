@@ -11,6 +11,7 @@ import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class TestRemoteServerMapManager implements RemoteServerMapManager {
 
@@ -61,4 +62,7 @@ public class TestRemoteServerMapManager implements RemoteServerMapManager {
     throw new ImplementMe();
   }
 
+  public void clearCachedItemsForLocks(final Set<LockID> toEvict) {
+    throw new ImplementMe();
+  }
 }

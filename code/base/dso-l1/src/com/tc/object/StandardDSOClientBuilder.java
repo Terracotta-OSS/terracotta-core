@@ -14,7 +14,6 @@ import com.tc.management.TCClient;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
-import com.tc.net.NodeID;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
@@ -26,7 +25,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.cache.CachedItem;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.MBeanSpec;
@@ -45,19 +43,16 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.ClientLockManagerConfig;
 import com.tc.object.locks.ClientLockManagerImpl;
-import com.tc.object.locks.LockID;
 import com.tc.object.locks.RemoteLockManager;
 import com.tc.object.locks.RemoteLockManagerImpl;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLogger;
-import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
-import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.RemoteTransactionManager;
@@ -254,71 +249,21 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                             distributedObjectClient, mBeanSpecs);
   }
 
-  public void registerForOperatorEvents(TCLogger dsoLogger, L1Management management) {
+  public void registerForOperatorEvents(final TCLogger dsoLogger, final L1Management management) {
     // NOP
   }
 
   public TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
-                                             final DNAEncoding dnaEncoding,
-                                             final Manager manager,
+                                             final DNAEncoding dnaEncoding, final Manager manager,
                                              final RemoteServerMapManager remoteServerMapManager) {
     return new TCClassFactoryImpl(new TCFieldFactory(config), config, classProvider, dnaEncoding);
   }
 
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                              final DSOClientMessageChannel dsoChannel,
-                                                             final SessionManager sessionManager) {
-    return new RemoteServerMapManager() {
-
-      public void unpause(final NodeID remoteNode, final int disconnected) {
-        //
-      }
-
-      public void shutdown() {
-        //
-      }
-
-      public void pause(final NodeID remoteNode, final int disconnected) {
-        //
-      }
-
-      public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
-                                      final ClientHandshakeMessage handshakeMessage) {
-        //
-      }
-
-      public void removeCachedItemForLock(final LockID lockID, final CachedItem item) {
-        //
-      }
-
-      public int getSize(final ObjectID mapID) {
-        return -1;
-      }
-
-      public Object getMappingForKey(final ObjectID oid, final Object portableKey) {
-        return null;
-      }
-
-      public void flush(final LockID lockID) {
-        //
-      }
-
-      public void addResponseForKeyValueMapping(final SessionID localSessionID, final ObjectID mapID,
-                                                final Collection<ServerMapGetValueResponse> responses,
-                                                final NodeID nodeID) {
-        //
-      }
-
-      public void addResponseForGetSize(final SessionID localSessionID, final ObjectID mapID,
-                                        final ServerMapRequestID requestID, final Integer size,
-                                        final NodeID sourceNodeID) {
-        //
-      }
-
-      public void addCachedItemForLock(final LockID lockID, final CachedItem item) {
-        //
-      }
-    };
+                                                             final SessionManager sessionManager,
+                                                             final Sink recallLockSink) {
+    return new NullRemoteServerMapManager();
   }
 
 }

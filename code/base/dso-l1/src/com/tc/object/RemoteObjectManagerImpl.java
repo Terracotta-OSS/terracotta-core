@@ -271,10 +271,10 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private void sendRequest(final ObjectLookupState lookupState) {
     final ObjectLookupState old = this.objectLookupStates.put(lookupState.getLookupID(), lookupState);
     Assert.assertNull(old);
-    int size = this.objectLookupStates.size();
+    final int size = this.objectLookupStates.size();
     if (size % 5000 == 4999) {
-      logger.warn("Too many pending requests in the system : objectLookup states size : " + size + " dna Cache size : "
-                  + dnaCache.size());
+      this.logger.warn("Too many pending requests in the system : objectLookup states size : " + size
+                       + " dna Cache size : " + this.dnaCache.size());
     }
     if (size <= MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY) {
       sendRequestNow(lookupState);
@@ -457,7 +457,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private void basicAddObject(final DNA dna) {
     final ObjectID id = dna.getObjectID();
     this.dnaCache.put(id, dna);
-    ObjectLookupState ols = this.objectLookupStates.get(id);
+    final ObjectLookupState ols = this.objectLookupStates.get(id);
     if (ols != null && ols.isPrefetch()) {
       // Prefetched requests are removed from the lookupState map so it can be removed from the cache if it is not used
       // within a certain time.
@@ -611,14 +611,14 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
   }
 
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.duplicateAndIndent().indent().print(getClass().getSimpleName()).flush();
     out.duplicateAndIndent().indent().print(this.groupID).flush();
     out.duplicateAndIndent().indent().print("dnaCache:").visit(this.dnaCache).flush();
-    StringBuilder strBuffer = new StringBuilder();
+    final StringBuilder strBuffer = new StringBuilder();
     out.duplicateAndIndent().indent().print("pending objects:").print(strBuffer.toString()).flush();
 
-    //printing this.objectLookupStates.toString() as PrettyPrinter prints the size of the map otherwise
+    // printing this.objectLookupStates.toString() as PrettyPrinter prints the size of the map otherwise
     out.duplicateAndIndent().indent().print("lookupstates:").print(this.objectLookupStates.toString()).flush();
     return out;
   }

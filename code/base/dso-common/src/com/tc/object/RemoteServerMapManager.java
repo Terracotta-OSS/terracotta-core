@@ -10,6 +10,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
@@ -28,4 +29,6 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
   public void removeCachedItemForLock(LockID lockID, CachedItem item);
 
   public void flush(LockID lockID);
+
+  public void clearCachedItemsForLocks(Set<LockID> toEvict);
 }
