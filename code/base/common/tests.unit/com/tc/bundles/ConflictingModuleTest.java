@@ -31,8 +31,8 @@ public class ConflictingModuleTest extends TCTestCase {
 
     File tempDir = getTempDirectory();
 
-    makeJar(tempDir, "tim-A", "1.0.0", "org.terracotta.modules.tim-C;bundle-version:=1.0.0");
-    makeJar(tempDir, "tim-B", "1.0.0", "org.terracotta.modules.tim-C;bundle-version:=2.0.0");
+    makeJar(tempDir, "tim-A", "1.0.0", "org.terracotta.modules.tim-C;bundle-version:=[1.0.0,1.0.0]");
+    makeJar(tempDir, "tim-B", "1.0.0", "org.terracotta.modules.tim-C;bundle-version:=[2.0.0,2.0.0]");
     makeJar(tempDir, "tim-C", "1.0.0", null);
     makeJar(tempDir, "tim-C", "2.0.0", null);
 
