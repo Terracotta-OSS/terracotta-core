@@ -3,9 +3,11 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
+
 import java.util.List;
 
 public interface TraversalAction {
 
-  public void visit(List objects);
+  public void visit(List objects, GroupID gid);
 }

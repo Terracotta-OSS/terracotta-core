@@ -6,6 +6,7 @@ package com.tc.object.bytecode;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.ClientObjectManager;
@@ -224,6 +225,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     }
 
     public TCObject lookupOrCreate(final Object obj) {
+      throw new ImplementMe();
+    }
+    
+    public TCObject lookupOrCreate(final Object obj, GroupID gid) {
       throw new ImplementMe();
     }
 

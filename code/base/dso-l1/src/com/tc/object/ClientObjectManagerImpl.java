@@ -12,6 +12,7 @@ import com.tc.logging.ClientIDLogger;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
@@ -295,8 +296,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return this.objectLatchStateMap;
   }
 
-  private TCObject create(final Object pojo, final NonPortableEventContext context) {
-    traverse(pojo, context, new AddManagedObjectAction());
+  private TCObject create(final Object pojo, final NonPortableEventContext context, GroupID gid) {
+    traverse(pojo, context, new AddManagedObjectAction(), gid);
     return basicLookup(pojo);
   }
 
@@ -324,20 +325,25 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public TCObject lookupOrCreate(final Object pojo) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
-    return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo));
+    return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), GroupID.NULL_ID);
+  }
+  
+  public TCObject lookupOrCreate(final Object pojo, GroupID gid) {
+    if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
+    return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), gid);
   }
 
   private TCObject lookupOrCreate(final Object pojo, final NonPortableEventContext context) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
-    return lookupOrCreateIfNecesary(pojo, context);
+    return lookupOrCreateIfNecesary(pojo, context, GroupID.NULL_ID);
   }
 
-  private TCObject lookupOrCreateIfNecesary(final Object pojo, final NonPortableEventContext context) {
+  private TCObject lookupOrCreateIfNecesary(final Object pojo, final NonPortableEventContext context, GroupID gid) {
     Assert.assertNotNull(pojo);
     TCObject obj = basicLookup(pojo);
     if (obj == null || obj.isNew()) {
       executePreCreateMethods(pojo);
-      obj = create(pojo, context);
+      obj = create(pojo, context, gid);
     }
     return obj;
   }
@@ -861,7 +867,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // TODO:: Optimize this, do lazy instantiation
       TCObject root = null;
       if (isLiteralPojo(rootPojo)) {
-        root = basicCreateIfNecessary(rootPojo);
+        root = basicCreateIfNecessary(rootPojo, GroupID.NULL_ID);
       } else {
         root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo));
       }
@@ -932,13 +938,13 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action) {
+  private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action, GroupID gid) {
     // if set this will be final exception thrown
     Throwable exception = null;
 
     final PostCreateMethodGatherer postCreate = (PostCreateMethodGatherer) action;
     try {
-      this.traverser.traverse(root, this.traverseTest, context, action);
+      this.traverser.traverse(root, this.traverseTest, context, action, gid);
     } catch (final Throwable t) {
       exception = t;
     } finally {
@@ -1012,7 +1018,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private class AddManagedObjectAction implements TraversalAction, PostCreateMethodGatherer {
     private final Map<Object, List<Method>> toCall = new IdentityHashMap<Object, List<Method>>();
 
-    public final void visit(final List objects) {
+    public final void visit(final List objects, GroupID gid) {
       for (final Object pojo : objects) {
         final List<Method> postCreateMethods = ClientObjectManagerImpl.this.clazzFactory
             .getOrCreate(pojo.getClass(), ClientObjectManagerImpl.this).getPostCreateMethods();
@@ -1022,7 +1028,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         }
       }
 
-      final List tcObjects = basicCreateIfNecessary(objects);
+      final List tcObjects = basicCreateIfNecessary(objects, gid);
       for (final Iterator i = tcObjects.iterator(); i.hasNext();) {
         ClientObjectManagerImpl.this.txManager.createObject((TCObject) i.next());
       }
@@ -1051,11 +1057,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private TCObject basicCreateIfNecessary(final Object pojo) {
+  private TCObject basicCreateIfNecessary(final Object pojo, GroupID gid) {
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo), pojo, pojo
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
           .getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
@@ -1066,17 +1072,17 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return obj;
   }
 
-  private synchronized List basicCreateIfNecessary(final List pojos) {
+  private synchronized List basicCreateIfNecessary(final List pojos, GroupID gid) {
     waitUntilRunning();
     final List tcObjects = new ArrayList(pojos.size());
     for (final Iterator i = pojos.iterator(); i.hasNext();) {
-      tcObjects.add(basicCreateIfNecessary(i.next()));
+      tcObjects.add(basicCreateIfNecessary(i.next(), gid));
     }
     return tcObjects;
   }
 
-  private ObjectID nextObjectID(final ClientTransaction txn, final Object pojo) {
-    return this.idProvider.next(txn, pojo);
+  private ObjectID nextObjectID(final ClientTransaction txn, final Object pojo, GroupID gid) {
+    return this.idProvider.next(txn, pojo, gid);
   }
 
   public WeakReference createNewPeer(final TCClass clazz, final DNA dna) {

@@ -4,6 +4,7 @@
  */
 package com.tc.object.idprovider.api;
 
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.tx.ClientTransaction;
 
@@ -12,6 +13,6 @@ import com.tc.object.tx.ClientTransaction;
  */
 public interface ObjectIDProvider {
 
-  public ObjectID next(ClientTransaction txn, Object pojo);
+  public ObjectID next(ClientTransaction txn, Object pojo, GroupID gid);
 
 }

@@ -4,6 +4,7 @@
  */
 package com.tc.object.idprovider.impl;
 
+import com.tc.net.GroupID;
 import com.tc.object.ObjectID;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.tx.ClientTransaction;
@@ -17,7 +18,7 @@ public class ObjectIDProviderImpl implements ObjectIDProvider {
     this.sequence = sequence;
   }
 
-  public ObjectID next(ClientTransaction txn, Object pojo) {
+  public ObjectID next(ClientTransaction txn, Object pojo, GroupID gid) {
     return new ObjectID(this.sequence.next());
   }
 }

@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.exception.TCClassNotFoundException;
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.net.GroupID;
 import com.tc.object.appevent.ApplicationEvent;
 import com.tc.object.appevent.ApplicationEventContext;
 import com.tc.object.applicator.ApplicatorObjectManager;
@@ -141,6 +142,15 @@ public interface ClientObjectManager extends ApplicatorObjectManager {
    * @return Managed object, may be new. Should never be null, but might be object representing null TCObject.
    */
   public TCObject lookupOrCreate(Object obj);
+
+  /**
+   * Find the managed object for this instance or create a new one if it does not yet exist.
+   * 
+   * @param obj Instance
+   * @param gid group to which this object should reside
+   * @return Managed object, may be new. Should never be null, but might be object representing null TCObject.
+   */
+  public TCObject lookupOrCreate(Object obj, GroupID gid);
 
   /**
    * Find identifier for existing instance

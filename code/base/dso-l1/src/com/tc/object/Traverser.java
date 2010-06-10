@@ -5,6 +5,7 @@
 package com.tc.object;
 
 import com.tc.exception.TCRuntimeException;
+import com.tc.net.GroupID;
 import com.tc.object.appevent.NonPortableEventContext;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 /**
  * Generic Object traverser. Initial use for this is to add any unmanaged objects to the managed object tree
- *
+ * 
  * @author steve
  */
 public class Traverser {
@@ -66,10 +67,11 @@ public class Traverser {
   }
 
   public void traverse(Object object, TraversalAction action) {
-    traverse(object, NULL_TEST, null, action);
+    traverse(object, NULL_TEST, null, action, GroupID.NULL_ID);
   }
 
-  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx, TraversalAction action) {
+  public void traverse(Object object, TraverseTest traverseTest, NonPortableEventContext ctx, TraversalAction action,
+                       GroupID gid) {
     Map visited = new IdentityHashMap();
     List toAdd = new ArrayList();
 
@@ -90,6 +92,6 @@ public class Traverser {
         // objects are obtained.
       }
     }
-    action.visit(toAdd);
+    action.visit(toAdd, gid);
   }
 }
