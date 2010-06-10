@@ -15,6 +15,7 @@ import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.L2Management;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -169,7 +170,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public void dump() {
-    logger.info(ThreadDumpUtil.getThreadDump());
+    TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
   }
 
   public void initializeContext(ConfigurationContext context) {

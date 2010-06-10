@@ -366,17 +366,7 @@ public class TCLogging {
   }
 
   public static TCLogger getDumpLogger() {
-    TCLoggerImpl loggerTemp = new TCLoggerImpl(DUMP_LOGGER_NAME);
-
-    boolean isDev = developmentConfiguration();
-    
-    if (isDev) {
-      loggerTemp.getLogger().setAdditivity(false);
-      ConsoleAppender consoleAppenderTemp = new ConsoleAppender(new PatternLayout(DUMP_PATTERN));
-      loggerTemp.getLogger().addAppender(consoleAppenderTemp);
-    }
-
-    return loggerTemp;
+    return new TCLoggerImpl(DUMP_LOGGER_NAME);
   }
 
   static {
@@ -414,7 +404,7 @@ public class TCLogging {
 
       boolean isDev = developmentConfiguration();
 
-      consoleAppender = new ConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_ERR);
+      consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_ERR);
 
       if (!isDev) {
         // Only the console logger goes to the console (by default)
