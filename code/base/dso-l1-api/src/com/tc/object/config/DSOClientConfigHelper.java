@@ -302,6 +302,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
    * @return {@code UUID}
    */
   UUID getUUID();
+  
+  String[] getTunneledDomains();
 
   SessionConfiguration getSessionConfiguration(String appName);
 

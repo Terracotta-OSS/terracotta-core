@@ -1381,7 +1381,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public Class getTCPeerClass(Class clazz) {
     if (moduleSpecs != null) {
       for (ModuleSpec moduleSpec : moduleSpecs) {
-        clazz = moduleSpec.getPeerClass(clazz);
+        Class klass = moduleSpec.getPeerClass(clazz);
+        if (klass != null) {
+           return klass;
+        }
       }
     }
     return clazz;
@@ -1520,8 +1523,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (applicatorSpec == null) {
       if (moduleSpecs != null) {
         for (ModuleSpec moduleSpec : moduleSpecs) {
-          Class applicatorClass = moduleSpec.getChangeApplicatorSpec().getChangeApplicator(clazz);
-          if (applicatorClass != null) { return applicatorClass; }
+          if (moduleSpec.getChangeApplicatorSpec() != null) {
+            Class applicatorClass = moduleSpec.getChangeApplicatorSpec().getChangeApplicator(clazz);
+            if (applicatorClass != null) { return applicatorClass; }
+          }
         }
       }
       return null;
@@ -2095,6 +2100,28 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public UUID getUUID() {
     return id;
+  }
+  
+  public String[] getTunneledDomains() {
+    if (null == this.moduleSpecs) {
+      return new String[0];
+    }
+    
+    Set<String> domains = new HashSet<String>();
+    for (ModuleSpec moduleSpec : this.moduleSpecs) {
+      String[] domainsArray = moduleSpec.getTunneledMBeanDomains();
+      if (null == domainsArray) {
+        continue;
+      }
+      
+      for (String domain : domainsArray) {
+        domains.add(domain);
+      }
+    }
+
+    String[] result = new String[domains.size()];
+    domains.toArray(result);
+    return result;
   }
 
   private static class Resource {

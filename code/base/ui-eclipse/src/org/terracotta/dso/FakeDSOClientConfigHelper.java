@@ -492,6 +492,10 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
+  public String[] getTunneledDomains() {
+    return null;
+  }
+
   public SessionConfiguration getSessionConfiguration(final String appName) {
     return null;
   }
@@ -503,5 +507,4 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public L1TVSConfigurationSetupManager reloadServersConfiguration() {
     return null;
   }
-
 }

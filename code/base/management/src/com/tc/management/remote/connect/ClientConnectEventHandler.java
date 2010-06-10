@@ -72,9 +72,11 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   private static final class RemoteRegistrationFilter implements NotificationFilter {
     private static final long serialVersionUID = 6745130208320538044L;
     private final UUID        uuid;
+    private final String[]    tunneledDomains;
 
-    private RemoteRegistrationFilter(UUID uuid) {
+    private RemoteRegistrationFilter(UUID uuid, String[] tunneledDomains) {
       this.uuid = uuid;
+      this.tunneledDomains = tunneledDomains;
     }
 
     public boolean isNotificationEnabled(final Notification notification) {
@@ -83,7 +85,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         if (mbsn.getType().equals(MBeanServerNotification.REGISTRATION_NOTIFICATION)) {
           ObjectName on = mbsn.getMBeanName();
           try {
-            return TerracottaManagement.matchAllTerracottaMBeans(uuid).apply(on);
+            return TerracottaManagement.matchAllTerracottaMBeans(uuid, tunneledDomains).apply(on);
           } catch (Exception e) {
             logger.warn("Unable to filter remote MBean registration", e);
             return false;
@@ -176,21 +178,21 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
 
           statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
 
-          ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, uuid, l1MBeanServerConnection,
-                                                this.l1OperatorEventsLogger);
+          ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, uuid, msg.getTunneledDomains(),
+                                                l1MBeanServerConnection, this.l1OperatorEventsLogger);
 
           // register as a listener before query'ing beans to avoid missing any registrations
           try {
             ObjectName on = new ObjectName("JMImplementation:type=MBeanServerDelegate");
             l1MBeanServerConnection.addNotificationListener(on, new MBeanRegistrationListener(bag),
-                                                            new RemoteRegistrationFilter(uuid), null);
+                                                            new RemoteRegistrationFilter(uuid, msg.getTunneledDomains()), null);
           } catch (Exception e) {
             logger.error("Unable to add listener to remove MBeanServerDelegate, no client MBeans "
                          + " registered after connect-time will be tunneled into the L2", e);
           }
 
           // now that we're listening we can query and let the bean bag deal with the possible concurrency
-          Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans(uuid));
+          Set mBeans = l1MBeanServerConnection.queryNames(null, TerracottaManagement.matchAllTerracottaMBeans(uuid, msg.getTunneledDomains()));
           for (Iterator iter = mBeans.iterator(); iter.hasNext();) {
             ObjectName objName = (ObjectName) iter.next();
             try {
@@ -276,13 +278,15 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
     private final MBeanServerConnection l1Connection;
     private final MessageChannel        channel;
     private final UUID                  id;
+    private final String[]              tunneledDomains;
     private final OperatorEventsLogger  l1OperatorEventsLogger;
 
-    public ClientBeanBag(MBeanServer l2MBeanServer, MessageChannel channel, UUID id,
+    public ClientBeanBag(MBeanServer l2MBeanServer, MessageChannel channel, UUID id, String[] tunneledDomains,
                          MBeanServerConnection l1Connection, OperatorEventsLogger operatorEventsLogger) {
       this.l2MBeanServer = l2MBeanServer;
       this.channel = channel;
       this.id = id;
+      this.tunneledDomains = tunneledDomains;
       this.l1Connection = l1Connection;
       this.l1OperatorEventsLogger = operatorEventsLogger;
     }
@@ -298,7 +302,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
       try {
         ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
 
-        if (TerracottaManagement.matchAllTerracottaMBeans(id).apply(objName)) {
+        if (TerracottaManagement.matchAllTerracottaMBeans(id, tunneledDomains).apply(objName)) {
           if (beanNames.add(modifiedObjName)) {
             try {
               MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);

@@ -34,7 +34,7 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
     final ClientMessageChannelImpl mc = new MockClientMessageChannelForTMC();
     mc.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
 
-    MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, UUID.getUUID());
+    MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, UUID.getUUID(), new String[0]);
     mc.addListener(teh);
 
     /*
@@ -117,8 +117,8 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
   }
 
   private class MockTunnelingEventHandler extends TunnelingEventHandler {
-    public MockTunnelingEventHandler(MessageChannel channel, UUID id) {
-      super(channel, id);
+    public MockTunnelingEventHandler(MessageChannel channel, UUID id, String[] tunneledDomains) {
+      super(channel, id, tunneledDomains);
     }
 
     @Override

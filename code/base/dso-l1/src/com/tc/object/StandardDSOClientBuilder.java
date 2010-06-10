@@ -104,8 +104,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                          connectionPolicy, aConfig);
   }
 
-  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final UUID id) {
-    return new TunnelingEventHandler(ch, id);
+  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final UUID id, final String[] tunneledDomains) {
+    return new TunnelingEventHandler(ch, id, tunneledDomains);
   }
 
   public ClientGlobalTransactionManager createClientGlobalTransactionManager(

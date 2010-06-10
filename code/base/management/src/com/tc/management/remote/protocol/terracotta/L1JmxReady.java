@@ -22,8 +22,10 @@ import java.io.IOException;
  */
 public class L1JmxReady extends DSOMessageBase {
   private static final byte UUID = 1;
+  private static final byte DOMAINS = 2;
 
   private UUID              uuid = null;
+  private String[]          tunneledDomains = null;
 
   public L1JmxReady(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out, MessageChannel channel,
                     TCMessageType type) {
@@ -35,8 +37,9 @@ public class L1JmxReady extends DSOMessageBase {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(UUID theUUID) {
+  public void initialize(UUID theUUID, String[] domains) {
     this.uuid = theUUID;
+    this.tunneledDomains = domains;
   }
 
   public L1JmxReady createResponse() {
@@ -48,6 +51,10 @@ public class L1JmxReady extends DSOMessageBase {
   @Override
   protected void dehydrateValues() {
     putNVPair(UUID, uuid.toString());
+    putNVPair(DOMAINS, tunneledDomains.length);
+    for (String domain : tunneledDomains) {
+      getOutputStream().writeString(domain);
+    }
   }
 
   @Override
@@ -56,6 +63,13 @@ public class L1JmxReady extends DSOMessageBase {
       case UUID:
         uuid = new UUID(getStringValue());
         return true;
+      case DOMAINS:
+        int numberOfDomains = getIntValue();
+        tunneledDomains = new String[numberOfDomains];
+        for (int i = 0; i < numberOfDomains; i++) {
+          tunneledDomains[i] = getInputStream().readString();
+        }
+        return true;
       default:
         return false;
     }
@@ -63,6 +77,10 @@ public class L1JmxReady extends DSOMessageBase {
 
   public UUID getUUID() {
     return this.uuid;
+  }
+  
+  public String[] getTunneledDomains() {
+    return this.tunneledDomains;
   }
 
 }

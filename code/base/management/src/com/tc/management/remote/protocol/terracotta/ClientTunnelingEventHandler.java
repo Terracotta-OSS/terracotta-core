@@ -31,17 +31,19 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     private final MBeanServer                                          mbs;
     private final MessageChannel                                       channel;
     private final UUID                                                 uuid;
+    private final String[]                                             tunneledDomains;
     private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
     private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
     private final boolean                                              isConnectingMsg;
 
-    public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, UUID uuid,
+    public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains,
                                ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
                                ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection,
                                boolean isConnectingMsg) {
       this.mbs = mbs;
       this.channel = channel;
       this.uuid = uuid;
+      this.tunneledDomains = tunneledDomains;
       this.channelIdToJmxConnector = channelIdToJmxConnector;
       this.channelIdToMsgConnection = channelIdToMsgConnection;
       this.isConnectingMsg = isConnectingMsg;
@@ -64,6 +66,10 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     public UUID getUUID() {
       return uuid;
     }
+    
+    public String[] getTunneledDomains() {
+      return tunneledDomains;
+    }
 
     public ConcurrentMap<ChannelID, JMXConnector> getChannelIdToJmxConnector() {
       return channelIdToJmxConnector;
@@ -82,6 +88,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
                                                                                 .getLogger(ClientTunnelingEventHandler.class);
 
   private UUID                                                       uuid;
+  private String[]                                                   tunneledDomains;
   private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
   private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
   private final MBeanServer                                          l2MBeanServer;
@@ -101,6 +108,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     if (context instanceof L1JmxReady) {
       final L1JmxReady readyMessage = (L1JmxReady) context;
       uuid = readyMessage.getUUID();
+      tunneledDomains = readyMessage.getTunneledDomains();
       connectToL1JmxServer(readyMessage.getChannel());
     } else {
       final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
@@ -117,7 +125,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
 
   private void connectToL1JmxServer(final MessageChannel channel) {
     logger.info("L1[" + channel.getChannelID() + "] notified us that their JMX server is now available");
-    EventContext msg = new L1ConnectionMessage(l2MBeanServer, channel, uuid, channelIdToJmxConnector,
+    EventContext msg = new L1ConnectionMessage(l2MBeanServer, channel, uuid, tunneledDomains, channelIdToJmxConnector,
                                                channelIdToMsgConnection, true);
     synchronized (sinkLock) {
       if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
@@ -151,7 +159,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   }
 
   public void channelRemoved(final MessageChannel channel) {
-    EventContext msg = new L1ConnectionMessage(null, channel, uuid, channelIdToJmxConnector, channelIdToMsgConnection,
+    EventContext msg = new L1ConnectionMessage(null, channel, uuid, tunneledDomains, channelIdToJmxConnector, channelIdToMsgConnection,
                                                false);
     synchronized (sinkLock) {
       if (disconnectStageSink == null) { throw new AssertionError("DisconnectStageSink was not set."); }

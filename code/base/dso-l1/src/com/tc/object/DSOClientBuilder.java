@@ -68,7 +68,7 @@ public interface DSOClientBuilder {
                                                     final ConnectionPolicy connectionPolicy, int workerCommThreads,
                                                     final HealthCheckerConfig hcConfig);
 
-  TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, UUID id);
+  TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final UUID id, final String[] tunneledDomains);
 
   ClientGlobalTransactionManager createClientGlobalTransactionManager(
                                                                       final RemoteTransactionManager remoteTxnMgr,

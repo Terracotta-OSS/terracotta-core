@@ -93,8 +93,7 @@ public abstract class TerracottaManagement {
 
   public enum MBeanDomain {
     PUBLIC(MANAGEMENT_RESOURCES.getPublicMBeanDomain()), INTERNAL(MANAGEMENT_RESOURCES.getInternalMBeanDomain()), TIM(
-        MANAGEMENT_RESOURCES.getTimMBeanDomain()), EHCACHE(MANAGEMENT_RESOURCES.getEhCacheMBeanDomain()), EHCACHE_HIBERNATE(
-        MANAGEMENT_RESOURCES.getEhCacheHibernateMBeanDomain()), QUARTZ(MANAGEMENT_RESOURCES.getQuartzMBeanDomain());
+        MANAGEMENT_RESOURCES.getTimMBeanDomain());
 
     private final String value;
 
@@ -192,13 +191,16 @@ public abstract class TerracottaManagement {
     return null;
   }
 
-  public static final QueryExp matchAllTerracottaMBeans(UUID id) {
+  public static final QueryExp matchAllTerracottaMBeans(UUID id, String[] tunneledDomains) {
     try {
-      return Query.or(Query.or(Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
-                                        new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id)), Query
-          .or(new ObjectName(MBeanDomain.EHCACHE + ":*,node=" + id), new ObjectName(MBeanDomain.EHCACHE_HIBERNATE
-                                                                                    + ":*,node=" + id))),
-                      new ObjectName(MBeanDomain.QUARTZ + ":*,node=" + id));
+      QueryExp query = Query.or(new ObjectName(MBeanDomain.PUBLIC + ":*,node=" + id),
+                                new ObjectName(MBeanDomain.INTERNAL + ":*,node=" + id));
+      if (tunneledDomains != null) {
+        for (String tunneledDomain : tunneledDomains) {
+          query = Query.or(query, new ObjectName(tunneledDomain + ":*,node=" + id));
+        }
+      }
+      return query;
     } catch (MalformedObjectNameException e) {
       throw new RuntimeException(e);
     }

@@ -116,7 +116,7 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars) throws ConfigurationSetupException {
+                                                   Map<String, URL> virtualTimJars, Collection<URL> additionalModules) throws ConfigurationSetupException {
     // XXX: refactor this to not duplicate createContext() so much
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
@@ -146,6 +146,13 @@ public class DSOContextImpl implements DSOContext {
     Collection<Repository> repos = new ArrayList<Repository>();
     repos.add(new VirtualTimRepository(virtualTimJars));
     DSOContext context = createContext(configHelper, manager, repos);
+    if (additionalModules != null && !additionalModules.isEmpty()) {
+      try {
+        context.addModules(additionalModules.toArray(new URL[0]));
+      } catch (Exception e) {
+        throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
+      }
+    }
     manager.init();
     return context;
   }

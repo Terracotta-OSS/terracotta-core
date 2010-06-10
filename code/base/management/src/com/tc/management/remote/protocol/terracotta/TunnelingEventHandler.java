@@ -34,6 +34,8 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
   private TunnelingMessageConnection messageConnection;
 
   private final UUID                 uuid;
+  
+  private final String[]             tunneledDomains;
 
   private boolean                    acceptOk;
 
@@ -45,10 +47,11 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
 
   private boolean                    sentReadyMessage;
 
-  public TunnelingEventHandler(final MessageChannel channel, final UUID uuid) {
+  public TunnelingEventHandler(final MessageChannel channel, final UUID uuid, final String[] tunneledDomains) {
     this.channel = channel;
     this.channel.addListener(this);
     this.uuid = uuid;
+    this.tunneledDomains = tunneledDomains;
     acceptOk = false;
     jmxReadyLock = new Object();
     localJmxServerReady = new SetOnceFlag();
@@ -161,7 +164,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
     if (send) {
       logger.info("Client JMX server ready; sending notification to L2 server");
       L1JmxReady readyMessage = (L1JmxReady) channel.createMessage(TCMessageType.CLIENT_JMX_READY_MESSAGE);
-      readyMessage.initialize(uuid);
+      readyMessage.initialize(uuid, tunneledDomains);
       readyMessage.send();
     }
 
