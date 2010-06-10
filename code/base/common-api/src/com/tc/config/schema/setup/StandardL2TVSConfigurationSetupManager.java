@@ -152,14 +152,14 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       throws ConfigurationSetupException {
     MutableBeanRepository changedL2sBeanRepository = new StandardBeanRepository(Servers.class);
 
-    this.configurationCreator.reloadServersConfiguration(changedL2sBeanRepository);
+    this.configurationCreator.reloadServersConfiguration(changedL2sBeanRepository, false);
 
     TopologyVerifier topologyVerifier = new TopologyVerifier(serversBeanRepository(), changedL2sBeanRepository,
                                                              this.activeServerGroupsConfig, serverConnectionValidator);
     TopologyReloadStatus status = topologyVerifier.checkAndValidateConfig();
     if (TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE != status) { return status; }
 
-    this.configurationCreator.reloadServersConfiguration(serversBeanRepository());
+    this.configurationCreator.reloadServersConfiguration(serversBeanRepository(), true);
 
     try {
       this.activeServerGroupsConfig = createActiveServerGroupsConfig();

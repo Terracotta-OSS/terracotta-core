@@ -13,10 +13,13 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
+import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.LockSpec;
@@ -89,6 +92,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected List<DSOClient>               pendingClients;
   protected Exception                     connectException;
   protected TCServerInfoMBean             serverInfoBean;
+  protected EnterpriseTCServerMbean       enterpriseServerBean;
   protected DSOMBean                      dsoBean;
   protected ObjectManagementMonitorMBean  objectManagementMonitorBean;
   protected boolean                       serverDBBackupSupported;
@@ -683,6 +687,18 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     }
     return serverInfoBean;
+  }
+
+  protected synchronized EnterpriseTCServerMbean getEnterpriseServerInfoBean() {
+    if (enterpriseServerBean == null) {
+      ConnectionContext cc = getConnectionContext();
+      if (cc != null) {
+        if (cc.mbsc == null) { return null; }
+        enterpriseServerBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.ENTERPRISE_TC_SERVER,
+                                                                        EnterpriseTCServerMbean.class, false);
+      }
+    }
+    return enterpriseServerBean;
   }
 
   protected synchronized DSOMBean getDSOBean() {
@@ -2179,5 +2195,16 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public void setVerboseGC(boolean verboseGC) {
     getServerInfoBean().setVerboseGC(verboseGC);
+  }
+
+  public TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException {
+    EnterpriseTCServerMbean enterpriseMbean = getEnterpriseServerInfoBean();
+
+    TopologyReloadStatus status = null;
+    if (enterpriseMbean != null) {
+      status = enterpriseMbean.reloadConfiguration();
+    }
+
+    return status;
   }
 }

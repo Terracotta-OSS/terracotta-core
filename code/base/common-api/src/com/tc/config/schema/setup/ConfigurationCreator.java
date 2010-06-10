@@ -44,5 +44,5 @@ public interface ConfigurationCreator {
   
   String describeSources();
 
-  void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository) throws ConfigurationSetupException;
+  void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogConfig) throws ConfigurationSetupException;
 }

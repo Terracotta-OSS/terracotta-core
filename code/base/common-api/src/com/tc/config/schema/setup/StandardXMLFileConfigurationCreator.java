@@ -120,11 +120,24 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     logCopyOfConfig();
   }
 
-  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository) throws ConfigurationSetupException {
+  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig)
+      throws ConfigurationSetupException {
     ConfigurationSource[] sources = getConfigurationSources(this.configurationSpec.getBaseConfigSpec());
-    loadServerConfigDataFromSources(sources, l2sBeanRepository);
+    if (this.configurationSpec.shouldOverrideServerTopology()) {
+      sources = getConfigurationSources(this.configurationSpec.getServerTopologyOverrideConfigSpec());
+      ConfigDataSourceStream serverOverrideConfigDataSourceStream = loadServerConfigDataFromSources(sources,
+                                                                                                    l2sBeanRepository);
+      serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
+      serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
+    } else {
+      loadServerConfigDataFromSources(sources, l2sBeanRepository);
+    }
+
+    if (shouldLogTcConfig) {
+      logCopyOfConfig();
+    }
   }
-  
+
   private ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
     String[] components = configrationSpec.split(",");
     ConfigurationSource[] out = new ConfigurationSource[components.length];
