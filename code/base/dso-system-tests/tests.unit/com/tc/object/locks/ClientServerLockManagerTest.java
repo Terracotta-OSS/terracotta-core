@@ -16,8 +16,12 @@ import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.NullChannelManager;
 import com.tc.objectserver.locks.ServerLockContextBean;
 import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
+import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import junit.framework.TestCase;
 
@@ -284,8 +288,9 @@ public class ClientServerLockManagerTest extends TestCase {
     clientLockManager.unlock(lockID1, LockLevel.WRITE);
 
     System.out.println("2nd thread unlocked = " + lockID1 + " thread = " + tx2);
-    
+
     ThreadUtil.reallySleep(3000);
+    dumpClientState();
     LockMBean[] lockBeans2 = serverLockManager.getAllLocks();
     for (LockMBean lockBean : lockBeans2) {
       System.out.println("Lock on the server " + lockBean);
@@ -298,6 +303,18 @@ public class ClientServerLockManagerTest extends TestCase {
     Assert.assertTrue(clientLockManager.isLockedByCurrentThread(lockID1, LockLevel.WRITE));
     Assert.assertTrue(clientLockManager.isLockedByCurrentThread(lockID1, LockLevel.READ));
     if (!equals(lockBeans1, lockBeans2)) { throw new AssertionError("The locks are not the same"); }
+  }
+
+  private void dumpClientState() {
+    StringWriter writer = new StringWriter();
+    PrintWriter pw = new PrintWriter(writer);
+    PrettyPrinterImpl prettyPrinter = new PrettyPrinterImpl(pw);
+    prettyPrinter.autoflush(false);
+    prettyPrinter.visit(clientLockManager);
+    writer.flush();
+
+    StringBuffer buffer = writer.getBuffer();
+    System.out.println(buffer);
   }
 
   public void testPendingWaitNotifiedRWClientServer() {
