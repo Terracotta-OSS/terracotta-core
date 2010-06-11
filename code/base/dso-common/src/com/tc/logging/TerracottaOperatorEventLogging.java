@@ -7,21 +7,23 @@ import com.tc.net.NodeNameProvider;
 import com.tc.util.Assert;
 
 public class TerracottaOperatorEventLogging {
-  private static volatile NodeNameProvider nodeIdProvider;
+  private static volatile NodeNameProvider nodeNameProvider;
 
   public static TerracottaOperatorEventLogger getEventLogger() {
-    Assert.assertNotNull(nodeIdProvider);
+    if(nodeNameProvider == null){
+      nodeNameProvider = NodeNameProvider.DEFAULT_NODE_NAME_PROVIDER;
+    }
     return TerracottaOperatorEventLoggerHolder.instance;
   }
 
-  public static void setNodeIdProvider(NodeNameProvider nodeIDProvider) {
-    if (nodeIdProvider == null) {
-      nodeIdProvider = nodeIDProvider;
+  public static void setNodeNameProvider(NodeNameProvider nameProvider) {
+    if (nodeNameProvider == null) {
+      nodeNameProvider = nameProvider;
     }
-    Assert.assertNotNull(nodeIdProvider);
+    Assert.assertNotNull(nodeNameProvider);
   }
 
   private static class TerracottaOperatorEventLoggerHolder {
-    static final TerracottaOperatorEventLogger instance = new TerracottaOperatorEventLogger(nodeIdProvider);
+    static final TerracottaOperatorEventLogger instance = new TerracottaOperatorEventLogger(nodeNameProvider);
   }
 }
