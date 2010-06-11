@@ -40,6 +40,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
+import com.tc.objectserver.dgc.impl.DGCOperatorEventPublisher;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -87,6 +88,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr, stateManager,
                                                                        gcPublisher);
     gc.addListener(gcEventListener);
+    gc.addListener(new DGCOperatorEventPublisher());
     return gc;
   }
 

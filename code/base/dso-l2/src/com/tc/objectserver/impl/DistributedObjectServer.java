@@ -158,6 +158,7 @@ import com.tc.objectserver.handler.ApplyCompleteTransactionHandler;
 import com.tc.objectserver.handler.ApplyTransactionChangeHandler;
 import com.tc.objectserver.handler.BroadcastChangeHandler;
 import com.tc.objectserver.handler.ChannelLifeCycleHandler;
+import com.tc.objectserver.handler.ClientChannelOperatorEventlistener;
 import com.tc.objectserver.handler.ClientHandshakeHandler;
 import com.tc.objectserver.handler.ClientLockStatisticsHandler;
 import com.tc.objectserver.handler.CommitTransactionChangeHandler;
@@ -676,7 +677,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final boolean verboseGC = l2DSOConfig.garbageCollectionVerbose().getBoolean();
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
-    final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300, true, 0L);
+    final SampledCumulativeCounterConfig sampledCumulativeCounterConfig = new SampledCumulativeCounterConfig(1, 300,
+                                                                                                             true, 0L);
     final SampledCounter objectCreationRate = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
     final SampledCounter objectFaultRate = (SampledCounter) this.sampledCounterManager
@@ -824,17 +826,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCounter globalLockCount = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
     final SampledCumulativeCounter globalServerMapGetSizeRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
-    .createCounter(sampledCumulativeCounterConfig);
+        .createCounter(sampledCumulativeCounterConfig);
     final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
-    .createCounter(sampledCumulativeCounterConfig);
+        .createCounter(sampledCumulativeCounterConfig);
 
     final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
-                                                                          globalObjectFaultCounter, globalTxnCounter,
-                                                                          objMgrStats, broadcastCounter,
-                                                                          l2FaultFromDisk, time2FaultFromDisk,
-                                                                          time2Add2ObjMgr, globalLockRecallCounter,
-                                                                          changesPerBroadcast, transactionSizeCounter,
-                                                                          globalLockCount);
+                                                                              globalObjectFaultCounter,
+                                                                              globalTxnCounter, objMgrStats,
+                                                                              broadcastCounter, l2FaultFromDisk,
+                                                                              time2FaultFromDisk, time2Add2ObjMgr,
+                                                                              globalLockRecallCounter,
+                                                                              changesPerBroadcast,
+                                                                              transactionSizeCounter, globalLockCount);
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
         .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter);
 
@@ -912,6 +915,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE, channelLifeCycleHandler, 1,
                              maxStageSize);
     channelManager.addEventListener(channelLifeCycleHandler);
+    channelManager.addEventListener(new ClientChannelOperatorEventlistener());
 
     final Stage objectRequestStage = stageManager
         .createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
@@ -1224,9 +1228,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
-    final String nodeName = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt())
-        .getServerNodeName();
-    final ServerID aNodeID = new ServerID(nodeName, UUID.getUUID().toString().getBytes());
+    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.serverName().getString(), l2DSOConfig
+        .listenPort().getInt());
+    final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes(), node
+        .getNodeName());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }
@@ -1493,7 +1498,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public GCStatsEventPublisher getGcStatsEventPublisher() {
     return this.gcStatsEventPublisher;
   }
-  
+
   public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {
     return this.operatorEventHistoryProvider;
   }

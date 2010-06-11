@@ -10,7 +10,7 @@ class TerracottaOperatorEventResources {
   private final ResourceBundle resources;
 
   private TerracottaOperatorEventResources() {
-    this.resources = ResourceBundle.getBundle(getClass().getPackage().getName() + ".operatoreventMessages");
+    this.resources = ResourceBundle.getBundle(getClass().getPackage().getName() + ".messages");
   }
   
   static String getLongGCMessage() {
@@ -33,16 +33,32 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("node.availability");
   }
 
-  public static String getLockGCMessage() {
+  static String getLockGCMessage() {
     return instance.resources.getString("lock.gc");
   }
 
-  public static String getMoveToPassiveStandByMessage() {
-    return instance.resources.getString("passive.standby");
+  static String getHighMemoryUsageMessage() {
+    return instance.resources.getString("high.memory.usage");
   }
 
-  public static String getHighMemoryUsageMessage() {
-    return instance.resources.getString("high.memory.usage");
+  static String getOOODisconnectMessage() {
+    return instance.resources.getString("ooo.disconnect");
+  }
+
+  static String getOOOConnectMessage() {
+    return instance.resources.getString("ooo.connect");
+  }
+
+  static String getClusterNodeStateChangedMessage() {
+    return instance.resources.getString("node.state");
+  }
+
+  static String getZapRequestReceivedMessage() {
+    return instance.resources.getString("zap.received");
+  }
+  
+  static String getZapRequestAcceptedMessage() {
+    return instance.resources.getString("zap.accepted");
   }
 }
 

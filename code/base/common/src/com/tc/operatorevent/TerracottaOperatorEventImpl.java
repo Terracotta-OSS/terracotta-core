@@ -11,6 +11,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   private final EventType      eventType;
   private final EventSubsystem subSystem;
   private String               nodeName = null;
+  private boolean              isRead   = false;
 
   public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message) {
     this.eventType = eventType;
@@ -58,12 +59,29 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof TerracottaOperatorEventImpl)) return false;
-    if (this.subSystem == EventSubsystem.DGC) return false;
     TerracottaOperatorEventImpl event = (TerracottaOperatorEventImpl) o;
     if (this.eventType != event.eventType) return false;
     if (this.subSystem != event.subSystem) return false;
     if (!this.eventMessage.equals(event.eventMessage)) return false;
     return true;
+  }
+
+  public boolean isRead() {
+    return this.isRead;
+  }
+
+  public void markRead() {
+    this.isRead = true;
+  }
+  
+  @Override
+  public String toString() {
+    return getEventType() + " " + getEventTime() + " " + getNodeName() + " " + getEventSubsystemAsString() + " "
+           + getEventMessage();
+  }
+
+  public String getExtractText() {
+    return toString();
   }
   
 }

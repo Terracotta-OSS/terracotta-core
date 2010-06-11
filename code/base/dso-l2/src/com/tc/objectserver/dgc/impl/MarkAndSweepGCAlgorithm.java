@@ -28,7 +28,7 @@ final class MarkAndSweepGCAlgorithm {
   private final GarbageCollector               collector;
   private final GarbageCollectionInfoPublisher gcPublisher;
   private final LifeCycleState                 gcState;
-  private final String                         uuid = UUID.getUUID().toString();
+  private final String                         uuid                  = UUID.getUUID().toString();
 
   public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook, GarbageCollectionInfoPublisher gcPublisher,
                                  LifeCycleState gcState, int gcIteration) {
@@ -131,9 +131,9 @@ final class MarkAndSweepGCAlgorithm {
     gcInfo.setDeleteStageTime(0);
     gcInfo.setActualGarbageCount(0);
     gcInfo.setEndObjectCount(gcHook.getLiveObjectCount());
-    long endMillis = System.currentTimeMillis();
-    gcInfo.setTotalMarkCycleTime(endMillis - gcInfo.getStartTime());
-    gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+    long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
+    gcInfo.setTotalMarkCycleTime(elapsedTime);
+    gcInfo.setElapsedTime(elapsedTime);
     gcPublisher.fireGCCycleCompletedEvent(gcInfo, new ObjectIDSet());
     gcPublisher.fireGCCompletedEvent(gcInfo);
   }

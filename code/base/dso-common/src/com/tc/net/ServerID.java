@@ -19,6 +19,7 @@ public class ServerID implements NodeID, Serializable {
   private static final String  UNINITIALIZED = "Uninitialized";
 
   private String               name;
+  private String               serverName;
   private byte[]               uid;
 
   private transient int        hash;
@@ -26,13 +27,20 @@ public class ServerID implements NodeID, Serializable {
   public ServerID() {
     // satisfy serialization
     this.name = UNINITIALIZED;
+    this.serverName = UNINITIALIZED;
   }
 
   public ServerID(String name, byte[] uid) {
-    this.name = name;
-    this.uid = uid;
+    this(name, uid, name);
   }
 
+  public ServerID(String name, byte[] uid, String serverName) {
+    this.name = name;
+    this.uid = uid;
+    this.serverName = serverName;
+  }
+
+  @Override
   public int hashCode() {
     if (hash != 0) return hash;
     int lhash = 27;
@@ -44,6 +52,7 @@ public class ServerID implements NodeID, Serializable {
     return lhash;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof ServerID) {
       ServerID that = (ServerID) o;
@@ -60,7 +69,13 @@ public class ServerID implements NodeID, Serializable {
     Assert.assertTrue(this.name != UNINITIALIZED);
     return name;
   }
+  
+  public String getServerName() {
+    Assert.assertTrue(this.name != UNINITIALIZED);
+    return this.serverName;
+  }
 
+  @Override
   public String toString() {
     return "NodeID[" + getName() + "]";
   }
@@ -71,6 +86,7 @@ public class ServerID implements NodeID, Serializable {
 
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     this.name = in.readString();
+    this.serverName = in.readString();
     int length = in.readInt();
     this.uid = new byte[length];
     int off = 0;
@@ -84,7 +100,9 @@ public class ServerID implements NodeID, Serializable {
 
   public void serializeTo(TCByteBufferOutput out) {
     Assert.assertTrue(this.name != UNINITIALIZED);
+    Assert.assertTrue(this.serverName != UNINITIALIZED);
     out.writeString(this.name);
+    out.writeString(this.serverName);
     int length = this.uid.length;
     out.writeInt(length);
     out.write(this.uid);

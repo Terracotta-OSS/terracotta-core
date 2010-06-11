@@ -3,7 +3,6 @@
  */
 package com.tc.operatorevent;
 
-import com.tc.net.NodeID;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 
@@ -45,21 +44,19 @@ public class TerracottaOperatorEventFactory {
   /**
    * High availability events
    */
-  public static TerracottaOperatorEvent createNodeConnectedEvent(NodeID nodeID) {
+  public static TerracottaOperatorEvent createNodeConnectedEvent(String nodeName) {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeID.toString(),
-            "joined" }));
-  }
-  
-  public static TerracottaOperatorEvent createNodeDisconnectedEvent(NodeID nodeID) {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeID.toString(),
-            "left" }));
+        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "joined" }));
   }
 
-  public static TerracottaOperatorEvent createMoveToPassiveStandByEvent() {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, TerracottaOperatorEventResources
-        .getMoveToPassiveStandByMessage());
+  public static TerracottaOperatorEvent createNodeDisconnectedEvent(String nodeName) {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.HA, MessageFormat
+        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "left" }));
+  }
+
+  public static TerracottaOperatorEvent createClusterNodeStateChangedEvent(Object[] arguments) {
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
+        .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments));
   }
   
   /**
@@ -68,5 +65,18 @@ public class TerracottaOperatorEventFactory {
   public static TerracottaOperatorEvent createLockGCEvent(Object[] arguments) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.LOCK_MANAGER, MessageFormat
                                            .format(TerracottaOperatorEventResources.getLockGCMessage(), arguments));
+  }
+  
+  /**
+   * zap events
+   */
+  public static TerracottaOperatorEvent createZapRequestReceivedEvent(Object[] arguments) {
+    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.HA, MessageFormat
+        .format(TerracottaOperatorEventResources.getZapRequestReceivedMessage(), arguments));
+  }
+
+  public static TerracottaOperatorEvent createZapRequestAcceptedEvent(Object[] arguments) {
+    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.HA, MessageFormat
+        .format(TerracottaOperatorEventResources.getZapRequestAcceptedMessage(), arguments));
   }
 }

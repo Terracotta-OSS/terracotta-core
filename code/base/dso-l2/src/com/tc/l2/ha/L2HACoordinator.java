@@ -42,8 +42,11 @@ import com.tc.l2.state.StateManagerConfigImpl;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogger;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.GroupEventsListener;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -55,8 +58,10 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorListener;
@@ -69,7 +74,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
     SequenceGeneratorListener, PrettyPrintable {
 
-  private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
+  private static final TCLogger                           logger              = TCLogging
+                                                                                  .getLogger(L2HACoordinator.class);
 
   private final TCLogger                                  consoleLogger;
   private final DistributedObjectServer                   server;
@@ -85,7 +91,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private SequenceGenerator                               sequenceGenerator;
 
   private final NewHaConfig                               haConfig;
-  private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
+  private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<StateChangeListener>();
+  private final TerracottaOperatorEventLogger             operatorEventLogger = TerracottaOperatorEventLogging
+                                                                                  .getEventLogger();
 
   public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
                          GroupManager groupCommsManager, PersistentMapStore persistentStateStore,
@@ -246,6 +254,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   public void nodeJoined(NodeID nodeID) {
     log(nodeID + " joined the cluster");
+    fireNodeJoinedOperatorEvent(nodeID);
     if (stateManager.isActiveCoordinator()) {
       try {
         stateManager.publishActiveState(nodeID);
@@ -274,6 +283,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   public void nodeLeft(NodeID nodeID) {
     warn(nodeID + " left the cluster");
+    fireNodeLeftOperatorEvent(nodeID);
     if (stateManager.isActiveCoordinator()) {
       rObjectManager.clear(nodeID);
       rClusterStateMgr.fireNodeLeftEvent(nodeID);
@@ -318,5 +328,22 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     out.indent().print(strBuilder.toString()).flush();
     out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();
     return out;
+  }
+
+  /**
+   * these events would should only be fired for ServerID
+   */
+  private void fireNodeJoinedOperatorEvent(NodeID nodeID) {
+    Assert.assertTrue(nodeID instanceof ServerID);
+    ServerID serverID = (ServerID) nodeID;
+    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(serverID
+        .getServerName()));
+  }
+
+  private void fireNodeLeftOperatorEvent(NodeID nodeID) {
+    Assert.assertTrue(nodeID instanceof ServerID);
+    ServerID serverID = (ServerID) nodeID;
+    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(serverID
+        .getServerName()));
   }
 }

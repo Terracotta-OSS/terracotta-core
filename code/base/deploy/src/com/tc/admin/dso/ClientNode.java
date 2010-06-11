@@ -18,7 +18,7 @@ public class ClientNode extends ClusterElementNode {
   public ClientNode(ApplicationContext appContext, IClient client) {
     super(client);
 
-    setLabel(client.getRemoteAddress());
+    setLabel(client.getClientID() + " " + client.getRemoteAddress());
 
     this.appContext = appContext;
     this.client = client;

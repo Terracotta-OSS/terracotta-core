@@ -10,6 +10,7 @@ import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.object.session.SessionManager;
+import com.tc.operatorevent.LockEventListener;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Util;
@@ -17,11 +18,13 @@ import com.tc.util.runtime.ThreadIDManager;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -46,6 +49,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   private final TCLogger                          logger;
 
   private final ConcurrentMap<ThreadID, Object>   inFlightLockQueries = new ConcurrentHashMap<ThreadID, Object>();
+  private final List<LockEventListener>           lockEventListeners  = new CopyOnWriteArrayList<LockEventListener>();
 
   @Deprecated
   private final ClientLockStatManager             statManager;
@@ -755,6 +759,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   class LockGcTimerTask extends TimerTask {
+    private static final int GCED_LOCK_THRESHOLD = 1000;
     @Override
     public void run() {
       int gcCount = 0;
@@ -779,6 +784,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       }
       if (gcCount > 0) {
         ClientLockManagerImpl.this.logger.info("Lock GC collected " + gcCount + " garbage locks");
+      }
+
+      if (gcCount > GCED_LOCK_THRESHOLD) {
+        for (LockEventListener lockGCEventListener : lockEventListeners) {
+          lockGCEventListener.fireLockGCEvent(gcCount);
+        }
       }
     }
   }
@@ -816,5 +827,9 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     if (this.statManager.isEnabled()) {
       this.statManager.recordLockRejected(lock, this.threadManager.getThreadID());
     }
+  }
+
+  public void addLockEventsListener(LockEventListener lockEventListener) {
+    this.lockEventListeners.add(lockEventListener);
   }
 }

@@ -37,4 +37,17 @@ public interface TerracottaOperatorEvent extends Serializable {
 
   String getEventSubsystemAsString();
   
+  
+  /**
+   * These methods are to determine whether the event has been read before or not in the dev-console
+   */
+  void markRead();
+
+  boolean isRead();
+  
+  /**
+   * This method is used to get the event in String format.
+   */
+  String getExtractText();
+  
 }

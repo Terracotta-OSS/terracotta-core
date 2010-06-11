@@ -22,9 +22,9 @@ import java.util.TreeSet;
 
 public class GarbageDisposeHandler extends AbstractEventHandler {
 
-  private final static TCLogger                logger           = TCLogging.getLogger(GarbageDisposeHandler.class);
+  private final static TCLogger                logger                = TCLogging.getLogger(GarbageDisposeHandler.class);
 
-  private static final long                    REMOVE_THRESHOLD = 300;
+  private static final long                    REMOVE_THRESHOLD      = 300;
 
   private final ManagedObjectPersistor         managedObjectPersistor;
   private final PersistenceTransactionProvider persistenceTransactionProvider;
@@ -66,8 +66,8 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     }
     long elapsed = System.currentTimeMillis() - start;
     gcInfo.setDeleteStageTime(elapsed);
-    long endMillis = System.currentTimeMillis();
-    gcInfo.setElapsedTime(endMillis - gcInfo.getStartTime());
+    long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
+    gcInfo.setElapsedTime(elapsedTime);
     gcInfo.setEndObjectCount(managedObjectPersistor.getObjectCount());
     publisher.fireGCCompletedEvent(gcInfo);
   }

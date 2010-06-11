@@ -6,6 +6,7 @@ package com.tc.object.locks;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.session.SessionID;
+import com.tc.operatorevent.LockEventListener;
 import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
@@ -41,4 +42,9 @@ public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCal
    * Returns a complete dump (in pseudo-portable format) of the state of all locks.
    */
   public Collection<ClientServerExchangeLockContext> getAllLockContexts();
+  
+  /**
+   * Adds listeners for lock gc events
+   */
+  public void addLockEventsListener(LockEventListener lockEventListener);
 }

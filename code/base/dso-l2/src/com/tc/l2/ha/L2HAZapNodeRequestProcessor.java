@@ -10,28 +10,35 @@ import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogger;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.ZapNodeRequestProcessor;
+import com.tc.operatorevent.TerracottaOperatorEventFactory;
+import com.tc.util.Assert;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
-  private static final TCLogger        logger                        = TCLogging
-                                                                         .getLogger(L2HAZapNodeRequestProcessor.class);
+  private static final TCLogger               logger                        = TCLogging
+                                                                                .getLogger(L2HAZapNodeRequestProcessor.class);
 
-  public static final int              COMMUNICATION_ERROR           = 0x01;
-  public static final int              PROGRAM_ERROR                 = 0x02;
-  public static final int              NODE_JOINED_WITH_DIRTY_DB     = 0x03;
-  public static final int              COMMUNICATION_TO_ACTIVE_ERROR = 0x04;
-  public static final int              SPLIT_BRAIN                   = 0xff;
+  public static final int                     COMMUNICATION_ERROR           = 0x01;
+  public static final int                     PROGRAM_ERROR                 = 0x02;
+  public static final int                     NODE_JOINED_WITH_DIRTY_DB     = 0x03;
+  public static final int                     COMMUNICATION_TO_ACTIVE_ERROR = 0x04;
+  public static final int                     SPLIT_BRAIN                   = 0xff;
 
-  private final TCLogger               consoleLogger;
-  private final StateManager           stateManager;
-  private final WeightGeneratorFactory factory;
+  private final TCLogger                      consoleLogger;
+  private final StateManager                  stateManager;
+  private final WeightGeneratorFactory        factory;
 
-  private final GroupManager           groupManager;
+  private final GroupManager                  groupManager;
+  private final TerracottaOperatorEventLogger operatorEventLogger           = TerracottaOperatorEventLogging
+                                                                                .getEventLogger();
 
   public L2HAZapNodeRequestProcessor(TCLogger consoleLogger, StateManager stateManager, GroupManager groupManager,
                                      WeightGeneratorFactory factory) {
@@ -120,9 +127,15 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   }
 
   private void handleSplitBrainScenario(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
+    Assert.assertTrue(nodeID instanceof ServerID);
+    Assert.assertTrue(this.groupManager.getLocalNodeID() instanceof ServerID);
     long myWeights[] = factory.generateWeightSequence();
-    logger.warn("A Terracotta server tried to join the mirror group as a second ACTIVE : My weights = " + toString(myWeights)
-                + " Other servers weights = " + toString(weights));
+    logger.warn("A Terracotta server tried to join the mirror group as a second ACTIVE : My weights = "
+                + toString(myWeights) + " Other servers weights = " + toString(weights));
+    String messageFrom = ((ServerID) nodeID).getServerName();
+    String localNode = ((ServerID) this.groupManager.getLocalNodeID()).getServerName();
+    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createZapRequestReceivedEvent(new Object[] {
+        localNode, messageFrom }));
     Enrollment mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);
     Enrollment hisOrHers = new Enrollment(nodeID, false, weights);
     if (hisOrHers.wins(mine)) {
@@ -130,6 +143,8 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       logger.warn(nodeID + " wins : Backing off : Exiting !!!");
       String message = "Found that " + nodeID
                        + " is active and has more clients connected to it than this server. Exiting ... !!";
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
+          .createZapRequestAcceptedEvent(new Object[] { messageFrom }));
       throw new ZapServerNodeException(message);
     } else {
       logger.warn("Not quiting since the other servers weight = " + toString(weights)
