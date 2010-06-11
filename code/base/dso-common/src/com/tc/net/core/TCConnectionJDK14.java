@@ -56,41 +56,50 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
 
-  private static final long                  NO_CONNECT_TIME               = -1L;
-  private static final TCLogger              logger                        = TCLogging.getLogger(TCConnection.class);
-  private static final long                  WARN_THRESHOLD                = 0x400000L;                              // 4MB
+  private static final long                  NO_CONNECT_TIME             = -1L;
+  private static final TCLogger              logger                      = TCLogging.getLogger(TCConnection.class);
+  private static final long                  WARN_THRESHOLD              = 0x400000L;                                                    // 4MB
 
   private volatile CoreNIOServices           commWorker;
   private volatile SocketChannel             channel;
 
-  private final AtomicBoolean                transportEstablished          = new AtomicBoolean(false);
-  private final LinkedList<TCNetworkMessage> writeMessages                 = new LinkedList<TCNetworkMessage>();
+  private final AtomicBoolean                transportEstablished        = new AtomicBoolean(false);
+  private final LinkedList<TCNetworkMessage> writeMessages               = new LinkedList<TCNetworkMessage>();
   private final TCConnectionManagerJDK14     parent;
-  private final TCConnectionEventCaller      eventCaller                   = new TCConnectionEventCaller(logger);
-  private final SynchronizedLong             lastDataWriteTime             = new SynchronizedLong(System
-                                                                               .currentTimeMillis());
-  private final SynchronizedLong             lastDataReceiveTime           = new SynchronizedLong(System
-                                                                               .currentTimeMillis());
-  private final SynchronizedLong             connectTime                   = new SynchronizedLong(NO_CONNECT_TIME);
-  private final List                         eventListeners                = new CopyOnWriteArrayList();
+  private final TCConnectionEventCaller      eventCaller                 = new TCConnectionEventCaller(logger);
+  private final SynchronizedLong             lastDataWriteTime           = new SynchronizedLong(System
+                                                                             .currentTimeMillis());
+  private final SynchronizedLong             lastDataReceiveTime         = new SynchronizedLong(System
+                                                                             .currentTimeMillis());
+  private final SynchronizedLong             connectTime                 = new SynchronizedLong(NO_CONNECT_TIME);
+  private final List                         eventListeners              = new CopyOnWriteArrayList();
   private final TCProtocolAdaptor            protocolAdaptor;
-  private final SynchronizedBoolean          isSocketEndpoint              = new SynchronizedBoolean(false);
-  private final SetOnceFlag                  closed                        = new SetOnceFlag();
-  private final SynchronizedBoolean          connected                     = new SynchronizedBoolean(false);
-  private final SetOnceRef                   localSocketAddress            = new SetOnceRef();
-  private final SetOnceRef                   remoteSocketAddress           = new SetOnceRef();
+  private final SynchronizedBoolean          isSocketEndpoint            = new SynchronizedBoolean(false);
+  private final SetOnceFlag                  closed                      = new SetOnceFlag();
+  private final SynchronizedBoolean          connected                   = new SynchronizedBoolean(false);
+  private final SetOnceRef                   localSocketAddress          = new SetOnceRef();
+  private final SetOnceRef                   remoteSocketAddress         = new SetOnceRef();
   private final SocketParams                 socketParams;
-  private final SynchronizedLong             totalRead                     = new SynchronizedLong(0);
-  private final SynchronizedLong             totalWrite                    = new SynchronizedLong(0);
-  private final ArrayList<WriteContext>      writeContexts                 = new ArrayList<WriteContext>();
-  private final int                          MESSAGES_GROUP_MAX_SIZE_BYTES = TCPropertiesImpl
-                                                                               .getProperties()
-                                                                               .getInt(
-                                                                                       TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
-                                                                                       128) * 1024;
+  private final SynchronizedLong             totalRead                   = new SynchronizedLong(0);
+  private final SynchronizedLong             totalWrite                  = new SynchronizedLong(0);
+  private final ArrayList<WriteContext>      writeContexts               = new ArrayList<WriteContext>();
+
+  private static final boolean               MSG_GROUPING_ENABLED        = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getBoolean(
+                                                                                         TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED);
+  private static final int                   MSG_GROUPING_MAX_SIZE_BYTES = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
+                                                                                     128) * 1024;
+
+  static {
+    logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
+  }
 
   // having this variable at instance level helps reducing memory pressure at VM;
-  private final ArrayList<TCNetworkMessage>  messagesToBatch               = new ArrayList<TCNetworkMessage>();
+  private final ArrayList<TCNetworkMessage>  messagesToBatch             = new ArrayList<TCNetworkMessage>();
 
   // for creating unconnected client connections
   TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
@@ -244,25 +253,27 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         continue;
       }
 
-      if (!canBatch(msg, batchSize, batchMsgCount)) {
-        if (batchMsgCount > 0) {
-          TCNetworkMessage ms = buildWireProtocolMessageGroup(messagesToBatch);
-          writeContexts.add(new WriteContext(ms));
-          batchSize = 0;
-          batchMsgCount = 0;
-          messagesToBatch.clear();
-        } else {
-          // fall thru and add to the existing batch. next message will goto a new batch
+      if (MSG_GROUPING_ENABLED) {
+        if (!canBatch(msg, batchSize, batchMsgCount)) {
+          if (batchMsgCount > 0) {
+            writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(messagesToBatch)));
+            batchSize = 0;
+            batchMsgCount = 0;
+            messagesToBatch.clear();
+          } else {
+            // fall thru and add to the existing batch. next message will goto a new batch
+          }
         }
+        batchSize += getRealMessgeSize(msg.getTotalLength());
+        batchMsgCount++;
+        messagesToBatch.add(msg);
+      } else {
+        writeContexts.add(new WriteContext(buildWireProtocolMessage(msg)));
       }
-
-      batchSize += getRealMessgeSize(msg.getTotalLength());
-      batchMsgCount++;
-      messagesToBatch.add(msg);
       msg = null;
     }
 
-    if (batchMsgCount > 0) {
+    if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
       TCNetworkMessage ms = buildWireProtocolMessageGroup(messagesToBatch);
       writeContexts.add(new WriteContext(ms));
     }
@@ -272,7 +283,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   private boolean canBatch(final TCNetworkMessage newMessage, final int currentBatchSize, final int currentBatchMsgCount) {
-    if ((currentBatchSize + getRealMessgeSize(newMessage.getTotalLength())) <= MESSAGES_GROUP_MAX_SIZE_BYTES
+    if ((currentBatchSize + getRealMessgeSize(newMessage.getTotalLength())) <= MSG_GROUPING_MAX_SIZE_BYTES
         && (currentBatchMsgCount + 1 <= WireProtocolHeader.MAX_MESSAGE_COUNT)) { return true; }
     return false;
   }

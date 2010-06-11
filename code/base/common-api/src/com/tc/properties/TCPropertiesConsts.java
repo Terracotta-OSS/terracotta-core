@@ -515,6 +515,7 @@ public interface TCPropertiesConsts {
   public static final String   TC_BYTEBUFFER_POOLING_ENABLED                                 = "tc.bytebuffer.pooling.enabled";
   public static final String   TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT                            = "tc.bytebuffer.common.pool.maxcount";
   public static final String   TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT                       = "tc.bytebuffer.threadlocal.pool.maxcount";
+  public static final String   TC_MESSAGE_GROUPING_ENABLED                                   = "tc.messages.grouping.enabled";
   public static final String   TC_MESSAGE_GROUPING_MAXSIZE_KB                                = "tc.messages.grouping.maxSizeKiloBytes";
 
   /*********************************************************************************************************************
