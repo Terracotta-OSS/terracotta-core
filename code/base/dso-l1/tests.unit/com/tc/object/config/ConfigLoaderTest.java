@@ -64,6 +64,7 @@ public class ConfigLoaderTest extends TestCase {
     }
   }
 
+  @Override
   public String getName() {
     return super.getName() + " : " + configName;
   }
@@ -90,32 +91,6 @@ public class ConfigLoaderTest extends TestCase {
     suite.addTest(new ConfigLoaderTest("tc-config-sharedqueue.xml"));
     suite.addTest(new ConfigLoaderTest("tc-config-sjmx.xml"));
     suite.addTest(new ConfigLoaderTest("tc-config-swebflow.xml"));
-
-    suite.addTest(new ConfigLoaderTest("anothersingleton-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("aop-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("app-ctx-matching-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("appctxdef-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("customscoped-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("empty-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("event-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("hibernate-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("init2-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("interceptor-via-postprocessor-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("lifecycle-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("multibeandef-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("multicontext-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("multifile-context-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("parent-child-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("proxiedbean-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("redeployment-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("referenceandreplication-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("scopedbeans-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("sellitem-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("sessionscoped-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("sharedlock-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("singleton-parent-child-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("thread-coordination-tc-config.xml"));
-    suite.addTest(new ConfigLoaderTest("webflow-tc-config.xml"));
 
     return suite;
   }
