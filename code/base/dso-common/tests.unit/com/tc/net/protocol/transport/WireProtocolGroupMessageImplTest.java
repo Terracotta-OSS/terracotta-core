@@ -18,7 +18,6 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.TCTimeoutException;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,16 +67,30 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
     Thread checker = new Thread(new Runnable() {
       public void run() {
         while (true) {
-          while (!fullySent.get()) {
-            System.out.println("XXX Waiting for Client to send all msgs ");
-            ThreadUtil.reallySleep(1000);
+
+          System.out.println("XXX Waiting for Client to send all msgs ");
+          synchronized (fullySent) {
+            while (!fullySent.get()) {
+              try {
+                fullySent.wait();
+              } catch (InterruptedException e) {
+                System.out.println("fullySent: " + e);
+              }
+            }
           }
 
-          while (rcvdMessages2.get() != sentMessages.get()) {
-            System.out.println("XXX Client SentMsgs: " + sentMessages + "; Server RcvdMsgs: " + rcvdMessages2);
-            ThreadUtil.reallySleep(1000);
+          System.out.println("XXX Waiting for server to rcv all msgs");
+          synchronized (rcvdMessages2) {
+            while (rcvdMessages2.get() != sentMessages.get()) {
+              try {
+                rcvdMessages2.wait();
+              } catch (InterruptedException e) {
+                System.out.println("rcvdMessages2: " + e);
+              }
+            }
           }
 
+          fullySent.set(false);
           synchronized (lock) {
             lock.notify();
           }
@@ -86,23 +99,25 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
     });
 
     checker.start();
+    long startTime = System.currentTimeMillis();
     for (int i = 0; i < 25; i++) {
-      fullySent.set(false);
-      r.setSeed(System.currentTimeMillis());
-      int count = r.nextInt(5000);
+      int count = 10000;
       ArrayList<TCNetworkMessage> messages = getMessages(count);
       for (TCNetworkMessage msg : messages)
         clientConn.putMessage(msg);
       sentMessages.addAndGet(count);
-      fullySent.set(true);
+      synchronized (fullySent) {
+        fullySent.set(true);
+        fullySent.notify();
+      }
       System.out.println("XXX total msgs sent " + sentMessages);
-
       synchronized (lock) {
         lock.wait();
       }
       System.out.println("XXX Completed Round " + i + "\n\n");
     }
-    System.out.println("XXX SuccesS");
+    long endTime = System.currentTimeMillis();
+    System.out.println("XXX SuccesS. Took " + (endTime - startTime) / 1000 + " seconds");
   }
 
   private ArrayList<TCNetworkMessage> getMessages(final int count) {
@@ -139,7 +154,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
 
       rcvdMessages.incrementAndGet();
       message.recycle();
-      if (rcvdMessages.get() % 250 == 0) {
+      if (rcvdMessages.get() % 5000 == 0) {
         System.out.println("XXX Client rcvd msgs " + rcvdMessages);
       }
 
@@ -152,10 +167,14 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
     // private volatile TCConnection serverconn;
 
     public void putMessage(WireProtocolMessage message) {
-      rcvdMessages2.incrementAndGet();
-      message.recycle();
 
-      if (rcvdMessages2.get() % 250 == 0) {
+      message.recycle();
+      synchronized (rcvdMessages2) {
+        rcvdMessages2.incrementAndGet();
+        rcvdMessages2.notify();
+      }
+
+      if (rcvdMessages2.get() % 5000 == 0) {
         System.out.println("XXX Server rcvd msgs " + rcvdMessages2);
 
         // if (!senderStarted) {
