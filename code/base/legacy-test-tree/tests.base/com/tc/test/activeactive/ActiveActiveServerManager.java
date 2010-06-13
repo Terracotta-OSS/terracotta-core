@@ -28,11 +28,17 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   /**
    * One <code>ActivePassiveServerManager</code> for each group since they logically form a group
    */
-  private ActivePassiveServerManager[] activePassiveServerManagers;
-  private ProxyConnectManager[]        proxyL2Managers;
-  private ProxyConnectManager[]        proxyL1Managers;
-  private GroupData[]                  groupsData;
-  private final String                 configFileLocation;
+  private ActivePassiveServerManager[]      activePassiveServerManagers;
+  private ProxyConnectManager[]             proxyL2Managers;
+  private ProxyConnectManager[]             proxyL1Managers;
+  private GroupData[]                       groupsData;
+  private final String                      configFileLocation;
+  private int                               groupCount;
+  private final PortChooser                 portChooser;
+  private final String                      configModel;
+  private final List                        extraJvmArgs;
+  private final DSOApplicationConfigBuilder dsoApplicationBuilder;
+  private final File                        configFile;
 
   public ActiveActiveServerManager(File tempDir, PortChooser portChooser, String configModel,
                                    ActiveActiveTestSetupManager setupManger, File javaHome,
@@ -40,10 +46,14 @@ public class ActiveActiveServerManager extends MultipleServerManager {
                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts,
                                    DSOApplicationConfigBuilder dsoApplicationBuilder) throws Exception {
     super(setupManger);
-    int groupCount = setupManger.getActiveServerGroupCount();
+    this.portChooser = portChooser;
+    this.configModel = configModel;
+    this.extraJvmArgs = extraJvmArgs;
+    this.dsoApplicationBuilder = dsoApplicationBuilder;
+    groupCount = setupManger.getActiveServerGroupCount();
     activePassiveServerManagers = new ActivePassiveServerManager[groupCount];
     configFileLocation = tempDir + File.separator + CONFIG_FILE_NAME;
-    File configFile = new File(configFileLocation);
+    configFile = new File(configFileLocation);
 
     if (this.setupManger.getServerCount() < 2) { throw new AssertionError(
                                                                           "Active-test tests involve 2 or more DSO servers: serverCount=["
@@ -56,7 +66,8 @@ public class ActiveActiveServerManager extends MultipleServerManager {
                                                                       portChooser, configModel,
                                                                       activePasssiveTestSetupManager, javaHome,
                                                                       configFactory, extraJvmArgs, isProxyL2GroupPorts,
-                                                                      isProxyDsoPorts, true, noOfServers, dsoApplicationBuilder);
+                                                                      isProxyDsoPorts, true, noOfServers,
+                                                                      dsoApplicationBuilder);
       noOfServers += setupManger.getGroupMemberCount(i);
     }
 
@@ -81,6 +92,52 @@ public class ActiveActiveServerManager extends MultipleServerManager {
         groupsData[i].setDsoPorts(activePassiveServerManagers[i].getProxyDsoPorts());
       }
     }
+  }
+
+  public void addNewGroup(File tempDir, File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
+      throws Exception {
+    int noOfServers = 0;
+    ActivePassiveServerManager[] oldManagers = activePassiveServerManagers;
+    activePassiveServerManagers = new ActivePassiveServerManager[groupCount + 1];
+    for (int i = 0; i < oldManagers.length; ++i) {
+      activePassiveServerManagers[i] = oldManagers[i];
+      noOfServers += setupManger.getGroupMemberCount(i);
+    }
+
+    ActivePassiveTestSetupManager activePasssiveTestSetupManager = createActivePassiveTestSetupManager(groupCount);
+    activePassiveServerManagers[groupCount] = new ActivePassiveServerManager(setupManger.getGroupName(groupCount),
+                                                                             true, tempDir, portChooser, configModel,
+                                                                             activePasssiveTestSetupManager, javaHome,
+                                                                             configFactory, extraJvmArgs, false, false,
+                                                                             true, noOfServers, dsoApplicationBuilder);
+    ++groupCount;
+
+    groupsData = createGroups();
+    serverConfigCreator = new MultipleServersConfigCreator(this.setupManger, groupsData, configModel, configFile,
+                                                           tempDir, configFactory, dsoApplicationBuilder);
+    serverConfigCreator.writeL2ConfigWithoutCleanData();
+
+    GroupData group = groupsData[groupCount - 1];
+    configFactory.appendNewServersAndGroupToL1Config(groupCount - 1, group.getGroupName(), group.getServerNames(),
+                                                     group.getDsoPorts(), group.getJmxPorts());
+  }
+
+  public void deleteDbDirectory(int dsoPort) {
+    // locate group and serverIndex
+    for (ActivePassiveServerManager apManager : activePassiveServerManagers) {
+      int[] dsoPorts = apManager.getDsoPorts();
+      for (int i = 0; i < dsoPorts.length; ++i) {
+        if (dsoPort == dsoPorts[i]) {
+          try {
+            apManager.cleanupServerDB(i);
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          return;
+        }
+      }
+    }
+    throw new AssertionError("Unable to find L2 at port " + dsoPort);
   }
 
   private GroupData[] createGroups() {
@@ -252,11 +309,11 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   public String getConfigFileLocation() {
     return configFileLocation;
   }
-  
+
   public int getDsoPort() {
     return activePassiveServerManagers[0].getDsoPort();
   }
-  
+
   public int getJMXPort() {
     return activePassiveServerManagers[0].getJMXPort();
   }

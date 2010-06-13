@@ -77,11 +77,13 @@ public class MultipleServersConfigCreator {
                                                                                                     "Unknown operating mode."); }
   }
 
-  protected void createOrCleanDirectory(String dataLocation, String dirFor) throws IOException {
+  protected void createOrCleanDirectory(String dataLocation, String dirFor, boolean cleanIfExist) throws IOException {
     File dbDir = new File(dataLocation);
     logger.info(dirFor + ": " + dbDir.getAbsolutePath());
     if (dbDir.exists()) {
-      FileUtils.cleanDirectory(dbDir);
+      if (cleanIfExist) {
+        FileUtils.cleanDirectory(dbDir);
+      }
     } else {
       FileUtils.forceMkdir(dbDir);
     }
@@ -95,16 +97,24 @@ public class MultipleServersConfigCreator {
   }
 
   public void writeL2Config() throws Exception {
+    writeL2ConfigBase(true);
+  }
+
+  public void writeL2ConfigWithoutCleanData() throws Exception {
+    writeL2ConfigBase(false);
+  }
+
+  private void writeL2ConfigBase(boolean cleanIfDataExist) throws Exception {
     checkConfigurationModel();
     SystemConfigBuilder system = SystemConfigBuilder.newMinimalInstance();
     system.setConfigurationModel(configModel);
 
     String dataLocationHome = tempDir.getAbsolutePath() + File.separator + "server-data";
-    createOrCleanDirectory(dataLocationHome, "DBHome");
+    createOrCleanDirectory(dataLocationHome, "DBHome", cleanIfDataExist);
     String logLocationHome = tempDir.getAbsolutePath() + File.separator + "server-logs" + File.separator;
-    createOrCleanDirectory(logLocationHome, "Log home");
+    createOrCleanDirectory(logLocationHome, "Log home", cleanIfDataExist);
     String statisticsLocationHome = tempDir.getAbsolutePath() + File.separator + "server-statistics" + File.separator;
-    createOrCleanDirectory(statisticsLocationHome, "Statistics home");
+    createOrCleanDirectory(statisticsLocationHome, "Statistics home", cleanIfDataExist);
 
     boolean gcEnabled = configFactory.getGCEnabled();
     boolean gcVerbose = configFactory.getGCVerbose();

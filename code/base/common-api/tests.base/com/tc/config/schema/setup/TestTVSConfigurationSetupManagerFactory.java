@@ -377,6 +377,18 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     isConfigDone = true;
   }
+  
+  // This is needed for add-new-stripe test. 
+  // Allowing a new stripe be added to existing L1 config. Refer DEV-3989.
+  public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] dsoPorts, int[] jmxPorts) {
+
+    for (int i = 0; i < name.length; i++) {
+      addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
+    }
+
+    addServerGroupToL1Config(gn, groupName, name);
+  }
+
 
   private void assertIfCalledBefore() throws AssertionError {
     if (isConfigDone) throw new AssertionError("Config factory not used properly. Servers were added more than once.");

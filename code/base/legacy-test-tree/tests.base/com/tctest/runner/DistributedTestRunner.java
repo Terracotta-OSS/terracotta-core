@@ -49,9 +49,8 @@ public class DistributedTestRunner implements ResultsListener {
   private final Class                                   applicationClass;
   private final ApplicationConfig                       applicationConfig;
   private final ContainerConfig                         containerConfig;
-  private final Control                                 control;
   private final ResultsListener[]                       resultsListeners;
-  private final TestClientConfigHelperFactory                 configHelperFactory;
+  private final TestClientConfigHelperFactory           configHelperFactory;
   private final ContainerStateFactory                   containerStateFactory;
   private final TestGlobalIdGenerator                   globalIdGenerator;
   private final TCServer                                server;
@@ -59,6 +58,7 @@ public class DistributedTestRunner implements ResultsListener {
   private final List                                    results     = new ArrayList();
   private final DistributedTestRunnerConfig             config;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
+  private Control                                       control;
   private boolean                                       startTimedOut;
   private boolean                                       executionTimedOut;
   private final int                                     clientCount;
@@ -92,8 +92,8 @@ public class DistributedTestRunner implements ResultsListener {
    */
   public DistributedTestRunner(DistributedTestRunnerConfig config,
                                TestTVSConfigurationSetupManagerFactory configFactory,
-                               TestClientConfigHelperFactory configHelperFactory, Class applicationClass, Map optionalAttributes,
-                               ApplicationConfig applicationConfig, boolean startServer,
+                               TestClientConfigHelperFactory configHelperFactory, Class applicationClass,
+                               Map optionalAttributes, ApplicationConfig applicationConfig, boolean startServer,
                                boolean isMutatorValidatorTest, boolean isMultipleServerTest,
                                MultipleServerManager serverManager, TransparentAppConfig transparentAppConfig)
       throws Exception {
@@ -115,7 +115,6 @@ public class DistributedTestRunner implements ResultsListener {
     this.statsOutputQueue = new LinkedQueue();
     this.statsOutputPrinter = new QueuePrinter(this.statsOutputQueue, System.out);
     this.containerStateFactory = new ContainerStateFactoryObject(statsOutputQueue);
-    this.control = newContainerControl();
 
     adaptedMutatorCount = transparentAppConfig.getAdaptedMutatorCount();
     adaptedValidatorCount = transparentAppConfig.getAdaptedValidatorCount();
@@ -152,7 +151,11 @@ public class DistributedTestRunner implements ResultsListener {
 
   private void initializedClients() throws Exception {
     applicationBuilders = newApplicationBuilders(this.clientCount + this.validatorCount);
+    initializeContainers();
+  }
 
+  private void initializeContainers() {
+    this.control = newContainerControl();
     createMutators();
     createValidators();
   }
@@ -191,7 +194,7 @@ public class DistributedTestRunner implements ResultsListener {
       }
     } catch (Throwable t) {
       notifyError(new ErrorContext(t));
-    } 
+    }
   }
 
   private void startStatsOutputPrinterThread() {
@@ -201,6 +204,69 @@ public class DistributedTestRunner implements ResultsListener {
   }
 
   public void run() {
+    try {
+      debugPrintln("***** control=[" + control.toString() + "]");
+
+      for (int i = 0; i < containers.length; i++) {
+        new Thread(containers[i]).start();
+      }
+
+      // wait for all mutators to finish before starting the validators
+      if (isMutatorValidatorTest) {
+        final boolean mutationComplete = this.control.waitForMutationComplete(config.executionTimeout());
+
+        if (!mutationComplete) {
+          notifyExecutionTimeout();
+        }
+
+        if (isMultipleServerTest) {
+          checkForErrors();
+        }
+
+        for (int i = 0; i < validatorContainers.length; i++) {
+          new Thread(validatorContainers[i]).start();
+        }
+
+        if (isMultipleServerTest && shouldCrashActiveServersAfterMutate()) {
+          Thread.sleep(5000);
+          debugPrintln("***** DTR: Crashing active server");
+          serverManager.crashActiveServers();
+          debugPrintln("***** DTR: Notifying the test-wide control");
+          control.notifyValidationStart();
+        }
+      }
+
+      if (isMultipleServerTest) {
+        checkForErrors();
+      }
+
+      final boolean complete = this.control.waitForAllComplete(this.config.executionTimeout());
+
+      if (!complete) {
+        notifyExecutionTimeout();
+      }
+
+      if (isMultipleServerTest) {
+        checkForErrors();
+      }
+    } catch (Throwable t) {
+      notifyError(new ErrorContext(t));
+    } finally {
+
+      try {
+        if (this.startServer) {
+          executePostActions();
+        }
+      } catch (Exception e) {
+        notifyError(new ErrorContext(e));
+      }
+    }
+  }
+
+  // spawn new control to re-run the test
+  public void rerun() {
+    initializeContainers();
+
     try {
       debugPrintln("***** control=[" + control.toString() + "]");
 
@@ -378,7 +444,10 @@ public class DistributedTestRunner implements ResultsListener {
       PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(l1ConfigManager);
       if (adapterMap != null
           && ((i < clientCount && i < adaptedMutatorCount) || (i >= clientCount && i < (adaptedValidatorCount + clientCount)))) {
-        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory, applicationClass, optionalAttributes, components, adapterMap);
+        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory,
+                                                                                              applicationClass,
+                                                                                              optionalAttributes,
+                                                                                              components, adapterMap);
         rv[i] = new DSOApplicationBuilder(configHelperFactoryData, this.applicationConfig);
 
         for (Iterator iter = adapterMap.keySet().iterator(); iter.hasNext();) {
@@ -388,7 +457,10 @@ public class DistributedTestRunner implements ResultsListener {
                        + "] adapterClass=[" + adapterClass.getName() + "]");
         }
       } else {
-        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory, applicationClass, optionalAttributes, components, null);
+        IsolationClassLoaderFactory configHelperFactoryData = new IsolationClassLoaderFactory(configHelperFactory,
+                                                                                              applicationClass,
+                                                                                              optionalAttributes,
+                                                                                              components, null);
         rv[i] = new DSOApplicationBuilder(configHelperFactoryData, this.applicationConfig);
         debugPrintln("***** Creating normal DSOApplicationBuilder: i=[" + i + "]");
       }
