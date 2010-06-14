@@ -54,8 +54,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   @Override
   protected void applyMethod(final ObjectID objectID, final BackReferences includeIDs, final int method,
                              final Object[] params) {
-    super.applyMethod(objectID, includeIDs, method, params);
-    if (method == SerializationUtil.CLEAR) {
+    if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
+      // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
+      super.applyMethod(objectID, includeIDs, method, params);
+    }
+    if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
       // clear needs to be broadcasted so local caches can be cleared elsewhere
       includeIDs.forceBroadcastFor(objectID);
     }

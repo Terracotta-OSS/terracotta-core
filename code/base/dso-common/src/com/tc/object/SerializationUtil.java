@@ -42,6 +42,8 @@ public class SerializationUtil {
   public final static int         PUT_IF_ABSENT                    = 26;
   public final static int         REMOVE_IF_VALUE_EQUAL            = 27;
   public final static int         URL_SET                          = 28;
+  public final static int         CLEAR_LOCAL_CACHE                = 29;
+  
   
 
   public final static String      PUSH_SIGNATURE                   = "push(Ljava/lang/Object;)java/lang/Object;";
@@ -57,6 +59,7 @@ public class SerializationUtil {
   public final static String      ADD_LAST_SIGNATURE               = "addLast(Ljava/lang/Object;)V";
   public final static String      ADD_FIRST_SIGNATURE              = "addFirst(Ljava/lang/Object;)V";
   public final static String      CLEAR_SIGNATURE                  = "clear()V";
+  public final static String      CLEAR_LOCAL_CACHE_SIGNATURE      = "clearLocalCache()V";
   public final static String      PUT_SIGNATURE                    = "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
   public final static String      GET_SIGNATURE                    = "get(Ljava/lang/Object;)Ljava/lang/Object;";
   public final static String      SET_SIGNATURE                    = "set(ILjava/lang/Object;)Ljava/lang/Object;";
@@ -159,6 +162,7 @@ public class SerializationUtil {
     mappings.put(REPLACE_SIGNATURE, REPLACE);
     mappings.put(REPLACE_IF_VALUE_EQUAL_SIGNATURE, REPLACE_IF_VALUE_EQUAL);
     mappings.put(URL_SET_SIGNATURE, URL_SET);
+    mappings.put(CLEAR_LOCAL_CACHE_SIGNATURE, CLEAR_LOCAL_CACHE);
   }
 
   public String[] getSignatures() {
