@@ -249,6 +249,10 @@ import com.tc.statistics.retrieval.actions.SRAL2ChangesPerBroadcast;
 import com.tc.statistics.retrieval.actions.SRAL2FaultsFromDisk;
 import com.tc.statistics.retrieval.actions.SRAL2GlobalLockCount;
 import com.tc.statistics.retrieval.actions.SRAL2PendingTransactions;
+import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetSizeRequestsCount;
+import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetSizeRequestsRate;
+import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetValueRequestsCount;
+import com.tc.statistics.retrieval.actions.SRAL2ServerMapGetValueRequestsRate;
 import com.tc.statistics.retrieval.actions.SRAL2ToL1FaultRate;
 import com.tc.statistics.retrieval.actions.SRAL2TransactionCount;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
@@ -1291,6 +1295,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRAL1ReferenceCount(this.clientStateManager));
       registry.registerActionInstance(new SRAGlobalLockRecallCount(serverStats));
       registry.registerActionInstance(new SRAL2GlobalLockCount(serverStats));
+      registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsCount(serverStats));
+      registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsRate(serverStats));
+      registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsCount(serverStats));
+      registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsRate(serverStats));
       if (sraBdb != null) {
         registry.registerActionInstance(sraBdb);
       }
