@@ -19,6 +19,7 @@ import com.tc.objectserver.locks.factory.NonGreedyLockPolicyFactory;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -315,6 +316,9 @@ public class ClientServerLockManagerTest extends TestCase {
 
     StringBuffer buffer = writer.getBuffer();
     System.out.println(buffer);
+    
+    System.out.println("Thread dump ------- ");
+    System.out.println(ThreadDumpUtil.getThreadDump());
   }
 
   public void testPendingWaitNotifiedRWClientServer() {
