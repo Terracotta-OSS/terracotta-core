@@ -19,8 +19,6 @@ public class LongGCLogger implements MemoryEventsListener {
   private final TCLogger                      logger;
   private final TerracottaOperatorEventLogger operatorEventLogger          = TerracottaOperatorEventLogging
                                                                                .getEventLogger();
-  private final static int                    HIGH_MEMORY_USAGE_PERCENTAGE = 80;
-
   public LongGCLogger(TCLogger logger, long gcTimeOut) {
     this.logger = logger;
     this.gcTimeout = gcTimeOut;
@@ -35,11 +33,6 @@ public class LongGCLogger implements MemoryEventsListener {
     long timeDiff = currentUsage.getCollectionTime() - lastMemoryUsage.getCollectionTime();
     if (countDiff > 0 && timeDiff > gcTimeout) {
       fireLongGCOperatorEvent(LongGCEventType.LONG_GC, countDiff, timeDiff);
-    }
-    if (lastMemoryUsage.getUsedPercentage() < HIGH_MEMORY_USAGE_PERCENTAGE
-        && currentUsage.getUsedPercentage() >= HIGH_MEMORY_USAGE_PERCENTAGE) {
-      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-          .createHighMemoryUsageEvent(new Object[] { currentUsage.getUsedPercentage() }));
     }
     lastMemoryUsage = currentUsage;
   }

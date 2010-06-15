@@ -229,6 +229,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
+import com.tc.runtime.logging.MemoryOperatorEventListener;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.server.TCServer;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -740,6 +741,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = new LongGCLogger(logger, timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
+    tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
     // CDV-1181 warn if using CMS
     tcMemManager.checkGarbageCollectors();
 

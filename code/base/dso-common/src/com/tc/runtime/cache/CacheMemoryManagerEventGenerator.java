@@ -4,23 +4,19 @@
  */
 package com.tc.runtime.cache;
 
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 import com.tc.runtime.TCMemoryManager;
 
 public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
 
-  private CacheMemoryEventsListener           listener;
-  private CacheMemoryEventType                currentState;
-  private MemoryUsage                         lastReported;
-  private int                                 threshold;
-  private int                                 criticalThreshold;
-  private int                                 leastCount;
-  private boolean                             isOldGen;
-  private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+  private final CacheMemoryEventsListener listener;
+  private CacheMemoryEventType            currentState;
+  private MemoryUsage                     lastReported;
+  private final int                       threshold;
+  private final int                       criticalThreshold;
+  private final int                       leastCount;
+  private final boolean                   isOldGen;
 
   public CacheMemoryManagerEventGenerator(int threshold, int criticalThreshold, int leastCount,
                                           TCMemoryManager manager, CacheMemoryEventsListener listener) {
@@ -60,7 +56,6 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
         // then send an event only if greater than least count or if we just reached ABOVE_CRITICAL_THRESHOLD or if a gc
         // took place
         fire(CacheMemoryEventType.ABOVE_CRITICAL_THRESHOLD, usage);
-        fireHighMemoryUsageOperatorEvent(usage.getUsedPercentage());
       }
     } else if (currentState != CacheMemoryEventType.ABOVE_THRESHOLD || isLeastCountReached(usedPercentage)) {
       fire(CacheMemoryEventType.ABOVE_THRESHOLD, usage);
@@ -73,11 +68,6 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
 
   private boolean isLeastCountReached(int usedPercentage) {
     return (Math.abs(usedPercentage - lastReported.getUsedPercentage()) >= leastCount);
-  }
-
-  private void fireHighMemoryUsageOperatorEvent(int usedPercentage) {
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-        .createHighMemoryUsageEvent(new Object[] { usedPercentage }));
   }
 
   private void fire(CacheMemoryEventType type, MemoryUsage mu) {

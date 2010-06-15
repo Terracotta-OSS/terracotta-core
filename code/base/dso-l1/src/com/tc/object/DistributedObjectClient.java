@@ -141,6 +141,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.TCMemoryManagerImpl;
 import com.tc.runtime.logging.LongGCLogger;
+import com.tc.runtime.logging.MemoryOperatorEventListener;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemCallback;
@@ -538,7 +539,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
                                                                                         this.config.getUUID(),
-                                                                                        this.config.getTunneledDomains());
+                                                                                        this.config
+                                                                                            .getTunneledDomains());
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger, this.manager
@@ -806,6 +808,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final String infoMsg = "Connection successfully established to server at " + remoteAddress;
     CONSOLE_LOGGER.info(infoMsg);
     DSO_LOGGER.info(infoMsg);
+
+    // register for memory events for operator console
+    // register for it after the handshake happens see MNK-1684
+    tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
 
     if (this.statisticsAgentSubSystem.isActive()) {
       this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX

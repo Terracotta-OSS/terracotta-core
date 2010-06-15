@@ -18,9 +18,9 @@ public class TerracottaOperatorEventFactory {
         .format(TerracottaOperatorEventResources.getLongGCMessage(), arguments));
   }
 
-  public static TerracottaOperatorEvent createHighMemoryUsageEvent(Object[] arguments) {
+  public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), arguments));
+        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), new Object[] { memoryUsage }));
   }
 
   /**
