@@ -83,6 +83,8 @@ public interface TCPropertiesConsts {
    * cachePolicy : <lru>/<lfu>      - Least Recently Used or Least Frequenctly used
    * deleteBatchSize                - Max number of objects deleted in one batch when
    *                                  removing from the object store after a GC
+   * mapEntriesDeleteBatchSize      - Max number of entries in a map which will get deleted in
+   *                                  one transaction from the object store after DGC 
    * maxObjectsToCommit             - Max number of Objects commited in one batch in
    *                                  the commit stage and flush stage
    * maxObjectsInTxnObjGrouping     - Max number of Objects allowed in the TransactionalObject
@@ -135,6 +137,7 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
 
   public static final String   L2_OBJECTMANAGER_DELETEBATCHSIZE                              = "l2.objectmanager.deleteBatchSize";
+  public static final String   L2_OBJECTMANAGER_MAP_ENTRIES_DELETE_BATCHSIZE                 = "l2.objectmanager.mapEntriesDeleteBatchSize";
   public static final String   L2_OBJECTMANAGER_CACHEPOLICY                                  = "l2.objectmanager.cachePolicy";
   public static final String   L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT                         = "l2.objectmanager.maxObjectsToCommit";
   public static final String   L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING                 = "l2.objectmanager.maxObjectsInTxnObjGrouping";

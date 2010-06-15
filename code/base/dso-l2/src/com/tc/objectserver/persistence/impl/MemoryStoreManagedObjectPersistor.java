@@ -211,6 +211,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
 
         if (!status) {
           failureContext = new Object() {
+            @Override
             public String toString() {
               return "Unable to save ManagedObject: " + managedObject + "; status: " + status;
             }
@@ -238,7 +239,7 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   private long saveAllObjectCount = 0;
   private long saveAllElapsed     = 0;
 
-  private void deleteObjectByID(PersistenceTransaction tx, ObjectID id) {
+  private void deleteObjectByID(ObjectID id) {
     validateID(id);
     byte[] key = objectIDToData(id);
     if (objectDB.get(key) != null) {
@@ -248,9 +249,9 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
     }
   }
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> objectIDs) {
-    for (Iterator i = objectIDs.iterator(); i.hasNext();) {
-      deleteObjectByID(tx, (ObjectID) i.next());
+  public void deleteAllObjectsByID(SortedSet<ObjectID> objectIDs) {
+    for (Iterator<ObjectID> i = objectIDs.iterator(); i.hasNext();) {
+      deleteObjectByID(i.next());
     }
   }
 

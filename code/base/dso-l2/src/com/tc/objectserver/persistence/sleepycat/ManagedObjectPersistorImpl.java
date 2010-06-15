@@ -79,6 +79,14 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                                                                          false);
   private static final int                        INTEGER_MAX_80_PERCENT = (int) (Integer.MAX_VALUE * 0.8);
 
+  private static final int                        DELETE_BATCH_SIZE      = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                                     5000);
+
+  private static final long                       REMOVE_THRESHOLD       = 300;
+
   private final Database                          objectDB;
   private final SerializationAdapterFactory       saf;
   private final MutableSequence                   objectIDSequence;
@@ -192,7 +200,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   public long nextObjectIDBatch(int batchSize) {
     return this.objectIDSequence.nextBatch(batchSize);
   }
-  
+
   public long currentObjectIDValue() {
     return this.objectIDSequence.current();
   }
@@ -496,16 +504,28 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private long saveAllObjectCount = 0;
   private long saveAllElapsed     = 0;
 
-  private void deleteObjectByID(PersistenceTransaction tx, ObjectID id) {
+  /**
+   * Deletes the object from the db with the id, Also if the object is of type map it deletes all the entries of the
+   * collection, the deletion of the map entries happen first in the batches of
+   * "l2.objectmanager.mapEntriesDeleteBatchSize"
+   * 
+   * the object id pointing to the map gets deleted later on in the batches of "l2.objectmanager.deleteBatchSize"
+   * So even if something wrong happens while deleting the map entries, the next cycle will delete them from the db
+   * 
+   * @return it returns the number of entries it has deleted from the object db
+   */
+  private int deleteObjectByID(PersistenceTransaction tx, ObjectID id) {
     validateID(id);
     try {
       DatabaseEntry key = new DatabaseEntry();
       setObjectIDData(key, id);
+      int entriesDeleted = 0;
       OperationStatus status = this.objectDB.delete(pt2nt(tx), key);
       if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
         // make the formatter happy
         throw new DBException("Unable to remove ManagedObject for object id: " + id + ", status: " + status);
       } else {
+        entriesDeleted++;
         long startTime = 0;
         boolean isMapType = false;
         if (MEASURE_PERF) {
@@ -513,13 +533,14 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
         }
         if (containsMapType(id)) {
           isMapType = true;
-          // may return false if ManagedObject persistent state empty
-          this.collectionsPersistor.deleteCollection(tx, id);
+          // will return zero if ManagedObject persistent state empty
+          this.collectionsPersistor.deleteCollection(ptp, id);
         }
         if (MEASURE_PERF) {
           this.perfMeasureStats.updateStats("Managed Objects deleted ", new long[] { 1, (isMapType ? 1 : 0),
               (System.nanoTime() - startTime) });
         }
+        return entriesDeleted;
       }
     } catch (TCDatabaseException t) {
       throw new DBException(t);
@@ -530,17 +551,44 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
    * This method takes a SortedSet of Object ID to delete for two reasons. 1) to maintain lock ordering - check
    * saveAllObjects 2) for performance reason
    */
-  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> sortedOids) {
-    for (Object element : sortedOids) {
-      ObjectID objectId = (ObjectID) element;
+  public void deleteAllObjectsByID(SortedSet<ObjectID> sortedGarbage) {
+    if (sortedGarbage.size() <= DELETE_BATCH_SIZE) {
+      removeFromStore(sortedGarbage);
+    } else {
+      SortedSet<ObjectID> split = new TreeSet<ObjectID>();
+      for (Iterator<ObjectID> i = sortedGarbage.iterator(); i.hasNext();) {
+        split.add(i.next());
+        if (split.size() >= DELETE_BATCH_SIZE) {
+          removeFromStore(split);
+          split = new TreeSet<ObjectID>();
+        }
+      }
+      if (split.size() > 0) {
+        removeFromStore(split);
+      }
+    }
+
+  }
+
+  private void removeFromStore(SortedSet<ObjectID> sortedGarbage) {
+    long start = System.currentTimeMillis();
+
+    PersistenceTransaction tx = this.ptp.newTransaction();
+    for (ObjectID objectId : sortedGarbage) {
       deleteObjectByID(tx, objectId);
     }
 
     try {
-      this.objectIDManager.deleteAll(tx, sortedOids);
-      removeAllMapTypeObject(sortedOids);
+      this.objectIDManager.deleteAll(tx, sortedGarbage);
+      removeAllMapTypeObject(sortedGarbage);
     } catch (TCDatabaseException de) {
       throw new TCRuntimeException(de);
+    }
+    tx.commit();
+
+    long elapsed = System.currentTimeMillis() - start;
+    if (elapsed > REMOVE_THRESHOLD) {
+      logger.info("Removed " + sortedGarbage.size() + " objects in " + elapsed + " ms.");
     }
   }
 

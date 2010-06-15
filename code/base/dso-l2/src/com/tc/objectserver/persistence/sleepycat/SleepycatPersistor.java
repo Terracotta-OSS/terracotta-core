@@ -49,7 +49,7 @@ public class SleepycatPersistor implements Persistor {
   private final SleepycatCollectionFactory     sleepycatCollectionFactory;
   private final PersistentMapStore             persistentStateStore;
 
-  private SleepycatCollectionsPersistor        sleepycatCollectionsPersistor;
+  private final SleepycatCollectionsPersistor  sleepycatCollectionsPersistor;
 
   // only for tests
   public SleepycatPersistor(TCLogger logger, DBEnvironment env, SerializationAdapterFactory serializationAdapterFactory)
