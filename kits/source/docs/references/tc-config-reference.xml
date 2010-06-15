@@ -22,20 +22,20 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
   <tc-properties>
 
 	<!--
-	The optional <tc-properties> block contains various tuning 
-	properties for the Terracotta cluster. This block is inserted at the
-	beginning of the Terracotta configuration file.
-			
-	The properties defined here override default tc.properties but they
-	are overridden by those found in a local tc.properties file and by
-	those defined using system properties. The order of precedence,
-	beginning with the source having least precedence, is:
-			
-	1. Default tc.properties file located in tc.jar
-	2. <tc-properties> block in the Terracotta configuration file
-	3. Local tc.properties file
-	4. Properties defined using Java system properties
-	-->
+          The optional <tc-properties> block contains various tuning 
+          properties for the Terracotta cluster. This block is inserted at the
+          beginning of the Terracotta configuration file.
+		
+          The properties defined here override default tc.properties but they
+          are overridden by those found in a local tc.properties file and by
+          those defined using system properties. The order of precedence,
+          beginning with the source having least precedence, is:
+		
+          1. Default tc.properties file located in tc.jar
+          2. <tc-properties> block in the Terracotta configuration file
+          3. Local tc.properties file
+          4. Properties defined using Java system properties
+          -->
 
     <property name="l2.nha.dirtydb.autoDelete" value="true"/>
     <property name="l1.cachemanager.enabled" value="true"/>
