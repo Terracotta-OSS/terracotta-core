@@ -358,6 +358,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     private final Object                 waitObject;
     private final long                   waitTime;
     private final Stack<PendingLockHold> reacquires;
+    private boolean                      notified = false;
 
     LockWaiter(ThreadID owner, Object waitObject, Stack<LockHold> holds, long timeout) {
       super(owner);
@@ -385,13 +386,17 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     void park() throws InterruptedException {
       synchronized (waitObject) {
-        waitObject.wait();
+        if (!notified) {
+          waitObject.wait();
+        }
       }
     }
 
     void park(long timeout) throws InterruptedException {
       synchronized (waitObject) {
-        waitObject.wait(timeout);
+        if (!notified) {
+          waitObject.wait(timeout);
+        }
       }
     }
 
@@ -401,6 +406,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
         @Override
         public void run() {
           synchronized (waitObject) {
+            notified = true;
             waitObject.notifyAll();
           }
         }
