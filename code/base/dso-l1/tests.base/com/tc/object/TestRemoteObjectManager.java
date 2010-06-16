@@ -13,6 +13,7 @@ import com.tc.object.dna.api.DNAException;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.text.PrettyPrinter;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;
@@ -27,6 +28,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   public final NoExceptionLinkedQueue retrieveRootIDResults = new NoExceptionLinkedQueue();
 
   public static final DNA             THROW_NOT_FOUND       = new ThrowNotFound();
+  public final ObjectIDSet            removedObjects        = new ObjectIDSet();
 
   public DNA retrieve(final ObjectID id) {
     this.retrieveCalls.put(id);
@@ -45,7 +47,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
   }
 
   public void removed(final ObjectID id) {
-    // do nothing
+    removedObjects.add(id);
   }
 
   public DNA retrieve(final ObjectID id, final int depth) {

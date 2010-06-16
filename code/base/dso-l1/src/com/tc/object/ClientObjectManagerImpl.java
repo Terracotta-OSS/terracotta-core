@@ -545,6 +545,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
         } catch (final Throwable t) {
           // remove the object creating in progress from the list.
           lookupDone(id, createInProgressSet);
+          this.remoteObjectManager.removed(id);
           this.logger.warn("Exception: ", t);
           if (t instanceof ClassNotFoundException) { throw (ClassNotFoundException) t; }
           if (t instanceof RuntimeException) { throw (RuntimeException) t; }

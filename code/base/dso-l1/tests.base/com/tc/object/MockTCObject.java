@@ -6,7 +6,6 @@ package com.tc.object;
 
 import com.tc.exception.ImplementMe;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 
@@ -19,15 +18,15 @@ import java.util.List;
  * Mock implementation of TCObject for testing.
  */
 public class MockTCObject implements TCObject {
-  private final ObjectID         id;
-  private final Object           peer;
-  private final List             history          = new LinkedList();
-  private final Object     resolveLock      = new Object();
-  private long             version          = 0;
-  private final TCClass          tcClazz;
-  private boolean          accessed         = false;
-  private boolean          isNew            = false;
-  private RuntimeException hydrateException = null;
+  private final ObjectID id;
+  private final Object   peer;
+  private final List     history          = new LinkedList();
+  private final Object   resolveLock      = new Object();
+  private long           version          = 0;
+  private final TCClass  tcClazz;
+  private boolean        accessed         = false;
+  private boolean        isNew            = false;
+  private Exception      hydrateException = null;
 
   public MockTCObject(final ObjectID id, final Object obj) {
     this(id, obj, false, false);
@@ -94,12 +93,15 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  public void setHydrateException(RuntimeException hydrateException) {
+  public void setHydrateException(Exception hydrateException) {
     this.hydrateException = hydrateException;
   }
 
-  public void hydrate(DNA from, boolean force) throws DNAException {
-    if (hydrateException != null) { throw hydrateException; }
+  public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
+    if (hydrateException != null) {
+      if (hydrateException instanceof RuntimeException) throw (RuntimeException) hydrateException;
+      throw (ClassNotFoundException) hydrateException;
+    }
     // nothing
   }
 

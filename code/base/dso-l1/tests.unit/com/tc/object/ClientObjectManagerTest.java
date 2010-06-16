@@ -233,6 +233,27 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
 
   }
 
+  public void testClassNotFoundExceptionDuringLookup() throws Exception {
+    final ClassNotFoundException expect = new ClassNotFoundException();
+    this.tcObject.setHydrateException(expect);
+
+    TestDNA dna = newEmptyDNA();
+    prepareObjectLookupResults(dna);
+
+    try {
+      this.mgr.lookup(this.objectID);
+      fail("no exception");
+    } catch (final Exception e) {
+      if (!(e == expect || e.getCause() == expect)) {
+        fail(e);
+      } else {
+        System.out.println("XXX Got exception : " + e);
+      }
+    }
+
+    Assert.eval(this.remoteObjectManager.removedObjects.contains(this.objectID));
+  }
+
   public void testExceptionDuringHydrateClearsState() throws Exception {
     final RuntimeException expect = new RuntimeException();
     this.tcObject.setHydrateException(expect);
