@@ -73,7 +73,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     this.ptp = null;
     this.env = null;
   }
-  
+
   public void testSleepycatPersistableMap() throws Exception {
     ManagedObjectStateFactory.createInstance(new NullManagedObjectChangeListenerProvider(), this.persistor);
     final ObjectID id = new ObjectID(1);
@@ -159,9 +159,8 @@ public class SleepycatCollectionsTest extends TCTestCase {
     tx.commit();
     equals(localMap, sMap2);
 
-    long objectsInDb = this.env.getMapsDatabase().count();
-    tx = ptp.newTransaction();
-    Assert.assertEquals(objectsInDb, collectionsPersistor.deleteCollection(ptp, id));
+    tx = this.ptp.newTransaction();
+    Assert.assertTrue(this.collectionsPersistor.deleteCollection(tx, id));
     tx.commit();
 
     tx = this.ptp.newTransaction();
@@ -174,9 +173,8 @@ public class SleepycatCollectionsTest extends TCTestCase {
     tx.commit();
     equals(new HashMap(), sMap2);
 
-    objectsInDb = this.env.getMapsDatabase().count();
-    tx = ptp.newTransaction();
-    Assert.assertEquals(objectsInDb, collectionsPersistor.deleteCollection(ptp, id));
+    tx = this.ptp.newTransaction();
+    Assert.assertFalse(this.collectionsPersistor.deleteCollection(tx, id));
     tx.commit();
 
   }

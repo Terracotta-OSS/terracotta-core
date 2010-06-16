@@ -19,11 +19,8 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.PersistableObjectState;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
@@ -34,11 +31,6 @@ import java.io.ObjectInput;
 
 public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
 
-  private static final int                 MAP_ENTRIES_DELETE_BATCH_SIZE = TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_MAP_ENTRIES_DELETE_BATCHSIZE,
-                                                                                     50000);
   private final Database                   database;
   private final BasicSerializer            serializer;
   private final ByteArrayOutputStream      bao;
@@ -104,14 +96,11 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
 
   /**
    * This method is slightly dubious in that it assumes that the ObjectID is the first 8 bytes of the Key in the entire
-   * collections database.(which is true, but that logic is spread elsewhere) If at any point of time if the deleted map
-   * entries exceed the batch size we do a commit.
+   * collections database.(which is true, but that logic is spread elsewhere)
    * 
-   * @return returns the number of entries deleted but haven't been committed yet. Will always be lesser than
-   *         MAP_ENTRIES_DELETE_BATCH_SIZE
    * @throws TCDatabaseException
    */
-  public int deleteCollection(PersistenceTransactionProvider ptp, ObjectID id) throws TCDatabaseException {
+  public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws TCDatabaseException {
     // These are the possible ways for isolation
     // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
     // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
@@ -121,11 +110,9 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     // During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
     // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
     // avoided
-    PersistenceTransaction tx = ptp.newTransaction();
     Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
-    int totalMapEntriesDeleted = 0;
-    int mapEntriesDeleted = 0;
     try {
+      boolean found = false;
       byte idb[] = Conversion.long2Bytes(id.toLong());
       DatabaseEntry key = new DatabaseEntry();
       key.setData(idb);
@@ -135,25 +122,8 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
         if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
           do {
             if (partialMatch(idb, key.getData())) {
+              found = true;
               c.delete();
-              mapEntriesDeleted++;
-              totalMapEntriesDeleted++;
-              if (mapEntriesDeleted >= MAP_ENTRIES_DELETE_BATCH_SIZE) {
-                c.close();
-                tx.commit();
-                mapEntriesDeleted = 0;
-                tx = ptp.newTransaction();
-                c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
-                if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                  if (partialMatch(idb, key.getData())) {
-                    c.delete();
-                    mapEntriesDeleted++;
-                    totalMapEntriesDeleted++;
-                  }
-                } else {
-                  break;
-                }
-              }
             } else {
               break;
             }
@@ -162,12 +132,9 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
       } catch (Exception t) {
         throw new TCDatabaseException(t.getMessage());
       }
-      return totalMapEntriesDeleted;
+      return found;
     } finally {
       c.close();
-      if (mapEntriesDeleted > 0) {
-        tx.commit();
-      }
     }
   }
 

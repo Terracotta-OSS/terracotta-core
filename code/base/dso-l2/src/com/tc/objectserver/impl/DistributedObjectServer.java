@@ -580,8 +580,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       final Sink gcDisposerSink = stageManager.createStage(
                                                            ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
                                                            new GarbageDisposeHandler(gcPublisher, this.persistor
-                                                               .getManagedObjectPersistor()), gcDeleteThreads,
-                                                           maxStageSize).getSink();
+                                                               .getManagedObjectPersistor(), this.persistor
+                                                               .getPersistenceTransactionProvider(),
+                                                                                     objManagerProperties
+                                                                                         .getInt("deleteBatchSize")),
+                                                           gcDeleteThreads, maxStageSize).getSink();
 
       this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
     } else {

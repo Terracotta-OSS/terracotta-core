@@ -40,7 +40,7 @@ public interface ManagedObjectPersistor {
 
   public void saveAllObjects(PersistenceTransaction tx, Collection managed);
 
-  public void deleteAllObjectsByID(SortedSet<ObjectID> ids);
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids);
 
   public Map loadRootNamesToIDs();
 

@@ -227,7 +227,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(toDelete);
+      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
     } finally {
       ptx.commit();
     }
@@ -260,7 +260,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     }
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(objectIds);
+      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
     } finally {
       ptx.commit();
     }
@@ -324,7 +324,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     this.testSleepycatCollectionsPersistor.setCounter(0);
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(toDelete);
+      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
     } finally {
       ptx.commit();
     }
@@ -362,7 +362,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     this.testSleepycatCollectionsPersistor.setCounter(0);
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(objectIds);
+      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
     } finally {
       ptx.commit();
     }
@@ -390,9 +390,9 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     }
 
     @Override
-    public int deleteCollection(PersistenceTransactionProvider ptp, final ObjectID id) {
+    public boolean deleteCollection(final PersistenceTransaction tx, final ObjectID id) {
       ++this.counter;
-      return counter;
+      return true;
     }
 
     public void setCounter(final int value) {
