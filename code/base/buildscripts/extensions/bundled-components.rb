@@ -69,6 +69,7 @@ module BundledComponents
         ant.manifest do
           ant.attribute(:name => 'Class-Path', :value => libfiles.sort.join(' '))
           ant.attribute(:name => 'Main-Class', :value => 'com.tc.cli.CommandLineMain')
+          add_build_info_manifest(ant)
         end 
       end
     end
@@ -132,7 +133,11 @@ module BundledComponents
         end
         libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
         jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))
-        ant.create_jar(jarfile, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt')
+        ant.create_jar(jarfile, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
+          ant.manifest do
+            add_build_info_manifest(ant)
+          end
+        end
       end
       runtime_classes_dir.delete
     end
@@ -157,6 +162,18 @@ module BundledComponents
           end
         end
       end
+    end
+  end
+
+  private
+  def add_build_info_manifest(ant)
+    ant.attribute(:name => 'BuildInfo-User', :value => @build_environment.build_username)
+    ant.attribute(:name => 'BuildInfo-Host', :value => @build_environment.build_hostname)
+    ant.attribute(:name => 'BuildInfo-Timestamp', :value => @build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S'))
+    ant.attribute(:name => 'BuildInfo-Revision-OSS', :value => @build_environment.os_revision)
+    ant.attribute(:name => 'BuildInfo-Branch', :value => @build_environment.current_branch)
+    if @build_environment.is_ee_branch?
+      ant.attribute(:name => 'BuildInfo-Revision-EE', :value => @build_environment.ee_revision)
     end
   end
 end

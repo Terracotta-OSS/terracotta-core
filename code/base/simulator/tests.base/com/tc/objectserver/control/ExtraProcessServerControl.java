@@ -153,7 +153,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected void addProductKeyIfExists(List args) {
     String propertyKey = TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.PRODUCTKEY_PATH;
     String productKeyPath = System.getProperty(propertyKey);
-    System.out.println("XXX expected product key path: " + productKeyPath);
     if (productKeyPath != null) {
       args.add("-D" + propertyKey + "=" + productKeyPath);
       System.out.println("XXX ading to server process: " + "-D" + propertyKey + "=" + productKeyPath);
