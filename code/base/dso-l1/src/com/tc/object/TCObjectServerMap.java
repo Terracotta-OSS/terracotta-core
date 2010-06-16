@@ -65,6 +65,13 @@ public interface TCObjectServerMap extends TCObject {
    * @return int for size of map.
    */
   public int getSize(final TCServerMap map);
+  
+  /**
+   * Returns the size of the local cache
+   * 
+   * @return int for size for the local cache of map.
+   */
+  public int getLocalSize();
 
   /**
    * Clears local cache of all entries. It is not immediate as all associated locks needs to be recalled.

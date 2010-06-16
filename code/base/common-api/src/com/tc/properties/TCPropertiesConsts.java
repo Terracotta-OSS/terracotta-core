@@ -489,6 +489,20 @@ public interface TCPropertiesConsts {
   public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                        = "l1.objectmanager.objectid.request.size";
   public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                        = "l1.objectmanager.flush.logging.enabled";
   public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                        = "l1.objectmanager.fault.logging.enabled";
+  
+  /*********************************************************************************************************************
+   * <code>
+   * Section : L1 ServerMap Manager Properties
+   * Description : This section contains the defaults for the ServerMap manager for the L1
+   * remote.maxRequestSentImmediately
+   *                         : Maximum number of requests send immediately after which it will be batched
+   * remote.batchLookupTimePeriod   
+   *                         : Time to wait before sending batch requests
+   *
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY          = "l1.servermapmanager.remote.maxRequestSentImmediately";
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD              = "l1.servermapmanager.remote.batchLookupTimePeriod";
 
   /*********************************************************************************************************************
    * <code>

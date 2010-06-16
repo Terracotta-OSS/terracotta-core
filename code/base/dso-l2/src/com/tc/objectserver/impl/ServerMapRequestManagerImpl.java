@@ -84,6 +84,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     final ConcurrentDistributedServerMapManagedObjectState csmState = (ConcurrentDistributedServerMapManagedObjectState) state;
 
     final Map<ClientID, Collection<ServerMapGetValueResponse>> results = new HashMap<ClientID, Collection<ServerMapGetValueResponse>>();
+    final Map<ClientID, ObjectIDSet> prefetches = new HashMap<ClientID, ObjectIDSet>();
     try {
       final Collection<ServerMapRequestContext> requests = this.requestQueue.remove(mapID);
 
@@ -98,7 +99,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
             sendResponseForGetSize(mapID, request, csmState);
             break;
           case GET_VALUE_FOR_KEY:
-            gatherResponseForGetValue(mapID, request, csmState, results);
+            gatherResponseForGetValue(mapID, request, csmState, results, prefetches);
             break;
           default:
             throw new AssertionError("Unknown request type : " + requestType);
@@ -108,6 +109,9 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       // TODO::FIXME::Release as soon as possible
       this.objectManager.releaseReadOnly(managedObject);
     }
+    if (!prefetches.isEmpty()) {
+      preFetchPortableValue(prefetches);
+    }
     if (!results.isEmpty()) {
       sendResponseForGetValue(mapID, results);
     }
@@ -115,7 +119,8 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
   private void gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestContext request,
                                          final ConcurrentDistributedServerMapManagedObjectState csmState,
-                                         final Map<ClientID, Collection<ServerMapGetValueResponse>> results) {
+                                         final Map<ClientID, Collection<ServerMapGetValueResponse>> results,
+                                         final Map<ClientID, ObjectIDSet> prefetches) {
     final ClientID clientID = request.getClientID();
     Collection<ServerMapGetValueResponse> responses = results.get(clientID);
     if (responses == null) {
@@ -127,7 +132,21 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
       // Null Value is not supported in CDSM
       portableValue = (portableValue == null ? ObjectID.NULL_ID : portableValue);
       responses.add(new ServerMapGetValueResponse(r.getRequestID(), portableValue));
-      preFetchPortableValueIfNeeded(mapID, portableValue, clientID);
+      gatherPreFetchPortableValues(prefetches, clientID, portableValue);
+    }
+  }
+
+  private void gatherPreFetchPortableValues(final Map<ClientID, ObjectIDSet> prefetches, final ClientID clientID,
+                                            final Object portableValue) {
+    if (portableValue instanceof ObjectID) {
+      final ObjectID valueID = (ObjectID) portableValue;
+      if (valueID.isNull()) { return; }
+      ObjectIDSet lookupIDs = prefetches.get(clientID);
+      if (lookupIDs == null) {
+        lookupIDs = new ObjectIDSet();
+        prefetches.put(clientID, lookupIDs);
+      }
+      lookupIDs.add(valueID);
     }
   }
 
@@ -172,20 +191,11 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
-  private void preFetchPortableValueIfNeeded(final ObjectID mapID, final Object portableValue, final ClientID clientID) {
-    if (portableValue instanceof ObjectID) {
-      final ObjectID valueID = (ObjectID) portableValue;
-      if (valueID.isNull()) { return; }
-      if (mapID.getGroupID() != valueID.getGroupID()) {
-        // TODO::FIX for AA
-        // Not in this server
-        return;
-      }
-      final ObjectIDSet lookupIDs = new ObjectIDSet();
-      lookupIDs.add(valueID);
-      this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(clientID, ObjectRequestID.NULL_ID,
-                                                                           lookupIDs, Thread.currentThread().getName(),
-                                                                           1, true));
+  private void preFetchPortableValue(final Map<ClientID, ObjectIDSet> prefetches) {
+    for (final Entry<ClientID, ObjectIDSet> element : prefetches.entrySet()) {
+      this.managedObjectRequestSink.add(new ObjectRequestServerContextImpl(element.getKey(), ObjectRequestID.NULL_ID,
+                                                                           element.getValue(), Thread.currentThread()
+                                                                               .getName(), 1, true));
     }
   }
 
