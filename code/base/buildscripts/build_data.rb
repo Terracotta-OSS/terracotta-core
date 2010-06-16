@@ -51,7 +51,7 @@ module BuildData
       file.puts("#{keyspace}.maven.artifacts.version=#{build_environment.maven_version}")
       file.puts("#{keyspace}.host=#{build_environment.build_hostname}")
       file.puts("#{keyspace}.user=#{build_environment.build_username}")
-      file.puts("#{keyspace}.timestamp=#{build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S')}")
+      file.puts("#{keyspace}.timestamp=#{build_environment.build_timestamp_string}")
       file.puts("#{keyspace}.revision=#{build_environment.os_revision}")
       file.puts("#{keyspace}.branch=#{build_environment.current_branch}")
 

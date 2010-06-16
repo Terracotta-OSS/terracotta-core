@@ -169,7 +169,7 @@ module BundledComponents
   def add_build_info_manifest(ant)
     ant.attribute(:name => 'BuildInfo-User', :value => @build_environment.build_username)
     ant.attribute(:name => 'BuildInfo-Host', :value => @build_environment.build_hostname)
-    ant.attribute(:name => 'BuildInfo-Timestamp', :value => @build_environment.build_timestamp.strftime('%Y%m%d-%H%m%S'))
+    ant.attribute(:name => 'BuildInfo-Timestamp', :value => @build_environment.build_timestamp_string)
     ant.attribute(:name => 'BuildInfo-Revision-OSS', :value => @build_environment.os_revision)
     ant.attribute(:name => 'BuildInfo-Branch', :value => @build_environment.current_branch)
     if @build_environment.is_ee_branch?

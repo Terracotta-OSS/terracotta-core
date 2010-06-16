@@ -204,7 +204,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
           @ant.ivy_retrieve(:pattern => dependencies_pattern)
           #puts "Converting to pom"
           #@ant.makepom(:ivyfile => ivyfile, :pomfile => ivyfile + ".pom") do
-            #@ant.mapping(:conf => "default", :scope => "compile")
+          #@ant.mapping(:conf => "default", :scope => "compile")
           #end
         end
       end

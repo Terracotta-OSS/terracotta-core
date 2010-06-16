@@ -117,6 +117,10 @@ class BuildEnvironment < Environment
     @build_timestamp
   end
 
+  def build_timestamp_string
+    @build_timestamp.strftime('%Y%m%d-%H%m%S')
+  end
+
   # What's the label of the currently-running monkey? Returns 'unknown' if we're not in a
   # monkey environment.
   def monkey_label
