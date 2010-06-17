@@ -18,6 +18,7 @@ import com.tc.net.protocol.tcm.TCMessageFactoryImpl;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageHeaderImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
 import com.tc.test.TCTestCase;
@@ -34,7 +35,18 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
     final ClientMessageChannelImpl mc = new MockClientMessageChannelForTMC();
     mc.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
 
-    MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, UUID.getUUID(), new String[0]);
+    MockTunnelingEventHandler teh = new MockTunnelingEventHandler(mc, new DSOMBeanConfig() {
+      private final UUID uuid = UUID.getUUID();
+
+      public String[] getTunneledDomains() {
+        return null;
+      }
+
+      public UUID getUUID() {
+        return uuid;
+      }
+    });
+
     mc.addListener(teh);
 
     /*
@@ -117,8 +129,8 @@ public class TunnelingMsgConnectionTest extends TCTestCase {
   }
 
   private class MockTunnelingEventHandler extends TunnelingEventHandler {
-    public MockTunnelingEventHandler(MessageChannel channel, UUID id, String[] tunneledDomains) {
-      super(channel, id, tunneledDomains);
+    public MockTunnelingEventHandler(MessageChannel channel, DSOMBeanConfig config) {
+      super(channel, config);
     }
 
     @Override

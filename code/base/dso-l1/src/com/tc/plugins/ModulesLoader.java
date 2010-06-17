@@ -25,6 +25,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.TunneledDomainUpdater;
 import com.tc.management.beans.TIMByteProviderMBean;
 import com.tc.object.config.ConfigLoader;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -108,14 +109,17 @@ public class ModulesLoader {
   }
 
   public static EmbeddedOSGiRuntime initModules(final DSOClientConfigHelper configHelper,
-                                                final ClassProvider classProvider, final boolean forBootJar)
-      throws Exception {
-    return initModules(configHelper, classProvider, forBootJar, Collections.EMPTY_LIST, null);
+                                                final ClassProvider classProvider,
+                                                final TunneledDomainUpdater tunneledDomainUpdater,
+                                                final boolean forBootJar) throws Exception {
+    return initModules(configHelper, classProvider, tunneledDomainUpdater, forBootJar, Collections.EMPTY_LIST);
   }
 
   public static EmbeddedOSGiRuntime initModules(final DSOClientConfigHelper configHelper,
-                                                final ClassProvider classProvider, final boolean forBootJar,
-                                                Collection<Repository> addlRepos, UUID id) throws Exception {
+                                                final ClassProvider classProvider,
+                                                final TunneledDomainUpdater tunneledDomainUpdater,
+                                                final boolean forBootJar, Collection<Repository> addlRepos)
+      throws Exception {
     if (forBootJar) {
       System.setProperty(TC_BOOTJAR_CREATION, Boolean.TRUE.toString());
     }
@@ -129,7 +133,8 @@ public class ModulesLoader {
 
       try {
         osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
-        initModules(osgiRuntime, configHelper, classProvider, modules.getModuleArray(), forBootJar, addlRepos, id);
+        initModules(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, modules.getModuleArray(),
+                    forBootJar, addlRepos);
       } catch (BundleException e) {
         if (e instanceof BundleExceptionSummary) {
           String msg = ((BundleExceptionSummary) e).getSummary();
@@ -154,14 +159,16 @@ public class ModulesLoader {
   }
 
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar, UUID id)
-      throws Exception {
-    initModules(osgiRuntime, configHelper, classProvider, modules, forBootJar, Collections.EMPTY_LIST, id);
+                          final ClassProvider classProvider, final TunneledDomainUpdater tunneledDomainUpdater,
+                          final Module[] modules, final boolean forBootJar) throws Exception {
+    initModules(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, modules, forBootJar,
+                Collections.EMPTY_LIST);
   }
 
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                          final ClassProvider classProvider, final Module[] modules, final boolean forBootJar,
-                          Collection<Repository> addlRepos, final UUID id) throws Exception {
+                          final ClassProvider classProvider, final TunneledDomainUpdater tunneledDomainUpdater,
+                          final Module[] modules, final boolean forBootJar, Collection<Repository> addlRepos)
+      throws Exception {
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
@@ -187,13 +194,14 @@ public class ModulesLoader {
         .mavenArtifactsVersion(), info.timApiVersion(), addlRepos);
     final URL[] locations = resolver.resolve(allModules);
 
-    installAndStartBundles(osgiRuntime, configHelper, classProvider, forBootJar, id, locations);
+    installAndStartBundles(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, forBootJar, locations);
   }
 
   public static void installAndStartBundles(final EmbeddedOSGiRuntime osgiRuntime,
                                             final DSOClientConfigHelper configHelper,
-                                            final ClassProvider classProvider, final boolean forBootJar, final UUID id,
-                                            final URL[] locations) throws Exception {
+                                            final ClassProvider classProvider,
+                                            final TunneledDomainUpdater tunneledDomainUpdater,
+                                            final boolean forBootJar, final URL[] locations) throws Exception {
     final Map<Bundle, URL> bundleURLs = osgiRuntime.installBundles(locations);
     configHelper.recordBundleURLs(bundleURLs);
 
@@ -211,7 +219,7 @@ public class ModulesLoader {
             Dictionary headers = bundle.getHeaders();
             if (headers.get("Presentation-Factory") != null) {
               logger.info("Installing TIMByteProvider for bundle '" + bundle.getSymbolicName() + "'");
-              installTIMByteProvider(bundle, bundleURL, id);
+              installTIMByteProvider(bundle, bundleURL, configHelper.getUUID());
             }
 
             String timApiInJar = (String) headers.get("Terracotta-TIM-API");
@@ -236,9 +244,13 @@ public class ModulesLoader {
     osgiRuntime.startBundles(locations, handler);
 
     if (!forBootJar) {
-      getModulesCustomApplicatorSpecs(osgiRuntime, configHelper);
-      getModulesMBeanSpecs(osgiRuntime, configHelper);
-      getModulesSRASpecs(osgiRuntime, configHelper);
+      getModulesSpecs(osgiRuntime, configHelper);
+      getMBeanSpecs(osgiRuntime, configHelper);
+      getSRASpecs(osgiRuntime, configHelper);
+      
+      if (tunneledDomainUpdater != null) {
+        tunneledDomainUpdater.sendCurrentTunneledDomains();
+      }
     }
   }
 
@@ -344,8 +356,7 @@ public class ModulesLoader {
     }
   }
 
-  private static void getModulesCustomApplicatorSpecs(final EmbeddedOSGiRuntime osgiRuntime,
-                                                      final DSOClientConfigHelper configHelper)
+  private static void getModulesSpecs(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper)
       throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(ModuleSpec.class.getName(), null);
     if (serviceReferences != null && serviceReferences.length > 0) {
@@ -353,16 +364,14 @@ public class ModulesLoader {
     }
 
     if (serviceReferences == null) { return; }
-    ModuleSpec[] modulesSpecs = new ModuleSpec[serviceReferences.length];
     for (int i = 0; i < serviceReferences.length; i++) {
-      modulesSpecs[i] = (ModuleSpec) osgiRuntime.getService(serviceReferences[i]);
+      configHelper.addModuleSpec((ModuleSpec) osgiRuntime.getService(serviceReferences[i]));
       osgiRuntime.ungetService(serviceReferences[i]);
     }
-    configHelper.setModuleSpecs(modulesSpecs);
   }
 
-  private static void getModulesMBeanSpecs(final EmbeddedOSGiRuntime osgiRuntime,
-                                           final DSOClientConfigHelper configHelper) throws InvalidSyntaxException {
+  private static void getMBeanSpecs(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper)
+      throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(MBeanSpec.class.getName(), null);
     if (serviceReferences != null && serviceReferences.length > 0) {
       Arrays.sort(serviceReferences, SERVICE_COMPARATOR);
@@ -377,7 +386,7 @@ public class ModulesLoader {
     configHelper.setMBeanSpecs(mbeanSpecs);
   }
 
-  private static void getModulesSRASpecs(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper)
+  private static void getSRASpecs(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper)
       throws InvalidSyntaxException {
     ServiceReference[] serviceReferences = osgiRuntime.getAllServiceReferences(SRASpec.class.getName(), null);
     if (serviceReferences != null && serviceReferences.length > 0) {

@@ -25,7 +25,6 @@ import com.tc.object.config.schema.DSORuntimeOutputOptions;
 import com.tc.object.config.schema.InstrumentedClass;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.properties.ReconnectConfig;
-import com.tc.util.UUID;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
@@ -39,7 +38,7 @@ import java.util.Map;
  * extends DSOApplicationConfig which is a much simpler interface suitable for manipulating the config from the
  * perspective of generating a configuration file.
  */
-public interface DSOClientConfigHelper extends DSOApplicationConfig {
+public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanConfig {
   boolean hasBootJar();
 
   String rawConfigText();
@@ -79,7 +78,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
 
   boolean isPortableModuleClass(Class clazz);
 
-  void setModuleSpecs(ModuleSpec[] moduleSpecs);
+  void addModuleSpec(ModuleSpec moduleSpec);
 
   void setMBeanSpecs(MBeanSpec[] mbeanSpecs);
 
@@ -293,17 +292,6 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig {
   void recordBundleURLs(Map<Bundle, URL> bundleURLs);
 
   URL getBundleURL(Bundle bundle);
-
-  /**
-   * Returns a unique identifier for this helper, which is exposed to clients via Manager and ManagerUtil. This id
-   * should be used when registering MBeans as the value for the ObjectName property <i>node</i>. This id is passed to
-   * the ClientConnectEventHandler and is used to filter the set of beans to be tunneled to the server's MBeanServer.
-   * 
-   * @return {@code UUID}
-   */
-  UUID getUUID();
-  
-  String[] getTunneledDomains();
 
   SessionConfiguration getSessionConfiguration(String appName);
 

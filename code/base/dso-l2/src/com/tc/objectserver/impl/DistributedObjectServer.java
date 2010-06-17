@@ -62,6 +62,7 @@ import com.tc.management.remote.connect.ClientConnectEventHandler;
 import com.tc.management.remote.protocol.terracotta.ClientTunnelingEventHandler;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
+import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
 import com.tc.net.AddressChecker;
 import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
@@ -1160,6 +1161,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                      jmxRemoteTunnelStage.getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                      hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                     hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsRespondStage
         .getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE, txnLwmStage.getSink(),
@@ -1228,6 +1231,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                     GetValueServerMapRequestMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
                                     GetValueServerMapResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
   }
 
   protected TCLogger getLogger() {

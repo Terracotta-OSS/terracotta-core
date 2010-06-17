@@ -14,7 +14,6 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.util.Assert;
-import com.tc.util.UUID;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -26,69 +25,9 @@ import javax.management.remote.message.Message;
 
 public class ClientTunnelingEventHandler extends AbstractEventHandler implements DSOChannelManagerEventListener {
 
-  public static final class L1ConnectionMessage implements EventContext {
-
-    private final MBeanServer                                          mbs;
-    private final MessageChannel                                       channel;
-    private final UUID                                                 uuid;
-    private final String[]                                             tunneledDomains;
-    private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
-    private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
-    private final boolean                                              isConnectingMsg;
-
-    public L1ConnectionMessage(MBeanServer mbs, MessageChannel channel, UUID uuid, String[] tunneledDomains,
-                               ConcurrentMap<ChannelID, JMXConnector> channelIdToJmxConnector,
-                               ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection,
-                               boolean isConnectingMsg) {
-      this.mbs = mbs;
-      this.channel = channel;
-      this.uuid = uuid;
-      this.tunneledDomains = tunneledDomains;
-      this.channelIdToJmxConnector = channelIdToJmxConnector;
-      this.channelIdToMsgConnection = channelIdToMsgConnection;
-      this.isConnectingMsg = isConnectingMsg;
-
-      if (isConnectingMsg && mbs == null) {
-        final AssertionError ae = new AssertionError("Attempting to create a L1-connecting-message without"
-                                                     + " a valid mBeanServer.");
-        throw ae;
-      }
-    }
-
-    public MBeanServer getMBeanServer() {
-      return mbs;
-    }
-
-    public MessageChannel getChannel() {
-      return channel;
-    }
-
-    public UUID getUUID() {
-      return uuid;
-    }
-    
-    public String[] getTunneledDomains() {
-      return tunneledDomains;
-    }
-
-    public ConcurrentMap<ChannelID, JMXConnector> getChannelIdToJmxConnector() {
-      return channelIdToJmxConnector;
-    }
-
-    public ConcurrentMap<ChannelID, TunnelingMessageConnection> getChannelIdToMsgConnector() {
-      return channelIdToMsgConnection;
-    }
-
-    public boolean isConnectingMsg() {
-      return isConnectingMsg;
-    }
-  }
-
   private static final TCLogger                                      logger = TCLogging
                                                                                 .getLogger(ClientTunnelingEventHandler.class);
 
-  private UUID                                                       uuid;
-  private String[]                                                   tunneledDomains;
   private final ConcurrentMap<ChannelID, JMXConnector>               channelIdToJmxConnector;
   private final ConcurrentMap<ChannelID, TunnelingMessageConnection> channelIdToMsgConnection;
   private final MBeanServer                                          l2MBeanServer;
@@ -107,9 +46,13 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   public void handleEvent(final EventContext context) {
     if (context instanceof L1JmxReady) {
       final L1JmxReady readyMessage = (L1JmxReady) context;
-      uuid = readyMessage.getUUID();
-      tunneledDomains = readyMessage.getTunneledDomains();
-      connectToL1JmxServer(readyMessage.getChannel());
+      connectToL1JmxServer(readyMessage);
+    } else if (context instanceof TunneledDomainsChanged) {
+      final TunneledDomainsChanged message = (TunneledDomainsChanged) context;
+      synchronized (sinkLock) {
+        if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
+        connectStageSink.add(message);
+      }
     } else {
       final JmxRemoteTunnelMessage messageEnvelope = (JmxRemoteTunnelMessage) context;
       if (messageEnvelope.getCloseConnection()) {
@@ -123,10 +66,11 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
     }
   }
 
-  private void connectToL1JmxServer(final MessageChannel channel) {
-    logger.info("L1[" + channel.getChannelID() + "] notified us that their JMX server is now available");
-    EventContext msg = new L1ConnectionMessage(l2MBeanServer, channel, uuid, tunneledDomains, channelIdToJmxConnector,
-                                               channelIdToMsgConnection, true);
+  private void connectToL1JmxServer(final L1JmxReady readyMessage) {
+    logger.info("L1[" + readyMessage.getChannelID()
+                + "] notified us that their JMX server is now available");
+    EventContext msg = new L1ConnectionMessage.Connecting(l2MBeanServer, readyMessage.getChannel(), readyMessage
+        .getUUID(), readyMessage.getTunneledDomains(), channelIdToJmxConnector, channelIdToMsgConnection);
     synchronized (sinkLock) {
       if (connectStageSink == null) { throw new AssertionError("ConnectStageSink was not set."); }
       connectStageSink.add(msg);
@@ -159,8 +103,7 @@ public class ClientTunnelingEventHandler extends AbstractEventHandler implements
   }
 
   public void channelRemoved(final MessageChannel channel) {
-    EventContext msg = new L1ConnectionMessage(null, channel, uuid, tunneledDomains, channelIdToJmxConnector, channelIdToMsgConnection,
-                                               false);
+    EventContext msg = new L1ConnectionMessage.Disconnecting(channel, channelIdToJmxConnector, channelIdToMsgConnection);
     synchronized (sinkLock) {
       if (disconnectStageSink == null) { throw new AssertionError("DisconnectStageSink was not set."); }
       disconnectStageSink.add(msg);

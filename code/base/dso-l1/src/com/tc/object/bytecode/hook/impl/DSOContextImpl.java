@@ -116,7 +116,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars, Collection<URL> additionalModules) throws ConfigurationSetupException {
+                                                   Map<String, URL> virtualTimJars, Collection<URL> additionalModules)
+      throws ConfigurationSetupException {
     // XXX: refactor this to not duplicate createContext() so much
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
@@ -184,7 +185,7 @@ public class DSOContextImpl implements DSOContext {
     validateTimApiVersion();
 
     try {
-      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, false, repos, configHelper.getUUID());
+      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, manager.getTunneledDomainUpdater(), false, repos);
       configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {
@@ -194,10 +195,11 @@ public class DSOContextImpl implements DSOContext {
       throw new AssertionError("Will not run");
     }
 
-    //do a pre-emptive class load since this path gets nested inside other classloads...
+    // do a pre-emptive class load since this path gets nested inside other classloads...
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       try {
-        ((StandardDSOClientConfigHelper) configHelper).addClassResource("non.existent.Class", new URL("file:///not/a/real/file"), false);
+        ((StandardDSOClientConfigHelper) configHelper).addClassResource("non.existent.Class",
+                                                                        new URL("file:///not/a/real/file"), false);
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
@@ -364,7 +366,6 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), false, configHelper
-        .getUUID(), modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager.getTunneledDomainUpdater(), false, modules);
   }
 }

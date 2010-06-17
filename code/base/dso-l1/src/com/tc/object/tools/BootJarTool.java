@@ -59,8 +59,8 @@ import com.tc.object.PortabilityImpl;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TCClass;
 import com.tc.object.TCObject;
-import com.tc.object.TCObjectServerMap;
 import com.tc.object.TCObjectExternal;
+import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.AAFairDistributionPolicyMarker;
 import com.tc.object.bytecode.AbstractStringBuilderAdapter;
 import com.tc.object.bytecode.AccessibleObjectAdapter;
@@ -111,12 +111,12 @@ import com.tc.object.bytecode.NullTCObject;
 import com.tc.object.bytecode.OverridesHashCode;
 import com.tc.object.bytecode.ReentrantLockClassAdapter;
 import com.tc.object.bytecode.ReentrantReadWriteLockClassAdapter;
-import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.bytecode.SetRemoveMethodAdapter;
 import com.tc.object.bytecode.StringBufferAdapter;
 import com.tc.object.bytecode.StringGetCharsAdapter;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.bytecode.TransparencyClassAdapter;
 import com.tc.object.bytecode.TransparentAccess;
 import com.tc.object.bytecode.VectorAdapter;
@@ -262,7 +262,7 @@ public class BootJarTool {
 
     // load the modules
     try {
-      ModulesLoader.initModules(this.configHelper, null, true);
+      ModulesLoader.initModules(this.configHelper, null, null, true);
     } catch (BundleException e) {
       exit("Error during module initialization.", e);
     }

@@ -12,6 +12,7 @@ import com.tc.management.ClientLockStatManager;
 import com.tc.management.L1Management;
 import com.tc.management.TCClient;
 import com.tc.management.lock.stats.ClientLockStatisticsManagerImpl;
+import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.GroupID;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -27,6 +28,7 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.field.TCFieldFactory;
@@ -68,7 +70,6 @@ import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
 import com.tc.util.Assert;
 import com.tc.util.ToggleableReferenceManager;
-import com.tc.util.UUID;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
@@ -104,8 +105,12 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                          connectionPolicy, aConfig);
   }
 
-  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final UUID id, final String[] tunneledDomains) {
-    return new TunnelingEventHandler(ch, id, tunneledDomains);
+  public TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config) {
+    return new TunnelingEventHandler(ch, config);
+  }
+
+  public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config) {
+    return new TunneledDomainManager(ch, config);
   }
 
   public ClientGlobalTransactionManager createClientGlobalTransactionManager(

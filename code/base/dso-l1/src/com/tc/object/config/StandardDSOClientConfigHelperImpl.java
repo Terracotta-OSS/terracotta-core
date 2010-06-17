@@ -184,7 +184,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private int                                                faultCount                         = -1;
 
-  private ModuleSpec[]                                       moduleSpecs                        = null;
+  private Collection<ModuleSpec>                             moduleSpecs                        = Collections.synchronizedList(new ArrayList<ModuleSpec>());
 
   private MBeanSpec[]                                        mbeanSpecs                         = null;
 
@@ -1548,8 +1548,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return false;
   }
 
-  public void setModuleSpecs(final ModuleSpec[] moduleSpecs) {
-    this.moduleSpecs = moduleSpecs;
+  public void addModuleSpec(final ModuleSpec moduleSpec) {
+    this.moduleSpecs.add(moduleSpec);
   }
 
   public void setMBeanSpecs(final MBeanSpec[] mbeanSpecs) {

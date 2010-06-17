@@ -354,7 +354,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     /**/
   }
 
-  public void setModuleSpecs(final ModuleSpec[] moduleSpecs) {
+  public void addModuleSpec(final ModuleSpec moduleSpec) {
     /**/
   }
 

@@ -34,6 +34,8 @@ import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
 import com.tc.management.remote.protocol.terracotta.JmxRemoteTunnelMessage;
 import com.tc.management.remote.protocol.terracotta.L1JmxReady;
+import com.tc.management.remote.protocol.terracotta.TunneledDomainManager;
+import com.tc.management.remote.protocol.terracotta.TunneledDomainsChanged;
 import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
@@ -233,6 +235,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private CounterManager                             counterManager;
   private ThreadIDManager                            threadIDManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
+  private TunneledDomainManager                      tunneledDomainManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -537,10 +540,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
             .getNodeMetaDataMessageFactory());
 
     // Set up the JMX management stuff
-    final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
-                                                                                        this.config.getUUID(),
-                                                                                        this.config
-                                                                                            .getTunneledDomains());
+    final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(), this.config);
+    this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config);
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger, this.manager
@@ -729,6 +730,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                   + " shouldn't be created using this constructor at the client.");
                                    }
                                  });
+    this.channel.addClassMapping(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
 
     DSO_LOGGER.debug("Added class mappings.");
 
@@ -880,6 +882,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public StatisticsAgentSubSystem getStatisticsAgentSubSystem() {
     return this.statisticsAgentSubSystem;
+  }
+
+  public TunneledDomainManager getTunneledDomainManager() {
+    return this.tunneledDomainManager;
   }
 
   public void dump() {

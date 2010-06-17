@@ -19,6 +19,7 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.management.TunneledDomainUpdater;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
 import com.tc.object.DistributedObjectClient;
@@ -177,6 +178,13 @@ public class ManagerImpl implements Manager {
 
   public String getUUID() {
     return this.config.getUUID().toString();
+  }
+  
+  public TunneledDomainUpdater getTunneledDomainUpdater() {
+    if (null == dso) {
+      return null;
+    }
+    return dso.getTunneledDomainManager();
   }
 
   private void resolveClasses() {
