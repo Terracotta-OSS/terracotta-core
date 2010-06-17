@@ -230,7 +230,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     if (sce.movedToActive()) {
       rClusterStateMgr.goActiveAndSyncState();
       rObjectManager.sync();
-      startActiveMode(sce);
+      server.startActiveMode();
+      startL1Listener();
     }
   }
 
@@ -244,9 +245,9 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     listeners.add(listener);
   }
 
-  protected void startActiveMode(StateChangedEvent sce) {
+  protected void startL1Listener() {
     try {
-      server.startActiveMode();
+      server.startL1Listener();
     } catch (IOException e) {
       throw new AssertionError(e);
     }

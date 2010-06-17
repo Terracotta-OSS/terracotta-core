@@ -1119,6 +1119,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (!networkedHA) {
       // In non-network enabled HA, Only active server reached here.
       startActiveMode();
+      startL1Listener();
     }
     setLoggerOnExit();
   }
@@ -1313,14 +1314,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.startupLock != null && this.startupLock.isBlocking();
   }
 
-  public boolean startActiveMode() throws IOException {
+  public void startActiveMode() {
     this.transactionManager.goToActiveMode();
+  }
+
+  public void startL1Listener() throws IOException {
     final Set existingConnections = Collections.unmodifiableSet(this.connectionIdFactory.loadConnectionIDs());
     this.context.getClientHandshakeManager().setStarting(existingConnections);
     this.l1Listener.start(existingConnections);
     consoleLogger.info("Terracotta Server instance has started up as ACTIVE node on " + format(this.l1Listener)
                        + " successfully, and is now ready for work.");
-    return true;
   }
 
   private static String format(final NetworkListener listener) {
