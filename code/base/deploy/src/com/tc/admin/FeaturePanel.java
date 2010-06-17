@@ -24,6 +24,7 @@ import java.io.StringWriter;
 
 import javax.swing.BorderFactory;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 public class FeaturePanel extends XContainer implements PropertyChangeListener {
   protected Feature             feature;
@@ -31,6 +32,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
   protected IAdminClientContext adminClientContext;
   protected IClusterModel       clusterModel;
   protected Presentation        presentation;
+  protected boolean             presentationReady;
 
   public FeaturePanel(final Feature feature, final FeatureNode featureNode, IAdminClientContext adminClientContext,
                       IClusterModel clusterModel) {
@@ -60,10 +62,10 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
         public void run() {
           while (true) {
             if (feature.isReady()) {
-              createPresentation();
+              createPresentationLater();
               return;
             } else if (feature.hasError()) {
-              showError(feature.getError());
+              showErrorLater(feature.getError());
               return;
             }
             ThreadUtil.reallySleep(500);
@@ -85,6 +87,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
         if (presentation != null) {
           presentation.addPropertyChangeListener(this);
           presentation.setup(adminClientContext, clusterModel);
+          presentation.startup();
         } else {
           System.err.println("Failed to instantiate instance of '" + factory + "'");
         }
@@ -96,11 +99,21 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
     }
   }
 
+  private void createPresentationLater() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        createPresentation();
+      }
+    });
+  }
+
   public void propertyChange(PropertyChangeEvent evt) {
     String prop = evt.getPropertyName();
     if (Presentation.PROP_PRESENTATION_READY.equals(prop)) {
       boolean ready = ((Boolean) evt.getNewValue()).booleanValue();
-      handlePresentationReady(ready);
+      if (ready != presentationReady) {
+        handlePresentationReady(presentationReady = ready);
+      }
     }
   }
 
@@ -132,6 +145,14 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
     add(new XScrollPane(textArea), BorderLayout.CENTER);
     revalidate();
     repaint();
+  }
+
+  private void showErrorLater(final Throwable error) {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        showError(error);
+      }
+    });
   }
 
   @Override
