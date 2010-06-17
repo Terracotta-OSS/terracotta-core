@@ -742,7 +742,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
         .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), this.threadGroup);
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
-    final LongGCLogger gcLogger = new LongGCLogger(logger, timeOut);
+    final LongGCLogger gcLogger = new LongGCLogger(timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
     tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
     // CDV-1181 warn if using CMS

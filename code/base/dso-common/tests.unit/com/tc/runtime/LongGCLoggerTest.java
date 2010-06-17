@@ -6,9 +6,12 @@ package com.tc.runtime;
 
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.logging.LogLevel;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogging;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventCallback;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.test.TCTestCase;
 
@@ -23,11 +26,24 @@ public class LongGCLoggerTest extends TCTestCase {
   private final int      OBJECT_COUNT = 1000;
 
   public void test() throws Exception {
+    TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
+
+      TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
+
+      public void logOperatorEvent(TerracottaOperatorEvent event) {
+        if (event.getEventType() == EventType.WARN) {
+          logger.warn(event);
+          latch.countDown();
+        } else {
+          logger.info(event);
+        }
+      }
+    });
     register();
     // Create some data for GC in a diff thread
     createThreadAndCollectGarbage();
     // wait in a thread to get notified
-    latch.await(); 
+    latch.await();
   }
 
   private void createThreadAndCollectGarbage() {
@@ -78,76 +94,9 @@ public class LongGCLoggerTest extends TCTestCase {
   }
 
   private void register() {
-    TCLogger tcLogger = new TCLoggerImpl();
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
     TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp);
-    LongGCLogger logger = new LongGCLogger(tcLogger, 1);
+    LongGCLogger logger = new LongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);
   }
-
-  class TCLoggerImpl implements TCLogger {
-    public void debug(Object message) {
-      //
-    }
-
-    public void debug(Object message, Throwable t) {
-      //
-    }
-
-    public void error(Object message) {
-      //
-    }
-
-    public void error(Object message, Throwable t) {
-      //
-    }
-
-    public void fatal(Object message) {
-      //
-    }
-
-    public void fatal(Object message, Throwable t) {
-      //
-    }
-
-    public LogLevel getLevel() {
-      return null;
-    }
-
-    public String getName() {
-      return null;
-    }
-
-    public void info(Object message) {
-      //
-    }
-
-    public void info(Object message, Throwable t) {
-      //
-    }
-
-    public boolean isDebugEnabled() {
-      return false;
-    }
-
-    public boolean isInfoEnabled() {
-      return false;
-    }
-
-    public void setLevel(LogLevel level) {
-      //
-    }
-
-    public void warn(Object message) {
-      System.err.println(message);
-
-      latch.countDown();
-    }
-
-    public void warn(Object message, Throwable t) {
-      //
-    }
-
-  }
-
 }

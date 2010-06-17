@@ -4,7 +4,6 @@
  */
 package com.tc.runtime.logging;
 
-import com.tc.logging.TCLogger;
 import com.tc.logging.TerracottaOperatorEventLogger;
 import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -16,11 +15,9 @@ public class LongGCLogger implements MemoryEventsListener {
 
   private final long                          gcTimeout;
   private MemoryUsage                         lastMemoryUsage;
-  private final TCLogger                      logger;
-  private final TerracottaOperatorEventLogger operatorEventLogger          = TerracottaOperatorEventLogging
-                                                                               .getEventLogger();
-  public LongGCLogger(TCLogger logger, long gcTimeOut) {
-    this.logger = logger;
+  private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+
+  public LongGCLogger(final long gcTimeOut) {
     this.gcTimeout = gcTimeOut;
   }
 
@@ -38,11 +35,8 @@ public class LongGCLogger implements MemoryEventsListener {
   }
 
   private void fireLongGCOperatorEvent(LongGCEventType type, long collectionCountDiff, long collectionTimeDiff) {
-    String message = "Detected Long GC > " + gcTimeout + " ms. Event Type : " + type + " GC Collection Count: "
-                     + collectionCountDiff + " GC Collection Time: " + collectionTimeDiff + " ms";
     TerracottaOperatorEvent tcEvent = TerracottaOperatorEventFactory.createLongGCOperatorEvent(new Object[] {
         gcTimeout, collectionCountDiff, collectionTimeDiff });
     operatorEventLogger.fireOperatorEvent(tcEvent);
-    logger.warn(message);
   }
 }
