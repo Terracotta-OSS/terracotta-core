@@ -12,19 +12,24 @@ import com.tc.runtime.MemoryUsage;
 public class MemoryOperatorEventListener implements MemoryEventsListener {
 
   private final int                           critcalThreshold;
-  private int                                 lastUsedPercentage  = 0;
+  private MemoryUsage                         lastMemoryUsage;
   private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
 
   public MemoryOperatorEventListener(int criticalThreshold) {
     this.critcalThreshold = criticalThreshold;
   }
 
-  public void memoryUsed(MemoryUsage usage) {
-    if (usage.getUsedPercentage() >= this.critcalThreshold && this.lastUsedPercentage < this.critcalThreshold) {
-      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createHighMemoryUsageEvent(usage
-                                                                                                      .getUsedPercentage()));
+  public void memoryUsed(MemoryUsage currentUsage) {
+    if (lastMemoryUsage == null) {
+      lastMemoryUsage = currentUsage;
+      return;
     }
-    this.lastUsedPercentage = usage.getUsedPercentage();
+    long countDiff = currentUsage.getCollectionCount() - lastMemoryUsage.getCollectionCount();
+    if (countDiff > 0 && currentUsage.getUsedPercentage() >= this.critcalThreshold) {
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createHighMemoryUsageEvent(currentUsage
+          .getUsedPercentage()));
+    }
+    this.lastMemoryUsage = currentUsage;
   }
 
 }
