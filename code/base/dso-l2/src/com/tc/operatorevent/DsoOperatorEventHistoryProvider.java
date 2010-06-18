@@ -3,15 +3,20 @@
  */
 package com.tc.operatorevent;
 
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.concurrent.CircularLossyQueue;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class DsoOperatorEventHistoryProvider implements TerracottaOperatorEventHistoryProvider {
-
   private final CircularLossyQueue<TerracottaOperatorEvent> operatorEventHistory = new CircularLossyQueue<TerracottaOperatorEvent>(
-                                                                                                                                   1500);
+                                                                                                                                   TCPropertiesImpl
+                                                                                                                                       .getProperties()
+                                                                                                                                       .getInt(
+                                                                                                                                               TCPropertiesConsts.L2_OPERATOR_EVENTS_STORE,
+                                                                                                                                               1500));
 
   public void push(TerracottaOperatorEvent event) {
     operatorEventHistory.push(event);

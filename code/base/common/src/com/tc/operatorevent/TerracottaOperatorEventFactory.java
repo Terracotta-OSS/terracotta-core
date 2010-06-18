@@ -5,6 +5,8 @@ package com.tc.operatorevent;
 
 import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.text.MessageFormat;
 
@@ -58,15 +60,7 @@ public class TerracottaOperatorEventFactory {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
         .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments));
   }
-  
-  /**
-   * Lock manager events
-   */
-  public static TerracottaOperatorEvent createLockGCEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.LOCK_MANAGER, MessageFormat
-                                           .format(TerracottaOperatorEventResources.getLockGCMessage(), arguments));
-  }
-  
+
   /**
    * zap events
    */
@@ -78,5 +72,16 @@ public class TerracottaOperatorEventFactory {
   public static TerracottaOperatorEvent createZapRequestAcceptedEvent(Object[] arguments) {
     return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.HA, MessageFormat
         .format(TerracottaOperatorEventResources.getZapRequestAcceptedMessage(), arguments));
+  }
+
+  public static TerracottaOperatorEvent createDirtyDBEvent() {
+    String restart;
+    if (TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_AUTODELETE)) {
+      restart = "enabled";
+    } else {
+      restart = "disabled";
+    }
+    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.HA, MessageFormat
+        .format(TerracottaOperatorEventResources.getDirtyDBMessage(), new Object[] { restart }));
   }
 }

@@ -42,7 +42,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.DumpHandlerStore;
-import com.tc.logging.OperatorEventsLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.TerracottaOperatorEventLogging;
@@ -969,15 +968,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage jmxEventsStage = stageManager.createStage(ServerConfigurationContext.JMX_EVENTS_STAGE,
                                                           new JMXEventsHandler(appEvents), 1, maxStageSize);
 
-    OperatorEventsLogger l1OperatorEventsLogger = new OperatorEventsLogger(logger);
     final Stage jmxRemoteConnectStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_CONNECT_STAGE,
-                                                                 new ClientConnectEventHandler(this.statisticsGateway,
-                                                                                               l1OperatorEventsLogger),
+                                                                 new ClientConnectEventHandler(this.statisticsGateway),
                                                                  1, maxStageSize);
 
     final Stage jmxRemoteDisconnectStage = stageManager
         .createStage(ServerConfigurationContext.JMXREMOTE_DISCONNECT_STAGE,
-                     new ClientConnectEventHandler(this.statisticsGateway, l1OperatorEventsLogger), 1, maxStageSize);
+                     new ClientConnectEventHandler(this.statisticsGateway), 1, maxStageSize);
 
     cteh.setStages(jmxRemoteConnectStage.getSink(), jmxRemoteDisconnectStage.getSink());
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ServerConfigurationContext.JMXREMOTE_TUNNEL_STAGE,
@@ -1064,9 +1061,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     this.groupCommManager, this.persistor
                                                                         .getPersistentStateStore(), this.objectManager,
                                                                     this.transactionManager, gtxm,
-                                                                    weightGeneratorFactory, this.configSetupManager
-                                                                        .haConfig(), recycler,
-                                                                    this.stripeIDStateManager);
+                                                                    weightGeneratorFactory, this.configSetupManager,
+                                                                    recycler, this.stripeIDStateManager);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -1239,10 +1235,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
-    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.serverName().getString(), l2DSOConfig
-        .listenPort().getInt());
-    final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes(), node
-        .getNodeName());
+    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt());
+    final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
   }

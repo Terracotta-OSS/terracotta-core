@@ -15,7 +15,7 @@ public class OperatorEventsListener implements NotificationListener {
   }
 
   public void handleNotification(Notification notification, Object handback) {
-    TerracottaOperatorEvent tcOperatorEvent = (TerracottaOperatorEvent) notification.getSource();
+    TerracottaOperatorEvent tcOperatorEvent = (TerracottaOperatorEvent) notification.getUserData();
     fireOperatorEvent(tcOperatorEvent);
   }
 

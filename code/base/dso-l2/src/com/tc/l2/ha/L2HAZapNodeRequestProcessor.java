@@ -10,17 +10,15 @@ import com.tc.l2.state.Enrollment;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.logging.TerracottaOperatorEventLogger;
-import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
-import com.tc.net.ServerID;
 import com.tc.net.groups.GroupManager;
+import com.tc.net.groups.ZapEventListener;
 import com.tc.net.groups.ZapNodeRequestProcessor;
-import com.tc.operatorevent.TerracottaOperatorEventFactory;
-import com.tc.util.Assert;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   private static final TCLogger               logger                        = TCLogging
@@ -37,8 +35,7 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   private final WeightGeneratorFactory        factory;
 
   private final GroupManager                  groupManager;
-  private final TerracottaOperatorEventLogger operatorEventLogger           = TerracottaOperatorEventLogging
-                                                                                .getEventLogger();
+  private final List<ZapEventListener>        listeners                     = new CopyOnWriteArrayList<ZapEventListener>();
 
   public L2HAZapNodeRequestProcessor(TCLogger consoleLogger, StateManager stateManager, GroupManager groupManager,
                                      WeightGeneratorFactory factory) {
@@ -127,15 +124,12 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
   }
 
   private void handleSplitBrainScenario(NodeID nodeID, int zapNodeType, String reason, long[] weights) {
-    Assert.assertTrue(nodeID instanceof ServerID);
-    Assert.assertTrue(this.groupManager.getLocalNodeID() instanceof ServerID);
     long myWeights[] = factory.generateWeightSequence();
     logger.warn("A Terracotta server tried to join the mirror group as a second ACTIVE : My weights = "
                 + toString(myWeights) + " Other servers weights = " + toString(weights));
-    String messageFrom = ((ServerID) nodeID).getServerName();
-    String localNode = ((ServerID) this.groupManager.getLocalNodeID()).getServerName();
-    operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createZapRequestReceivedEvent(new Object[] {
-        localNode, messageFrom }));
+    for (ZapEventListener listener : this.listeners) {
+      listener.fireSplitBrainEvent(this.groupManager.getLocalNodeID(), nodeID);
+    }
     Enrollment mine = new Enrollment(groupManager.getLocalNodeID(), false, myWeights);
     Enrollment hisOrHers = new Enrollment(nodeID, false, weights);
     if (hisOrHers.wins(mine)) {
@@ -143,8 +137,9 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
       logger.warn(nodeID + " wins : Backing off : Exiting !!!");
       String message = "Found that " + nodeID
                        + " is active and has more clients connected to it than this server. Exiting ... !!";
-      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
-          .createZapRequestAcceptedEvent(new Object[] { messageFrom }));
+      for (ZapEventListener listener : this.listeners) {
+        listener.fireBackOffEvent(nodeID);
+      }
       throw new ZapServerNodeException(message);
     } else {
       logger.warn("Not quiting since the other servers weight = " + toString(weights)
@@ -173,6 +168,10 @@ public class L2HAZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     pw.flush();
     sw.write("\n");
     return sw.toString();
+  }
+
+  public void addZapEventListener(ZapEventListener listener) {
+    this.listeners.add(listener);
   }
 
 }

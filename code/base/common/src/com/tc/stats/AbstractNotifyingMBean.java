@@ -27,6 +27,7 @@ public abstract class AbstractNotifyingMBean extends AbstractTerracottaMBean {
     super(mBeanInterface, true);
   }
 
+  @Override
   public MBeanNotificationInfo[] getNotificationInfo() {
     return NOTIFICATION_INFO;
   }
@@ -43,6 +44,12 @@ public abstract class AbstractNotifyingMBean extends AbstractTerracottaMBean {
   
   protected synchronized void sendNotification(final String type, final Object source, String message) {
     sendNotification(new Notification(type, source, nextSequenceNumber++, message));
+  }
+  
+  protected synchronized void sendNotification(final String type, final Object source, final Object userData) {
+    Notification notification = new Notification(type, source, nextSequenceNumber++);
+    notification.setUserData(userData);
+    sendNotification(notification);
   }
 
 }

@@ -794,13 +794,17 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public long[] getCurrentNodeWeights() {
       return new long[0];
     }
+
+    public void addZapEventListener(ZapEventListener listener) {
+      //
+    }
   }
 
   static final class MockZapNodeRequestProcessor implements ZapNodeRequestProcessor {
 
     public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
-    private int                   weight   = 0;
+    private final int                   weight   = 0;
 
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);
@@ -814,6 +818,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
     public long[] getCurrentNodeWeights() {
       long[] rv = new long[] { weight };
       return rv;
+    }
+
+    public void addZapEventListener(ZapEventListener listener) {
+      //
     }
   }
 

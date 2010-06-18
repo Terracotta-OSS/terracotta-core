@@ -486,7 +486,7 @@ public interface TCPropertiesConsts {
   public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                        = "l1.objectmanager.objectid.request.size";
   public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                        = "l1.objectmanager.flush.logging.enabled";
   public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                        = "l1.objectmanager.fault.logging.enabled";
-  
+
   /*********************************************************************************************************************
    * <code>
    * Section : L1 ServerMap Manager Properties
@@ -498,8 +498,8 @@ public interface TCPropertiesConsts {
    *
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY          = "l1.servermapmanager.remote.maxRequestSentImmediately";
-  public static final String   L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD              = "l1.servermapmanager.remote.batchLookupTimePeriod";
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY       = "l1.servermapmanager.remote.maxRequestSentImmediately";
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD           = "l1.servermapmanager.remote.batchLookupTimePeriod";
 
   /*********************************************************************************************************************
    * <code>
@@ -813,4 +813,15 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   L2_DUMP_ON_EXCEPTION_TIMEOUT                                  = "l2.dump.on.exception.timeout";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Dev console Settings
+   *  console.max.operator.events   -   Number of operator events dev console will show 
+   *                                    in the panel before it starts recycling
+   *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events                                 
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   DEV_CONSOLE_MAX_OPERATOR_EVENTS                               = "dev.console.max.operator.events";
+  public static final String   L2_OPERATOR_EVENTS_STORE                                      = "l2.operator.events.store";
 }

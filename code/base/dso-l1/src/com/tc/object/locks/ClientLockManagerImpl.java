@@ -829,7 +829,4 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     }
   }
 
-  public void addLockEventsListener(LockEventListener lockEventListener) {
-    this.lockEventListeners.add(lockEventListener);
-  }
 }

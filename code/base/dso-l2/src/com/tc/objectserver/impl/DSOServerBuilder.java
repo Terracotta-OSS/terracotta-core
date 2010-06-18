@@ -6,7 +6,6 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
-import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -57,9 +56,9 @@ import java.util.List;
 public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
-  
+
   ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
-                                                            Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
+                                                          Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                   ClientStateManager clientStateMgr,
@@ -108,7 +107,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       StageManager stageManager, GroupManager groupCommsManager,
                                       PersistentMapStore persistentMapStore, ObjectManager objectManager,
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                                      WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfig,
+                                      WeightGeneratorFactory weightGeneratorFactory,
+                                      L2TVSConfigurationSetupManager configurationSetupManager,
                                       MessageRecycler recycler, StripeIDStateManager stripeStateManager);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,

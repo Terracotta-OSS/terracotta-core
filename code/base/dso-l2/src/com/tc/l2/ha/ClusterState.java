@@ -11,6 +11,8 @@ import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogger;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.GroupID;
 import com.tc.net.StripeID;
 import com.tc.net.groups.StripeIDStateManager;
@@ -18,6 +20,7 @@ import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.gtx.GlobalTransactionIDSequenceProvider;
+import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.State;
@@ -46,6 +49,8 @@ public class ClusterState {
   private long                                      nextAvailGlobalTxnID = -1;
   private State                                     currentState;
   private StripeID                                  stripeID;
+  private final TerracottaOperatorEventLogger       operatorEventLogger  = TerracottaOperatorEventLogging
+                                                                             .getEventLogger();
 
   public ClusterState(PersistentMapStore persistentStateStore, ObjectIDSequence oidSequence,
                       ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider,
@@ -82,6 +87,7 @@ public class ClusterState {
                         + StateManager.ACTIVE_COORDINATOR.getName()
                         + " is up and running before starting this server else you might end up losing data", "ERROR");
         logger.error(errorMessage, new Throwable());
+        operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDirtyDBEvent());
         throw new CleanDirtyDatabaseException(errorMessage);
       }
     }

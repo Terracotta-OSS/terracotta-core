@@ -80,7 +80,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
            + getEventMessage();
   }
 
-  public String getExtractText() {
+  public String extractAsText() {
     return toString();
   }
   

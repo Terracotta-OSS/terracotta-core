@@ -44,7 +44,7 @@ public class MonitoringNode extends ComponentNode implements HyperlinkListener {
     return new RuntimeStatsNode(adminClientContext, clusterModel);
   }
 
-  synchronized IClusterModel getClusterModel() {
+  protected synchronized IClusterModel getClusterModel() {
     return clusterModel;
   }
 
@@ -54,7 +54,7 @@ public class MonitoringNode extends ComponentNode implements HyperlinkListener {
       XTextPane textPane = new XTextPane();
       monitoringPanel = new XScrollPane(textPane);
       try {
-        textPane.setPage(getClass().getResource("MonitoringIntro.html"));
+        textPane.setPage(MonitoringNode.class.getResource("MonitoringIntro.html"));
       } catch (Exception e) {
         e.printStackTrace();
       }

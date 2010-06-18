@@ -53,14 +53,15 @@ public class TCLogging {
 
   private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 
-  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracotta", "com.terracottatech",
-      "org.terracotta"                                                };
+  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracotta",
+      "com.terracottatech", "org.terracotta", "tc.operator"           };
 
   private static final String       CUSTOMER_LOGGER_NAMESPACE          = "com.terracottatech";
   private static final String       CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
 
   private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
   public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
+  private static final String       OPERATOR_EVENT_LOGGER_NAME         = "tc.operator.event";
 
   private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
   private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
@@ -77,6 +78,7 @@ public class TCLogging {
   public static final String        FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
   private static TCLogger           console;
+  private static TCLogger           operatorEventLogger;
   private static Appender           consoleAppender;
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
@@ -144,6 +146,10 @@ public class TCLogging {
   // this method not public on purpose, use CustomerLogging.getConsoleLogger() instead
   static TCLogger getConsoleLogger() {
     return console;
+  }
+
+  static TCLogger getOperatorEventLogger() {
+    return operatorEventLogger;
   }
 
   private static void reportLoggingError(Exception e) {
@@ -396,6 +402,8 @@ public class TCLogging {
 
       console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
 
+      operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
+
       for (Logger internalLogger : internalLoggers) {
         internalLogger.setLevel(Level.INFO);
       }
@@ -494,7 +502,7 @@ public class TCLogging {
           maxKeyLength = Math.max(maxKeyLength, key.length());
         }
       }
-      
+
       String inputArguments = null;
       try {
         RuntimeMXBean mxbean = ManagementFactory.getRuntimeMXBean();

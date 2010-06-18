@@ -8,7 +8,6 @@ import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
-import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
@@ -115,14 +114,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                 statsRecorder);
     return new ObjectRequestManagerRestartImpl(objectMgr, transactionMgr, orm);
   }
-  
-  public ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr,
-                                                                   DSOChannelManager channelManager,
-                                                                   Sink respondToServerTCMapSink,
-                                                                   Sink managedObjectRequestSink) {
-    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink, managedObjectRequestSink);
-  }
 
+  public ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr,
+                                                                 DSOChannelManager channelManager,
+                                                                 Sink respondToServerTCMapSink,
+                                                                 Sink managedObjectRequestSink) {
+    return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink,
+                                           managedObjectRequestSink);
+  }
 
   public ServerConfigurationContext createServerConfigurationContext(
                                                                      StageManager stageManager,
@@ -146,9 +145,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                                      int maxStageSize,
                                                                      ChannelManager genericChannelManager,
                                                                      DumpHandlerStore dumpHandlerStore) {
-    return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, serverTCMapRequestManager, objStore, lockMgr, channelManager,
-                                              clientStateMgr, txnMgr, txnObjectMgr, clientHandshakeManager,
-                                              channelStats, coordinator,
+    return new ServerConfigurationContextImpl(stageManager, objMgr, objRequestMgr, serverTCMapRequestManager, objStore,
+                                              lockMgr, channelManager, clientStateMgr, txnMgr, txnObjectMgr,
+                                              clientHandshakeManager, channelStats, coordinator,
                                               new CommitTransactionMessageToTransactionBatchReader(serverStats),
                                               transactionBatchManager, gtxm, clusterMetaDataManager);
   }
@@ -184,12 +183,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              PersistentMapStore persistentMapStore, ObjectManager objectManager,
                                              ServerTransactionManager transactionManager,
                                              ServerGlobalTransactionManager gtxm,
-                                             WeightGeneratorFactory weightGeneratorFactory, NewHaConfig haConfigure,
+                                             WeightGeneratorFactory weightGeneratorFactory,
+                                             L2TVSConfigurationSetupManager configurationSetupManager,
                                              MessageRecycler recycler, StripeIDStateManager stripeStateManager) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
-                               objectManager, transactionManager, gtxm, weightGeneratorFactory, haConfigure, recycler,
-                               thisGroupID, stripeStateManager);
+                               objectManager, transactionManager, gtxm, weightGeneratorFactory,
+                               configurationSetupManager, recycler, thisGroupID, stripeStateManager);
   }
+
   public L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean,
                                          LockStatisticsMonitor lockStatisticsMBean,
                                          StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

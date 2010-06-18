@@ -13,5 +13,7 @@ public interface ZapNodeRequestProcessor {
   public long[] getCurrentNodeWeights();
 
   public void incomingZapNodeRequest(NodeID nodeID, int zapNodeType, String reason, long[] weights);
+  
+  public void addZapEventListener(ZapEventListener listener);
 
 }

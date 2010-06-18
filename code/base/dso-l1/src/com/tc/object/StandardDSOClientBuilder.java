@@ -254,7 +254,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                             distributedObjectClient, mBeanSpecs);
   }
 
-  public void registerForOperatorEvents(final TCLogger dsoLogger, final L1Management management) {
+  public void registerForOperatorEvents(final L1Management management) {
     // NOP
   }
 

@@ -44,13 +44,13 @@ public class ClientBeanBag {
   private RemoteRegistrationFilter    remoteRegistrationFilter;
 
   public ClientBeanBag(MBeanServer l2MBeanServer, MessageChannel channel, UUID uuid, String[] tunneledDomains,
-                       MBeanServerConnection l1Connection, OperatorEventsLogger operatorEventsLogger) {
+                       MBeanServerConnection l1Connection) {
     this.l2MBeanServer = l2MBeanServer;
     this.channel = channel;
     this.uuid = uuid;
     this.tunneledDomains = tunneledDomains;
     this.l1Connection = l1Connection;
-    this.l1OperatorEventsLogger = operatorEventsLogger;
+    this.l1OperatorEventsLogger = new OperatorEventsLogger(); 
   }
 
   synchronized void unregisterBeans() {

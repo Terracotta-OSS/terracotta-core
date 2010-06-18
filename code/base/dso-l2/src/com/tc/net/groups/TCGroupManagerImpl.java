@@ -13,6 +13,7 @@ import com.tc.config.TopologyChangeListener;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
@@ -163,6 +164,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     setDiscover(new TCGroupMemberDiscoveryStatic(this));
 
     nodesStore.registerForTopologyChange(this);
+    registerForGroupEvents(new OperatorEventsNodeConnectionListener(configSetupManager));
   }
 
   public boolean isNodeConnected(NodeID sid) {

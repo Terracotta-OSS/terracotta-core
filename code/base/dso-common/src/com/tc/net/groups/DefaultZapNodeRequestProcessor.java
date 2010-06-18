@@ -29,4 +29,8 @@ public class DefaultZapNodeRequestProcessor implements ZapNodeRequestProcessor {
     return new long[0];
   }
 
+  public void addZapEventListener(ZapEventListener listener) {
+    //
+  }
+
 }

@@ -25,6 +25,13 @@ public class DSOHelper extends BaseHelper {
   private Icon                   platformIcon;
   private Icon                   monitoringIcon;
   private Icon                   operatorEventIcon;
+  private Icon                   bulletErrorIcon;
+  private Icon                   bulletGreenIcon;
+  private Icon                   bulletOrangeIcon;
+  private Icon                   bulletPinkIcon;
+  private Icon                   bulletPurpleIcon;
+  private Icon                   bulletRedIcon;
+  private Icon                   bulletStarIcon;
 
   private DSOHelper() {/**/
   }
@@ -111,5 +118,75 @@ public class DSOHelper extends BaseHelper {
       }
     }
     return operatorEventIcon;
+  }
+
+  public Icon getBulletErrorIcon() {
+    if (bulletErrorIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_error.png");
+      if (url != null) {
+        bulletErrorIcon = new ImageIcon(url);
+      }
+    }
+    return bulletErrorIcon;
+  }
+
+  public Icon getBulletGreenIcon() {
+    if (bulletGreenIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_green.png");
+      if (url != null) {
+        bulletGreenIcon = new ImageIcon(url);
+      }
+    }
+    return bulletGreenIcon;
+  }
+
+  public Icon getBulletOrangeIcon() {
+    if (bulletOrangeIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_orange.png");
+      if (url != null) {
+        bulletOrangeIcon = new ImageIcon(url);
+      }
+    }
+    return bulletOrangeIcon;
+  }
+
+  public Icon getBulletPinkIcon() {
+    if (bulletPinkIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_pink.png");
+      if (url != null) {
+        bulletPinkIcon = new ImageIcon(url);
+      }
+    }
+    return bulletPinkIcon;
+  }
+
+  public Icon getBulletPurpleIcon() {
+    if (bulletPurpleIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_purple.png");
+      if (url != null) {
+        bulletPurpleIcon = new ImageIcon(url);
+      }
+    }
+    return bulletPurpleIcon;
+  }
+
+  public Icon getBulletRedIcon() {
+    if (bulletRedIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_red.png");
+      if (url != null) {
+        bulletRedIcon = new ImageIcon(url);
+      }
+    }
+    return bulletRedIcon;
+  }
+
+  public Icon getBulletStarIcon() {
+    if (bulletStarIcon == null) {
+      URL url = getClass().getResource(ICONS_PATH + "bullet_star.png");
+      if (url != null) {
+        bulletStarIcon = new ImageIcon(url);
+      }
+    }
+    return bulletStarIcon;
   }
 }

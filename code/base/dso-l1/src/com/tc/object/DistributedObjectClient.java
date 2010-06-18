@@ -136,7 +136,6 @@ import com.tc.object.tx.ClientTransactionManagerImpl;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
-import com.tc.operatorevent.LockOperatorEventListener;
 import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -551,7 +550,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.l1Management.start(this.createDedicatedMBeanServer);
 
     // register the terracotta operator event logger
-    this.dsoClientBuilder.registerForOperatorEvents(DSO_LOGGER, this.l1Management);
+    this.dsoClientBuilder.registerForOperatorEvents(this.l1Management);
 
     // Setup the lock manager
     final ClientLockStatManager lockStatManager = this.dsoClientBuilder.createLockStatsManager();
@@ -564,7 +563,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
     this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
     this.dumpHandler.registerForDump(lockDumpAdapter);
-    this.lockManager.addLockEventsListener(new LockOperatorEventListener());
 
     // Setup the transaction manager
     this.txManager = new ClientTransactionManagerImpl(this.channel.getClientIDProvider(), this.objectManager,

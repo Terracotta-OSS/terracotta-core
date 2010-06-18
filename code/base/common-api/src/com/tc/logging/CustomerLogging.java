@@ -38,4 +38,8 @@ public class CustomerLogging {
   public static TCLogger getDSORuntimeLogger() {
     return TCLogging.getCustomerLogger(DSO_RUNTIME_LOGGER);
   }
+  
+  public static TCLogger getOperatorEventLogger() {
+    return TCLogging.getOperatorEventLogger();
+  }
 }

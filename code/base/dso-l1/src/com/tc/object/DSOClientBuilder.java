@@ -139,7 +139,7 @@ public interface DSOClientBuilder {
                                   String rawConfigText, DistributedObjectClient distributedObjectClient,
                                   MBeanSpec[] mBeanSpecs);
 
-  void registerForOperatorEvents(TCLogger dsoLogger, L1Management management);
+  void registerForOperatorEvents(L1Management management);
 
   TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                       final DNAEncoding dnaEncoding, final Manager manager,

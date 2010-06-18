@@ -6,7 +6,6 @@ package com.tc.management.remote.connect;
 
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
-import com.tc.logging.OperatorEventsLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.remote.protocol.ProtocolProvider;
@@ -40,13 +39,11 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
   private static final TCLogger                 LOGGER         = TCLogging.getLogger(ClientConnectEventHandler.class);
 
   private final StatisticsGateway               statisticsGateway;
-  private final OperatorEventsLogger            l1OperatorEventsLogger;
 
   final ConcurrentMap<ChannelID, ClientBeanBag> clientBeanBags = new ConcurrentHashMap<ChannelID, ClientBeanBag>();
 
-  public ClientConnectEventHandler(final StatisticsGateway statisticsGateway, OperatorEventsLogger operatorEventsLogger) {
+  public ClientConnectEventHandler(final StatisticsGateway statisticsGateway) {
     this.statisticsGateway = statisticsGateway;
-    this.l1OperatorEventsLogger = operatorEventsLogger;
   }
 
   private static final class ConnectorClosedFilter implements NotificationFilter {
@@ -137,7 +134,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
           statisticsGateway.addStatisticsAgent(channel.getChannelID(), l1MBeanServerConnection);
 
           ClientBeanBag bag = new ClientBeanBag(l2MBeanServer, channel, msg.getUUID(), msg.getTunneledDomains(),
-                                                l1MBeanServerConnection, this.l1OperatorEventsLogger);
+                                                l1MBeanServerConnection);
           clientBeanBags.put(channel.getChannelID(), bag);
 
           if (bag.updateRegisteredBeans()) {

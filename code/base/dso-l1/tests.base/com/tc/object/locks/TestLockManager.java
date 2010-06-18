@@ -8,7 +8,6 @@ import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
-import com.tc.operatorevent.LockEventListener;
 import com.tc.text.PrettyPrinter;
 
 import java.util.ArrayList;
@@ -179,8 +178,4 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public void addLockEventsListener(LockEventListener lockGCEventListener) {
-    throw new ImplementMe();
-
-  }
 }

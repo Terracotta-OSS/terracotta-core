@@ -3,7 +3,6 @@
  */
 package com.tc.logging;
 
-import com.tc.logging.TCLogger;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventCallbackLogger;
@@ -14,16 +13,12 @@ import javax.management.NotificationListener;
 
 public class OperatorEventsLogger implements NotificationListener {
 
-  private final TerracottaOperatorEventCallbackLogger callbackLogger;
-
-  public OperatorEventsLogger(TCLogger logger) {
-    this.callbackLogger = new TerracottaOperatorEventCallbackLogger(logger);
-  }
+  private final TerracottaOperatorEventCallbackLogger callbackLogger = new TerracottaOperatorEventCallbackLogger();
 
   public void handleNotification(Notification notification, Object handback) {
     Assert.assertTrue(TerracottaOperatorEventsMBean.TERRACOTTA_OPERATOR_EVENT.equals(notification.getType()));
 
-    TerracottaOperatorEvent operatorEvent = (TerracottaOperatorEvent) notification.getSource();
+    TerracottaOperatorEvent operatorEvent = (TerracottaOperatorEvent) notification.getUserData();
     callbackLogger.logOperatorEvent(operatorEvent);
   }
 

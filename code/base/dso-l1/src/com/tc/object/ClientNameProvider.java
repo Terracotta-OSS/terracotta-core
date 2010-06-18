@@ -15,7 +15,7 @@ public class ClientNameProvider implements NodeNameProvider {
   }
 
   public String getNodeName() {
-    return this.channel.channel().getLocalAddress().getCanonicalStringForm();
+    return this.channel.channel().getLocalNodeID().toString();
   }
 
 }
