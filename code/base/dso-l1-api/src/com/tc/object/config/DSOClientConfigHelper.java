@@ -88,6 +88,8 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
 
   SRASpec[] getSRASpecs();
 
+  void addTunneledMBeanDomain(String tunneledMBeanDomain);
+
   // HACK: is also in IStandardDSOClientConfigHelper
   TransparencyClassSpec getOrCreateSpec(String className);
 

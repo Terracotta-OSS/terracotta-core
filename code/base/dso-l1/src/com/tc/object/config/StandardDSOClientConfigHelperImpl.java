@@ -190,6 +190,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private SRASpec[]                                          sraSpecs                           = null;
 
+  private Set<String>                                        tunneledMBeanDomains               = Collections.synchronizedSet(new HashSet<String>());
+
   private final ModulesContext                               modulesContext                     = new ModulesContext();
 
   private ReconnectConfig                                    l1ReconnectConfig                  = null;
@@ -1567,6 +1569,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public SRASpec[] getSRASpecs() {
     return this.sraSpecs;
   }
+  
+  public void addTunneledMBeanDomain(final String tunneledMBeanDomain) {
+    this.tunneledMBeanDomains.add(tunneledMBeanDomain);
+  }
+  
 
   /*
    * public String getChangeApplicatorClassNameFor(String className) { TransparencyClassSpec spec = getSpec(className);
@@ -2103,25 +2110,11 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
   
   public String[] getTunneledDomains() {
-    if (null == this.moduleSpecs) {
-      return new String[0];
+    synchronized (tunneledMBeanDomains) {
+      String[] result = new String[tunneledMBeanDomains.size()];
+      tunneledMBeanDomains.toArray(result);
+      return result;
     }
-    
-    Set<String> domains = new HashSet<String>();
-    for (ModuleSpec moduleSpec : this.moduleSpecs) {
-      String[] domainsArray = moduleSpec.getTunneledMBeanDomains();
-      if (null == domainsArray) {
-        continue;
-      }
-      
-      for (String domain : domainsArray) {
-        domains.add(domain);
-      }
-    }
-
-    String[] result = new String[domains.size()];
-    domains.toArray(result);
-    return result;
   }
 
   private static class Resource {

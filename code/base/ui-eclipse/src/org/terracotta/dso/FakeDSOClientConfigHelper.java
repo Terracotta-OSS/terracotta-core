@@ -374,6 +374,10 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     throw new ImplementMe();
   }
 
+  public void addTunneledMBeanDomain(String tunneledMBeanDomain) {
+    throw new ImplementMe();
+  }
+
   public boolean shouldBeAdapted(final ClassInfo classInfo) {
     return false;
   }

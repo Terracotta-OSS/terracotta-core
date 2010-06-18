@@ -234,6 +234,10 @@ public class ModulesLoader {
               logger.warn(bundle.getSymbolicName() + " does not declare a TIM API version requirement");
             }
 
+            if (headers.get("Tunneled-MBean-Domains") != null) {
+              logger.info("Installing tunneled MBean domains for bundle '" + bundle.getSymbolicName() + "'");
+              installTunneledMBeanDomains(String.valueOf(headers.get("Tunneled-MBean-Domains")), configHelper);
+            }
           }
           printModuleBuildInfo(bundle);
           loadConfiguration(configHelper, bundle, bundleURL);
@@ -353,6 +357,17 @@ public class ModulesLoader {
       return (NamedClassLoader) classLoader;
     } catch (Exception e) {
       throw new BundleException("Unable to get classloader for bundle.", e);
+    }
+  }
+
+  private static void installTunneledMBeanDomains(final String tunneledMBeanDomains, final DSOClientConfigHelper configHelper) {
+    if (null == tunneledMBeanDomains) {
+      return;
+    }
+    
+    String[] domains = tunneledMBeanDomains.split(":");
+    for (String domain : domains) {
+      configHelper.addTunneledMBeanDomain(domain);
     }
   }
 
