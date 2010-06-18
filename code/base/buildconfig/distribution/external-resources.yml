@@ -110,7 +110,7 @@ artifacts:
     destination: quartz
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/nightly/quartz/quartz-1.8.1.tar.gz
+    url: http://download.terracotta.org/quartz/quartz-1.8.2.tar.gz
 # end QUARTZ
 
 # begin express products
