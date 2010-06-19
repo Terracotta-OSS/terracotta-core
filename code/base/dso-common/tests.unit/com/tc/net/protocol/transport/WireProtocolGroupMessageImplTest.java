@@ -22,10 +22,10 @@ import com.tc.util.TCTimeoutException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import junit.framework.TestCase;
 
@@ -39,7 +39,6 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
   private final AtomicLong    rcvdMessages2 = new AtomicLong(0);
 
   private final AtomicBoolean fullySent     = new AtomicBoolean(false);
-  private final Lock          lock          = new ReentrantLock();
 
   protected void setUp() throws Exception {
     connMgr = new TCConnectionManagerJDK14();
@@ -60,39 +59,48 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
 
   Random r = new Random();
 
-  public void testBasic() throws TCTimeoutException, IOException, InterruptedException {
+  public void testBasic() throws TCTimeoutException, IOException, InterruptedException, BrokenBarrierException {
     final TCConnection clientConn = connMgr.createConnection(new WireProtocolAdaptorImpl(new ClientWPMGSink()));
     clientConn.connect(new TCSocketAddress(server.getBindPort()), 3000);
+
+    final CyclicBarrier startBarrier = new CyclicBarrier(2);
+    final CyclicBarrier endBarrier = new CyclicBarrier(2);
 
     Thread checker = new Thread(new Runnable() {
       public void run() {
         while (true) {
 
-          System.out.println("XXX Waiting for Client to send all msgs ");
-          synchronized (fullySent) {
-            while (!fullySent.get()) {
-              try {
-                fullySent.wait();
-              } catch (InterruptedException e) {
-                System.out.println("fullySent: " + e);
+          try {
+            startBarrier.await();
+
+            System.out.println("XXX Waiting for Client to send all msgs ");
+            synchronized (fullySent) {
+              while (!fullySent.get()) {
+                try {
+                  fullySent.wait();
+                } catch (InterruptedException e) {
+                  System.out.println("fullySent: " + e);
+                }
               }
             }
-          }
 
-          System.out.println("XXX Waiting for server to rcv all msgs");
-          synchronized (rcvdMessages2) {
-            while (rcvdMessages2.get() != sentMessages.get()) {
-              try {
-                rcvdMessages2.wait();
-              } catch (InterruptedException e) {
-                System.out.println("rcvdMessages2: " + e);
+            System.out.println("XXX Waiting for server to rcv all msgs");
+            synchronized (rcvdMessages2) {
+              while (rcvdMessages2.get() != sentMessages.get()) {
+                try {
+                  rcvdMessages2.wait();
+                } catch (InterruptedException e) {
+                  System.out.println("rcvdMessages2: " + e);
+                }
               }
             }
-          }
 
-          fullySent.set(false);
-          synchronized (lock) {
-            lock.notify();
+            endBarrier.await();
+            
+          } catch (BrokenBarrierException ie) {
+            System.out.println("XXX Thread " + ie);
+          } catch (InterruptedException e) {
+            System.out.println("XXX Thread " + e);
           }
         }
       }
@@ -101,19 +109,28 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
     checker.start();
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < 25; i++) {
+
       int count = 10000;
+      fullySent.set(false);
+      
+      startBarrier.await();
+      startBarrier.reset();
+
       ArrayList<TCNetworkMessage> messages = getMessages(count);
-      for (TCNetworkMessage msg : messages)
+      for (TCNetworkMessage msg : messages) {
         clientConn.putMessage(msg);
+      }
+
       sentMessages.addAndGet(count);
+
       synchronized (fullySent) {
+        System.out.println("XXX total msgs sent " + sentMessages);
         fullySent.set(true);
         fullySent.notify();
       }
-      System.out.println("XXX total msgs sent " + sentMessages);
-      synchronized (lock) {
-        lock.wait();
-      }
+
+      endBarrier.await();
+      endBarrier.reset();
       System.out.println("XXX Completed Round " + i + "\n\n");
     }
     long endTime = System.currentTimeMillis();
