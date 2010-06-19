@@ -619,7 +619,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             }
 
           } catch (CancelledKeyException cke) {
-            logger.warn(cke.getClass().getName() + " occured");
+            logger.info("selection key cancelled key@" + key.hashCode());
           }
         } // for
       } // while (true)
