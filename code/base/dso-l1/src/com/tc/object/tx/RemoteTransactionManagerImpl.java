@@ -110,6 +110,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   public void shutdown() {
     this.isShutdown = true;
+    this.timer.cancel();
   }
 
   public void pause(final NodeID remote, final int disconnected) {

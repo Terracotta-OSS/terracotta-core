@@ -557,6 +557,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.stateGuard.writeLock().lock();
     try {
       this.state = this.state.shutdown();
+      this.gcTimer.cancel();
+      this.lockLeaseTimer.cancel();
     } finally {
       this.stateGuard.writeLock().unlock();
     }
@@ -760,6 +762,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
   class LockGcTimerTask extends TimerTask {
     private static final int GCED_LOCK_THRESHOLD = 1000;
+
     @Override
     public void run() {
       int gcCount = 0;

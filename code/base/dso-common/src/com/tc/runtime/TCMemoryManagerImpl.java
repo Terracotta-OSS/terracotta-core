@@ -25,7 +25,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private final List            listeners     = new CopyOnWriteArrayList();
 
-  private int                   leastCount;
+  private final int             leastCount;
   private final long            sleepInterval;
   private final boolean         monitorOldGenOnly;
 
@@ -74,7 +74,17 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   }
 
   private synchronized void stopMonitorIfNecessary() {
-    if (listeners.size() == 0 && monitor != null) {
+    if (listeners.size() == 0) {
+      stopMonitorThread();
+    }
+  }
+
+  public synchronized void shutdown() {
+    stopMonitorThread();
+  }
+
+  private void stopMonitorThread() {
+    if (monitor != null) {
       monitor.stop();
       monitor = null;
     }
@@ -136,8 +146,8 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
         } catch (Throwable t) {
           // for debugging pupose
           StackTraceElement[] trace = t.getStackTrace();
-          for (int i = 0; i < trace.length; i++)
-            logger.warn(trace[i].toString());
+          for (StackTraceElement element : trace)
+            logger.warn(element.toString());
           logger.error(t);
           throw new TCRuntimeException(t);
         }

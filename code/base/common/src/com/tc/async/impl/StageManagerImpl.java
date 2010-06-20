@@ -40,7 +40,7 @@ public class StageManagerImpl implements StageManager {
   private static final long    MONITOR_DELAY = TCPropertiesImpl.getProperties()
                                                  .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private Map                  stages        = new HashMap();
+  private final Map            stages        = new HashMap();
   private TCLoggerProvider     loggerProvider;
   private final ThreadGroup    group;
   private String[]             stageNames    = new String[] {};
@@ -59,6 +59,7 @@ public class StageManagerImpl implements StageManager {
   private void startMonitor() {
     final TCLogger logger = loggerProvider.getLogger(getClass());
     Thread t = new Thread("SEDA Stage Monitor") {
+      @Override
       public void run() {
         while (true) {
           printStats();
@@ -71,8 +72,8 @@ public class StageManagerImpl implements StageManager {
           Stats stats[] = StageManagerImpl.this.getStats();
           logger.info("Stage Depths");
           logger.info("=================================");
-          for (int i = 0; i < stats.length; i++) {
-            stats[i].logDetails(logger);
+          for (Stats stat : stats) {
+            stat.logDetails(logger);
           }
         } catch (Throwable th) {
           logger.error(th);
@@ -113,8 +114,8 @@ public class StageManagerImpl implements StageManager {
   }
 
   public synchronized void startAll(ConfigurationContext context, List<PostInit> toInit) {
-    for (Iterator i = toInit.iterator(); i.hasNext();) {
-      PostInit mgr = (PostInit) i.next();
+    for (Object element : toInit) {
+      PostInit mgr = (PostInit) element;
       mgr.initializeContext(context);
 
     }
@@ -133,6 +134,7 @@ public class StageManagerImpl implements StageManager {
       Stage s = (Stage) i.next();
       s.destroy();
     }
+    stages.clear();
   }
 
   public synchronized Stage getStage(String name) {
@@ -166,6 +168,7 @@ public class StageManagerImpl implements StageManager {
       return new NullStageMonitor();
     }
 
+    @Override
     public String toString() {
       StringBuffer buf = new StringBuffer();
       buf.append("StageMonitors").append(formatter.newline());

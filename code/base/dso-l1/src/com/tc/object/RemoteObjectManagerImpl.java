@@ -107,6 +107,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   public synchronized void shutdown() {
     this.state = State.STOPPED;
+    this.objectRequestTimer.cancel();
   }
 
   private boolean isStopped() {

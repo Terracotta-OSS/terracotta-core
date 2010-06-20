@@ -42,6 +42,7 @@ public final class TunnelingMessageConnectionServer implements MessageConnection
   }
 
   public synchronized void stop() {
+    handler.stopAccept();
     handler = null;
   }
 

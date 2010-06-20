@@ -28,7 +28,7 @@ import javax.management.remote.message.Message;
 public class TunnelingEventHandler extends AbstractEventHandler implements ChannelEventListener,
     ClientHandshakeCallback {
 
-  private static final TCLogger      logger = TCLogging.getLogger(TunnelingEventHandler.class);
+  private static final TCLogger      logger     = TCLogging.getLogger(TunnelingEventHandler.class);
 
   private final MessageChannel       channel;
 
@@ -45,6 +45,8 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
   private boolean                    transportConnected;
 
   private boolean                    sentReadyMessage;
+
+  private boolean                    stopAccept = false;
 
   public TunnelingEventHandler(final MessageChannel channel, final DSOMBeanConfig config) {
     this.channel = channel;
@@ -96,7 +98,7 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
   }
 
   protected synchronized MessageConnection accept() throws IOException {
-    while (!acceptOk) {
+    while (!acceptOk && !stopAccept) {
       try {
         wait();
       } catch (InterruptedException ie) {
@@ -106,6 +108,11 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
     }
     acceptOk = false;
     return messageConnection;
+  }
+
+  protected synchronized void stopAccept() {
+    stopAccept = true;
+    notifyAll();
   }
 
   private synchronized void reset() {
@@ -191,4 +198,5 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
   public void shutdown() {
     // Ignore
   }
+
 }

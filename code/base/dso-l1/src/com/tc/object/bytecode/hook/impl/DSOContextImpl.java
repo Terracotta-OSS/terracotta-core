@@ -185,7 +185,8 @@ public class DSOContextImpl implements DSOContext {
     validateTimApiVersion();
 
     try {
-      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, manager.getTunneledDomainUpdater(), false, repos);
+      osgiRuntime = ModulesLoader.initModules(configHelper, classProvider, manager.getTunneledDomainUpdater(), false,
+                                              repos);
       configHelper.validateSessionConfig();
       validateBootJar();
     } catch (Exception e) {
@@ -366,6 +367,12 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager.getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
+        .getTunneledDomainUpdater(), false, modules);
+  }
+
+  public void shutdown() {
+    osgiRuntime.shutdown();
+    manager.stop();
   }
 }

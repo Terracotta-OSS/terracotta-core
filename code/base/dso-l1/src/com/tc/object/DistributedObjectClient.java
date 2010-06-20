@@ -235,6 +235,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private ThreadIDManager                            threadIDManager;
   private final CallbackDumpHandler                  dumpHandler                         = new CallbackDumpHandler();
   private TunneledDomainManager                      tunneledDomainManager;
+  private TCMemoryManagerImpl                        tcMemManager;
 
   public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
                                  final ClassProvider classProvider,
@@ -511,8 +512,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final TCProperties cacheManagerProperties = this.l1Properties.getPropertiesFor("cachemanager");
     final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
-    final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
-        .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), getThreadGroup());
+    tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(), cacheConfig
+        .isOnlyOldGenMonitored(), getThreadGroup());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = new LongGCLogger(timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
@@ -917,5 +918,71 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   protected DSOClientConfigHelper getClientConfigHelper() {
     return this.config;
+  }
+
+  public void shutdown() {
+    TCLogger logger = DSO_LOGGER;
+
+    if (counterManager != null) {
+      try {
+        counterManager.shutdown();
+      } catch (Throwable t) {
+        logger.error("error shutting down counter manager", t);
+      }
+    }
+
+    if (l1Management != null) {
+      try {
+        l1Management.stop();
+      } catch (Throwable t) {
+        logger.error("error shutting down JMX connector", t);
+      }
+    }
+
+    if (tcMemManager != null) {
+      try {
+        tcMemManager.shutdown();
+      } catch (Throwable t) {
+        logger.error("Error stopping memory manager", t);
+      }
+    }
+
+    if (lockManager != null) {
+      try {
+        lockManager.shutdown();
+      } catch (Throwable t) {
+        logger.error("Error stopping lock manager", t);
+      }
+    }
+
+    try {
+      getStageManager().stopAll();
+    } catch (Throwable t) {
+      logger.error("Error stopping stage manager", t);
+    }
+
+    if (objectManager != null) {
+      try {
+        objectManager.shutdown();
+      } catch (Throwable t) {
+        logger.error("Error shutting down client object manager", t);
+      }
+    }
+
+    if (channel != null) {
+      try {
+        channel.close();
+      } catch (Throwable t) {
+        logger.error("Error closing channel", t);
+      }
+    }
+
+    if (communicationsManager != null) {
+      try {
+        communicationsManager.shutdown();
+      } catch (Throwable t) {
+        logger.error("Error shutting down communications manager", t);
+      }
+    }
   }
 }

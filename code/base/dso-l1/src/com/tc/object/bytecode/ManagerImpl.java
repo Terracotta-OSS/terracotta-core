@@ -179,11 +179,9 @@ public class ManagerImpl implements Manager {
   public String getUUID() {
     return this.config.getUUID().toString();
   }
-  
+
   public TunneledDomainUpdater getTunneledDomainUpdater() {
-    if (null == dso) {
-      return null;
-    }
+    if (null == dso) { return null; }
     return dso.getTunneledDomainManager();
   }
 
@@ -235,14 +233,8 @@ public class ManagerImpl implements Manager {
         ManagerImpl.this.lockManager = ManagerImpl.this.dso.getLockManager();
         ManagerImpl.this.methodCallManager = ManagerImpl.this.dso.getDmiManager();
 
-        ManagerImpl.this.shutdownManager = new ClientShutdownManager(
-                                                                     ManagerImpl.this.objectManager,
-                                                                     ManagerImpl.this.dso.getRemoteTransactionManager(),
-                                                                     ManagerImpl.this.dso.getStageManager(),
-                                                                     ManagerImpl.this.dso.getCommunicationsManager(),
-                                                                     ManagerImpl.this.dso.getChannel(),
-                                                                     ManagerImpl.this.dso.getClientHandshakeManager(),
-                                                                     ManagerImpl.this.dso.getStatisticsAgentSubSystem(),
+        ManagerImpl.this.shutdownManager = new ClientShutdownManager(ManagerImpl.this.objectManager,
+                                                                     ManagerImpl.this.dso,
                                                                      ManagerImpl.this.connectionComponents);
 
         ManagerImpl.this.dsoCluster.init(ManagerImpl.this.dso.getClusterMetaDataManager(),

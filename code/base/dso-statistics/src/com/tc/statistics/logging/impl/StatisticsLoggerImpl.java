@@ -81,6 +81,8 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
       logTask.shutdown();
       logTask = null;
     }
+
+    timer.cancel();
   }
 
   private void retrieveAction(final Date moment, final StatisticRetrievalAction action) {
@@ -96,9 +98,9 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
       return;
     }
     if (data != null) {
-      for (int i = 0; i < data.length; i++) {
-        data[i].setMoment(moment);
-        logData(data[i]);
+      for (StatisticData element : data) {
+        element.setMoment(moment);
+        logData(element);
       }
     }
   }
@@ -121,6 +123,7 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
       this.cancel();
     }
 
+    @Override
     public void run() {
       if (!shutdown) {
         synchronized (actions) {
