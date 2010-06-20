@@ -17,8 +17,8 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
   public static final String DSO_LOCK_TYPE_FIELDNAME = "dsoLockType";
   public static final String LOCK_STRATEGY_FIELDNAME = "lockStrategy";
 
-  private int                dsoLockType;
-  private ObjectID           lockStrategy;
+  protected int                dsoLockType;
+  protected ObjectID           lockStrategy;
 
   protected ConcurrentDistributedMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
