@@ -164,7 +164,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     setDiscover(new TCGroupMemberDiscoveryStatic(this));
 
     nodesStore.registerForTopologyChange(this);
-    registerForGroupEvents(new OperatorEventsNodeConnectionListener(configSetupManager));
+    registerForGroupEvents(new OperatorEventsNodeConnectionListener(nodesStore));
   }
 
   public boolean isNodeConnected(NodeID sid) {

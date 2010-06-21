@@ -10,4 +10,6 @@ public interface NodesStore extends ClusterInfo {
   void registerForTopologyChange(TopologyChangeListener listener);
 
   Node[] getAllNodes();
+  
+  String getNodeNameFromServerName(String serverName);
 }

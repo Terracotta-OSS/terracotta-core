@@ -49,7 +49,8 @@ public class HaConfigImpl implements HaConfig {
     ServerGroup thisGroup = getThisGroupFrom(this.groups, this.configSetupManager.getActiveServerGroupForThisL2());
     this.thisGroupID = thisGroup.getGroupId();
 
-    this.nodeStore = new NodesStoreImpl(nodes, getNodeNamesForThisGroup(thisGroup), buildServerGroupIDMap());
+    this.nodeStore = new NodesStoreImpl(nodes, getNodeNamesForThisGroup(thisGroup), buildServerGroupIDMap(),
+                                        configSetupManager);
   }
 
   private HashMap<String, GroupID> buildServerGroupIDMap() {
@@ -198,9 +199,7 @@ public class HaConfigImpl implements HaConfig {
 
   public String getNodeName(String member) {
     for (ServerGroup group : this.groups) {
-      if (group.hasMember(member)) {
-        return group.getNode(member).getServerNodeName();
-      }
+      if (group.hasMember(member)) { return group.getNode(member).getServerNodeName(); }
     }
     return null;
   }
