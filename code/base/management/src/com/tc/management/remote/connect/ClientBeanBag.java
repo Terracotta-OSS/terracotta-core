@@ -7,6 +7,7 @@ import com.tc.logging.OperatorEventsLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TerracottaManagement;
+import com.tc.management.beans.MBeanNames;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.util.UUID;
 
@@ -50,7 +51,7 @@ public class ClientBeanBag {
     this.uuid = uuid;
     setTunneledDomains(tunneledDomains);
     this.l1Connection = l1Connection;
-    this.l1OperatorEventsLogger = new OperatorEventsLogger(); 
+    this.l1OperatorEventsLogger = new OperatorEventsLogger();
   }
 
   synchronized void unregisterBeans() {
@@ -89,7 +90,7 @@ public class ClientBeanBag {
       } catch (Exception e) {
         LOGGER.error("Unable to remove listener from MBeanServerDelegate", e);
       }
-      
+
       // register as a listener before query'ing beans to avoid missing any registrations
       try {
         mbeanRegistrationListener = new MBeanRegistrationListener(this);
@@ -140,8 +141,10 @@ public class ClientBeanBag {
           try {
             MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
             l2MBeanServer.registerMBean(mirror, modifiedObjName);
-            l2MBeanServer.addNotificationListener(modifiedObjName, this.l1OperatorEventsLogger,
-                                                  new OperatorEventsFilter(), null);
+            if (objName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
+              l2MBeanServer.addNotificationListener(modifiedObjName, this.l1OperatorEventsLogger,
+                                                    new OperatorEventsFilter(), null);
+            }
           } catch (Throwable t) {
             beanNames.remove(modifiedObjName);
             if (t instanceof Error) throw (Error) t;
@@ -158,17 +161,23 @@ public class ClientBeanBag {
     }
   }
 
-  synchronized void unregisterBean(ObjectName name, boolean remove) {
+  synchronized void unregisterBean(ObjectName objName, boolean remove) {
     ObjectName modifiedObjName;
 
     try {
-      modifiedObjName = TerracottaManagement.addNodeInfo(name, channel.getRemoteAddress());
+      modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
 
     if (beanNames.contains(modifiedObjName)) {
       try {
+        if (objName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC) && l2MBeanServer.isRegistered(modifiedObjName)) {
+          try {
+            l2MBeanServer.removeNotificationListener(modifiedObjName, this.l1OperatorEventsLogger);
+          } catch (Exception e) {/**/
+          }
+        }
         l2MBeanServer.unregisterMBean(modifiedObjName);
         LOGGER.info("Unregistered Tunneled MBean '" + modifiedObjName + "'");
       } catch (Exception e) {

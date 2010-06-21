@@ -241,7 +241,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       theReadySet.add(L2MBeanNames.LOGGER);
       theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
       theReadySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
-      theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
+      // theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
     }
   }
 
@@ -979,6 +979,16 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void testInitRegisteredBean(Set<ObjectName> theReadySet, ObjectName beanName) {
+    /**
+     * This is lame as the registration of these EE beans will not be tied to the Server being ready. There should be EE
+     * versions of the cluster model types.
+     */
+    if (beanName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
+      initOperatorEventsBean();
+    } else if (beanName.equals(L2MBeanNames.SERVER_DB_BACKUP)) {
+      initServerDBBackupBean();
+    }
+
     if (theReadySet.contains(beanName)) {
       if (beanName.equals(L2MBeanNames.DSO)) {
         try {
@@ -988,14 +998,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         }
       } else if (beanName.equals(StatisticsMBeanNames.STATISTICS_GATHERER)) {
         initClusterStatsBean();
-      } else if (beanName.equals(L2MBeanNames.SERVER_DB_BACKUP)) {
-        initServerDBBackupBean();
       } else if (beanName.equals(L2MBeanNames.LOCK_STATISTICS)) {
         initLockProfilerBean();
       } else if (beanName.equals(L2MBeanNames.TC_SERVER_INFO)) {
         initServerInfoBean();
-      } else if (beanName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
-        initOperatorEventsBean();
       }
 
       synchronized (this) {
