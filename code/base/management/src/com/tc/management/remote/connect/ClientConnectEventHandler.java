@@ -84,6 +84,7 @@ public class ClientConnectEventHandler extends AbstractEventHandler {
         ClientBeanBag bag = clientBeanBags.get(msg.getChannelID());
         if (bag != null) {
           try {
+            bag.setTunneledDomains(msg.getTunneledDomains());
             bag.updateRegisteredBeans();
           } catch (IOException e) {
             LOGGER.error("Unable to create tunneled JMX connection to all the tunneled domains on the DSO client on host["

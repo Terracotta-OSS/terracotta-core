@@ -48,7 +48,7 @@ public class ClientBeanBag {
     this.l2MBeanServer = l2MBeanServer;
     this.channel = channel;
     this.uuid = uuid;
-    this.tunneledDomains = tunneledDomains;
+    setTunneledDomains(tunneledDomains);
     this.l1Connection = l1Connection;
     this.l1OperatorEventsLogger = new OperatorEventsLogger(); 
   }
