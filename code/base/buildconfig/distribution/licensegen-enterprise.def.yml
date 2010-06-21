@@ -5,7 +5,7 @@ root_directory: license-generator-version
 bundled_components:
   - common:
       module_packages:
-        - license-generator:
+        - license-generator-version:
             modules:
               - license-common
               - ent-license-generator
