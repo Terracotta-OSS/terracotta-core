@@ -39,12 +39,13 @@ public class LicenseDescriptorTest extends TestCase {
   public void testFields() {
     LicenseDescriptor d = new LicenseDescriptor();
     Map description = d.getDescriptionMap();
-    assertEquals(6, description.size());
+    assertEquals(7, description.size());
     assertNotNull(description.get(LicenseConstants.LICENSE_TYPE));
     assertNotNull(description.get(LicenseConstants.LICENSE_NUMBER));
     assertNotNull(description.get(LicenseConstants.LICENSEE));
     assertNotNull(description.get(LicenseConstants.MAX_CLIENTS));
     assertNotNull(description.get(LicenseConstants.PRODUCT));
+    assertNotNull(description.get(LicenseConstants.EDITION));
     assertNotNull(description.get(LicenseConstants.EXPIRATION_DATE));
   }
 }
