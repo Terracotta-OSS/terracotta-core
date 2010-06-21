@@ -13,6 +13,7 @@ public class FieldValidationTest extends TestCase {
     requiredfieldTestTemplate(descriptor, LicenseConstants.LICENSEE);
     requiredfieldTestTemplate(descriptor, LicenseConstants.MAX_CLIENTS);
     requiredfieldTestTemplate(descriptor, LicenseConstants.PRODUCT);
+    requiredfieldTestTemplate(descriptor, LicenseConstants.EDITION);
   }
 
   public void testLicenseType() throws Exception {
@@ -62,14 +63,14 @@ public class FieldValidationTest extends TestCase {
     LicenseDescriptor descriptor = new LicenseDescriptor();
 
     LicenseField field = descriptor.createField(LicenseConstants.PRODUCT);
-    field.setRawValue(LicenseConstants.FX);
-    assertEquals(LicenseConstants.FX, (String) field.getValue());
+    field.setRawValue(LicenseConstants.PRODUCT_QUARTZ);
+    assertEquals(LicenseConstants.PRODUCT_QUARTZ, (String) field.getValue());
 
-    field.setRawValue(LicenseConstants.EX);
-    assertEquals(LicenseConstants.EX, (String) field.getValue());
+    field.setRawValue(LicenseConstants.PRODUCT_EHCACHE);
+    assertEquals(LicenseConstants.PRODUCT_EHCACHE, (String) field.getValue());
 
-    field.setRawValue(LicenseConstants.EX_SESSIONS);
-    assertEquals(LicenseConstants.EX_SESSIONS, (String) field.getValue());
+    field.setRawValue(LicenseConstants.PRODUCT_ENTERPRISE_SUITE);
+    assertEquals(LicenseConstants.PRODUCT_ENTERPRISE_SUITE, (String) field.getValue());
 
     try {
       field.setRawValue("DUDE");
