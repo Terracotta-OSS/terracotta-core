@@ -11,18 +11,20 @@ public interface License {
   public String licensee();
 
   public String product();
+  
+  public String edition();
 
   public int maxClients();
 
   public Date expirationDate();
 
   public Capabilities capabilities();
-
-  public byte[] getCanonicalData();
+  
+  public String getSignature();
+  
+  public void setSignature(String signature);
 
   public String toString();
-
-  public String getSignature();
-
-  public void setSignature(String signature);
+  
+  public byte[] getCanonicalData();
 }

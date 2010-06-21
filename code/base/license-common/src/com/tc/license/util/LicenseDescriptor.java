@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,12 +26,12 @@ public class LicenseDescriptor {
 
   public LicenseDescriptor(String descriptorResource) {
     InputStream in = LicenseDescriptor.class.getResourceAsStream(descriptorResource);
-    if (in == null) throw new RuntimeException("Descriptor resource not found: " + descriptorResource);
+    if (in == null) throw new LicenseException("Descriptor resource not found: " + descriptorResource);
     YamlReader reader = new YamlReader(new InputStreamReader(in));
     try {
       descriptor = (Map) reader.read();
     } catch (YamlException e) {
-      throw new RuntimeException(e);
+      throw new LicenseException(e);
     } finally {
       try {
         reader.close();
@@ -42,18 +42,22 @@ public class LicenseDescriptor {
     this.descriptionMap = (Map) get(descriptor, LicenseConstants.LICENSE_DESCRIPTION);
   }
 
-  public EnumSet<Capability> getLicensedCapabilities(String product) {
+  public Set<Capability> getLicensedCapabilities(String product, String edition) {
+    if (LicenseConstants.PRODUCT_CUSTOM.equals(product)) {
+      return getEnterpriseCapabilities();
+    }
     Map licensedProducts = (Map) get(descriptor, LicenseConstants.LICENSED_PRODUCT);
-    List values = (List) get(licensedProducts, product);
-    return convertToCapabilitySet(values);
+    Map editions = (Map) get(licensedProducts, product);
+    List capablities = (List) get(editions, edition);
+    return convertToCapabilitySet(capablities);
   }
 
-  public EnumSet<Capability> getEnterpriseCapabilities() {
+  public Set<Capability> getEnterpriseCapabilities() {
     List values = (List) get(descriptor, LicenseConstants.ENTERPRISE_CAPABILITIES);
     return convertToCapabilitySet(values);
   }
 
-  public EnumSet<Capability> getOpenSourceCapabilities() {
+  public Set<Capability> getOpenSourceCapabilities() {
     List values = (List) get(descriptor, LicenseConstants.OPENSOURCE_CAPABILITIES);
     return convertToCapabilitySet(values);
   }
@@ -87,14 +91,14 @@ public class LicenseDescriptor {
     if (value != null) {
       return value;
     } else {
-      throw new RuntimeException("Field " + key + " couldn't be found in resource: " + DESCRIPTOR_RESOURCE);
+      throw new LicenseException("Field " + key + " couldn't be found in resource: " + DESCRIPTOR_RESOURCE);
     }
   }
 
-  private EnumSet<Capability> convertToCapabilitySet(List values) {
-    EnumSet<Capability> result = EnumSet.noneOf(Capability.class);
+  private Set<Capability> convertToCapabilitySet(List values) {
+    Set<Capability> result = new HashSet<Capability>();
     for (Iterator it = values.iterator(); it.hasNext();) {
-      Capability c = Capability.parse((String) it.next());
+      Capability c = new Capability((String) it.next());
       result.add(c);
     }
     return result;

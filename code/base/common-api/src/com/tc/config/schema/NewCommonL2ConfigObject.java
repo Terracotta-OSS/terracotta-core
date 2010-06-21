@@ -9,6 +9,8 @@ import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
+import com.tc.license.LicenseCheck;
+import com.tc.license.util.LicenseConstants;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.AuthenticationMode;
 import com.terracottatech.config.HttpAuthentication;
@@ -65,6 +67,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     }
 
     if (authentication) {
+      LicenseCheck.checkCapability(LicenseConstants.AUTHENTICATION);
       if (server.getAuthentication().isSetMode()) {
         if (server.getAuthentication().getMode().isSetLoginConfigName()) {
           loginConfig = server.getAuthentication().getMode().getLoginConfigName();

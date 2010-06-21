@@ -4,6 +4,7 @@
   <dependencies defaultconf="default">    
     <dependency name="commons-cli" rev="1.1" org="commons-cli"/>
     <dependency name="commons-io" rev="1.2" org="commons-io"/>
+    <dependency name="commons-lang" rev="2.0" org="commons-lang"/>
     <dependency name="commons-logging" rev="1.0.3" org="commons-logging"/>
     <dependency name="log4j" rev="1.2.9" org="log4j"/>
     <dependency name="yamlbeans" rev="0.9.2" org="net.sourceforge"/>

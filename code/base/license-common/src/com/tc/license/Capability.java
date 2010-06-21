@@ -1,17 +1,10 @@
 package com.tc.license;
 
-import com.tc.license.util.LicenseConstants;
-
-import java.util.Arrays;
-import java.util.EnumSet;
-
-public enum Capability {
-  ROOTS(LicenseConstants.ROOTS), SESSIONS(LicenseConstants.SESSIONS), TOC(LicenseConstants.TOC), SERVER_STRIPING(
-      LicenseConstants.SERVER_STRIPING);
+public class Capability {
 
   private final String name;
 
-  private Capability(String name) {
+  public Capability(String name) {
     this.name = name;
   }
 
@@ -19,33 +12,25 @@ public enum Capability {
     return name;
   }
 
-  public static Capability parse(String name) {
-    if (LicenseConstants.ROOTS.equals(name)) return ROOTS;
-    if (LicenseConstants.SESSIONS.equals(name)) return SESSIONS;
-    if (LicenseConstants.TOC.equals(name)) return TOC;
-    if (LicenseConstants.SERVER_STRIPING.equals(name)) return SERVER_STRIPING;
-    throw new IllegalArgumentException("Capability unknown: " + name + ". Valid: " + Arrays.asList(Capability.values()));
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    return result;
   }
 
-  public static EnumSet<Capability> toSet(String capabilities) {
-    EnumSet<Capability> set = EnumSet.noneOf(Capability.class);
-    String[] tokens = capabilities.split(",");
-    for (String t : tokens) {
-      set.add(Capability.parse(t.trim()));
-    }
-    return set;
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    Capability other = (Capability) obj;
+    if (name == null) {
+      if (other.name != null) return false;
+    } else if (!name.equals(other.name)) return false;
+    return true;
   }
 
-  public static String convertToString(EnumSet<Capability> set) {
-    StringBuffer sb = new StringBuffer();
-    int index = 0;
-    for (Capability c : set) {
-      if (index > 0) {
-        sb.append(", ");
-      }
-      sb.append(c.toString());
-      index++;
-    }
-    return sb.toString();
-  }
+  
 }

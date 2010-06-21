@@ -2,36 +2,38 @@ package com.tc.license.util;
 
 import com.tc.license.Capability;
 
-import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
 public class LicenseDescriptorTest extends TestCase {
-  
+
   public void testLicensedCapabilities() {
+    testProduct("Enterprise Suite", "EX", 6,
+                "roots, Terracotta operator console, authentication, ehcache, quartz, sessions");
+    testProduct("Enterprise Suite", "FX", 8,
+                "roots, Terracotta operator console, authentication, ehcache, quartz, sessions, DCV2, server striping");
+    testProduct("Ehcache", "EX", 3, "Terracotta operator console, authentication, ehcache");
+    testProduct("Ehcache", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, ehcache");
+    testProduct("Quartz", "EX", 3, "Terracotta operator console, authentication, quartz");
+    testProduct("Quartz", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, quartz");
+    testProduct("Session", "EX", 3, "Terracotta operator console, authentication, sessions");
+    testProduct("Session", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, sessions");
+  }
+
+  private void testProduct(String product, String edition, int capabilitiesCount, String expectedCapabilities) {
     LicenseDescriptor d = new LicenseDescriptor();
-    EnumSet<Capability> capabilities = d.getLicensedCapabilities(LicenseConstants.EX);
-    assertEquals(3, capabilities.size());
-    assertTrue(capabilities.contains(Capability.ROOTS));
-    assertTrue(capabilities.contains(Capability.SESSIONS));
-    assertTrue(capabilities.contains(Capability.TOC));
+    Set<Capability> capabilities = d.getLicensedCapabilities(product, edition);
+    assertCapabilities(capabilitiesCount, capabilities, expectedCapabilities);
+  }
 
-    capabilities = d.getLicensedCapabilities(LicenseConstants.EX_SESSIONS);
-    assertEquals(1, capabilities.size());
-    assertTrue(capabilities.contains(Capability.SESSIONS));
-
-    capabilities = d.getLicensedCapabilities(LicenseConstants.FX);
-    assertEquals(4, capabilities.size());
-    assertTrue(capabilities.contains(Capability.ROOTS));
-    assertTrue(capabilities.contains(Capability.SESSIONS));
-    assertTrue(capabilities.contains(Capability.TOC));
-    assertTrue(capabilities.contains(Capability.SERVER_STRIPING));
-
-    capabilities = d.getLicensedCapabilities(LicenseConstants.ES);
-    assertEquals(2, capabilities.size());
-    assertTrue(capabilities.contains(Capability.ROOTS));
-    assertTrue(capabilities.contains(Capability.SESSIONS));
+  private void assertCapabilities(int capabilitiesCount, Set<Capability> capabilities, String expectedCapabilities) {
+    assertEquals(capabilitiesCount, capabilities.size());
+    String[] tokens = expectedCapabilities.split("\\s*,\\s*");
+    for (String token : tokens) {
+      assertTrue(capabilities.contains(new Capability(token)));
+    }
   }
 
   public void testFields() {

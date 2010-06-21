@@ -8,25 +8,49 @@ import com.tc.license.Capability;
 import com.tc.license.License;
 import com.tc.license.LicenseFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import junit.framework.TestCase;
 
 public class LicenseFactoryTest extends TestCase {
 
   public void testFactory() throws Exception {
-    License license = LicenseFactory.createEnterpriseLicense("Commercial", "123", "Big ole company", "EX", "4", null);
+    Map<String, String> rawValueFields = new HashMap<String, String>();
+    rawValueFields.put(LicenseConstants.LICENSE_TYPE, "Commercial");
+    rawValueFields.put(LicenseConstants.LICENSE_NUMBER, "123");
+    rawValueFields.put(LicenseConstants.LICENSEE, "Big ole company");
+    rawValueFields.put(LicenseConstants.MAX_CLIENTS, "4");
+    rawValueFields.put(LicenseConstants.PRODUCT, "Ehcache");
+    rawValueFields.put(LicenseConstants.EDITION, "EX");
+    rawValueFields.put(LicenseConstants.EXPIRATION_DATE, null);
+    
+    License license = LicenseFactory.createEnterpriseLicense(rawValueFields);
     assertEquals("Commercial", license.licenseType());
     assertEquals("123", license.licenseNumber());
     assertEquals("Big ole company", license.licensee());
-    assertEquals("EX", license.product());
+    assertEquals("Ehcache", license.product());
+    assertEquals("EX", license.edition());
     assertEquals(4, license.maxClients());
-    assertTrue(license.capabilities().isLicensed(Capability.ROOTS));
-    assertTrue(license.capabilities().isLicensed(Capability.SESSIONS));
+    assertTrue(license.capabilities().isLicensed(new Capability("Terracotta operator console")));
+    assertTrue(license.capabilities().isLicensed(new Capability("authentication")));
+    assertTrue(license.capabilities().isLicensed(new Capability("ehcache")));
     assertNull(license.expirationDate());
   }
 
   public void testFactoryValidator() throws Exception {
     try {
-      LicenseFactory.createEnterpriseLicense("Unknown", "123", "Big ole company", "EX", "4", null);
+      Map<String, String> rawValueFields = new HashMap<String, String>();
+      rawValueFields.put(LicenseConstants.LICENSE_TYPE, "BOGUS");
+      rawValueFields.put(LicenseConstants.LICENSE_NUMBER, "123");
+      rawValueFields.put(LicenseConstants.LICENSEE, "Big ole company");
+      rawValueFields.put(LicenseConstants.MAX_CLIENTS, "4");
+      rawValueFields.put(LicenseConstants.PRODUCT, "Ehcache");
+      rawValueFields.put(LicenseConstants.EDITION, "EX");
+      rawValueFields.put(LicenseConstants.EXPIRATION_DATE, null);
+      
+      LicenseFactory.createEnterpriseLicense(rawValueFields);
+      
       fail("Should have thrown LicenseException");
     } catch (LicenseException e) {
       // expected

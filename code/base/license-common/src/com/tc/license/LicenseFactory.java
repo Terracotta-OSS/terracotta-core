@@ -2,65 +2,57 @@ package com.tc.license;
 
 import com.tc.license.util.LicenseConstants;
 import com.tc.license.util.LicenseDescriptor;
-import com.tc.license.util.LicenseException;
 import com.tc.license.util.LicenseField;
 
-import java.util.Date;
-import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class LicenseFactory {
   private static final LicenseDescriptor descriptor = new LicenseDescriptor();
 
-  public static EnterpriseLicense createEnterpriseLicense(String licenseType, String licenseNumber, String licensee,
-                                                          String product, String maxClients, String expirationDate)
-      throws LicenseException {
-
-    LicenseField productField = createField(LicenseConstants.PRODUCT, product);
-    EnumSet<Capability> licensedCapabilities = descriptor.getLicensedCapabilities((String) productField.getValue());
-
-    return createLicense(licenseType, licenseNumber, licensee, product, maxClients, expirationDate,
-                         licensedCapabilities);
-  }
-
-  public static EnterpriseLicense createEnterpriseLicense(String licenseType, String licenseNumber, String licensee,
-                                                          String product, String maxClients, String expirationDate,
-                                                          String licensedCapabilities) throws LicenseException {
-
-    return createLicense(licenseType, licenseNumber, licensee, product, maxClients, expirationDate, Capability
-        .toSet(licensedCapabilities));
+  public static License createEnterpriseLicense(Map<String, String> rawValueFields) {
+    String product = rawValueFields.get(LicenseConstants.PRODUCT);
+    String edition = rawValueFields.get(LicenseConstants.EDITION);
+    Set<Capability> licensedCapabilities;
+    if (LicenseConstants.PRODUCT_CUSTOM.equals(product)) {
+      String listOfCapabilities = rawValueFields.get(LicenseConstants.CAPABILITIES);
+      licensedCapabilities = toCapabilitiesSet(listOfCapabilities);
+    } else {
+      licensedCapabilities = descriptor.getLicensedCapabilities(product, edition);
+    }
+    Capabilities capabilities = new Capabilities(licensedCapabilities, descriptor.getEnterpriseCapabilities());
+    return new EnterpriseLicense(covertToLicenseFields(rawValueFields), capabilities);
   }
 
   public static OpenSourceLicense createOpenSourceLicense() {
-    Capabilities openSourceCapabilities = new Capabilities(descriptor.getLicensedCapabilities(LicenseConstants.ES),
+    Capabilities openSourceCapabilities = new Capabilities(descriptor.getOpenSourceCapabilities(),
                                                            descriptor.getOpenSourceCapabilities());
     return new OpenSourceLicense(openSourceCapabilities);
   }
 
-  private static EnterpriseLicense createLicense(String type, String number, String licensee, String product,
-                                                 String maxClients, String expirationDate,
-                                                 EnumSet<Capability> licensedCapabilities) throws LicenseException {
+  private static Map<String, Object> covertToLicenseFields(Map<String, String> rawValueFields) {
+    Map<String, Object> convertedLicenseFields = new HashMap<String, Object>();
 
-    LicenseField typeField = createField(LicenseConstants.LICENSE_TYPE, type);
-    LicenseField numberField = createField(LicenseConstants.LICENSE_NUMBER, number);
-    LicenseField licenseeField = createField(LicenseConstants.LICENSEE, licensee);
-    LicenseField maxClientField = createField(LicenseConstants.MAX_CLIENTS, maxClients);
-    LicenseField productField = createField(LicenseConstants.PRODUCT, product);
-    LicenseField expiredDateField = createField(LicenseConstants.EXPIRATION_DATE, expirationDate);
+    for (Map.Entry<String, String> entry : rawValueFields.entrySet()) {
+      // capabilities is auto generated, no conversion needed
+      if (LicenseConstants.CAPABILITIES.equals(entry.getKey())) continue;
+      
+      LicenseField licenseField = descriptor.createField(entry.getKey());
+      licenseField.setRawValue(entry.getValue());
+      convertedLicenseFields.put(entry.getKey(), licenseField.getValue());
+    }
 
-    Capabilities capabilities = new Capabilities(licensedCapabilities, new LicenseDescriptor()
-        .getEnterpriseCapabilities());
-
-    EnterpriseLicense license = new EnterpriseLicense((String) typeField.getValue(), (String) numberField.getValue(),
-                                                      (String) licenseeField.getValue(), (String) productField
-                                                          .getValue(), (Integer) maxClientField.getValue(),
-                                                      (Date) expiredDateField.getValue(), capabilities);
-
-    return license;
+    return convertedLicenseFields;
   }
 
-  private static LicenseField createField(String name, String value) throws LicenseException {
-    LicenseField field = descriptor.createField(name);
-    field.setRawValue(value);
-    return field;
+  private static Set<Capability> toCapabilitiesSet(String listOfCapabilities) {
+    Set<Capability> retVal = new HashSet<Capability>();
+    String[] tokens = listOfCapabilities.split("\\s*,\\s*");
+    for (String token : tokens) {
+      retVal.add(new Capability(token));
+    }
+    return retVal;
   }
 }

@@ -23,7 +23,7 @@ public class TerracottaLicenseField implements LicenseField {
     this.range = range;
   }
 
-  public void setRawValue(String rawValue) throws LicenseException {
+  public void setRawValue(String rawValue) {
     this.value = convertAndValidate(rawValue);
   }
 
@@ -51,7 +51,7 @@ public class TerracottaLicenseField implements LicenseField {
     return range;
   }
 
-  private Object convertAndValidate(String rawValue) throws LicenseException {
+  private Object convertAndValidate(String rawValue) {
     if (LicenseConstants.STRING.equals(type)) {
       return convertToString(rawValue);
     } else if (LicenseConstants.INTEGER.equals(type)) {
@@ -63,7 +63,7 @@ public class TerracottaLicenseField implements LicenseField {
     }
   }
 
-  private String convertToString(String rawValue) throws LicenseException {
+  private String convertToString(String rawValue) {
     if (isBlank(rawValue)) {
       if (required) {
         throw new LicenseException("Field '" + name + "' is required");
@@ -73,7 +73,8 @@ public class TerracottaLicenseField implements LicenseField {
     } else {
       if (pattern != null && !Pattern.matches(pattern, rawValue)) {
         //
-        throw new LicenseException("Field '" + name + "' doesn't match pattern '" + pattern + "'");
+        throw new LicenseException("Field '" + name + "' value '" + rawValue + "' doesn't match pattern '" + pattern
+                                   + "'");
       }
       return rawValue;
     }
@@ -83,7 +84,7 @@ public class TerracottaLicenseField implements LicenseField {
     return s == null || s.trim().length() == 0;
   }
 
-  private Integer convertToInteger(String rawValue) throws LicenseException {
+  private Integer convertToInteger(String rawValue) {
     if (isBlank(rawValue)) {
       if (required) {
         throw new LicenseException("Field '" + name + "' is required");
@@ -115,7 +116,7 @@ public class TerracottaLicenseField implements LicenseField {
     }
   }
 
-  private Date convertToDate(String rawValue) throws LicenseException {
+  private Date convertToDate(String rawValue) {
     if (isBlank(rawValue)) {
       if (required) {
         throw new LicenseException("Field '" + name + "' is required");

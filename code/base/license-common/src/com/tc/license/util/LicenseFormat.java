@@ -6,12 +6,11 @@ package com.tc.license.util;
 
 import com.tc.license.License;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface LicenseFormat {
-  public License load(InputStream in) throws LicenseException, IOException;
+  public License loadAndVerify(InputStream in, Signer signer);
 
-  public void store(License license, OutputStream out);
+  public void store(OutputStream out, License license);
 }

@@ -4,8 +4,6 @@
  */
 package com.tc.license;
 
-import com.tc.license.util.LicenseConstants;
-
 import java.util.Date;
 
 public class OpenSourceLicense implements License {
@@ -21,10 +19,6 @@ public class OpenSourceLicense implements License {
 
   public Date expirationDate() {
     return null;
-  }
-
-  public byte[] getCanonicalData() {
-    return new byte[0];
   }
 
   public String getSignature() {
@@ -48,11 +42,19 @@ public class OpenSourceLicense implements License {
   }
 
   public String product() {
-    return LicenseConstants.ES;
+    return "Community";
   }
 
   public void setSignature(String signature) {
     // do nothing
+  }
+
+  public String edition() {
+    return "Community";
+  }
+  
+  public byte[] getCanonicalData() {
+    return null;
   }
 
 }

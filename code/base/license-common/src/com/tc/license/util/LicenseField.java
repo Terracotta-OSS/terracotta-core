@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface LicenseField {
 
-  public void setRawValue(String value) throws LicenseException;
+  public void setRawValue(String value);
 
   public Object getValue();
 

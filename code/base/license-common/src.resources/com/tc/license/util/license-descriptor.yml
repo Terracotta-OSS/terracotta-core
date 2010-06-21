@@ -21,45 +21,88 @@ Enterprise License Description:
   "Product":
     type: String
     required: true
-    pattern: EX|EX/Sessions|FX|Custom
+    pattern: Enterprise Suite|Ehcache|Quartz|Session|Custom
+    
+  "Edition":
+    type: String
+    required: true
+    pattern: FX|EX
   
   "Expiration date":
     type: Date
     required: false
+    
+Opensource capabilities:
+  - roots
+  - sessions
+  - ehcache
+  - quartz
 
 Enterprise capabilities:
   - roots
   - sessions
-  - TOC
+  - Terracotta operator console
   - server striping
-  
-Opensource capabilities:
-  - roots
-  - sessions
+  - ehcache
+  - quartz
+  - authentication
+  - DCV2
 
 Licensed products:
-  # Open source product
-  "ES":
-    - roots
-    - sessions
-    
-  "EX":
-    - roots
-    - sessions
-    - TOC
-    
-  "EX/Sessions":
-    - sessions
-    
-  "FX":
-    - roots
-    - sessions
-    - TOC
-    - server striping
-  
-  "Custom":
-    - roots
-    - sessions
-    - TOC
-    - server striping
-    
+  Enterprise Suite:
+    EX:
+      - roots
+      - Terracotta operator console
+      - authentication
+      - ehcache
+      - quartz
+      - sessions
+    FX:
+      - roots
+      - Terracotta operator console
+      - authentication
+      - ehcache
+      - quartz
+      - sessions
+      - server striping
+      - DCV2
+
+  Ehcache:
+    EX:
+      - Terracotta operator console
+      - authentication
+      - ehcache
+    FX:
+      - Terracotta operator console
+      - authentication
+      - ehcache
+      - server striping
+      - DCV2
+
+  Quartz:
+    EX:
+      - Terracotta operator console
+      - authentication
+      - quartz
+    FX:
+      - Terracotta operator console
+      - authentication
+      - quartz
+      - server striping
+      - DCV2
+      
+  Session:
+    EX:
+      - Terracotta operator console
+      - authentication
+      - sessions
+    FX:
+      - Terracotta operator console
+      - authentication
+      - sessions
+      - server striping
+      - DCV2
+
+  Custom:
+    EX:
+    FX:

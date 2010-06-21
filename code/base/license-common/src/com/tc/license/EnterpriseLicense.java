@@ -1,11 +1,13 @@
 package com.tc.license;
 
 import com.tc.license.util.LicenseConstants;
+import com.tc.license.util.LicenseException;
 
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 public final class EnterpriseLicense implements License {
   private static final String NEWLINE = System.getProperty("line.separator");
@@ -13,24 +15,22 @@ public final class EnterpriseLicense implements License {
   private final String        licenseNumber;
   private final String        licensee;
   private final String        product;
+  private final String        edition;
   private final int           maxClients;
   private final Date          expirationDate;
   private final Capabilities  capabilities;
   private String              signature;
 
-  public EnterpriseLicense(String type, String number, String licensee, String product, int maxClients,
-                           Date expirationDate, Capabilities capabilities) {
-    this.licenseType = type;
-    this.licenseNumber = number;
-    this.licensee = licensee;
-    this.product = product;
-    this.maxClients = maxClients;
+  public EnterpriseLicense(Map<String, Object> licenseFields, Capabilities capabilities) {
+    this.licenseType = (String) licenseFields.get(LicenseConstants.LICENSE_TYPE);
+    this.licenseNumber = (String) licenseFields.get(LicenseConstants.LICENSE_NUMBER);
+    this.licensee = (String) licenseFields.get(LicenseConstants.LICENSEE);
+    this.product = (String) licenseFields.get(LicenseConstants.PRODUCT);
+    this.edition = (String) licenseFields.get(LicenseConstants.EDITION);
+    this.maxClients = (Integer) licenseFields.get(LicenseConstants.MAX_CLIENTS);
     this.capabilities = capabilities;
-    if (expirationDate != null) {
-      this.expirationDate = new Date(expirationDate.getTime());
-    } else {
-      this.expirationDate = null;
-    }
+    Date expireDate = (Date) licenseFields.get(LicenseConstants.EXPIRATION_DATE);
+    this.expirationDate = expireDate != null ? new Date(expireDate.getTime()) : null;
   }
 
   public Date expirationDate() {
@@ -57,46 +57,30 @@ public final class EnterpriseLicense implements License {
     return product;
   }
 
+  public String edition() {
+    return edition;
+  }
+
   public Capabilities capabilities() {
     return capabilities;
   }
 
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(LicenseConstants.LICENSE_TYPE).append(" = ").append(licenseType).append(NEWLINE);
-    sb.append(LicenseConstants.LICENSE_NUMBER).append(" = ").append(licenseNumber).append(NEWLINE);
-    sb.append(LicenseConstants.LICENSEE).append(" = ").append(licensee).append(NEWLINE);
-    sb.append(LicenseConstants.PRODUCT).append(" = ").append(product).append(NEWLINE);
-    sb.append(LicenseConstants.MAX_CLIENTS).append(" = ").append(maxClients).append(NEWLINE);
-    sb.append(LicenseConstants.CAPABILITIES).append(" = ").append(capabilities.getLicensedCapabilitiesAsString())
-        .append(NEWLINE);
-    if (expirationDate != null) {
-      sb.append(LicenseConstants.EXPIRATION_DATE).append(" = ").append(dateToString(expirationDate)).append(NEWLINE);
+    return asString(NEWLINE);
+  }
+
+  public byte[] getCanonicalData() {
+    String rawData = asString("");
+    try {
+      return rawData.getBytes(LicenseConstants.CANONICAL_ENCODING);
+    } catch (UnsupportedEncodingException e) {
+      throw new LicenseException(e);
     }
-    return sb.toString();
   }
 
   private static String dateToString(Date date) {
     DateFormat df = new SimpleDateFormat(LicenseConstants.DATE_FORMAT);
     return df.format(date);
-  }
-
-  public final byte[] getCanonicalData() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(LicenseConstants.LICENSE_TYPE).append(licenseType);
-    sb.append(LicenseConstants.LICENSE_NUMBER).append(licenseNumber);
-    sb.append(LicenseConstants.LICENSEE).append(licensee);
-    sb.append(LicenseConstants.PRODUCT).append(product);
-    sb.append(LicenseConstants.MAX_CLIENTS).append(maxClients);
-    sb.append(LicenseConstants.CAPABILITIES).append(capabilities.getLicensedCapabilitiesAsString());
-    if (expirationDate != null) {
-      sb.append(LicenseConstants.EXPIRATION_DATE).append(dateToString(expirationDate));
-    }
-    try {
-      return sb.toString().getBytes(LicenseConstants.CANONICAL_ENCODING);
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public String getSignature() {
@@ -105,5 +89,21 @@ public final class EnterpriseLicense implements License {
 
   public void setSignature(String signature) {
     this.signature = signature;
+  }
+
+  private String asString(String delimiter) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(LicenseConstants.LICENSE_TYPE).append(" = ").append(licenseType).append(delimiter);
+    sb.append(LicenseConstants.LICENSE_NUMBER).append(" = ").append(licenseNumber).append(delimiter);
+    sb.append(LicenseConstants.LICENSEE).append(" = ").append(licensee).append(delimiter);
+    sb.append(LicenseConstants.PRODUCT).append(" = ").append(product).append(delimiter);
+    sb.append(LicenseConstants.EDITION).append(" = ").append(edition).append(delimiter);
+    sb.append(LicenseConstants.MAX_CLIENTS).append(" = ").append(maxClients).append(delimiter);
+    sb.append(LicenseConstants.CAPABILITIES).append(" = ").append(capabilities.getLicensedCapabilitiesAsString())
+        .append(delimiter);
+    if (expirationDate != null) {
+      sb.append(LicenseConstants.EXPIRATION_DATE).append(" = ").append(dateToString(expirationDate)).append(delimiter);
+    }
+    return sb.toString();
   }
 }

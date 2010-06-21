@@ -10,8 +10,8 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.license.Capability;
 import com.tc.license.LicenseCheck;
+import com.tc.license.util.LicenseConstants;
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.config.schema.ExcludedInstrumentedClass;
@@ -26,6 +26,7 @@ import com.terracottatech.config.AppGroups;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.DistributedMethods;
+import com.terracottatech.config.DistributedMethods.MethodExpression;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.InjectedField;
@@ -40,7 +41,6 @@ import com.terracottatech.config.Roots;
 import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.WebApplications;
-import com.terracottatech.config.DistributedMethods.MethodExpression;
 
 import java.text.ParseException;
 import java.util.Arrays;
@@ -77,7 +77,7 @@ public class ConfigLoader {
 
   private void addRoot(final Root root) throws ConfigurationSetupException {
 
-    LicenseCheck.checkCapability(Capability.ROOTS);
+    LicenseCheck.checkCapability(LicenseConstants.ROOTS);
 
     String rootName = root.getRootName();
     String fieldName = root.getFieldName();
@@ -120,7 +120,7 @@ public class ConfigLoader {
   }
 
   private void addWebApplication(final WebApplication webApp) {
-    LicenseCheck.checkCapability(Capability.SESSIONS);
+    LicenseCheck.checkCapability(LicenseConstants.SESSIONS);
 
     int lockType = webApp.getSynchronousWrite() ? com.tc.object.locks.LockLevel.SYNCHRONOUS_WRITE.toInt()
         : com.tc.object.locks.LockLevel.WRITE.toInt();
@@ -135,8 +135,8 @@ public class ConfigLoader {
       sessionLocking = !webApp.getSerialization();
     }
 
-    config.addWebApplication(webApp.getStringValue(), new SessionConfiguration(lockType, sessionLocking, webApp
-        .getSerialization()));
+    config.addWebApplication(webApp.getStringValue(),
+                             new SessionConfiguration(lockType, sessionLocking, webApp.getSerialization()));
   }
 
   private void addWebApplications(final WebApplications webApplicationsList) {
@@ -238,15 +238,17 @@ public class ConfigLoader {
     Autolock[] autolocks = lockList.getAutolockArray();
     for (int i = 0; autolocks != null && i < autolocks.length; i++) {
       Autolock autolock = autolocks[i];
-      config.addAutolock(autolock.getMethodExpression(), getLockLevel(autolock.getLockLevel(), autolock
-          .getAutoSynchronized()), xmlObject2Text(autolock, options));
+      config.addAutolock(autolock.getMethodExpression(),
+                         getLockLevel(autolock.getLockLevel(), autolock.getAutoSynchronized()),
+                         xmlObject2Text(autolock, options));
     }
 
     NamedLock[] namedLocks = lockList.getNamedLockArray();
     for (int i = 0; namedLocks != null && i < namedLocks.length; i++) {
       NamedLock namedLock = namedLocks[i];
-      LockDefinition lockDefinition = new LockDefinitionImpl(namedLock.getLockName(), getLockLevel(namedLock
-          .getLockLevel(), false), xmlObject2Text(namedLock, options));
+      LockDefinition lockDefinition = new LockDefinitionImpl(namedLock.getLockName(),
+                                                             getLockLevel(namedLock.getLockLevel(), false),
+                                                             xmlObject2Text(namedLock, options));
       lockDefinition.commit();
       config.addLock(namedLock.getMethodExpression(), lockDefinition);
     }
@@ -315,8 +317,8 @@ public class ConfigLoader {
       try {
         for (InjectedField injectedField : injectedFields) {
           ClassSpec spec = ClassUtils.parseFullyQualifiedFieldName(injectedField.getFieldName());
-          config.addInjectedField(spec.getFullyQualifiedClassName(), spec.getShortFieldName(), injectedField
-              .getInstanceType());
+          config.addInjectedField(spec.getFullyQualifiedClassName(), spec.getShortFieldName(),
+                                  injectedField.getInstanceType());
         }
       } catch (ParseException e) {
         throw new ConfigurationSetupException(e.getLocalizedMessage(), e);

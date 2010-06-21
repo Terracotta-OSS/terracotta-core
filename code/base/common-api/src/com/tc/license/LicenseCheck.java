@@ -19,7 +19,8 @@ public class LicenseCheck {
   public static final int           WARNING_MARK   = 240;
   public static final long          HOUR           = 1000 * 60 * 60;
 
-  public static void checkCapability(Capability capability) {
+  public static void checkCapability(String cap) {
+    Capability capability = new Capability(cap);
     if (!capabilities.isSupported(capability)) {
       consoleLogger.error("Feature '" + capability + "' is not supported in this edition of Terracotta. "
                           + EXIT_MESSAGE);
