@@ -344,7 +344,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
 
     @Override
     public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) {
-      ++this.counter;
+      this.counter += mapIds.size();
       return counter;
     }
 
