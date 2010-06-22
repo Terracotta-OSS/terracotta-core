@@ -45,6 +45,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private static final long    RETRIEVE_WAIT_INTERVAL                    = 15000;
   private static final int     REMOVE_OBJECTS_THRESHOLD                  = 10000;
   private static final long    REMOVED_OBJECTS_SEND_TIMER                = 30000;
+  private static final long    CLEANUP_UNUSED_DNA_TIMER                  = 300000;
 
   private static final int     MAX_OUTSTANDING_REQUESTS_SENT_IMMEDIATELY = TCPropertiesImpl
                                                                              .getProperties()
@@ -103,6 +104,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     this.rmomFactory = rmomFactory;
     this.defaultDepth = defaultDepth;
     this.sessionManager = sessionManager;
+    this.objectRequestTimer.schedule(new CleanupUnusedDNATimerTask(), CLEANUP_UNUSED_DNA_TIMER,
+                                     CLEANUP_UNUSED_DNA_TIMER);
   }
 
   public synchronized void shutdown() {
@@ -287,7 +290,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private void scheduleRequestForLater(final ObjectLookupState ctxt) {
     ctxt.makePending();
     if (!this.pendingSendTaskScheduled) {
-      this.objectRequestTimer.schedule(new SendPendingRequestsTimer(), BATCH_LOOKUP_TIME_PERIOD);
+      this.objectRequestTimer.schedule(new SendPendingRequestsTaskTimer(), BATCH_LOOKUP_TIME_PERIOD);
       this.pendingSendTaskScheduled = true;
     }
   }
@@ -405,7 +408,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       this.logger.warn("Ignoring DNA added from a different session: " + sessionID + ", " + this.sessionManager);
       return;
     }
-    this.lru.clearUnrequestedDNA();
+    this.lru.clearOneUnrequestedDNABatch();
     this.lru.add(batchID, dnas);
     for (final Iterator i = dnas.iterator(); i.hasNext();) {
       final DNA dna = (DNA) i.next();
@@ -472,7 +475,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
       sendRequestNow(getNextRequestID(), TCCollections.EMPTY_OBJECT_ID_SET, -1);
     } else if (this.removeObjects.size() == 1 && !this.removeTaskScheduled) {
-      this.objectRequestTimer.schedule(new RemovedObjectTimer(), REMOVED_OBJECTS_SEND_TIMER);
+      this.objectRequestTimer.schedule(new RemovedObjectTimerTask(), REMOVED_OBJECTS_SEND_TIMER);
       this.removeTaskScheduled = true;
 
     }
@@ -489,17 +492,29 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     return this.dnaCache.get(id) != null;
   }
 
-  private class SendPendingRequestsTimer extends TimerTask {
+  public synchronized void clearAllUnrequestedDNABatches() {
+    waitUntilRunning();
+    this.lru.clearAllUnrequestedDNABatches();
+  }
+
+  private class SendPendingRequestsTaskTimer extends TimerTask {
     @Override
     public void run() {
       sendPendingRequests();
     }
   }
 
-  private class RemovedObjectTimer extends TimerTask {
+  private class RemovedObjectTimerTask extends TimerTask {
     @Override
     public void run() {
       sendRemovedObjects();
+    }
+  }
+
+  private class CleanupUnusedDNATimerTask extends TimerTask {
+    @Override
+    public void run() {
+      clearAllUnrequestedDNABatches();
     }
   }
 
@@ -545,7 +560,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private class LRUCache {
     private final HashMap<ObjectID, Long>            lruOids = new HashMap<ObjectID, Long>();
-    private final LinkedHashMap<Long, Set<ObjectID>> batches = new LinkedHashMap<Long, Set<ObjectID>>();
+    private final LinkedHashMap<Long, LRUCacheEntry> batches = new LinkedHashMap<Long, LRUCacheEntry>();
 
     public int size() {
       return this.lruOids.size();
@@ -569,46 +584,92 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     }
 
     private Set<ObjectID> getOrCreateSetForBatch(final Long batchID) {
-      Set<ObjectID> oids = this.batches.get(batchID);
-      if (oids == null) {
-        oids = new HashSet<ObjectID>();
-        this.batches.put(batchID, oids);
+      LRUCacheEntry entry = this.batches.get(batchID);
+      if (entry == null) {
+        entry = new LRUCacheEntry();
+        this.batches.put(batchID, entry);
       }
-      return oids;
+      return entry.getOids();
+    }
+
+    private Set<ObjectID> getSetForBatch(Long batchID) {
+      LRUCacheEntry entry = this.batches.get(batchID);
+      return entry.getOids();
     }
 
     public void remove(final ObjectID id) {
       final Long batchID = this.lruOids.remove(id);
       if (batchID == null) { return; }
 
-      final Set<ObjectID> oids = this.batches.get(batchID);
+      final Set<ObjectID> oids = getSetForBatch(batchID);
       oids.remove(id);
       if (oids.isEmpty()) {
         this.batches.remove(batchID);
       }
     }
 
-    public void clearUnrequestedDNA() {
+    public void clearOneUnrequestedDNABatch() {
       if (this.batches.isEmpty() || this.batches.size() <= MAX_LRU) { return; }
       final Set<ObjectID> oidsToRemove = removeFirstBatchToClear();
 
-      for (final ObjectID oid : oidsToRemove) {
-        if (!RemoteObjectManagerImpl.this.objectLookupStates.containsKey(oid)) {
-          removed(oid);
-        }
-        this.lruOids.remove(oid);
-      }
-
+      removeOids(oidsToRemove);
       if (ENABLE_LOGGING) {
         RemoteObjectManagerImpl.this.logger.info("DNA LRU remove 1 batch containing " + oidsToRemove.size() + " DNAs");
       }
     }
 
+    private void removeOids(Set<ObjectID> oidsToRemove) {
+      for (final ObjectID oid : oidsToRemove) {
+        this.lruOids.remove(oid);
+        if (!RemoteObjectManagerImpl.this.objectLookupStates.containsKey(oid)) {
+          removed(oid);
+        }
+      }
+    }
+
+    public void clearAllUnrequestedDNABatches() {
+      int removed = 0;
+      for (Iterator<Entry<Long, LRUCacheEntry>> i = this.batches.entrySet().iterator(); i.hasNext();) {
+        LRUCacheEntry batch = i.next().getValue();
+        if (!batch.getAndSetAccessed(false)) {
+          // Not accessed for two cycles - remove
+          i.remove();
+          removeOids(batch.getOids());
+          removed++;
+        }
+      }
+      if (ENABLE_LOGGING) {
+        RemoteObjectManagerImpl.this.logger.info("DNA LRU remove " + removed + " batch containing  many DNAs");
+      }
+    }
+
     private Set<ObjectID> removeFirstBatchToClear() {
-      final Iterator<Entry<Long, Set<ObjectID>>> i = this.batches.entrySet().iterator();
-      final Set<ObjectID> oidsToRemove = i.next().getValue();
+      final Iterator<Entry<Long, LRUCacheEntry>> i = this.batches.entrySet().iterator();
+      final LRUCacheEntry batchToRemove = i.next().getValue();
       i.remove();
-      return oidsToRemove;
+      return batchToRemove.getOids(); // already removed, doesn't matter if accessed is set
+    }
+  }
+
+  private static final class LRUCacheEntry {
+
+    private final HashSet<ObjectID> oidsSet;
+    private boolean                 accessed;
+
+    private LRUCacheEntry() {
+      this.oidsSet = new HashSet<ObjectID>();
+      this.accessed = true;
+    }
+
+    public boolean getAndSetAccessed(boolean b) {
+      boolean old = this.accessed;
+      this.accessed = b;
+      return old;
+    }
+
+    public Set<ObjectID> getOids() {
+      this.accessed = true;
+      return this.oidsSet;
     }
   }
 
