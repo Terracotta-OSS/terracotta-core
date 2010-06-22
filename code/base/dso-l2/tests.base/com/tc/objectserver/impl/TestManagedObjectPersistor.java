@@ -99,11 +99,17 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     throw new ImplementMe();
   }
 
-  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> ids) {
-    for (final Object element : ids) {
+  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> sortedOids) {
+    for (final Object element : sortedOids) {
       deleteObjectByID(tx, (ObjectID) element);
     }
+    removeAllFromOtherExtantSets(sortedOids);
   }
+  
+  private void removeAllFromOtherExtantSets(final Collection ids) {
+    this.extantObjectIDs.removeAll(ids);
+  }
+
 
   public Map loadRootNamesToIDs() {
     return null;
