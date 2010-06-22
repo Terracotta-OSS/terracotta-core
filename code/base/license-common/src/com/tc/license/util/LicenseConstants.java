@@ -52,5 +52,5 @@ public class LicenseConstants {
   public static final String PRODUCT_EHCACHE          = "Ehcache";
   public static final String PRODUCT_QUARTZ           = "Quartz";
   public static final String PRODUCT_CUSTOM           = "Custom";
-  public static final String PRODUCT_SESSION          = "Session";
+  public static final String PRODUCT_SESSIONS         = "Sessions";
 }

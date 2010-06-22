@@ -11,7 +11,7 @@ import static com.tc.license.util.LicenseConstants.EX_SESSIONS;
 import static com.tc.license.util.LicenseConstants.FX;
 import static com.tc.license.util.LicenseConstants.PRODUCT;
 import static com.tc.license.util.LicenseConstants.PRODUCT_ENTERPRISE_SUITE;
-import static com.tc.license.util.LicenseConstants.PRODUCT_SESSION;
+import static com.tc.license.util.LicenseConstants.PRODUCT_SESSIONS;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -120,7 +120,7 @@ public class TerracottaLicenseFormat implements LicenseFormat {
       fields.put(PRODUCT, PRODUCT_ENTERPRISE_SUITE);
       fields.put(EDITION, FX);
     } else if (EX_SESSIONS.equals(product)) {
-      fields.put(PRODUCT, PRODUCT_SESSION);
+      fields.put(PRODUCT, PRODUCT_SESSIONS);
       fields.put(EDITION, EX);
     } else if (CUSTOM.equals(product)) {
       fields.put(PRODUCT, PRODUCT_ENTERPRISE_SUITE);

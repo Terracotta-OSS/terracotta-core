@@ -21,7 +21,7 @@ Enterprise License Description:
   "Product":
     type: String
     required: true
-    pattern: Enterprise Suite|Ehcache|Quartz|Session|Custom
+    pattern: Enterprise Suite|Ehcache|Quartz|Sessions|Custom
     
   "Edition":
     type: String
@@ -91,7 +91,7 @@ Licensed products:
       - server striping
       - DCV2
       
-  Session:
+  Sessions:
     EX:
       - Terracotta operator console
       - authentication
