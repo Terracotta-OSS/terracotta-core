@@ -23,10 +23,10 @@ import java.util.Map.Entry;
 
 public class ServerMapRequestHandler extends AbstractEventHandler implements EventHandler {
 
-  private ServerMapRequestManager serverTCMapRequestManager;
-  private final Counter         globalGetValueRequestCounter;
-  private final Counter         globalGetSizeRequestCounter;
-  private ChannelStats channelStats;
+  private ServerMapRequestManager serverMapRequestManager;
+  private final Counter           globalGetValueRequestCounter;
+  private final Counter           globalGetSizeRequestCounter;
+  private ChannelStats            channelStats;
 
   public ServerMapRequestHandler(Counter globalGetSizeRequestCounter, Counter globalGetValueRequestCounter) {
     this.globalGetSizeRequestCounter = globalGetSizeRequestCounter;
@@ -39,16 +39,16 @@ public class ServerMapRequestHandler extends AbstractEventHandler implements Eve
       final GetSizeServerMapRequestMessage smContext = (GetSizeServerMapRequestMessage) context;
       globalGetSizeRequestCounter.increment();
       this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_SIZE, smContext.getChannel(), 1);
-      this.serverTCMapRequestManager.requestSize(smContext.getRequestID(), smContext.getClientID(), smContext
-          .getMapID());
+      this.serverMapRequestManager.requestSize(smContext.getRequestID(), smContext.getClientID(), smContext.getMapID());
     } else {
       final GetValueServerMapRequestMessage smContext = (GetValueServerMapRequestMessage) context;
       final Map<ObjectID, Collection<ServerMapGetValueRequest>> requests = smContext.getRequests();
       int numRequests = requests.size();
       globalGetValueRequestCounter.increment(numRequests);
-      this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_VALUE_FOR_KEY, smContext.getChannel(), numRequests);
+      this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_VALUE_FOR_KEY, smContext.getChannel(),
+                                               numRequests);
       for (final Entry<ObjectID, Collection<ServerMapGetValueRequest>> e : requests.entrySet()) {
-        this.serverTCMapRequestManager.requestValues(smContext.getClientID(), e.getKey(), e.getValue());
+        this.serverMapRequestManager.requestValues(smContext.getClientID(), e.getKey(), e.getValue());
       }
     }
   }
@@ -56,7 +56,7 @@ public class ServerMapRequestHandler extends AbstractEventHandler implements Eve
   @Override
   public void initialize(final ConfigurationContext context) {
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    this.serverTCMapRequestManager = oscc.getServerTCMapRequestManager();
+    this.serverMapRequestManager = oscc.getServerMapRequestManager();
     this.channelStats = oscc.getChannelStats();
   }
 

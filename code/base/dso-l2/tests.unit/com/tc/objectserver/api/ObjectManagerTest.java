@@ -141,7 +141,7 @@ public class ObjectManagerTest extends TCTestCase {
    * 
    * @param arg0
    */
-  public ObjectManagerTest(String arg0) {
+  public ObjectManagerTest(final String arg0) {
     super(arg0);
   }
 
@@ -171,18 +171,19 @@ public class ObjectManagerTest extends TCTestCase {
     return new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(ObjectManagerImpl.class)));
   }
 
-  private void initObjectManager(ThreadGroup threadGroup) {
+  private void initObjectManager(final ThreadGroup threadGroup) {
     initObjectManager(threadGroup, new NullCache());
   }
 
-  private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache) {
+  private void initObjectManager(final ThreadGroup threadGroup, final EvictionPolicy cache) {
     this.objectStore = new InMemoryManagedObjectStore(this.managed);
     initObjectManager(threadGroup, cache, this.objectStore);
   }
 
-  private void initObjectManager(ThreadGroup threadGroup, EvictionPolicy cache, ManagedObjectStore store) {
-    TestSink faultSink = new TestSink();
-    TestSink flushSink = new TestSink();
+  private void initObjectManager(final ThreadGroup threadGroup, final EvictionPolicy cache,
+                                 final ManagedObjectStore store) {
+    final TestSink faultSink = new TestSink();
+    final TestSink flushSink = new TestSink();
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, cache,
                                                this.persistenceTransactionProvider, faultSink, flushSink,
                                                this.objectStatsRecorder);
@@ -192,7 +193,7 @@ public class ObjectManagerTest extends TCTestCase {
   }
 
   private void initTransactionObjectManager() {
-    ServerTransactionSequencerImpl sequencer = new ServerTransactionSequencerImpl();
+    final ServerTransactionSequencerImpl sequencer = new ServerTransactionSequencerImpl();
     this.coordinator = new TestTransactionalStageCoordinator();
     this.gtxMgr = new TestGlobalTransactionManager();
     this.txObjectManager = new TransactionalObjectManagerImpl(this.objectManager, sequencer, this.gtxMgr,
@@ -206,7 +207,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.setGarbageCollector(null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -217,7 +218,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.getObjectByID(null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok;
     }
   }
@@ -228,7 +229,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.lookupRootID(null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -239,7 +240,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.createRoot(null, null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -250,7 +251,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.createObject(null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -261,7 +262,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.getRoots();
       fail("Should have thrown a ShutdownError");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
 
@@ -275,7 +276,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.lookupObjectsFor(null, null);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -288,7 +289,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.lookupObjectsAndSubObjectsFor(null, null, -1);
       fail("Should have thrown a ShutdownError.");
-    } catch (ShutdownError e) {
+    } catch (final ShutdownError e) {
       // ok.
     }
   }
@@ -321,26 +322,26 @@ public class ObjectManagerTest extends TCTestCase {
     TestResultsContext results = new TestResultsContext(ids, new ObjectIDSet(), true);
     this.testFaultSinkContext.resetCounter();
 
-    ClientID c1 = new ClientID(1);
+    final ClientID c1 = new ClientID(1);
     // fetch 10 objects and with fault-count -1
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, -1);
     Assert.assertEquals(10, results.objects.size());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 1K
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 1000);
     Assert.assertEquals(1000, results.objects.size());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 10K
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 10000);
     Assert.assertEquals(10000, results.objects.size());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // fetch 10 objects and with fault-count 20K. but, max objects available are 10010
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 20000);
     Assert.assertEquals(10010, results.objects.size());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // single object reaching more objects than fault count
     createObjects(10, 11, createObjects(11000, 18000, new HashSet<ObjectID>()));
@@ -352,7 +353,7 @@ public class ObjectManagerTest extends TCTestCase {
     // fetch 1 object and with fault-count 5K. but, object can reach 7K
     this.objectManager.lookupObjectsAndSubObjectsFor(c1, results, 5000);
     Assert.assertEquals(5000, results.objects.size());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
   }
 
@@ -375,7 +376,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.testFaultSinkContext.resetCounter();
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     this.testFaultSinkContext.waitUntillCounterIs(10);
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // before no objects were pre-fetched, we should expect 0 hits and 10 misses
     assertEquals(0, this.stats.getTotalCacheHits());
@@ -398,7 +399,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
     assertEquals(0, this.testFaultSinkContext.getCounter());
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     // because objects where prefetched we should have 10 hits, but also 10 more
     // misses because the prefetching gets factored in as a miss to bring the total
@@ -415,8 +416,8 @@ public class ObjectManagerTest extends TCTestCase {
     createObjects(10, 10);
 
     // Look up two existing objects
-    ObjectIDSet ids = makeObjectIDSet(1, 2);
-    TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet(), true);
+    final ObjectIDSet ids = makeObjectIDSet(1, 2);
+    final TestResultsContext result1 = new TestResultsContext(ids, new ObjectIDSet(), true);
 
     this.testFaultSinkContext.resetCounter();
     this.objectManager.lookupObjectsAndSubObjectsFor(null, result1, -1);
@@ -424,8 +425,8 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(0, this.testFaultSinkContext.getCounter());
 
     // Now look two missing objects
-    ObjectIDSet missingids = makeObjectIDSet(20, 22);
-    TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
+    final ObjectIDSet missingids = makeObjectIDSet(20, 22);
+    final TestResultsContext result2 = new TestResultsContext(missingids, new ObjectIDSet(), true);
 
     this.testFaultSinkContext.resetCounter();
     this.objectManager.lookupObjectsAndSubObjectsFor(null, result2, -1);
@@ -433,7 +434,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(missingids, result2.missing);
 
     // Now release the first two objects
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, result1.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, result1.objects.values());
 
     // Counter shouldn't be incremented, in other words, missing objects should not be looked up again.
     assertEquals(2, this.testFaultSinkContext.getCounter());
@@ -444,13 +445,13 @@ public class ObjectManagerTest extends TCTestCase {
     // accurate in the lookup results
     initObjectManager();
 
-    ObjectIDSet ids = new ObjectIDSet(); // important to use a Set here
+    final ObjectIDSet ids = new ObjectIDSet(); // important to use a Set here
 
     ObjectID id1;
     ids.add((id1 = new ObjectID(1)));
     ObjectID id2;
     ids.add((id2 = new ObjectID(2)));
-    ClientID key = new ClientID(0);
+    final ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
 
@@ -458,7 +459,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.lookupObjectsFor(key, results);
     assertEquals(2, results.objects.size());
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
 
     ManagedObject mo = results.objects.get(id1);
     TestArrayDNA ta;
@@ -470,11 +471,11 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(1, ic.size());
     assertEquals(2, ic.get(ta.getTypeName()));
 
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     ids.add(new ObjectID(3));
     ids.add(new ObjectID(4));
-    ObjectIDSet newIDs = new ObjectIDSet();
+    final ObjectIDSet newIDs = new ObjectIDSet();
     newIDs.add(new ObjectID(3));
     newIDs.add(new ObjectID(4));
 
@@ -485,8 +486,8 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(4, results.objects.size());
 
     int count = 100;
-    for (Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
-      ObjectID id = iter.next();
+    for (final Iterator<ObjectID> iter = ids.iterator(); iter.hasNext();) {
+      final ObjectID id = iter.next();
       mo = results.objects.get(id);
       if (newIDs.contains(id)) {
         mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo, false);
@@ -499,26 +500,26 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(1, ic.size());
     assertEquals(4, ic.get(ta.getTypeName()));
 
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
   }
 
   public void testArrayFacade() throws Exception {
     initObjectManager();
 
-    ObjectID id = new ObjectID(1);
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectID id = new ObjectID(1);
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.add(id);
     this.objectManager.createNewObjects(ids);
-    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
 
     this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    ManagedObject mo = lookedUpObjects.get(id);
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ManagedObject mo = lookedUpObjects.get(id);
     mo.apply(new TestArrayDNA(id), new TransactionID(1), new BackReferences(), imo, false);
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, lookedUpObjects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
 
@@ -556,24 +557,24 @@ public class ObjectManagerTest extends TCTestCase {
   public void testDateFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    ObjectID dateID = new ObjectID(1);
+    final ObjectID dateID = new ObjectID(1);
 
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.add(dateID);
     this.objectManager.createNewObjects(ids);
-    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
 
     this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
-    ManagedObject dateManagedObject = lookedUpObjects.get(dateID);
+    final ManagedObject dateManagedObject = lookedUpObjects.get(dateID);
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo,
                             false);
 
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, lookedUpObjects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
 
@@ -585,24 +586,24 @@ public class ObjectManagerTest extends TCTestCase {
   public void testLiteralFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    ObjectID literalID = new ObjectID(1);
+    final ObjectID literalID = new ObjectID(1);
 
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.add(literalID);
 
     this.objectManager.createNewObjects(ids);
-    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
 
     this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
-    ManagedObject managedObject = lookedUpObjects.get(literalID);
+    final ManagedObject managedObject = lookedUpObjects.get(literalID);
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     managedObject.apply(new TestLiteralValuesDNA(literalID), new TransactionID(1), new BackReferences(), imo, false);
 
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, lookedUpObjects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
 
@@ -611,14 +612,14 @@ public class ObjectManagerTest extends TCTestCase {
 
   }
 
-  private void validateLiteralFacade(ManagedObjectFacade literalFacade) {
+  private void validateLiteralFacade(final ManagedObjectFacade literalFacade) {
     assertFalse(literalFacade.isArray());
     assertFalse(literalFacade.isMap());
     assertFalse(literalFacade.isSet());
     assertFalse(literalFacade.isList());
     assertEquals("java.lang.Integer", literalFacade.getClassName());
 
-    Object value = literalFacade.getFieldValue("java.lang.Integer");
+    final Object value = literalFacade.getFieldValue("java.lang.Integer");
 
     assertTrue(value instanceof Integer);
   }
@@ -626,33 +627,33 @@ public class ObjectManagerTest extends TCTestCase {
   public void testLogicalFacades() throws NoSuchObjectException {
     initObjectManager();
 
-    ObjectID mapID = new ObjectID(1);
-    ObjectID listID = new ObjectID(2);
-    ObjectID setID = new ObjectID(3);
+    final ObjectID mapID = new ObjectID(1);
+    final ObjectID listID = new ObjectID(2);
+    final ObjectID setID = new ObjectID(3);
 
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.add(mapID);
     ids.add(listID);
     ids.add(setID);
 
     this.objectManager.createNewObjects(ids);
-    TestResultsContext responseContext = new TestResultsContext(ids, ids);
+    final TestResultsContext responseContext = new TestResultsContext(ids, ids);
     final Map<ObjectID, ManagedObject> lookedUpObjects = responseContext.objects;
 
     this.objectManager.lookupObjectsFor(null, responseContext);
     assertEquals(ids.size(), lookedUpObjects.size());
 
-    ManagedObject list = lookedUpObjects.get(listID);
-    ManagedObject set = lookedUpObjects.get(setID);
-    ManagedObject map = lookedUpObjects.get(mapID);
+    final ManagedObject list = lookedUpObjects.get(listID);
+    final ManagedObject set = lookedUpObjects.get(setID);
+    final ManagedObject map = lookedUpObjects.get(mapID);
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     map.apply(new TestMapDNA(mapID), new TransactionID(1), new BackReferences(), imo, false);
     set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new BackReferences(), imo, false);
     list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo,
                false);
 
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, lookedUpObjects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
 
@@ -685,7 +686,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   }
 
-  private void validateListFacade(ManagedObjectFacade listFacade, int facadeSize, int totalSize) {
+  private void validateListFacade(final ManagedObjectFacade listFacade, final int facadeSize, final int totalSize) {
     assertFalse(listFacade.isArray());
     assertFalse(listFacade.isMap());
     assertFalse(listFacade.isSet());
@@ -695,14 +696,14 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(totalSize, listFacade.getTrueObjectSize());
 
     for (int i = 0; i < facadeSize; i++) {
-      String fName = String.valueOf(i);
-      Object value = listFacade.getFieldValue(fName);
+      final String fName = String.valueOf(i);
+      final Object value = listFacade.getFieldValue(fName);
       assertTrue(value instanceof String);
       assertEquals("item" + (i + 1), value);
     }
   }
 
-  private void validateSetFacade(ManagedObjectFacade setFacade, int facadeSize, int totalSize) {
+  private void validateSetFacade(final ManagedObjectFacade setFacade, final int facadeSize, final int totalSize) {
     assertFalse(setFacade.isArray());
     assertFalse(setFacade.isMap());
     assertTrue(setFacade.isSet());
@@ -711,15 +712,15 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(facadeSize, setFacade.getFacadeSize());
     assertEquals(totalSize, setFacade.getTrueObjectSize());
 
-    Set<String> expect = new HashSet<String>();
+    final Set<String> expect = new HashSet<String>();
     expect.add("item1");
     expect.add("item2");
     expect.add("item3");
 
-    Set<String> actual = new HashSet<String>();
+    final Set<String> actual = new HashSet<String>();
     for (int i = 0; i < facadeSize; i++) {
-      String fName = String.valueOf(i);
-      Object value = setFacade.getFieldValue(fName);
+      final String fName = String.valueOf(i);
+      final Object value = setFacade.getFieldValue(fName);
       assertTrue(value instanceof String);
       actual.add((String) value);
     }
@@ -727,7 +728,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(expect.containsAll(actual));
   }
 
-  private void validateMapFacade(ManagedObjectFacade mapFacade, int facadeSize, int totalSize) {
+  private void validateMapFacade(final ManagedObjectFacade mapFacade, final int facadeSize, final int totalSize) {
     assertFalse(mapFacade.isArray());
     assertTrue(mapFacade.isMap());
     assertFalse(mapFacade.isSet());
@@ -736,43 +737,43 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(facadeSize, mapFacade.getFacadeSize());
     assertEquals(totalSize, mapFacade.getTrueObjectSize());
 
-    Map<String, String> expect = new HashMap<String, String>();
+    final Map<String, String> expect = new HashMap<String, String>();
     expect.put("key1", "val1");
     expect.put("key2", "val2");
     expect.put("key3", "val3");
 
-    Map<String, String> actual = new HashMap<String, String>();
+    final Map<String, String> actual = new HashMap<String, String>();
 
     for (int i = 0; i < facadeSize; i++) {
-      String fName = String.valueOf(i);
-      Object value = mapFacade.getFieldValue(fName);
+      final String fName = String.valueOf(i);
+      final Object value = mapFacade.getFieldValue(fName);
       assertTrue(value instanceof MapEntryFacade);
-      MapEntryFacade entry = (MapEntryFacade) value;
+      final MapEntryFacade entry = (MapEntryFacade) value;
       actual.put((String) entry.getKey(), (String) entry.getValue());
     }
 
-    for (String key : actual.keySet()) {
+    for (final String key : actual.keySet()) {
       assertEquals(expect.get(key), actual.get(key));
     }
   }
 
-  private void validateDateFacade(ManagedObjectFacade dateFacade) {
+  private void validateDateFacade(final ManagedObjectFacade dateFacade) {
     assertFalse(dateFacade.isArray());
     assertFalse(dateFacade.isMap());
     assertFalse(dateFacade.isSet());
     assertFalse(dateFacade.isList());
     assertEquals("java.util.Date", dateFacade.getClassName());
 
-    Object value = dateFacade.getFieldValue("date");
+    final Object value = dateFacade.getFieldValue("date");
 
     assertTrue(value instanceof Date);
   }
 
-  private DBEnvironment newDBEnvironment(boolean paranoid) throws Exception {
+  private DBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
     File dbHome;
     int count = 0;
     do {
-      dbHome = new File(this.getTempDirectory(), getClass().getName() + "db" + (++count));
+      dbHome = new File(getTempDirectory(), getClass().getName() + "db" + (++count));
     } while (dbHome.exists());
     dbHome.mkdir();
     assertTrue(dbHome.exists());
@@ -781,12 +782,12 @@ public class ObjectManagerTest extends TCTestCase {
     return new DBEnvironment(paranoid, dbHome);
   }
 
-  private Persistor newPersistor(DBEnvironment dbEnv, SerializationAdapterFactory serializationAdapterFactory)
-      throws Exception {
+  private Persistor newPersistor(final DBEnvironment dbEnv,
+                                 final SerializationAdapterFactory serializationAdapterFactory) throws Exception {
     return new SleepycatPersistor(this.logger, dbEnv, serializationAdapterFactory);
   }
 
-  private SerializationAdapterFactory newSleepycatSerializationAdapterFactory(DBEnvironment dbEnv) {
+  private SerializationAdapterFactory newSleepycatSerializationAdapterFactory(final DBEnvironment dbEnv) {
     return new SleepycatSerializationAdapterFactory();
   }
 
@@ -823,12 +824,12 @@ public class ObjectManagerTest extends TCTestCase {
     testLookupInPersistentContext(persistor, paranoid, persistor.getPersistenceTransactionProvider());
   }
 
-  private void testLookupInPersistentContext(Persistor persistor, boolean paranoid, PersistenceTransactionProvider ptp)
-      throws Exception {
-    ManagedObjectPersistor mop = persistor.getManagedObjectPersistor();
-    PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop, new MockSink());
-    TestSink faultSink = new TestSink();
-    TestSink flushSink = new TestSink();
+  private void testLookupInPersistentContext(final Persistor persistor, final boolean paranoid,
+                                             final PersistenceTransactionProvider ptp) throws Exception {
+    final ManagedObjectPersistor mop = persistor.getManagedObjectPersistor();
+    final PersistentManagedObjectStore store = new PersistentManagedObjectStore(mop, new MockSink());
+    final TestSink faultSink = new TestSink();
+    final TestSink flushSink = new TestSink();
     this.config.paranoid = paranoid;
     this.objectManager = new ObjectManagerImpl(this.config, this.clientStateManager, store, new LRUEvictionPolicy(100),
                                                this.persistenceTransactionProvider, faultSink, flushSink,
@@ -836,10 +837,10 @@ public class ObjectManagerTest extends TCTestCase {
     new TestMOFaulter(this.objectManager, store, faultSink, new NullSinkContext()).start();
     new TestMOFlusher(this.objectManager, flushSink, new NullSinkContext()).start();
 
-    ObjectID id = new ObjectID(1);
-    ObjectIDSet ids = new ObjectIDSet();
+    final ObjectID id = new ObjectID(1);
+    final ObjectIDSet ids = new ObjectIDSet();
     ids.add(id);
-    ClientID key = new ClientID(0);
+    final ClientID key = new ClientID(0);
 
     this.objectManager.createNewObjects(ids);
     TestResultsContext responseContext = new TestResultsContext(ids, ids);
@@ -855,7 +856,7 @@ public class ObjectManagerTest extends TCTestCase {
     final List<ObjectID> fieldValueSlot = new ArrayList<ObjectID>(1);
     fieldValueSlot.add(new ObjectID(100));
 
-    DNACursor cursor = new DNACursor() {
+    final DNACursor cursor = new DNACursor() {
       public LogicalAction getLogicalAction() {
         return null;
       }
@@ -871,7 +872,7 @@ public class ObjectManagerTest extends TCTestCase {
         return count >= 0;
       }
 
-      public boolean next(DNAEncoding encoding) {
+      public boolean next(final DNAEncoding encoding) {
         throw new ImplementMe();
       }
 
@@ -891,11 +892,11 @@ public class ObjectManagerTest extends TCTestCase {
     TestDNA dna = new TestDNA(cursor);
     dna.version = 5;
 
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new BackReferences(), imo, false);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    this.objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
+    this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
 
     ManagedObject lookedUpViaLookup = this.objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
@@ -903,7 +904,7 @@ public class ObjectManagerTest extends TCTestCase {
         .getObjectReferences());
 
     tx = ptp.newTransaction();
-    this.objectManager.release(tx, lookedUpViaLookup);
+    this.objectManager.releaseAndCommit(tx, lookedUpViaLookup);
 
     // now do another lookup, change, and commit cycle
     responseContext = new TestResultsContext(ids, new ObjectIDSet());
@@ -912,7 +913,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.objectManager.lookupObjectsFor(key, responseContext);
     lookedUpViaLookupObjectsForCreateIfNecessary = lookedUpObjects.get(id);
     countSlot.set(0, 1);
-    ObjectID newReferenceID = new ObjectID(9324);
+    final ObjectID newReferenceID = new ObjectID(9324);
     fieldValueSlot.set(0, newReferenceID);
     dna = new TestDNA(cursor);
     dna.version = 10;
@@ -920,7 +921,7 @@ public class ObjectManagerTest extends TCTestCase {
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo, false);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
-    this.objectManager.release(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
+    this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
 
     lookedUpViaLookup = this.objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
@@ -932,11 +933,11 @@ public class ObjectManagerTest extends TCTestCase {
     close(persistor, store);
   }
 
-  private static void close(Persistor persistor, PersistentManagedObjectStore store) {
-    // to work around timing problem with this test, let's look up some object id...
-    // this should block this thread until trasaction reading all object ids from bdb completes,
+  private static void close(final Persistor persistor, final PersistentManagedObjectStore store) {
+    // to work around timing problem with this test, calling snapshot
+    // this should block this thread until trasaction reading all oject ids from bdb completes,
     // at which point, it's ok to close the DB
-    persistor.getManagedObjectPersistor().getAllObjectIDs().size();
+    persistor.getManagedObjectPersistor().snapshotObjectIDs();
     try {
       store.shutdown();
       persistor.close();
@@ -954,13 +955,13 @@ public class ObjectManagerTest extends TCTestCase {
   public void testObjectManagerBasics() {
     initObjectManager();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
+    final ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     assertFalse(this.objectManager.isReferenced(id));
-    ManagedObject mo2 = this.objectManager.getObjectByID(id);
+    final ManagedObject mo2 = this.objectManager.getObjectByID(id);
     assertTrue(mo == mo2);
     assertTrue(this.objectManager.isReferenced(id));
-    this.objectManager.release(this.NULL_TRANSACTION, mo);
+    this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
     assertFalse(this.objectManager.isReferenced(id));
 
     this.objectManager.getObjectByID(id);
@@ -968,7 +969,7 @@ public class ObjectManagerTest extends TCTestCase {
     final boolean[] gotIt = new boolean[1];
     gotIt[0] = false;
 
-    Thread t = new Thread() {
+    final Thread t = new Thread() {
       @Override
       public void run() {
         ObjectManagerTest.this.objectManager.getObjectByID(id);
@@ -979,7 +980,7 @@ public class ObjectManagerTest extends TCTestCase {
     t.start();
     ThreadUtil.reallySleep(1000);
     assertFalse(gotIt[0]);
-    this.objectManager.release(this.NULL_TRANSACTION, mo);
+    this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
     ThreadUtil.reallySleep(1000);
     assertTrue(gotIt[0]);
   }
@@ -989,42 +990,42 @@ public class ObjectManagerTest extends TCTestCase {
     testPhysicalObjectFacade(true);
   }
 
-  private void testPhysicalObjectFacade(boolean paranoid) throws Exception {
-    DBEnvironment dbEnv = newDBEnvironment(paranoid);
-    SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
-    Persistor persistor = newPersistor(dbEnv, saf);
-    PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
+  private void testPhysicalObjectFacade(final boolean paranoid) throws Exception {
+    final DBEnvironment dbEnv = newDBEnvironment(paranoid);
+    final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
+    final Persistor persistor = newPersistor(dbEnv, saf);
+    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
+    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
         .getManagedObjectPersistor(), new MockSink());
     this.objectStore = persistantMOStore;
     this.config.paranoid = paranoid;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
                       this.objectStore);
 
-    ObjectIDSet oids = new ObjectIDSet();
+    final ObjectIDSet oids = new ObjectIDSet();
     oids.add(new ObjectID(1));
 
     this.objectManager.createNewObjects(oids);
     final TestResultsContext context = new TestResultsContext(oids, oids);
     this.objectManager.lookupObjectsFor(null, context);
     context.waitTillComplete();
-    ManagedObject mo = (context.objects).get(new ObjectID(1));
+    final ManagedObject mo = (context.objects).get(new ObjectID(1));
     assertTrue(mo.isNew());
-    ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
+    final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new BackReferences(), imo, false);
 
-    PersistenceTransaction tx = ptp.newTransaction();
-    this.objectManager.release(tx, mo);
+    final PersistenceTransaction tx = ptp.newTransaction();
+    this.objectManager.releaseAndCommit(tx, mo);
 
     ManagedObjectFacade facade;
     try {
       facade = this.objectManager.lookupFacade(new ObjectID(1), -1);
-    } catch (NoSuchObjectException e1) {
+    } catch (final NoSuchObjectException e1) {
       fail(e1.getMessage());
       return;
     }
 
-    String[] fieldNames = facade.getFields();
+    final String[] fieldNames = facade.getFields();
     assertEquals(6, fieldNames.length);
     // NOTE: the order of the object fields should be alphabetic
     assertTrue(Arrays.asList(fieldNames).toString(), Arrays.equals(fieldNames, new String[] { "access$0", "this$0",
@@ -1047,21 +1048,21 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       facade.getFieldType("does not exist");
       fail();
-    } catch (IllegalArgumentException iae) {
+    } catch (final IllegalArgumentException iae) {
       // expected
     }
 
     try {
       facade.getFieldValue("does not exist");
       fail();
-    } catch (IllegalArgumentException iae) {
+    } catch (final IllegalArgumentException iae) {
       // expected
     }
 
     try {
       facade.isPrimitive("does not exist");
       fail();
-    } catch (IllegalArgumentException iae) {
+    } catch (final IllegalArgumentException iae) {
       // expected
     }
 
@@ -1075,10 +1076,10 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectID id = new ObjectID(0);
     final ObjectID id1 = new ObjectID(1);
 
-    ObjectIDSet objectIDs = new ObjectIDSet();
+    final ObjectIDSet objectIDs = new ObjectIDSet();
 
-    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
-    ManagedObject mo1 = new TestManagedObject(id1, new ArrayList<ObjectID>());
+    final ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>());
+    final ManagedObject mo1 = new TestManagedObject(id1, new ArrayList<ObjectID>());
     this.objectManager.createObject(mo);
     this.objectManager.createObject(mo1);
 
@@ -1094,17 +1095,17 @@ public class ObjectManagerTest extends TCTestCase {
                                                                                      new HashMap<ObjectID, ManagedObject>(),
                                                                                      objectIDs), -1));
 
-    ManagedObject retrievedMo = (ManagedObject) context.getResults().values().iterator().next();
+    final ManagedObject retrievedMo = (ManagedObject) context.getResults().values().iterator().next();
     assertTrue(mo == retrievedMo);
     assertTrue(this.objectManager.isReferenced(id));
-    this.objectManager.release(this.NULL_TRANSACTION, mo);
+    this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
     assertFalse(this.objectManager.isReferenced(id));
 
     this.objectManager.getObjectByID(id);
 
     objectIDs.add(id1);
 
-    boolean notPending = this.objectManager
+    final boolean notPending = this.objectManager
         .lookupObjectsAndSubObjectsFor(
                                        null,
                                        context = new TestObjectManagerResultsContext(
@@ -1112,10 +1113,10 @@ public class ObjectManagerTest extends TCTestCase {
                                                                                      objectIDs), -1);
     assertFalse(notPending);
     assertEquals(0, context.getResults().size());
-    this.objectManager.release(this.NULL_TRANSACTION, mo);
+    this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
     assertEquals(objectIDs.size(), context.getResults().size());
 
-    Collection objs = context.getResults().values();
+    final Collection objs = context.getResults().values();
     assertTrue(objs.contains(mo));
     assertTrue(objs.contains(mo1));
     assertTrue(objs.size() == 2);
@@ -1151,7 +1152,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
 
     assertEquals(10, this.stats.getTotalRequests());
     assertEquals(0, this.stats.getTotalCacheHits());
@@ -1160,7 +1161,7 @@ public class ObjectManagerTest extends TCTestCase {
     results = new TestResultsContext(ids, new ObjectIDSet());
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
     assertEquals(20, this.stats.getTotalRequests());
     assertEquals(10, this.stats.getTotalCacheHits());
     assertEquals(10, this.stats.getTotalCacheMisses());
@@ -1169,7 +1170,7 @@ public class ObjectManagerTest extends TCTestCase {
     results = new TestResultsContext(ids, new ObjectIDSet());
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
     assertEquals(30, this.stats.getTotalRequests());
     assertEquals(10, this.stats.getTotalCacheHits());
     assertEquals(20, this.stats.getTotalCacheMisses());
@@ -1180,24 +1181,24 @@ public class ObjectManagerTest extends TCTestCase {
     results = new TestResultsContext(ids, new ObjectIDSet());
     this.objectManager.lookupObjectsAndSubObjectsFor(null, results, -1);
     results.waitTillComplete();
-    this.objectManager.releaseAll(this.NULL_TRANSACTION, results.objects.values());
+    this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, results.objects.values());
     assertEquals(40, this.stats.getTotalRequests());
     assertEquals(15, this.stats.getTotalCacheHits());
     assertEquals(25, this.stats.getTotalCacheMisses());
 
-    double hitRate = ((double) 15) / ((double) 40);
+    final double hitRate = ((double) 15) / ((double) 40);
     assertEquals(hitRate, this.stats.getCacheHitRatio(), 0D);
   }
 
-  private void evictCache(int inCache) {
-    TestCacheStats tc = new TestCacheStats();
+  private void evictCache(final int inCache) {
+    final TestCacheStats tc = new TestCacheStats();
     tc.toKeep = inCache;
     this.objectManager.evictCache(tc);
     tc.validate();
   }
 
-  private ObjectIDSet makeObjectIDSet(int begin, int end) {
-    ObjectIDSet rv = new ObjectIDSet();
+  private ObjectIDSet makeObjectIDSet(final int begin, final int end) {
+    final ObjectIDSet rv = new ObjectIDSet();
 
     if (begin > end) {
       for (int i = begin; i > end; i--) {
@@ -1211,25 +1212,26 @@ public class ObjectManagerTest extends TCTestCase {
     return rv;
   }
 
-  private void createObjects(int num, int inCache) {
+  private void createObjects(final int num, final int inCache) {
     createObjects(num);
     evictCache(inCache);
   }
 
-  private Set<ObjectID> createObjects(int num) {
+  private Set<ObjectID> createObjects(final int num) {
     return createObjects(0, num, new HashSet());
   }
 
-  public Set<ObjectID> createObjects(int startID, int endID, Set<ObjectID> children) {
+  public Set<ObjectID> createObjects(final int startID, final int endID, final Set<ObjectID> children) {
     return createObjects(startID, endID, children, new HashSet());
   }
 
-  public Set<ObjectID> createObjects(int startID, int endID, Set<ObjectID> children, Set<TestManagedObject> objects) {
-    Set<ObjectID> oidSet = new HashSet<ObjectID>(endID - startID);
+  public Set<ObjectID> createObjects(final int startID, final int endID, final Set<ObjectID> children,
+                                     final Set<TestManagedObject> objects) {
+    final Set<ObjectID> oidSet = new HashSet<ObjectID>(endID - startID);
     for (int i = startID; i < endID; i++) {
-      ObjectID oid = new ObjectID(i);
+      final ObjectID oid = new ObjectID(i);
       oidSet.add(oid);
-      TestManagedObject mo = new TestManagedObject(oid, new ArrayList<ObjectID>(children));
+      final TestManagedObject mo = new TestManagedObject(oid, new ArrayList<ObjectID>(children));
 
       objects.add(mo);
       this.objectManager.createObject(mo);
@@ -1244,7 +1246,7 @@ public class ObjectManagerTest extends TCTestCase {
     try {
       this.objectManager.lookupFacade(new ObjectID(1), -1);
       fail("lookup didn't throw exception");
-    } catch (NoSuchObjectException e) {
+    } catch (final NoSuchObjectException e) {
       // expected
     }
   }
@@ -1253,11 +1255,11 @@ public class ObjectManagerTest extends TCTestCase {
     initObjectManager();
     // this should disable the gc thread.
     this.config.myGCThreadSleepTime = -1;
-    TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
+    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();
     final ObjectID id = new ObjectID(0);
-    ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
+    final ManagedObject mo = new TestManagedObject(id, new ArrayList<ObjectID>(3));
     this.objectManager.createObject(mo);
 
     assertFalse(gc.isCollected());
@@ -1276,7 +1278,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertFalse(gc.collectWasCalled());
     assertFalse(gc.blockUntilReadyToGC_WasCalled());
 
-    Thread gcCaller = new Thread(new GCCaller(), "GCCaller");
+    final Thread gcCaller = new Thread(new GCCaller(), "GCCaller");
     gcCaller.start();
 
     // give the thread some time to start and call collect()...
@@ -1289,7 +1291,7 @@ public class ObjectManagerTest extends TCTestCase {
     // now call release and make sure it calls the appropriate GC methods...
 
     assertFalse(gc.notifyReadyToGC_WasCalled());
-    this.objectManager.release(this.NULL_TRANSACTION, mo);
+    this.objectManager.releaseAndCommit(this.NULL_TRANSACTION, mo);
 
     // make sure release calls notifyReadyToGC
     assertTrue(gc.waitFor_notifyReadyToGC_ToBeCalled(5000));
@@ -1307,11 +1309,11 @@ public class ObjectManagerTest extends TCTestCase {
    * recall in TransactionalObjectManager in persistence mode
    */
   public void testRecallNewObjects() throws Exception {
-    DBEnvironment dbEnv = newDBEnvironment(true);
-    SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
-    Persistor persistor = newPersistor(dbEnv, saf);
-    PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
+    final DBEnvironment dbEnv = newDBEnvironment(true);
+    final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
+    final Persistor persistor = newPersistor(dbEnv, saf);
+    final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
+    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
         .getManagedObjectPersistor(), new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
@@ -1321,23 +1323,24 @@ public class ObjectManagerTest extends TCTestCase {
 
     // this should disable the gc thread.
     this.config.myGCThreadSleepTime = -1;
-    TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
+    final TestGarbageCollector gc = new TestGarbageCollector(this.objectManager);
     this.objectManager.setGarbageCollector(gc);
     this.objectManager.start();
 
     /**
      * STEP 1: Create an New object and check it out
      */
-    Map<ObjectID, DNA> changes = new HashMap<ObjectID, DNA>();
+    final Map<ObjectID, DNA> changes = new HashMap<ObjectID, DNA>();
 
     changes.put(new ObjectID(1), new TestPhysicalDNA(new ObjectID(1)));
 
-    ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1), new SequenceID(1),
-                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
-    List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
+    final ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
+                                                              new SequenceID(1), new LockID[0], new ClientID(2),
+                                                              new ArrayList<DNA>(changes.values()),
+                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              TxnType.NORMAL, new LinkedList(),
+                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+    final List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
     this.txObjectManager.addTransactions(txns);
@@ -1363,7 +1366,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
     this.txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc1 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
+    final CommitTransactionContext ctc1 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc1);
     assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
@@ -1380,11 +1383,12 @@ public class ObjectManagerTest extends TCTestCase {
     changes.clear();
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2)));
 
-    ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+    final ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
+                                                              new SequenceID(1), new LockID[0], new ClientID(2),
+                                                              new ArrayList<DNA>(changes.values()),
+                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              TxnType.NORMAL, new LinkedList(),
+                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
@@ -1412,11 +1416,12 @@ public class ObjectManagerTest extends TCTestCase {
     changes.put(new ObjectID(2), new TestPhysicalDNA(new ObjectID(2), true));
     changes.put(new ObjectID(3), new TestPhysicalDNA(new ObjectID(3)));
 
-    ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2), new SequenceID(1),
-                                                        new LockID[0], new ClientID(2), new ArrayList<DNA>(changes
-                                                            .values()), new ObjectStringSerializer(),
-                                                        Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                        DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+    final ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
+                                                              new SequenceID(1), new LockID[0], new ClientID(2),
+                                                              new ArrayList<DNA>(changes.values()),
+                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              TxnType.NORMAL, new LinkedList(),
+                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
 
     txns.clear();
     txns.add(stxn3);
@@ -1448,7 +1453,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
     this.txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc2 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
+    final CommitTransactionContext ctc2 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc2);
     assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
@@ -1465,7 +1470,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     // Now check back Object 1
     PersistenceTransaction dbtxn = ptp.newTransaction();
-    this.objectManager.releaseAll(dbtxn, ctc1.getObjects());
+    this.objectManager.releaseAllAndCommit(dbtxn, ctc1.getObjects());
 
     // Lookup context should have been fired
     loc = (LookupEventContext) this.coordinator.lookupSink.queue.take();
@@ -1478,13 +1483,13 @@ public class ObjectManagerTest extends TCTestCase {
     gc.requestGCPause();
     // Doing in a separate thread since this will block
     final CyclicBarrier cb = new CyclicBarrier(2);
-    Thread t = new Thread("GC Thread - testRecallNewObjects") {
+    final Thread t = new Thread("GC Thread - testRecallNewObjects") {
       @Override
       public void run() {
         ObjectManagerTest.this.objectManager.waitUntilReadyToGC();
         try {
           cb.await();
-        } catch (Exception e) {
+        } catch (final Exception e) {
           e.printStackTrace();
           throw new AssertionError(e);
         }
@@ -1494,7 +1499,7 @@ public class ObjectManagerTest extends TCTestCase {
     ThreadUtil.reallySleep(5000);
 
     // Recall request should have be added.
-    RecallObjectsContext roc = (RecallObjectsContext) this.coordinator.recallSink.queue.take();
+    final RecallObjectsContext roc = (RecallObjectsContext) this.coordinator.recallSink.queue.take();
     assertNotNull(roc);
     assertTrue(this.coordinator.recallSink.queue.isEmpty());
 
@@ -1505,7 +1510,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     // Check in Object 2 to make the GC go to paused state
     dbtxn = ptp.newTransaction();
-    this.objectManager.releaseAll(dbtxn, ctc2.getObjects());
+    this.objectManager.releaseAllAndCommit(dbtxn, ctc2.getObjects());
 
     cb.await();
 
@@ -1535,7 +1540,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(this.coordinator.applyCompleteSink.queue.isEmpty());
 
     this.txObjectManager.processApplyComplete();
-    CommitTransactionContext ctc3 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
+    final CommitTransactionContext ctc3 = (CommitTransactionContext) this.coordinator.commitSink.queue.take();
     assertNotNull(ctc3);
     assertTrue(this.coordinator.commitSink.queue.isEmpty());
 
@@ -1548,7 +1553,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     // Now check back the objects
     dbtxn = ptp.newTransaction();
-    this.objectManager.releaseAll(dbtxn, ctc3.getObjects());
+    this.objectManager.releaseAllAndCommit(dbtxn, ctc3.getObjects());
 
     assertEquals(0, this.objectManager.getCheckedOutCount());
     assertFalse(this.objectManager.isReferenced(new ObjectID(1)));
@@ -1560,7 +1565,7 @@ public class ObjectManagerTest extends TCTestCase {
 
   public void testGetObjectReferencesFrom() {
     this.config.paranoid = true;
-    TestEvictionPolicy policy = new TestEvictionPolicy();
+    final TestEvictionPolicy policy = new TestEvictionPolicy();
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), policy);
     this.objectManager.setStatsListener(this.stats);
 
@@ -1568,34 +1573,35 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(0, this.stats.getTotalCacheMisses());
 
     // each object has 1000 distinct reachable objects
-    Set<ObjectID> children = createObjects(1000, 2000, new HashSet<ObjectID>());
+    final Set<ObjectID> children = createObjects(1000, 2000, new HashSet<ObjectID>());
 
     createObjects(0, 2, children);
-    Set<TestManagedObject> objects = new HashSet();
+    final Set<TestManagedObject> objects = new HashSet();
 
     createObjects(3, 5, children, objects);
-    Set<ObjectID> returnedSet = this.objectManager.getObjectReferencesFrom(new ObjectID(1), false);
+    final Set<ObjectID> returnedSet = this.objectManager.getObjectReferencesFrom(new ObjectID(1), false);
     assertEquals(1000, returnedSet.size());
 
-    Set<ObjectID> returnedCachedNoReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
+    final Set<ObjectID> returnedCachedNoReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
     assertEquals(1000, returnedCachedNoReapSet.size());
 
     policy.objects = objects;
-    CacheStatsYoungGC cacheStats = new CacheStatsYoungGC();
+    final CacheStatsYoungGC cacheStats = new CacheStatsYoungGC();
     this.objectManager.evictCache(cacheStats);
 
-    Set<ObjectID> returnedCachedReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
+    final Set<ObjectID> returnedCachedReapSet = this.objectManager.getObjectReferencesFrom(new ObjectID(4), true);
     assertEquals(0, returnedCachedReapSet.size());
 
   }
 
   public static class CacheStatsYoungGC implements CacheStats {
 
-    public int getObjectCountToEvict(int currentCount) {
+    public int getObjectCountToEvict(final int currentCount) {
       return 2;
     }
 
-    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
+    public void objectEvicted(final int evictedCount, final int currentCount, final List targetObjects4GC,
+                              final boolean printNewObjects) {
       //
     }
 
@@ -1605,7 +1611,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     public Set<TestManagedObject> objects;
 
-    public boolean add(Cacheable obj) {
+    public boolean add(final Cacheable obj) {
       return false;
     }
 
@@ -1613,31 +1619,31 @@ public class ObjectManagerTest extends TCTestCase {
       return 0;
     }
 
-    public Collection getRemovalCandidates(int maxCount) {
+    public Collection getRemovalCandidates(final int maxCount) {
       return this.objects;
     }
 
-    public void markReferenced(Cacheable obj) {
+    public void markReferenced(final Cacheable obj) {
       //
     }
 
-    public void remove(Cacheable obj) {
+    public void remove(final Cacheable obj) {
       //
     }
 
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       return new PrettyPrinterImpl(new PrintWriter(new StringWriter()));
     }
 
   }
 
-  private void applyTxn(ApplyTransactionContext aoc) {
-    ServerTransaction txn = aoc.getTxn();
-    Map managedObjects = aoc.getObjects();
-    ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
-    for (Iterator i = txn.getChanges().iterator(); i.hasNext();) {
-      DNA dna = (DNA) i.next();
-      ManagedObject mo = (ManagedObject) managedObjects.get(dna.getObjectID());
+  private void applyTxn(final ApplyTransactionContext aoc) {
+    final ServerTransaction txn = aoc.getTxn();
+    final Map managedObjects = aoc.getObjects();
+    final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
+    for (final Iterator i = txn.getChanges().iterator(); i.hasNext();) {
+      final DNA dna = (DNA) i.next();
+      final ManagedObject mo = (ManagedObject) managedObjects.get(dna.getObjectID());
       mo.apply(new VersionizedDNAWrapper(dna, ++this.version), txn.getTransactionID(), new BackReferences(),
                instanceMonitor, false);
     }
@@ -1652,11 +1658,11 @@ public class ObjectManagerTest extends TCTestCase {
 
     private final boolean  delta;
 
-    public TestArrayDNA(ObjectID id) {
+    public TestArrayDNA(final ObjectID id) {
       this(id, false);
     }
 
-    public TestArrayDNA(ObjectID id, boolean delta) {
+    public TestArrayDNA(final ObjectID id, final boolean delta) {
       this.id = id;
       this.delta = delta;
       this.version = getNextVersion();
@@ -1722,7 +1728,7 @@ public class ObjectManagerTest extends TCTestCase {
           }
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1746,7 +1752,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectID setID;
     final String   className;
 
-    public TestListSetDNA(String className, ObjectID setID) {
+    public TestListSetDNA(final String className, final ObjectID setID) {
       this.className = className;
       this.setID = setID;
     }
@@ -1793,7 +1799,7 @@ public class ObjectManagerTest extends TCTestCase {
             case 1:
             case 2:
             case 3:
-              Object item = new UTF8ByteDataHolder("item" + this.count);
+              final Object item = new UTF8ByteDataHolder("item" + this.count);
               return new LogicalAction(SerializationUtil.ADD, new Object[] { item });
             default:
               throw new RuntimeException("bad count: " + this.count);
@@ -1804,7 +1810,7 @@ public class ObjectManagerTest extends TCTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1833,11 +1839,11 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectID        objectID;
     private final boolean isDelta;
 
-    TestMapDNA(ObjectID id) {
+    TestMapDNA(final ObjectID id) {
       this(id, false);
     }
 
-    TestMapDNA(ObjectID id, boolean isDelta) {
+    TestMapDNA(final ObjectID id, final boolean isDelta) {
       this.objectID = id;
       this.isDelta = isDelta;
     }
@@ -1885,8 +1891,8 @@ public class ObjectManagerTest extends TCTestCase {
             case 1:
             case 2:
             case 3:
-              Object key = new UTF8ByteDataHolder("key" + this.count);
-              Object val = new UTF8ByteDataHolder("val" + this.count);
+              final Object key = new UTF8ByteDataHolder("key" + this.count);
+              final Object val = new UTF8ByteDataHolder("val" + this.count);
               return new LogicalAction(SerializationUtil.PUT, new Object[] { key, val });
             default:
               throw new RuntimeException("bad count: " + this.count);
@@ -1897,7 +1903,7 @@ public class ObjectManagerTest extends TCTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -1926,7 +1932,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectID setID;
     final String   className;
 
-    public TestDateDNA(String className, ObjectID setID) {
+    public TestDateDNA(final String className, final ObjectID setID) {
       this.className = className;
       this.setID = setID;
     }
@@ -1981,7 +1987,7 @@ public class ObjectManagerTest extends TCTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -2013,13 +2019,13 @@ public class ObjectManagerTest extends TCTestCase {
     private final ObjectIDSet           newIDS;
     private final boolean               updateStats;
 
-    public TestResultsContext(ObjectIDSet ids, ObjectIDSet newIDS, boolean updateStats) {
+    public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS, final boolean updateStats) {
       this.ids = ids;
       this.newIDS = newIDS;
       this.updateStats = updateStats;
     }
 
-    public TestResultsContext(ObjectIDSet ids, ObjectIDSet newIDS) {
+    public TestResultsContext(final ObjectIDSet ids, final ObjectIDSet newIDS) {
       this(ids, newIDS, true);
     }
 
@@ -2027,13 +2033,13 @@ public class ObjectManagerTest extends TCTestCase {
       while (!this.complete) {
         try {
           wait();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
       }
     }
 
-    public synchronized void setResults(ObjectManagerLookupResults results) {
+    public synchronized void setResults(final ObjectManagerLookupResults results) {
       this.complete = true;
       this.objects.putAll(results.getObjects());
       this.missing.addAll(results.getMissingObjectIDs());
@@ -2059,11 +2065,11 @@ public class ObjectManagerTest extends TCTestCase {
     private final ObjectID id;
     private final boolean  isDelta;
 
-    TestPhysicalDNA(ObjectID id) {
+    TestPhysicalDNA(final ObjectID id) {
       this(id, false);
     }
 
-    public TestPhysicalDNA(ObjectID id, boolean isDelta) {
+    public TestPhysicalDNA(final ObjectID id, final boolean isDelta) {
       this.isDelta = isDelta;
       this.id = id;
     }
@@ -2141,7 +2147,7 @@ public class ObjectManagerTest extends TCTestCase {
 
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -2164,7 +2170,7 @@ public class ObjectManagerTest extends TCTestCase {
   private static class TestLiteralValuesDNA implements DNA {
     private final ObjectID id;
 
-    TestLiteralValuesDNA(ObjectID id) {
+    TestLiteralValuesDNA(final ObjectID id) {
       this.id = id;
     }
 
@@ -2225,7 +2231,7 @@ public class ObjectManagerTest extends TCTestCase {
           throw new ImplementMe();
         }
 
-        public boolean next(DNAEncoding encoding) {
+        public boolean next(final DNAEncoding encoding) {
           throw new ImplementMe();
         }
 
@@ -2269,7 +2275,7 @@ public class ObjectManagerTest extends TCTestCase {
       super(10000, true, true, true, false, 60000, 1000);
     }
 
-    TestObjectManagerConfig(long gcThreadSleepTime, boolean doGC) {
+    TestObjectManagerConfig(final long gcThreadSleepTime, final boolean doGC) {
       super(gcThreadSleepTime, doGC, true, true, false, 60000, 1000);
       throw new RuntimeException("Don't use me.");
     }
@@ -2292,8 +2298,8 @@ public class ObjectManagerTest extends TCTestCase {
     private final TestSink           faultSink;
     private final SinkContext        sinkContext;
 
-    public TestMOFaulter(ObjectManagerImpl objectManager, ManagedObjectStore store, TestSink faultSink,
-                         SinkContext sinkContext) {
+    public TestMOFaulter(final ObjectManagerImpl objectManager, final ManagedObjectStore store,
+                         final TestSink faultSink, final SinkContext sinkContext) {
       this.store = store;
       this.faultSink = faultSink;
       this.objectManager = objectManager;
@@ -2306,11 +2312,11 @@ public class ObjectManagerTest extends TCTestCase {
     public void run() {
       while (true) {
         try {
-          ManagedObjectFaultingContext ec = (ManagedObjectFaultingContext) this.faultSink.take();
+          final ManagedObjectFaultingContext ec = (ManagedObjectFaultingContext) this.faultSink.take();
           this.objectManager.addFaultedObject(ec.getId(), this.store.getObjectByID(ec.getId()), ec.isRemoveOnRelease());
           this.sinkContext.postProcess();
 
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
       }
@@ -2323,7 +2329,7 @@ public class ObjectManagerTest extends TCTestCase {
     private final TestSink          flushSink;
     private final SinkContext       sinkContext;
 
-    public TestMOFlusher(ObjectManagerImpl objectManager, TestSink flushSink, SinkContext sinkContext) {
+    public TestMOFlusher(final ObjectManagerImpl objectManager, final TestSink flushSink, final SinkContext sinkContext) {
       this.objectManager = objectManager;
       this.flushSink = flushSink;
       this.sinkContext = sinkContext;
@@ -2335,10 +2341,10 @@ public class ObjectManagerTest extends TCTestCase {
     public void run() {
       while (true) {
         try {
-          ManagedObjectFlushingContext ec = (ManagedObjectFlushingContext) this.flushSink.take();
+          final ManagedObjectFlushingContext ec = (ManagedObjectFlushingContext) this.flushSink.take();
           this.objectManager.flushAndEvict(ec.getObjectToFlush());
           this.sinkContext.postProcess();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
       }
@@ -2352,7 +2358,7 @@ public class ObjectManagerTest extends TCTestCase {
       return this.counter.get();
     }
 
-    public void waitUntillCounterIs(int count) {
+    public void waitUntillCounterIs(final int count) {
       this.counter.waitUntil(count);
     }
 

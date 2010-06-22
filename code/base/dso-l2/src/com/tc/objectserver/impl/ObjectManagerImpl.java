@@ -530,7 +530,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  public void release(final PersistenceTransaction persistenceTransaction, final ManagedObject object) {
+  public void releaseAndCommit(final PersistenceTransaction persistenceTransaction, final ManagedObject object) {
     if (this.config.paranoid()) {
       flushAndCommit(persistenceTransaction, object);
     }
@@ -559,13 +559,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
    * is committed to disk. This is good for performance reason but imposes a problem. The clients could read an object
    * that has changes but it not committed to the disk yet and If the server crashes then transactions are resent and
    * may be re-applied in the clients when it should not have re-applied. To avoid this we now commit in-line before
-   * releasing the objects. (A wise man in the company once said that the performance of broken code is zero)
-   * <p>
-   * TODO:: Implement a mechanism where Objects are marked pending to commit and give it out for other transactions but
-   * not for client lookups.
+   * releasing the objects.
    */
-  public void releaseAll(final PersistenceTransaction persistenceTransaction,
-                         final Collection<ManagedObject> managedObjects) {
+  public void releaseAllAndCommit(final PersistenceTransaction persistenceTransaction,
+                                  final Collection<ManagedObject> managedObjects) {
     if (this.config.paranoid()) {
       flushAllAndCommit(persistenceTransaction, managedObjects);
     }
@@ -617,7 +614,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return this.objectStore.getAllObjectIDs();
   }
 
-  private boolean containsObject(ObjectID id) {
+  private boolean containsObject(final ObjectID id) {
     return this.objectStore.containsObject(id);
   }
 

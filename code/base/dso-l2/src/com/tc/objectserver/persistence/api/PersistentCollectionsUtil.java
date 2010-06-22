@@ -27,6 +27,15 @@ public class PersistentCollectionsUtil {
     }
   }
 
+  public static boolean isEvictableMapType(final byte type) {
+    switch (type) {
+      case ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   public static PersistableCollection createPersistableCollection(final ObjectID id,
                                                                   final SleepycatCollectionFactory collectionFactory,
                                                                   final byte type) {

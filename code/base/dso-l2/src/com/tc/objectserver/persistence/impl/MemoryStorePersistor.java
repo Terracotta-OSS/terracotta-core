@@ -46,32 +46,35 @@ public class MemoryStorePersistor implements Persistor {
     this(TCLogging.getLogger(MemoryStorePersistor.class));
   }
 
-  public MemoryStorePersistor(TCLogger logger) {
-    memoryStoreHost = TCPropertiesImpl.getProperties().getProperty(PropertyMemoryStoreHost);
-    memoryStorePort = TCPropertiesImpl.getProperties().getInt(PropertyMemoryStorePort);
+  public MemoryStorePersistor(final TCLogger logger) {
+    this.memoryStoreHost = TCPropertiesImpl.getProperties().getProperty(this.PropertyMemoryStoreHost);
+    this.memoryStorePort = TCPropertiesImpl.getProperties().getInt(this.PropertyMemoryStorePort);
 
     this.persistenceTransactionProvider = new NullPersistenceTransactionProvider();
     this.clientStatePersistor = new InMemoryClientStatePersistor();
     this.stringIndex = new StringIndexImpl(new NullStringIndexPersistor());
     this.clazzPersistor = new InMemoryClassPersistor();
     this.memoryStoreCollectionFactory = new MemoryStoreCollectionFactory();
-    MemoryDataStoreClient mapsDB = new MemoryDataStoreClient(MAP_DB_NAME, memoryStoreHost, memoryStorePort);
+    final MemoryDataStoreClient mapsDB = new MemoryDataStoreClient(MAP_DB_NAME, this.memoryStoreHost,
+                                                                   this.memoryStorePort);
     this.memoryStoreCollectionsPersistor = new MemoryStoreCollectionsPersistor(logger, mapsDB,
-                                                                            this.memoryStoreCollectionFactory);
+                                                                               this.memoryStoreCollectionFactory);
     this.memoryStoreCollectionFactory.setMemoryDataStore(mapsDB);
     this.memoryStoreCollectionFactory.setPersistor(this.memoryStoreCollectionsPersistor);
 
-    MemoryDataStoreClient objectDB = new MemoryDataStoreClient(OBJECT_DB_NAME, memoryStoreHost, memoryStorePort);
-    MemoryDataStoreClient rootDB = new MemoryDataStoreClient(ROOT_DB_NAME, memoryStoreHost, memoryStorePort);
+    final MemoryDataStoreClient objectDB = new MemoryDataStoreClient(OBJECT_DB_NAME, this.memoryStoreHost,
+                                                                     this.memoryStorePort);
+    final MemoryDataStoreClient rootDB = new MemoryDataStoreClient(ROOT_DB_NAME, this.memoryStoreHost,
+                                                                   this.memoryStorePort);
     this.managedObjectPersistor = new MemoryStoreManagedObjectPersistor(logger, objectDB,
                                                                         new InMemorySequenceProvider(), rootDB,
                                                                         this.memoryStoreCollectionsPersistor);
-    MemoryDataStoreClient transactionStore = new MemoryDataStoreClient(TRANSACTION_DB_NAME, memoryStoreHost,
-                                                                       memoryStorePort);
+    final MemoryDataStoreClient transactionStore = new MemoryDataStoreClient(TRANSACTION_DB_NAME, this.memoryStoreHost,
+                                                                             this.memoryStorePort);
     this.transactionPerisistor = new MemoryStoreTransactionPersistor(transactionStore);
     this.mutableSequence = new InMemorySequenceProvider();
-    MemoryDataStoreClient clusterStateDB = new MemoryDataStoreClient(CLUSTER_STATE_STORE, memoryStoreHost,
-                                                                     memoryStorePort);
+    final MemoryDataStoreClient clusterStateDB = new MemoryDataStoreClient(CLUSTER_STATE_STORE, this.memoryStoreHost,
+                                                                           this.memoryStorePort);
     this.persistentStateStore = new MemoryStorePersistentMapStore(clusterStateDB);
   }
 
@@ -100,7 +103,7 @@ public class MemoryStorePersistor implements Persistor {
   }
 
   public StringIndex getStringIndex() {
-    return stringIndex;
+    return this.stringIndex;
   }
 
   public ClassPersistor getClassPersistor() {
@@ -112,7 +115,7 @@ public class MemoryStorePersistor implements Persistor {
   }
 
   public PersistentMapStore getPersistentStateStore() {
-    return persistentStateStore;
+    return this.persistentStateStore;
   }
 
 }

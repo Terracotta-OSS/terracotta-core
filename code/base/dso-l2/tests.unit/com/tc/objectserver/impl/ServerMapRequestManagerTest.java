@@ -29,6 +29,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -109,20 +110,19 @@ public class ServerMapRequestManagerTest extends TestCase {
     final Object portableValue1 = "value1";
     final Object portableKey2 = "key2";
     final Object portableValue2 = "value2";
-    final Sink respondToServerTCMapSink = mock(Sink.class);
+    final Sink respondToServerMapSink = mock(Sink.class);
     final Sink managedObjectRequestSink = mock(Sink.class);
     final DSOChannelManager channelManager = mock(DSOChannelManager.class);
-    final ServerMapRequestManagerImpl serverTCMapRequestManager = new ServerMapRequestManagerImpl(
-                                                                                                  objManager,
-                                                                                                  channelManager,
-                                                                                                  respondToServerTCMapSink,
-                                                                                                  managedObjectRequestSink);
+    final ServerMapRequestManagerImpl serverMapRequestManager = new ServerMapRequestManagerImpl(objManager,
+                                                                                                channelManager,
+                                                                                                respondToServerMapSink,
+                                                                                                managedObjectRequestSink);
     final ArrayList request1 = new ArrayList();
     request1.add(new ServerMapGetValueRequest(requestID1, portableKey1));
     final ArrayList request2 = new ArrayList();
     request2.add(new ServerMapGetValueRequest(requestID2, portableKey2));
-    serverTCMapRequestManager.requestValues(clientID, mapID, request1);
-    serverTCMapRequestManager.requestValues(clientID, mapID, request2);
+    serverMapRequestManager.requestValues(clientID, mapID, request1);
+    serverMapRequestManager.requestValues(clientID, mapID, request2);
 
     final Set<ObjectID> lookupIDs = new HashSet<ObjectID>();
     lookupIDs.add(mapID);
@@ -149,7 +149,7 @@ public class ServerMapRequestManagerTest extends TestCase {
     final GetValueServerMapResponseMessage message = mock(GetValueServerMapResponseMessage.class);
     when(messageChannel.createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE)).thenReturn(message);
 
-    serverTCMapRequestManager.sendResponseFor(mapID, mo);
+    serverMapRequestManager.sendResponseFor(mapID, mo);
 
     verify(mo, atMost(1)).getManagedObjectState();
 
@@ -163,12 +163,23 @@ public class ServerMapRequestManagerTest extends TestCase {
 
     verify(messageChannel, atLeastOnce()).createMessage(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE);
 
+    final ArgumentCaptor<Collection> responsesArg = ArgumentCaptor
+    .forClass(Collection.class);
+
     final ArrayList responses = new ArrayList();
-    responses.add(new ServerMapGetValueResponse(requestID1, portableValue1));
-    responses.add(new ServerMapGetValueResponse(requestID2, portableValue2));
-    verify(message, atLeastOnce()).initializeGetValueResponse(mapID, responses);
+    verify(message, atLeastOnce()).initializeGetValueResponse(Matchers.eq(mapID), responsesArg.capture());
+   
+    ServerMapGetValueResponse response2 = new ServerMapGetValueResponse(requestID1, portableValue1);
+    ServerMapGetValueResponse response1 = new ServerMapGetValueResponse(requestID2, portableValue2);
+    
+    responses.add(response1);
+    responses.add(response2);
+  
 
     verify(message, atLeastOnce()).send();
+    assertTrue(responsesArg.getValue().contains(response1));
+    assertTrue(responsesArg.getValue().contains(response2));
+     
   }
 
 }

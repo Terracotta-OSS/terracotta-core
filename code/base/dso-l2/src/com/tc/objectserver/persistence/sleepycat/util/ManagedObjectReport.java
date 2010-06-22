@@ -10,7 +10,7 @@ import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Counter;
-import com.tc.util.SyncObjectIdSet;
+import com.tc.util.ObjectIDSet;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
@@ -35,50 +35,49 @@ public class ManagedObjectReport extends BaseUtility {
 
   protected Counter totalCounter          = new Counter(0);
 
-  public ManagedObjectReport(File dir) throws Exception {
+  public ManagedObjectReport(final File dir) throws Exception {
     this(dir, new OutputStreamWriter(System.out));
   }
 
-  public ManagedObjectReport(File dir, Writer writer) throws Exception {
+  public ManagedObjectReport(final File dir, final Writer writer) throws Exception {
     super(writer, new File[] { dir });
   }
 
   public void report() {
 
-    SleepycatPersistor persistor = getPersistor(1);
-    SyncObjectIdSet objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
-    objectIDSet.snapshot();
-    for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
-      ObjectID objectID = (ObjectID) iter.next();
-      totalCounter.increment();
-      ManagedObject managedObject = persistor.getManagedObjectPersistor().loadObjectByID(objectID);
+    final SleepycatPersistor persistor = getPersistor(1);
+    final ObjectIDSet objectIDSet = persistor.getManagedObjectPersistor().snapshotObjectIDs();
+    for (final Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
+      final ObjectID objectID = (ObjectID) iter.next();
+      this.totalCounter.increment();
+      final ManagedObject managedObject = persistor.getManagedObjectPersistor().loadObjectByID(objectID);
       if (managedObject == null) {
         log("managed object is null : " + objectID);
-        nullObjectIDSet.add(new NullObjectData(objectID));
+        this.nullObjectIDSet.add(new NullObjectData(objectID));
       } else {
-        String className = managedObject.getManagedObjectState().getClassName();
-        Counter classCounter = (Counter) classMap.get(className);
+        final String className = managedObject.getManagedObjectState().getClassName();
+        Counter classCounter = (Counter) this.classMap.get(className);
         if (classCounter == null) {
           classCounter = new Counter(1);
-          classMap.put(className, classCounter);
+          this.classMap.put(className, classCounter);
         } else {
           classCounter.increment();
         }
       }
 
-      for (Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
-        ObjectID mid = (ObjectID) r.next();
+      for (final Iterator r = managedObject.getObjectReferences().iterator(); r.hasNext();) {
+        final ObjectID mid = (ObjectID) r.next();
         if (mid == null) {
           log("reference objectID is null and parent: ");
           log(managedObject.toString());
-          nullObjectIDSet.add(new NullObjectData(managedObject, null));
+          this.nullObjectIDSet.add(new NullObjectData(managedObject, null));
         } else {
           if (mid.isNull()) {
-            objectIDIsNullCounter.increment();
+            this.objectIDIsNullCounter.increment();
           } else {
-            boolean exitInSet = objectIDSet.contains(mid);
+            final boolean exitInSet = objectIDSet.contains(mid);
             if (!exitInSet) {
-              doesNotExistInSet.add(mid);
+              this.doesNotExistInSet.add(mid);
             }
           }
         }
@@ -88,15 +87,14 @@ public class ManagedObjectReport extends BaseUtility {
   }
 
   public void listAllObjectIDs() {
-    SleepycatPersistor persistor = getPersistor(1);
-    SyncObjectIdSet objectIDSet = persistor.getManagedObjectPersistor().getAllObjectIDs();
-    objectIDSet.snapshot();
+    final SleepycatPersistor persistor = getPersistor(1);
+    final ObjectIDSet objectIDSet = persistor.getManagedObjectPersistor().snapshotObjectIDs();
     log("---------------------------------- Managed Object ID List ----------------------------------------------------");
     StringBuilder msg = new StringBuilder();
     int counter = 0;
-    for (Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
-      ObjectID objectID = (ObjectID) iter.next();
-      totalCounter.increment();
+    for (final Iterator iter = objectIDSet.iterator(); iter.hasNext();) {
+      final ObjectID objectID = (ObjectID) iter.next();
+      this.totalCounter.increment();
       msg.append(" " + objectID);
       if (++counter >= 10) {
         log(msg.toString());
@@ -104,16 +102,18 @@ public class ManagedObjectReport extends BaseUtility {
         counter = 0;
       }
     }
-    if (counter > 0) log(msg.toString());
+    if (counter > 0) {
+      log(msg.toString());
+    }
     log("---------------------------------------------------------------------------------------------------------------");
-    log("\t Total number of objects: " + totalCounter.get());
+    log("\t Total number of objects: " + this.totalCounter.get());
   }
 
-  public void listSpecificObjectByID(ObjectID objectID) {
-    SleepycatPersistor persistor = getPersistor(1);
+  public void listSpecificObjectByID(final ObjectID objectID) {
+    final SleepycatPersistor persistor = getPersistor(1);
     log("---------------------------------- Managed Object " + objectID
         + " ----------------------------------------------------");
-    ManagedObject managedObject = persistor.getManagedObjectPersistor().loadObjectByID(objectID);
+    final ManagedObject managedObject = persistor.getManagedObjectPersistor().loadObjectByID(objectID);
     if (managedObject != null) {
       log(managedObject.toString());
     } else {
@@ -125,21 +125,21 @@ public class ManagedObjectReport extends BaseUtility {
 
   public void printReport() {
     log("---------------------------------- Managed Object Report ----------------------------------------------------");
-    log("\t Total number of objects read: " + totalCounter.get());
-    log("\t Total number getObjectReferences that yielded isNull references: " + objectIDIsNullCounter.get());
-    log("\t Total number of references that does not exist in allObjectIDs set: " + doesNotExistInSet.size());
-    log("\t does not exist in allObjectIDs set: " + doesNotExistInSet + " \n");
-    log("\t Total number of references without ManagedObjects: " + nullObjectIDSet.size());
+    log("\t Total number of objects read: " + this.totalCounter.get());
+    log("\t Total number getObjectReferences that yielded isNull references: " + this.objectIDIsNullCounter.get());
+    log("\t Total number of references that does not exist in allObjectIDs set: " + this.doesNotExistInSet.size());
+    log("\t does not exist in allObjectIDs set: " + this.doesNotExistInSet + " \n");
+    log("\t Total number of references without ManagedObjects: " + this.nullObjectIDSet.size());
     log("\n\t Begin references with null ManagedObject summary --> \n");
-    for (Iterator iter = nullObjectIDSet.iterator(); iter.hasNext();) {
-      NullObjectData data = (NullObjectData) iter.next();
+    for (final Iterator iter = this.nullObjectIDSet.iterator(); iter.hasNext();) {
+      final NullObjectData data = (NullObjectData) iter.next();
       log("\t\t " + data);
     }
     log("\t Begin Class Map summary --> \n");
 
-    for (Iterator iter = classMap.keySet().iterator(); iter.hasNext();) {
-      String key = (String) iter.next();
-      log("\t\t Class: --> " + key + " had --> " + ((Counter) classMap.get(key)).get() + " references");
+    for (final Iterator iter = this.classMap.keySet().iterator(); iter.hasNext();) {
+      final String key = (String) iter.next();
+      log("\t\t Class: --> " + key + " had --> " + ((Counter) this.classMap.get(key)).get() + " references");
     }
     log("------------------------------------------End-----------------------------------------------------------------");
   }
@@ -150,50 +150,50 @@ public class ManagedObjectReport extends BaseUtility {
 
     private final ObjectID      objectID;
 
-    public NullObjectData(ObjectID objectID) {
+    public NullObjectData(final ObjectID objectID) {
       this(null, objectID);
     }
 
-    public NullObjectData(ManagedObject parent, ObjectID objectID) {
+    public NullObjectData(final ManagedObject parent, final ObjectID objectID) {
       this.parent = parent;
       this.objectID = objectID;
     }
 
     @Override
     public String toString() {
-      StringWriter writer = new StringWriter();
-      PrintWriter pWriter = new PrintWriter(writer);
-      PrettyPrinter out = new PrettyPrinterImpl(pWriter);
+      final StringWriter writer = new StringWriter();
+      final PrintWriter pWriter = new PrintWriter(writer);
+      final PrettyPrinter out = new PrettyPrinterImpl(pWriter);
       out.println();
       out.print("Summary of reference with null ManagedObject").duplicateAndIndent().println();
       out.indent().print("identityHashCode: " + System.identityHashCode(this)).println();
-      out.indent().print("objectID: " + objectID).println();
-      out.indent().print("parent:" + parent).println();
+      out.indent().print("objectID: " + this.objectID).println();
+      out.indent().print("parent:" + this.parent).println();
 
       return writer.getBuffer().toString();
     }
 
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     if (args == null || args.length < 1) {
       usage();
       System.exit(1);
     }
 
     try {
-      File dir = new File(args[0]);
+      final File dir = new File(args[0]);
       validateDir(dir);
-      ManagedObjectReport reporter = new ManagedObjectReport(dir);
+      final ManagedObjectReport reporter = new ManagedObjectReport(dir);
       reporter.report();
       reporter.printReport();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       e.printStackTrace();
       System.exit(2);
     }
   }
 
-  private static void validateDir(File dir) {
+  private static void validateDir(final File dir) {
     if (!dir.exists() || !dir.isDirectory()) { throw new RuntimeException("Not a valid directory : " + dir); }
   }
 

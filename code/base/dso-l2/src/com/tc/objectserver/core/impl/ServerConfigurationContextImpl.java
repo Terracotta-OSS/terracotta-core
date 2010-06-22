@@ -26,14 +26,14 @@ import com.tc.objectserver.tx.TransactionalObjectManager;
 
 /**
  * App specific configuration context
- *
+ * 
  * @author steve
  */
 public class ServerConfigurationContextImpl extends ConfigurationContextImpl implements ServerConfigurationContext {
 
   private final ObjectManager                  objectManager;
   private final ObjectRequestManager           objectRequestManager;
-  private final ServerMapRequestManager      serverTCMapRequestManager;
+  private final ServerMapRequestManager        serverMapRequestManager;
   private final LockManager                    lockManager;
   private final DSOChannelManager              channelManager;
   private final ClientStateManager             clientStateManager;
@@ -49,15 +49,15 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
   private final ServerClusterMetaDataManager   serverClusterMetaDataManager;
 
   public ServerConfigurationContextImpl(final StageManager stageManager, final ObjectManager objectManager,
-                                        final ObjectRequestManager objectRequestManager, 
+                                        final ObjectRequestManager objectRequestManager,
                                         final ServerMapRequestManager serverTCMapRequestManager,
-                                        final ManagedObjectStore objectStore,
-                                        final LockManager lockManager, final DSOChannelManager channelManager,
+                                        final ManagedObjectStore objectStore, final LockManager lockManager,
+                                        final DSOChannelManager channelManager,
                                         final ClientStateManager clientStateManager,
                                         final ServerTransactionManager transactionManager,
                                         final TransactionalObjectManager txnObjectManager,
-                                        final ServerClientHandshakeManager clientHandshakeManager, final ChannelStats channelStats,
-                                        final L2Coordinator l2Coordinator,
+                                        final ServerClientHandshakeManager clientHandshakeManager,
+                                        final ChannelStats channelStats, final L2Coordinator l2Coordinator,
                                         final TransactionBatchReaderFactory transactionBatchReaderFactory,
                                         final TransactionBatchManager transactionBatchManager,
                                         final ServerGlobalTransactionManager serverGlobalTransactionManager,
@@ -65,7 +65,7 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     super(stageManager);
     this.objectManager = objectManager;
     this.objectRequestManager = objectRequestManager;
-    this.serverTCMapRequestManager = serverTCMapRequestManager;
+    this.serverMapRequestManager = serverTCMapRequestManager;
     this.objectStore = objectStore;
     this.lockManager = lockManager;
     this.channelManager = channelManager;
@@ -93,8 +93,8 @@ public class ServerConfigurationContextImpl extends ConfigurationContextImpl imp
     return objectRequestManager;
   }
 
-  public ServerMapRequestManager getServerTCMapRequestManager() {
-    return serverTCMapRequestManager;
+  public ServerMapRequestManager getServerMapRequestManager() {
+    return serverMapRequestManager;
   }
 
   public LockManager getLockManager() {

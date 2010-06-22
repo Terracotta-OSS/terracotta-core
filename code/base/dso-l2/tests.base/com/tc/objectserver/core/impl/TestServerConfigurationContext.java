@@ -123,7 +123,7 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
     return clusterMetaDataManager;
   }
 
-  public ServerMapRequestManager getServerTCMapRequestManager() {
+  public ServerMapRequestManager getServerMapRequestManager() {
     throw new ImplementMe();
   }
 

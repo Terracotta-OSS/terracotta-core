@@ -24,10 +24,10 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
     }
   }
 
-  public void stopPopulating(ObjectIDSet fullSet) {
+  public void stopPopulating(final ObjectIDSet fullSet) {
     synchronized (this.lock) {
-      ObjectIDSet large = (fullSet.size() > this.set.size()) ? fullSet : this.set;
-      ObjectIDSet small = (this.set == large) ? fullSet : this.set;
+      final ObjectIDSet large = (fullSet.size() > this.set.size()) ? fullSet : this.set;
+      final ObjectIDSet small = (this.set == large) ? fullSet : this.set;
       large.addAll(small);
       this.set = large;
       this.isBlocking = false;
@@ -40,9 +40,9 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
    * 
    * @return size if object was successfully added, else return -1.
    */
-  public int addAndGetSize(ObjectID obj) {
+  public int addAndGetSize(final ObjectID obj) {
     synchronized (this.lock) {
-      boolean added = this.set.add(obj);
+      final boolean added = this.set.add(obj);
       if (added) {
         return this.set.size();
       } else {
@@ -52,20 +52,20 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   }
 
   @Override
-  public boolean add(Object obj) {
+  public boolean add(final Object obj) {
     synchronized (this.lock) {
       return this.set.add((ObjectID) obj);
     }
   }
 
-  public void addAll(Set s) {
+  public void addAll(final Set s) {
     synchronized (this.lock) {
       this.set.addAll(s);
     }
   }
 
   @Override
-  public boolean contains(Object o) {
+  public boolean contains(final Object o) {
     boolean rv = false;
     synchronized (this.lock) {
       rv = this.set.contains(o);
@@ -78,7 +78,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   }
 
   @Override
-  public boolean removeAll(Collection ids) {
+  public boolean removeAll(final Collection ids) {
     boolean rv = false;
     synchronized (this.lock) {
       waitWhileBlocked();
@@ -88,7 +88,7 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
   }
 
   @Override
-  public boolean remove(Object o) {
+  public boolean remove(final Object o) {
     boolean rv = false;
     synchronized (this.lock) {
       waitWhileBlocked();
@@ -129,12 +129,12 @@ public class SyncObjectIdSetImpl extends AbstractSet implements SyncObjectIdSet 
       while (this.isBlocking) {
         this.lock.wait();
       }
-    } catch (InterruptedException e) {
+    } catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
     }
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.println(getClass().getName());
     synchronized (this.lock) {
       out.indent().print("blocking : ").print(Boolean.valueOf(this.isBlocking));

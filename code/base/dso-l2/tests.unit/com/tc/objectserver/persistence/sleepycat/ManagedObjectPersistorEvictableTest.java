@@ -42,8 +42,10 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class ManagedObjectPersistorImplTest extends TCTestCase {
-  private static final TCLogger             logger = TCLogging.getTestingLogger(ManagedObjectPersistorImplTest.class);
+public class ManagedObjectPersistorEvictableTest extends TCTestCase {
+  private static final TCLogger             logger = TCLogging
+                                                       .getTestingLogger(ManagedObjectPersistorEvictableTest.class);
+
   private ManagedObjectPersistorImpl        managedObjectPersistor;
   private PersistentManagedObjectStore      objectStore;
   private PersistenceTransactionProvider    persistenceTransactionProvider;
@@ -51,14 +53,17 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   private DBEnvironment                     env;
   private FastObjectIDManagerImpl           oidManager;
 
-  public ManagedObjectPersistorImplTest() {
+  // Passing across tests
+  private static HashSet<ManagedObject>     globalAllObjects;
+  private static HashSet<ManagedObject>     globalEvictableObjects;
+
+  public ManagedObjectPersistorEvictableTest() {
     //
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    // test only with Oid fastLoad enabled
     final boolean paranoid = true;
     this.env = newDBEnvironment(paranoid);
     this.env.open();
@@ -89,11 +94,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
   }
 
   private DBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
-    File dbHome;
-    int count = 0;
-    do {
-      dbHome = new File(getTempDirectory(), getClass().getName() + "db" + (++count));
-    } while (dbHome.exists());
+    File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
     dbHome.mkdir();
     assertTrue(dbHome.exists());
     assertTrue(dbHome.isDirectory());
@@ -101,21 +102,45 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     return new DBEnvironment(paranoid, dbHome);
   }
 
-  private Collection createRandomObjects(final int num, final boolean withPersistentCollectionState) {
-    final Random r = new Random();
-    final HashSet objects = new HashSet(num);
-    final HashSet ids = new HashSet(num);
+  private HashSet<ManagedObject> createPhyscalObjects(final int num) {
+    return createRandomObjects(num, ManagedObjectState.PHYSICAL_TYPE);
+  }
+
+  private HashSet<ManagedObject> createMapObjects(final int num) {
+    return createRandomObjects(num, ManagedObjectState.MAP_TYPE);
+  }
+
+  private HashSet<ManagedObject> createCDSMObjects(final int num) {
+    return createRandomObjects(num, ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
+  }
+
+  private HashSet<ManagedObject> createRandomObjects(final int num, final byte stateType) {
+    final Random r = new Random(System.currentTimeMillis());
+    HashSet<ManagedObject> objects = new HashSet<ManagedObject>();
     for (int i = 0; i < num; i++) {
-      final long id = (long) r.nextInt(num * 10) + 1;
-      if (ids.add(new Long(id))) {
-        final ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ArrayList<ObjectID>(),
-                                                                      withPersistentCollectionState);
+      final long id = (long) r.nextInt(num * 100) + 1;
+      final ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ArrayList<ObjectID>(),
+                                                                    stateType);
+      objects.add(mo);
+    }
+    return (objects);
+  }
+
+  private HashSet<ManagedObject> addToObjectStore(HashSet<ManagedObject> objects, HashSet<ManagedObject> newObjects) {
+    HashSet<ManagedObject> duplicated = new HashSet<ManagedObject>();
+    ObjectIDSet evictableSet = this.objectStore.getAllEvictableObjectIDs();
+    newObjects.removeAll(objects);
+    for (ManagedObject mo : newObjects) {
+      if (!this.objectStore.containsObject(mo.getID()) && !evictableSet.contains(mo.getID())) {
         objects.add(mo);
         this.objectStore.addNewObject(mo);
+      } else {
+        duplicated.add(mo);
       }
     }
-    logger.info("Test with " + objects.size() + " objects");
-    return (objects);
+    newObjects.removeAll(duplicated);
+    logger.info("Added " + newObjects.size() + " objects");
+    return objects;
   }
 
   private SyncObjectIdSet getAllObjectIDs() {
@@ -132,10 +157,10 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     return rv;
   }
 
-  private SyncObjectIdSet getAllMapsObjectIDs() {
+  private SyncObjectIdSet getAllEvictableObjectIDs() {
     final SyncObjectIdSet rv = new SyncObjectIdSetImpl();
     rv.startPopulating();
-    final Thread t = new Thread(this.oidManager.getMapsObjectIDReader(rv), "ObjectIdReaderThread");
+    final Thread t = new Thread(this.oidManager.getEvictableObjectIDReader(rv), "EvictableObjectIdReaderThread");
     t.setDaemon(true);
     t.start();
     try {
@@ -163,44 +188,26 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     assertTrue("Wrong object IDs on disk", inMemoryIds.containsAll(idSet));
   }
 
-  private void verifyState(final Collection oidSet, final Collection objects) {
-    for (final Iterator i = objects.iterator(); i.hasNext();) {
+  private void verifyObjectIDSet(final Collection objectIDSet, final Collection managedObjectSet) {
+    assertEquals("Size is different", objectIDSet.size(), managedObjectSet.size());
+    for (final Iterator i = managedObjectSet.iterator(); i.hasNext();) {
       final ManagedObject mo = (ManagedObject) i.next();
-      assertTrue("PersistentCollectionMap missing " + mo.getID(), oidSet.contains((mo.getID())));
+      assertTrue("Missing " + mo.getID(), objectIDSet.contains((mo.getID())));
     }
   }
 
-  public void testOidBitsArraySave() throws Exception {
-    // wait for background retrieving persistent data
+  // wait for background retrieving persistent data
+  private void waitForBackgroupTasks() {
     this.objectStore.getAllObjectIDs();
-
-    // publish data
-    final Collection objects = createRandomObjects(15050, false);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.saveAllObjects(ptx, objects);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    final Collection oidSet = getAllObjectIDs();
-    // verify object IDs is in memory
-    for (final Iterator i = objects.iterator(); i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      assertTrue("Object:" + mo.getID() + " missed in memory! ", oidSet.contains(mo.getID()));
-    }
-
-    verify(objects);
+    this.objectStore.getAllEvictableObjectIDs();
   }
 
-  public void testOidBitsArrayDeleteHalf() throws Exception {
-    // wait for background retrieving persistent data
-    this.objectStore.getAllObjectIDs();
+  public void testEvictableObjectsStep1() throws Exception {
+    waitForBackgroupTasks();
 
-    // publish data
-    final Collection objects = createRandomObjects(15050, false);
+    // publish CDSM data
+    final HashSet<ManagedObject> newObjects = createCDSMObjects(15050);
+    final HashSet<ManagedObject> objects = addToObjectStore(new HashSet<ManagedObject>(), newObjects);
     PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
@@ -208,171 +215,119 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       ptx.commit();
     }
 
+    // consume add-logs into disk store
     runCheckpointToCompressedStorage();
 
+    // delete half
     final int total = objects.size();
     final SortedSet<ObjectID> toDelete = new TreeSet<ObjectID>();
-    final int count = 0;
+    int count = 0;
     for (final Iterator i = objects.iterator(); (count < total / 2) && i.hasNext();) {
       final ManagedObject mo = (ManagedObject) i.next();
       toDelete.add(mo.getID());
       i.remove();
+      ++count;
     }
 
-    ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.removeAllObjectIDs(toDelete);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    getAllObjectIDs();
-    verify(objects);
-  }
-
-  public void testOidBitsArrayDeleteAll() throws Exception {
-    // wait for background retrieving persistent data
-    this.objectStore.getAllObjectIDs();
-
-    // publish data
-    final Collection objects = createRandomObjects(15050, false);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.saveAllObjects(ptx, objects);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    final TreeSet<ObjectID> objectIds = new TreeSet<ObjectID>();
-    for (final Iterator i = objects.iterator(); i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      objectIds.add(mo.getID());
-    }
-    ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.removeAllObjectIDs(objectIds);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    objects.clear();
-    verify(objects);
-  }
-
-  public void testStateOidBitsArraySave() throws Exception {
-    // wait for background retrieving persistent data
-    this.objectStore.getAllObjectIDs();
-
-    // publish data with persistentCollectionMap
-    final Collection objects = createRandomObjects(15050, true);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.saveAllObjects(ptx, objects);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    Collection oidSet = getAllObjectIDs();
-    // verify object IDs is in memory
-    for (final Iterator i = objects.iterator(); i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      assertTrue("Object:" + mo.getID() + " missed in memory! ", oidSet.contains(mo.getID()));
-    }
-    verify(objects);
-
-    oidSet = getAllMapsObjectIDs();
-    verifyState(oidSet, objects);
-  }
-
-  public void testStateOidBitsArrayDeleteHalf() throws Exception {
-    // wait for background retrieving persistent data
-    this.objectStore.getAllObjectIDs();
-
-    // publish data with persistentCollectionMap
-    final Collection objects = createRandomObjects(15050, true);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.saveAllObjects(ptx, objects);
-    } finally {
-      ptx.commit();
-    }
-
-    runCheckpointToCompressedStorage();
-
-    final int total = objects.size();
-    final SortedSet<ObjectID> toDelete = new TreeSet<ObjectID>();
-    final int count = 0;
-    for (final Iterator i = objects.iterator(); (count < total / 2) && i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      toDelete.add(mo.getID());
-      i.remove();
-    }
     this.testSleepycatCollectionsPersistor.setCounter(0);
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.removeAllObjectIDs(toDelete);
       this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.removeAllObjectIDs(toDelete);
     } finally {
       ptx.commit();
     }
     assertEquals(toDelete.size(), this.testSleepycatCollectionsPersistor.getCounter());
 
+    // consume delete-logs to disk store
     runCheckpointToCompressedStorage();
 
     getAllObjectIDs();
     verify(objects);
 
-    final Collection oidSet = getAllMapsObjectIDs();
-    verifyState(oidSet, objects);
+    final Collection evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    verifyObjectIDSet(evictableSet, objects);
+
+    // save for next test
+    globalAllObjects = objects;
   }
 
-  public void testStateOidBitsArrayDeleteAll() throws Exception {
-    // wait for background retrieving persistent data
-    this.objectStore.getAllObjectIDs();
+  public void testEvictableObjectsStep2() throws Exception {
+    waitForBackgroupTasks();
 
-    // publish data
-    final Collection objects = createRandomObjects(15050, true);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.saveAllObjects(ptx, objects);
-    } finally {
-      ptx.commit();
-    }
+    HashSet<ManagedObject> objects = globalAllObjects;
+    globalEvictableObjects = new HashSet<ManagedObject>(objects);
 
-    runCheckpointToCompressedStorage();
-
-    final TreeSet<ObjectID> objectIds = new TreeSet<ObjectID>();
-    for (final Iterator i = objects.iterator(); i.hasNext();) {
-      final ManagedObject mo = (ManagedObject) i.next();
-      objectIds.add(mo.getID());
-    }
-    this.testSleepycatCollectionsPersistor.setCounter(0);
-    ptx = this.persistenceTransactionProvider.newTransaction();
-    try {
-      this.managedObjectPersistor.removeAllObjectIDs(objectIds);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
-    } finally {
-      ptx.commit();
-    }
-    assertEquals(objectIds.size(), this.testSleepycatCollectionsPersistor.getCounter());
-
-    runCheckpointToCompressedStorage();
-
-    objects.clear();
+    // after restarted, evictable set shall be the same
+    Collection evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    verifyObjectIDSet(evictableSet, objects);
     verify(objects);
 
-    final Collection oidSet = getAllMapsObjectIDs();
-    verifyState(oidSet, objects);
+    // add more objects
+    HashSet<ManagedObject> newObjects2 = createMapObjects(1344);
+    addToObjectStore(objects, newObjects2);
+    HashSet<ManagedObject> newObjects = createPhyscalObjects(1234);
+    addToObjectStore(objects, newObjects);
+    HashSet<ManagedObject> newEvitcable = createCDSMObjects(700);
+    addToObjectStore(objects, newEvitcable);
+    globalEvictableObjects.addAll(newEvitcable);
+    newObjects.addAll(newObjects2);
+    newObjects.addAll(newEvitcable);
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    try {
+      this.managedObjectPersistor.saveAllObjects(ptx, newObjects);
+    } finally {
+      ptx.commit();
+    }
+
+    // consume add-logs into disk store
+    runCheckpointToCompressedStorage();
+    objects.addAll(newObjects);
+    verify(objects);
+
+    evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    verifyObjectIDSet(evictableSet, globalEvictableObjects);
+
+  }
+
+  public void testEvictableObjectsStep3() throws Exception {
+    waitForBackgroupTasks();
+
+    HashSet<ManagedObject> objects = globalAllObjects;
+
+    // after restarted, evictable set shall be the same
+    Collection evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    verifyObjectIDSet(evictableSet, globalEvictableObjects);
+    verify(objects);
+
+    // delete all
+    final SortedSet<ObjectID> toDelete = new TreeSet<ObjectID>();
+    for (final Iterator i = objects.iterator(); i.hasNext();) {
+      final ManagedObject mo = (ManagedObject) i.next();
+      toDelete.add(mo.getID());
+      i.remove();
+    }
+
+    // this.testSleepycatCollectionsPersistor.setCounter(0);
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    try {
+      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.removeAllObjectIDs(toDelete);
+    } finally {
+      ptx.commit();
+    }
+    // assertEquals(toDelete.size(), this.testSleepycatCollectionsPersistor.getCounter());
+
+  }
+
+  public void testEvictableObjectsStep4() throws Exception {
+    waitForBackgroupTasks();
+
+    Collection objects = getAllObjectIDs();
+    assertEquals(0, objects.size());
+
+    Collection evictableSet = getAllEvictableObjectIDs();
+    assertEquals(0, evictableSet.size());
   }
 
   private void runCheckpointToCompressedStorage() {
@@ -407,10 +362,9 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     private final ManagedObjectState state;
 
     public TestPersistentStateManagedObject(final ObjectID id, final ArrayList<ObjectID> references,
-                                            final boolean isPersistentCollectionMap) {
+                                            final byte stateType) {
       super(id, references);
-      final byte type = (isPersistentCollectionMap) ? ManagedObjectState.MAP_TYPE : ManagedObjectState.PHYSICAL_TYPE;
-      this.state = new TestManagedObjectState(type);
+      this.state = new TestManagedObjectState(stateType);
     }
 
     @Override
@@ -421,6 +375,16 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     @Override
     public ManagedObjectState getManagedObjectState() {
       return this.state;
+    }
+
+    public boolean equals(Object other) {
+      if (!(other instanceof TestPersistentStateManagedObject)) { return false; }
+      TestPersistentStateManagedObject o = (TestPersistentStateManagedObject) other;
+      return getID().toLong() == o.getID().toLong();
+    }
+
+    public int hashCode() {
+      return (int) getID().toLong();
     }
   }
 

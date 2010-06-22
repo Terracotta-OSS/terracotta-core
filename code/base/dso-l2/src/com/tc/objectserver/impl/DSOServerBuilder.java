@@ -57,7 +57,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
 
-  ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
+  ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                           Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,

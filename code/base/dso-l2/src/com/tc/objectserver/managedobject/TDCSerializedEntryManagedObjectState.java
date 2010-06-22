@@ -11,6 +11,7 @@ import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
 
@@ -23,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectState {
+public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectState implements EvictableEntry {
 
   private static final TCLogger logger                     = TCLogging
                                                                .getLogger(TDCSerializedEntryManagedObjectState.class);
@@ -44,13 +45,24 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     this.classID = classID;
   }
 
+  public boolean canEvict(final int ttiSeconds, final int ttlSeconds) {
+    return canEvictNow(ttiSeconds, ttlSeconds);
+  }
+
+  protected boolean canEvictNow(final int ttiSeconds, final int ttlSeconds) {
+    final int now = (int) (System.currentTimeMillis() / 1000);
+    final int expiresAtTTI = ttiSeconds <= 0 ? Integer.MAX_VALUE : this.lastAccessedTime + ttiSeconds;
+    final int expiresAtTTL = ttlSeconds <= 0 ? Integer.MAX_VALUE : this.createTime + ttlSeconds;
+    return now >= Math.min(expiresAtTTI, expiresAtTTL);
+  }
+
   @Override
   protected boolean basicEquals(final AbstractManagedObjectState o) {
-    TDCSerializedEntryManagedObjectState other = (TDCSerializedEntryManagedObjectState) o;
+    final TDCSerializedEntryManagedObjectState other = (TDCSerializedEntryManagedObjectState) o;
 
-    if (createTime != other.createTime) return false;
-    if (lastAccessedTime != other.lastAccessedTime) return false;
-    if (!Arrays.equals(value, other.value)) return false;
+    if (this.createTime != other.createTime) { return false; }
+    if (this.lastAccessedTime != other.lastAccessedTime) { return false; }
+    if (!Arrays.equals(this.value, other.value)) { return false; }
 
     return true;
   }
@@ -59,15 +71,16 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
-  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs) throws IOException {
+  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs)
+      throws IOException {
     while (cursor.next()) {
-      PhysicalAction pa = cursor.getPhysicalAction();
+      final PhysicalAction pa = cursor.getPhysicalAction();
       if (pa.isEntireArray()) {
-        Object array = pa.getObject();
+        final Object array = pa.getObject();
         if (array instanceof byte[]) {
-          value = (byte[]) array;
+          this.value = (byte[]) array;
         } else {
-          String type = safeTypeName(array);
+          final String type = safeTypeName(array);
           logger.error("received array of type " + type + " -- ignoring it");
         }
       } else {
@@ -76,19 +89,19 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     }
   }
 
-  protected void physicalActionApply(PhysicalAction pa) {
-    Object val = pa.getObject();
-    String field = pa.getFieldName();
+  protected void physicalActionApply(final PhysicalAction pa) {
+    final Object val = pa.getObject();
+    final String field = pa.getFieldName();
     // last access time is the only field that should be updated, check it first
     if (LAST_ACCESS_TIME_FIELD.equals(field)) {
       if (val instanceof Integer) {
-        lastAccessedTime = ((Integer) val).intValue();
+        this.lastAccessedTime = ((Integer) val).intValue();
       } else {
         logInvalidType(LAST_ACCESS_TIME_FIELD, val);
       }
     } else if (CREATE_TIME_FIELD.equals(field)) {
       if (val instanceof Integer) {
-        createTime = ((Integer) val).intValue();
+        this.createTime = ((Integer) val).intValue();
       } else {
         logInvalidType(CREATE_TIME_FIELD, val);
       }
@@ -96,7 +109,7 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
       logger.error("recieved data for field named [" + field + "] -- ignoring it");
     }
   }
-  
+
   /**
    * This method returns whether this ManagedObjectState can have references or not. @ return true : The Managed object
    * represented by this state object will never have any reference to other objects. false : The Managed object
@@ -112,34 +125,34 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   }
 
   private static String safeTypeName(final Object obj) {
-    String type = obj == null ? "null" : obj.getClass().getName();
+    final String type = obj == null ? "null" : obj.getClass().getName();
     return type;
   }
 
   public ManagedObjectFacade createFacade(final ObjectID objectID, final String className, final int limit) {
-    Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
+    final Map<String, Object> fields = addFacadeFields(new HashMap<String, Object>());
     return new PhysicalManagedObjectFacade(objectID, null, className, fields, false, DNA.NULL_ARRAY_SIZE, false);
   }
 
-  protected Map<String, Object> addFacadeFields(Map<String, Object> fields) {
+  protected Map<String, Object> addFacadeFields(final Map<String, Object> fields) {
     // The byte[] value field is not shown in the admin console
-    fields.put(CREATE_TIME_FIELD, Integer.valueOf(createTime));
-    fields.put(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
+    fields.put(CREATE_TIME_FIELD, Integer.valueOf(this.createTime));
+    fields.put(LAST_ACCESS_TIME_FIELD, Integer.valueOf(this.lastAccessedTime));
     return fields;
   }
-  
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
-    writer.addEntireArray(value);
-    writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(createTime));
-    writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(lastAccessedTime));
+
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
+    writer.addEntireArray(this.value);
+    writer.addPhysicalAction(CREATE_TIME_FIELD, Integer.valueOf(this.createTime));
+    writer.addPhysicalAction(LAST_ACCESS_TIME_FIELD, Integer.valueOf(this.lastAccessedTime));
   }
 
   public final String getClassName() {
-    return getStateFactory().getClassName(classID);
+    return getStateFactory().getClassName(this.classID);
   }
 
   public final String getLoaderDescription() {
-    return getStateFactory().getLoaderDescription(classID);
+    return getStateFactory().getLoaderDescription(this.classID);
   }
 
   public Set getObjectReferences() {
@@ -151,30 +164,30 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
   }
 
   public void writeTo(final ObjectOutput out) throws IOException {
-    out.writeLong(classID);
-    out.writeInt(createTime);
-    out.writeInt(lastAccessedTime);
-    if (value != null) {
-      out.writeInt(value.length);
-      out.write(value, 0, value.length);
+    out.writeLong(this.classID);
+    out.writeInt(this.createTime);
+    out.writeInt(this.lastAccessedTime);
+    if (this.value != null) {
+      out.writeInt(this.value.length);
+      out.write(this.value, 0, this.value.length);
     } else {
       out.writeInt(-1);
     }
   }
 
   static TDCSerializedEntryManagedObjectState readFrom(final ObjectInput in) throws IOException {
-    TDCSerializedEntryManagedObjectState state = new TDCSerializedEntryManagedObjectState(in.readLong());
+    final TDCSerializedEntryManagedObjectState state = new TDCSerializedEntryManagedObjectState(in.readLong());
     state.readFromInternal(in);
     return state;
   }
-  
+
   protected void readFromInternal(final ObjectInput in) throws IOException {
     this.createTime = in.readInt();
     this.lastAccessedTime = in.readInt();
 
-    int length = in.readInt();
+    final int length = in.readInt();
     if (length >= 0) {
-      byte[] data = new byte[length];
+      final byte[] data = new byte[length];
       in.read(data, 0, length);
       this.value = data;
     }

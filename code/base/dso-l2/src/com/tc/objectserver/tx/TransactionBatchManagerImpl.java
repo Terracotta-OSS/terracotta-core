@@ -56,22 +56,22 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   private final List<TransactionBatchListener> txnListeners = new CopyOnWriteArrayList<TransactionBatchListener>();
   private final Sink                           syncWriteTxnRecvdSink;
 
-  public TransactionBatchManagerImpl(SequenceValidator sequenceValidator, MessageRecycler recycler,
-                                     TransactionFilter txnFilter, Sink syncWriteTxnRecvdSink) {
+  public TransactionBatchManagerImpl(final SequenceValidator sequenceValidator, final MessageRecycler recycler,
+                                     final TransactionFilter txnFilter, final Sink syncWriteTxnRecvdSink) {
     this.sequenceValidator = sequenceValidator;
     this.messageRecycler = recycler;
     this.filter = txnFilter;
     this.syncWriteTxnRecvdSink = syncWriteTxnRecvdSink;
   }
 
-  public void initializeContext(ConfigurationContext context) {
-    ServerConfigurationContext oscc = (ServerConfigurationContext) context;
+  public void initializeContext(final ConfigurationContext context) {
+    final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.transactionManager = oscc.getTransactionManager();
     this.replicatedObjectMgr = oscc.getL2Coordinator().getReplicatedObjectManager();
     this.gtxm = oscc.getServerGlobalTransactionManager();
     this.dsoChannelManager = oscc.getChannelManager();
-    Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
+    final Stage relayStage = oscc.getStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE);
     if (relayStage != null) {
       this.txnRelaySink = relayStage.getSink();
     }
@@ -85,11 +85,11 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       ServerTransaction txn;
 
       // Transactions should maintain order.
-      ArrayList<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
-      HashSet<ServerTransactionID> txnIDs = new HashSet(reader.getNumberForTxns());
-      NodeID nodeID = reader.getNodeID();
-      HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
-      HashSet<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
+      final ArrayList<ServerTransaction> txns = new ArrayList<ServerTransaction>(reader.getNumberForTxns());
+      final HashSet<ServerTransactionID> txnIDs = new HashSet(reader.getNumberForTxns());
+      final NodeID nodeID = reader.getNodeID();
+      final HashSet<ObjectID> newObjectIDs = new HashSet<ObjectID>();
+      final HashSet<TransactionID> syncWriteTxns = new HashSet<TransactionID>();
 
       while ((txn = reader.getNextTransaction()) != null) {
         this.sequenceValidator.setCurrent(nodeID, txn.getClientSequenceID());
@@ -102,25 +102,26 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       }
 
       if (reader.containsSyncWriteTransaction()) {
-        syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(), (ClientID) ctm
-            .getSourceNodeID(), syncWriteTxns));
+        this.syncWriteTxnRecvdSink.add(new SyncWriteTransactionReceivedContext(reader.getBatchID().toLong(),
+                                                                               (ClientID) ctm.getSourceNodeID(),
+                                                                               syncWriteTxns));
       }
 
       defineBatch(nodeID, txns.size());
       this.messageRecycler.addMessage(ctm, txnIDs);
 
       this.filter.addTransactionBatch(new IncomingTransactionBatchContext(nodeID, txnIDs, reader, txns, newObjectIDs));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       logger.error("Error reading transaction batch. : ", e);
-      MessageChannel c = ctm.getChannel();
+      final MessageChannel c = ctm.getChannel();
       logger.error("Closing channel " + c.getChannelID() + " due to previous errors !");
       c.close();
     }
   }
 
-  public void processTransactions(TransactionBatchContext batchContext) {
-    List<ServerTransaction> txns = batchContext.getTransactions();
-    NodeID nodeID = batchContext.getSourceNodeID();
+  public void processTransactions(final TransactionBatchContext batchContext) {
+    final List<ServerTransaction> txns = batchContext.getTransactions();
+    final NodeID nodeID = batchContext.getSourceNodeID();
     // This lock is used to make sure the order in which we assign GIDs is the order in which we process transactions.
     // Even though this stage is single threaded today we use this lock to just to be sure.
     synchronized (this.lock) {
@@ -131,7 +132,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
          * common objects between them. hence if g1 is the first TXN and g2 is the second TXN, g2 will be applied before
          * g1, only when g2 has no common objects with g1. If this is not true then we can't assign GID here.
          */
-        for (ServerTransaction txn : txns) {
+        for (final ServerTransaction txn : txns) {
           txn.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
         }
         if (this.replicatedObjectMgr.relayTransactions()) {
@@ -140,7 +141,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
         } else {
           this.transactionManager.incomingTransactions(nodeID, batchContext.getTransactionIDs(), txns, false);
         }
-      } catch (Exception e) {
+      } catch (final Exception e) {
         logger.error("Error reading transaction batch. : ", e);
         logger.error("Closing channel " + nodeID + " due to previous errors !");
         this.dsoChannelManager.closeAll(Collections.singletonList(nodeID));
@@ -148,12 +149,12 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public synchronized void defineBatch(NodeID nid, int numTxns) {
-    BatchStats batchStats = getOrCreateStats(nid);
+  public synchronized void defineBatch(final NodeID nid, final int numTxns) {
+    final BatchStats batchStats = getOrCreateStats(nid);
     batchStats.defineBatch(numTxns);
   }
 
-  private BatchStats getOrCreateStats(NodeID nid) {
+  private BatchStats getOrCreateStats(final NodeID nid) {
     BatchStats bs = (BatchStats) this.map.get(nid);
     if (bs == null) {
       bs = new BatchStats(nid);
@@ -162,21 +163,21 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     return bs;
   }
 
-  public synchronized boolean batchComponentComplete(NodeID nid, TransactionID txnID) {
-    BatchStats bs = (BatchStats) this.map.get(nid);
+  public synchronized boolean batchComponentComplete(final NodeID nid, final TransactionID txnID) {
+    final BatchStats bs = (BatchStats) this.map.get(nid);
     Assert.assertNotNull(bs);
     return bs.batchComplete(txnID);
   }
 
-  public void nodeConnected(NodeID nodeID) {
+  public void nodeConnected(final NodeID nodeID) {
     this.transactionManager.nodeConnected(nodeID);
   }
 
-  public void notifyServerHighWaterMark(NodeID nodeID, long serverHighWaterMark) {
+  public void notifyServerHighWaterMark(final NodeID nodeID, final long serverHighWaterMark) {
     this.filter.notifyServerHighWaterMark(nodeID, serverHighWaterMark);
   }
 
-  public void shutdownNode(NodeID nodeID) {
+  public void shutdownNode(final NodeID nodeID) {
     if (this.filter.shutdownNode(nodeID)) {
       shutdownBatchStats(nodeID);
       this.transactionManager.shutdownNode(nodeID);
@@ -186,14 +187,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  private synchronized void shutdownBatchStats(NodeID nodeID) {
-    BatchStats bs = (BatchStats) this.map.get(nodeID);
+  private synchronized void shutdownBatchStats(final NodeID nodeID) {
+    final BatchStats bs = (BatchStats) this.map.get(nodeID);
     if (bs != null) {
       bs.shutdownNode();
     }
   }
 
-  private void cleanUp(NodeID nodeID) {
+  private void cleanUp(final NodeID nodeID) {
     this.map.remove(nodeID);
   }
 
@@ -206,12 +207,12 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
 
     private boolean      killed = false;
 
-    public BatchStats(NodeID nid) {
+    public BatchStats(final NodeID nid) {
       this.nodeID = nid;
     }
 
-    public void defineBatch(int numTxns) {
-      long adjustedTotal = (long) (this.batchCount * this.avg) + numTxns;
+    public void defineBatch(final int numTxns) {
+      final long adjustedTotal = (long) (this.batchCount * this.avg) + numTxns;
       this.txnCount += numTxns;
       this.batchCount++;
       this.avg = adjustedTotal / this.batchCount;
@@ -230,14 +231,14 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
              + " avg = " + this.avg;
     }
 
-    private void log_stats(float thresh) {
+    private void log_stats(final float thresh) {
       logger.info(this + " threshold = " + thresh);
     }
 
-    public boolean batchComplete(TransactionID txnID) {
+    public boolean batchComplete(final TransactionID txnID) {
       if (this.txnCount <= 0) {
         // this is possible when the passive server moves to active.
-        logger.info("Not decrementing txnCount : " + txnID + " : " + this.toString());
+        logger.info("Not decrementing txnCount : " + txnID + " : " + toString());
       } else {
         this.txnCount--;
       }
@@ -250,7 +251,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
           return false;
         }
       }
-      float threshold = (this.avg * (this.batchCount - 1));
+      final float threshold = (this.avg * (this.batchCount - 1));
 
       if (false) {
         log_stats(threshold);
@@ -259,7 +260,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
       if (this.txnCount <= threshold) {
         if (this.batchCount <= 0) {
           // this is possible when the passive server moves to active.
-          logger.info("Not decrementing batchCount : " + txnID + " : " + this.toString());
+          logger.info("Not decrementing batchCount : " + txnID + " : " + toString());
         } else {
           this.batchCount--;
         }
@@ -277,12 +278,12 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     }
   }
 
-  public void registerForBatchTransaction(TransactionBatchListener listener) {
-    txnListeners.add(listener);
+  public void registerForBatchTransaction(final TransactionBatchListener listener) {
+    this.txnListeners.add(listener);
   }
 
-  private void fireBatchTxnEvent(CommitTransactionMessage ctm) {
-    for (TransactionBatchListener listener : txnListeners) {
+  private void fireBatchTxnEvent(final CommitTransactionMessage ctm) {
+    for (final TransactionBatchListener listener : this.txnListeners) {
       listener.notifyTransactionBatchAdded(ctm);
     }
   }

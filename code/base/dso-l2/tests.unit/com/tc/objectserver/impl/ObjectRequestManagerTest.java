@@ -890,7 +890,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void release(final PersistenceTransaction tx, final ManagedObject object) {
+    public void releaseAndCommit(final PersistenceTransaction tx, final ManagedObject object) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
@@ -932,7 +932,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
-    public void releaseAll(final PersistenceTransaction tx, final Collection<ManagedObject> collection) {
+    public void releaseAllAndCommit(final PersistenceTransaction tx, final Collection<ManagedObject> collection) {
       throw new NotImplementedException(TestObjectManager.class);
     }
 

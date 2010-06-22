@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.persistence.sleepycat.util;
 
-
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -19,7 +18,7 @@ import com.tc.objectserver.persistence.impl.StringIndexImpl;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
 import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
 import com.tc.util.Assert;
-import com.tc.util.SyncObjectIdSet;
+import com.tc.util.ObjectIDSet;
 
 import gnu.trove.TObjectLongHashMap;
 
@@ -37,7 +36,7 @@ public class DBDiff extends BaseUtility {
 
   private static final String             VERSION_STRING       = "SleepycatTCDBDiff [ Ver 0.2]";
 
-    private final boolean                   moDiff;
+  private final boolean                   moDiff;
   private final ManagedObjectStateFactory mosf1;
   private final ManagedObjectStateFactory mosf2;
   protected boolean                       diffStringIndexer    = false;
@@ -46,35 +45,36 @@ public class DBDiff extends BaseUtility {
   protected boolean                       diffClientStates     = false;
   protected boolean                       diffManagedObjects   = false;
 
-  public DBDiff(File d1, File d2, boolean moDiff) throws TCDatabaseException, IOException ,Exception {
+  public DBDiff(final File d1, final File d2, final boolean moDiff) throws TCDatabaseException, IOException, Exception {
     this(d1, d2, moDiff, new OutputStreamWriter(System.out));
   }
 
-  public DBDiff(File d1, File d2, boolean moDiff, Writer writer) throws TCDatabaseException, IOException ,Exception {
-    super(writer, new File[]{d1, d2} );
+  public DBDiff(final File d1, final File d2, final boolean moDiff, final Writer writer) throws TCDatabaseException,
+      IOException, Exception {
+    super(writer, new File[] { d1, d2 });
     this.moDiff = moDiff;
-  
+
     // Since we dont create any new MOState Objects in this program, we use 1 of the 2 persistor.
-    ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
+    final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
 
-      public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
+      public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
         // NOP
       }
 
     });
     ManagedObjectStateFactory.disableSingleton(true);
-    mosf1 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(1));
-    mosf2 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(2));
+    this.mosf1 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(1));
+    this.mosf2 = ManagedObjectStateFactory.createInstance(moclp, getPersistor(2));
 
   }
 
   public void diff() {
-    File d1 = getDatabaseDir(1);
-    File d2 = getDatabaseDir(2);
+    final File d1 = getDatabaseDir(1);
+    final File d2 = getDatabaseDir(2);
     log("Diffing [1] " + d1 + " and [2] " + d2);
-    SleepycatPersistor sdb1 = getPersistor(1);
-    SleepycatPersistor sdb2= getPersistor(2);
+    final SleepycatPersistor sdb1 = getPersistor(1);
+    final SleepycatPersistor sdb2 = getPersistor(2);
     diffStringIndexer((StringIndexImpl) sdb1.getStringIndex(), (StringIndexImpl) sdb2.getStringIndex());
     diffManagedObjects(sdb1.getManagedObjectPersistor(), sdb2.getManagedObjectPersistor());
     diffClientStates(sdb1.getClientStatePersistor(), sdb2.getClientStatePersistor());
@@ -82,65 +82,63 @@ public class DBDiff extends BaseUtility {
     diffGeneratedClasses(sdb1.getClassPersistor(), sdb2.getClassPersistor());
   }
 
-  private void diffGeneratedClasses(ClassPersistor cp1, ClassPersistor cp2) {
+  private void diffGeneratedClasses(final ClassPersistor cp1, final ClassPersistor cp2) {
     log("Diffing Generated Classes...(Partial implementation)");
-    Map m1 = cp1.retrieveAllClasses();
-    Map m2 = cp2.retrieveAllClasses();
+    final Map m1 = cp1.retrieveAllClasses();
+    final Map m2 = cp2.retrieveAllClasses();
     if (!m1.keySet().equals(m2.keySet())) {
       log("*** [1] containing " + m1.size() + " generated classes differs from [2] containing " + m2.size());
-      diffGeneratedClasses = true;
+      this.diffGeneratedClasses = true;
     }
   }
 
-  private void diffTransactions(TransactionPersistor tp1, TransactionPersistor tp2) {
+  private void diffTransactions(final TransactionPersistor tp1, final TransactionPersistor tp2) {
     log("Diffing Transactions...");
-    Collection txns1 = tp1.loadAllGlobalTransactionDescriptors();
-    Collection txns2 = tp2.loadAllGlobalTransactionDescriptors();
+    final Collection txns1 = tp1.loadAllGlobalTransactionDescriptors();
+    final Collection txns2 = tp2.loadAllGlobalTransactionDescriptors();
     if (!txns1.equals(txns2)) {
       log("*** [1] containing " + txns1.size() + " Transactions differs from [2] containing " + txns2.size()
           + " Transactions");
-      diffTransactions = true;
+      this.diffTransactions = true;
     }
   }
 
-  private void diffClientStates(ClientStatePersistor cp1, ClientStatePersistor cp2) {
+  private void diffClientStates(final ClientStatePersistor cp1, final ClientStatePersistor cp2) {
     log("Diffing ClientStates...");
-    Set cids1 = cp1.loadClientIDs();
-    Set cids2 = cp2.loadClientIDs();
+    final Set cids1 = cp1.loadClientIDs();
+    final Set cids2 = cp2.loadClientIDs();
     if (!cids1.equals(cids2)) {
       log("*** [1] containing " + cids1.size() + " ClientIDs differs from [2] containing " + cids2.size()
           + " ClientIDs");
-      diffClientStates = true;
+      this.diffClientStates = true;
     }
   }
 
-  private void diffManagedObjects(ManagedObjectPersistor mp1, ManagedObjectPersistor mp2) {
+  private void diffManagedObjects(final ManagedObjectPersistor mp1, final ManagedObjectPersistor mp2) {
     log("Diffing ManagedObjects...(Partial implementation)");
-    SyncObjectIdSet oids1 = mp1.getAllObjectIDs();
-    SyncObjectIdSet oids2 = mp2.getAllObjectIDs();
-    oids1.snapshot();
-    oids2.snapshot();
+    final ObjectIDSet oids1 = mp1.snapshotObjectIDs();
+    final ObjectIDSet oids2 = mp2.snapshotObjectIDs();
     if (!oids1.equals(oids2)) {
       log("*** [1] containing " + oids1.size() + " ObjectIDs differs from [2] containing " + oids2.size()
           + " ObjectIDs");
-      diffManagedObjects = true;
+      this.diffManagedObjects = true;
     }
 
-    if (!moDiff) return;
+    if (!this.moDiff) { return; }
 
     // The diff only makes sense if the sequence in which the objects created are same.
     // First diff the common set
-    Set common = new HashSet(oids1);
+    final Set common = new HashSet(oids1);
     common.retainAll(oids2);
-    for (Iterator i = common.iterator(); i.hasNext();) {
-      ObjectID oid = (ObjectID) i.next();
-      ManagedObjectStateFactory.setInstance(mosf1);
-      ManagedObject mo1 = mp1.loadObjectByID(oid);
-      ManagedObjectStateFactory.setInstance(mosf2);
-      ManagedObject mo2 = mp2.loadObjectByID(oid);
+    for (final Iterator i = common.iterator(); i.hasNext();) {
+      final ObjectID oid = (ObjectID) i.next();
+      ManagedObjectStateFactory.setInstance(this.mosf1);
+      final ManagedObject mo1 = mp1.loadObjectByID(oid);
+      ManagedObjectStateFactory.setInstance(this.mosf2);
+      final ManagedObject mo2 = mp2.loadObjectByID(oid);
       Assert.assertEquals(mo1.getID(), mo2.getID());
-      ManagedObjectState ms1 = mo1.getManagedObjectState();
-      ManagedObjectState ms2 = mo2.getManagedObjectState();
+      final ManagedObjectState ms1 = mo1.getManagedObjectState();
+      final ManagedObjectState ms2 = mo2.getManagedObjectState();
       if (!ms1.equals(ms2)) {
         log("****** [1] " + ms1 + " differs from [2] " + ms2);
       }
@@ -157,17 +155,17 @@ public class DBDiff extends BaseUtility {
     }
   }
 
-  private void diffStringIndexer(StringIndexImpl stringIndex1, StringIndexImpl stringIndex2) {
+  private void diffStringIndexer(final StringIndexImpl stringIndex1, final StringIndexImpl stringIndex2) {
     log("Diffing StringIndexes...");
-    TObjectLongHashMap map1 = stringIndex1.getString2LongMappings();
-    TObjectLongHashMap map2 = stringIndex2.getString2LongMappings();
+    final TObjectLongHashMap map1 = stringIndex1.getString2LongMappings();
+    final TObjectLongHashMap map2 = stringIndex2.getString2LongMappings();
     if (!map1.equals(map2)) {
       log("*** [1] containing " + map1.size() + " mapping differs from [2] containing " + map2.size() + " mapping");
-      diffStringIndexer = true;
+      this.diffStringIndexer = true;
     }
   }
 
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
     boolean moDiff = false;
 
     System.out.println(VERSION_STRING);
@@ -179,20 +177,20 @@ public class DBDiff extends BaseUtility {
       moDiff = true;
     }
     try {
-      File d1 = new File(args[0]);
+      final File d1 = new File(args[0]);
       validateDir(d1);
-      File d2 = new File(args[1]);
+      final File d2 = new File(args[1]);
       validateDir(d2);
 
-      DBDiff sdiff = new DBDiff(d1, d2, moDiff);
+      final DBDiff sdiff = new DBDiff(d1, d2, moDiff);
       sdiff.diff();
-    } catch (Exception ex) {
+    } catch (final Exception ex) {
       ex.printStackTrace();
       System.exit(-2);
     }
   }
 
-  private static void validateDir(File dir) {
+  private static void validateDir(final File dir) {
     if (!dir.exists() || !dir.isDirectory()) { throw new RuntimeException("Not a valid directory : " + dir); }
   }
 

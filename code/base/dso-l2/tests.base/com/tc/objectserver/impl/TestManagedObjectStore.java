@@ -23,49 +23,49 @@ public class TestManagedObjectStore implements ManagedObjectStore {
 
   public boolean       addNewWasCalled = false;
   public boolean       containsKey;
-  public ObjectIDSet  keySet;
+  public ObjectIDSet   keySet;
   public ManagedObject managedObject;
   private int          count;
 
-  public boolean containsObject(ObjectID id) {
-    return containsKey;
+  public boolean containsObject(final ObjectID id) {
+    return this.containsKey;
   }
-  
-  public void addNewObject(ManagedObject managed) {
-    addNewWasCalled = true;
-    count++;
+
+  public void addNewObject(final ManagedObject managed) {
+    this.addNewWasCalled = true;
+    this.count++;
   }
 
   public ObjectIDSet getAllObjectIDs() {
-    return keySet;
+    return this.keySet;
   }
 
   public int getObjectCount() {
-    return count;
+    return this.count;
   }
 
-  public ManagedObject getObjectByID(ObjectID id) {
-    return managedObject;
+  public ManagedObject getObjectByID(final ObjectID id) {
+    return this.managedObject;
   }
 
-  public void commitObject(PersistenceTransaction tx, ManagedObject object) {
+  public void commitObject(final PersistenceTransaction tx, final ManagedObject object) {
     return;
   }
 
-  public void commitAllObjects(PersistenceTransaction tx, Collection c) {
+  public void commitAllObjects(final PersistenceTransaction tx, final Collection c) {
     return;
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return out.print(getClass().getName());
   }
 
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> objectIds) {
-    count -= objectIds.size();
+  public void removeAllObjectsByIDNow(final PersistenceTransaction tx, final SortedSet<ObjectID> objectIds) {
+    this.count -= objectIds.size();
     return;
   }
 
-  public void removeAllObjectsByID(GCResultContext gcResult) {
+  public void removeAllObjectsByID(final GCResultContext gcResult) {
     removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
   }
 
@@ -77,7 +77,7 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return false;
   }
 
-  public ObjectID getRootID(String name) {
+  public ObjectID getRootID(final String name) {
     return null;
   }
 
@@ -89,15 +89,15 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return null;
   }
 
-  public void addNewRoot(PersistenceTransaction tx, String rootName, ObjectID id) {
+  public void addNewRoot(final PersistenceTransaction tx, final String rootName, final ObjectID id) {
     return;
   }
 
-  public long nextObjectIDBatch(int batchSize) {
+  public long nextObjectIDBatch(final int batchSize) {
     throw new ImplementMe();
   }
 
-  public void setNextAvailableObjectID(long startID) {
+  public void setNextAvailableObjectID(final long startID) {
     throw new ImplementMe();
   }
 
@@ -106,6 +106,10 @@ public class TestManagedObjectStore implements ManagedObjectStore {
   }
 
   public long currentObjectIDValue() {
+    throw new ImplementMe();
+  }
+
+  public ObjectIDSet getAllEvictableObjectIDs() {
     throw new ImplementMe();
   }
 

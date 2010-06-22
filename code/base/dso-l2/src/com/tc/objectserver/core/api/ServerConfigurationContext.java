@@ -75,6 +75,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public final static String CLUSTER_METADATA_STAGE                             = "cluster_metadata_stage";
   public static final String SERVER_MAP_REQUEST_STAGE                           = "server_map_request_stage";
   public static final String SERVER_MAP_RESPOND_STAGE                           = "server_map_response_stage";
+  public static final String SERVER_MAP_EVICTION_PROCESSOR_STAGE                = "server_map_eviction_processor_stage";
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
@@ -86,8 +87,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public ObjectManager getObjectManager();
 
   public ObjectRequestManager getObjectRequestManager();
-  
-  public ServerMapRequestManager getServerTCMapRequestManager();
+
+  public ServerMapRequestManager getServerMapRequestManager();
 
   public LockManager getLockManager();
 

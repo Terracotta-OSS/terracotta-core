@@ -9,8 +9,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.text.PrettyPrinterImpl;
-import com.tc.util.NullSyncObjectIdSet;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;
@@ -27,64 +25,62 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
   public final NoExceptionLinkedQueue loadByObjectIDCalls = new NoExceptionLinkedQueue();
   public final Map                    map;
   public boolean                      closeCalled         = false;
-  public SyncObjectIdSet              allObjectIDs        = new SyncObjectIdSetImpl();
   private final SyncObjectIdSet       extantObjectIDs;
 
-  public TestManagedObjectPersistor(Map map) {
+  public TestManagedObjectPersistor(final Map map) {
     this.map = map;
-
-    this.extantObjectIDs = getAllObjectIDs();
+    this.extantObjectIDs = new SyncObjectIdSetImpl();
   }
 
   public int getObjectCount() {
-    return extantObjectIDs.size();
+    return this.extantObjectIDs.size();
   }
 
-  public boolean addNewObject(ObjectID id) {
-    return extantObjectIDs.add(id);
+  public boolean addNewObject(final ManagedObject managed) {
+    return this.extantObjectIDs.add(managed.getID());
   }
 
-  public boolean containsObject(ObjectID id) {
-    return extantObjectIDs.contains(id);
+  public boolean containsObject(final ObjectID id) {
+    return this.extantObjectIDs.contains(id);
   }
 
-  public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
+  public void removeAllObjectIDs(final SortedSet<ObjectID> ids) {
     this.extantObjectIDs.removeAll(ids);
   }
 
-  public ObjectIDSet snapshotObjects() {
+  public ObjectIDSet snapshotObjectIDs() {
     return this.extantObjectIDs.snapshot();
   }
 
-  public ManagedObject loadObjectByID(ObjectID id) {
-    loadByObjectIDCalls.put(id);
-    return (ManagedObject) map.get(id);
+  public ObjectIDSet snapshotEvictableObjectIDs() {
+    throw new ImplementMe();
   }
 
-  public ObjectID loadRootID(String name) {
+  public ManagedObject loadObjectByID(final ObjectID id) {
+    this.loadByObjectIDCalls.put(id);
+    return (ManagedObject) this.map.get(id);
+  }
+
+  public ObjectID loadRootID(final String name) {
     return null;
   }
 
-  public void addRoot(PersistenceTransaction tx, String name, ObjectID id) {
+  public void addRoot(final PersistenceTransaction tx, final String name, final ObjectID id) {
     return;
   }
 
-  public void saveObject(PersistenceTransaction tx, ManagedObject managedObject) {
-    map.put(managedObject.getID(), managedObject);
+  public void saveObject(final PersistenceTransaction tx, final ManagedObject managedObject) {
+    this.map.put(managedObject.getID(), managedObject);
   }
 
-  public void saveAllObjects(PersistenceTransaction tx, Collection managed) {
-    for (Iterator i = managed.iterator(); i.hasNext();) {
+  public void saveAllObjects(final PersistenceTransaction tx, final Collection managed) {
+    for (final Iterator i = managed.iterator(); i.hasNext();) {
       saveObject(tx, (ManagedObject) i.next());
     }
   }
 
-  public void deleteObjectByID(PersistenceTransaction tx, ObjectID id) {
-    map.remove(id);
-  }
-
-  public void prettyPrint(PrettyPrinterImpl out) {
-    return;
+  public void deleteObjectByID(final PersistenceTransaction tx, final ObjectID id) {
+    this.map.remove(id);
   }
 
   public Set loadRoots() {
@@ -95,42 +91,22 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return null;
   }
 
-  public long nextObjectIDBatch(int batchSize) {
+  public long nextObjectIDBatch(final int batchSize) {
     throw new ImplementMe();
   }
 
-  public void setNextAvailableObjectID(long startID) {
+  public void setNextAvailableObjectID(final long startID) {
     throw new ImplementMe();
   }
 
-  public SyncObjectIdSet getAllObjectIDs() {
-    return allObjectIDs;
-  }
-
-  public SyncObjectIdSet getAllMapsObjectIDs() {
-    return new NullSyncObjectIdSet();
-  }
-
-  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> ids) {
-    for (Iterator i = ids.iterator(); i.hasNext();) {
-      deleteObjectByID(tx, (ObjectID) i.next());
+  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> ids) {
+    for (final Object element : ids) {
+      deleteObjectByID(tx, (ObjectID) element);
     }
   }
 
   public Map loadRootNamesToIDs() {
     return null;
-  }
-
-  public boolean addMapTypeObject(ObjectID id) {
-    return false;
-  }
-
-  public boolean containsMapType(ObjectID id) {
-    return false;
-  }
-
-  public void removeAllMapTypeObject(Collection ids) {
-    return;
   }
 
   public long currentObjectIDValue() {

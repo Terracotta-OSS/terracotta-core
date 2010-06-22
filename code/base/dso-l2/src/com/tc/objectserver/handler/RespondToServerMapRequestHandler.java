@@ -15,22 +15,22 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 public class RespondToServerMapRequestHandler extends AbstractEventHandler implements EventHandler {
 
-  private ServerMapRequestManager serverTCMapRequestManager;
- 
+  private ServerMapRequestManager serverMapRequestManager;
+
   @Override
   public void handleEvent(final EventContext context) {
     final EntryForKeyResponseContext responseContext = (EntryForKeyResponseContext) context;
 
     final ObjectID mapID = responseContext.getMapID();
     final ManagedObject mo = responseContext.getManagedObject();
-    
-    serverTCMapRequestManager.sendResponseFor(mapID, mo);
+
+    serverMapRequestManager.sendResponseFor(mapID, mo);
   }
 
   @Override
   public void initialize(final ConfigurationContext context) {
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    this.serverTCMapRequestManager = oscc.getServerTCMapRequestManager();
+    this.serverMapRequestManager = oscc.getServerMapRequestManager();
   }
 
 }

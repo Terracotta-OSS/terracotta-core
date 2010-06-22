@@ -73,22 +73,22 @@ public class ManagedObjectStateFactory {
                             new Byte(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put(java.util.concurrent.ConcurrentHashMap.class.getName(),
                             new Byte(ManagedObjectState.CONCURRENT_HASHMAP_TYPE));
-    // XXX: hack to support CDM in tim-concurrent-collections.
+    // XXX: Support for CDM, CDSM in terracotta-toolkit
     classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedMapDso", Byte
         .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE));
-    // XXX: hack to support CDMServerMap in tim-concurrent-collections.
     classNameToStateMap.put("com.terracotta.toolkit.collections.ConcurrentDistributedServerMapDso", Byte
         .valueOf(ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE));
-    // XXX: hack to support Hibernate cache entry type
+    // XXX: Support for Ehcache entry type
     classNameToStateMap.put(TDCSerializedEntryManagedObjectState.SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TDC_SERIALIZED_ENTRY));
     classNameToStateMap.put(TDCCustomLifespanSerializedEntryManagedObjectState.CUSTOM_SERIALIZED_ENTRY,
                             new Byte(ManagedObjectState.TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY));
     classNameToStateMap.put(java.util.concurrent.CopyOnWriteArrayList.class.getName(),
                             new Byte(ManagedObjectState.LIST_TYPE));
-    // XXX: Hack for terracotta toolkit
+    // XXX: Support for terracotta toolkit
     classNameToStateMap.put("org.terracotta.async.ProcessingBucketItems", new Byte(ManagedObjectState.LIST_TYPE));
-    classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue", new Byte(ManagedObjectState.QUEUE_TYPE));
+    classNameToStateMap.put("org.terracotta.collections.ConcurrentBlockingQueue",
+                            new Byte(ManagedObjectState.QUEUE_TYPE));
     classNameToStateMap.put("org.terracotta.collections.TerracottaList", new Byte(ManagedObjectState.LIST_TYPE));
   }
 

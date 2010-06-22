@@ -381,7 +381,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final PersistenceTransaction ptx = ptxp.newTransaction();
     this.gtxm.commitAll(ptx, appliedServerTransactionIDs);
     // This call commits the transaction too.
-    this.objectManager.releaseAll(ptx, objects);
+    this.objectManager.releaseAllAndCommit(ptx, objects);
     fireRootCreatedEvents(newRoots);
     committed(appliedServerTransactionIDs);
     if (this.commitLoggingEnabled) {

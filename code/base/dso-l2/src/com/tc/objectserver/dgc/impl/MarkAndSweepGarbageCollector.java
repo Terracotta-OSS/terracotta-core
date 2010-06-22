@@ -47,8 +47,9 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   private volatile LifeCycleState              gcState                    = new NullLifeCycleState();
   private volatile boolean                     started                    = false;
 
-  public MarkAndSweepGarbageCollector(ObjectManagerConfig objectManagerConfig, ObjectManager objectMgr,
-                                      ClientStateManager stateManager, GarbageCollectionInfoPublisher gcPublisher) {
+  public MarkAndSweepGarbageCollector(final ObjectManagerConfig objectManagerConfig, final ObjectManager objectMgr,
+                                      final ClientStateManager stateManager,
+                                      final GarbageCollectionInfoPublisher gcPublisher) {
     this.objectManagerConfig = objectManagerConfig;
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
@@ -56,7 +57,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 
-  public void doGC(GCType type) {
+  public void doGC(final GCType type) {
     GCHook hook = null;
     switch (type) {
       case FULL_GC:
@@ -66,12 +67,12 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
         hook = new YoungGCHook(this, this.objectManager, this.stateManager, this.youngGenReferenceCollector);
         break;
     }
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
-                                                                 this.gcIterationCounter.incrementAndGet());
+    final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
+                                                                       this.gcIterationCounter.incrementAndGet());
     gcAlgo.doGC();
   }
 
-  public boolean deleteGarbage(GCResultContext gcResult) {
+  public boolean deleteGarbage(final GCResultContext gcResult) {
     if (requestGCDeleteStart()) {
       this.youngGenReferenceCollector.removeGarbage(gcResult.getGCedObjectIDs());
       this.objectManager.notifyGCComplete(gcResult);
@@ -91,40 +92,41 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     this.youngGenReferenceCollector.stopMonitoringChanges();
   }
 
-  public void changed(ObjectID changedObject, ObjectID oldReference, ObjectID newReference) {
+  public void changed(final ObjectID changedObject, final ObjectID oldReference, final ObjectID newReference) {
     this.referenceCollector.changed(changedObject, oldReference, newReference);
   }
 
-  public void notifyObjectCreated(ObjectID id) {
+  public void notifyObjectCreated(final ObjectID id) {
     this.youngGenReferenceCollector.notifyObjectCreated(id);
   }
 
-  public void notifyNewObjectInitalized(ObjectID id) {
+  public void notifyNewObjectInitalized(final ObjectID id) {
     this.youngGenReferenceCollector.notifyObjectInitalized(id);
   }
 
-  public void notifyObjectsEvicted(Collection evicted) {
+  public void notifyObjectsEvicted(final Collection evicted) {
     this.youngGenReferenceCollector.notifyObjectsEvicted(evicted);
   }
 
-  public void addNewReferencesTo(Set rescueIds) {
+  public void addNewReferencesTo(final Set rescueIds) {
     this.referenceCollector.addNewReferencesTo(rescueIds);
   }
 
   /**
    * Used for Tests.
    */
-  ObjectIDSet collect(GCHook hook, Filter filter, Collection rootIds, ObjectIDSet managedObjectIds) {
+  ObjectIDSet collect(final GCHook hook, final Filter filter, final Collection rootIds,
+                      final ObjectIDSet managedObjectIds) {
     return collect(hook, filter, rootIds, managedObjectIds, NULL_LIFECYCLE_STATE);
   }
 
   /**
    * Used for Tests.
    */
-  ObjectIDSet collect(GCHook hook, Filter traverser, Collection roots, ObjectIDSet managedObjectIds,
-                      LifeCycleState lstate) {
-    MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
-                                                                 this.gcIterationCounter.incrementAndGet());
+  ObjectIDSet collect(final GCHook hook, final Filter traverser, final Collection roots,
+                      final ObjectIDSet managedObjectIds, final LifeCycleState lstate) {
+    final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
+                                                                       this.gcIterationCounter.incrementAndGet());
     return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
@@ -149,11 +151,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     return this.started;
   }
 
-  public void setState(StoppableThread st) {
+  public void setState(final StoppableThread st) {
     this.gcState = st;
   }
 
-  public void addListener(GarbageCollectorEventListener listener) {
+  public void addListener(final GarbageCollectorEventListener listener) {
     this.gcPublisher.addListener(listener);
   }
 
@@ -221,7 +223,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
     return GC_DISABLED == this.state;
   }
 
-  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return out.print(getClass().getName()).print("[").print(this.state).print("]");
   }
 }

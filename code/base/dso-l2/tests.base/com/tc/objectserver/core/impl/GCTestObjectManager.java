@@ -72,12 +72,12 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     return hs;
   }
 
-  public void release(PersistenceTransaction tx, ManagedObject object) {
+  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object) {
     released.add(object.getID());
     return;
   }
 
-  public void releaseAll(PersistenceTransaction tx, Collection c) {
+  public void releaseAllAndCommit(PersistenceTransaction tx, Collection c) {
     return;
   }
 
@@ -127,7 +127,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   public void releaseAllReadOnly(Collection objects) {
-    releaseAll(transactionProvider.nullTransaction(), objects);
+    releaseAllAndCommit(transactionProvider.nullTransaction(), objects);
   }
 
   public int getCheckedOutCount() {

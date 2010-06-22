@@ -21,8 +21,8 @@ public class GarbageCollectorThread extends StoppableThread {
   private final long             youngGCSleepTime;
   private final boolean          doFullGC;
 
-  public GarbageCollectorThread(ThreadGroup group, String name, GarbageCollector newCollector,
-                                ObjectManagerConfig config) {
+  public GarbageCollectorThread(final ThreadGroup group, final String name, final GarbageCollector newCollector,
+                                final ObjectManagerConfig config) {
     super(group, name);
     this.collector = newCollector;
     this.doFullGC = config.doGC();
@@ -69,7 +69,7 @@ public class GarbageCollectorThread extends StoppableThread {
           lastFullGC = System.currentTimeMillis();
         } else {
           // run young or full GC
-          long current = System.currentTimeMillis();
+          final long current = System.currentTimeMillis();
           if (lastFullGC + this.fullGCSleepTime > current + this.youngGCSleepTime) {
             // Run young GC next
             doYoungGC(this.youngGCSleepTime);
@@ -85,26 +85,26 @@ public class GarbageCollectorThread extends StoppableThread {
     }
   }
 
-  private void doYoungGC(long sleepTime) {
+  private void doYoungGC(final long sleepTime) {
     try {
       synchronized (this.stopLock) {
         this.stopLock.wait(sleepTime);
       }
       if (isStopRequested()) { return; }
       this.collector.doGC(GCType.YOUNG_GEN_GC);
-    } catch (InterruptedException ie) {
+    } catch (final InterruptedException ie) {
       throw new TCRuntimeException(ie);
     }
   }
 
-  private void doFullGC(long sleepTime) {
+  private void doFullGC(final long sleepTime) {
     try {
       synchronized (this.stopLock) {
         this.stopLock.wait(sleepTime);
       }
       if (isStopRequested()) { return; }
       this.collector.doGC(GCType.FULL_GC);
-    } catch (InterruptedException ie) {
+    } catch (final InterruptedException ie) {
       throw new TCRuntimeException(ie);
     }
   }

@@ -119,7 +119,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final LinkedQueue releaseContextQueue = new LinkedQueue();
 
-  public void release(PersistenceTransaction tx, ManagedObject object) {
+  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object) {
     try {
       releaseContextQueue.put(object);
     } catch (InterruptedException e) {
@@ -137,7 +137,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
 
   public final LinkedQueue releaseAllQueue = new LinkedQueue();
 
-  public void releaseAll(PersistenceTransaction tx, Collection collection) {
+  public void releaseAllAndCommit(PersistenceTransaction tx, Collection collection) {
     try {
       releaseAllQueue.put(collection);
     } catch (InterruptedException e) {
@@ -160,7 +160,7 @@ public class TestObjectManager implements ObjectManager, ObjectStatsManager {
   }
 
   public void releaseAllReadOnly(Collection objects) {
-    releaseAll(null, objects);
+    releaseAllAndCommit(null, objects);
   }
 
   public int getCheckedOutCount() {

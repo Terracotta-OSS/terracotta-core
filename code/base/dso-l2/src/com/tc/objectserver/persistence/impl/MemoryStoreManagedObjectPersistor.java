@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.persistence.impl;
 
+import com.tc.exception.ImplementMe;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.memorydatastore.client.MemoryDataStoreClient;
@@ -37,6 +38,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
+/**
+ * Looks like this class is not maintained well over the years. It should either be cleaned up or Killed. @see
+ * https://jira.terracotta.org/jira/browse/DEV-4347
+ */
 public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPersistor {
   private final MemoryDataStoreClient           objectDB;
   private final MutableSequence                 objectIDSequence;
@@ -46,9 +51,9 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   private final MemoryStoreCollectionsPersistor collectionsPersistor;
   private final SyncObjectIdSet                 extantObjectIDs;
 
-  public MemoryStoreManagedObjectPersistor(TCLogger logger, MemoryDataStoreClient objectDB,
-                                           MutableSequence objectIDSequence, MemoryDataStoreClient rootDB,
-                                           MemoryStoreCollectionsPersistor collectionsPersistor) {
+  public MemoryStoreManagedObjectPersistor(final TCLogger logger, final MemoryDataStoreClient objectDB,
+                                           final MutableSequence objectIDSequence, final MemoryDataStoreClient rootDB,
+                                           final MemoryStoreCollectionsPersistor collectionsPersistor) {
     this.logger = logger;
     this.objectDB = objectDB;
     this.objectIDSequence = objectIDSequence;
@@ -59,65 +64,69 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   }
 
   public int getObjectCount() {
-    return extantObjectIDs.size();
+    return this.extantObjectIDs.size();
   }
 
-  public boolean addNewObject(ObjectID id) {
-    return extantObjectIDs.add(id);
+  public boolean addNewObject(final ManagedObject managed) {
+    return this.extantObjectIDs.add(managed.getID());
   }
 
-  public boolean containsObject(ObjectID id) {
-    return extantObjectIDs.contains(id);
+  public boolean containsObject(final ObjectID id) {
+    return this.extantObjectIDs.contains(id);
   }
 
-  public void removeAllObjectsByID(SortedSet<ObjectID> ids) {
+  public void removeAllObjectIDs(final SortedSet<ObjectID> ids) {
     this.extantObjectIDs.removeAll(ids);
   }
 
-  public ObjectIDSet snapshotObjects() {
+  public ObjectIDSet snapshotObjectIDs() {
     return this.extantObjectIDs.snapshot();
   }
 
-  public long nextObjectIDBatch(int batchSize) {
-    return objectIDSequence.nextBatch(batchSize);
+  public ObjectIDSet snapshotEvictableObjectIDs() {
+    throw new ImplementMe();
   }
-  
+
+  public long nextObjectIDBatch(final int batchSize) {
+    return this.objectIDSequence.nextBatch(batchSize);
+  }
+
   public long currentObjectIDValue() {
-    return objectIDSequence.current();
+    return this.objectIDSequence.current();
   }
 
-  public void setNextAvailableObjectID(long startID) {
-    objectIDSequence.setNext(startID);
+  public void setNextAvailableObjectID(final long startID) {
+    this.objectIDSequence.setNext(startID);
   }
 
-  public void addRoot(PersistenceTransaction tx, String name, ObjectID id) {
+  public void addRoot(final PersistenceTransaction tx, final String name, final ObjectID id) {
     validateID(id);
     this.rootDB.put(name.getBytes(), objectIDToData(id));
   }
 
-  public ObjectID loadRootID(String name) {
-    if (name == null) throw new AssertionError("Attempt to retrieve a null root name");
-    byte[] value = this.rootDB.get(name.getBytes());
-    if (value == null) return ObjectID.NULL_ID;
-    ObjectID rv = dataToObjectID(value);
-    if (rv == null) return ObjectID.NULL_ID;
+  public ObjectID loadRootID(final String name) {
+    if (name == null) { throw new AssertionError("Attempt to retrieve a null root name"); }
+    final byte[] value = this.rootDB.get(name.getBytes());
+    if (value == null) { return ObjectID.NULL_ID; }
+    final ObjectID rv = dataToObjectID(value);
+    if (rv == null) { return ObjectID.NULL_ID; }
     return rv;
   }
 
   public Set loadRoots() {
-    Set rv = new HashSet();
-    Collection txns = rootDB.getAll();
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
+    final Set rv = new HashSet();
+    final Collection txns = this.rootDB.getAll();
+    for (final Iterator i = txns.iterator(); i.hasNext();) {
+      final TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
       rv.add(dataToObjectID(pair.getValue()));
     }
     return rv;
   }
 
   public SyncObjectIdSet getAllObjectIDs() {
-    SyncObjectIdSet rv = new SyncObjectIdSetImpl();
+    final SyncObjectIdSet rv = new SyncObjectIdSetImpl();
     rv.startPopulating();
-    Thread t = new Thread(new ObjectIdReader(rv), "ObjectIdReaderThread");
+    final Thread t = new Thread(new ObjectIdReader(rv), "ObjectIdReaderThread");
     t.setDaemon(true);
     t.start();
     return rv;
@@ -128,89 +137,90 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   }
 
   public Set loadRootNames() {
-    Set rv = new HashSet();
-    Collection txns = rootDB.getAll();
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
+    final Set rv = new HashSet();
+    final Collection txns = this.rootDB.getAll();
+    for (final Iterator i = txns.iterator(); i.hasNext();) {
+      final TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
       rv.add(pair.getKey().toString());
     }
     return rv;
   }
 
   public Map loadRootNamesToIDs() {
-    Map rv = new HashMap();
-    Collection txns = rootDB.getAll();
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
+    final Map rv = new HashMap();
+    final Collection txns = this.rootDB.getAll();
+    for (final Iterator i = txns.iterator(); i.hasNext();) {
+      final TCByteArrayKeyValuePair pair = (TCByteArrayKeyValuePair) i.next();
       rv.put(pair.getKey().toString(), dataToObjectID(pair.getValue()));
     }
     return rv;
   }
 
-  public ManagedObject loadObjectByID(ObjectID id) {
+  public ManagedObject loadObjectByID(final ObjectID id) {
     validateID(id);
     try {
-      byte[] value = this.objectDB.get(objectIDToData(id));
-      ManagedObject mo = dataToManagedObject(value);
+      final byte[] value = this.objectDB.get(objectIDToData(id));
+      final ManagedObject mo = dataToManagedObject(value);
       loadCollection(mo);
       return mo;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new TCRuntimeException(e);
     }
   }
 
-  private void loadCollection(ManagedObject mo) {
-    ManagedObjectState state = mo.getManagedObjectState();
+  private void loadCollection(final ManagedObject mo) {
+    final ManagedObjectState state = mo.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
-      MapManagedObjectState mapState = (MapManagedObjectState) state;
+      final MapManagedObjectState mapState = (MapManagedObjectState) state;
       Assert.assertNull(mapState.getMap());
-      mapState.setMap(collectionsPersistor.loadMap(mo.getID()));
+      mapState.setMap(this.collectionsPersistor.loadMap(mo.getID()));
     }
   }
 
-  public void saveObject(PersistenceTransaction persistenceTransaction, ManagedObject managedObject) {
+  public void saveObject(final PersistenceTransaction persistenceTransaction, final ManagedObject managedObject) {
     Assert.assertNotNull(managedObject);
     validateID(managedObject.getID());
     try {
       basicSaveObject(managedObject);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new TCRuntimeException(e);
     }
   }
 
-  private boolean basicSaveObject(ManagedObject managedObject) throws IOException {
-    if (!managedObject.isDirty()) return true;
+  private boolean basicSaveObject(final ManagedObject managedObject) throws IOException {
+    if (!managedObject.isDirty()) { return true; }
     this.objectDB.put(objectIDToData(managedObject.getID()), managedObjectToData(managedObject));
     basicSaveCollection(managedObject);
     managedObject.setIsDirty(false);
-    saveCount++;
-    if (saveCount == 1 || saveCount % (100 * 1000) == 0) {
-      logger.debug("saveCount: " + saveCount);
+    this.saveCount++;
+    if (this.saveCount == 1 || this.saveCount % (100 * 1000) == 0) {
+      this.logger.debug("saveCount: " + this.saveCount);
     }
     return true;
   }
 
-  private void basicSaveCollection(ManagedObject managedObject) {
-    ManagedObjectState state = managedObject.getManagedObjectState();
+  private void basicSaveCollection(final ManagedObject managedObject) {
+    final ManagedObjectState state = managedObject.getManagedObjectState();
     if (PersistentCollectionsUtil.isPersistableCollectionType(state.getType())) {
-      MapManagedObjectState mapState = (MapManagedObjectState) state;
-      MemoryStorePersistableMap map = (MemoryStorePersistableMap) mapState.getMap();
-      collectionsPersistor.saveMap(map);
+      final MapManagedObjectState mapState = (MapManagedObjectState) state;
+      final MemoryStorePersistableMap map = (MemoryStorePersistableMap) mapState.getMap();
+      this.collectionsPersistor.saveMap(map);
     }
   }
 
-  public void saveAllObjects(PersistenceTransaction persistenceTransaction, Collection managedObjects) {
-    long t0 = System.currentTimeMillis();
-    if (managedObjects.isEmpty()) return;
+  public void saveAllObjects(final PersistenceTransaction persistenceTransaction, final Collection managedObjects) {
+    final long t0 = System.currentTimeMillis();
+    if (managedObjects.isEmpty()) { return; }
     Object failureContext = null;
     try {
-      for (Iterator i = managedObjects.iterator(); i.hasNext();) {
+      for (final Iterator i = managedObjects.iterator(); i.hasNext();) {
         final ManagedObject managedObject = (ManagedObject) i.next();
 
         final boolean status = basicSaveObject(managedObject);
 
         if (!status) {
           failureContext = new Object() {
+            @Override
             public String toString() {
               return "Unable to save ManagedObject: " + managedObject + "; status: " + status;
             }
@@ -218,19 +228,19 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
           break;
         }
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new TCRuntimeException(e);
     }
 
-    if (failureContext != null) throw new TCRuntimeException(failureContext.toString());
+    if (failureContext != null) { throw new TCRuntimeException(failureContext.toString()); }
 
-    long delta = System.currentTimeMillis() - t0;
-    saveAllElapsed += delta;
-    saveAllCount++;
-    saveAllObjectCount += managedObjects.size();
-    if (saveAllCount % (100 * 1000) == 0) {
-      double avg = ((double) saveAllObjectCount / (double) saveAllElapsed) * 1000;
-      logger.debug("save time: " + delta + ", " + managedObjects.size() + " objects; avg: " + avg + "/sec");
+    final long delta = System.currentTimeMillis() - t0;
+    this.saveAllElapsed += delta;
+    this.saveAllCount++;
+    this.saveAllObjectCount += managedObjects.size();
+    if (this.saveAllCount % (100 * 1000) == 0) {
+      final double avg = ((double) this.saveAllObjectCount / (double) this.saveAllElapsed) * 1000;
+      this.logger.debug("save time: " + delta + ", " + managedObjects.size() + " objects; avg: " + avg + "/sec");
     }
   }
 
@@ -238,19 +248,19 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
   private long saveAllObjectCount = 0;
   private long saveAllElapsed     = 0;
 
-  private void deleteObjectByID(PersistenceTransaction tx, ObjectID id) {
+  private void deleteObjectByID(final PersistenceTransaction tx, final ObjectID id) {
     validateID(id);
-    byte[] key = objectIDToData(id);
-    if (objectDB.get(key) != null) {
-      objectDB.remove(objectIDToData(id));
+    final byte[] key = objectIDToData(id);
+    if (this.objectDB.get(key) != null) {
+      this.objectDB.remove(objectIDToData(id));
     } else {
-      collectionsPersistor.deleteCollection(id);
+      this.collectionsPersistor.deleteCollection(id);
     }
   }
 
-  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> objectIDs) {
-    for (Iterator i = objectIDs.iterator(); i.hasNext();) {
-      deleteObjectByID(tx, (ObjectID) i.next());
+  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> objectIDs) {
+    for (final Object element : objectIDs) {
+      deleteObjectByID(tx, (ObjectID) element);
     }
   }
 
@@ -258,60 +268,60 @@ public final class MemoryStoreManagedObjectPersistor implements ManagedObjectPer
    * Private stuff
    */
 
-  private void validateID(ObjectID id) {
+  private void validateID(final ObjectID id) {
     Assert.assertNotNull(id);
     Assert.eval(!ObjectID.NULL_ID.equals(id));
   }
 
-  private byte[] objectIDToData(ObjectID objectID) {
+  private byte[] objectIDToData(final ObjectID objectID) {
     return (Conversion.long2Bytes(objectID.toLong()));
   }
 
-  private byte[] managedObjectToData(ManagedObject mo) throws IOException {
-    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+  private byte[] managedObjectToData(final ManagedObject mo) throws IOException {
+    final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
     new ObjectOutputStream(byteStream).writeObject(mo);
     return (byteStream.toByteArray());
   }
 
-  private ObjectID dataToObjectID(byte[] entry) {
+  private ObjectID dataToObjectID(final byte[] entry) {
     return new ObjectID(Conversion.bytes2Long(entry));
   }
 
-  private ManagedObject dataToManagedObject(byte[] value) throws IOException, ClassNotFoundException {
-    ByteArrayInputStream byteStream = new ByteArrayInputStream(value);
-    ObjectInputStream objStream = new ObjectInputStream(byteStream);
+  private ManagedObject dataToManagedObject(final byte[] value) throws IOException, ClassNotFoundException {
+    final ByteArrayInputStream byteStream = new ByteArrayInputStream(value);
+    final ObjectInputStream objStream = new ObjectInputStream(byteStream);
     return ((ManagedObject) objStream.readObject());
   }
 
   public void prettyPrint(PrettyPrinter out) {
     out.println(this.getClass().getName());
     out = out.duplicateAndIndent();
-    out.println("db: " + objectDB);
-    out.indent().print("extantObjectIDs: ").visit(extantObjectIDs).println();
+    out.println("db: " + this.objectDB);
+    out.indent().print("extantObjectIDs: ").visit(this.extantObjectIDs).println();
   }
 
   class ObjectIdReader implements Runnable {
     private final SyncObjectIdSet set;
 
-    public ObjectIdReader(SyncObjectIdSet set) {
+    public ObjectIdReader(final SyncObjectIdSet set) {
       this.set = set;
     }
 
     public void run() {
-      ObjectIDSet tmp = new ObjectIDSet(objectDB.getAll());
-      set.stopPopulating(tmp);
+      final ObjectIDSet tmp = new ObjectIDSet(MemoryStoreManagedObjectPersistor.this.objectDB.getAll());
+      this.set.stopPopulating(tmp);
     }
   }
 
-  public boolean addMapTypeObject(ObjectID id) {
+  public boolean addMapTypeObject(final ObjectID id) {
     return false;
   }
 
-  public boolean containsMapType(ObjectID id) {
+  public boolean containsMapType(final ObjectID id) {
     return false;
   }
 
-  public void removeAllMapTypeObject(Collection ids) {
+  public void removeAllMapTypeObject(final Collection ids) {
     return;
   }
 

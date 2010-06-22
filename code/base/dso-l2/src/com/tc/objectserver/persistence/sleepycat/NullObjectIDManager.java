@@ -11,11 +11,15 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 
-import java.util.Set;
+import java.util.SortedSet;
 
 public class NullObjectIDManager implements ObjectIDManager {
 
   public Runnable getObjectIDReader(final SyncObjectIdSet rv) {
+    return returnDummy(rv);
+  }
+
+  private Runnable returnDummy(final SyncObjectIdSet rv) {
     // a dummy one, just stop populating and return
     return new Runnable() {
       public void run() {
@@ -24,25 +28,26 @@ public class NullObjectIDManager implements ObjectIDManager {
       }
     };
   }
-  
+
   public Runnable getMapsObjectIDReader(final SyncObjectIdSet rv) {
-    return null;
+    return returnDummy(rv);
   }
 
-  public OperationStatus deleteAll(PersistenceTransaction tx, Set<ObjectID> oidSet) {
+  public Runnable getEvictableObjectIDReader(final SyncObjectIdSet rv) {
+    return returnDummy(rv);
+  }
+
+  public OperationStatus deleteAll(final PersistenceTransaction tx, final SortedSet<ObjectID> oidsToDelete,
+                                   final SyncObjectIdSet extantMapTypeOidSet,
+                                   final SyncObjectIdSet extantEvictableOidSet) {
     return OperationStatus.SUCCESS;
   }
 
-  public OperationStatus put(PersistenceTransaction tx, ManagedObject mo) {
+  public OperationStatus put(final PersistenceTransaction tx, final ManagedObject mo) {
     return OperationStatus.SUCCESS;
   }
 
-  public void prePutAll(Set<ObjectID> oidSet, ManagedObject mo) {
-    return;
-  }
-
-  public OperationStatus putAll(PersistenceTransaction tx, Set<ObjectID> oidSet) {
+  public OperationStatus putAll(final PersistenceTransaction tx, final SortedSet<ManagedObject> managedObjects) {
     return OperationStatus.SUCCESS;
   }
-
 }

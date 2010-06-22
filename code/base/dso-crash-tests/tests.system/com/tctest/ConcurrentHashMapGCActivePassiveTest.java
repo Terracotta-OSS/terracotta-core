@@ -10,16 +10,19 @@ import com.tc.test.MultipleServersSharedDataMode;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 
 public class ConcurrentHashMapGCActivePassiveTest extends GCAndActivePassiveTestBase implements TestConfigurator {
-  public void doSetUp(TransparentTestIface t) throws Exception {
+  @Override
+  public void doSetUp(final TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setAttribute(ConcurrentHashMapSwappingTestApp.GC_TEST_KEY, "true");
     super.doSetUp(t);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return ConcurrentHashMapSwappingTestApp.class;
   }
 
-  public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
+  @Override
+  public void setupActivePassiveTest(final ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
     setupManager.setServerCrashWaitTimeInSec(40);

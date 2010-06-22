@@ -14,8 +14,9 @@ public class ObjectManagerConfig {
   private final long    youngGenGCFrequency;
   private final long    enterpriseMarkStageInterval;
 
-  public ObjectManagerConfig(long gcThreadSleepTime, boolean doGC, boolean verboseGC, boolean paranoid,
-                             boolean youngGenGCEnabled, long youngGenGCFrequency, long enterpriseMarkStageInterval) {
+  public ObjectManagerConfig(final long gcThreadSleepTime, final boolean doGC, final boolean verboseGC,
+                             final boolean paranoid, final boolean youngGenGCEnabled, final long youngGenGCFrequency,
+                             final long enterpriseMarkStageInterval) {
     this.gcThreadSleepTime = gcThreadSleepTime;
     this.doGC = doGC;
     this.verboseGC = verboseGC;
@@ -50,7 +51,7 @@ public class ObjectManagerConfig {
   }
 
   public long getEnterpriseMarkStageInterval() {
-    return enterpriseMarkStageInterval;
+    return this.enterpriseMarkStageInterval;
   }
 
   public boolean startGCThread() {

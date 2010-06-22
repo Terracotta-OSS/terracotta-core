@@ -1,12 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.persistence.api;
 
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.util.sequence.MutableSequence;
-
 
 public interface Persistor {
   public void close();
@@ -20,13 +20,13 @@ public interface Persistor {
   public TransactionPersistor getTransactionPersistor();
 
   public MutableSequence getGlobalTransactionIDSequence();
-  
+
   public ClassPersistor getClassPersistor();
-  
+
   public StringIndex getStringIndex();
-  
+
   public PersistentCollectionFactory getPersistentCollectionFactory();
-  
+
   public PersistentMapStore getPersistentStateStore();
-  
+
 }

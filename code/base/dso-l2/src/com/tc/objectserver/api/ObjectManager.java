@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
+ * Manages all access to objects on the server. This will be single threaded and only accessed via it's event handler.
  */
 public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean {
 
@@ -28,10 +28,8 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   /**
    * releases the object and commits the transaction, so that if anyone needs it they can have it
-   * 
-   * @param object
    */
-  public void release(PersistenceTransaction tx, ManagedObject object);
+  public void releaseAndCommit(PersistenceTransaction tx, ManagedObject object);
 
   /**
    * release all objects
@@ -48,7 +46,7 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
    * 
    * @param collection
    */
-  public void releaseAll(PersistenceTransaction tx, Collection<ManagedObject> collection);
+  public void releaseAllAndCommit(PersistenceTransaction tx, Collection<ManagedObject> collection);
 
   /**
    * Looks up the objects associated with the Object Lookups from the clients. What it does is if all the objects are

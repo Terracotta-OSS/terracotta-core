@@ -115,7 +115,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new ObjectRequestManagerRestartImpl(objectMgr, transactionMgr, orm);
   }
 
-  public ServerMapRequestManager createServerTCMapRequestManager(ObjectManager objectMgr,
+  public ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr,
                                                                  DSOChannelManager channelManager,
                                                                  Sink respondToServerTCMapSink,
                                                                  Sink managedObjectRequestSink) {

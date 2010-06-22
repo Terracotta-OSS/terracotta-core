@@ -68,7 +68,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
 
     // wait for completion of daemon threads launched by getAllObjectIDs() & getAllMapsObjectIDs()
-    this.managedObjectPersistor.containsMapType(new ObjectID(1000));
+    this.managedObjectPersistor.snapshotObjectIDs();
   }
 
   private DBEnvironment newDBEnvironment() throws Exception {

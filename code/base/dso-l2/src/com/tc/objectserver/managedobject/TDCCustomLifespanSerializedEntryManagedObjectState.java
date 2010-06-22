@@ -20,36 +20,41 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
   public static final String CUSTOM_TTI_FIELD        = CUSTOM_SERIALIZED_ENTRY + ".customTti";
   public static final String CUSTOM_TTL_FIELD        = CUSTOM_SERIALIZED_ENTRY + ".customTtl";
 
-  private int customTti;
-  private int customTtl;
+  private int                customTti;
+  private int                customTtl;
 
   public TDCCustomLifespanSerializedEntryManagedObjectState(final long classID) {
     super(classID);
   }
 
   @Override
-  protected boolean basicEquals(final AbstractManagedObjectState o) {
-    TDCCustomLifespanSerializedEntryManagedObjectState other = (TDCCustomLifespanSerializedEntryManagedObjectState) o;
+  public boolean canEvict(final int ttiSeconds, final int ttlSeconds) {
+    return canEvictNow(this.customTti, this.customTtl);
+  }
 
-    if (customTti != other.customTti) return false;
-    if (customTtl != other.customTtl) return false;
+  @Override
+  protected boolean basicEquals(final AbstractManagedObjectState o) {
+    final TDCCustomLifespanSerializedEntryManagedObjectState other = (TDCCustomLifespanSerializedEntryManagedObjectState) o;
+
+    if (this.customTti != other.customTti) { return false; }
+    if (this.customTtl != other.customTtl) { return false; }
 
     return super.basicEquals(o);
   }
 
   @Override
-  protected void physicalActionApply(PhysicalAction pa) {
-    Object val = pa.getObject();
-    String field = pa.getFieldName();
+  protected void physicalActionApply(final PhysicalAction pa) {
+    final Object val = pa.getObject();
+    final String field = pa.getFieldName();
     if (CUSTOM_TTI_FIELD.equals(field)) {
       if (val instanceof Integer) {
-        customTti = ((Integer) val).intValue();
+        this.customTti = ((Integer) val).intValue();
       } else {
         logInvalidType(LAST_ACCESS_TIME_FIELD, val);
       }
     } else if (CUSTOM_TTL_FIELD.equals(field)) {
       if (val instanceof Integer) {
-        customTtl = ((Integer) val).intValue();
+        this.customTtl = ((Integer) val).intValue();
       } else {
         logInvalidType(CREATE_TIME_FIELD, val);
       }
@@ -62,16 +67,16 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
   protected Map<String, Object> addFacadeFields(Map<String, Object> fields) {
     // The byte[] value field is not shown in the admin console
     fields = super.addFacadeFields(fields);
-    fields.put(CUSTOM_TTI_FIELD, Integer.valueOf(customTti));
-    fields.put(CUSTOM_TTL_FIELD, Integer.valueOf(customTtl));
+    fields.put(CUSTOM_TTI_FIELD, Integer.valueOf(this.customTti));
+    fields.put(CUSTOM_TTL_FIELD, Integer.valueOf(this.customTtl));
     return fields;
   }
 
   @Override
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     super.dehydrate(objectID, writer, type);
-    writer.addPhysicalAction(CUSTOM_TTI_FIELD, Integer.valueOf(customTti));
-    writer.addPhysicalAction(CUSTOM_TTL_FIELD, Integer.valueOf(customTtl));
+    writer.addPhysicalAction(CUSTOM_TTI_FIELD, Integer.valueOf(this.customTti));
+    writer.addPhysicalAction(CUSTOM_TTL_FIELD, Integer.valueOf(this.customTtl));
   }
 
   @Override
@@ -82,16 +87,19 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
   @Override
   public void writeTo(final ObjectOutput out) throws IOException {
     super.writeTo(out);
-    out.writeInt(customTti);
-    out.writeInt(customTtl);
+    out.writeInt(this.customTti);
+    out.writeInt(this.customTtl);
   }
-  
+
   static TDCSerializedEntryManagedObjectState readFrom(final ObjectInput in) throws IOException {
-    TDCCustomLifespanSerializedEntryManagedObjectState state = new TDCCustomLifespanSerializedEntryManagedObjectState(in.readLong());
+    final TDCCustomLifespanSerializedEntryManagedObjectState state = new TDCCustomLifespanSerializedEntryManagedObjectState(
+                                                                                                                            in
+                                                                                                                                .readLong());
     state.readFromInternal(in);
     return state;
   }
 
+  @Override
   protected void readFromInternal(final ObjectInput in) throws IOException {
     super.readFromInternal(in);
     this.customTti = in.readInt();
