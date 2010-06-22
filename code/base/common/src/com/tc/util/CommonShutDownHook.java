@@ -10,10 +10,37 @@ import java.util.List;
 public class CommonShutDownHook implements Runnable {
   private static final List runnables = new ArrayList();
   private static Thread     hooker;                     // ;-)
+  private static boolean    shutdown;
+
+  public static void shutdown(boolean runHooks) {
+    synchronized (runnables) {
+      if (shutdown) return;
+      shutdown = true;
+    }
+
+    if (hooker != null) {
+      try {
+        Runtime.getRuntime().removeShutdownHook(hooker);
+      } finally {
+        try {
+          hooker.start();
+          hooker.join();
+        } catch (InterruptedException e) {
+          //
+        } finally {
+          hooker = null;
+          runnables.clear();
+        }
+      }
+    }
+  }
 
   public static void addShutdownHook(Runnable r) {
     if (r == null) { throw new NullPointerException("Shutdown hook cannot be null"); }
+
     synchronized (runnables) {
+      if (shutdown) throw new IllegalStateException("shutdown");
+
       runnables.add(r);
 
       if (hooker == null) {
@@ -31,8 +58,7 @@ public class CommonShutDownHook implements Runnable {
       hooks = (Runnable[]) runnables.toArray(new Runnable[runnables.size()]);
     }
 
-    for (int i = 0; i < hooks.length; i++) {
-      Runnable r = hooks[i];
+    for (Runnable r : hooks) {
       try {
         r.run();
       } catch (Throwable t) {

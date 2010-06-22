@@ -33,6 +33,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
@@ -99,6 +100,30 @@ public class L1Management extends TerracottaManagement {
         connServer.stop();
       } finally {
         connServer = null;
+      }
+    }
+
+    ManagementResources mr = new ManagementResources();
+    unregisterBeans(mr.getInternalMBeanDomain());
+    unregisterBeans(mr.getPublicMBeanDomain());
+  }
+
+  private void unregisterBeans(String domain) {
+    MBeanServer mbs = mBeanServer;
+    if (mbs != null) {
+      Set<ObjectName> queryNames;
+      try {
+        queryNames = mbs.queryNames(new ObjectName(domain + ":*,node=" + tunnelingHandler.getUUID()), null);
+      } catch (MalformedObjectNameException e1) {
+        throw new RuntimeException(e1);
+      }
+
+      for (ObjectName name : queryNames) {
+        try {
+          mbs.unregisterMBean(name);
+        } catch (Exception e) {
+          logger.error("error unregistering " + name, e);
+        }
       }
     }
   }
@@ -234,6 +259,8 @@ public class L1Management extends TerracottaManagement {
   }
 
   private void addJMXConnectors() {
+
+    // This will make the JobExecutor threads in remote JMX idle timeout after 5s (instead of 5 minutes)
     try {
       Class c = Class.forName("com.sun.jmx.remote.opt.util.JobExecutor");
       Method method = c.getMethod("setWaitingTime", Long.TYPE);
@@ -261,8 +288,7 @@ public class L1Management extends TerracottaManagement {
       url = new JMXServiceURL("terracotta", "localhost", 0);
       // Normally you should NOT do this in the client, but we have a modified version of jmxremote_optional.jar that
       // uses a daemon thread to wait for connections so we don't hang the client
-      connServer = JMXConnectorServerFactory.newJMXConnectorServer(url, environment,
-                                                                                            mBeanServer);
+      connServer = JMXConnectorServerFactory.newJMXConnectorServer(url, environment, mBeanServer);
       connServer.start();
       logger.info("Terracotta JMX connector available at[" + url + "]");
     } catch (Exception e) {

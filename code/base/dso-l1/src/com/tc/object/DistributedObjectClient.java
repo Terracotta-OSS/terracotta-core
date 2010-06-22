@@ -540,7 +540,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
             .getNodeMetaDataMessageFactory());
 
     // Set up the JMX management stuff
-    final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(), this.config);
+    final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
+                                                                                        this.config);
     this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config);
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
@@ -928,6 +929,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         counterManager.shutdown();
       } catch (Throwable t) {
         logger.error("error shutting down counter manager", t);
+      } finally {
+        counterManager = null;
       }
     }
 
@@ -936,6 +939,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         l1Management.stop();
       } catch (Throwable t) {
         logger.error("error shutting down JMX connector", t);
+      } finally {
+        l1Management = null;
       }
     }
 
@@ -944,6 +949,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         tcMemManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error stopping memory manager", t);
+      } finally {
+        tcMemManager = null;
       }
     }
 
@@ -952,6 +959,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         lockManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error stopping lock manager", t);
+      } finally {
+        lockManager = null;
       }
     }
 
@@ -966,6 +975,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         objectManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error shutting down client object manager", t);
+      } finally {
+        objectManager = null;
       }
     }
 
@@ -974,6 +985,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         channel.close();
       } catch (Throwable t) {
         logger.error("Error closing channel", t);
+      } finally {
+        channel = null;
       }
     }
 
@@ -982,7 +995,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         communicationsManager.shutdown();
       } catch (Throwable t) {
         logger.error("Error shutting down communications manager", t);
+      } finally {
+        communicationsManager = null;
       }
     }
+
+    CommonShutDownHook.shutdown(true);
   }
 }
