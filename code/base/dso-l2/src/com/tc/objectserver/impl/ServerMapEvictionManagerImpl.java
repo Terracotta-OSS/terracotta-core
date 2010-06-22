@@ -177,7 +177,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       } else {
         if (++cantEvict % 1000 == 0) {
           if (EVICTOR_LOGGING) {
-            logger.info("Server Map Eviction  : Can't Evict " + cantEvict + " Candidates so far : " + candidates.size()
+            logger.info("Server Map Eviction : " + oid + " : Can't Evict " + cantEvict + " Candidates so far : " + candidates.size()
                         + " Samples : " + samples.size());
           }
         }
