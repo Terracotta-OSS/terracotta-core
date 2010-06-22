@@ -18,8 +18,8 @@ public class LicenseDescriptorTest extends TestCase {
     testProduct("Ehcache", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, ehcache");
     testProduct("Quartz", "EX", 3, "Terracotta operator console, authentication, quartz");
     testProduct("Quartz", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, quartz");
-    testProduct("Session", "EX", 3, "Terracotta operator console, authentication, sessions");
-    testProduct("Session", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, sessions");
+    testProduct("Sessions", "EX", 3, "Terracotta operator console, authentication, sessions");
+    testProduct("Sessions", "FX", 5, "Terracotta operator console, server striping, DCV2, authentication, sessions");
   }
 
   private void testProduct(String product, String edition, int capabilitiesCount, String expectedCapabilities) {
