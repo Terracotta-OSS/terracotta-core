@@ -32,20 +32,24 @@ public class StatisticsRetrievalThreadsTest extends AbstractStatisticsTransparen
     waitForAllNodesToConnectToGateway(stat_gateway, StatisticsRetrievalThreadsTestApp.NODE_COUNT+1);
 
     List<StatisticData> data = new ArrayList<StatisticData>();
-    CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsGatewayNoActionsTestApp.NODE_COUNT + 1);
+    CollectingNotificationListener listener = new CollectingNotificationListener(StatisticsRetrievalThreadsTestApp.NODE_COUNT + 1);
     mbsc.addNotificationListener(StatisticsMBeanNames.STATISTICS_GATEWAY, listener, null, data);
     stat_gateway.enable();
 
+    String sessionid = UUID.getUUID().toString();
     for (int i = 0; i < 5; i++) {
-      String sessionid = UUID.getUUID().toString();
-      stat_gateway.createSession(sessionid);
+      stat_gateway.createSession(sessionid + i);
 
       // start capturing
-      stat_gateway.startCapturing(sessionid);
-
+      stat_gateway.startCapturing(sessionid + i);
+    }
+    
+    Thread.sleep(120000);
+    
+    for (int i = 0; i < 5; i++) {
       // stop capturing and wait for the last data
       synchronized (listener) {
-        stat_gateway.stopCapturing(sessionid);
+        stat_gateway.stopCapturing(sessionid + i);
         while (!listener.getShutdown()) {
           listener.wait(2000);
         }
@@ -63,7 +67,7 @@ public class StatisticsRetrievalThreadsTest extends AbstractStatisticsTransparen
 
   @Override
   protected Class getApplicationClass() {
-    return StatisticsManagerNoActionsTestApp.class;
+    return StatisticsRetrievalThreadsTestApp.class;
   }
 
   @Override
