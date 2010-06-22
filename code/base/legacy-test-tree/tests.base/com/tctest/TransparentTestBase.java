@@ -127,10 +127,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     // for windows, it takes 10 seconds to restart proxy port
     if (Os.isWindows()) {
-      tcProps.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "20000");
-      System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, "20000");
-      jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT + "=20000");
+      setL2ReconnectTimout(jvmArgs, 20000);
     }
+  }
+
+  protected void setL2ReconnectTimout(final ArrayList jvmArgs, int timeoutMilliSecond) {
+    String timeoutString = Integer.toString(timeoutMilliSecond);
+    TCProperties tcProps = TCPropertiesImpl.getProperties();
+
+    tcProps.setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, timeoutString);
+    System.setProperty("com.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT, timeoutString);
+    jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT + "=" + timeoutString);
   }
 
   protected void setJvmArgsCvtIsolation(final ArrayList jvmArgs) {

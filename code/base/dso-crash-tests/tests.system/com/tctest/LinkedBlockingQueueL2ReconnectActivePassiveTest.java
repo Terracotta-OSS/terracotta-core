@@ -17,8 +17,15 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassi
   
   public LinkedBlockingQueueL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
-//      System.err.println("Disabling it for windows only for now");
-//      disableAllUntil("2008-05-15");
+      // System.err.println("Disabling it for windows only for now");
+      // disableAllUntil("2008-05-15");
+    }
+  }
+
+  protected void setJvmArgsL2Reconnect(final ArrayList jvmArgs) {
+    super.setJvmArgsL2Reconnect(jvmArgs);
+    if (Os.isSolaris()) {
+      setL2ReconnectTimout(jvmArgs, 5000);
     }
   }
 
