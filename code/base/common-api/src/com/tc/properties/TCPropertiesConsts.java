@@ -112,7 +112,6 @@ public interface TCPropertiesConsts {
    *                                  objects to the passive
    * dgc.throttle.timeInMillis     - Throttle time for dgc for each cycle for every requestsPerThrottle
    *                                 requests for references from object manager
-   * l2.objectmanager.persistor.measure.performance - Enable/disable logging for object manager persistor
    * dgc.throttle.requestsPerThrottle - Number of objects for which object references are requested
    *                                 from object manager after which dgc will throttle
    * dgc.faulting.optimization      - This property will not fault in objects that has no references during DGC mark stage
@@ -152,7 +151,6 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                          = "l2.objectmanager.dgc.young.frequencyInMillis";
   public static final String   L2_OBJECTMANAGER_DGC_ENTERPRISE_MARK_STAGE_INTERVAL           = "l2.objectmanager.dgc.enterpriseMarkStageInterval";
   public static final String   L2_DATA_BACKUP_THROTTLE_TIME                                  = "l2.data.backup.throttle.timeInMillis";
-  public static final String   L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF                       = "l2.objectmanager.persistor.measure.performance";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY        = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                    = "l2.objectmanager.loadObjectID.measure.performance";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP             = "l2.objectmanager.loadObjectID.checkpoint.maxsleep";

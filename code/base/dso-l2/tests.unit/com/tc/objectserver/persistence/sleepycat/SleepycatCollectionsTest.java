@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class SleepycatCollectionsTest extends TCTestCase {
 
@@ -160,7 +162,9 @@ public class SleepycatCollectionsTest extends TCTestCase {
     equals(localMap, sMap2);
 
     tx = this.ptp.newTransaction();
-    Assert.assertTrue(this.collectionsPersistor.deleteCollection(tx, id));
+    SortedSet<ObjectID> idsToDelete = new TreeSet<ObjectID>();
+    idsToDelete.add(id);
+    Assert.assertEquals(40, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete));
     tx.commit();
 
     tx = this.ptp.newTransaction();
@@ -174,7 +178,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     equals(new HashMap(), sMap2);
 
     tx = this.ptp.newTransaction();
-    Assert.assertFalse(this.collectionsPersistor.deleteCollection(tx, id));
+    Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete));
     tx.commit();
 
   }

@@ -325,7 +325,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     } finally {
       ptx.commit();
     }
-    assertEquals(toDelete.size(), this.testSleepycatCollectionsPersistor.getCounter());
+    assertEquals(1, this.testSleepycatCollectionsPersistor.getCounter());
 
     runCheckpointToCompressedStorage();
 
@@ -364,7 +364,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     } finally {
       ptx.commit();
     }
-    assertEquals(objectIds.size(), this.testSleepycatCollectionsPersistor.getCounter());
+    assertEquals(1, this.testSleepycatCollectionsPersistor.getCounter());
 
     runCheckpointToCompressedStorage();
 
@@ -388,11 +388,11 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     }
 
     @Override
-    public boolean deleteCollection(final PersistenceTransaction tx, final ObjectID id) {
+    public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) {
       ++this.counter;
-      return true;
+      return counter;
     }
-
+    
     public void setCounter(final int value) {
       this.counter = value;
     }

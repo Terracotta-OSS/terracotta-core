@@ -19,8 +19,11 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.PersistableObjectState;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
@@ -28,9 +31,15 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.util.SortedSet;
 
 public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
 
+  private static final int                 DELETE_BATCH_SIZE = TCPropertiesImpl
+                                                                 .getProperties()
+                                                                 .getInt(
+                                                                         TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                         5000);
   private final Database                   database;
   private final BasicSerializer            serializer;
   private final ByteArrayOutputStream      bao;
@@ -97,10 +106,10 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
   /**
    * This method is slightly dubious in that it assumes that the ObjectID is the first 8 bytes of the Key in the entire
    * collections database.(which is true, but that logic is spread elsewhere)
+   * @throws TCDatabaseException 
    * 
-   * @throws TCDatabaseException
    */
-  public boolean deleteCollection(PersistenceTransaction tx, ObjectID id) throws TCDatabaseException {
+  public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) throws TCDatabaseException {
     // These are the possible ways for isolation
     // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
     // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
@@ -110,32 +119,59 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     // During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
     // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
     // avoided
+    PersistenceTransaction tx = ptp.newTransaction();
+    int totalEntriesDeleted = 0;
+    int mapEntriesDeleted = 0;
+
     Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     try {
-      boolean found = false;
-      byte idb[] = Conversion.long2Bytes(id.toLong());
-      DatabaseEntry key = new DatabaseEntry();
-      key.setData(idb);
-      DatabaseEntry value = new DatabaseEntry();
-      value.setPartial(0, 0, true);
-      try {
-        if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-          do {
-            if (partialMatch(idb, key.getData())) {
-              found = true;
-              c.delete();
-            } else {
-              break;
-            }
-          } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+      for (ObjectID id : mapIds) {
+        byte idb[] = Conversion.long2Bytes(id.toLong());
+        DatabaseEntry key = new DatabaseEntry();
+        key.setData(idb);
+        DatabaseEntry value = new DatabaseEntry();
+        value.setPartial(0, 0, true);
+        try {
+          if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+            do {
+              if (partialMatch(idb, key.getData())) {
+                c.delete();
+                mapEntriesDeleted++;
+                totalEntriesDeleted++;
+                if (mapEntriesDeleted >= DELETE_BATCH_SIZE) {
+                  c.close();
+                  tx.commit();
+                  mapEntriesDeleted = 0;
+                  tx = ptp.newTransaction();
+                  c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
+                  if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+                    if (partialMatch(idb, key.getData())) {
+                      c.delete();
+                      mapEntriesDeleted++;
+                      totalEntriesDeleted++;
+                    } else {
+                      break;
+                    }
+                  }
+                }
+              } else {
+                break;
+              }
+            } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+          }
+        } catch (Exception t) {
+          throw new TCDatabaseException(t.getMessage());
         }
-      } catch (Exception t) {
-        throw new TCDatabaseException(t.getMessage());
       }
-      return found;
+    } catch (Exception e) {
+      throw new TCDatabaseException(e.getMessage());
     } finally {
       c.close();
+      if (mapEntriesDeleted > 0) {
+        tx.commit();
+      }
     }
+    return totalEntriesDeleted;
   }
 
   private boolean partialMatch(byte[] idbytes, byte[] key) {

@@ -22,11 +22,6 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
-import com.tc.statistics.util.NullStatsRecorder;
-import com.tc.statistics.util.StatsPrinter;
-import com.tc.statistics.util.StatsRecorder;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -37,7 +32,6 @@ import com.tc.util.SyncObjectIdSetImpl;
 import com.tc.util.sequence.MutableSequence;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -72,11 +66,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                                                            + ".saveAllObjects";
   private static final Object                     MO_PERSISTOR_VALUE     = "Complete";
 
-  private static final boolean                    MEASURE_PERF           = TCPropertiesImpl
-                                                                             .getProperties()
-                                                                             .getBoolean(
-                                                                                         TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_MEASURE_PERF,
-                                                                                         false);
   private static final int                        INTEGER_MAX_80_PERCENT = (int) (Integer.MAX_VALUE * 0.8);
 
   private final Database                          objectDB;
@@ -94,7 +83,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   private final SyncObjectIdSet                   extantMapTypeOidSet;
   private final SyncObjectIdSet                   extantEvictableOidSet;
   private final ObjectStatsRecorder               objectStatsRecorder;
-  private final StatsRecorder                     perfMeasureStats;
 
   private final ThreadLocal<SerializationAdapter> threadlocalAdapter;
 
@@ -132,19 +120,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.extantEvictableOidSet = loadAllEvictableObjectIDs();
 
     this.objectStatsRecorder = objectStatsRecorder;
-
-    if (MEASURE_PERF) {
-      this.perfMeasureStats = new StatsPrinter(
-                                               new MessageFormat("Deletes in the Last {0} ms"),
-                                               new MessageFormat(
-                                               // " count = {0,number,#} collections mo state = {1,number,#} time taken
-                                                                 // =
-                                                                 // {2,number, #}"
-                                                                 " total count = {0}   collections mo state = {1}   time taken = {2} nanos"),
-                                               false);
-    } else {
-      this.perfMeasureStats = new NullStatsRecorder();
-    }
   }
 
   public int getObjectCount() {
@@ -511,31 +486,26 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   private void deleteObjectByID(final PersistenceTransaction tx, final ObjectID id) {
     validateID(id);
-    try {
-      final DatabaseEntry key = new DatabaseEntry();
-      setObjectIDData(key, id);
-      final OperationStatus status = this.objectDB.delete(pt2nt(tx), key);
-      if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
-        // make the formatter happy
-        throw new DBException("Unable to remove ManagedObject for object id: " + id + ", status: " + status);
-      } else {
-        long startTime = 0;
-        boolean isMapType = false;
-        if (MEASURE_PERF) {
-          startTime = System.nanoTime();
-        }
-        if (containsMapType(id)) {
-          isMapType = true;
-          // may return false if ManagedObject persistent state empty
-          this.collectionsPersistor.deleteCollection(tx, id);
-        }
-        if (MEASURE_PERF) {
-          this.perfMeasureStats.updateStats("Managed Objects deleted ", new long[] { 1, (isMapType ? 1 : 0),
-              (System.nanoTime() - startTime) });
-        }
+    DatabaseEntry key = new DatabaseEntry();
+    setObjectIDData(key, id);
+    OperationStatus status = this.objectDB.delete(pt2nt(tx), key);
+    if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
+      // make the formatter happy
+      throw new DBException("Unable to remove ManagedObject for object id: " + id + ", status: " + status);
+    }
+  }
+
+  private void deleteAllMaps(SortedSet<ObjectID> sortedOids) throws TCDatabaseException {
+    SortedSet<ObjectID> mapIds = new TreeSet<ObjectID>();
+    for(ObjectID id : sortedOids){
+      validateID(id);
+      if(containsMapType(id)){
+        mapIds.add(id);
       }
-    } catch (final TCDatabaseException t) {
-      throw new DBException(t);
+    }
+    
+    if(mapIds.size() > 0){
+      this.collectionsPersistor.deleteAllCollections(this.ptp, mapIds);
     }
   }
 
@@ -543,9 +513,14 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
    * This method takes a SortedSet of Object ID to delete for two reasons. 1) to maintain lock ordering - check
    * saveAllObjects 2) for performance reason
    */
-  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> sortedOids) {
-    for (final ObjectID objectID : sortedOids) {
-      deleteObjectByID(tx, objectID);
+  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> sortedOids) {
+    try {
+      deleteAllMaps(sortedOids);
+    } catch (TCDatabaseException e) {
+      throw new TCRuntimeException(e);
+    }
+    for (ObjectID element : sortedOids) {
+      deleteObjectByID(tx, element);
     }
 
     try {

@@ -343,9 +343,9 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     @Override
-    public boolean deleteCollection(final PersistenceTransaction tx, final ObjectID id) {
+    public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) {
       ++this.counter;
-      return true;
+      return counter;
     }
 
     public void setCounter(final int value) {
@@ -377,12 +377,14 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
       return this.state;
     }
 
+    @Override
     public boolean equals(Object other) {
       if (!(other instanceof TestPersistentStateManagedObject)) { return false; }
       TestPersistentStateManagedObject o = (TestPersistentStateManagedObject) other;
       return getID().toLong() == o.getID().toLong();
     }
 
+    @Override
     public int hashCode() {
       return (int) getID().toLong();
     }
