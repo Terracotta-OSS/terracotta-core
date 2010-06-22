@@ -18,8 +18,8 @@ import com.tc.object.event.DmiEventContext;
 import com.tc.object.event.DmiManager;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.gtx.GlobalTransactionID;
-import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -88,6 +88,8 @@ public class ReceiveTransactionHandler extends AbstractEventHandler {
           this.txManager.apply(btm.getTransactionType(), btm.getLockIDs(), changes, btm.getNewRoots());
         } catch (TCClassNotFoundException cnfe) {
           logger.warn("transaction apply failed for " + btm.getTransactionID(), cnfe);
+          // Do not ignore, re-throw to kill this L1
+          throw cnfe;
         }
 
       }
