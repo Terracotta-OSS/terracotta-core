@@ -11,6 +11,8 @@ import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.runtime.Os;
 
+import java.util.ArrayList;
+
 public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase {
 
   private static final int NODE_COUNT = 4;
