@@ -210,16 +210,6 @@ modules:
         - sigarstats
         - thirdparty
         - tim-api
-  - dso-memory-datastore:
-      options:
-        jdk: J2SE-1.5
-      dependencies:
-        - common
-        - common-api
-        - license-common
-        - dso-common
-        - dso-l1-api
-        - tim-api
   - dso-l2:
       options:
         jdk: J2SE-1.5
@@ -231,7 +221,6 @@ modules:
         - dso-common-jdk16
         - dso-l1-api
         - dso-l2-common
-        - dso-memory-datastore
         - dso-statistics
         - dso-statistics-api
         - management
@@ -383,7 +372,6 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
-        - dso-memory-datastore
         - dso-statistics
         - dso-statistics-api
         - legacy-test-tree
@@ -432,7 +420,6 @@ modules:
         - dso-l1-api
         - dso-l2
         - dso-l2-common
-        - dso-memory-datastore
         - dso-statistics
         - dso-statistics-api
         - dso-system-tests
@@ -478,4 +465,3 @@ module-groups:
     - dso-statistics
     - dso-statistics-tests
     - management
-    - dso-memory-datastore
