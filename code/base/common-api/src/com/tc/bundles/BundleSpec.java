@@ -20,7 +20,11 @@ public abstract class BundleSpec {
   public static final String    REQUIRE_BUNDLE              = "Require-Bundle";
   protected static final String PROP_KEY_RESOLUTION         = "resolution";
   protected static final String PROP_KEY_BUNDLE_VERSION     = "bundle-version";
-  protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z][A-Za-z0-9._\\-]+";
+  // This only accepts names that start with at least 2 chars and no numbers, when we later determine
+  // the simple name from the full symbolic name it is used to determine which part is the groupId and which part is the name.
+  // To do this the symbolic name is split in parts that are separated by the dots. These contrived rules are needed for names
+  // like tim-ehcache-1.7 and tim-ehcache-2.x-ui
+  protected static final String BUNDLE_SYMBOLIC_NAME_REGEX  = "[a-zA-Z]{2}[A-Za-z0-9._\\-]+";  
   protected static final String REQUIRE_BUNDLE_EXPR_MATCHER = "(" + BUNDLE_SYMBOLIC_NAME_REGEX
                                                               + "(;resolution:=\"?optional\"?)?" + //
                                                               "(;bundle-version:=(\"?[A-Za-z0-9.]+\"?|" + //
