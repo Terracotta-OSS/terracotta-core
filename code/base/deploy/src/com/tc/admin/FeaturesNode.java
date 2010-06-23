@@ -182,7 +182,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         acp.activeFeatureAdded(featureNode.getName());
       }
     } else if (isNodeChild(featureNode)) {
-      featureNode.removeNoTearDown();
+      removeChild(featureNode);
       if (acp != null) {
         acp.activeFeatureRemoved(featureNode.getName());
       }

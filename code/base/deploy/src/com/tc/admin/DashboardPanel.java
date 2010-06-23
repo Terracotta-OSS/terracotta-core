@@ -49,6 +49,7 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -193,6 +194,8 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   public void attributesPolled(final PolledAttributesResult result) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (tornDown.get()) { return; }
+
         IClusterModel theClusterModel = getClusterModel();
         if (theClusterModel == null) { return; }
 
@@ -279,7 +282,12 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
         if (lockRecallRate != -1) lockRecallRateDialInfo.setValue(Double.valueOf(lockRecallRate));
         if (faultRate != -1) faultRateDialInfo.setValue(Double.valueOf(faultRate));
         if (flushRate != -1) flushRateDialInfo.setValue(Double.valueOf(flushRate));
-        if (txnSizeRate != -1) txnSizeRateDialInfo.setValue(Double.valueOf((txnSizeRate / clusterModel.getServerGroups().length ) / 1000d));
+        if (txnSizeRate != -1) {
+          IServerGroup[] groups = clusterModel.getServerGroups();
+          if (groups != null && groups.length > 0) {
+            txnSizeRateDialInfo.setValue(Double.valueOf((txnSizeRate / groups.length) / 1000d));
+          }
+        }
         if (pendingTxnsCount != -1) pendingTxnsDialInfo.setValue(Integer.valueOf(pendingTxnsCount));
       }
     });
@@ -587,8 +595,12 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
     }
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     clusterModel.removePropertyChangeListener(clusterListener);
     clusterListener.tearDown();
 

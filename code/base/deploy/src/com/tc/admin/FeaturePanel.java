@@ -87,7 +87,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
         if (presentation != null) {
           presentation.addPropertyChangeListener(this);
           presentation.setup(adminClientContext, clusterModel);
-          // presentation.startup();
+          presentation.startup();
         } else {
           System.err.println("Failed to instantiate instance of '" + factory + "'");
         }

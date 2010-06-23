@@ -21,4 +21,6 @@ public abstract class Presentation extends JPanel {
   }
 
   public abstract void tearDown();
+
+  public abstract void startup();
 }

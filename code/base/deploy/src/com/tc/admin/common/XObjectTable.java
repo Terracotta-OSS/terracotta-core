@@ -202,14 +202,15 @@ public class XObjectTable extends XTable {
   }
 
   public Object[] getSelection() {
+    Object[] result = {};
     XObjectTableModel model = (XObjectTableModel) getModel();
-    int[] rows = getSelectedRows();
-    Object[] result = new Object[rows.length];
-
-    for (int i = 0; i < rows.length; i++) {
-      result[i] = model.getObjectAt(rows[i]);
+    if (model.getRowCount() > 0) {
+      int[] rows = getSelectedRows();
+      result = new Object[rows.length];
+      for (int i = 0; i < rows.length; i++) {
+        result[i] = model.getObjectAt(rows[i]);
+      }
     }
-
     return result;
   }
 

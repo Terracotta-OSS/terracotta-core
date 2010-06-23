@@ -6,7 +6,6 @@ package com.tc.admin;
 import org.terracotta.modules.configuration.Presentation;
 
 import com.tc.admin.common.ComponentNode;
-import com.tc.admin.common.XTreeNode;
 import com.tc.admin.dso.ClientsNode;
 import com.tc.admin.model.IClusterModel;
 
@@ -83,19 +82,11 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
     return featurePanel.getPresentation();
   }
 
-  private boolean shouldTearDown;
-
-  void removeNoTearDown() {
-    shouldTearDown = false;
-    ((XTreeNode) getParent()).removeChild(this);
-    shouldTearDown = true;
-  }
-
   private final AtomicBoolean tornDown = new AtomicBoolean(false);
 
   @Override
   public void tearDown() {
-    if (!shouldTearDown || !tornDown.compareAndSet(false, true)) { return; }
+    if (!tornDown.compareAndSet(false, true)) { return; }
 
     if (featurePanel != null) {
       featurePanel.tearDown();

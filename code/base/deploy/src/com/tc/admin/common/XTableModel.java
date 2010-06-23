@@ -12,6 +12,10 @@ public class XTableModel extends DefaultTableModel {
   }
 
   public XTableModel(Object[] columnNames) {
-    super(columnNames, 0);
+    this(columnNames, 0);
+  }
+
+  public XTableModel(Object[] columnNames, int rowCount) {
+    super(columnNames, rowCount);
   }
 }
