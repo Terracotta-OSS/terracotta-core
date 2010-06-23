@@ -269,11 +269,9 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       }
     }
     while (true) {
-      int newPort = portChooser.chooseRandomPort();
-      if (newPort == PortChooser.MAX) {
-        continue;
-      }
-      if (portChooser.isPortUsed(newPort + 1)) {
+      final int numOfPorts = 4;
+      int newPort = portChooser.chooseRandomPorts(numOfPorts);
+      if (newPort + numOfPorts >= PortChooser.MAX) {
         continue;
       }
       if (isUnusedPort(newPort) && isUnusedPort(newPort + 1) && isUnusedPort(newPort + 2) && isUnusedPort(newPort + 3)) {

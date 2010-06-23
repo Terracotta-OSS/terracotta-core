@@ -42,6 +42,31 @@ public final class PortChooser {
     return port;
   }
 
+  public int chooseRandomPorts(int numOfPorts) {
+    Assert.assertTrue(numOfPorts > 0);
+    int port = 0;
+    synchronized (VM_WIDE_LOCK) {
+      do {
+        port = choose();
+        boolean choosen = true;
+        for (int i = 1; i < numOfPorts; i++) {
+          if (!isPortUsed(port + i)) {
+            choosen = false;
+            break;
+          }
+        }
+        if(choosen && (port + numOfPorts <= MAX)){
+          break;
+        }
+      } while (true);
+      
+      for(int i = 1; i < numOfPorts; i++){
+        chosen.add(new Integer(port + i));
+      }
+    }
+    return port;
+  }
+
   public boolean isPortUsed(int portNum) {
     final Integer port = new Integer(portNum);
     if (chosen.contains(port)) return true;
