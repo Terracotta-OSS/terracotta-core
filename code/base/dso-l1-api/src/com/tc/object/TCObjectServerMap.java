@@ -8,6 +8,16 @@ import com.tc.object.bytecode.TCServerMap;
 public interface TCObjectServerMap extends TCObject {
 
   /**
+   * Initializes the server map TCObject with TTI,TTL, max in memory capacity and max target count.
+   * 
+   * @param maxTTISeconds TTI
+   * @param maxTTLSeconds TTL
+   * @param targetMaxInMemoryCount targetMaxInMemoryCount
+   * @param targetMaxTotalCount targetMaxTotalCount
+   */
+  public void initialize(int maxTTISeconds, int maxTTLSeconds, int targetMaxInMemoryCount, int targetMaxTotalCount);
+
+  /**
    * Does a logic remove and removes from the local cache if present
    * 
    * @param map ServerTCMap
@@ -65,7 +75,7 @@ public interface TCObjectServerMap extends TCObject {
    * @return int for size of map.
    */
   public int getSize(final TCServerMap map);
-  
+
   /**
    * Returns the size of the local cache
    * 
@@ -79,4 +89,9 @@ public interface TCObjectServerMap extends TCObject {
    * @param map ServerTCMap
    */
   public void clearLocalCache(final TCServerMap map);
+
+  /**
+   * Runs Target capacity eviction to evict Cached Entries from local cache
+   */
+  public void doCapacityEviction();
 }

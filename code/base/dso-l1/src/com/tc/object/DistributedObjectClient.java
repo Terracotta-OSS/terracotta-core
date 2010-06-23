@@ -71,6 +71,7 @@ import com.tc.object.event.DmiManager;
 import com.tc.object.event.DmiManagerImpl;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.handler.BatchTransactionAckHandler;
+import com.tc.object.handler.CapacityEvictionHandler;
 import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterMemberShipEventsHandler;
 import com.tc.object.handler.ClusterMetaDataHandler;
@@ -488,10 +489,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final Stage lockRecallStage = stageManager.createStage(ClientConfigurationContext.LOCK_RECALL_STAGE,
                                                            new LockRecallHandler(), 1, maxSize);
+    final Stage capacityEvictionStage = stageManager.createStage(ClientConfigurationContext.CAPACITY_EVICTION_STAGE,
+                                                                 new CapacityEvictionHandler(), 1, maxSize);
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
-            .getLogger(RemoteObjectManager.class)), this.channel, sessionManager, lockRecallStage.getSink());
+            .getLogger(RemoteObjectManager.class)), this.channel, sessionManager, lockRecallStage.getSink(),
+                                      capacityEvictionStage.getSink());
 
     final ClientGlobalTransactionManager gtxManager = this.dsoClientBuilder
         .createClientGlobalTransactionManager(this.rtxManager, remoteServerMapManager);
@@ -512,17 +516,17 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final TCProperties cacheManagerProperties = this.l1Properties.getPropertiesFor("cachemanager");
     final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties);
-    tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(), cacheConfig
-        .isOnlyOldGenMonitored(), getThreadGroup());
+    this.tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(),
+                                                cacheConfig.isOnlyOldGenMonitored(), getThreadGroup());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = new LongGCLogger(timeOut);
-    tcMemManager.registerForMemoryEvents(gcLogger);
+    this.tcMemManager.registerForMemoryEvents(gcLogger);
     // CDV-1181 warn if using CMS
-    tcMemManager.checkGarbageCollectors();
+    this.tcMemManager.checkGarbageCollectors();
 
     if (cacheManagerProperties.getBoolean("enabled")) {
       this.cacheManager = new CacheManager(this.objectManager, cacheConfig, getThreadGroup(),
-                                           this.statisticsAgentSubSystem, tcMemManager);
+                                           this.statisticsAgentSubSystem, this.tcMemManager);
       this.cacheManager.start();
       if (DSO_LOGGER.isDebugEnabled()) {
         DSO_LOGGER.debug("CacheManager Enabled : " + this.cacheManager);
@@ -813,7 +817,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     // register for memory events for operator console
     // register for it after the handshake happens see MNK-1684
-    tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
+    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
 
     if (this.statisticsAgentSubSystem.isActive()) {
       this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
@@ -922,81 +926,81 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   }
 
   public void shutdown() {
-    TCLogger logger = DSO_LOGGER;
+    final TCLogger logger = DSO_LOGGER;
 
-    if (counterManager != null) {
+    if (this.counterManager != null) {
       try {
-        counterManager.shutdown();
-      } catch (Throwable t) {
+        this.counterManager.shutdown();
+      } catch (final Throwable t) {
         logger.error("error shutting down counter manager", t);
       } finally {
-        counterManager = null;
+        this.counterManager = null;
       }
     }
 
-    if (l1Management != null) {
+    if (this.l1Management != null) {
       try {
-        l1Management.stop();
-      } catch (Throwable t) {
+        this.l1Management.stop();
+      } catch (final Throwable t) {
         logger.error("error shutting down JMX connector", t);
       } finally {
-        l1Management = null;
+        this.l1Management = null;
       }
     }
 
-    if (tcMemManager != null) {
+    if (this.tcMemManager != null) {
       try {
-        tcMemManager.shutdown();
-      } catch (Throwable t) {
+        this.tcMemManager.shutdown();
+      } catch (final Throwable t) {
         logger.error("Error stopping memory manager", t);
       } finally {
-        tcMemManager = null;
+        this.tcMemManager = null;
       }
     }
 
-    if (lockManager != null) {
+    if (this.lockManager != null) {
       try {
-        lockManager.shutdown();
-      } catch (Throwable t) {
+        this.lockManager.shutdown();
+      } catch (final Throwable t) {
         logger.error("Error stopping lock manager", t);
       } finally {
-        lockManager = null;
+        this.lockManager = null;
       }
     }
 
     try {
       getStageManager().stopAll();
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       logger.error("Error stopping stage manager", t);
     }
 
-    if (objectManager != null) {
+    if (this.objectManager != null) {
       try {
-        objectManager.shutdown();
-      } catch (Throwable t) {
+        this.objectManager.shutdown();
+      } catch (final Throwable t) {
         logger.error("Error shutting down client object manager", t);
       } finally {
-        objectManager = null;
+        this.objectManager = null;
       }
     }
 
-    if (channel != null) {
+    if (this.channel != null) {
       try {
-        channel.close();
-      } catch (Throwable t) {
+        this.channel.close();
+      } catch (final Throwable t) {
         logger.error("Error closing channel", t);
       } finally {
-        channel = null;
+        this.channel = null;
       }
     }
 
-    if (communicationsManager != null) {
+    if (this.communicationsManager != null) {
       try {
-        communicationsManager.shutdown();
-      } catch (Throwable t) {
+        this.communicationsManager.shutdown();
+      } catch (final Throwable t) {
         logger.error("Error shutting down communications manager", t);
       } finally {
-        communicationsManager = null;
+        this.communicationsManager = null;
       }
     }
 

@@ -31,4 +31,6 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
   public void flush(LockID lockID);
 
   public void clearCachedItemsForLocks(Set<LockID> toEvict);
+
+  public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap);
 }

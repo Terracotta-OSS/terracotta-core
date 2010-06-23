@@ -63,4 +63,8 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   public void clearCachedItemsForLocks(final Set<LockID> toEvict) {
     //
   }
+
+  public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap) {
+    //
+  }
 }

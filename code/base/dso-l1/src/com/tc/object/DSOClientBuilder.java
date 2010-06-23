@@ -81,7 +81,8 @@ public interface DSOClientBuilder {
                                                 final int faultCount, final SessionManager sessionManager);
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
-                                                      final SessionManager sessionManager, Sink lockRecallSink);
+                                                      final SessionManager sessionManager, Sink lockRecallSink,
+                                                      Sink evictionSink);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,
