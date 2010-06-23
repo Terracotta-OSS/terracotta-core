@@ -117,7 +117,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   public void doEvictionOn(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
-    final ManagedObject mo = this.objectManager.getObjectByID(oid);
+    final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+    if (mo == null) { return; }
     try {
       final EvictableMap ev = getEvictableMapFrom(mo);
       doEviction(oid, ev, faultedInClients);
@@ -177,8 +178,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       } else {
         if (++cantEvict % 1000 == 0) {
           if (EVICTOR_LOGGING) {
-            logger.info("Server Map Eviction : " + oid + " : Can't Evict " + cantEvict + " Candidates so far : " + candidates.size()
-                        + " Samples : " + samples.size());
+            logger.info("Server Map Eviction : " + oid + " : Can't Evict " + cantEvict + " Candidates so far : "
+                        + candidates.size() + " Samples : " + samples.size());
           }
         }
       }
@@ -190,7 +191,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Evicting " + oid + " Candidates : " + candidates.size());
     }
-    final ManagedObject mo = this.objectManager.getObjectByID(oid);
+    final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+    if (mo == null) { return; }
     try {
       final EvictableMap ev = getEvictableMapFrom(mo);
       ev.evict(candidates);
@@ -212,7 +214,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private boolean canEvict(final Object value, final int ttiSeconds, final int ttlSeconds) {
     if ((!(value instanceof ObjectID)) || !isInterestedInTTIOrTTL(ttiSeconds, ttlSeconds)) { return true; }
     final ObjectID oid = (ObjectID) value;
-    final ManagedObject mo = this.objectManager.getObjectByID(oid);
+    final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+    if (mo == null) { return false; }
     try {
       final EvictableEntry ev = getEvictableEntryFrom(mo);
       if (ev != null) {

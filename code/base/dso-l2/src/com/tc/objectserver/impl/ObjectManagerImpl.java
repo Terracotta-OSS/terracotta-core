@@ -248,6 +248,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     return lookup(id, false, false);
   }
 
+  public ManagedObject getObjectByIDOrNull(final ObjectID id) {
+    return lookup(id, true, false);
+  }
+
   private void markReferenced(final ManagedObjectReference reference) {
     if (reference.isReferenced()) { throw new AssertionError("Attempt to mark an already referenced object: "
                                                              + reference); }

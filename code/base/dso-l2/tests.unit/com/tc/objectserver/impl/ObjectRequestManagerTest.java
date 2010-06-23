@@ -964,6 +964,10 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    public ManagedObject getObjectByIDOrNull(final ObjectID id) {
+      throw new NotImplementedException(TestObjectManager.class);
+    }
+
   }
 
   private static class TestMessageChannel implements MessageChannel {

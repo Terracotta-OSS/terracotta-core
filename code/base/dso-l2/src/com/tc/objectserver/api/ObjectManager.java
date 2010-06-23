@@ -130,4 +130,6 @@ public interface ObjectManager extends ManagedObjectProvider, ObjectManagerMBean
 
   public void preFetchObjectsAndCreate(Set<ObjectID> oids, Set<ObjectID> newOids);
 
+  public ManagedObject getObjectByIDOrNull(ObjectID id);
+
 }
