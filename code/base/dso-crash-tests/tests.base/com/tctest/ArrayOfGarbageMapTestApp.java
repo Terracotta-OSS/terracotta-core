@@ -39,7 +39,7 @@ public class ArrayOfGarbageMapTestApp extends AbstractTransparentApp {
     }
 
     Random rand = new Random(index * 1000000);
-    for(int i = 0; i < NUM_OF_LOOPS;i++) {
+    for (int i = 0; i < NUM_OF_LOOPS; i++) {
       Map<Key, Value> val = createMap();
       synchronized (list) {
         if (rand.nextBoolean()) {
@@ -48,7 +48,7 @@ public class ArrayOfGarbageMapTestApp extends AbstractTransparentApp {
           list.clear();
         }
       }
-      if(i % 10 == 0){
+      if (i % 10 == 0) {
         System.out.println("XXXXX loop " + i);
       }
     }
@@ -73,7 +73,7 @@ public class ArrayOfGarbageMapTestApp extends AbstractTransparentApp {
 
     spec.addRoot("list", "list");
     spec.addRoot("barrier", "barrier");
-    
+
     String verifyExpression = "* " + testClass + "*.*(..)";
     config.addWriteAutolock(verifyExpression);
   }
@@ -106,10 +106,6 @@ public class ArrayOfGarbageMapTestApp extends AbstractTransparentApp {
   private static class Value {
 
     private final int val;
-
-    public int getVal() {
-      return val;
-    }
 
     public Value(int val) {
       this.val = val;
