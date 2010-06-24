@@ -16,16 +16,18 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.ApplyTransactionContext;
 import com.tc.objectserver.context.BroadcastChangeContext;
+import com.tc.objectserver.context.ServerMapEvictionInitiateContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.locks.ServerLock;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.locks.ServerLock;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Applies all the changes in a transaction then releases the objects and passes the changes off to be broadcast to the
@@ -41,6 +43,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private ServerTransactionManager       transactionManager;
   private LockManager                    lockManager;
   private Sink                           broadcastChangesSink;
+  private Sink                           evictionInitiateSink;
   private final ObjectInstanceMonitor    instanceMonitor;
   private final GlobalTransactionManager gtxm;
   private TransactionalObjectManager     txnObjectMgr;
@@ -48,48 +51,57 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
   private int                            count                           = 0;
   private GlobalTransactionID            lowWaterMark                    = GlobalTransactionID.NULL_ID;
 
-  public ApplyTransactionChangeHandler(ObjectInstanceMonitor instanceMonitor, GlobalTransactionManager gtxm) {
+  public ApplyTransactionChangeHandler(final ObjectInstanceMonitor instanceMonitor, final GlobalTransactionManager gtxm) {
     this.instanceMonitor = instanceMonitor;
     this.gtxm = gtxm;
   }
 
-  public void handleEvent(EventContext context) {
-    ApplyTransactionContext atc = (ApplyTransactionContext) context;
+  @Override
+  public void handleEvent(final EventContext context) {
+    final ApplyTransactionContext atc = (ApplyTransactionContext) context;
     final ServerTransaction txn = atc.getTxn();
 
     NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
     final ServerTransactionID stxnID = txn.getServerTransactionID();
-    final BackReferences includeIDs = new BackReferences();
+    final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo();
 
     if (atc.needsApply()) {
-      transactionManager.apply(txn, atc.getObjects(), includeIDs, instanceMonitor);
-      txnObjectMgr.applyTransactionComplete(stxnID);
+      this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
+      this.txnObjectMgr.applyTransactionComplete(stxnID);
     } else {
-      transactionManager.skipApplyAndCommit(txn);
+      this.transactionManager.skipApplyAndCommit(txn);
       getLogger().warn("Not applying previously applied transaction: " + stxnID);
     }
 
-    for (Iterator i = txn.getNotifies().iterator(); i.hasNext();) {
-      Notify notify = (Notify) i.next();
-      ServerLock.NotifyAction allOrOne = notify.getIsAll() ? ServerLock.NotifyAction.ALL : ServerLock.NotifyAction.ONE;
-      notifiedWaiters = lockManager.notify(notify.getLockID(), (ClientID) txn.getSourceID(), notify.getThreadID(), allOrOne,
-                         notifiedWaiters);
+    for (final Iterator i = txn.getNotifies().iterator(); i.hasNext();) {
+      final Notify notify = (Notify) i.next();
+      final ServerLock.NotifyAction allOrOne = notify.getIsAll() ? ServerLock.NotifyAction.ALL
+          : ServerLock.NotifyAction.ONE;
+      notifiedWaiters = this.lockManager.notify(notify.getLockID(), (ClientID) txn.getSourceID(), notify.getThreadID(),
+                                                allOrOne, notifiedWaiters);
+    }
+
+    final Set initiateEviction = applyInfo.getObjectIDsToInitateEviction();
+    if (!initiateEviction.isEmpty()) {
+      this.evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
     }
 
     if (txn.needsBroadcast()) {
-      if (count == 0) {
-        lowWaterMark = gtxm.getLowGlobalTransactionIDWatermark();
+      if (this.count == 0) {
+        this.lowWaterMark = this.gtxm.getLowGlobalTransactionIDWatermark();
       }
-      count = count++ % LOW_WATER_MARK_UPDATE_FREQUENCY;
-      broadcastChangesSink.add(new BroadcastChangeContext(txn, lowWaterMark, notifiedWaiters, includeIDs));
+      this.count = this.count++ % LOW_WATER_MARK_UPDATE_FREQUENCY;
+      this.broadcastChangesSink.add(new BroadcastChangeContext(txn, this.lowWaterMark, notifiedWaiters, applyInfo));
     }
   }
 
-  public void initialize(ConfigurationContext context) {
+  @Override
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.transactionManager = scc.getTransactionManager();
     this.broadcastChangesSink = scc.getStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE).getSink();
+    this.evictionInitiateSink = scc.getStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE).getSink();
     this.txnObjectMgr = scc.getTransactionalObjectManager();
     this.lockManager = scc.getLockManager();
   }

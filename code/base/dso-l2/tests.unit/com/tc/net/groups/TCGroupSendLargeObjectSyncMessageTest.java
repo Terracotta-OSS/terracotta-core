@@ -32,7 +32,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
@@ -121,7 +121,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     for (long i = 0; i < oidsCount; ++i) {
       final ManagedObject m = new ManagedObjectImpl(new ObjectID(i));
-      m.apply(new TestDNA(new TestDNACursor()), new TransactionID(i), new BackReferences(),
+      m.apply(new TestDNA(new TestDNACursor()), new TransactionID(i), new ApplyTransactionInfo(),
               new NullObjectInstanceMonitor(), true);
       m.toDNA(out, objectStringSerializer, DNAType.L2_SYNC);
     }

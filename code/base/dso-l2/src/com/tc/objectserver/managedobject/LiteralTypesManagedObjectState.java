@@ -45,7 +45,7 @@ public class LiteralTypesManagedObjectState extends AbstractManagedObjectState i
     throw new TCRuntimeException("Don't hash me!");
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LiteralAction a = (LiteralAction) cursor.getAction();
       // PhysicalAction a = cursor.getPhysicalAction();

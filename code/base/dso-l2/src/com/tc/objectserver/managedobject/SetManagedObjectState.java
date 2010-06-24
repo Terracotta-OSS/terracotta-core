@@ -36,7 +36,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     super(in);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LogicalAction action = cursor.getLogicalAction();
       int method = action.getMethod();
@@ -45,7 +45,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  protected void apply(ObjectID objectID, int method, Object[] params, BackReferences includeIDs) {
+  protected void apply(ObjectID objectID, int method, Object[] params, ApplyTransactionInfo includeIDs) {
     switch (method) {
       case SerializationUtil.ADD:
         Object v = params[0];
@@ -66,7 +66,7 @@ public class SetManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  private void addChangeToCollector(ObjectID objectID, Object newValue, BackReferences includeIDs) {
+  private void addChangeToCollector(ObjectID objectID, Object newValue, ApplyTransactionInfo includeIDs) {
     if (newValue instanceof ObjectID) {
       getListener().changed(objectID, null, (ObjectID) newValue);
       includeIDs.addBackReference((ObjectID) newValue, objectID);

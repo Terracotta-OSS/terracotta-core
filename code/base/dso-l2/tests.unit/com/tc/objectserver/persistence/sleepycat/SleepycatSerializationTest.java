@@ -16,7 +16,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
@@ -155,44 +155,44 @@ public class SleepycatSerializationTest extends TCTestCase {
       final byte type = loaded.getManagedObjectState().getType();
       switch (type) {
         case ManagedObjectState.PHYSICAL_TYPE:
-          loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.MAP_TYPE:
         case ManagedObjectState.PARTIAL_MAP_TYPE:
-          loaded.apply(newLogicalMapDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalMapDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.LIST_TYPE:
-          loaded.apply(newLogicalListDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalListDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.SET_TYPE:
-          loaded.apply(newLogicalSetDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalSetDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.ARRAY_TYPE:
-          loaded.apply(newLogicalArrayDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalArrayDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.LINKED_HASHMAP_TYPE:
           loaded.apply(newLogicalLinkedHashMapDNA(true), new TransactionID(++this.transactionSequence),
-                       new BackReferences(), this.imo, false);
+                       new ApplyTransactionInfo(), this.imo, false);
           break;
         case ManagedObjectState.DATE_TYPE:
-          loaded.apply(newLogicalDateDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalDateDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.LITERAL_TYPE:
-          loaded.apply(newLiteralDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLiteralDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.TREE_MAP_TYPE:
-          loaded.apply(newLogicalTreeMapDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalTreeMapDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
         case ManagedObjectState.TREE_SET_TYPE:
-          loaded.apply(newLogicalTreeSetDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(),
+          loaded.apply(newLogicalTreeSetDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
                        this.imo, false);
           break;
       }
@@ -346,7 +346,7 @@ public class SleepycatSerializationTest extends TCTestCase {
   private ManagedObject newLogicalObject(final ObjectID objectID, final TestDNA dna) {
     final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++this.transactionSequence), new BackReferences(), this.imo, false);
+    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
     return rv;
   }
 
@@ -368,7 +368,7 @@ public class SleepycatSerializationTest extends TCTestCase {
     final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     final TestDNA dna = newPhysicalDNA(false);
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++this.transactionSequence), new BackReferences(), this.imo, false);
+    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
     return rv;
   }
 

@@ -18,7 +18,7 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
@@ -406,7 +406,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
       return;
     }
 
-    public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs) {
+    public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs) {
       return;
     }
 

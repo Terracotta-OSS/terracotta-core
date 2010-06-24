@@ -45,7 +45,7 @@ public class URLManagedObjectState extends LogicalManagedObjectState {
     super(in);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LogicalAction action = cursor.getLogicalAction();
       int method = action.getMethod();

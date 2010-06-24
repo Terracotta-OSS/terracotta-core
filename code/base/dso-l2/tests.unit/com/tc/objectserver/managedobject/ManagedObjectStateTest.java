@@ -61,7 +61,7 @@ public class ManagedObjectStateTest extends TestCase {
       final String className = "com.xxx.SomeClassName" + i;
       final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
           .createState(new ObjectID(1), ObjectID.NULL_ID, className, loaderDesc, cursor);
-      state.apply(this.objectID, cursor, new BackReferences());
+      state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
       final int classId = state.getClassId();
       assertTrue(classId != 0);
@@ -77,7 +77,7 @@ public class ManagedObjectStateTest extends TestCase {
       final String className = "com.xxx.SomeClassName" + i;
       final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
           .createState(new ObjectID(1), ObjectID.NULL_ID, className, loaderDesc, cursor);
-      state.apply(this.objectID, cursor, new BackReferences());
+      state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
       final int classId = state.getClassId();
 
@@ -116,7 +116,7 @@ public class ManagedObjectStateTest extends TestCase {
 
     final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(new ObjectID(1), ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state.getClassId() != 0);
     assertEquals(state.getClassName(), "com.xxx.SomeClassName");
@@ -143,7 +143,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor.addPhysicalAction("field2", new Boolean(false), true);
     cursor.addPhysicalAction("field3", new Character('d'), true);
 
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     references = state.getObjectReferences();
     assertEquals(1, references.size());
@@ -175,7 +175,7 @@ public class ManagedObjectStateTest extends TestCase {
 
     final PhysicalManagedObjectState state = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state.getClassId() != 0);
     assertEquals(state.getClassName(), "com.xxx.SomeClassName");
@@ -201,7 +201,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor.addPhysicalAction("field5", new ObjectID(22), true);
 
     try {
-      state.apply(this.objectID, cursor, new BackReferences());
+      state.apply(this.objectID, cursor, new ApplyTransactionInfo());
       assertTrue(false);
     } catch (final ClassNotCompatableException cfe) {
       // expected
@@ -210,7 +210,7 @@ public class ManagedObjectStateTest extends TestCase {
     // recreate the state object
     final PhysicalManagedObjectState state1 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor, state);
-    state1.apply(this.objectID, cursor, new BackReferences());
+    state1.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state1.getClassId() != state.getClassId());
     assertEquals(state1.getClassName(), "com.xxx.SomeClassName");
@@ -237,7 +237,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor2.addPhysicalAction("field6", new Integer(2), false);
 
     try {
-      state.apply(this.objectID, cursor2, new BackReferences());
+      state.apply(this.objectID, cursor2, new ApplyTransactionInfo());
       assertTrue(false);
     } catch (final ClassNotCompatableException cfe) {
       // expected
@@ -246,9 +246,9 @@ public class ManagedObjectStateTest extends TestCase {
     // recreate the state object, even though we pass old state object, it should extend latest state object
     final PhysicalManagedObjectState state2 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .recreateState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor2, state);
-    state2.apply(this.objectID, cursor2, new BackReferences());
+    state2.apply(this.objectID, cursor2, new ApplyTransactionInfo());
     cursor.reset();
-    state2.apply(this.objectID, cursor, new BackReferences());
+    state2.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     assertTrue(state1.getClassId() != state2.getClassId());
     assertEquals(state2.getClassName(), "com.xxx.SomeClassName");
@@ -273,7 +273,7 @@ public class ManagedObjectStateTest extends TestCase {
     cursor2.addPhysicalAction("field6", new Long(2), true);
     try {
       // We print the exception but dont throw it.
-      state2.apply(this.objectID, cursor2, new BackReferences());
+      state2.apply(this.objectID, cursor2, new ApplyTransactionInfo());
       System.err.println("The above exception is NORMAL.");
     } catch (final ClassCastException cfe) {
       assertTrue(false);
@@ -291,7 +291,7 @@ public class ManagedObjectStateTest extends TestCase {
 
     PhysicalManagedObjectState state3 = (PhysicalManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(this.objectID, ObjectID.NULL_ID, "com.xxx.SomeClassName", loaderDesc, cursor);
-    state3.apply(this.objectID, cursor, new BackReferences());
+    state3.apply(this.objectID, cursor, new ApplyTransactionInfo());
     assertEquals(state2.getClass().getName(), state3.getClass().getName());
 
     // RESTART Scenario... still only the new object type should be used
@@ -301,7 +301,7 @@ public class ManagedObjectStateTest extends TestCase {
                                                                                               ObjectID.NULL_ID,
                                                                                               "com.xxx.SomeClassName",
                                                                                               loaderDesc, cursor);
-    state3.apply(this.objectID, cursor, new BackReferences());
+    state3.apply(this.objectID, cursor, new ApplyTransactionInfo());
     assertEquals(state2.getClass().getName(), state3.getClass().getName());
 
     assertEquals(ObjectID.NULL_ID, state.getParentID());

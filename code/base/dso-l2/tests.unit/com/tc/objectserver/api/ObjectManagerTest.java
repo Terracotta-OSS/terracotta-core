@@ -57,7 +57,7 @@ import com.tc.objectserver.impl.ObjectManagerStatsImpl;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -463,9 +463,9 @@ public class ObjectManagerTest extends TCTestCase {
 
     ManagedObject mo = results.objects.get(id1);
     TestArrayDNA ta;
-    mo.apply((ta = new TestArrayDNA(id1)), new TransactionID(1), new BackReferences(), imo, false);
+    mo.apply((ta = new TestArrayDNA(id1)), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
     mo = results.objects.get(id2);
-    mo.apply(new TestArrayDNA(id2), new TransactionID(2), new BackReferences(), imo, false);
+    mo.apply(new TestArrayDNA(id2), new TransactionID(2), new ApplyTransactionInfo(), imo, false);
 
     Map ic = imo.getInstanceCounts();
     assertEquals(1, ic.size());
@@ -490,9 +490,9 @@ public class ObjectManagerTest extends TCTestCase {
       final ObjectID id = iter.next();
       mo = results.objects.get(id);
       if (newIDs.contains(id)) {
-        mo.apply(new TestArrayDNA(id), new TransactionID(count++), new BackReferences(), imo, false);
+        mo.apply(new TestArrayDNA(id), new TransactionID(count++), new ApplyTransactionInfo(), imo, false);
       } else {
-        mo.apply(new TestArrayDNA(id, true), new TransactionID(count++), new BackReferences(), imo, false);
+        mo.apply(new TestArrayDNA(id, true), new TransactionID(count++), new ApplyTransactionInfo(), imo, false);
 
       }
     }
@@ -518,7 +518,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     final ManagedObject mo = lookedUpObjects.get(id);
-    mo.apply(new TestArrayDNA(id), new TransactionID(1), new BackReferences(), imo, false);
+    mo.apply(new TestArrayDNA(id), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
     this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
     ManagedObjectFacade facade;
@@ -571,7 +571,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ManagedObject dateManagedObject = lookedUpObjects.get(dateID);
 
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new BackReferences(), imo,
+    dateManagedObject.apply(new TestDateDNA("java.util.Date", dateID), new TransactionID(1), new ApplyTransactionInfo(), imo,
                             false);
 
     this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
@@ -601,7 +601,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ManagedObject managedObject = lookedUpObjects.get(literalID);
 
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    managedObject.apply(new TestLiteralValuesDNA(literalID), new TransactionID(1), new BackReferences(), imo, false);
+    managedObject.apply(new TestLiteralValuesDNA(literalID), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
 
     this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
 
@@ -648,9 +648,9 @@ public class ObjectManagerTest extends TCTestCase {
     final ManagedObject map = lookedUpObjects.get(mapID);
 
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    map.apply(new TestMapDNA(mapID), new TransactionID(1), new BackReferences(), imo, false);
-    set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new BackReferences(), imo, false);
-    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new BackReferences(), imo,
+    map.apply(new TestMapDNA(mapID), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
+    set.apply(new TestListSetDNA("java.util.HashSet", setID), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
+    list.apply(new TestListSetDNA("java.util.LinkedList", listID), new TransactionID(1), new ApplyTransactionInfo(), imo,
                false);
 
     this.objectManager.releaseAllAndCommit(this.NULL_TRANSACTION, lookedUpObjects.values());
@@ -893,7 +893,7 @@ public class ObjectManagerTest extends TCTestCase {
     dna.version = 5;
 
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new BackReferences(), imo, false);
+    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), imo, false);
 
     PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
@@ -918,7 +918,7 @@ public class ObjectManagerTest extends TCTestCase {
     dna = new TestDNA(cursor);
     dna.version = 10;
     dna.isDelta = true;
-    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new BackReferences(), imo, false);
+    lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new ApplyTransactionInfo(), imo, false);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
     tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
@@ -1012,7 +1012,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ManagedObject mo = (context.objects).get(new ObjectID(1));
     assertTrue(mo.isNew());
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
-    mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new BackReferences(), imo, false);
+    mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
 
     final PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, mo);
@@ -1644,7 +1644,7 @@ public class ObjectManagerTest extends TCTestCase {
     for (final Iterator i = txn.getChanges().iterator(); i.hasNext();) {
       final DNA dna = (DNA) i.next();
       final ManagedObject mo = (ManagedObject) managedObjects.get(dna.getObjectID());
-      mo.apply(new VersionizedDNAWrapper(dna, ++this.version), txn.getTransactionID(), new BackReferences(),
+      mo.apply(new VersionizedDNAWrapper(dna, ++this.version), txn.getTransactionID(), new ApplyTransactionInfo(),
                instanceMonitor, false);
     }
   }

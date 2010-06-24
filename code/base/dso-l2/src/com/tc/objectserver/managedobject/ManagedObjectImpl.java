@@ -147,7 +147,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     this.state.addObjectReferencesTo(traverser);
   }
 
-  public void apply(final DNA dna, final TransactionID txnID, final BackReferences includeIDs,
+  public void apply(final DNA dna, final TransactionID txnID, final ApplyTransactionInfo applyInfo,
                     final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) {
     final boolean isInitialized = isInitialized();
 
@@ -182,11 +182,11 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     }
     try {
       try {
-        this.state.apply(this.id, cursor, includeIDs);
+        this.state.apply(this.id, cursor, applyInfo);
       } catch (final ClassNotCompatableException cnce) {
         // reinitialize state object and try again
         reinitializeState(dna.getParentObjectID(), getClassname(), getLoaderDescription(), cursor, this.state);
-        this.state.apply(this.id, cursor, includeIDs);
+        this.state.apply(this.id, cursor, applyInfo);
       }
     } catch (final IOException e) {
       throw new DNAException(e);

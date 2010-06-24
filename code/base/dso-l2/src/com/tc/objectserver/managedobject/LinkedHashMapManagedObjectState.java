@@ -37,7 +37,7 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
   }
 
   @Override
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     if (!cursor.next()) { return; }
     Object action = cursor.getAction();
     if (action instanceof PhysicalAction) {
@@ -60,7 +60,7 @@ public class LinkedHashMapManagedObjectState extends PartialMapManagedObjectStat
   }
 
   @Override
-  protected void applyMethod(ObjectID objectID, BackReferences includeIDS, int method, Object[] params) {
+  protected void applyMethod(ObjectID objectID, ApplyTransactionInfo includeIDS, int method, Object[] params) {
     switch (method) {
       case SerializationUtil.GET:
         ((LinkedHashMap) references).get(params[0]);

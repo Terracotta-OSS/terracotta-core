@@ -25,9 +25,12 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -62,8 +65,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private final ClientStateManager             clientStateManager;
   private final PersistenceTransactionProvider transactionStorePTP;
   private final long                           evictionSleepTime;
+  private final Set<ObjectID>                  currentlyEvicting             = Collections
+                                                                                 .synchronizedSet(new HashSet());
   private final AtomicBoolean                  isStarted                     = new AtomicBoolean(false);
-  private final Timer                          evictor                       = new Timer("Server Map Evictor", true);
+  private final Timer                          evictor                       = new Timer("Server Map Periodic Evictor",
+                                                                                         true);
 
   private Sink                                 evictorSink;
 
@@ -117,6 +123,20 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   public void doEvictionOn(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
+    if (!markEvictionInProgress(oid)) {
+      logger.info("Ignoring eviction request as its already in progress : " + oid);
+      return;
+    }
+    try {
+      basicDoEviction(oid, faultedInClients);
+    } finally {
+      // TODO:: We could possibly hold off on removing the OID for longer until all processing of samples are done, but
+      // requires more careful surgery as we should make sure all exit paths are covered.
+      markEvictionDone(oid);
+    }
+  }
+
+  private void basicDoEviction(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
     if (mo == null) { return; }
     try {
@@ -125,6 +145,14 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     } finally {
       this.objectManager.releaseReadOnly(mo);
     }
+  }
+
+  private boolean markEvictionInProgress(final ObjectID oid) {
+    return this.currentlyEvicting.add(oid);
+  }
+
+  private void markEvictionDone(final ObjectID oid) {
+    this.currentlyEvicting.remove(oid);
   }
 
   private EvictableMap getEvictableMapFrom(final ManagedObject mo) {
@@ -151,7 +179,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final int requested = isInterestedInTTIOrTTL(tti, ttl) ? (int) (overshoot * 1.5) : overshoot;
     final Map samples = ev.getRandomSamples(requested, faultedInClients);
 
-    if ((samples.size() < overshoot * 0.5) || EVICTOR_LOGGING) {
+    if ((samples.size() < overshoot * 0.3) || EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " : Random Samples : "
                   + samples.size() + " overshoot : " + overshoot);
     }

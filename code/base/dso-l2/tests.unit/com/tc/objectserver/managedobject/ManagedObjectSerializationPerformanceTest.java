@@ -178,7 +178,7 @@ public class ManagedObjectSerializationPerformanceTest extends TCTestCase {
   private ManagedObjectImpl newManagedObject() {
     final ManagedObjectImpl mo = new ManagedObjectImpl(new ObjectID(1));
     final TestDNA dna = newDNA();
-    mo.apply(dna, new TransactionID(1), new BackReferences(), this.imo, false);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), this.imo, false);
     return mo;
   }
 

@@ -38,7 +38,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     references = new ArrayList(1);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       LogicalAction action = cursor.getLogicalAction();
       int method = action.getMethod();
@@ -47,7 +47,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  protected void applyOperation(int method, ObjectID objectID, BackReferences includeIDs, Object[] params)
+  protected void applyOperation(int method, ObjectID objectID, ApplyTransactionInfo includeIDs, Object[] params)
       throws AssertionError {
     switch (method) {
       case SerializationUtil.ADD:
@@ -139,7 +139,7 @@ public class ListManagedObjectState extends LogicalManagedObjectState {
     }
   }
 
-  protected void addChangeToCollector(ObjectID objectID, Object newValue, BackReferences includeIDs) {
+  protected void addChangeToCollector(ObjectID objectID, Object newValue, ApplyTransactionInfo includeIDs) {
     if (newValue instanceof ObjectID) {
       getListener().changed(objectID, null, (ObjectID) newValue);
       includeIDs.addBackReference((ObjectID) newValue, objectID);

@@ -21,7 +21,7 @@ public class QueueManagedObjectStateTest extends AbstractTestManagedObjectState 
 
   public void basicTestQueue(final TestDNACursor cursor, final int objCount, final int actionCount) throws Exception {
     final ManagedObjectState state = createManagedObjectState(this.className, cursor);
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     // API verification
     basicAPI(this.className, this.type, cursor, objCount, state);

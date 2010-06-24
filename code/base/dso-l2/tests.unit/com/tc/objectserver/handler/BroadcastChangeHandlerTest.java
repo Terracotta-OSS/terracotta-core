@@ -52,7 +52,7 @@ import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -93,8 +93,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    SampledCounterImpl sci = new SampledCounterImpl(new SampledCounterConfig(5, 10, true, 0));
-    SampledRateCounterImpl srci = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 10, true));
+    final SampledCounterImpl sci = new SampledCounterImpl(new SampledCounterConfig(5, 10, true, 0));
+    final SampledRateCounterImpl srci = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 10, true));
     this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci);
     this.serverCfgCxt = new TestServerConfigurationContext(NO_OF_CLIENTS, DISCONNECTED_CLIENT);
     this.handler.initialize(this.serverCfgCxt);
@@ -103,14 +103,14 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   public void testBasic() throws Exception {
     System.out.println("Client 5 gets disonnected ");
 
-    ServerTransaction serverTX = new TestServerTransaction(SRC_CLIENT_ID);
-    BroadcastChangeContext context = new BroadcastChangeContext(serverTX, new GlobalTransactionID(1),
-                                                                new NotifiedWaiters(), new BackReferences());
+    final ServerTransaction serverTX = new TestServerTransaction(SRC_CLIENT_ID);
+    final BroadcastChangeContext context = new BroadcastChangeContext(serverTX, new GlobalTransactionID(1),
+                                                                      new NotifiedWaiters(), new ApplyTransactionInfo());
     this.handler.handleEvent(context);
 
-    TestServerTransactionManager serverTxManager = (TestServerTransactionManager) this.serverCfgCxt
+    final TestServerTransactionManager serverTxManager = (TestServerTransactionManager) this.serverCfgCxt
         .getTransactionManager();
-    List<NodeID> clients = serverTxManager.acknowledgedBack;
+    final List<NodeID> clients = serverTxManager.acknowledgedBack;
 
     Assert.assertEquals(NO_OF_CLIENTS - 1, clients.size());
   }
@@ -118,7 +118,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
   private class TestServerTransaction implements ServerTransaction {
     private final int srcID;
 
-    public TestServerTransaction(int srcID) {
+    public TestServerTransaction(final int srcID) {
       this.srcID = srcID;
     }
 
@@ -194,7 +194,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return null;
     }
 
-    public void setGlobalTransactionID(GlobalTransactionID gid) {
+    public void setGlobalTransactionID(final GlobalTransactionID gid) {
       throw new ImplementMe();
     }
 
@@ -205,7 +205,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     private final int                          clientDisconnectNo;
     private final TestServerTransactionManager testServerTxManager;
 
-    public TestServerConfigurationContext(int noOfClients, int clientDisconnectNo) {
+    public TestServerConfigurationContext(final int noOfClients, final int clientDisconnectNo) {
       this.clientDisconnectNo = clientDisconnectNo;
       this.noOfClients = noOfClients;
       this.testServerTxManager = new TestServerTransactionManager(new ClientID(clientDisconnectNo));
@@ -271,11 +271,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public TCLogger getLogger(Class clazz) {
+    public TCLogger getLogger(final Class clazz) {
       throw new ImplementMe();
     }
 
-    public Stage getStage(String name) {
+    public Stage getStage(final String name) {
       return new TestStage();
     }
 
@@ -296,7 +296,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return this.sink;
     }
 
-    public void start(ConfigurationContext context) {
+    public void start(final ConfigurationContext context) {
       throw new ImplementMe();
     }
 
@@ -304,15 +304,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   private class TestSink implements Sink {
 
-    public void add(EventContext context) {
+    public void add(final EventContext context) {
       //
     }
 
-    public boolean addLossy(EventContext context) {
+    public boolean addLossy(final EventContext context) {
       throw new ImplementMe();
     }
 
-    public void addMany(Collection contexts) {
+    public void addMany(final Collection contexts) {
       throw new ImplementMe();
     }
 
@@ -324,7 +324,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void setAddPredicate(AddPredicate predicate) {
+    public void setAddPredicate(final AddPredicate predicate) {
       throw new ImplementMe();
     }
 
@@ -332,15 +332,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void enableStatsCollection(boolean enable) {
+    public void enableStatsCollection(final boolean enable) {
       throw new ImplementMe();
     }
 
-    public Stats getStats(long frequency) {
+    public Stats getStats(final long frequency) {
       throw new ImplementMe();
     }
 
-    public Stats getStatsAndReset(long frequency) {
+    public Stats getStatsAndReset(final long frequency) {
       throw new ImplementMe();
     }
 
@@ -358,27 +358,27 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     private final int noOfChannels;
     private final int deadChannelID;
 
-    public TestDSOChannelManager(int noOfChannels, int deadChannelID) {
+    public TestDSOChannelManager(final int noOfChannels, final int deadChannelID) {
       this.noOfChannels = noOfChannels;
       this.deadChannelID = deadChannelID;
     }
 
-    public void addEventListener(DSOChannelManagerEventListener listener) {
+    public void addEventListener(final DSOChannelManagerEventListener listener) {
       throw new ImplementMe();
     }
 
-    public void closeAll(Collection clientIDs) {
+    public void closeAll(final Collection clientIDs) {
       throw new ImplementMe();
     }
 
-    public MessageChannel getActiveChannel(NodeID id) {
+    public MessageChannel getActiveChannel(final NodeID id) {
       throw new ImplementMe();
     }
 
     public MessageChannel[] getActiveChannels() {
-      MessageChannel[] channels = new MessageChannel[this.noOfChannels];
+      final MessageChannel[] channels = new MessageChannel[this.noOfChannels];
       for (int i = 1; i <= this.noOfChannels; i++) {
-        boolean isClosed = i == this.deadChannelID ? true : false;
+        final boolean isClosed = i == this.deadChannelID ? true : false;
         channels[i - 1] = new TestMessageChannel(i, isClosed);
       }
 
@@ -393,27 +393,27 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public String getChannelAddress(NodeID nid) {
+    public String getChannelAddress(final NodeID nid) {
       throw new ImplementMe();
     }
 
-    public ClientID getClientIDFor(ChannelID channelID) {
+    public ClientID getClientIDFor(final ChannelID channelID) {
       return new ClientID(channelID.toLong());
     }
 
-    public boolean isActiveID(NodeID nodeID) {
+    public boolean isActiveID(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public void makeChannelActive(ClientID clientID, boolean persistent) {
+    public void makeChannelActive(final ClientID clientID, final boolean persistent) {
       throw new ImplementMe();
     }
 
-    public void makeChannelActiveNoAck(MessageChannel channel) {
+    public void makeChannelActiveNoAck(final MessageChannel channel) {
       throw new ImplementMe();
     }
 
-    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(NodeID nid) {
+    public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid) {
       throw new ImplementMe();
     }
   }
@@ -422,16 +422,16 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     private final long    id;
     private final boolean isClosed;
 
-    public TestMessageChannel(int id, boolean isClosed) {
+    public TestMessageChannel(final int id, final boolean isClosed) {
       this.isClosed = isClosed;
       this.id = id;
     }
 
-    public void addAttachment(String key, Object value, boolean replace) {
+    public void addAttachment(final String key, final Object value, final boolean replace) {
       throw new ImplementMe();
     }
 
-    public void addListener(ChannelEventListener listener) {
+    public void addListener(final ChannelEventListener listener) {
       throw new ImplementMe();
     }
 
@@ -439,11 +439,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public TCMessage createMessage(TCMessageType type) {
+    public TCMessage createMessage(final TCMessageType type) {
       return new TestBroadcastMessage();
     }
 
-    public Object getAttachment(String key) {
+    public Object getAttachment(final String key) {
       throw new ImplementMe();
     }
 
@@ -483,15 +483,15 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public Object removeAttachment(String key) {
+    public Object removeAttachment(final String key) {
       throw new ImplementMe();
     }
 
-    public void send(TCNetworkMessage message) {
+    public void send(final TCNetworkMessage message) {
       //
     }
 
-    public void setLocalNodeID(NodeID source) {
+    public void setLocalNodeID(final NodeID source) {
       throw new ImplementMe();
     }
   }
@@ -534,7 +534,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       //
     }
 
-    public Collection addNotifiesTo(List c) {
+    public Collection addNotifiesTo(final List c) {
       throw new ImplementMe();
     }
 
@@ -578,10 +578,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void initialize(List chges, ObjectStringSerializer serializer, LockID[] lids, long cid, TransactionID txID,
-                           NodeID commitID, GlobalTransactionID gtx, TxnType txnType,
-                           GlobalTransactionID lowGlobalTransactionIDWatermark, Collection notifies, Map newRoots,
-                           DmiDescriptor[] dmis) {
+    public void initialize(final List chges, final ObjectStringSerializer serializer, final LockID[] lids,
+                           final long cid, final TransactionID txID, final NodeID commitID,
+                           final GlobalTransactionID gtx, final TxnType txnType,
+                           final GlobalTransactionID lowGlobalTransactionIDWatermark, final Collection notifies,
+                           final Map newRoots, final DmiDescriptor[] dmis) {
       //
     }
 
@@ -589,24 +590,23 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
   private class TestClientStateManagerImpl implements ClientStateManager {
 
-    public void addAllReferencedIdsTo(Set<ObjectID> rescueIds) {
+    public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
       throw new ImplementMe();
-
     }
 
-    public void addReference(NodeID nodeID, ObjectID objectID) {
+    public void addReference(final NodeID nodeID, final ObjectID objectID) {
       throw new ImplementMe();
-
     }
 
-    public Set<ObjectID> addReferences(NodeID nodeID, Set<ObjectID> oids) {
+    public Set<ObjectID> addReferences(final NodeID nodeID, final Set<ObjectID> oids) {
       return null;
     }
 
-    public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences references,
-                                                         NodeID clientID, Set<ObjectID> objectIDs) {
-      ArrayList<DNA> list = new ArrayList<DNA>();
-      ObjectID dateID = new ObjectID(1);
+    public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
+                                                         final ApplyTransactionInfo references, final NodeID clientID,
+                                                         final Set<ObjectID> objectIDs) {
+      final ArrayList<DNA> list = new ArrayList<DNA>();
+      final ObjectID dateID = new ObjectID(1);
       list.add(new TestDateDNA("java.util.Date", dateID));
       return list;
     }
@@ -615,27 +615,27 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public int getReferenceCount(NodeID nodeID) {
+    public int getReferenceCount(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public boolean hasReference(NodeID nodeID, ObjectID objectID) {
+    public boolean hasReference(final NodeID nodeID, final ObjectID objectID) {
       throw new ImplementMe();
     }
 
-    public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass) {
+    public void removeReferencedFrom(final NodeID nodeID, final Set<ObjectID> secondPass) {
       throw new ImplementMe();
     }
 
-    public void removeReferences(NodeID nodeID, Set<ObjectID> removed) {
+    public void removeReferences(final NodeID nodeID, final Set<ObjectID> removed) {
       throw new ImplementMe();
     }
 
-    public void shutdownNode(NodeID deadNode) {
+    public void shutdownNode(final NodeID deadNode) {
       throw new ImplementMe();
     }
 
-    public void startupNode(NodeID nodeID) {
+    public void startupNode(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
@@ -646,42 +646,42 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     private final NodeID       deadNodeID;
     private final List<NodeID> acknowledgedBack = new ArrayList<NodeID>();
 
-    public TestServerTransactionManager(NodeID dead) {
+    public TestServerTransactionManager(final NodeID dead) {
       this.deadNodeID = dead;
     }
 
-    public void acknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
+    public void acknowledgement(final NodeID waiter, final TransactionID requestID, final NodeID waitee) {
       this.acknowledgedBack.add(waitee);
     }
 
-    public void addWaitingForAcknowledgement(NodeID waiter, TransactionID requestID, NodeID waitee) {
+    public void addWaitingForAcknowledgement(final NodeID waiter, final TransactionID requestID, final NodeID waitee) {
       if (this.deadNodeID.equals(waitee)) { return; }
       acknowledgement(waiter, requestID, waitee);
     }
 
-    public void addTransactionListener(ServerTransactionListener listener) {
+    public void addTransactionListener(final ServerTransactionListener listener) {
       throw new ImplementMe();
     }
 
-    public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs,
-                      ObjectInstanceMonitor instanceMonitor) {
+    public void apply(final ServerTransaction txn, final Map objects, final ApplyTransactionInfo includeIDs,
+                      final ObjectInstanceMonitor instanceMonitor) {
       throw new ImplementMe();
     }
 
-    public void broadcasted(NodeID waiter, TransactionID requestID) {
+    public void broadcasted(final NodeID waiter, final TransactionID requestID) {
       //
     }
 
-    public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    public void callBackOnResentTxnsInSystemCompletion(final TxnsInSystemCompletionLister l) {
       throw new ImplementMe();
     }
 
-    public void callBackOnTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+    public void callBackOnTxnsInSystemCompletion(final TxnsInSystemCompletionLister l) {
       throw new ImplementMe();
     }
 
-    public void commit(PersistenceTransactionProvider ptxp, Collection objects, Map newRoots,
-                       Collection appliedServerTransactionIDs) {
+    public void commit(final PersistenceTransactionProvider ptxp, final Collection objects, final Map newRoots,
+                       final Collection appliedServerTransactionIDs) {
       throw new ImplementMe();
     }
 
@@ -693,43 +693,43 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void incomingTransactions(NodeID nodeID, Set txnIDs, Collection txns, boolean relayed) {
+    public void incomingTransactions(final NodeID nodeID, final Set txnIDs, final Collection txns, final boolean relayed) {
       throw new ImplementMe();
     }
 
-    public boolean isWaiting(NodeID waiter, TransactionID requestID) {
+    public boolean isWaiting(final NodeID waiter, final TransactionID requestID) {
       throw new ImplementMe();
     }
 
-    public void nodeConnected(NodeID nodeID) {
+    public void nodeConnected(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public void objectsSynched(NodeID node, ServerTransactionID tid) {
+    public void objectsSynched(final NodeID node, final ServerTransactionID tid) {
       throw new ImplementMe();
     }
 
-    public void removeTransactionListener(ServerTransactionListener listener) {
+    public void removeTransactionListener(final ServerTransactionListener listener) {
       throw new ImplementMe();
     }
 
-    public void setResentTransactionIDs(NodeID source, Collection transactionIDs) {
+    public void setResentTransactionIDs(final NodeID source, final Collection transactionIDs) {
       throw new ImplementMe();
     }
 
-    public void shutdownNode(NodeID nodeID) {
+    public void shutdownNode(final NodeID nodeID) {
       throw new ImplementMe();
     }
 
-    public void skipApplyAndCommit(ServerTransaction txn) {
+    public void skipApplyAndCommit(final ServerTransaction txn) {
       throw new ImplementMe();
     }
 
-    public void start(Set cids) {
+    public void start(final Set cids) {
       throw new ImplementMe();
     }
 
-    public void transactionsRelayed(NodeID node, Set serverTxnIDs) {
+    public void transactionsRelayed(final NodeID node, final Set serverTxnIDs) {
       throw new ImplementMe();
     }
 

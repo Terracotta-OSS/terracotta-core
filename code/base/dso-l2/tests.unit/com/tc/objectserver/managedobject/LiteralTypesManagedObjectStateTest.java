@@ -21,7 +21,7 @@ public class LiteralTypesManagedObjectStateTest extends AbstractTestManagedObjec
     final TestDNACursor cursor = new TestDNACursor();
     final ManagedObjectState state = createManagedObjectState(className, cursor);
     cursor.addLiteralAction(obj);
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     // API verification
     Assert.assertTrue(state.getObjectReferences().size() == 0);

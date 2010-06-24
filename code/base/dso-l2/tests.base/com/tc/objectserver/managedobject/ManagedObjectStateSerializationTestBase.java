@@ -90,7 +90,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
     final TestDNA dna = new TestDNA(dnaCursor);
     dna.typeName = className;
-    mo.apply(dna, new TransactionID(1), new BackReferences(), new NullObjectInstanceMonitor(), false);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), new NullObjectInstanceMonitor(), false);
 
     final PersistenceTransaction txn = this.ptp.newTransaction();
     this.managedObjectPersistor.saveObject(txn, mo);

@@ -7,7 +7,7 @@ package com.tc.objectserver.l1.api;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,10 +43,10 @@ public interface ClientStateManager {
   /**
    * Prunes the changes list down to include only changes for objects the given client has.
    */
-  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, BackReferences references,
+  public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
                                                        NodeID clientID, Set<ObjectID> objectIDs);
 
-  public void addAllReferencedIdsTo(Set<ObjectID> rescueIds);
+  public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds);
 
   public void removeReferencedFrom(NodeID nodeID, Set<ObjectID> secondPass);
 

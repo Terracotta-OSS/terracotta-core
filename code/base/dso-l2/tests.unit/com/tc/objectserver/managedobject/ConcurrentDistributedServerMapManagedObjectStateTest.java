@@ -21,7 +21,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     final TestDNACursor cursor = createDNACursor();
 
     final ManagedObjectState state = createManagedObjectState(CDSM_DSO_CLASSNAME, cursor);
-    state.apply(new ObjectID(1), cursor, new BackReferences());
+    state.apply(new ObjectID(1), cursor, new ApplyTransactionInfo());
 
     TestDNAWriter dnaWriter = new TestDNAWriter();
     state.dehydrate(new ObjectID(1), dnaWriter, DNAType.L2_SYNC); // fully Dehydrate
@@ -29,7 +29,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     final TestDNACursor cursor2 = dnaWriter.getDNACursor();
     final ManagedObjectState state2 = createManagedObjectState(CDSM_DSO_CLASSNAME, cursor2);
-    state2.apply(new ObjectID(1), cursor2, new BackReferences());
+    state2.apply(new ObjectID(1), cursor2, new ApplyTransactionInfo());
     assertEquals(state, state2);
 
     dnaWriter = new TestDNAWriter();
@@ -40,7 +40,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(
                                                                                                                                                 CDSM_DSO_CLASSNAME,
                                                                                                                                                 cursor3);
-    state3.apply(new ObjectID(1), cursor3, new BackReferences());
+    state3.apply(new ObjectID(1), cursor3, new ApplyTransactionInfo());
     assertTrue(state3.references.isEmpty());
 
   }

@@ -4,7 +4,7 @@
 package com.tc.objectserver.core.impl;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.test.TCTestCase;
 
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import java.util.Set;
 public class BackReferencesTest extends TCTestCase {
 
   public void testBasic() throws Exception {
-    BackReferences br = new BackReferences();
+    ApplyTransactionInfo br = new ApplyTransactionInfo();
     assertTrue(br.getAllParents().isEmpty());
     
     Set actualParents = new HashSet();

@@ -8,7 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 
 import java.util.Collection;
@@ -61,7 +61,7 @@ public interface ServerTransactionManager {
    * 
    * @param instanceMonitor
    */
-  public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor);
+  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor);
 
   /**
    * Commits all the changes in objects and releases the objects This could potentially trigger an acknowledgment to the

@@ -43,7 +43,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
     super(in);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     ManagedObjectChangeListener listener = getListener();
 
     while (cursor.next()) {
@@ -127,7 +127,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
    * This method should be called before the new value is applied
    */
   private void informListener(ObjectID objectID, ManagedObjectChangeListener listener, int startPos, int length,
-                              Object value, BackReferences includeIDs) {
+                              Object value, ApplyTransactionInfo includeIDs) {
     if (!isPrimitive) {
       Object[] oldArray = (Object[]) arrayData;
       Object[] newArray = (Object[]) value;
@@ -143,7 +143,7 @@ public class ArrayManagedObjectState extends LogicalManagedObjectState implement
   }
 
   private void informListener(ObjectID objectID, ManagedObjectChangeListener listener, int index, Object value,
-                              BackReferences includeIDs) {
+                              ApplyTransactionInfo includeIDs) {
     if (!isPrimitive) {
       Object[] objectArray = (Object[]) arrayData;
       Object oldVal = objectArray[index];

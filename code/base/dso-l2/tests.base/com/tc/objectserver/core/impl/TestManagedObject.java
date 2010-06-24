@@ -20,7 +20,7 @@ import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.impl.ObjectManagerImpl;
 import com.tc.objectserver.managedobject.AbstractManagedObjectState;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -81,7 +81,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return new HashSet<ObjectID>(this.references);
   }
 
-  public void apply(final DNA dna, final TransactionID txID, final BackReferences includeIDs,
+  public void apply(final DNA dna, final TransactionID txID, final ApplyTransactionInfo includeIDs,
                     final ObjectInstanceMonitor imo) {
     // do nothing
   }
@@ -222,7 +222,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     traverser.addReachableObjectIDs(getObjectReferences());
   }
 
-  public void apply(final DNA dna, final TransactionID txnID, final BackReferences includeIDs,
+  public void apply(final DNA dna, final TransactionID txnID, final ApplyTransactionInfo includeIDs,
                     final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) throws DNAException {
     // TODO: do i need to implement this?
   }
@@ -255,7 +255,7 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
       throw new UnsupportedOperationException();
     }
 
-    public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs) {
+    public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs) {
       throw new UnsupportedOperationException();
     }
 

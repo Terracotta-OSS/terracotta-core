@@ -68,7 +68,7 @@ public abstract class PhysicalManagedObjectState extends AbstractManagedObjectSt
     throw new TCRuntimeException("Don't hash me!");
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     ManagedObjectChangeListener listener = getListener();
     while (cursor.next()) {
       PhysicalAction a = cursor.getPhysicalAction();

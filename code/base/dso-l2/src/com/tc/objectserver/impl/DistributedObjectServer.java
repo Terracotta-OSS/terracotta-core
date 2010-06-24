@@ -179,6 +179,7 @@ import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.RespondToServerMapRequestHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
 import com.tc.objectserver.handler.ServerMapEvictionHandler;
+import com.tc.objectserver.handler.ServerMapCapacityEvictionHandler;
 import com.tc.objectserver.handler.ServerMapRequestHandler;
 import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
@@ -955,6 +956,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     toInit.add(this.serverMapEvictor);
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE,
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, maxStageSize);
+    stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,
+                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor), 1, maxStageSize);
 
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,

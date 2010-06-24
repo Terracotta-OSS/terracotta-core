@@ -9,7 +9,7 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
@@ -39,7 +39,7 @@ public class ManagedObjectTest extends TCTestCase {
 
     Map instances = instanceMonitor.getInstanceCounts();
     assertEquals(0, instances.size());
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, false);
 
     instances = instanceMonitor.getInstanceCounts();
     assertEquals(1, instances.size());
@@ -63,12 +63,12 @@ public class ManagedObjectTest extends TCTestCase {
     TestDNA dna = new TestDNA(cursor);
     dna.version = 10;
 
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, false);
 
     // Now reapply and see if it fails.
     boolean failed = false;
     try {
-      mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
+      mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, false);
       failed = true;
     } catch (final AssertionError ae) {
       // expected.
@@ -80,7 +80,7 @@ public class ManagedObjectTest extends TCTestCase {
       dna = new TestDNA(cursor);
       dna.version = 5;
       dna.isDelta = true;
-      mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
+      mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, false);
       failed = true;
     } catch (final AssertionError ae) {
       // expected.
@@ -91,7 +91,7 @@ public class ManagedObjectTest extends TCTestCase {
     dna = new TestDNA(cursor);
     dna.version = 15;
     dna.isDelta = true;
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, false);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, false);
 
     final long version = mo.getVersion();
 
@@ -99,21 +99,21 @@ public class ManagedObjectTest extends TCTestCase {
     dna = new TestDNA(cursor);
     dna.version = 5;
     dna.isDelta = true;
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, true);
 
     assertTrue(version == mo.getVersion());
 
     dna = new TestDNA(cursor);
     dna.version = 15;
     dna.isDelta = true;
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, true);
 
     assertTrue(version == mo.getVersion());
 
     dna = new TestDNA(cursor);
     dna.version = 17;
     dna.isDelta = true;
-    mo.apply(dna, new TransactionID(1), new BackReferences(), instanceMonitor, true);
+    mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), instanceMonitor, true);
 
     assertTrue(version < mo.getVersion());
   }

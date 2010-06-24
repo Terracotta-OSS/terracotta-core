@@ -76,7 +76,7 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
 
       if (!clientID.equals(committerID)) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
-            .getIncludeIDs(), clientID, lookupObjectIDs);
+            .getApplyInfo(), clientID, lookupObjectIDs);
       }
 
       if (this.objectStatsRecorder.getBroadcastDebug()) {

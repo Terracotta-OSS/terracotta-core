@@ -8,7 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
@@ -49,7 +49,7 @@ public interface ManagedObjectState {
   public static final byte TDC_CUSTOM_LIFESPAN_SERIALIZED_ENTRY   = 0x13;
   public static final byte CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE = 0x14;
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException;
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo applyInfo) throws IOException;
 
   public Set getObjectReferences();
 

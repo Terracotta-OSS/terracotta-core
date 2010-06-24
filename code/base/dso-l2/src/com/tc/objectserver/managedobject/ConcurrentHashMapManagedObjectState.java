@@ -38,7 +38,7 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     super(classID, map);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       Object action = cursor.getAction();
       if (action instanceof LogicalAction) {
@@ -62,7 +62,7 @@ public class ConcurrentHashMapManagedObjectState extends PartialMapManagedObject
     }
   }
 
-  private void initalizeSegments(ObjectID objectID, Object[] array, BackReferences includeIDs) {
+  private void initalizeSegments(ObjectID objectID, Object[] array, ApplyTransactionInfo includeIDs) {
     Assert.assertNull(segments);
     segments = new ObjectID[array.length];
     for (int i = 0; i < array.length; i++) {

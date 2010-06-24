@@ -42,7 +42,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     super(in);
   }
 
-  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs)
+  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
       final LogicalAction action = cursor.getLogicalAction();
@@ -52,7 +52,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  protected void applyMethod(final ObjectID objectID, final BackReferences includeIDs, final int method,
+  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo includeIDs, final int method,
                              final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
@@ -84,11 +84,11 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   }
 
-  protected void addBackReferenceForKey(final BackReferences includeIDs, final ObjectID key, final ObjectID map) {
+  protected void addBackReferenceForKey(final ApplyTransactionInfo includeIDs, final ObjectID key, final ObjectID map) {
     includeIDs.addBackReference(key, map);
   }
 
-  protected void addBackReferenceForValue(final BackReferences includeIDs, final ObjectID value, final ObjectID map) {
+  protected void addBackReferenceForValue(final ApplyTransactionInfo includeIDs, final ObjectID value, final ObjectID map) {
     includeIDs.addBackReference(value, map);
   }
 

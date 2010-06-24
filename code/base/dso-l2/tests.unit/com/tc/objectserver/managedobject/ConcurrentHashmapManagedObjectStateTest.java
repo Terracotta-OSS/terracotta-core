@@ -33,7 +33,7 @@ public class ConcurrentHashmapManagedObjectStateTest extends AbstractTestManaged
     cursor.addArrayAction(segments);
 
     final ManagedObjectState state = createManagedObjectState(className, cursor);
-    state.apply(new ObjectID(1), cursor, new BackReferences());
+    state.apply(new ObjectID(1), cursor, new ApplyTransactionInfo());
 
     final ManagedObjectStateSerializer serializer = new ManagedObjectStateSerializer();
 

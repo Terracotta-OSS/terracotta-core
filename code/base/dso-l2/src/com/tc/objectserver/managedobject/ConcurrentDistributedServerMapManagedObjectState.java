@@ -30,6 +30,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
 
+  private boolean            evictionInitiated                    = false;
   private int                maxTTISeconds;
   private int                maxTTLSeconds;
   private int                targetMaxInMemoryCount;
@@ -78,7 +79,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   }
 
   @Override
-  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs)
+  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     boolean broadcast = false;
     while (cursor.next()) {
@@ -121,11 +122,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   }
 
   @Override
-  protected void applyMethod(final ObjectID objectID, final BackReferences includeIDs, final int method,
+  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo includeIDs, final int method,
                              final Object[] params) {
     if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
       // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
       super.applyMethod(objectID, includeIDs, method, params);
+    }
+    if (method == SerializationUtil.PUT && !this.evictionInitiated
+        && this.references.size() > this.targetMaxTotalCount * 1.15) { // 15 % overshoot
+      this.evictionInitiated = true;
+      includeIDs.initiateEvictionFor(objectID);
     }
   }
 
@@ -180,6 +186,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   public Map getRandomSamples(final int count, final SortedSet<ObjectID> ignoreList) {
+    // TODO::May be delay this setting to later, in evict, but have to be careful not to miss setting it.
+    this.evictionInitiated = false;
     final Map samples = new HashMap(count);
     final Map ignored = new HashMap(count);
     final Random r = new Random();

@@ -28,7 +28,7 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.TransactionAcknowledgeAction;
 import com.tc.objectserver.locks.LockManager;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
@@ -305,7 +305,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public void apply(final ServerTransaction txn, final Map objects, final BackReferences includeIDs,
+  public void apply(final ServerTransaction txn, final Map objects, final ApplyTransactionInfo applyInfo,
                     final ObjectInstanceMonitor instanceMonitor) {
 
     final ServerTransactionID stxnID = txn.getServerTransactionID();
@@ -326,7 +326,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       }
       final DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       final ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
-      mo.apply(change, txnID, includeIDs, instanceMonitor, !active);
+      mo.apply(change, txnID, applyInfo, instanceMonitor, !active);
       if (this.broadcastStatsLoggingEnabled || this.objectStatsRecorder.getBroadcastDebug()) {
         // This ugly code exists so that Broadcast change handler can log more stats about the broadcasts that are
         // taking place there. This type info was lost from the DNA in one of the performance optimizations that we did.

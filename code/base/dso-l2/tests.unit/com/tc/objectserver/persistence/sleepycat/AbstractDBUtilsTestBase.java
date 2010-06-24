@@ -15,7 +15,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProvider;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
@@ -125,7 +125,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       assertTrue(test.isEqual(loaded));
       assertNotSame(test, loaded);
       assertNotSame(mop.loadObjectByID(test.getID()), mop.loadObjectByID(test.getID()));
-      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new BackReferences(), this.imo,
+      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo,
                    false);
     }
   }
@@ -150,7 +150,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     final ManagedObjectImpl rv = new ManagedObjectImpl(objectID);
     final DNA dna = newPhysicalDNA(false);
     assertTrue(rv.isNew());
-    rv.apply(dna, new TransactionID(++this.transactionSequence), new BackReferences(), this.imo, false);
+    rv.apply(dna, new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo, false);
     return rv;
   }
 

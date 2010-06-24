@@ -35,7 +35,7 @@ public class TreeMapManagedObjectState extends MapManagedObjectState implements 
     super(classID, map);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     while (cursor.next()) {
       Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {

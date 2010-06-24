@@ -6,23 +6,23 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-// TODO::This class doesn't maintain back references anymore. Should be renamed.
-public class BackReferences {
+public class ApplyTransactionInfo {
 
   private final Map nodes;
   private final Set parents;
-  private final Set ignoreBroadcasts;
+  private Set       ignoreBroadcasts = Collections.EMPTY_SET;
+  private Set       initiateEviction = Collections.EMPTY_SET;
 
-  public BackReferences() {
+  public ApplyTransactionInfo() {
     this.parents = new HashSet();
     this.nodes = new HashMap();
-    this.ignoreBroadcasts = new HashSet();
   }
 
   public void addBackReference(final ObjectID child, final ObjectID parent) {
@@ -105,10 +105,24 @@ public class BackReferences {
   }
 
   public void ignoreBroadcastFor(final ObjectID objectID) {
+    if (this.ignoreBroadcasts == Collections.EMPTY_SET) {
+      this.ignoreBroadcasts = new HashSet();
+    }
     this.ignoreBroadcasts.add(objectID);
   }
 
   public boolean isBroadcastIgnoredFor(final ObjectID oid) {
     return this.ignoreBroadcasts.contains(oid);
+  }
+
+  public void initiateEvictionFor(final ObjectID objectID) {
+    if (this.initiateEviction == Collections.EMPTY_SET) {
+      this.initiateEviction = new HashSet();
+    }
+    this.initiateEviction.add(objectID);
+  }
+
+  public Set getObjectIDsToInitateEviction() {
+    return this.initiateEviction;
   }
 }

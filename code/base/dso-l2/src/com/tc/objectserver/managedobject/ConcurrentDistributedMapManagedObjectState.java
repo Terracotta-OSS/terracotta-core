@@ -44,7 +44,7 @@ public class ConcurrentDistributedMapManagedObjectState extends PartialMapManage
   }
 
   @Override
-  public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs)
+  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
       throws IOException {
     while (cursor.next()) {
       final Object action = cursor.getAction();

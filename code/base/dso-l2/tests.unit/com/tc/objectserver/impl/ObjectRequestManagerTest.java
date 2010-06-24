@@ -53,7 +53,7 @@ import com.tc.objectserver.impl.ObjectRequestManagerImpl.ObjectRequestCache;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.RequestedObject;
 import com.tc.objectserver.impl.ObjectRequestManagerImpl.ResponseContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListener;
 import com.tc.objectserver.managedobject.ManagedObjectChangeListenerProviderImpl;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
@@ -423,7 +423,7 @@ public class ObjectRequestManagerTest extends TestCase {
     for (int i = 0; i < 5000; i++) {
       final ObjectID id = new ObjectID(i);
       final ManagedObjectImpl mo = new ManagedObjectImpl(id);
-      mo.apply(new TestDNA(new TestDNACursor()), new TransactionID(id.toLong()), new BackReferences(),
+      mo.apply(new TestDNA(new TestDNACursor()), new TransactionID(id.toLong()), new ApplyTransactionInfo(),
                new NullObjectInstanceMonitor(), true);
       batchAndSend.sendObject(mo);
 
@@ -763,7 +763,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
-    public void addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
+    public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> rescueIds) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
@@ -791,7 +791,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
-                                                         final BackReferences references, final NodeID clientID,
+                                                         final ApplyTransactionInfo references, final NodeID clientID,
                                                          final Set<ObjectID> objectIDs) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
@@ -865,7 +865,7 @@ public class ObjectRequestManagerTest extends TestCase {
       for (final Iterator iter = ids.iterator(); iter.hasNext();) {
         final ObjectID id = (ObjectID) iter.next();
         final ManagedObjectImpl mo = new ManagedObjectImpl(id);
-        mo.apply(new TestDNA(new TestDNACursor()), new TransactionID(id.toLong()), new BackReferences(),
+        mo.apply(new TestDNA(new TestDNACursor()), new TransactionID(id.toLong()), new ApplyTransactionInfo(),
                  new NullObjectInstanceMonitor(), true);
         resultsMap.put(id, mo);
       }

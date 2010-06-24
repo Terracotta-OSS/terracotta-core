@@ -13,7 +13,7 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.impl.ManagedObjectReference;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 
@@ -27,7 +27,7 @@ public interface ManagedObject {
 
   public Set getObjectReferences();
 
-  public void apply(DNA dna, TransactionID txnID, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor,
+  public void apply(DNA dna, TransactionID txnID, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor,
                     boolean ignoreIfOlderDNA) throws DNAException;
 
   public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer, DNAType type);

@@ -34,7 +34,7 @@ public class TreeSetManagedObjectState extends SetManagedObjectState {
     super(in);
   }
 
-  public void apply(ObjectID objectID, DNACursor cursor, BackReferences includeIDs) throws IOException {
+  public void apply(ObjectID objectID, DNACursor cursor, ApplyTransactionInfo includeIDs) throws IOException {
     if (!cursor.next()) { return; }
 
     Object action = cursor.getAction();

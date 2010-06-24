@@ -13,7 +13,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.locks.NotifiedWaiters;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.tx.ServerTransaction;
 
 import java.util.List;
@@ -28,19 +28,19 @@ public class BroadcastChangeContext implements EventContext {
   private final ServerTransaction   tx;
   private final GlobalTransactionID lowGlobalTransactionIDWatermark;
   private final NotifiedWaiters     notifiedWaiters;
-  private final BackReferences      includeIDs;
+  private final ApplyTransactionInfo      applyInfo;
 
   public BroadcastChangeContext(ServerTransaction tx,
                                 GlobalTransactionID lowGlobalTransactionIDWatermark, NotifiedWaiters notifiedWaiters,
-                                BackReferences includeIDs) {
+                                ApplyTransactionInfo applyInfo) {
     this.tx = tx;
     this.lowGlobalTransactionIDWatermark = lowGlobalTransactionIDWatermark;
     this.notifiedWaiters = notifiedWaiters;
-    this.includeIDs = includeIDs;
+    this.applyInfo = applyInfo;
   }
 
-  public BackReferences getIncludeIDs() {
-    return includeIDs;
+  public ApplyTransactionInfo getApplyInfo() {
+    return applyInfo;
   }
 
   public List getChanges() {

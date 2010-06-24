@@ -65,7 +65,7 @@ public abstract class AbstractTestManagedObjectState extends TestCase {
   public void basicTestUnit(final String className, final byte type, final TestDNACursor cursor, final int objCount,
                             final boolean verifyReadWrite) throws Exception {
     final ManagedObjectState state = createManagedObjectState(className, cursor);
-    state.apply(this.objectID, cursor, new BackReferences());
+    state.apply(this.objectID, cursor, new ApplyTransactionInfo());
 
     // API verification
     basicAPI(className, type, cursor, objCount, state);

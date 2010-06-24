@@ -10,7 +10,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.objectserver.l1.api.ClientState;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
@@ -38,8 +38,9 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     this.clientStates = new ConcurrentHashMap<NodeID, ClientStateImpl>();
   }
 
-  public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes, final BackReferences includeIDs,
-                                                       final NodeID id, final Set<ObjectID> lookupObjectIDs) {
+  public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
+                                                       final ApplyTransactionInfo applyInfo, final NodeID id,
+                                                       final Set<ObjectID> lookupObjectIDs) {
     final ClientStateImpl clientState = getClientState(id);
     if (clientState == null) {
       this.logger.warn(": createPrunedChangesAndAddObjectIDTo : Client state is NULL (probably due to disconnect) : "
@@ -54,7 +55,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       for (final DNA dna : changes) {
         final ObjectID oid = dna.getObjectID();
         if (clientState.containsReference(oid)) {
-          if (dna.isDelta() && !includeIDs.isBroadcastIgnoredFor(oid)) {
+          if (dna.isDelta() && !applyInfo.isBroadcastIgnoredFor(oid)) {
             prunedChanges.add(dna);
           } else {
             // This new Object must have already been sent as a part of a different lookup. So ignoring this change.
@@ -65,7 +66,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
           // }
         }
       }
-      clientState.addReferencedChildrenTo(lookupObjectIDs, includeIDs);
+      clientState.addReferencedChildrenTo(lookupObjectIDs, applyInfo);
       clientState.removeReferencedObjectIDsFrom(lookupObjectIDs);
 
       return prunedChanges;
@@ -117,7 +118,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
     }
   }
 
-  public void addAllReferencedIdsTo(final Set<ObjectID> ids) {
+  public Set<ObjectID> addAllReferencedIdsTo(final Set<ObjectID> ids) {
     for (final ClientStateImpl c : this.clientStates.values()) {
       c.lock();
       try {
@@ -126,6 +127,7 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
         c.unlock();
       }
     }
+    return ids;
   }
 
   public void removeReferencedFrom(final NodeID id, final Set<ObjectID> oids) {
@@ -238,10 +240,10 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       lookupObjectIDs.removeAll(this.managed);
     }
 
-    public void addReferencedChildrenTo(final Set objectIDs, final BackReferences includeIDs) {
-      final Set parents = includeIDs.getAllParents();
+    public void addReferencedChildrenTo(final Set objectIDs, final ApplyTransactionInfo applyInfo) {
+      final Set parents = applyInfo.getAllParents();
       parents.retainAll(this.managed);
-      includeIDs.addReferencedChildrenTo(objectIDs, parents);
+      applyInfo.addReferencedChildrenTo(objectIDs, parents);
     }
 
     @Override

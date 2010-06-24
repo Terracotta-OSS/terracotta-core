@@ -9,7 +9,7 @@ import com.tc.net.NodeID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
-import com.tc.objectserver.managedobject.BackReferences;
+import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
@@ -64,7 +64,7 @@ public class TestServerTransactionManager implements ServerTransactionManager {
     // NOP
   }
 
-  public void apply(ServerTransaction txn, Map objects, BackReferences includeIDs, ObjectInstanceMonitor instanceMonitor) {
+  public void apply(ServerTransaction txn, Map objects, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor) {
     // NOP
   }
 
