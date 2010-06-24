@@ -20,6 +20,5 @@
 
   <clients>
       <logs>%(user.home)/terracotta/client-logs</logs>
-      <statistics>%(user.home)/terracotta/client-statistics</statistics>
   </clients>
 </tc:tc-config>
