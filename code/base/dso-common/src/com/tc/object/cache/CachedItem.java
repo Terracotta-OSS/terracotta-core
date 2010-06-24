@@ -5,26 +5,24 @@ package com.tc.object.cache;
 
 import com.tc.object.locks.LockID;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class CachedItem {
-  private final ConcurrentHashMap parentCache;
-  private final LockID            lockID;
-  private final Object            key;
-  private volatile Object         value;
-  private volatile boolean        accessed = true;
-  private CachedItem              next;
 
-  public CachedItem(final ConcurrentHashMap cache, final LockID lockID, final Object key, final Object value) {
-    this.parentCache = cache;
+  public interface DisposeListener {
+    public void disposed(CachedItem ci);
+  }
+
+  private final DisposeListener listener;
+  private final LockID          lockID;
+  private final Object          key;
+  private volatile Object       value;
+  private volatile boolean      accessed = true;
+  private CachedItem            next;
+
+  public CachedItem(final DisposeListener listener, final LockID lockID, final Object key, final Object value) {
+    this.listener = listener;
     this.lockID = lockID;
     this.key = key;
     this.value = value;
-  }
-
-  public Map getParentCache() {
-    return this.parentCache;
   }
 
   public LockID getLockID() {
@@ -46,7 +44,7 @@ public class CachedItem {
   }
 
   public void dispose() {
-    this.parentCache.remove(this.key);
+    this.listener.disposed(this);
   }
 
   public CachedItem getNext() {
