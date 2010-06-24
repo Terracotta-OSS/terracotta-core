@@ -18,7 +18,7 @@ set JAVA_HOME="%JAVA_HOME:"=%"
 set root=%~d0%~p0..
 set root="%root:"=%"
 set jetty_work_dir=%root%\jetty6.1\%jetty_instance%
-set jetty_home=%root%\..\..\..\vendors\jetty-6.1.15
+set jetty_home=%root%\..\..\..\third-party\jetty-6.1.15
 set start_jar=%jetty_home%\start.jar
 set /a stop_port=jetty_instance + 2
 

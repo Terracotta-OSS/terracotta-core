@@ -72,11 +72,11 @@ public class DSOContextImpl implements DSOContext {
                                                                              + "existing Terracotta boot JAR file. Recreate the boot JAR file using the\n"
                                                                              + "following command from the Terracotta home directory:\n"
                                                                              + "\n"
-                                                                             + "bin/make-boot-jar.sh -f <path/to/Terracotta/configuration/file>\n"
+                                                                             + "platform/bin/make-boot-jar.sh -f <path/to/Terracotta/configuration/file>\n"
                                                                              + "\n"
                                                                              + "or\n"
                                                                              + "\n"
-                                                                             + "bin\\make-boot-jar.bat -f <path\\to\\Terracotta\\configuration\\file>\n"
+                                                                             + "platform/bin\\make-boot-jar.bat -f <path\\to\\Terracotta\\configuration\\file>\n"
                                                                              + "\n"
                                                                              + "Enter the make-boot-jar command with the -h switch for help.\n"
                                                                              + "********************************************************************************\n";

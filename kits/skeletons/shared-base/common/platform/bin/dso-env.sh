@@ -40,7 +40,7 @@ if (test "$1" = "-f") || (test "$1" = "--config"); then
   TC_CONFIG_PATH="$1"
 fi
 
-. "${TC_INSTALL_DIR}/bin/boot-jar-path.sh"
+. "${TC_INSTALL_DIR}/platform/bin/boot-jar-path.sh"
 
 if $cygwin; then
   [ -n "$DSO_BOOT_JAR" ] && DSO_BOOT_JAR=`cygpath -d "$DSO_BOOT_JAR"`

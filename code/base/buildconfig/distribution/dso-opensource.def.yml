@@ -20,7 +20,7 @@ bundled_demos:
         - townsend
 bundled_vendors:
    - jetty-6.1.15:
-       install_directory: vendors/jetty-6.1.15
+       install_directory: third-party/jetty-6.1.15
 bundled_components:
   - base:
       documentations:
@@ -35,7 +35,7 @@ bundled_components:
           - QUICK-START
   - express-base:
       documentations:
-        install_directory: docs
+        install_directory: config-samples
         references:
           - tc-config-express-reference
   - shared-base:

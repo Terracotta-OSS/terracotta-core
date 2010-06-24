@@ -24,7 +24,7 @@ if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
 fi
 
-JAVACMD=${JAVA_HOME}/bin/java
+JAVACMD=${JAVA_HOME}/platform/bin/java
 TC_JAR=${TC_INSTALL_DIR}/lib/tc.jar
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
@@ -71,9 +71,9 @@ fi
 
 echo "Starting BootJarTool..."
 if test -n "${TC_CONFIG_PATH}"; then
-  "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
+  "${TC_INSTALL_DIR}/platform/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}" -f "${TC_CONFIG_PATH}"
 else
-  "${TC_INSTALL_DIR}/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}"
+  "${TC_INSTALL_DIR}/platform/bin/make-boot-jar.sh" -o "${DSO_BOOT_JAR}"
 fi
 if test $? != 0; then
   exit 14

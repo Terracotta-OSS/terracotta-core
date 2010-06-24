@@ -25,7 +25,7 @@ if not defined JAVA_HOME (
 
 set JAVA_HOME="%JAVA_HOME:"=%"
 
-set TC_JAVACMD=%JAVA_HOME%\bin\java
+set TC_JAVACMD=%JAVA_HOME%\platform\bin\java
 set TC_JAR=%TC_INSTALL_DIR%\lib\tc.jar
 
 if defined DSO_BOOT_JAR goto tc_set_dso_boot_jar__1_1
@@ -61,14 +61,14 @@ goto tc_set_dso_boot_jar__1_0
    
    set DSO_BOOT_JAR="%DSO_BOOT_JAR:"=%"
    
-   call %TC_INSTALL_DIR%\bin\make-boot-jar.bat -o %DSO_BOOT_JAR% -f %TC_CONFIG_PATH%
+   call %TC_INSTALL_DIR%\platfrom\bin\make-boot-jar.bat -o %DSO_BOOT_JAR% -f %TC_CONFIG_PATH%
    if %ERRORLEVEL% NEQ 0 goto error
    goto return
 
    :tc_set_dso_boot_jar__1_1_1
      set DSO_BOOT_JAR="%DSO_BOOT_JAR:"=%"
      
-     call %TC_INSTALL_DIR%\bin\make-boot-jar.bat -o %DSO_BOOT_JAR%
+     call %TC_INSTALL_DIR%\platfrom\bin\make-boot-jar.bat -o %DSO_BOOT_JAR%
      if %ERRORLEVEL% NEQ 0 goto error
      goto return
 

@@ -27,7 +27,7 @@ TC_INSTALL_DIR=${CWD}/../../../..
 ARGS=$*
 TC_CONFIG_PATH="${CWD}/tc-config.xml"
 set -- -q
-. "${TC_INSTALL_DIR}/bin/dso-env.sh"
+. "${TC_INSTALL_DIR}/platform/bin/dso-env.sh"
 
 exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} \
   -Djava.awt.Window.locationByPlatform=true \

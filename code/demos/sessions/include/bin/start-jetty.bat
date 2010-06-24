@@ -20,7 +20,7 @@ set root="%root:"=%"
 
 set jetty_work_dir=%root%\jetty6.1\%jetty_instance%
 set install_root=%root%\..\..\..
-set jetty_home=%install_root%\vendors\jetty-6.1.15
+set jetty_home=%install_root%\third-party\jetty-6.1.15
 set start_jar=%jetty_home%\start.jar
 set /a stop_port=jetty_instance + 2
 

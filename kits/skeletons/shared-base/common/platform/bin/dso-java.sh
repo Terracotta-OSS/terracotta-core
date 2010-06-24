@@ -27,7 +27,7 @@ esac
 
 TC_INSTALL_DIR=`dirname "$0"`/..
 set -- -q
-. "${TC_INSTALL_DIR}/bin/dso-env.sh"
+. "${TC_INSTALL_DIR}/platform/bin/dso-env.sh"
 
 # For Cygwin, convert paths to Windows
 if $cygwin; then

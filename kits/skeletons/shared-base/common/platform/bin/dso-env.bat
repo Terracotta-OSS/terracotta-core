@@ -19,7 +19,7 @@ goto tc_dso_env_1
   if "%1" == "--config" shift
   if not "%~1" == "" set TC_CONFIG_PATH=%~1
 
-  call %TC_INSTALL_DIR%\bin\boot-jar-path.bat
+  call %TC_INSTALL_DIR%\platform\bin\boot-jar-path.bat
   if %ERRORLEVEL% neq 0 (
     pause
     exit /b %ERRORLEVEL%

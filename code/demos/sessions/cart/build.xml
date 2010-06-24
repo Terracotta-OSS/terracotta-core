@@ -7,7 +7,7 @@
 -->
 
 <project name="Cart" default="compile" basedir=".">
-  <property name="bundled.server.home" value="${basedir}/../../../vendors/jetty-6.1.15"/>
+  <property name="bundled.server.home" value="${basedir}/../../../third-party/jetty-6.1.15"/>
   <condition property="is.live" value="true">
     <available file="${bundled.server.home}" type="dir"/>
   </condition>

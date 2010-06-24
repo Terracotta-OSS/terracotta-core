@@ -37,7 +37,7 @@ TC_INSTALL_DIR=${CWD}/../../../..
 ARGS=$*
 TC_CONFIG_PATH="${CWD}/tc-config.xml"
 set -- -q
-. "${TC_INSTALL_DIR}/bin/dso-env.sh"
+. "${TC_INSTALL_DIR}/platform/bin/dso-env.sh"
 
 exec "${JAVA_HOME}/bin/java" ${TC_JAVA_OPTS} ${JAVA_OPTS} \
   -cp "${CWD}/classes${PATH_SEPARATOR}${CWD}/lib/concurrent-1.3.4.jar" \
