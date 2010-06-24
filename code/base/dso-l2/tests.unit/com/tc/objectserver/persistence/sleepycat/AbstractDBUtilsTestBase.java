@@ -100,12 +100,14 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       final ManagedObject mo = newManagedObject(oid, i);
       assertTrue(mo.isDirty());
       this.mos.add(mo);
+      mop.addNewObject(mo);
     }
     mop.saveAllObjects(ptx, this.mos);
 
     final ManagedObject mo = newPhysicalObject(newObjectID());
     mop.saveObject(ptx, mo);
     this.mos.add(mo);
+    mop.addNewObject(mo);
 
     ptx.commit();
 
