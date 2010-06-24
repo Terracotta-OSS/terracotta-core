@@ -15,7 +15,6 @@ import com.tc.aspectwerkz.expression.ExpressionContext;
 import com.tc.aspectwerkz.expression.PointcutType;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.ClassInfoHelper;
-import com.tc.aspectwerkz.reflect.MethodInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
@@ -42,7 +41,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.bytecode.ByteCodeUtil;
 import com.tc.object.bytecode.ClassAdapterFactory;
-import com.tc.object.bytecode.ClassLoaderSubclassAdapter;
 import com.tc.object.bytecode.RenameClassesAdapter;
 import com.tc.object.bytecode.SafeSerialVersionUIDAdder;
 import com.tc.object.config.ClassReplacementMapping;
@@ -190,24 +188,13 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       // has AW aspects?
       final boolean isAdvisable = isAdvisable(classInfo, definitions);
 
-      // classloader subclass that overrides loadClass(String)
-      final boolean needsClassLoaderInstrumentation = needsClassLoaderInstrumentation(classInfo);
-
-      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters && !needsClassLoaderInstrumentation) {
+      if (!isAdvisable && !isDsoAdaptable && !hasCustomAdapters) {
         context.setCurrentBytecode(context.getInitialBytecode());
         return;
       }
 
       if (m_instrumentationLogger.getClassInclusion()) {
         m_instrumentationLogger.classIncluded(className);
-      }
-
-      if (needsClassLoaderInstrumentation) {
-        final ClassReader clReader = new ClassReader(context.getCurrentBytecode());
-        final ClassWriter clWriter = new ClassWriter(clReader, ClassWriter.COMPUTE_MAXS);
-        ClassVisitor clVisitor = new ClassLoaderSubclassAdapter(clWriter);
-        clReader.accept(clVisitor, ClassReader.SKIP_FRAMES);
-        context.setCurrentBytecode(clWriter.toByteArray());
       }
 
       // handle replacement classes
@@ -423,20 +410,6 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
       t.printStackTrace();
       throw new WrappedRuntimeException(t);
     }
-  }
-
-  private static boolean needsClassLoaderInstrumentation(final ClassInfo classInfo) {
-    for (ClassInfo c = classInfo; c != null; c = c.getSuperclass()) {
-      if ("java.lang.ClassLoader".equals(c.getName())) {
-        // found ClassLoader in the heirarchy of subclasses, now check for a definition of loadClass in this class
-        for (MethodInfo m : classInfo.getMethods()) {
-          if ("loadClass".equals(m.getName()) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(m.getSignature())) { return true; }
-        }
-        return false;
-
-      }
-    }
-    return false;
   }
 
   public static boolean isAdvisable(final ClassInfo classInfo, final Set definitions) {
