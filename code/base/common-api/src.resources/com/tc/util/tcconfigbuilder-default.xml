@@ -22,7 +22,6 @@
 
 	<clients>
 		<logs>terracotta/client-logs</logs>
-		<statistics>terracotta/client-stats</statistics>
 	</clients>
 </tc:tc-config>
 
