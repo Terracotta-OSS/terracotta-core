@@ -480,7 +480,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.statisticsAgentSubSystem.addCallback(new StatisticsSetupCallback(stageManager, mm, outstandingBatchesCounter,
                                                                           pendingBatchesSize, transactionSizeCounter,
                                                                           transactionsPerBatchCounter, txnCounter));
-    this.statisticsAgentSubSystem.setup(StatisticsSystemType.CLIENT, this.config.getNewCommonL1Config());
+    this.statisticsAgentSubSystem.setup(StatisticsSystemType.CLIENT, null);
 
     final RemoteObjectManager remoteObjectManager = this.dsoClientBuilder
         .createRemoteObjectManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging

@@ -188,11 +188,6 @@ public class TcConfigBuilder {
     tcConfig.getClients().setLogs(path);
   }
 
-  public void setClientStatistics(String path) {
-    ensureClients();
-    tcConfig.getClients().setStatistics(path);
-  }
-
   public void addAutoLock(String pattern, String lockLevel) {
     addAutoLock(pattern, lockLevel, false);
   }

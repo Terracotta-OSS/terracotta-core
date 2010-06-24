@@ -44,8 +44,7 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
   }
 
   public boolean hasAnySet() {
-    return m_client.isSetDso() || m_client.isSetLogs() || m_client.isSetStatistics()
-           || m_layout.m_modulesPanel.hasAnySet();
+    return m_client.isSetDso() || m_client.isSetLogs() || m_layout.m_modulesPanel.hasAnySet();
   }
 
   @Override
