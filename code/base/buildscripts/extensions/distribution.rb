@@ -51,9 +51,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     patch_bin_files = Array.new
 
     Dir.chdir(product_directory.to_s) do
-      # Make sure patch-data.txt and releasenotes.txt are included in the patch
+      # Make sure patch-data.txt and RELEASE-NOTES.txt are included in the patch
       patch_files << create_patch_data(patch_level, @config_source, FilePath.new('lib', 'resources'))
-      patch_files << 'releasenotes.txt'
+      patch_files << 'RELEASE-NOTES.txt'
 
       patch_descriptor['files'].each do |file|
         raise("Patch may not include build-data.txt") if file =~ /build-data\.txt$/
