@@ -111,8 +111,4 @@ public class BackReferences {
   public boolean isBroadcastIgnoredFor(final ObjectID oid) {
     return this.ignoreBroadcasts.contains(oid);
   }
-
-  public void forceBroadcastFor(final ObjectID objectID) {
-    this.ignoreBroadcasts.remove(objectID);
-  }
 }

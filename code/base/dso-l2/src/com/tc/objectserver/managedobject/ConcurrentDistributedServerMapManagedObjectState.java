@@ -24,16 +24,16 @@ import java.util.Map.Entry;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
-  
+
   public static final String MAX_TTI_SECONDS_FIELDNAME            = "maxTTISeconds";
   public static final String MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
   public static final String TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
 
-  private int                 maxTTISeconds;
-  private int                 maxTTLSeconds;
-  private int                 targetMaxInMemoryCount;
-  private int                 targetMaxTotalCount;
+  private int                maxTTISeconds;
+  private int                maxTTLSeconds;
+  private int                targetMaxInMemoryCount;
+  private int                targetMaxTotalCount;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -67,7 +67,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       dehydrateFields(objectID, writer);
     }
   }
-  
 
   @Override
   protected void dehydrateFields(final ObjectID objectID, final DNAWriter writer) {
@@ -81,7 +80,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   @Override
   public void apply(final ObjectID objectID, final DNACursor cursor, final BackReferences includeIDs)
       throws IOException {
-    includeIDs.ignoreBroadcastFor(objectID);
+    boolean broadcast = false;
     while (cursor.next()) {
       final Object action = cursor.getAction();
       if (action instanceof PhysicalAction) {
@@ -110,7 +109,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
         final int method = logicalAction.getMethod();
         final Object[] params = logicalAction.getParameters();
         applyMethod(objectID, includeIDs, method, params);
+        if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
+          // clear needs to be broadcasted so local caches can be cleared elsewhere
+          broadcast = true;
+        }
       }
+    }
+    if (!broadcast) {
+      includeIDs.ignoreBroadcastFor(objectID);
     }
   }
 
@@ -120,10 +126,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
       // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
       super.applyMethod(objectID, includeIDs, method, params);
-    }
-    if (method == SerializationUtil.CLEAR || method == SerializationUtil.CLEAR_LOCAL_CACHE) {
-      // clear needs to be broadcasted so local caches can be cleared elsewhere
-      includeIDs.forceBroadcastFor(objectID);
     }
   }
 
@@ -148,7 +150,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
            && this.targetMaxInMemoryCount == mmo.targetMaxInMemoryCount
            && this.targetMaxTotalCount == mmo.targetMaxTotalCount;
   }
-  
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {
     final ConcurrentDistributedServerMapManagedObjectState cdmMos = new ConcurrentDistributedServerMapManagedObjectState(
