@@ -103,6 +103,50 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     assertEquals(0, this.manager.getDNACacheSize());
   }
 
+  public void testUnrequestedDNACacheClearing() {
+    Collection dnas;
+    final int dnaCollectionCount = 4;
+    for (int i = 0; i < dnaCollectionCount; i++) {
+      dnas = new ArrayList();
+      dnas.add(new TestDNA(new ObjectID(i)));
+      this.manager.addAllObjects(new SessionID(i), i, dnas, this.groupID);
+    }
+    assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
+
+    // case 1:
+    // clear task first run
+    this.manager.clearAllUnrequestedDNABatches();
+    assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
+
+    // clear task second run
+    this.manager.clearAllUnrequestedDNABatches();
+    assertEquals(0, this.manager.getDNACacheSize());
+
+    this.manager.clear();
+
+    for (int i = 0; i < dnaCollectionCount; i++) {
+      dnas = new ArrayList();
+      dnas.add(new TestDNA(new ObjectID(i)));
+      this.manager.addAllObjects(new SessionID(i), i, dnas, this.groupID);
+    }
+    assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
+
+    // case 2:
+    // clear task first run
+    this.manager.clearAllUnrequestedDNABatches();
+    assertEquals(dnaCollectionCount, this.manager.getDNACacheSize());
+
+    // cache entry touch for batchID 3
+    dnas = new ArrayList();
+    dnas.add(new TestDNA(new ObjectID(30)));
+    this.manager.addAllObjects(new SessionID(3), 3, dnas, this.groupID);
+    assertEquals(dnaCollectionCount + 1, this.manager.getDNACacheSize());
+
+    // clear task second run
+    this.manager.clearAllUnrequestedDNABatches();
+    assertEquals(2, this.manager.getDNACacheSize());
+  }
+
   public void testMissingObjectIDsThrowsError() throws Exception {
     final CyclicBarrier barrier = new CyclicBarrier(2);
     final Thread thread = new Thread("Test Thread Saro") {
