@@ -22,8 +22,8 @@ public class CallbackDirtyDatabaseCleanUpAdapter implements CallbackOnExitHandle
 
   public void callbackOnExit(CallbackOnExitState state) {
     logger.error("Marking the object db as dirty ...");
+    state.setRestartNeeded();
     // there is no harm in marking this even for non-persistent dbs, except it has no effect :)
     clusterStateStore.put(ClusterStatePersistentMapStore.DBKEY_STATE, ClusterStatePersistentMapStore.DB_STATE_DIRTY);
-    state.setRestartNeeded();
   }
 }

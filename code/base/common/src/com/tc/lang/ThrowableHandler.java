@@ -41,11 +41,12 @@ public class ThrowableHandler {
   private final ExceptionHelperImpl  helper;
   private final CopyOnWriteArrayList callbackOnExitDefaultHandlers   = new CopyOnWriteArrayList();
   private final HashMap              callbackOnExitExceptionHandlers = new HashMap();
+  private final Object               dumpLock                        = new Object();
 
   private static final long          TIME_OUT                        = TCPropertiesImpl
                                                                          .getProperties()
                                                                          .getLong(
-                                                                                  TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT);
+                                                                                  TCPropertiesConsts.L2_DUMP_ON_EXCEPTION_TIMEOUT) * 1000;
   private boolean                    isExitScheduled                 = false;
   private boolean                    isDumpTaken                     = false;
 
@@ -128,10 +129,9 @@ public class ThrowableHandler {
   }
 
   private void handleDefaultException(Thread thread, CallbackOnExitState throwableState) {
-
     logException(thread, throwableState);
 
-    synchronized (this) {
+    synchronized (dumpLock) {
       if (!isDumpTaken) {
         isDumpTaken = true;
         for (Iterator iter = callbackOnExitDefaultHandlers.iterator(); iter.hasNext();) {
