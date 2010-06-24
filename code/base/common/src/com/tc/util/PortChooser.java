@@ -33,6 +33,7 @@ public final class PortChooser {
     synchronized (VM_WIDE_LOCK) {
       do {
         port = choose();
+        if (port + 1 >= MAX) continue;
         if (!isPortUsed(port + 1)) {
           chosen.add(new Integer(port + 1));
           break;
@@ -48,19 +49,19 @@ public final class PortChooser {
     synchronized (VM_WIDE_LOCK) {
       do {
         port = choose();
-        boolean choosen = true;
+        boolean isChosen = true;
         for (int i = 1; i < numOfPorts; i++) {
-          if (!isPortUsed(port + i)) {
-            choosen = false;
+          if (isPortUsed(port + i)) {
+            isChosen = false;
             break;
           }
         }
-        if(choosen && (port + numOfPorts <= MAX)){
+        if (isChosen && (port + numOfPorts <= MAX)) {
           break;
         }
       } while (true);
-      
-      for(int i = 1; i < numOfPorts; i++){
+
+      for (int i = 1; i < numOfPorts; i++) {
         chosen.add(new Integer(port + i));
       }
     }

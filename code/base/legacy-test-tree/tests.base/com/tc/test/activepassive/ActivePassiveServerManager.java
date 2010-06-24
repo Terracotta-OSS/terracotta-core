@@ -271,9 +271,6 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     while (true) {
       final int numOfPorts = 4;
       int newPort = portChooser.chooseRandomPorts(numOfPorts);
-      if (newPort + numOfPorts >= PortChooser.MAX) {
-        continue;
-      }
       if (isUnusedPort(newPort) && isUnusedPort(newPort + 1) && isUnusedPort(newPort + 2) && isUnusedPort(newPort + 3)) {
         dsoPorts[serverIndex] = newPort;
         l2GroupPorts[serverIndex] = newPort + 1;
