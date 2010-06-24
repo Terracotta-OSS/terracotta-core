@@ -7,6 +7,7 @@ package com.tctest;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.injection.annotations.InjectedDsoInstance;
+import com.tc.object.TCObject;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
 
 public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
@@ -484,12 +486,12 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
   void testGetKeysForLocalValuesUnclustered() {
     final Map unclustered = new HashMap();
-    try {
-      cluster.getKeysForLocalValues(unclustered);
-      Assert.fail("Expected exception");
-    } catch (UnclusteredObjectException e) {
-      Assert.assertSame(unclustered, e.getUnclusteredObject());
-    }
+    unclustered.put("key1", new Object());
+    unclustered.put("key2", new Object());
+    unclustered.put("key3", new Object());
+    final Set result = cluster.getKeysForLocalValues(unclustered);
+    Assert.assertNotNull(result);
+    Assert.assertEquals(3, result.size());
   }
 
   void testGetKeysForLocalValuesNull() {
@@ -499,9 +501,45 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
   }
 
   void testGetKeysForLocalValuesNotPartial() {
-    final Set result = cluster.getKeysForLocalValues(treeMap);
+    synchronized (treeMap) {
+      treeMap.put("key1", new Object());
+      treeMap.put("key2", new Object());
+      treeMap.put("key3", new Object());
+    }
+    try {
+      final Set result = cluster.getKeysForLocalValues(treeMap);
+      Assert.assertNotNull(result);
+      Assert.assertEquals(3, result.size());
+    } finally {
+      synchronized (treeMap) {
+        treeMap.clear();
+      }
+    }
+  }
+  
+  public class ManageableMap extends HashMap implements Manageable {
+
+    public boolean __tc_isManaged() {
+      return false;
+    }
+
+    public void __tc_managed(TCObject t) {
+      // no-op
+    }
+
+    public TCObject __tc_managed() {
+      return null;
+    }
+  }
+
+  void testGetKeysForLocalValuesNotManaged() {
+    Map manageableMap = new ConcurrentHashMap();
+    manageableMap.put("key1", new Object());
+    manageableMap.put("key2", new Object());
+    manageableMap.put("key3", new Object());
+    final Set result = cluster.getKeysForLocalValues(manageableMap);
     Assert.assertNotNull(result);
-    Assert.assertEquals(0, result.size());
+    Assert.assertEquals(3, result.size());
   }
 
   void testGetKeysForLocalValues() throws InterruptedException, BrokenBarrierException {

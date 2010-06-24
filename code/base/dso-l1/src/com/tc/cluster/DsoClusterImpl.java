@@ -189,29 +189,26 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
     if (map instanceof Manageable) {
       Manageable manageable = (Manageable) map;
-      if (manageable.__tc_isManaged()) {
-        if (manageable instanceof TCMap) {
-          final Set<K> result = new HashSet<K>();
-          final Set keys = clusterMetaDataManager.getKeysForOrphanedValues((TCMap)map);
-          for (Object key : keys) {
-            if (key instanceof ObjectID) {
-              try {
-                result.add((K) clientObjectManager.lookupObject((ObjectID) key));
-              } catch (ClassNotFoundException e) {
-                Assert.fail("Unexpected ClassNotFoundException for key '" + key + "' : " + e.getMessage());
-              }
-            } else {
-              result.add((K) key);
+      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
+        final Set<K> result = new HashSet<K>();
+        final Set keys = clusterMetaDataManager.getKeysForOrphanedValues((TCMap)map);
+        for (Object key : keys) {
+          if (key instanceof ObjectID) {
+            try {
+              result.add((K) clientObjectManager.lookupObject((ObjectID) key));
+            } catch (ClassNotFoundException e) {
+              Assert.fail("Unexpected ClassNotFoundException for key '" + key + "' : " + e.getMessage());
             }
+          } else {
+            result.add((K) key);
           }
-          return result;
-        } else {
-          return Collections.emptySet();
         }
+        return result;
       }
     }
 
-    throw new UnclusteredObjectException(map);
+    // if either the map isn't clustered, or it doesn't implement partial map capabilities, then no key are orphaned
+    return Collections.emptySet();
   }
 
   public <K> Set<K> getKeysForLocalValues(final Map<K, ?> map) throws UnclusteredObjectException {
@@ -219,27 +216,24 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
     if (map instanceof Manageable) {
       Manageable manageable = (Manageable) map;
-      if (manageable.__tc_isManaged()) {
-        if (manageable instanceof TCMap) {
-          final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllEntriesSnapshot();
-          if (0 == localEntries.size()) { return Collections.emptySet(); }
+      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
+        final Collection<Map.Entry> localEntries = ((TCMap) manageable).__tc_getAllEntriesSnapshot();
+        if (0 == localEntries.size()) { return Collections.emptySet(); }
 
-          final Set<K> result = new HashSet<K>();
-          for (Map.Entry entry : localEntries) {
-            if (!(entry.getValue() instanceof ObjectID) ||
-                clientObjectManager.isLocal((ObjectID)entry.getValue())) {
-              result.add((K) entry.getKey());
-            }
+        final Set<K> result = new HashSet<K>();
+        for (Map.Entry entry : localEntries) {
+          if (!(entry.getValue() instanceof ObjectID) ||
+              clientObjectManager.isLocal((ObjectID)entry.getValue())) {
+            result.add((K) entry.getKey());
           }
-
-          return result;
-        } else {
-          return Collections.emptySet();
         }
+
+        return result;
       }
     }
 
-    throw new UnclusteredObjectException(map);
+    // if either the map isn't clustered, or it doesn't implement partial map capabilities, then all the keys are local
+    return map.keySet();
   }
 
   public DsoNodeMetaData retrieveMetaDataForDsoNode(final DsoNodeInternal node) {
