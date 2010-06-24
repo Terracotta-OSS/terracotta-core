@@ -3,11 +3,9 @@
  */
 package com.tc.management.remote.connect;
 
-import com.tc.logging.OperatorEventsLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TerracottaManagement;
-import com.tc.management.beans.MBeanNames;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.util.UUID;
 
@@ -37,7 +35,6 @@ public class ClientBeanBag {
    * comes in on the L1ConnectionMessage.
    */
   private final UUID                  uuid;
-  private final OperatorEventsLogger  l1OperatorEventsLogger;
 
   private String[]                    tunneledDomains;
 
@@ -51,7 +48,6 @@ public class ClientBeanBag {
     this.uuid = uuid;
     setTunneledDomains(tunneledDomains);
     this.l1Connection = l1Connection;
-    this.l1OperatorEventsLogger = new OperatorEventsLogger();
   }
 
   synchronized void unregisterBeans() {
@@ -141,10 +137,6 @@ public class ClientBeanBag {
           try {
             MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
             l2MBeanServer.registerMBean(mirror, modifiedObjName);
-            if (objName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
-              l2MBeanServer.addNotificationListener(modifiedObjName, this.l1OperatorEventsLogger,
-                                                    new OperatorEventsFilter(), null);
-            }
           } catch (Throwable t) {
             beanNames.remove(modifiedObjName);
             if (t instanceof Error) throw (Error) t;
@@ -172,12 +164,6 @@ public class ClientBeanBag {
 
     if (beanNames.contains(modifiedObjName)) {
       try {
-        if (objName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC) && l2MBeanServer.isRegistered(modifiedObjName)) {
-          try {
-            l2MBeanServer.removeNotificationListener(modifiedObjName, this.l1OperatorEventsLogger);
-          } catch (Exception e) {/**/
-          }
-        }
         l2MBeanServer.unregisterMBean(modifiedObjName);
         LOGGER.info("Unregistered Tunneled MBean '" + modifiedObjName + "'");
       } catch (Exception e) {

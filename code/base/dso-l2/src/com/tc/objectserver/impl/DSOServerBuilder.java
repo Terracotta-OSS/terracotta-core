@@ -53,12 +53,14 @@ import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import java.net.InetAddress;
 import java.util.List;
 
+import javax.management.MBeanServer;
+
 public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
-                                                          Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
+                                                        Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
 
   ObjectRequestManager createObjectRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                   ClientStateManager clientStateMgr,
@@ -120,5 +122,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
       throws Exception;
 
   void registerForOperatorEvents(L2Management l2Management,
-                                 TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider);
+                                 TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
+                                 MBeanServer l2MbeanServer);
 }

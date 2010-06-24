@@ -568,7 +568,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
       // register the terracotta operator event logger
       this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
-      this.serverBuilder.registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider);
+      this.serverBuilder.registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider, getMBeanServer());
 
       final String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {

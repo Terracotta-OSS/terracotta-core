@@ -65,6 +65,8 @@ import com.tc.util.runtime.ThreadDumpUtil;
 import java.net.InetAddress;
 import java.util.List;
 
+import javax.management.MBeanServer;
+
 public class StandardDSOServerBuilder implements DSOServerBuilder {
   private final HaConfig   haConfig;
   private final GroupID    thisGroupID;
@@ -116,9 +118,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr,
-                                                                 DSOChannelManager channelManager,
-                                                                 Sink respondToServerTCMapSink,
-                                                                 Sink managedObjectRequestSink) {
+                                                               DSOChannelManager channelManager,
+                                                               Sink respondToServerTCMapSink,
+                                                               Sink managedObjectRequestSink) {
     return new ServerMapRequestManagerImpl(objectMgr, channelManager, respondToServerTCMapSink,
                                            managedObjectRequestSink);
   }
@@ -204,7 +206,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public void registerForOperatorEvents(L2Management l2Management,
-                                        TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider) {
+                                        TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
+                                        MBeanServer l2MbeanServer) {
     // NOP
   }
 }
