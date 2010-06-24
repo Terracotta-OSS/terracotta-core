@@ -47,7 +47,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
         group = arg['groupId']
         artifact = arg['artifact']
-        classifier = arg['classifier']
+        classifier = arg['classifier'] || config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
           config_source['version'] || build_environment.version
 

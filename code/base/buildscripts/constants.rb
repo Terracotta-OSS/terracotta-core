@@ -25,6 +25,7 @@ module MavenConstants
   MAVEN_REPO_ID_CONFIG_KEY = 'maven.repositoryId'
   MAVEN_VERSION_CONFIG_KEY = 'maven.version'
   MAVEN_SNAPSHOT_CONFIG_KEY = 'maven.snapshot'
+  MAVEN_CLASSIFIER_CONFIG_KEY = 'maven.classifier'
   MAVEN_REPO_LOCAL = 'local'
   DEFAULT_GROUP_ID = 'org.terracotta'
   MODULES_GROUP_ID = 'org.terracotta.modules'

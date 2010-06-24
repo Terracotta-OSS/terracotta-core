@@ -33,6 +33,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
 
     patch_level = config_source['level'] || patch_descriptor['level']
+ 
+    if config_source[MAVEN_REPO_CONFIG_KEY]
+      @internal_config_source[MAVEN_CLASSIFIER_CONFIG_KEY] = "patch-#{patch_level}"
+    end
 
     dist(product_code, flavor)
 

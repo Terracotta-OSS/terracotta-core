@@ -194,7 +194,7 @@ create_all_packages
     configuration files found under the code/base/buildconfig/distribution
     directory.
 
-patch [level=IDENTIFIER]
+patch [level=IDENTIFIER] [maven.repo=URL]
     Creates a patch tar file containing the files specified in patch.def.yml.
     The patch.def.yml file is a YAML file containing two keys: level and files.
     The files key must refer to an array of file names relative to the product
@@ -202,6 +202,11 @@ patch [level=IDENTIFIER]
 
     If specified, the 'level' command-line option overrides the level attribute
     from patch.def.yml.
+
+    If the maven.repo parameter is given, then patched versions of the Terracotta
+    Maven artifacts will be deployed to the specified repository URL.  As with
+    other Maven commands, the maven.repositoryId parameter can also be used to
+    link to a server/id element in the Maven settings.xml.
 
 DEPLOYING MAVEN ARTIFACTS
 
