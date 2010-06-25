@@ -106,9 +106,8 @@ public class TCTestCase extends TestCase {
     if (Os.isLinux()) {
       try {
         System.err.println("attempting thread dump for linux");
-        Process proc = Runtime.getRuntime().exec(
-                                                 new String[] { "/usr/bin/kill", "-3",
-                                                     "" + GetPid.getInstance().getPid() });
+        Process proc = Runtime.getRuntime()
+            .exec(new String[] { "/bin/kill", "-3", "" + GetPid.getInstance().getPid() });
         proc.waitFor();
       } catch (Throwable t) {
         t.printStackTrace();
