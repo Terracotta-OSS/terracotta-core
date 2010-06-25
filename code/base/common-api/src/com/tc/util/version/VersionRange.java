@@ -6,73 +6,94 @@ package com.tc.util.version;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class VersionRange {
-  // A version range:  
-  //   ^         - match start at beginning
-  //   [([]      - the begin range character
-  //   <version> - see above
-  //   ,         - just a comma
-  //   <version> - see above
-  //   [\])]     - the end range character, does not have to match begin range character
-  //   $         - match must hit end of string
-  // A version:
-  //   \d+ - 1 or more digits
-  //   \.  - a dot
-  //   \d+ - 1 or more digits
-  //   \.  - a dot
-  //   \d+ - 1 or more digits
-  //   -   - just a dash
-  //   \w+ - letters and numbers
-  static final String VERSION_PATTERN_STR = "(\\d+(?:\\.\\d+(?:\\.\\d+(?:-\\w+)?)?)?)";
-
+public class VersionRange {
+  // A version range:
+  // ^ - match start at beginning
+  // [([] - the begin range character
+  // <version> - see below
+  // , - just a comma
+  // <version> - see below
+  // [\])] - the end range character, does not have to match begin range character
+  // $ - match must hit end of string
   //
-  // Examples:
-  //    1
-  //    1.2
-  //    1.2.3
-  //    1.2.2-SNAPSHOT
-  //    [1.0.0-SNAPSHOT,1.1.0-SNAPSHOT)
-  // 
-  // Match groups:
-  //    0 - whole input
-  //    1 - [ or ( begin range
-  //    2 - min version 
-  //    3 - max version
-  //    4 - ] or ) end range
-  private static final Pattern VERSION = Pattern.compile("^([(\\[])?" + VERSION_PATTERN_STR + "(?:," + VERSION_PATTERN_STR + "([\\])])?)?$");
+  // A version:
+  // \d+ - 1 or more digits
+  // \. - a dot
+  // \d+ - 1 or more digits
+  // \. - a dot
+  // \d+ - 1 or more digits
+  // - - just a dash
+  // \w+ - letters and numbers
+  private static final String  VERSION_PATTERN_STR = "^(\\d+(?:\\.\\d+(?:\\.\\d+(?:-\\w+)?)?)?)$";
 
-  private final String minVersion;
-  private final String maxVersion;
-  private final boolean minIsInclusive;
-  private final boolean maxIsInclusive;
+  private static final Pattern SINGLE_COMMA        = Pattern.compile("^([^,]+)?,([^,]+)?$");
+  private static final Pattern VERSION             = Pattern.compile(VERSION_PATTERN_STR);
+
+  private final String         minVersion;
+  private final String         maxVersion;
+  private final boolean        minIsInclusive;
+  private final boolean        maxIsInclusive;
 
   public VersionRange(String versionString) {
-    Matcher m = VERSION.matcher(versionString);
-    if(m.matches()) { 
-      if(m.groupCount() == 4) {
-        minIsInclusive = m.group(1) != null ? m.group(1).equals("[") : true;
-        minVersion = m.group(2);
-        maxVersion = m.group(3) != null ? m.group(3) : minVersion;
-        maxIsInclusive = m.group(4) != null ? m.group(4).equals("]") : true;
+    if (versionString == null) { throw new NullPointerException(); }
+    versionString = versionString.trim();
+
+    if (isRange(versionString)) {
+      minIsInclusive = versionString.startsWith("[");
+      maxIsInclusive = versionString.endsWith("]");
+
+      versionString = versionString.replaceFirst("^[\\[(]", "");
+      versionString = versionString.replaceFirst("[\\])]$", "");
+      versionString = versionString.trim();
+
+      if (versionString.endsWith(",")) {
+        minVersion = verifyVersionFormat(versionString.replaceFirst(",$", ""));
+        maxVersion = "";
+      } else if (versionString.startsWith(",")) {
+        maxVersion = verifyVersionFormat(versionString.replaceFirst("^,", ""));
+        minVersion = "";
       } else {
-        throw new IllegalArgumentException("Unknown version string: " + versionString);
+        String[] pair = versionString.split(",");
+        if (pair.length != 2) { throw new AssertionError("Unexpected number of elements (" + pair.length + "): "
+                                                         + versionString); }
+        for (int i = 0; i < pair.length; i++) {
+          pair[i] = pair[i].trim();
+        }
+
+        minVersion = verifyVersionFormat(pair[0]);
+        maxVersion = verifyVersionFormat(pair[1]);
       }
     } else {
-      throw new IllegalArgumentException("Unknown version string: " + versionString);
+      minVersion = verifyVersionFormat(versionString);
+      maxVersion = verifyVersionFormat(versionString);
+      minIsInclusive = true;
+      maxIsInclusive = true;
     }
   }
 
-  public VersionRange(String minVersion, String maxVersion) {
-    this(minVersion, maxVersion, true, false);
+  private String verifyVersionFormat(String ver) {
+    Matcher matcher = VERSION.matcher(ver);
+    if (matcher.matches()) { return ver; }
+
+    throw new IllegalArgumentException("Unexpected version string format: " + ver);
   }
 
-  public VersionRange(String minVersion, String maxVersion, boolean minIsInclusive, boolean maxIsInclusive) {
-    this.minVersion = minVersion;
-    this.maxVersion = maxVersion;
-    this.minIsInclusive = minIsInclusive;
-    this.maxIsInclusive = maxIsInclusive;
+  private boolean isRange(String ver) {
+    if (ver.startsWith("[") || ver.startsWith("(")) {
+      if (ver.endsWith("]") || ver.endsWith(")")) {
+        Matcher matcher = SINGLE_COMMA.matcher(ver);
+        if (matcher.matches()) {
+          return true;
+        } else {
+          throw new IllegalArgumentException("Apparent version range missing single comma: " + ver);
+        }
+      } else {
+        throw new IllegalArgumentException("Version string missing proper trailing character: " + ver);
+      }
+    }
+    return false;
   }
-  
+
   public String getMinVersion() {
     return minVersion;
   }
@@ -91,15 +112,21 @@ class VersionRange {
 
   public boolean contains(String otherVersionStr) {
     Version otherVersion = new Version(otherVersionStr);
-    Version min = new Version(minVersion);
-    Version max = new Version(maxVersion);
-    
-    int compareMin = otherVersion.compareTo(min);
-    int compareMax = otherVersion.compareTo(max);
+
+    int compareMin = isMinUnbounded() ? 1 : otherVersion.compareTo(new Version(minVersion));
+    int compareMax = isMaxUnbounded() ? -1 : otherVersion.compareTo(new Version(maxVersion));
 
     boolean greaterThanMin = compareMin > 0 || (isMinInclusive() && compareMin == 0);
     boolean lessThanMax = compareMax < 0 || (isMaxInclusive() && compareMax == 0);
-    
+
     return greaterThanMin && lessThanMax;
+  }
+
+  public boolean isMaxUnbounded() {
+    return maxVersion.length() == 0;
+  }
+
+  public boolean isMinUnbounded() {
+    return minVersion.length() == 0;
   }
 }

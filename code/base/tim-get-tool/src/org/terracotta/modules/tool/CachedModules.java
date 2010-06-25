@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
 import com.tc.util.version.VersionMatcher;
+import com.tc.util.version.VersionRange;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -221,7 +222,7 @@ public class CachedModules implements Modules {
     for (Module module : list()) {
       // boolean m0 = (artifactId == null) ? true : module.artifactId().equals(artifactId);
       boolean m0 = module.artifactId().equals(artifactId);
-      boolean m1 = (version == null) ? true : module.version().equals(version);
+      boolean m1 = (version == null) ? true : new VersionRange(version).contains(module.version());
       boolean m2 = (groupId == null) ? true : module.groupId().equals(groupId);
       if (!m0 || !m1 || !m2) continue;
       list.add(module);
@@ -242,13 +243,18 @@ public class CachedModules implements Modules {
   }
 
   public Module get(String groupId, String artifactId, String version) {
-    Map<String, Object> attributes = new HashMap<String, Object>();
-    attributes.put("groupId", groupId);
-    attributes.put("artifactId", artifactId);
-    attributes.put("version", version);
-    Module module = new Module(null, attributes, relativeUrlBase());
-    int index = list().indexOf(module);
-    return (index == -1) ? null : list().get(index);
+    Module rv = null;
+    for (Module m : list()) {
+      if (m.groupId().equals(groupId) && m.artifactId().equals(artifactId)) {
+        VersionRange range = new VersionRange(version);
+        if (range.contains(m.version())) {
+          // we don't break here since we want to find the latest version (in the case of a range)
+          rv = m;
+        }
+      }
+    }
+
+    return rv;
   }
 
   public List<Module> getSiblings(Module module) {
