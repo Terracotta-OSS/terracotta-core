@@ -3,7 +3,7 @@
 rem All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 
 setlocal
-set TC_INSTALL_DIR=%~d0%~p0..
+set TC_INSTALL_DIR=%~d0%~p0..\..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 if not defined JAVA_HOME (

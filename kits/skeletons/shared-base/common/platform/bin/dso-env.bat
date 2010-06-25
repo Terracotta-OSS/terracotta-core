@@ -2,7 +2,7 @@
 
 rem All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.
 
-set TC_INSTALL_DIR=%~d0%~p0..
+set TC_INSTALL_DIR=%~d0%~p0..\..
 set TC_INSTALL_DIR="%TC_INSTALL_DIR:"=%"
 
 if "%1" == "-q" GOTO tc_dso_env_0

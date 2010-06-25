@@ -25,7 +25,7 @@ case "`uname`" in
 CYGWIN*) cygwin=true;;
 esac
 
-TC_INSTALL_DIR=`dirname "$0"`/..
+TC_INSTALL_DIR=`dirname "$0"`/../..
 set -- -q
 . "${TC_INSTALL_DIR}/platform/bin/dso-env.sh"
 

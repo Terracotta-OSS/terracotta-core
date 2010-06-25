@@ -32,7 +32,7 @@ if test "$1" = "-q" || test -n "${TC_INSTALL_DIR}"; then
     __DSO_ENV_QUIET="true"
   fi
 else
-  TC_INSTALL_DIR=`dirname "$0"`/..
+  TC_INSTALL_DIR=`dirname "$0"`/../..
 fi
 
 if (test "$1" = "-f") || (test "$1" = "--config"); then

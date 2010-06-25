@@ -15,7 +15,7 @@ if test \! -d "${JAVA_HOME}"; then
   exit 2
 fi
 
-TC_INSTALL_DIR=`dirname "$0"`/..
+TC_INSTALL_DIR=`dirname "$0"`/../..
 
 if $cygwin; then
   TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
