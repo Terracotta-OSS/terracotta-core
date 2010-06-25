@@ -19,6 +19,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.BindPort;
 
 import java.io.IOException;
 
@@ -139,7 +140,9 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
 
   // TODO: fix this
   protected synchronized final void makeClientUsePort(int whichPort) throws ConfigurationSetupException {
-    ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(whichPort);
+    BindPort bindPort = BindPort.Factory.newInstance();
+    bindPort.setIntValue(whichPort);
+    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(bindPort);
   }
 
   public BaseDSOTestCase() {

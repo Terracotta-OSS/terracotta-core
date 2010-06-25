@@ -108,6 +108,7 @@ import com.tc.plugins.ModulesLoader;
 import com.tc.server.ServerConstants;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Module;
@@ -199,8 +200,17 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     Server server = Server.Factory.newInstance();
     server.setName("default");
     server.setHost("localhost");
-    server.setJmxPort(9520);
-    server.setDsoPort(9510);
+    BindPort jmxPort = BindPort.Factory.newInstance();
+    jmxPort.setBind("0.0.0.0");
+    jmxPort.setIntValue(9520);
+    server.addNewJmxPort();
+    server.setJmxPort(jmxPort);
+    
+    BindPort dsoPort = BindPort.Factory.newInstance();
+    dsoPort.setBind("0.0.0.0");
+    dsoPort.setIntValue(9510);
+    server.addNewDsoPort();
+    server.setDsoPort(dsoPort);
     server.setBind("0.0.0.0");
     return server;
   }
@@ -446,8 +456,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, ServerConstants.SERVER_MAIN_CLASS_NAME);
     wc.setAttribute(SERVER_NAME_LAUNCH_ATTR, server.getName());
     wc.setAttribute(SERVER_HOST_LAUNCH_ATTR, server.getHost());
-    wc.setAttribute(SERVER_JMX_PORT_LAUNCH_ATTR, server.getJmxPort());
-    wc.setAttribute(SERVER_DSO_PORT_LAUNCH_ATTR, server.getDsoPort());
+    wc.setAttribute(SERVER_JMX_PORT_LAUNCH_ATTR, server.getJmxPort().getIntValue());
+    wc.setAttribute(SERVER_DSO_PORT_LAUNCH_ATTR, server.getDsoPort().getIntValue());
 
     IFile configFile = getConfigurationFile(project);
 
@@ -503,8 +513,20 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     Server server = Server.Factory.newInstance();
     server.setName(name);
     server.setHost(host);
-    if (jmxPort > 0) server.setJmxPort(jmxPort);
-    if (dsoPort > 0) server.setDsoPort(dsoPort);
+    if (jmxPort > 0) {
+      BindPort jmxBindPort = BindPort.Factory.newInstance();
+      jmxBindPort.setBind("0.0.0.0");
+      jmxBindPort.setIntValue(jmxPort);
+      server.addNewJmxPort();
+      server.setJmxPort(jmxBindPort);
+    }
+    if (dsoPort > 0) {
+      BindPort dsoBindPort = BindPort.Factory.newInstance();
+      dsoBindPort.setBind("0.0.0.0");
+      dsoBindPort.setIntValue(dsoPort);
+      server.addNewDsoPort();
+      server.getDsoPort().setIntValue(dsoPort);
+    }
 
     return server;
   }
@@ -583,7 +605,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     if (server.isSetName()) {
       name = server.getName();
     } else {
-      int dsoPort = server.isSetDsoPort() ? server.getDsoPort() : 9510;
+      int dsoPort = server.isSetDsoPort() ? server.getDsoPort().getIntValue() : 9510;
       name = server.getHost() + ":" + dsoPort;
     }
     return name;
@@ -987,8 +1009,19 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     server.setHost("%i");
     server.setName("localhost");
-    server.setDsoPort(9510);
-    server.setJmxPort(9520);
+    
+    BindPort dsoPort = BindPort.Factory.newInstance();
+    dsoPort.setBind("0.0.0.0");
+    dsoPort.setIntValue(9510);
+    server.addNewDsoPort();
+    server.setDsoPort(dsoPort);
+    
+    BindPort jmxPort = BindPort.Factory.newInstance();
+    jmxPort.setBind("0.0.0.0");
+    jmxPort.setIntValue(9520);
+    server.addNewJmxPort();
+    server.setJmxPort(jmxPort);
+    
     server.setData("terracotta/server-data");
     server.setLogs("terracotta/server-logs");
     server.setStatistics("terracotta/cluster-statistics");

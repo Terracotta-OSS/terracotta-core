@@ -9,6 +9,7 @@ import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
@@ -50,6 +51,25 @@ public class TestConfigBeanSet {
     Server initialServer = this.rootServersBean.addNewServer();
     initialServer.setHost(DEFAULT_HOST);
     initialServer.setName(DEFAULT_SERVER_NAME);
+    
+    BindPort dsoPort = BindPort.Factory.newInstance();
+    dsoPort.setIntValue(0);
+    dsoPort.setBind("0.0.0.0");
+    initialServer.addNewDsoPort();
+    initialServer.setDsoPort(dsoPort);
+    
+    BindPort jmxPort = BindPort.Factory.newInstance();
+    jmxPort.setIntValue(0);
+    jmxPort.setBind("0.0.0.0");
+    initialServer.addNewJmxPort();
+    initialServer.setJmxPort(jmxPort);
+
+    BindPort groupPort = BindPort.Factory.newInstance();
+    groupPort.setIntValue(0);
+    groupPort.setBind("0.0.0.0");
+    initialServer.addNewL2GroupPort();
+    initialServer.setL2GroupPort(groupPort);
+    
     Ha commonHa = this.rootServersBean.addNewHa();
     commonHa.setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);
     commonHa.addNewNetworkedActivePassive();

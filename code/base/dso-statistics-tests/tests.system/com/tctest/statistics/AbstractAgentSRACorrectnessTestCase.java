@@ -29,6 +29,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
+import com.terracottatech.config.BindPort;
 
 import java.util.Collection;
 
@@ -96,8 +97,16 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
       TestTVSConfigurationSetupManagerFactory factory = AbstractAgentSRACorrectnessTestCase.this.configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
       ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue("127.0.0.1");
-      ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(dsoPort);
-      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
+
+      BindPort dsoBindPort = BindPort.Factory.newInstance();
+      dsoBindPort.setIntValue(dsoPort);
+      dsoBindPort.setBind("127.0.0.1");
+      ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+
+      BindPort jmxBindPort = BindPort.Factory.newInstance();
+      jmxBindPort.setIntValue(jmxPort);
+      jmxBindPort.setBind("127.0.0.1");
+      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxBindPort);
 
       server = new TCServerImpl(manager);
       server.start();

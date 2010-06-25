@@ -127,7 +127,7 @@ public class TCStop {
       host = serverConfig.host().getString();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
-      port = serverConfig.jmxPort().getInt();
+      port = serverConfig.jmxPort().getBindPort();
       consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {

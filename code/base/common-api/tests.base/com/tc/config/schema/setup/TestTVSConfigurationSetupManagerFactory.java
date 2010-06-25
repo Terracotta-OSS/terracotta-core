@@ -238,7 +238,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     //
     // // Make servers use dynamic ports, by default.
     // ((SettableConfigItem) l2DSOConfig().listenPort()).setValue(0);
-    ((SettableConfigItem) l2CommonConfig().jmxPort()).setValue(0);
+//    ((SettableConfigItem) l2CommonConfig().jmxPort()).setValue(0);
 
     // We also set the data and log directories to strings that shouldn't be valid on any platform: you need to set
     // these yourself before you use this config. If you don't, you'll write all over the place as we create 'data' and
@@ -420,10 +420,12 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     newL2.setName(name);
     newL2.setHost(TestConfigBeanSet.DEFAULT_HOST);
 
-    newL2.setDsoPort(dsoPort);
+    newL2.addNewDsoPort();
+    newL2.getDsoPort().setIntValue(dsoPort);
 
     if (jmxPort >= 0) {
-      newL2.setJmxPort(jmxPort);
+      newL2.addNewJmxPort();
+      newL2.getJmxPort().setIntValue(jmxPort);
     }
 
     newL2.setData(BOGUS_FILENAME);

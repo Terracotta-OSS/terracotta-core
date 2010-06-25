@@ -64,11 +64,11 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
 
     final NewCommonL2Config commonConfig = configSetupManager.commonl2Config();
     final NewL2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
-    String hostname = dsoConfig.bind().getString();
+    String hostname = configSetupManager.commonl2Config().jmxPort().getBindAddress();
     if (null == hostname) {
       hostname = dsoConfig.host().getString();
     }
-    final int port = commonConfig.jmxPort().getInt();
+    final int port = commonConfig.jmxPort().getBindPort();
     system.getStatisticsGatherer().connect(hostname, port);
   }
 

@@ -81,14 +81,14 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
     if (!subsystem.isActive()) { return; }
 
     try {
-      String hostname = dsoConfig.bind().getString();
+      String hostname = config.jmxPort().getBindAddress();
       if (null == hostname) {
         hostname = dsoConfig.host().getString();
       }
       if (username != null && password != null) {
-        subsystem.getStatisticsGatherer().connect(username, password, hostname, config.jmxPort().getInt());
+        subsystem.getStatisticsGatherer().connect(username, password, hostname, config.jmxPort().getBindPort());
       } else {
-        subsystem.getStatisticsGatherer().connect(hostname, config.jmxPort().getInt());
+        subsystem.getStatisticsGatherer().connect(hostname, config.jmxPort().getBindPort());
       }
     } catch (StatisticsGathererException e) {
       throw new RuntimeException(e);

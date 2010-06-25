@@ -66,15 +66,15 @@ public class ExternalDsoServer {
         for (Server server : servers) {
           if (server.getName().equals(serverName)) {
             foundServer = true;
-            jmxPort = server.getJmxPort();
-            dsoPort = server.getDsoPort();
+            jmxPort = server.getJmxPort().getIntValue();
+            dsoPort = server.getDsoPort().getIntValue();
             break;
           }
         }
         if (!foundServer) { throw new RuntimeException("Can't find " + serverName + " from config input"); }
       } else {
-        jmxPort = servers[0].getJmxPort();
-        dsoPort = servers[0].getDsoPort();
+        jmxPort = servers[0].getJmxPort().getIntValue();
+        dsoPort = servers[0].getDsoPort().getIntValue();
       }
     } catch (Exception e) {
       throw new RuntimeException(e);

@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
@@ -7,6 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.impl.values.XmlObjectBase;
 
+import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.ConfigItemListener;
@@ -19,6 +21,7 @@ import com.tc.config.schema.dynamic.XPathBasedConfigItem;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.util.Assert;
+import com.terracottatech.config.BindPort;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -32,9 +35,8 @@ import java.util.Map;
 
 /**
  * This class exists to avoid the massive pain of writing fully-compliant test versions of every single config object in
- * the system. This is used by the {@link com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory}; see
- * there for more details.
- * </p>
+ * the system. This is used by the {@link com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory}; see there
+ * for more details. </p>
  * <p>
  * Basically, you can use this with the {@link java.util.Proxy} stuff and any random config interface (more
  * specifically, one that has methods that all take no parameters and return instances of {@link ConfigItem}, or
@@ -58,7 +60,7 @@ public class TestConfigObjectInvocationHandler implements InvocationHandler {
    * {@link com.tc.util.TCAssertionError}s.
    */
   private class OurSettableConfigItem implements SettableConfigItem, BooleanConfigItem, FileConfigItem, IntConfigItem,
-      ObjectArrayConfigItem, StringArrayConfigItem, StringConfigItem {
+      ObjectArrayConfigItem, StringArrayConfigItem, StringConfigItem, BindPortConfigItem {
     private final String xpath;
 
     public OurSettableConfigItem(String xpath) {
@@ -409,6 +411,15 @@ public class TestConfigObjectInvocationHandler implements InvocationHandler {
     public Object[] getObjects() {
       return (Object[]) getObject();
     }
+
+    public String getBindAddress() {
+      return ((BindPort)getObject()).getBind();
+    }
+
+    public int getBindPort() {
+      return ((BindPort)getObject()).getIntValue();
+    }
+
   }
 
   private final Class       theInterface;

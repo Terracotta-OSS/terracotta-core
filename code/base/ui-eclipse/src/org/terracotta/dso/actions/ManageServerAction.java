@@ -52,7 +52,7 @@ public class ManageServerAction extends BaseAction implements IRunnableWithProgr
     if (server.isSetName()) {
       name = server.getName();
     } else {
-      int dsoPort = server.isSetDsoPort() ? server.getDsoPort() : 9510;
+      int dsoPort = server.isSetDsoPort() ? server.getDsoPort().getIntValue() : 9510;
       name = server.getHost() + ":" + dsoPort;
     }
     return name;

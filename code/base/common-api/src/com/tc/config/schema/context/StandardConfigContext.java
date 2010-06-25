@@ -9,6 +9,8 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.defaults.DefaultValueProvider;
+import com.tc.config.schema.dynamic.BindPortConfigItem;
+import com.tc.config.schema.dynamic.BindPortXPathBasedConfigObject;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.BooleanXPathBasedConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -24,6 +26,7 @@ import com.tc.config.schema.dynamic.SubstitutedFileXPathBasedConfigItem;
 import com.tc.config.schema.listen.ConfigurationChangeListener;
 import com.tc.config.schema.repository.BeanRepository;
 import com.tc.util.Assert;
+import com.terracottatech.config.BindPort;
 
 import java.io.File;
 
@@ -121,6 +124,10 @@ public class StandardConfigContext implements ConfigContext {
 
   public String toString() {
     return "<ConfigContext around repository: " + this.beanRepository + ">";
+  }
+
+  public BindPortConfigItem bindPortItem(String xpath, BindPort bindPort) {
+    return new BindPortXPathBasedConfigObject(this, xpath, bindPort);
   }
 
 }

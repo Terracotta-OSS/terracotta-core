@@ -84,7 +84,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
               host = L2ConfigForL1Object.this.defaultL2Data.host();
             }
 
-            int dsoPort = l2.getDsoPort() > 0 ? l2.getDsoPort() : L2ConfigForL1Object.this.defaultL2Data.dsoPort();
+            int dsoPort = l2.getDsoPort().getIntValue() > 0 ? l2.getDsoPort().getIntValue() : L2ConfigForL1Object.this.defaultL2Data.dsoPort();
 
             if (name == null) {
               name = host + ":" + dsoPort;

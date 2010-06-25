@@ -47,7 +47,7 @@ public class ServerInfo {
   }
 
   public int getJmxPort() {
-    return m_server.getJmxPort();
+    return m_server.getJmxPort().getIntValue();
   }
 
   public int getStatus() {

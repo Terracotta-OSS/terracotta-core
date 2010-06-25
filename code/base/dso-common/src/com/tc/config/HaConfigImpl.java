@@ -181,7 +181,7 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public static Node makeNode(NewL2DSOConfig l2) {
-    return new Node(l2.host().getString(), l2.listenPort().getInt(), l2.l2GroupPort().getInt(),
+    return new Node(l2.host().getString(), l2.dsoPort().getBindPort(), l2.l2GroupPort().getBindPort(),
                     TCSocketAddress.WILDCARD_IP);
   }
 

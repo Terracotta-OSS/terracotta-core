@@ -5,6 +5,7 @@
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
+import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
@@ -28,10 +29,10 @@ public interface NewL2DSOConfig extends NewConfig {
 
   IntConfigItem garbageCollectionInterval();
 
-  IntConfigItem listenPort();
-
-  IntConfigItem l2GroupPort();
-
+  BindPortConfigItem dsoPort();
+  
+  BindPortConfigItem l2GroupPort();
+  
   StringConfigItem host();
   
   StringConfigItem serverName();

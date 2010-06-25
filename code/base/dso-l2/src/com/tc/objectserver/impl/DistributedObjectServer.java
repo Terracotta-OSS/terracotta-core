@@ -179,8 +179,8 @@ import com.tc.objectserver.handler.RespondToObjectRequestHandler;
 import com.tc.objectserver.handler.RespondToRequestLockHandler;
 import com.tc.objectserver.handler.RespondToServerMapRequestHandler;
 import com.tc.objectserver.handler.ServerClusterMetaDataHandler;
-import com.tc.objectserver.handler.ServerMapEvictionHandler;
 import com.tc.objectserver.handler.ServerMapCapacityEvictionHandler;
+import com.tc.objectserver.handler.ServerMapEvictionHandler;
 import com.tc.objectserver.handler.ServerMapRequestHandler;
 import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
@@ -450,16 +450,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       System.exit(-1);
     }
 
-    String bindAddress = l2DSOConfig.bind().getString();
+    String bindAddress = this.configSetupManager.commonl2Config().jmxPort().getBindAddress();
     if (bindAddress == null) {
       // workaround for CDV-584
       bindAddress = TCSocketAddress.WILDCARD_IP;
     }
 
-    final InetAddress bind = InetAddress.getByName(bindAddress);
+    final InetAddress jmxBind = InetAddress.getByName(bindAddress);
 
     final AddressChecker addressChecker = new AddressChecker();
-    if (!addressChecker.isLegalBindAddress(bind)) { throw new IOException("Invalid bind address [" + bind
+    if (!addressChecker.isLegalBindAddress(jmxBind)) { throw new IOException("Invalid bind address [" + jmxBind
                                                                           + "]. Local addresses are "
                                                                           + addressChecker.getAllLocalAddresses()); }
 
@@ -471,7 +471,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     if (TCSocketAddress.WILDCARD_IP.equals(bindAddress) || TCSocketAddress.LOOPBACK_IP.equals(bindAddress)) {
       this.statisticsAgentSubSystem.setDefaultAgentIp(InetAddress.getLocalHost().getHostAddress());
     } else {
-      this.statisticsAgentSubSystem.setDefaultAgentIp(bind.getHostAddress());
+      this.statisticsAgentSubSystem.setDefaultAgentIp(jmxBind.getHostAddress());
     }
     try {
       this.statisticsGateway = new StatisticsGatewayMBeanImpl();
@@ -484,7 +484,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // start the JMX server
     try {
-      startJMXServer(bind, this.configSetupManager.commonl2Config().jmxPort().getInt(), new RemoteJMXProcessor());
+      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(), new RemoteJMXProcessor());
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
       consoleLogger.error(msg);
@@ -765,12 +765,13 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.connectionIdFactory = new ConnectionIDFactoryImpl(clientStateStore);
 
-    l2DSOConfig.changesInItemIgnored(l2DSOConfig.listenPort());
-    final int serverPort = l2DSOConfig.listenPort().getInt();
+    l2DSOConfig.changesInItemIgnored(l2DSOConfig.dsoPort());
+    final int serverPort = l2DSOConfig.dsoPort().getBindPort();
 
     this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/" + serverPort);
 
-    this.l1Listener = this.communicationsManager.createListener(sessionManager, new TCSocketAddress(bind, serverPort),
+    String dsoBind = l2DSOConfig.dsoPort().getBindAddress();
+    this.l1Listener = this.communicationsManager.createListener(sessionManager, new TCSocketAddress(dsoBind, serverPort),
                                                                 true, this.connectionIdFactory, this.httpSink);
 
     final ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
@@ -1253,7 +1254,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
-    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.listenPort().getInt());
+    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.dsoPort().getBindPort());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;
@@ -1379,7 +1380,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
    */
   public int getListenPort() {
     final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.listenPort().getInt();
+    final int configValue = l2DSOConfig.dsoPort().getBindPort();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
       try {
@@ -1396,7 +1397,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public int getGroupPort() {
     final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
-    final int configValue = l2DSOConfig.l2GroupPort().getInt();
+    final int configValue = l2DSOConfig.l2GroupPort().getBindPort();
     if (configValue != 0) { return configValue; }
     return -1;
   }

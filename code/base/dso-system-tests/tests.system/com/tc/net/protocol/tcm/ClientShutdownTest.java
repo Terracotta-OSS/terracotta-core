@@ -219,7 +219,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       TestTVSConfigurationSetupManagerFactory factory = configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
       ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue("127.0.0.1");
-      ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(dsoPort);
+      ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoPort);
       ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
       server = new TCServerImpl(manager);
       server.start();

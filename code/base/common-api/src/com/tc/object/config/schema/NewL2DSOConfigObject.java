@@ -7,8 +7,8 @@ package com.tc.object.config.schema;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.BaseNewConfigObject;
-import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.context.ConfigContext;
+import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
@@ -23,16 +23,16 @@ import com.terracottatech.config.Server;
  */
 public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DSOConfig {
 
-  private final ConfigItem        persistenceMode;
-  private final BooleanConfigItem garbageCollectionEnabled;
-  private final BooleanConfigItem garbageCollectionVerbose;
-  private final IntConfigItem     garbageCollectionInterval;
-  private final IntConfigItem     listenPort;
-  private final IntConfigItem     l2GroupPort;
-  private final IntConfigItem     clientReconnectWindow;
-  private final StringConfigItem  host;
-  private final StringConfigItem  serverName;
-  private final StringConfigItem  bind;
+  private final ConfigItem         persistenceMode;
+  private final BooleanConfigItem  garbageCollectionEnabled;
+  private final BooleanConfigItem  garbageCollectionVerbose;
+  private final IntConfigItem      garbageCollectionInterval;
+  private final BindPortConfigItem dsoPort;
+  private final BindPortConfigItem l2GroupPort;
+  private final IntConfigItem      clientReconnectWindow;
+  private final StringConfigItem   host;
+  private final StringConfigItem   serverName;
+  private final StringConfigItem   bind;
 
   public NewL2DSOConfigObject(ConfigContext context) {
     super(context);
@@ -53,29 +53,28 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionVerbose = this.context.booleanItem("dso/garbage-collection/verbose");
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
-    this.listenPort = this.context.intItem("dso-port");
-    int tempGroupPort = this.context.intItem("dso-port").getInt()
-                        + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-    int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
-        : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-    this.l2GroupPort = this.context.intItem("l2-group-port", defaultGroupPort, true);
+
+    Server server = (Server) this.context.bean();
+    this.dsoPort = this.context.bindPortItem("dso-port", server.getDsoPort());
+    this.l2GroupPort = this.context.bindPortItem("l2-group-port", server.getL2GroupPort());
     this.host = this.context.stringItem("@host");
     this.serverName = this.context.stringItem("@name");
     this.bind = this.context.stringItem("@bind");
+
   }
 
-  public IntConfigItem listenPort() {
-    return this.listenPort;
+  public BindPortConfigItem dsoPort() {
+    return this.dsoPort;
   }
 
-  public IntConfigItem l2GroupPort() {
+  public BindPortConfigItem l2GroupPort() {
     return this.l2GroupPort;
   }
 
   public StringConfigItem host() {
     return host;
   }
-  
+
   public StringConfigItem serverName() {
     return this.serverName;
   }

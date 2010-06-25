@@ -311,7 +311,7 @@ public class ServerTracker implements IDebugEventSetListener {
 
   private void waitForMBean(final IJavaProject javaProject, final String name, final Server server) {
     L2ConnectListener connectListener = new L2ConnectListener(javaProject, name);
-    int jmxPort = server.getJmxPort();
+    int jmxPort = server.getJmxPort().getIntValue();
     if (jmxPort == 0) jmxPort = 9520;
     String host = server.getHost();
     if (host == null) host = "localhost";
@@ -404,7 +404,7 @@ public class ServerTracker implements IDebugEventSetListener {
       name = serverInfo.getName();
 
       if (javaProject.getProject().isOpen() && targetProj.equals(javaProject) && targetName.equals(name)) {
-        int jmxPort = server.getJmxPort();
+        int jmxPort = server.getJmxPort().getIntValue();
         if(jmxPort == 0) jmxPort = 9520;
         String host = server.getHost();
         if(host == null) host = "localhost";

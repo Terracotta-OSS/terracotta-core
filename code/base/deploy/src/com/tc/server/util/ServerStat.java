@@ -8,7 +8,6 @@ import org.apache.xmlbeans.XmlException;
 
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Loader;
-import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
 import com.terracottatech.config.Server;
@@ -152,12 +151,8 @@ public class ServerStat {
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
     for (int i = 0; i < servers.length; i++) {
-      String host = servers[i].getHost();
-      // this should probably be calling ParameterSubstituter.substitute(host)
-      if ("%c".equals(host)) host = ParameterSubstituter.getCanonicalHostName();
-      if ("%h".equals(host)) host = ParameterSubstituter.getHostName();
-      if ("%i".equals(host)) host = ParameterSubstituter.getIpAddress();
-      int jmxPort = servers[i].getJmxPort() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort();
+      String host = servers[i].getJmxPort().getBind();
+      int jmxPort = servers[i].getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort().getIntValue();
       ServerStat stat = new ServerStat(username, password, host, jmxPort);
       System.out.println(stat.toString());
     }

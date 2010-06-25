@@ -65,7 +65,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     for (int i = 0; i < serverNames.length; i++) {
       try {
         NewL2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
-        tempNodeNamesToServerNames.put(l2Config.host().getString() + ":" + l2Config.listenPort().getInt(), serverNames[i]);
+        tempNodeNamesToServerNames.put(l2Config.host().getString() + ":" + l2Config.dsoPort().getBindPort(), serverNames[i]);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }

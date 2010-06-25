@@ -5,8 +5,8 @@
 package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
+import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.license.LicenseCheck;
@@ -25,18 +25,18 @@ import javax.xml.namespace.QName;
  */
 public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewCommonL2Config {
 
-  private final FileConfigItem   dataPath;
-  private final FileConfigItem   logsPath;
-  private final FileConfigItem   serverDbBackupPath;
-  private final FileConfigItem   statisticsPath;
-  private final IntConfigItem    jmxPort;
-  private final StringConfigItem host;
-  private final boolean          authentication;
-  private final String           passwordFile;
-  private final String           loginConfigName;
-  private final String           accessFile;
-  private final boolean          httpAuthentication;
-  private final String           userRealmFile;
+  private final FileConfigItem     dataPath;
+  private final FileConfigItem     logsPath;
+  private final FileConfigItem     serverDbBackupPath;
+  private final FileConfigItem     statisticsPath;
+  private final BindPortConfigItem jmxPort;
+  private final StringConfigItem   host;
+  private final boolean            authentication;
+  private final String             passwordFile;
+  private final String             loginConfigName;
+  private final String             accessFile;
+  private final boolean            httpAuthentication;
+  private final String             userRealmFile;
 
   public NewCommonL2ConfigObject(ConfigContext context) {
     super(context);
@@ -49,10 +49,6 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     this.serverDbBackupPath = context.configRelativeSubstitutedFileItem("data-backup");
 
     this.statisticsPath = context.configRelativeSubstitutedFileItem("statistics");
-    int tempJmxPort = context.intItem("dso-port").getInt() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-    int defaultJmxPort = ((tempJmxPort <= NewCommonL2Config.MAX_PORTNUMBER) ? tempJmxPort
-        : (tempJmxPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-    this.jmxPort = context.intItem("jmx-port", defaultJmxPort, true);
     this.host = context.stringItem("@host");
 
     // JMX authentication
@@ -106,6 +102,8 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
       userRealm = new File(ParameterSubstituter.substitute(userRealm)).getAbsolutePath();
     }
     this.userRealmFile = userRealm;
+
+    this.jmxPort = context.bindPortItem("jmx-port", server.getJmxPort());
   }
 
   public FileConfigItem dataPath() {
@@ -124,7 +122,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     return this.serverDbBackupPath;
   }
 
-  public IntConfigItem jmxPort() {
+  public BindPortConfigItem jmxPort() {
     return this.jmxPort;
   }
 

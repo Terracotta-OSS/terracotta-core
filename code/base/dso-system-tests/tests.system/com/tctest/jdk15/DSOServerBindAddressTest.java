@@ -157,7 +157,7 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
     ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue(bindAddress);
-    ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(dsoPort);
+    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoPort);
     ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
     return manager;
   }

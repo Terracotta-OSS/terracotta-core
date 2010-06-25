@@ -64,13 +64,13 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
   public void testJmxPort() throws Exception {
     addListeners(object.jmxPort());
 
-    assertEquals(9520, object.jmxPort().getInt());
+    assertEquals(9520, object.jmxPort().getBindPort());
     checkNoListener();
 
     builder().getServers().getL2s()[0].setJMXPort("3285");
     setConfig();
 
-    assertEquals(3285, object.jmxPort().getInt());
+    assertEquals(3285, object.jmxPort().getBindPort());
     checkListener(new Integer(9520), new Integer(3285));
   }
 

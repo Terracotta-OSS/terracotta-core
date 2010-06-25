@@ -646,7 +646,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="dso-port" type="port" minOccurs="0"
+      <xs:element name="dso-port" type="bind-port" minOccurs="0" maxOccurs="1"
         default="9510">
         <xs:annotation>
           <xs:documentation>
@@ -660,7 +660,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="jmx-port" type="port" minOccurs="0">
+      <xs:element name="jmx-port" type="bind-port" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>
             On what port should the server listen for
@@ -674,7 +674,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="l2-group-port" type="port" minOccurs="0">
+      <xs:element name="l2-group-port" type="bind-port" minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>
             Port for server to server communication which must
@@ -866,6 +866,21 @@
     </xs:sequence>
   </xs:complexType>
 
+  <xs:complexType name="bind-port">
+  	<xs:simpleContent>
+      <xs:extension base="port">
+        <xs:attribute name="bind" type="non-blank-token" use="optional">
+      	  <xs:annotation>
+            <xs:documentation>
+              The address this server should bind its network listeners to. By default network listeners
+              will be available on all local addresses (ie. 0.0.0.0)
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  
   <xs:complexType name="mirror-groups">
     <xs:annotation>
         <xs:documentation>

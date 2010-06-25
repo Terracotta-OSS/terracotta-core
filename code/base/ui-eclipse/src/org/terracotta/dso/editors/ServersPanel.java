@@ -20,6 +20,7 @@ import org.terracotta.dso.editors.xmlbeans.XmlObjectHolderHelper;
 import org.terracotta.ui.util.SWTLayout;
 import org.terracotta.ui.util.SWTUtil;
 
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -150,8 +151,8 @@ public class ServersPanel extends ConfigurationEditorPanel
     item.setText(new String[] {
       server.getName(),
       server.getHost(),
-      Integer.toString(server.isSetDsoPort() ? server.getDsoPort() : DEFAULT_DSO_PORT),
-      Integer.toString(server.isSetJmxPort() ? server.getJmxPort() : DEFAULT_JMX_PORT)});
+      Integer.toString(server.isSetDsoPort() ? server.getDsoPort().getIntValue() : DEFAULT_DSO_PORT),
+      Integer.toString(server.isSetJmxPort() ? server.getJmxPort().getIntValue() : DEFAULT_JMX_PORT)});
   }
 
   private void updateTableItem(int index) {
@@ -285,8 +286,18 @@ public class ServersPanel extends ConfigurationEditorPanel
       Server server = m_servers.addNewServer();
       server.setName("localhost");
       server.setHost("localhost");
-      server.setDsoPort(9510);
-      server.setJmxPort(9520);
+      
+      BindPort dsoPort = BindPort.Factory.newInstance();
+      dsoPort.setBind("0.0.0.0");
+      dsoPort.setIntValue(9510);
+      server.addNewDsoPort();
+      server.setDsoPort(dsoPort);
+      
+      BindPort jmxPort = BindPort.Factory.newInstance();
+      jmxPort.setBind("0.0.0.0");
+      jmxPort.setIntValue(9520);
+      server.addNewJmxPort();
+      server.getJmxPort().setIntValue(9520);
 
       createTableItem(server);
       fireServersChanged();

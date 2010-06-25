@@ -55,7 +55,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    ((SettableConfigItem) configFactory().l2DSOConfig().listenPort()).setValue(port);
+    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(port);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
     setupConfigLogDataStatisticsPaths(configFactory());
 

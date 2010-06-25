@@ -49,7 +49,7 @@ public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
                                                                                                   new FatalIllegalConfigurationChangeHandler());
     int portNumber = Integer.parseInt(appCfg.getAttribute(PORT_NUMBER));
     int jmxPort = Integer.parseInt(appCfg.getAttribute(JMX_PORT));
-    ((SettableConfigItem) factory.l2DSOConfig().listenPort()).setValue(portNumber);
+    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(portNumber);
     ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
     factory.addServerToL1Config(null, portNumber, jmxPort);
     try {

@@ -206,9 +206,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
     String hostname = server.getHost();
-    verifyPortUsed(serverPorts, hostname, server.getDsoPort());
-    verifyPortUsed(serverPorts, hostname, server.getJmxPort());
-    verifyPortUsed(serverPorts, hostname, server.getL2GroupPort());
+    verifyPortUsed(serverPorts, hostname, server.getDsoPort().getIntValue());
+    verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
+    verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
   }
 
   private void validateGroups() throws ConfigurationSetupException {
@@ -271,9 +271,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                      return activeServerGroups;
                                                                    }
                                                                  });
-    return new ActiveServerGroupsConfigObject(createContext(beanRepository,
-                                                            configurationCreator.directoryConfigurationLoadedFrom()),
-                                              this);
+    return new ActiveServerGroupsConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()), this);
   }
 
   // make sure there is at most one of these
@@ -305,8 +304,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                    }
                                                                  });
 
-    return new UpdateCheckConfigObject(createContext(beanRepository,
-                                                     configurationCreator.directoryConfigurationLoadedFrom()));
+    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()));
   }
 
   private UpdateCheck getDefaultUpdateCheck() throws XmlException {
@@ -339,8 +338,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                    }
                                                                  });
 
-    newHaConfig = new NewHaConfigObject(createContext(beanRepository,
-                                                      configurationCreator.directoryConfigurationLoadedFrom()));
+    newHaConfig = new NewHaConfigObject(createContext(beanRepository, configurationCreator
+        .directoryConfigurationLoadedFrom()));
     Assert.assertNotNull(newHaConfig);
     return newHaConfig;
   }
@@ -356,12 +355,10 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       this.name = name;
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
-      this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository,
-                                                                      configurationCreator
-                                                                          .directoryConfigurationLoadedFrom()));
-      this.dsoL2Config = new NewL2DSOConfigObject(
-                                                  createContext(this.beanRepository,
-                                                                configurationCreator.directoryConfigurationLoadedFrom()));
+      this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository, configurationCreator
+          .directoryConfigurationLoadedFrom()));
+      this.dsoL2Config = new NewL2DSOConfigObject(createContext(this.beanRepository, configurationCreator
+          .directoryConfigurationLoadedFrom()));
     }
 
     public NewCommonL2Config commonL2Config() {
@@ -518,9 +515,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
-    this.systemConfig = new NewSystemConfigObject(
-                                                  createContext(systemBeanRepository(),
-                                                                configurationCreator.directoryConfigurationLoadedFrom()));
+    this.systemConfig = new NewSystemConfigObject(createContext(systemBeanRepository(), configurationCreator
+        .directoryConfigurationLoadedFrom()));
     L2ConfigData serverConfigData = configDataFor(this.thisL2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
     serverConfigData.commonL2Config().logsPath().addListener(listener);

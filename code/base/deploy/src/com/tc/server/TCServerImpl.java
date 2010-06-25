@@ -180,12 +180,12 @@ public class TCServerImpl extends SEDA implements TCServer {
           name = L2Info.IMPLICIT_L2_NAME;
         }
 
-        String host = config.host().getString();
+        String host = config.jmxPort().getBindAddress();
         if (StringUtils.isBlank(host)) {
           host = name;
         }
 
-        out[i] = new L2Info(name, host, config.jmxPort().getInt());
+        out[i] = new L2Info(name, host, config.jmxPort().getBindPort());
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }

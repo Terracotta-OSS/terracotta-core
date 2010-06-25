@@ -4,8 +4,8 @@
  */
 package com.tc.config.schema;
 
+import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.StringConfigItem;
 
 /**
@@ -23,8 +23,8 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
 
   FileConfigItem serverDbBackupPath();
 
-  IntConfigItem jmxPort();
-
+  BindPortConfigItem jmxPort();
+  
   StringConfigItem host();
 
   boolean authentication();
