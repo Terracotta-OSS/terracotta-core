@@ -23,6 +23,9 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public void addResponseForGetSize(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
                                     Integer size, NodeID sourceNodeID);
+  
+  public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID,
+                                              NodeID nodeID);
 
   public void addCachedItemForLock(LockID lockID, CachedItem item);
 

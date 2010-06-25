@@ -17,6 +17,7 @@ import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
 import com.tc.object.msg.GetSizeServerMapResponseMessage;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
+import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
@@ -114,6 +115,27 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
     if (!results.isEmpty()) {
       sendResponseForGetValue(mapID, results);
+    }
+  }
+
+  public void sendMissingObjectResponseFor(ObjectID mapID) {
+    final Collection<ServerMapRequestContext> requests = this.requestQueue.remove(mapID);
+    
+    for (final ServerMapRequestContext request : requests) {
+      final ServerMapRequestID requestID = request.getSizeRequestID();
+      final ServerMapRequestType requestType = request.getRequestType();
+      final ClientID clientID = request.getClientID();
+
+      final MessageChannel channel = getActiveChannel(clientID);
+      if (channel == null) {
+        logger.error("no Active Channel, cannot sent ObjectNotFound message for mapID: " + mapID + " for client " + clientID);
+        return; 
+      }
+
+      final ObjectNotFoundServerMapResponseMessage notFound = (ObjectNotFoundServerMapResponseMessage) channel
+          .createMessage(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE);
+      notFound.initialize(mapID, requestID, requestType);
+      notFound.send();
     }
   }
 

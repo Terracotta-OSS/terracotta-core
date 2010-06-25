@@ -56,6 +56,9 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
+  public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID) {
+   //
+  }
   public void addCachedItemForLock(final LockID lockID, final CachedItem item) {
     //
   }

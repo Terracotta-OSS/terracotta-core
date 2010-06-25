@@ -8,6 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.object.RemoteServerMapManager;
 import com.tc.object.msg.GetSizeServerMapResponseMessage;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
+import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
 
 public class ReceiveServerMapResponseHandler extends AbstractEventHandler {
 
@@ -25,12 +26,16 @@ public class ReceiveServerMapResponseHandler extends AbstractEventHandler {
       this.remoteServerMapManager.addResponseForGetSize(responseMsg.getLocalSessionID(), responseMsg.getMapID(),
                                                         responseMsg.getRequestID(), responseMsg.getSize(), responseMsg
                                                             .getSourceNodeID());
-    } else {
+    } else if (context instanceof GetValueServerMapResponseMessage) {
       final GetValueServerMapResponseMessage responseMsg = (GetValueServerMapResponseMessage) context;
       this.remoteServerMapManager.addResponseForKeyValueMapping(responseMsg.getLocalSessionID(),
                                                                 responseMsg.getMapID(), responseMsg
                                                                     .getGetValueResponses(), responseMsg
                                                                     .getSourceNodeID());
+    } else {
+      final ObjectNotFoundServerMapResponseMessage notFoundMsg = (ObjectNotFoundServerMapResponseMessage) context;
+      this.remoteServerMapManager.objectNotFoundFor(notFoundMsg.getLocalSessionID(), notFoundMsg.getMapID(),
+                                                     notFoundMsg.getRequestID(), notFoundMsg.getSourceNodeID());
     }
   }
 }
