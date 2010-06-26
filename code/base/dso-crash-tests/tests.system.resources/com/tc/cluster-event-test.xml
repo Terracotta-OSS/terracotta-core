@@ -52,7 +52,6 @@
 	
   <clients>
     <logs>client-logs</logs>
-	<statistics>client-stats</statistics>
   </clients>
   <application>
     <dso>

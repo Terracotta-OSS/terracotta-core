@@ -58,7 +58,6 @@
 
 	<clients>
 		<logs>client-logs</logs>
-        <statistics>client-statistics</statistics>
   </clients>
 
 </tc:tc-config>
