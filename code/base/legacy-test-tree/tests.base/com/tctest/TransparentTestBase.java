@@ -310,8 +310,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     proxyMgr.setupProxy();
     setupL1ProxyConnectTest(proxyMgr);
 
-    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoPort);
-    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
+    BindPort dsoBindPort = BindPort.Factory.newInstance();
+    dsoBindPort.setIntValue(dsoPort);
+    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+    
+    BindPort jmxBindPort = BindPort.Factory.newInstance();
+    jmxBindPort.setIntValue(adminPort);
+    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
     disableL1L2ConfigValidationCheck();
   }
@@ -410,8 +415,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                                   jvmArgs);
     setUpTransparent(factory, helper);
 
-    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(serverPort);
-    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(adminPort);
+    BindPort dsoBindPort = BindPort.Factory.newInstance();
+    dsoBindPort.setIntValue(serverPort);
+    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+    
+    BindPort jmxBindPort = BindPort.Factory.newInstance();
+    jmxBindPort.setIntValue(adminPort);
+    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
     configFactory().addServerToL1Config(null, serverPort, adminPort);
   }
 
