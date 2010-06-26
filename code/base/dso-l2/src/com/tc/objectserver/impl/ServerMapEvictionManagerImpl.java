@@ -23,6 +23,7 @@ import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collections;
@@ -274,5 +275,12 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     public void run() {
       this.serverMapEvictionMgr.runEvictor();
     }
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
+    out.indent().print("isStarted:" + this.isStarted).flush();
+    out.indent().print("currentlyEvicting:" + this.currentlyEvicting).flush();
+    return out;
   }
 }

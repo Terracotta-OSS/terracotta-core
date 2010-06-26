@@ -8,10 +8,11 @@ import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapRequestID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Collection;
 
-public interface ServerMapRequestManager {
+public interface ServerMapRequestManager extends PrettyPrintable {
 
   public void requestSize(ServerMapRequestID requestID, ClientID clientID, ObjectID mapID);
 

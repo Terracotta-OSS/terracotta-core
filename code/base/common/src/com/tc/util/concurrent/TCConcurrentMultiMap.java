@@ -3,6 +3,8 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
 import java.util.Collections;
@@ -16,7 +18,7 @@ import java.util.Set;
  * 
  * @author Saravanan Subbiah
  */
-public class TCConcurrentMultiMap<K, V> {
+public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private final AddCallBack<K, V>            addCallback    = new AddCallBack<K, V>();
   private final RemoveCallBack<K, V>         removeCallback = new RemoveCallBack<K, V>();
@@ -142,4 +144,10 @@ public class TCConcurrentMultiMap<K, V> {
       return removed;
     }
   }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.visit(this.store).flush();
+    return out;
+  }
+
 }

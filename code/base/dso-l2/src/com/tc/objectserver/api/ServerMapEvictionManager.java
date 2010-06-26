@@ -5,11 +5,12 @@ package com.tc.objectserver.api;
 
 import com.tc.async.api.PostInit;
 import com.tc.object.ObjectID;
+import com.tc.text.PrettyPrintable;
 
 import java.util.Map;
 import java.util.SortedSet;
 
-public interface ServerMapEvictionManager extends PostInit {
+public interface ServerMapEvictionManager extends PostInit, PrettyPrintable {
 
   public void startEvictor();
 

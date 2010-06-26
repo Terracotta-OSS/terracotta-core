@@ -570,7 +570,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
       // register the terracotta operator event logger
       this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
-      this.serverBuilder.registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider, getMBeanServer());
+      this.serverBuilder.registerForOperatorEvents(this.l2Management, this.operatorEventHistoryProvider,
+                                                   getMBeanServer());
 
       final String cachePolicy = this.l2Properties.getProperty("objectmanager.cachePolicy").toUpperCase();
       if (cachePolicy.equals("LRU")) {
@@ -948,6 +949,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.serverMapRequestManager = this.serverBuilder
         .createServerMapRequestManager(this.objectManager, channelManager, respondToServerTCMapStage.getSink(),
                                        objectRequestStage.getSink());
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
     this.serverMapEvictor = new ServerMapEvictionManagerImpl(this.objectManager, this.objectStore,
                                                              this.clientStateManager, objectManagerConfig
@@ -956,6 +958,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                  : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME,
                                                              transactionStorePTP);
     toInit.add(this.serverMapEvictor);
+    dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE,
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,

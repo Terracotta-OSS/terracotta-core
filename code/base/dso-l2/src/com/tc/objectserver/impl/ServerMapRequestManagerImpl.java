@@ -27,6 +27,8 @@ import com.tc.objectserver.context.ServerMapRequestContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
 
@@ -120,7 +122,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
   public void sendMissingObjectResponseFor(ObjectID mapID) {
     final Collection<ServerMapRequestContext> requests = this.requestQueue.remove(mapID);
-    
+
     for (final ServerMapRequestContext request : requests) {
       final ServerMapRequestID requestID = request.getSizeRequestID();
       final ServerMapRequestType requestType = request.getRequestType();
@@ -128,8 +130,9 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
       final MessageChannel channel = getActiveChannel(clientID);
       if (channel == null) {
-        logger.error("no Active Channel, cannot sent ObjectNotFound message for mapID: " + mapID + " for client " + clientID);
-        return; 
+        logger.error("no Active Channel, cannot sent ObjectNotFound message for mapID: " + mapID + " for client "
+                     + clientID);
+        return;
       }
 
       final ObjectNotFoundServerMapResponseMessage notFound = (ObjectNotFoundServerMapResponseMessage) channel
@@ -221,7 +224,14 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
-  private final static class ServerMapRequestQueue {
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
+    out.indent().print("requestQueue: ").flush();
+    out.visit(this.requestQueue).flush();
+    return out;
+  }
+
+  private final static class ServerMapRequestQueue implements PrettyPrintable {
 
     private final TCConcurrentMultiMap<ObjectID, ServerMapRequestContext> requests = new TCConcurrentMultiMap<ObjectID, ServerMapRequestContext>();
 
@@ -232,6 +242,11 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
     public Collection<ServerMapRequestContext> remove(final ObjectID mapID) {
       return this.requests.removeAll(mapID);
+    }
+
+    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+      out.visit(this.requests).flush();
+      return out;
     }
   }
 
