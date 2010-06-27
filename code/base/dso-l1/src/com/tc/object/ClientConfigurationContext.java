@@ -34,6 +34,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE            = "cluster_membership_event_stage";
   public static final String             RECEIVE_SERVER_MAP_RESPONSE_STAGE         = "receive_server_map_response_stage";
   public static final String             CAPACITY_EVICTION_STAGE                   = "capacity_eviction_stage";
+  public static final String             TTI_TTL_EVICTION_STAGE                    = "tti_ttl_eviction_stage";
 
   private final ClientLockManager        lockManager;
   private final RemoteObjectManager      remoteObjectManager;

@@ -23,9 +23,8 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public void addResponseForGetSize(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
                                     Integer size, NodeID sourceNodeID);
-  
-  public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID,
-                                              NodeID nodeID);
+
+  public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID);
 
   public void addCachedItemForLock(LockID lockID, CachedItem item);
 
@@ -35,5 +34,7 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public void clearCachedItemsForLocks(Set<LockID> toEvict);
 
-  public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap);
+  public void initiateCachedItemEvictionFor(TCObjectServerMap serverMap);
+
+  public void expired(TCObjectServerMap serverMap, CachedItem ci);
 }

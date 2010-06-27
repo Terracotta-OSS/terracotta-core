@@ -56,9 +56,11 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID) {
-   //
+  public void objectNotFoundFor(final SessionID sessionID, final ObjectID mapID, final ServerMapRequestID requestID,
+                                final NodeID nodeID) {
+    //
   }
+
   public void addCachedItemForLock(final LockID lockID, final CachedItem item) {
     //
   }
@@ -68,6 +70,10 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   }
 
   public void initiateCachedItemEvictionFor(final TCObjectServerMap serverMap) {
+    //
+  }
+
+  public void expired(final TCObjectServerMap serverMap, final CachedItem ci) {
     //
   }
 }

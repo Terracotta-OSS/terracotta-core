@@ -267,7 +267,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   public RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger,
                                                              final DSOClientMessageChannel dsoChannel,
                                                              final SessionManager sessionManager,
-                                                             final Sink recallLockSink, final Sink evictionSink) {
+                                                             final Sink recallLockSink,
+                                                             final Sink capacityEvictionSink,
+                                                             final Sink ttiTTLEvitionSink) {
     return new NullRemoteServerMapManager();
   }
 

@@ -82,7 +82,7 @@ public interface DSOClientBuilder {
 
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager, Sink lockRecallSink,
-                                                      Sink evictionSink);
+                                                      Sink capacityEvictionSink, Sink ttiTTLEvitionSink);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,

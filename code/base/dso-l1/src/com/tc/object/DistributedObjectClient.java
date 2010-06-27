@@ -86,6 +86,7 @@ import com.tc.object.handler.ReceiveServerMapResponseHandler;
 import com.tc.object.handler.ReceiveSyncWriteTransactionAckHandler;
 import com.tc.object.handler.ReceiveTransactionCompleteHandler;
 import com.tc.object.handler.ReceiveTransactionHandler;
+import com.tc.object.handler.TimeBasedEvictionHandler;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.handshakemanager.ClientHandshakeManagerImpl;
@@ -492,11 +493,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                            new LockRecallHandler(), 1, maxSize);
     final Stage capacityEvictionStage = stageManager.createStage(ClientConfigurationContext.CAPACITY_EVICTION_STAGE,
                                                                  new CapacityEvictionHandler(), 1, maxSize);
+    final Stage ttiTTLEvictionStage = stageManager.createStage(ClientConfigurationContext.TTI_TTL_EVICTION_STAGE,
+                                                               new TimeBasedEvictionHandler(), 1, maxSize);
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
             .getLogger(RemoteObjectManager.class)), this.channel, sessionManager, lockRecallStage.getSink(),
-                                      capacityEvictionStage.getSink());
+                                      capacityEvictionStage.getSink(), ttiTTLEvictionStage.getSink());
 
     final ClientGlobalTransactionManager gtxManager = this.dsoClientBuilder
         .createClientGlobalTransactionManager(this.rtxManager, remoteServerMapManager);
@@ -776,8 +779,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
                                   hydrateSink);
-    this.channel.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
-                                  hydrateSink);
+    this.channel.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage
+        .getSink(), hydrateSink);
 
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
