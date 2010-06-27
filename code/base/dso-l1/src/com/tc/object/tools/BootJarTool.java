@@ -26,6 +26,7 @@ import com.tc.asm.tree.MethodNode;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.aspectwerkz.reflect.impl.java.JavaClassInfo;
+import com.tc.cache.ExpirableEntry;
 import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterEvent;
 import com.tc.cluster.DsoClusterListener;
@@ -251,25 +252,25 @@ public class BootJarTool {
   private void loadModules() throws Exception {
     // remove the user defined specs already load from config while modules are running so that specs created take
     // precedence from user defined specs
-    List userSpecs = new ArrayList();
-    for (Iterator i = this.configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
+    final List userSpecs = new ArrayList();
+    for (final Iterator i = this.configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
       userSpecs.add(i.next());
     }
 
-    for (Iterator i = userSpecs.iterator(); i.hasNext();) {
+    for (final Iterator i = userSpecs.iterator(); i.hasNext();) {
       this.configHelper.removeSpec(((TransparencyClassSpec) i.next()).getClassName());
     }
 
     // load the modules
     try {
       ModulesLoader.initModules(this.configHelper, null, null, true);
-    } catch (BundleException e) {
+    } catch (final BundleException e) {
       exit("Error during module initialization.", e);
     }
 
     // put the user defined specs back not already included by modules
-    for (Iterator i = userSpecs.iterator(); i.hasNext();) {
-      TransparencyClassSpec userSpec = (TransparencyClassSpec) i.next();
+    for (final Iterator i = userSpecs.iterator(); i.hasNext();) {
+      final TransparencyClassSpec userSpec = (TransparencyClassSpec) i.next();
 
       if (this.configHelper.getSpec(userSpec.getClassName()) == null) {
         this.configHelper.addUserDefinedBootSpec(userSpec.getClassName(), userSpec);
@@ -284,7 +285,7 @@ public class BootJarTool {
 
   private final void addJdk15SpecificPreInstrumentedClasses() {
     if (Vm.isJDK15Compliant()) {
-      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.math.MathContext");
+      final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.math.MathContext");
       spec.markPreInstrumented();
 
       addInstrumentedJavaUtilConcurrentLocks();
@@ -301,37 +302,37 @@ public class BootJarTool {
    * tc-config's <additional-boot-jar-classes/> section. Program execution halts if it fails these checks.
    */
   private final void scanJar(final File bootJarFile) {
-    String MESSAGE0 = "\nYour boot JAR file might be out of date or invalid.";
-    String MESSAGE1 = "\nThe following classes was declared in the <additional-boot-jar-classes/> section "
-                      + "of your tc-config file but is not a part of your boot JAR file:";
-    String MESSAGE2 = "\nThe following user-classes were found in the boot JAR but was not declared in the "
-                      + "<additional-boot-jar-classes/> section of your tc-config file:";
-    String MESSAGE3 = "\nUse the make-boot-jar tool to re-create your boot JAR.";
+    final String MESSAGE0 = "\nYour boot JAR file might be out of date or invalid.";
+    final String MESSAGE1 = "\nThe following classes was declared in the <additional-boot-jar-classes/> section "
+                            + "of your tc-config file but is not a part of your boot JAR file:";
+    final String MESSAGE2 = "\nThe following user-classes were found in the boot JAR but was not declared in the "
+                            + "<additional-boot-jar-classes/> section of your tc-config file:";
+    final String MESSAGE3 = "\nUse the make-boot-jar tool to re-create your boot JAR.";
     try {
-      Map result = compareBootJarContentsToUserSpec(bootJarFile);
-      Set missing = (Set) result.get(MISSING_CLASSES);
-      Set excess = (Set) result.get(EXCESS_CLASSES);
+      final Map result = compareBootJarContentsToUserSpec(bootJarFile);
+      final Set missing = (Set) result.get(MISSING_CLASSES);
+      final Set excess = (Set) result.get(EXCESS_CLASSES);
 
       if (!missing.isEmpty() || !excess.isEmpty()) {
         consoleLogger.fatal(MESSAGE0);
 
         if (!missing.isEmpty()) {
           consoleLogger.error(MESSAGE1);
-          for (Iterator i = missing.iterator(); i.hasNext();) {
+          for (final Iterator i = missing.iterator(); i.hasNext();) {
             consoleLogger.error("- " + i.next());
           }
         }
 
         if (!excess.isEmpty()) {
           consoleLogger.error(MESSAGE2);
-          for (Iterator i = missing.iterator(); i.hasNext();) {
+          for (final Iterator i = missing.iterator(); i.hasNext();) {
             consoleLogger.error("- " + i.next());
           }
         }
         consoleLogger.error(MESSAGE3);
         System.exit(1);
       }
-    } catch (InvalidBootJarMetaDataException e) {
+    } catch (final InvalidBootJarMetaDataException e) {
       consoleLogger.fatal(e.getMessage());
       consoleLogger.fatal(MESSAGE3);
       System.exit(1);
@@ -356,7 +357,7 @@ public class BootJarTool {
       final Set missing = (Set) result.get(MISSING_CLASSES);
       final Set excess = (Set) result.get(EXCESS_CLASSES);
       return missing.isEmpty() && excess.isEmpty();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       return false;
     }
   }
@@ -368,14 +369,14 @@ public class BootJarTool {
       issueWarningsAndErrors();
 
       // check that everything listed in userspec is in the bootjar
-      Map result = new HashMap();
-      Map userSpecs = massageSpecs(getUserDefinedSpecs(getTCSpecs()), false);
-      BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      Set preInstrumented = bootJarLocal.getAllPreInstrumentedClasses();
-      Set unInstrumented = bootJarLocal.getAllUninstrumentedClasses();
-      Set missing = new HashSet();
-      for (Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
-        String cn = (String) i.next();
+      final Map result = new HashMap();
+      final Map userSpecs = massageSpecs(getUserDefinedSpecs(getTCSpecs()), false);
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      final Set preInstrumented = bootJarLocal.getAllPreInstrumentedClasses();
+      final Set unInstrumented = bootJarLocal.getAllUninstrumentedClasses();
+      final Set missing = new HashSet();
+      for (final Iterator i = userSpecs.keySet().iterator(); i.hasNext();) {
+        final String cn = (String) i.next();
         if (!preInstrumented.contains(cn) && !unInstrumented.contains(cn)) {
           missing.add(cn);
         }
@@ -384,19 +385,19 @@ public class BootJarTool {
       // check that everything marked as foreign in the bootjar is also
       // listed in the userspec
       result.put(MISSING_CLASSES, missing);
-      Set foreign = bootJarLocal.getAllForeignClasses();
-      Set excess = new HashSet();
-      for (Iterator i = foreign.iterator(); i.hasNext();) {
-        String cn = (String) i.next();
+      final Set foreign = bootJarLocal.getAllForeignClasses();
+      final Set excess = new HashSet();
+      for (final Iterator i = foreign.iterator(); i.hasNext();) {
+        final String cn = (String) i.next();
         if (!userSpecs.keySet().contains(cn)) {
           excess.add(cn);
         }
       }
       result.put(EXCESS_CLASSES, excess);
       return result;
-    } catch (InvalidBootJarMetaDataException e) {
+    } catch (final InvalidBootJarMetaDataException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       exit(e.getMessage());
     }
     return null;
@@ -407,29 +408,29 @@ public class BootJarTool {
    */
   private final void verifyJar(final File bootJarFile) {
     try {
-      BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
-      Set bootJarClassNames = bootJarLocal.getAllClasses();
-      Map offendingClasses = new HashMap();
-      for (Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
+      final BootJar bootJarLocal = BootJar.getBootJarForReading(bootJarFile);
+      final Set bootJarClassNames = bootJarLocal.getAllClasses();
+      final Map offendingClasses = new HashMap();
+      for (final Iterator i = bootJarClassNames.iterator(); i.hasNext();) {
         final String className = (String) i.next();
         final byte[] bytes = bootJarLocal.getBytesForClass(className);
-        ClassReader cr = new ClassReader(bytes);
-        ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames, offendingClasses);
+        final ClassReader cr = new ClassReader(bytes);
+        final ClassVisitor cv = new BootJarClassDependencyVisitor(bootJarClassNames, offendingClasses);
         cr.accept(cv, ClassReader.SKIP_FRAMES);
       }
 
-      String newline = System.getProperty("line.separator");
-      StringBuffer msg = new StringBuffer();
+      final String newline = System.getProperty("line.separator");
+      final StringBuffer msg = new StringBuffer();
       msg.append(newline).append(newline);
       msg.append("The following Terracotta classes needs to be included in the boot jar:");
       msg.append(newline).append(newline);
 
-      for (Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
-        Map.Entry entry = (Map.Entry) i.next();
+      for (final Iterator i = offendingClasses.entrySet().iterator(); i.hasNext();) {
+        final Map.Entry entry = (Map.Entry) i.next();
         msg.append("  - " + entry.getKey() + " [" + entry.getValue() + "]" + newline);
       }
       Assert.assertTrue(msg, offendingClasses.isEmpty());
-    } catch (Exception e) {
+    } catch (final Exception e) {
       exit(e.getMessage());
     }
   }
@@ -438,7 +439,7 @@ public class BootJarTool {
     this.instrumentationLogger = new InstrumentationLoggerImpl(this.configHelper.getInstrumentationLoggingOptions());
     try {
       this.bootJarHandler.validateDirectoryExists();
-    } catch (BootJarHandlerException e) {
+    } catch (final BootJarHandlerException e) {
       exit(e.getMessage(), e);
     }
 
@@ -492,6 +493,7 @@ public class BootJarTool {
       loadTerracottaClass(Clearable.class.getName());
       loadTerracottaClass(NotClearable.class.getName());
       loadTerracottaClass(TCServerMap.class.getName());
+      loadTerracottaClass(ExpirableEntry.class.getName());
       loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
       loadTerracottaClass(InstrumentationLogger.class.getName());
@@ -587,10 +589,10 @@ public class BootJarTool {
 
       addIBMSpecific();
 
-      Map internalSpecs = getTCSpecs();
+      final Map internalSpecs = getTCSpecs();
       loadBootJarClasses(removeAlreadyLoaded(massageSpecs(internalSpecs, true)));
 
-      Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
+      final Map userSpecs = massageSpecs(getUserDefinedSpecs(internalSpecs), false);
       issueWarningsAndErrors();
 
       // user defined specs should ALWAYS be after internal specs
@@ -601,7 +603,7 @@ public class BootJarTool {
       // in the <additiona-boot-jar-classes/> section of your tc-config
       adaptClassIfNotAlreadyIncluded(BufferedWriter.class.getName(), BufferedWriterAdapter.class);
       adaptClassIfNotAlreadyIncluded(DataOutputStream.class.getName(), DataOutputStreamAdapter.class);
-    } catch (Throwable e) {
+    } catch (final Throwable e) {
       exit(this.bootJarHandler.getCreationErrorMessage(), e);
     }
 
@@ -611,7 +613,7 @@ public class BootJarTool {
       this.bootJarHandler.announceCreationEnd();
       // } catch (IOException e) {
       // exit(bootJarHandler.getCloseErrorMessage(), e);
-    } catch (BootJarHandlerException e) {
+    } catch (final BootJarHandlerException e) {
       exit(e.getMessage(), e.getCause());
     }
   }
@@ -625,7 +627,7 @@ public class BootJarTool {
     loadTerracottaClass(DsoNode.class.getName());
     loadTerracottaClass(DsoNodeInternal.class.getName());
     {
-      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
+      final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(DsoNodeImpl.class.getName());
       spec.markPreInstrumented();
       spec.setHonorTransient(true);
       spec.setHonorVolatile(true);
@@ -634,7 +636,7 @@ public class BootJarTool {
       loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
     }
     {
-      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(DsoNodeMetaData.class.getName());
+      final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(DsoNodeMetaData.class.getName());
       spec.markPreInstrumented();
       spec.setHonorTransient(true);
       byte[] bytes = getTerracottaBytes(spec.getClassName());
@@ -647,22 +649,22 @@ public class BootJarTool {
   }
 
   private void addObjectStreamClass() {
-    String jClassNameDots = "java.io.ObjectStreamClass";
-    String tcClassNameDots = "java.io.ObjectStreamClassTC";
+    final String jClassNameDots = "java.io.ObjectStreamClass";
+    final String tcClassNameDots = "java.io.ObjectStreamClassTC";
 
-    byte[] tcData = getSystemBytes(tcClassNameDots);
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    final byte[] tcData = getSystemBytes(tcClassNameDots);
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     byte[] jData = getSystemBytes(jClassNameDots);
 
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    final ClassReader jCR = new ClassReader(jData);
+    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    Map instrumentedContext = new HashMap();
-    ClassVisitor cv = new MergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
-                                                    instrumentedContext);
+    final Map instrumentedContext = new HashMap();
+    final ClassVisitor cv = new MergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
+                                                          instrumentedContext);
     jCR.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     loadClassIntoJar(jClassNameDots, jData, true);
@@ -702,9 +704,9 @@ public class BootJarTool {
   }
 
   private final Map getAllSpecs() {
-    Map map = new HashMap();
-    TransparencyClassSpec[] allSpecs = this.configHelper.getAllSpecs();
-    for (TransparencyClassSpec spec : allSpecs) {
+    final Map map = new HashMap();
+    final TransparencyClassSpec[] allSpecs = this.configHelper.getAllSpecs();
+    for (final TransparencyClassSpec spec : allSpecs) {
       map.put(spec.getClassName(), spec);
     }
     return Collections.unmodifiableMap(map);
@@ -716,7 +718,7 @@ public class BootJarTool {
 
   private void loadClassIntoJar(final String className, final byte[] data, final boolean isPreinstrumented,
                                 final boolean isForeign) {
-    Map userSpecs = getUserDefinedSpecs(getAllSpecs());
+    final Map userSpecs = getUserDefinedSpecs(getAllSpecs());
     if (!isForeign && userSpecs.containsKey(className)) {
       consoleLogger.warn(className + " already belongs in the bootjar by default.");
     }
@@ -726,10 +728,10 @@ public class BootJarTool {
   private void adaptAndLoad(final String name, final ClassAdapterFactory factory) {
     byte[] bytes = getSystemBytes(name);
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = factory.create(cw, null);
+    final ClassVisitor cv = factory.create(cw, null);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
@@ -742,7 +744,7 @@ public class BootJarTool {
   }
 
   private final boolean shouldIncludeStringBufferAndFriends() {
-    Map userSpecs = getUserDefinedSpecs(getTCSpecs());
+    final Map userSpecs = getUserDefinedSpecs(getTCSpecs());
     return userSpecs.containsKey("java.lang.StringBuffer") || userSpecs.containsKey("java.lang.AbstractStringBuilder")
            || userSpecs.containsKey("java.lang.StringBuilder");
 
@@ -765,17 +767,17 @@ public class BootJarTool {
   }
 
   private final void addTreeMap() {
-    String className = "java.util.TreeMap";
-    byte[] orig = getSystemBytes(className);
+    final String className = "java.util.TreeMap";
+    final byte[] orig = getSystemBytes(className);
 
-    TransparencyClassSpec spec = this.configHelper.getSpec(className);
+    final TransparencyClassSpec spec = this.configHelper.getSpec(className);
 
-    byte[] transformed = doDSOTransform(className, orig);
+    final byte[] transformed = doDSOTransform(className, orig);
 
-    ClassReader cr = new ClassReader(transformed);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(transformed);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaUtilTreeMapAdapter(cw);
+    final ClassVisitor cv = new JavaUtilTreeMapAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar(className, cw.toByteArray(), spec.isPreInstrumented());
@@ -812,9 +814,9 @@ public class BootJarTool {
   }
 
   private final Map removeAlreadyLoaded(final Map specs) {
-    Map rv = new HashMap(specs);
-    for (Iterator i = rv.keySet().iterator(); i.hasNext();) {
-      String className = (String) i.next();
+    final Map rv = new HashMap(specs);
+    for (final Iterator i = rv.keySet().iterator(); i.hasNext();) {
+      final String className = (String) i.next();
       if (this.bootJar.classLoaded(className)) {
         i.remove();
       }
@@ -824,9 +826,9 @@ public class BootJarTool {
   }
 
   private final Map massageSpecs(final Map specs, final boolean tcSpecs) {
-    Map rv = new HashMap();
+    final Map rv = new HashMap();
 
-    for (Iterator i = specs.values().iterator(); i.hasNext();) {
+    for (final Iterator i = specs.values().iterator(); i.hasNext();) {
       final TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
 
       final Class topClass = getBootstrapClass(spec.getClassName());
@@ -844,7 +846,7 @@ public class BootJarTool {
         }
       }
 
-      Set supers = new HashSet();
+      final Set supers = new HashSet();
       boolean add = true;
       if (!this.configHelper.isLogical(topClass.getName())) {
         Class clazz = topClass;
@@ -881,10 +883,10 @@ public class BootJarTool {
         rv.put(topClass.getName(), spec);
 
         // include supers (if found)
-        for (Iterator supes = supers.iterator(); supes.hasNext();) {
-          String name = (String) supes.next();
+        for (final Iterator supes = supers.iterator(); supes.hasNext();) {
+          final String name = (String) supes.next();
           this.autoIncludedBootstrapClasses.add(name);
-          TransparencyClassSpec superSpec = this.configHelper.getOrCreateSpec(name);
+          final TransparencyClassSpec superSpec = this.configHelper.getOrCreateSpec(name);
           superSpec.markPreInstrumented();
           rv.put(name, superSpec);
         }
@@ -897,19 +899,19 @@ public class BootJarTool {
   private final static Class getBootstrapClass(final String className) {
     try {
       return Class.forName(className, false, ClassLoader.getSystemClassLoader());
-    } catch (ClassNotFoundException e) {
+    } catch (final ClassNotFoundException e) {
       return null;
     }
   }
 
   private final void loadBootJarClasses(final Map specs, final boolean foreignClass) {
-    for (Iterator iter = specs.values().iterator(); iter.hasNext();) {
-      TransparencyClassSpec spec = (TransparencyClassSpec) iter.next();
+    for (final Iterator iter = specs.values().iterator(); iter.hasNext();) {
+      final TransparencyClassSpec spec = (TransparencyClassSpec) iter.next();
       if (foreignClass) {
         spec.markForeign();
       }
       announce("Adapting: " + spec.getClassName());
-      byte[] classBytes = doDSOTransform(spec.getClassName(), getSystemBytes(spec.getClassName()));
+      final byte[] classBytes = doDSOTransform(spec.getClassName(), getSystemBytes(spec.getClassName()));
       loadClassIntoJar(spec.getClassName(), classBytes, spec.isPreInstrumented(), foreignClass);
     }
   }
@@ -919,10 +921,10 @@ public class BootJarTool {
   }
 
   private final Map getTCSpecs() {
-    Map map = new HashMap();
+    final Map map = new HashMap();
 
-    TransparencyClassSpec[] allSpecs = this.configHelper.getAllSpecs();
-    for (TransparencyClassSpec spec : allSpecs) {
+    final TransparencyClassSpec[] allSpecs = this.configHelper.getAllSpecs();
+    for (final TransparencyClassSpec spec : allSpecs) {
       if (spec.isPreInstrumented()) {
         map.put(spec.getClassName(), spec);
       }
@@ -932,9 +934,9 @@ public class BootJarTool {
   }
 
   private final Map getUserDefinedSpecs(final Map internalSpecs) {
-    Map rv = new HashMap();
-    for (Iterator i = this.configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
-      TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
+    final Map rv = new HashMap();
+    for (final Iterator i = this.configHelper.getAllUserDefinedBootSpecs(); i.hasNext();) {
+      final TransparencyClassSpec spec = (TransparencyClassSpec) i.next();
       Assert.assertTrue(spec.isPreInstrumented());
 
       // Take out classes that don't need instrumentation (but the user included anyway)
@@ -962,7 +964,7 @@ public class BootJarTool {
   private final byte[] getBytes(final String className, final ClassLoader provider) {
     try {
       return getBytesForClass(className, provider);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       exit("Error sourcing bytes for class " + className, e);
     }
     return null;
@@ -977,7 +979,7 @@ public class BootJarTool {
       input = loader.getResourceAsStream(resource);
       if (input == null) { throw new ClassNotFoundException("No resource found for class: " + className); }
       return IOUtils.toByteArray(input);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new ClassNotFoundException("Error reading bytes from " + resource, e);
     } finally {
       IOUtils.closeQuietly(input);
@@ -1022,9 +1024,9 @@ public class BootJarTool {
     }
     BootJar.closeQuietly(this.bootJar);
 
-    String newline = System.getProperty("line.separator");
-    String cause = rootCauseMessage(throwable);
-    StringBuffer errmsg = new StringBuffer();
+    final String newline = System.getProperty("line.separator");
+    final String cause = rootCauseMessage(throwable);
+    final StringBuffer errmsg = new StringBuffer();
     errmsg.append(newline).append(StringUtils.center(" ERROR DETAILS ", 77, "-")).append(newline);
     if (!StringUtils.isEmpty(msg)) {
       errmsg.append("+ ").append(msg).append(newline);
@@ -1039,7 +1041,7 @@ public class BootJarTool {
   }
 
   private final void addInstrumentedJavaLangStringBuffer() {
-    boolean makePortable = shouldIncludeStringBufferAndFriends();
+    final boolean makePortable = shouldIncludeStringBufferAndFriends();
     if (makePortable) {
       addPortableStringBuffer();
     } else {
@@ -1048,18 +1050,18 @@ public class BootJarTool {
   }
 
   private void addInstrumentedAccessibleObject() {
-    String classname = AccessibleObject.class.getName();
+    final String classname = AccessibleObject.class.getName();
     byte[] bytes = getSystemBytes(classname);
 
     // instrument the state changing methods in AccessibleObject
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new AccessibleObjectAdapter(cw);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new AccessibleObjectAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
@@ -1069,18 +1071,18 @@ public class BootJarTool {
     Vm.assertIsIbm();
     if (!Vm.isJDK15Compliant()) { return; }
 
-    String classname = "java.util.concurrent.atomic.AtomicInteger";
+    final String classname = "java.util.concurrent.atomic.AtomicInteger";
     byte[] bytes = getSystemBytes(classname);
 
     // instrument the state changing methods in AtomicInteger
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new AtomicIntegerAdapter(cw);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new AtomicIntegerAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
@@ -1090,25 +1092,25 @@ public class BootJarTool {
     Vm.assertIsIbm();
     if (!Vm.isJDK15Compliant()) { return; }
 
-    String classname = "java.util.concurrent.atomic.AtomicLong";
+    final String classname = "java.util.concurrent.atomic.AtomicLong";
     byte[] bytes = getSystemBytes(classname);
 
     // instrument the state changing methods in AtomicLong
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new AtomicLongAdapter(cw);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new AtomicLongAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bytes = cw.toByteArray();
 
     // regular DSO instrumentation
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(classname);
     spec.markPreInstrumented();
 
     loadClassIntoJar(spec.getClassName(), bytes, spec.isPreInstrumented());
   }
 
   private final void addPortableStringBuffer() {
-    boolean isJDK15 = Vm.isJDK15Compliant();
+    final boolean isJDK15 = Vm.isJDK15Compliant();
     if (isJDK15) {
       addAbstractStringBuilder();
     }
@@ -1130,7 +1132,7 @@ public class BootJarTool {
     bytes = cw.toByteArray();
 
     // 3rd pass (regular DSO instrumentation)
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.lang.StringBuffer");
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.lang.StringBuffer");
     spec.markPreInstrumented();
     this.configHelper.addWriteAutolock("* java.lang.StringBuffer.*(..)");
     bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -1156,7 +1158,7 @@ public class BootJarTool {
     // even if we aren't making StringBu[ild|ff]er portable, we still need to make
     // sure it calls the fast getChars() methods on String
 
-    boolean isJDK15 = Vm.isJDK15Compliant();
+    final boolean isJDK15 = Vm.isJDK15Compliant();
 
     if (isJDK15) {
       if (Vm.isIBM()) {
@@ -1170,14 +1172,14 @@ public class BootJarTool {
   }
 
   private void addNonPortableStringBuffer(final String className) {
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
     spec.markPreInstrumented();
 
     byte[] bytes = getSystemBytes(className);
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new StringGetCharsAdapter(cw, new String[] { ".*" });
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new StringGetCharsAdapter(cw, new String[] { ".*" });
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     bytes = cw.toByteArray();
 
@@ -1200,7 +1202,7 @@ public class BootJarTool {
     cr.accept(cv, ClassReader.SKIP_FRAMES);
     classBytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
     spec.markPreInstrumented();
 
     classBytes = doDSOTransform(className, classBytes);
@@ -1219,46 +1221,47 @@ public class BootJarTool {
   }
 
   private final void addInstrumentedProxy() {
-    String className = "java.lang.reflect.Proxy";
+    final String className = "java.lang.reflect.Proxy";
     byte[] bytes = getSystemBytes(className);
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaLangReflectProxyClassAdapter(cw);
+    final ClassVisitor cv = new JavaLangReflectProxyClassAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
     bytes = doDSOTransform(spec.getClassName(), bytes);
     loadClassIntoJar(className, bytes, true);
   }
 
   private final void addInstrumentedJavaLangString() {
-    byte[] orig = getSystemBytes("java.lang.String");
+    final byte[] orig = getSystemBytes("java.lang.String");
 
-    ClassReader cr = new ClassReader(orig);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(orig);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm.isAzul(), Vm
-        .isIBM());
+    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm
+        .isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
   }
 
   private final void addInstrumentedJavaNetURL() {
-    String className = "java.net.URL";
+    final String className = "java.net.URL";
     byte[] bytes = getSystemBytes(className);
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    ClassVisitor cv = new JavaNetURLAdapter(cw);
+    final ClassVisitor cv = new JavaNetURLAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className, "com.tc.object.applicator.URLApplicator");
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className,
+                                                                         "com.tc.object.applicator.URLApplicator");
     spec.markPreInstrumented();
     spec.setHonorTransient(true);
     spec.addAlwaysLogSpec(SerializationUtil.URL_SET_SIGNATURE);
@@ -1280,9 +1283,9 @@ public class BootJarTool {
                                                      SYSTEM_CLASSLOADER_NAME_PROPERTY);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
-    byte[] tcData = getSystemBytes("sun.misc.AppClassLoaderTC");
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    final byte[] tcData = getSystemBytes("sun.misc.AppClassLoaderTC");
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     cr = new ClassReader(cw.toByteArray());
@@ -1302,22 +1305,22 @@ public class BootJarTool {
   }
 
   private final void addInstrumentedJavaLangThrowable() {
-    String className = "java.lang.Throwable";
+    final String className = "java.lang.Throwable";
     byte[] bytes = getSystemBytes(className);
 
     if (System.getProperty(TC_DEBUG_THROWABLE_CONSTRUCTION) != null) {
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaLangThrowableDebugClassAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaLangThrowableDebugClassAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       bytes = cw.toByteArray();
     }
 
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec(className);
     spec.markPreInstrumented();
     spec.setHonorTransient(true);
 
-    byte[] instrumented = doDSOTransform(className, bytes);
+    final byte[] instrumented = doDSOTransform(className, bytes);
 
     loadClassIntoJar(className, instrumented, spec.isPreInstrumented());
   }
@@ -1330,14 +1333,14 @@ public class BootJarTool {
 
     byte[] bytes = getSystemBytes("java.util.concurrent.CyclicBarrier");
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new JavaUtilConcurrentCyclicBarrierClassAdapter(cw);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new JavaUtilConcurrentCyclicBarrierClassAdapter(cw);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
 
-    TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
+    final TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.CyclicBarrier");
     bytes = doDSOTransform(spec.getClassName(), bytes);
     loadClassIntoJar("java.util.concurrent.CyclicBarrier", bytes, true);
   }
@@ -1352,18 +1355,18 @@ public class BootJarTool {
 
     // java.util.concurrent.ConcurrentHashMap
     {
-      String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
-      String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
+      final String jClassNameDots = "java.util.concurrent.ConcurrentHashMap";
+      final String tcClassNameDots = "java.util.concurrent.ConcurrentHashMapTC";
 
-      byte[] tcData = getSystemBytes(tcClassNameDots);
-      ClassReader tcCR = new ClassReader(tcData);
-      ClassNode tcCN = new ClassNode();
+      final byte[] tcData = getSystemBytes(tcClassNameDots);
+      final ClassReader tcCR = new ClassReader(tcData);
+      final ClassNode tcCN = new ClassNode();
       tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
       byte[] jData = getSystemBytes(jClassNameDots);
       ClassReader jCR = new ClassReader(jData);
       ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
+      final ClassVisitor cv1 = new JavaUtilConcurrentHashMapAdapter(cw);
 
       jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
@@ -1371,15 +1374,13 @@ public class BootJarTool {
       jCR = new ClassReader(jData);
       cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-      ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-      TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                       this.instrumentationLogger,
-                                                                                       getClass().getClassLoader(),
-                                                                                       true, true);
-      Map instrumentedContext = new HashMap();
-      ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                                tcClassNameDots, tcCN,
-                                                                                instrumentedContext));
+      final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+      final TransparencyClassAdapter dsoAdapter = this.configHelper
+          .createDsoClassAdapterFor(cw, jClassInfo, this.instrumentationLogger, getClass().getClassLoader(), true, true);
+      final Map instrumentedContext = new HashMap();
+      final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                                      tcClassNameDots, tcCN,
+                                                                                      instrumentedContext));
       jCR.accept(cv, ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
       jData = doDSOTransform(jClassNameDots, jData);
@@ -1389,9 +1390,9 @@ public class BootJarTool {
     // java.util.concurrent.ConcurrentHashMap$HashEntry
     {
       byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$HashEntry");
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentHashMapHashEntryAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       bytes = cw.toByteArray();
       loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$HashEntry", bytes, false);
@@ -1400,14 +1401,15 @@ public class BootJarTool {
     // java.util.concurrent.ConcurrentHashMap$Segment
     {
       byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$Segment");
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentHashMapSegmentAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentHashMapSegmentAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
 
       bytes = cw.toByteArray();
 
-      TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
+      final TransparencyClassSpec spec = this.configHelper
+          .getOrCreateSpec("java.util.concurrent.ConcurrentHashMap$Segment");
       bytes = doDSOTransform(spec.getClassName(), bytes);
       bytes = addNotClearableInterface(bytes);
       loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$Segment", bytes, spec.isPreInstrumented());
@@ -1416,9 +1418,9 @@ public class BootJarTool {
     // java.util.concurrent.ConcurrentHashMap$ValueIterator
     {
       byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$ValueIterator");
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentHashMapValueIteratorAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       bytes = cw.toByteArray();
       loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$ValueIterator", bytes, false);
@@ -1427,9 +1429,9 @@ public class BootJarTool {
     // java.util.concurrent.ConcurrentHashMap$EntryIterator
     {
       byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$EntryIterator");
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentHashMapEntryIteratorAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentHashMapEntryIteratorAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       bytes = cw.toByteArray();
       loadClassIntoJar("java.util.concurrent.ConcurrentHashMap$EntryIterator", bytes, false);
@@ -1438,9 +1440,9 @@ public class BootJarTool {
     if (Vm.isJDK16Compliant()) {
       // java.util.concurrent.ConcurrentHashMap$EntryIterator
       byte[] bytes = getSystemBytes("java.util.concurrent.ConcurrentHashMap$WriteThroughEntry");
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentHashMapWriteThroughEntryAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
 
       bytes = cw.toByteArray();
@@ -1462,7 +1464,7 @@ public class BootJarTool {
     // com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper
     {
       byte[] bytes = getTerracottaBytes("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
-      TransparencyClassSpec spec = this.configHelper
+      final TransparencyClassSpec spec = this.configHelper
           .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
@@ -1472,8 +1474,8 @@ public class BootJarTool {
   }
 
   private byte[] addNotClearableInterface(final byte[] bytes) {
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, 0);
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, 0);
     cr.accept(new AddInterfacesAdapter(cw, new String[] { NotClearable.class.getName().replace('.', '/') }),
               ClassReader.SKIP_FRAMES);
     return cw.toByteArray();
@@ -1485,9 +1487,9 @@ public class BootJarTool {
     { // Instrumentation for Itr inner class
       byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Itr");
 
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueIteratorClassAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
 
       bytes = cw.toByteArray();
@@ -1497,9 +1499,9 @@ public class BootJarTool {
     { // Instrumentation for Node inner class
       byte[] bytes = getSystemBytes("java.util.concurrent.LinkedBlockingQueue$Node");
 
-      ClassReader cr = new ClassReader(bytes);
-      ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-      ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
+      final ClassReader cr = new ClassReader(bytes);
+      final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      final ClassVisitor cv = new JavaUtilConcurrentLinkedBlockingQueueNodeClassAdapter(cw);
       cr.accept(cv, ClassReader.SKIP_FRAMES);
 
       bytes = cw.toByteArray();
@@ -1507,37 +1509,35 @@ public class BootJarTool {
     }
 
     { // Instrumentation for LinkedBlockingQueue class
-      String jClassNameDots = "java.util.concurrent.LinkedBlockingQueue";
-      String tcClassNameDots = "java.util.concurrent.LinkedBlockingQueueTC";
+      final String jClassNameDots = "java.util.concurrent.LinkedBlockingQueue";
+      final String tcClassNameDots = "java.util.concurrent.LinkedBlockingQueueTC";
 
-      byte[] tcData = getSystemBytes(tcClassNameDots);
-      ClassReader tcCR = new ClassReader(tcData);
-      ClassNode tcCN = new ClassNode();
+      final byte[] tcData = getSystemBytes(tcClassNameDots);
+      final ClassReader tcCR = new ClassReader(tcData);
+      final ClassNode tcCN = new ClassNode();
       tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
       byte[] jData = getSystemBytes(jClassNameDots);
-      ClassReader jCR = new ClassReader(jData);
-      ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+      final ClassReader jCR = new ClassReader(jData);
+      final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-      ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-      TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                       this.instrumentationLogger,
-                                                                                       getClass().getClassLoader(),
-                                                                                       true, true);
-      Map instrumentedContext = new HashMap();
-      ClassVisitor cv = new SerialVersionUIDAdder(
-                                                  new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(
-                                                                                                        new MergeTCToJavaClassAdapter(
-                                                                                                                                      cw,
-                                                                                                                                      dsoAdapter,
-                                                                                                                                      jClassNameDots,
-                                                                                                                                      tcClassNameDots,
-                                                                                                                                      tcCN,
-                                                                                                                                      instrumentedContext)));
+      final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+      final TransparencyClassAdapter dsoAdapter = this.configHelper
+          .createDsoClassAdapterFor(cw, jClassInfo, this.instrumentationLogger, getClass().getClassLoader(), true, true);
+      final Map instrumentedContext = new HashMap();
+      final ClassVisitor cv = new SerialVersionUIDAdder(
+                                                        new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(
+                                                                                                              new MergeTCToJavaClassAdapter(
+                                                                                                                                            cw,
+                                                                                                                                            dsoAdapter,
+                                                                                                                                            jClassNameDots,
+                                                                                                                                            tcClassNameDots,
+                                                                                                                                            tcCN,
+                                                                                                                                            instrumentedContext)));
       jCR.accept(cv, ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
 
-      TransparencyClassSpec spec = this.configHelper
+      final TransparencyClassSpec spec = this.configHelper
           .getOrCreateSpec(jClassNameDots, "com.tc.object.applicator.LinkedBlockingQueueApplicator");
       spec.addArrayCopyMethodCodeSpec(SerializationUtil.TO_ARRAY_SIGNATURE);
       spec.markPreInstrumented();
@@ -1549,7 +1549,7 @@ public class BootJarTool {
   private final void addInstrumentedJavaUtilConcurrentFutureTask() {
 
     if (!Vm.isJDK15Compliant()) { return; }
-    Map instrumentedContext = new HashMap();
+    final Map instrumentedContext = new HashMap();
 
     TransparencyClassSpec spec = this.configHelper.getOrCreateSpec("java.util.concurrent.FutureTask");
     spec.setHonorTransient(true);
@@ -1695,9 +1695,9 @@ public class BootJarTool {
     spec.markPreInstrumented();
     bytes = doDSOTransform(spec.getClassName(), bytes);
 
-    ClassReader cr = new ClassReader(bytes);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
+    final ClassReader cr = new ClassReader(bytes);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
         .getClassName());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
@@ -1706,25 +1706,25 @@ public class BootJarTool {
   }
 
   private final void addInstrumentedHashtable() {
-    String jMapClassNameDots = "java.util.Hashtable";
-    String tcMapClassNameDots = "java.util.HashtableTC";
-    Map instrumentedContext = new HashMap();
+    final String jMapClassNameDots = "java.util.Hashtable";
+    final String tcMapClassNameDots = "java.util.HashtableTC";
+    final Map instrumentedContext = new HashMap();
     mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, HashtableClassAdapter.getMethods(), null);
   }
 
   private final void addInstrumentedLinkedHashMap(final Map instrumentedContext) {
-    String jMapClassNameDots = "java.util.LinkedHashMap";
-    String tcMapClassNameDots = "java.util.LinkedHashMapTC";
+    final String jMapClassNameDots = "java.util.LinkedHashMap";
+    final String tcMapClassNameDots = "java.util.LinkedHashMapTC";
 
     mergeClass(tcMapClassNameDots, jMapClassNameDots, instrumentedContext, null,
                new ClassAdapterFactory[] { LinkedHashMapClassAdapter.FACTORY });
   }
 
   private void addInstrumentedReentrantReadWriteLock() {
-    String methodPrefix = "__RWL" + ByteCodeUtil.TC_METHOD_PREFIX;
+    final String methodPrefix = "__RWL" + ByteCodeUtil.TC_METHOD_PREFIX;
 
-    String jClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLock";
-    String tcClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLockTC";
+    final String jClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLock";
+    final String tcClassNameDots = "java.util.concurrent.locks.ReentrantReadWriteLockTC";
     Map instrumentedContext = new HashMap();
     mergeReentrantReadWriteLock(tcClassNameDots, jClassNameDots, instrumentedContext, methodPrefix);
 
@@ -1749,28 +1749,30 @@ public class BootJarTool {
                                             final String tcClassNameDots, final String jClassNameDots,
                                             final String srcInnerClassName, final String targetInnerClassName,
                                             final Map instrumentedContext, final String methodPrefix) {
-    String tcInnerClassNameSlashes = tcInnerClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
-                                                                  ChangeClassNameHierarchyAdapter.SLASH_DELIMITER);
-    byte[] tcData = getSystemBytes(tcInnerClassNameDots);
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    final String tcInnerClassNameSlashes = tcInnerClassNameDots
+        .replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER, ChangeClassNameHierarchyAdapter.SLASH_DELIMITER);
+    final byte[] tcData = getSystemBytes(tcInnerClassNameDots);
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     byte[] jData = getSystemBytes(jInnerClassNameDots);
 
     // jData = doDSOTransform(jInnerClassNameDots, jData);
 
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    final ClassReader jCR = new ClassReader(jData);
+    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jInnerClassNameDots, this.systemLoader);
-    TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                     this.instrumentationLogger,
-                                                                                     getClass().getClassLoader(), true,
-                                                                                     false);
-    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jInnerClassNameDots,
-                                                                              tcInnerClassNameDots, tcCN,
-                                                                              instrumentedContext, methodPrefix, false));
+    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jInnerClassNameDots, this.systemLoader);
+    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                           this.instrumentationLogger,
+                                                                                           getClass().getClassLoader(),
+                                                                                           true, false);
+    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                    jInnerClassNameDots,
+                                                                                    tcInnerClassNameDots, tcCN,
+                                                                                    instrumentedContext, methodPrefix,
+                                                                                    false));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
 
@@ -1783,9 +1785,9 @@ public class BootJarTool {
 
   private void mergeReentrantReadWriteLock(final String tcClassNameDots, final String jClassNameDots,
                                            final Map instrumentedContext, final String methodPrefix) {
-    byte[] tcData = getSystemBytes(tcClassNameDots);
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    final byte[] tcData = getSystemBytes(tcClassNameDots);
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     byte[] jData = getSystemBytes(jClassNameDots);
@@ -1794,7 +1796,7 @@ public class BootJarTool {
 
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv1 = new ReentrantReadWriteLockClassAdapter(cw);
+    final ClassVisitor cv1 = new ReentrantReadWriteLockClassAdapter(cw);
 
     jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
@@ -1802,26 +1804,27 @@ public class BootJarTool {
     jCR = new ClassReader(jData);
     cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                     this.instrumentationLogger,
-                                                                                     getClass().getClassLoader(), true,
-                                                                                     true);
-    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                              tcClassNameDots, tcCN,
-                                                                              instrumentedContext, methodPrefix, true));
+    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                           this.instrumentationLogger,
+                                                                                           getClass().getClassLoader(),
+                                                                                           true, true);
+    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                                    tcClassNameDots, tcCN,
+                                                                                    instrumentedContext, methodPrefix,
+                                                                                    true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);
     loadClassIntoJar(jClassNameDots, jData, true);
 
-    String innerClassName = "java/util/concurrent/locks/ReentrantReadWriteLockTC$DsoLock";
+    final String innerClassName = "java/util/concurrent/locks/ReentrantReadWriteLockTC$DsoLock";
     changeClassNameAndGetBytes(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext);
     changeClassName(innerClassName, tcClassNameDots, jClassNameDots, instrumentedContext, true);
   }
 
   private void addInstrumentedHashMap() {
-    Map instrumentedContext = new HashMap();
+    final Map instrumentedContext = new HashMap();
     mergeClass(HashMapClassAdapter.TC_MAP_CLASSNAME_DOTS, HashMapClassAdapter.J_MAP_CLASSNAME_DOTS,
                instrumentedContext, null, new ClassAdapterFactory[] { HashMapClassAdapter.FACTORY });
 
@@ -1831,15 +1834,15 @@ public class BootJarTool {
   private final void mergeClass(final String tcClassNameDots, final String jClassNameDots,
                                 final Map instrumentedContext, final MethodNode[] replacedMethods,
                                 final ClassAdapterFactory[] addlAdapters) {
-    byte[] tcData = getSystemBytes(tcClassNameDots);
+    final byte[] tcData = getSystemBytes(tcClassNameDots);
 
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode() {
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode() {
       @Override
       public MethodVisitor visitMethod(final int maccess, final String mname, final String mdesc,
                                        final String msignature, final String[] mexceptions) {
         if (replacedMethods != null) {
-          for (MethodNode replacedMethod : replacedMethods) {
+          for (final MethodNode replacedMethod : replacedMethods) {
             if (mname.equals(replacedMethod.name) && mdesc.equals(replacedMethod.desc)) {
               this.methods.add(replacedMethod);
               return null;
@@ -1854,36 +1857,36 @@ public class BootJarTool {
     byte[] jData = getSystemBytes(jClassNameDots);
 
     if (addlAdapters != null) {
-      for (ClassAdapterFactory addlAdapter : addlAdapters) {
-        ClassReader cr = new ClassReader(jData);
-        ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+      for (final ClassAdapterFactory addlAdapter : addlAdapters) {
+        final ClassReader cr = new ClassReader(jData);
+        final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-        ClassVisitor cv = addlAdapter.create(cw, null);
+        final ClassVisitor cv = addlAdapter.create(cw, null);
         cr.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         jData = cw.toByteArray();
       }
     }
 
-    ClassReader jCR = new ClassReader(jData);
-    ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    ClassNode jCN = new ClassNode();
+    final ClassReader jCR = new ClassReader(jData);
+    final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
+    final ClassNode jCN = new ClassNode();
     jCR.accept(jCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                     this.instrumentationLogger,
-                                                                                     getClass().getClassLoader(), true,
-                                                                                     false);
-    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                              tcClassNameDots, tcCN,
-                                                                              instrumentedContext));
+    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                           this.instrumentationLogger,
+                                                                                           getClass().getClassLoader(),
+                                                                                           true, false);
+    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                                    tcClassNameDots, tcCN,
+                                                                                    instrumentedContext));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     loadClassIntoJar(jClassNameDots, cw.toByteArray(), true);
 
-    List innerClasses = tcCN.innerClasses;
+    final List innerClasses = tcCN.innerClasses;
     // load ClassInfo for all inner classes
-    for (Iterator i = innerClasses.iterator(); i.hasNext();) {
-      InnerClassNode innerClass = (InnerClassNode) i.next();
+    for (final Iterator i = innerClasses.iterator(); i.hasNext();) {
+      final InnerClassNode innerClass = (InnerClassNode) i.next();
 
       if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
@@ -1891,8 +1894,8 @@ public class BootJarTool {
       }
     }
     // transform and add inner classes to the boot jar
-    for (Iterator i = innerClasses.iterator(); i.hasNext();) {
-      InnerClassNode innerClass = (InnerClassNode) i.next();
+    for (final Iterator i = innerClasses.iterator(); i.hasNext();) {
+      final InnerClassNode innerClass = (InnerClassNode) i.next();
       if (innerClass.outerName.equals(tcClassNameDots.replace(ChangeClassNameHierarchyAdapter.DOT_DELIMITER,
                                                               ChangeClassNameHierarchyAdapter.SLASH_DELIMITER))) {
         changeClassName(innerClass.name, tcClassNameDots, jClassNameDots, instrumentedContext,
@@ -1911,8 +1914,9 @@ public class BootJarTool {
     byte[] data = changeClassNameAndGetBytes(fullClassNameDots, classNameDotsToBeChanged, classNameDotsReplaced,
                                              instrumentedContext);
 
-    String replacedClassName = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots, classNameDotsToBeChanged,
-                                                                           classNameDotsReplaced, null, null);
+    final String replacedClassName = ChangeClassNameRootAdapter.replaceClassName(fullClassNameDots,
+                                                                                 classNameDotsToBeChanged,
+                                                                                 classNameDotsReplaced, null, null);
 
     if (doDSOTransform) {
       data = doDSOTransform(replacedClassName, data);
@@ -1941,11 +1945,11 @@ public class BootJarTool {
                                                   final String classNameDotsToBeChanged,
                                                   final String classNameDotsReplaced, final String srcInnerClassName,
                                                   final String targetInnerClassName, final Map instrumentedContext) {
-    ClassReader cr = new ClassReader(data);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
-                                                     classNameDotsReplaced, srcInnerClassName, targetInnerClassName,
-                                                     instrumentedContext, null);
+    final ClassReader cr = new ClassReader(data);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new ChangeClassNameRootAdapter(cw, fullClassNameDots, classNameDotsToBeChanged,
+                                                           classNameDotsReplaced, srcInnerClassName,
+                                                           targetInnerClassName, instrumentedContext, null);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     data = cw.toByteArray();
@@ -1985,25 +1989,25 @@ public class BootJarTool {
   }
 
   private void addInstrumentedReentrantLock() {
-    String jClassNameDots = "java.util.concurrent.locks.ReentrantLock";
-    String tcClassNameDots = "java.util.concurrent.locks.ReentrantLockTC";
-    Map instrumentedContext = new HashMap();
+    final String jClassNameDots = "java.util.concurrent.locks.ReentrantLock";
+    final String tcClassNameDots = "java.util.concurrent.locks.ReentrantLockTC";
+    final Map instrumentedContext = new HashMap();
     mergeReentrantLock(tcClassNameDots, jClassNameDots, instrumentedContext);
   }
 
   private void mergeReentrantLock(final String tcClassNameDots, final String jClassNameDots,
                                   final Map instrumentedContext) {
-    String methodPrefix = "__RL" + ByteCodeUtil.TC_METHOD_PREFIX;
+    final String methodPrefix = "__RL" + ByteCodeUtil.TC_METHOD_PREFIX;
 
-    byte[] tcData = getSystemBytes(tcClassNameDots);
-    ClassReader tcCR = new ClassReader(tcData);
-    ClassNode tcCN = new ClassNode();
+    final byte[] tcData = getSystemBytes(tcClassNameDots);
+    final ClassReader tcCR = new ClassReader(tcData);
+    final ClassNode tcCN = new ClassNode();
     tcCR.accept(tcCN, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     byte[] jData = getSystemBytes(jClassNameDots);
     ClassReader jCR = new ClassReader(jData);
     ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv1 = new ReentrantLockClassAdapter(cw);
+    final ClassVisitor cv1 = new ReentrantLockClassAdapter(cw);
 
     jCR.accept(cv1, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
@@ -2011,14 +2015,15 @@ public class BootJarTool {
     jCR = new ClassReader(jData);
     cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
-    ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
-    TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
-                                                                                     this.instrumentationLogger,
-                                                                                     getClass().getClassLoader(), true,
-                                                                                     true);
-    ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                              tcClassNameDots, tcCN,
-                                                                              instrumentedContext, methodPrefix, true));
+    final ClassInfo jClassInfo = AsmClassInfo.getClassInfo(jClassNameDots, this.systemLoader);
+    final TransparencyClassAdapter dsoAdapter = this.configHelper.createDsoClassAdapterFor(cw, jClassInfo,
+                                                                                           this.instrumentationLogger,
+                                                                                           getClass().getClassLoader(),
+                                                                                           true, true);
+    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
+                                                                                    tcClassNameDots, tcCN,
+                                                                                    instrumentedContext, methodPrefix,
+                                                                                    true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);
@@ -2027,12 +2032,12 @@ public class BootJarTool {
 
   private final void addInstrumentedClassLoader() {
     // patch the java.lang.ClassLoader
-    ClassLoaderPreProcessorImpl adapter = new ClassLoaderPreProcessorImpl();
-    byte[] patched = adapter.preProcess(getSystemBytes("java.lang.ClassLoader"));
+    final ClassLoaderPreProcessorImpl adapter = new ClassLoaderPreProcessorImpl();
+    final byte[] patched = adapter.preProcess(getSystemBytes("java.lang.ClassLoader"));
 
-    ClassReader cr = new ClassReader(patched);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassVisitor cv = new NamedLoaderAdapter().create(cw, null);
+    final ClassReader cr = new ClassReader(patched);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassVisitor cv = new NamedLoaderAdapter().create(cw, null);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.ClassLoader", cw.toByteArray(), false);
@@ -2040,11 +2045,11 @@ public class BootJarTool {
 
   protected final byte[] doDSOTransform(final String name, final byte[] data) {
     // adapts the class on the fly
-    ClassReader cr = new ClassReader(data);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    ClassInfo classInfo = AsmClassInfo.getClassInfo(data, this.tcLoader);
-    ClassVisitor cv = this.configHelper.createClassAdapterFor(cw, classInfo, this.instrumentationLogger, getClass()
-        .getClassLoader(), true);
+    final ClassReader cr = new ClassReader(data);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassInfo classInfo = AsmClassInfo.getClassInfo(data, this.tcLoader);
+    final ClassVisitor cv = this.configHelper.createClassAdapterFor(cw, classInfo, this.instrumentationLogger,
+                                                                    getClass().getClassLoader(), true);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     return cw.toByteArray();
@@ -2053,17 +2058,17 @@ public class BootJarTool {
   private final void adaptClassIfNotAlreadyIncluded(final String className, final Class adapter) {
     if (this.bootJar.classLoaded(className)) { return; }
 
-    byte[] orig = getSystemBytes(className);
+    final byte[] orig = getSystemBytes(className);
 
-    ClassReader cr = new ClassReader(orig);
-    ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
+    final ClassReader cr = new ClassReader(orig);
+    final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
     try {
-      ClassVisitor cv = (ClassVisitor) adapter.getConstructor(new Class[] { ClassVisitor.class })
+      final ClassVisitor cv = (ClassVisitor) adapter.getConstructor(new Class[] { ClassVisitor.class })
           .newInstance(new Object[] { cw });
       cr.accept(cv, ClassReader.SKIP_FRAMES);
       loadClassIntoJar(className, cw.toByteArray(), false);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       exit("Can't instaniate class apapter using class " + adapter, e);
     }
   }
@@ -2077,7 +2082,7 @@ public class BootJarTool {
   private final static File getInstallationDir() {
     try {
       return Directories.getInstallationRoot();
-    } catch (FileNotFoundException fnfe) {
+    } catch (final FileNotFoundException fnfe) {
       return null;
     }
   }
@@ -2092,34 +2097,34 @@ public class BootJarTool {
   private static final String MAKE_OR_SCAN_MODE = "<" + MAKE_MODE + "|" + SCAN_MODE + ">";
 
   public final static void main(final String[] args) {
-    File installDir = getInstallationDir();
-    String outputFileOptionMsg = "path to boot JAR file"
-                                 + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
-    Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
+    final File installDir = getInstallationDir();
+    final String outputFileOptionMsg = "path to boot JAR file"
+                                       + (installDir != null ? "\ndefault: [TC_INSTALL_DIR]/lib/dso-boot" : "");
+    final Option targetFileOption = new Option(TARGET_FILE_OPTION, true, outputFileOptionMsg);
     targetFileOption.setArgName("file");
     targetFileOption.setLongOpt("bootjar-file");
     targetFileOption.setArgs(1);
     targetFileOption.setRequired(installDir == null);
     targetFileOption.setType(String.class);
 
-    Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
+    final Option configFileOption = new Option("f", "config", true, "configuration file (optional)");
     configFileOption.setArgName("file-or-URL");
     configFileOption.setType(String.class);
     configFileOption.setRequired(false);
 
-    Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
+    final Option overwriteOption = new Option("w", "overwrite", false, "always make the boot JAR file");
     overwriteOption.setType(String.class);
     overwriteOption.setRequired(false);
 
-    Option verboseOption = new Option("v", "verbose");
+    final Option verboseOption = new Option("v", "verbose");
     verboseOption.setType(String.class);
     verboseOption.setRequired(false);
 
-    Option helpOption = new Option("h", "help");
+    final Option helpOption = new Option("h", "help");
     helpOption.setType(String.class);
     helpOption.setRequired(false);
 
-    Options options = new Options();
+    final Options options = new Options();
     options.addOption(targetFileOption);
     options.addOption(configFileOption);
     options.addOption(overwriteOption);
@@ -2131,7 +2136,7 @@ public class BootJarTool {
     try {
       cmdLine = new PosixParser().parse(options, args);
       mode = (cmdLine.getArgList().size() > 0) ? cmdLine.getArgList().get(0).toString().toLowerCase() : mode;
-    } catch (ParseException pe) {
+    } catch (final ParseException pe) {
       showHelpAndExit(options, 1);
     }
 
@@ -2142,11 +2147,11 @@ public class BootJarTool {
     try {
       if (!cmdLine.hasOption("f")
           && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
-        String cwd = System.getProperty("user.dir");
-        File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
-        String configSpec = localConfig.exists() ? localConfig.getAbsolutePath()
+        final String cwd = System.getProperty("user.dir");
+        final File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
+        final String configSpec = localConfig.exists() ? localConfig.getAbsolutePath()
             : StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
-        String[] newArgs = new String[args.length + 2];
+        final String[] newArgs = new String[args.length + 2];
         System.arraycopy(args, 0, newArgs, 0, args.length);
         newArgs[newArgs.length - 2] = "-f";
         newArgs[newArgs.length - 1] = configSpec;
@@ -2158,9 +2163,9 @@ public class BootJarTool {
                                                                 cmdLine,
                                                                 StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                 new FatalIllegalConfigurationChangeHandler());
-      boolean verbose = cmdLine.hasOption("v");
-      TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
-      L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
+      final boolean verbose = cmdLine.hasOption("v");
+      final TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
+      final L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
 
       File targetFile;
       if (cmdLine.hasOption(TARGET_FILE_OPTION)) {
@@ -2177,12 +2182,12 @@ public class BootJarTool {
       // This used to be a provider that read from a specified rt.jar (to let us create boot jars for other platforms).
       // That requirement is no more, but might come back, so I'm leaving at least this much scaffolding in place
       // WAS: systemProvider = new RuntimeJarBytesProvider(...)
-      ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
+      final ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
       BootJarTool bjTool = new BootJarTool(new StandardDSOClientConfigHelperImpl(config, false), targetFile,
                                            systemLoader, !verbose);
       if (mode.equals(MAKE_MODE)) {
         boolean validating = false;
-        boolean makeItAnyway = cmdLine.hasOption("w");
+        final boolean makeItAnyway = cmdLine.hasOption("w");
         if (targetFile.exists()) {
           if (makeItAnyway) {
             consoleLogger.info("Overwrite mode specified, existing boot JAR file at '" + targetFile.getCanonicalPath()
@@ -2211,7 +2216,7 @@ public class BootJarTool {
                             + "use the -h option to view the options for this tool.");
         System.exit(1);
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // See CDV-835, DEV-2792: for some messages it would be better to print e.getMessage() but
       // for others the message is not sufficient and we need the entire stack trace.
       consoleLogger.fatal("BootJarTool: ", e);
