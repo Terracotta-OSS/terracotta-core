@@ -21,8 +21,6 @@ import com.tc.util.Stringifier;
 import com.tc.util.diff.Difference;
 import com.tc.util.diff.DifferenceBuilder;
 import com.tc.util.diff.Differenceable;
-import com.tc.util.runtime.GetPid;
-import com.tc.util.runtime.Os;
 import com.tc.util.runtime.ThreadDump;
 
 import java.io.ByteArrayInputStream;
@@ -102,17 +100,6 @@ public class TCTestCase extends TestCase {
     System.err.println("\n" + bar + "\n+ TCTestCase timeout alarm going off after " + millisToMinutes(elapsedTime)
                        + " minutes at " + new Date() + "\n" + bar + "\n");
     System.err.flush();
-
-    if (Os.isLinux()) {
-      try {
-        System.err.println("attempting thread dump for linux");
-        Process proc = Runtime.getRuntime()
-            .exec(new String[] { "/bin/kill", "-3", "" + GetPid.getInstance().getPid() });
-        proc.waitFor();
-      } catch (Throwable t) {
-        t.printStackTrace();
-      }
-    }
 
     doDumpServerDetails();
     if (dumpThreadsOnTimeout) {
@@ -211,11 +198,6 @@ public class TCTestCase extends TestCase {
   }
 
   public void scheduleTimeoutTask() {
-    // XXX: remove me (just here to get classes loaded)
-    if (Os.isLinux()) {
-      GetPid.getInstance().getPid();
-    }
-
     // enforce some sanity
     final int MINIMUM = 30;
     long junitTimeout = this.getTimeoutValueInSeconds();

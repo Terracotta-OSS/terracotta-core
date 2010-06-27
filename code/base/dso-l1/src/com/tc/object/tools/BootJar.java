@@ -11,6 +11,7 @@ import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.NotInBootJar;
 import com.tc.object.bytecode.OverridesHashCodeAdapter;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -156,6 +157,11 @@ public class BootJar {
     // disallow duplicate entries into the boot jar. Even w/o this assertion, the jar
     // stuff will blow up later if an entry is duplicated
     Assert.assertTrue("Duplicate class added " + className, added);
+
+    if (className.equals(NotInBootJar.class.getName())) {
+      // make formatter sane
+      throw new AssertionError("Invalid class for boot jar: " + className);
+    }
 
     // Add OverridesHashCode interface (if appropriate) to any class going into the boot jar
     // NOTE: We might need to move this logic out of this class at some point, but at the moment I don't know any
