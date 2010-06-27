@@ -3,6 +3,7 @@
  */
 package com.tc.object.cache;
 
+import com.tc.cache.ExpirableEntry;
 import com.tc.object.locks.LockID;
 
 public class CachedItem {
@@ -31,6 +32,11 @@ public class CachedItem {
 
   public Object getKey() {
     return this.key;
+  }
+
+  public ExpirableEntry getExpirableEntry() {
+    if (this.value instanceof ExpirableEntry) { return (ExpirableEntry) this.value; }
+    return null;
   }
 
   public Object getValue() {
