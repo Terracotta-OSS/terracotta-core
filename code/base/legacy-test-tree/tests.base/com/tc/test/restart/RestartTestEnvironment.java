@@ -54,6 +54,7 @@ public class RestartTestEnvironment {
   private boolean                                       mergeServerOutput = true;
   private int                                           serverPort;
   private int                                           adminPort;
+  private int                                           groupPort;
   private final OperatingMode                           operatingMode;
   private final TestTVSConfigurationSetupManagerFactory configFactory;
 
@@ -114,7 +115,8 @@ public class RestartTestEnvironment {
 
     config = new StandardTVSConfigurationSetupManagerFactory(new String[] {
         StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
-        StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2, new MockIllegalConfigurationChangeHandler());
+                                                             StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                             new MockIllegalConfigurationChangeHandler());
   }
 
   private void writeL2Config() throws Exception {
@@ -152,6 +154,7 @@ public class RestartTestEnvironment {
     L2ConfigBuilder l2 = new L2ConfigBuilder();
     l2.setDSOPort(serverPort);
     l2.setJMXPort(adminPort);
+    l2.setL2GroupPort(groupPort);
     l2.setData(tempDirectory.getAbsolutePath());
     l2.setPersistenceMode(persistenceMode);
     if (configFactory != null) {
@@ -272,6 +275,10 @@ public class RestartTestEnvironment {
   public void setAdminPort(int i) {
     this.adminPort = i;
   }
+  
+  public void setGroupPort(int groupPort) {
+    this.groupPort = groupPort;
+  }
 
   public int chooseServerPort() {
     this.serverPort = portChooser.chooseRandomPort();
@@ -282,10 +289,16 @@ public class RestartTestEnvironment {
     this.adminPort = portChooser.chooseRandomPort();
     return this.adminPort;
   }
+  
+  public int chooseGroupPort(){
+    this.groupPort = portChooser.chooseRandomPort();
+    return this.groupPort;
+  }
 
   public void choosePorts() {
     chooseServerPort();
     chooseAdminPort();
+    chooseGroupPort();
   }
 
   public int getServerPort() {
@@ -294,6 +307,10 @@ public class RestartTestEnvironment {
 
   public int getAdminPort() {
     return this.adminPort;
+  }
+  
+  public int getGroupPort() {
+    return this.groupPort;
   }
 
   public static final class OperatingMode {

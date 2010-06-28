@@ -40,6 +40,10 @@ public class RestartTestHelper {
     return env.getAdminPort();
   }
 
+  public int getGroupPort() {
+    return env.getGroupPort();
+  }
+
   private void initRestartEnv() {
     if (isCrashy) {
       initRestartEnvCrashy();

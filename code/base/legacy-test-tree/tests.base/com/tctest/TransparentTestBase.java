@@ -89,6 +89,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   private int                         dsoPort                         = -1;
   private int                         adminPort                       = -1;
+  private int                         groupPort                       = -1;
   private final List                  postActions                     = new ArrayList();
 
   protected TestConfigObject getTestConfigObject() {
@@ -201,12 +202,19 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
                                      jvmArgs);
       dsoPort = helper.getServerPort();
       adminPort = helper.getAdminPort();
+      groupPort = helper.getGroupPort();
       BindPort dsoBindPort = BindPort.Factory.newInstance();
       dsoBindPort.setIntValue(dsoPort);
       ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+      
       BindPort jmxBindPort = BindPort.Factory.newInstance();
       jmxBindPort.setIntValue(adminPort);
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+      
+      BindPort groupBindPort = BindPort.Factory.newInstance();
+      groupBindPort.setIntValue(groupPort);
+      ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
+      
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
     } else if (isMultipleServerTest()) {
@@ -214,12 +222,19 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     } else {
       dsoPort = portChooser.chooseRandomPort();
       adminPort = portChooser.chooseRandomPort();
+      groupPort = portChooser.chooseRandomPort();
       BindPort dsoBindPort = BindPort.Factory.newInstance();
       dsoBindPort.setIntValue(dsoPort);
       ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+      
       BindPort jmxBindPort = BindPort.Factory.newInstance();
       jmxBindPort.setIntValue(adminPort);
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+      
+      BindPort groupBindPort = BindPort.Factory.newInstance();
+      groupBindPort.setIntValue(groupPort);
+      ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
+      
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, -1);
     }
 
@@ -254,6 +269,10 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   public int getAdminPort() {
     return adminPort;
+  }
+  
+  public int getGroupPort(){
+    return this.groupPort;
   }
 
   protected ProxyConnectManager getProxyConnectManager() {
@@ -293,6 +312,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     if (helper != null) {
       dsoPort = helper.getServerPort();
       adminPort = helper.getAdminPort();
+      groupPort = helper.getGroupPort();
       // for crash+proxy, set crash interval to 60 sec
       helper.getServerCrasherConfig().setRestartInterval(60 * 1000);
     } else if (isMultipleServerTest()) {
@@ -301,6 +321,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     } else {
       dsoPort = portChooser.chooseRandomPort();
       adminPort = portChooser.chooseRandomPort();
+      groupPort = portChooser.chooseRandomPort();
     }
 
     int dsoProxyPort = portChooser.chooseRandomPort();
@@ -313,10 +334,15 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     BindPort dsoBindPort = BindPort.Factory.newInstance();
     dsoBindPort.setIntValue(dsoPort);
     ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-    
+
     BindPort jmxBindPort = BindPort.Factory.newInstance();
     jmxBindPort.setIntValue(adminPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+    
+    BindPort groupBindPort = BindPort.Factory.newInstance();
+    groupBindPort.setIntValue(groupPort);
+    ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
+    
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
     disableL1L2ConfigValidationCheck();
   }
@@ -418,10 +444,11 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     BindPort dsoBindPort = BindPort.Factory.newInstance();
     dsoBindPort.setIntValue(serverPort);
     ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-    
+
     BindPort jmxBindPort = BindPort.Factory.newInstance();
     jmxBindPort.setIntValue(adminPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+    
     configFactory().addServerToL1Config(null, serverPort, adminPort);
   }
 

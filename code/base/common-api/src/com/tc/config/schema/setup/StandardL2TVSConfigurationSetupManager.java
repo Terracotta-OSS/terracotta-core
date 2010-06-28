@@ -194,7 +194,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       }
     }
 
-    if ((servers.length > 1) && !found) { throw new ConfigurationSetupException(
+    if ((servers.length > 0) && !found) { throw new ConfigurationSetupException(
                                                                                 "You have specified server name '"
                                                                                     + l2Identifier
                                                                                     + "' which does not "

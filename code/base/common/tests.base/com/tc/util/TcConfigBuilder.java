@@ -470,7 +470,6 @@ public class TcConfigBuilder {
     Server[] serverArray = servers.getServerArray();
     for (Server server : serverArray) {
 
-      int dsoPort = 0;
       if (!server.isSetDsoPort()) {
         BindPort dsoBindPort = BindPort.Factory.newInstance();
         dsoBindPort.setBind(server.getBind());
@@ -478,7 +477,7 @@ public class TcConfigBuilder {
         final DefaultValueProvider defaultValueProvider = new FromSchemaDefaultValueProvider();
         if (defaultValueProvider.hasDefault(server.schemaType(), "dso-port")) {
           final XmlInteger defaultValue = (XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso-port");
-          dsoPort = defaultValue.getBigIntegerValue().intValue();
+          int dsoPort = defaultValue.getBigIntegerValue().intValue();
           dsoBindPort.setIntValue(dsoPort);
         }
 
@@ -492,7 +491,7 @@ public class TcConfigBuilder {
         BindPort jmxBindPort = BindPort.Factory.newInstance();
         jmxBindPort.setBind(server.getBind());
 
-        int tempJmxPort = dsoPort + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+        int tempJmxPort = server.getDsoPort().getIntValue() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
         int defaultJmxPort = ((tempJmxPort <= NewCommonL2Config.MAX_PORTNUMBER) ? tempJmxPort
             : (tempJmxPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
         jmxBindPort.setIntValue(defaultJmxPort);
@@ -507,7 +506,7 @@ public class TcConfigBuilder {
         BindPort l2GroupBindPort = BindPort.Factory.newInstance();
         l2GroupBindPort.setBind(server.getBind());
 
-        int tempGroupPort = dsoPort + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+        int tempGroupPort = server.getDsoPort().getIntValue() + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
         int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
             : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
         l2GroupBindPort.setIntValue(defaultGroupPort);
