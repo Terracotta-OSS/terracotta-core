@@ -26,7 +26,7 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
     return domainConfig.getServers().getServerArray(0);
   }
 
-  public void xtestConstruction() throws Exception {
+  public void testConstruction() throws Exception {
     try {
       new NewCommonL2ConfigObject(null);
       fail("Didn't get NPE on no context");
@@ -35,7 +35,7 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
     }
   }
 
-  public void xtestDataPath() throws Exception {
+  public void testDataPath() throws Exception {
     addListeners(object.dataPath());
 
     assertEquals(new File("data"), object.dataPath().getFile());
@@ -48,7 +48,7 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
     checkListener(new File("data"), new File("foobar"));
   }
 
-  public void xtestLogsPath() throws Exception {
+  public void testLogsPath() throws Exception {
     addListeners(object.logsPath());
 
     assertEquals(new File("logs"), object.logsPath().getFile());
@@ -69,7 +69,6 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
 
     builder().getServers().getL2s()[0].setJMXPort("3285");
     setConfig();
-    System.out.println(builder().toString());
 
     assertEquals(3285, object.jmxPort().getBindPort());
     checkListener(new Integer(9520), new Integer(3285));

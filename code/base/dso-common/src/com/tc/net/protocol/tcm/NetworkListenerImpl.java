@@ -40,7 +40,6 @@ class NetworkListenerImpl implements NetworkListener {
                       final TCMessageRouter router, final boolean reuseAddr,
                       final ConnectionIDFactory connectionIdFactory, final Sink httpSink,
                       final WireProtocolMessageSink wireProtoMsgSnk) {
-    new Exception().printStackTrace();
     this.commsMgr = commsMgr;
     this.channelManager = channelManager;
     this.addr = addr;

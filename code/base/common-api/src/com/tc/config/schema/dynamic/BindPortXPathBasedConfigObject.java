@@ -18,15 +18,7 @@ public class BindPortXPathBasedConfigObject extends XPathBasedConfigItem impleme
   }
 
   protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-//    BindPort bindPort = BindPort.Factory.newInstance();
-//    Integer port = (Integer) super.fetchDataFromXmlObjectByReflection(xmlObject,"getIntValue");
-//    bindPort.setIntValue(port);
-//    Boolean isBindAddressSet = (Boolean) super.fetchDataFromXmlObjectByReflection(xmlObject, "isSetBind");
-//    
-//    if(isBindAddressSet){
-//      String bindAddress = (String) super.fetchDataFromXmlObjectByReflection(xmlObject, "getBind");
-//      bindPort.setBind(bindAddress);
-//    }
+
     return bindPort;
   }
 
