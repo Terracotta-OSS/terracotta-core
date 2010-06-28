@@ -49,6 +49,7 @@ public final class PortChooser {
     synchronized (VM_WIDE_LOCK) {
       do {
         port = choose();
+        if (port + numOfPorts > MAX) continue;
         boolean isChosen = true;
         for (int i = 1; i < numOfPorts; i++) {
           if (isPortUsed(port + i)) {
