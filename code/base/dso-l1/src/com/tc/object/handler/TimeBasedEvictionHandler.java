@@ -19,7 +19,10 @@ public class TimeBasedEvictionHandler extends AbstractEventHandler {
     final TCServerMap serverMap = (TCServerMap) serverMapTC.getPeerObject();
     if (serverMap != null) {
       final CachedItem ci = ev.getExpiredCachedItem();
-      serverMap.evictExpired(ci.getKey(), ci.getValue());
+      final Object value = ci.getValue();
+      if (value != null) { // If null, its Already removed
+        serverMap.evictExpired(ci.getKey(), value);
+      }
     }
   }
 }

@@ -17,6 +17,7 @@ public class CachedItem {
   private final Object          key;
   private volatile Object       value;
   private volatile boolean      accessed = true;
+  private volatile boolean      expired  = false;
   private CachedItem            next;
 
   public CachedItem(final DisposeListener listener, final LockID lockID, final Object key, final Object value) {
@@ -69,5 +70,13 @@ public class CachedItem {
 
   public void setAccessed() {
     this.accessed = true;
+  }
+
+  public boolean isExpired() {
+    return this.expired;
+  }
+
+  public void markExpired() {
+    this.expired = true;
   }
 }
