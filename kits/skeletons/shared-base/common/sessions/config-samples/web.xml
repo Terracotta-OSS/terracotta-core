@@ -27,6 +27,12 @@ version="2.4">
     <!-- Weblogic 10.x -->
     <!-- <filter-class>org.terracotta.session.TerracottaWeblogic10xSessionFilter</filter-class> -->
 
+    <!-- Websphere 6.1.x -->
+    <!-- <filter-class>org.terracotta.session.TerracottaWebsphere61xSessionFilter</filter-class> -->
+
+    <!-- Websphere 7.0.x -->
+    <!-- <filter-class>org.terracotta.session.TerracottaWebsphere70xSessionFilter</filter-class> -->
+
     <init-param>
       <param-name>tcConfigUrl</param-name>
       <param-value>localhost:9510</param-value>
