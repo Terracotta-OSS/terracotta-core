@@ -11,7 +11,8 @@ import com.tc.util.SinglyLinkedList;
 import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNode> {
 
@@ -142,10 +143,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
   static class PendingLockHold extends LockStateNode {
     private final LockLevel  level;
     private final Thread     javaThread;
-    private volatile boolean delegates        = true;
+    final Semaphore          permit      = new Semaphore(0);
+    
+    private volatile boolean delegates   = true;
 
-    volatile boolean         responded        = false;
-    volatile boolean         awarded          = false;
+    volatile boolean         responded   = false;
+    volatile boolean         awarded     = false;
 
     private volatile String  delegationMethod = "Not Delegated";
 
@@ -165,11 +168,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     void park() {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
-      LockSupport.park();
+      try {
+        permit.acquire();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
 
     void unpark() {
-      LockSupport.unpark(javaThread);
+      permit.release();
     }
 
     boolean canDelegate() {
@@ -279,7 +286,11 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     @Override
     void park(long timeout) {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
-      LockSupport.parkNanos(timeout * 1000000L);
+      try {
+        permit.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
 
     @Override
