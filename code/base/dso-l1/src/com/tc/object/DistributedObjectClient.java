@@ -490,11 +490,11 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(remoteObjectManager));
 
     final Stage lockRecallStage = stageManager.createStage(ClientConfigurationContext.LOCK_RECALL_STAGE,
-                                                           new LockRecallHandler(), 1, maxSize);
+                                                           new LockRecallHandler(), 8, maxSize);
     final Stage capacityEvictionStage = stageManager.createStage(ClientConfigurationContext.CAPACITY_EVICTION_STAGE,
-                                                                 new CapacityEvictionHandler(), 1, maxSize);
+                                                                 new CapacityEvictionHandler(), 8, maxSize);
     final Stage ttiTTLEvictionStage = stageManager.createStage(ClientConfigurationContext.TTI_TTL_EVICTION_STAGE,
-                                                               new TimeBasedEvictionHandler(), 1, maxSize);
+                                                               new TimeBasedEvictionHandler(), 8, maxSize);
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
@@ -550,7 +550,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
                                                                                         this.config);
-    this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config, teh);
+    this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config,
+                                                                                   teh);
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger, this.manager
