@@ -71,7 +71,7 @@ public interface DSOClientBuilder {
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
 
-  TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config);
+  TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config, final TunnelingEventHandler teh);
 
   ClientGlobalTransactionManager createClientGlobalTransactionManager(
                                                                       final RemoteTransactionManager remoteTxnMgr,

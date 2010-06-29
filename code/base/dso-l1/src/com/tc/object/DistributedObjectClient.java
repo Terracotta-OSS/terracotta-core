@@ -550,7 +550,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
                                                                                         this.config);
-    this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config);
+    this.tunneledDomainManager = this.dsoClientBuilder.createTunneledDomainManager(this.channel.channel(), this.config, teh);
 
     this.l1Management = this.dsoClientBuilder.createL1Management(teh, this.statisticsAgentSubSystem,
                                                                  this.runtimeLogger, this.manager

@@ -109,8 +109,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new TunnelingEventHandler(ch, config);
   }
 
-  public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config) {
-    return new TunneledDomainManager(ch, config);
+  public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config, final TunnelingEventHandler teh) {
+    return new TunneledDomainManager(ch, config, teh);
   }
 
   public ClientGlobalTransactionManager createClientGlobalTransactionManager(

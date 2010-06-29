@@ -16,21 +16,19 @@ public class TunneledDomainManager implements TunneledDomainUpdater {
 
   private final MessageChannel        channel;
 
-  private final DSOMBeanConfig config;
+  private final DSOMBeanConfig        config;
 
-  private TunnelingEventHandler       tunnelingEventHandler;
+  private final TunnelingEventHandler tunnelingEventHandler;
 
-  public TunneledDomainManager(final MessageChannel channel, final DSOMBeanConfig config) {
+  public TunneledDomainManager(final MessageChannel channel, final DSOMBeanConfig config,
+                               final TunnelingEventHandler teh) {
     this.channel = channel;
     this.config = config;
-  }
-
-  public void setTunnelingEventHandler(TunnelingEventHandler teh) {
     this.tunnelingEventHandler = teh;
   }
 
   public void sendCurrentTunneledDomains() {
-    if (tunnelingEventHandler != null && tunnelingEventHandler.isTunnelingReady()) {
+    if (tunnelingEventHandler.isTunnelingReady()) {
       LOGGER
           .info("Sending current registered tunneled domains to L2 server to set up the tunneled connections for the mbeans that match.");
       TunneledDomainsChanged message = (TunneledDomainsChanged) channel
