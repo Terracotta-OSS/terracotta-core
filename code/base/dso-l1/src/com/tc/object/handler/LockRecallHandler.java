@@ -9,12 +9,13 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.LocksToRecallContext;
+import com.tc.object.locks.ClientLockManager;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockLevel;
 
 public class LockRecallHandler extends AbstractEventHandler {
 
-  private com.tc.object.locks.ClientLockManager lockManager;
+  private ClientLockManager lockManager;
 
   @Override
   public void handleEvent(final EventContext context) {

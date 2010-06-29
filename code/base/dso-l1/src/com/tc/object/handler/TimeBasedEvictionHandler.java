@@ -4,13 +4,19 @@
 package com.tc.object.handler;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.object.ClientConfigurationContext;
 import com.tc.object.TCObjectServerMap;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.context.CachedItemExpiredContext;
+import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.ServerLockLevel;
 
 public class TimeBasedEvictionHandler extends AbstractEventHandler {
+
+  private ClientLockManager lockManager;
 
   @Override
   public void handleEvent(final EventContext context) {
@@ -22,7 +28,16 @@ public class TimeBasedEvictionHandler extends AbstractEventHandler {
       final Object value = ci.getValue();
       if (value != null) { // If null, its Already removed
         serverMap.evictExpired(ci.getKey(), value);
+        // recall the locks in-line to save memory and also to keep the local cache count in check
+        this.lockManager.recall(ci.getLockID(), ServerLockLevel.WRITE, -1);
       }
     }
+  }
+
+  @Override
+  public void initialize(final ConfigurationContext context) {
+    super.initialize(context);
+    final ClientConfigurationContext ccc = (ClientConfigurationContext) context;
+    this.lockManager = ccc.getLockManager();
   }
 }
