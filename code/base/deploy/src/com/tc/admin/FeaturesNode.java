@@ -18,6 +18,7 @@ import com.tc.management.beans.TIMByteProviderMBean;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -170,13 +171,20 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   private void handlePresentationReady(FeatureNode featureNode) {
-    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class, clusterNode
-        .getComponent());
+    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
+                                                                                clusterNode.getComponent());
 
     if (featureNode.isPresentationReady()) {
       testAddToParent();
       adminClientContext.getAdminClientController().expand(this);
-      addChild(featureNode);
+      int i = 0;
+      for (Enumeration<FeatureNode> ce = children(); ce.hasMoreElements();) {
+        if (featureNode.getLabel().compareTo(ce.nextElement().getLabel()) < 0) {
+          break;
+        }
+        i++;
+      }
+      insertChild(featureNode, i);
       adminClientContext.getAdminClientController().expand(featureNode);
       if (acp != null) {
         acp.activeFeatureAdded(featureNode.getName());
@@ -232,12 +240,18 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   }
 
   private void tearDownFeature(Feature feature) {
-    FeatureNode node = nodeMap.remove(feature);
-    if (node != null) {
-      if (isNodeChild(node)) {
-        removeChild(node);
+    AdminClientPanel acp = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
+                                                                                clusterNode.getComponent());
+
+    FeatureNode featureNode = nodeMap.remove(feature);
+    if (featureNode != null) {
+      if (isNodeChild(featureNode)) {
+        removeChild(featureNode);
+        if (acp != null) {
+          acp.activeFeatureRemoved(featureNode.getName());
+        }
       }
-      node.tearDown();
+      featureNode.tearDown();
     }
     if (getParent() != null && getChildCount() == 0) {
       noTearDown = true;
@@ -333,6 +347,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       adminClientContext = null;
       clusterModel = null;
       clusterListener = null;
+      clusterNode = null;
       activeFeatureMap = null;
       nodeMap.clear();
       nodeMap = null;

@@ -86,13 +86,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.JPopupMenu.Separator;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -248,6 +248,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       quartzSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Quartz") != null);
       hibernateSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Hibernate") != null);
       ehcacheSelectorAction.setEnabled(selectedClusterNode.findNodeByName("Ehcache") != null);
+    } else {
+      sessionSelectorAction.setEnabled(false);
+      quartzSelectorAction.setEnabled(false);
+      hibernateSelectorAction.setEnabled(false);
+      ehcacheSelectorAction.setEnabled(false);
     }
   }
 
@@ -700,7 +705,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     ProductInfo consoleInfo = ProductInfo.getInstance();
     String consoleVersion = consoleInfo.version();
     IProductVersion serverInfo = clusterNode.getProductInfo();
-    if (serverInfo == null) return true; // something went wrong, move on
+    if (serverInfo == null) { return true; // something went wrong, move on
+    }
     String serverVersion = serverInfo.mavenArtifactsVersion();
 
     if (!versionsMatch(consoleVersion, serverVersion)) {
@@ -737,7 +743,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     Object selectedValue = pane.getValue();
 
-    if (selectedValue == null) return JOptionPane.CLOSED_OPTION;
+    if (selectedValue == null) { return JOptionPane.CLOSED_OPTION; }
     versionCheckAction.setVersionCheckEnabled(!versionCheckCheckBox.isSelected());
     if (selectedValue instanceof Integer) { return ((Integer) selectedValue).intValue(); }
 
@@ -860,8 +866,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textArea.setLineWrap(true);
       textArea.setWrapStyleWord(true);
       XScrollPane scrollPane = new XScrollPane(textArea);
-      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane, adminClientContext
-          .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane,
+                                    adminClientContext.getMessage("update-checker.action.title"),
+                                    JOptionPane.INFORMATION_MESSAGE);
     }
 
     public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
@@ -971,8 +978,9 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       if (msg != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            JOptionPane.showMessageDialog(AdminClientPanel.this, msg, adminClientContext
-                .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(AdminClientPanel.this, msg,
+                                          adminClientContext.getMessage("update-checker.action.title"),
+                                          JOptionPane.INFORMATION_MESSAGE);
           }
         });
       }
