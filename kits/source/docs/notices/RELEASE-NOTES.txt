@@ -1,4 +1,4 @@
-Terracotta Trunk/3.3.0-SNAPSHOT - Simple Scale for Enterprise Java
+Terracotta Trunk/3.4.0-SNAPSHOT - Simple Scale for Enterprise Java
 ===================================================
 
 Release Notes: http://www.terracotta.org/kit/reflector?kitID=3.3.0&pageID=BetaReleaseNotes
