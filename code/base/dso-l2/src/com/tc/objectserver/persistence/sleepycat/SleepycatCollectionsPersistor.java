@@ -106,10 +106,12 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
   /**
    * This method is slightly dubious in that it assumes that the ObjectID is the first 8 bytes of the Key in the entire
    * collections database.(which is true, but that logic is spread elsewhere)
-   * @throws TCDatabaseException 
    * 
+   * @param extantMapTypeOidSet
+   * @throws TCDatabaseException
    */
-  public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) throws TCDatabaseException {
+  public long deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> oids,
+                                   SortedSet<ObjectID> extantMapTypeOidSet) throws TCDatabaseException {
     // These are the possible ways for isolation
     // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
     // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
@@ -120,58 +122,65 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
     // avoided
     PersistenceTransaction tx = ptp.newTransaction();
-    int totalEntriesDeleted = 0;
+    long totalEntriesDeleted = 0;
     int mapEntriesDeleted = 0;
 
-    Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     try {
-      for (ObjectID id : mapIds) {
-        byte idb[] = Conversion.long2Bytes(id.toLong());
-        DatabaseEntry key = new DatabaseEntry();
-        key.setData(idb);
-        DatabaseEntry value = new DatabaseEntry();
-        value.setPartial(0, 0, true);
-        try {
-          if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-            do {
-              if (partialMatch(idb, key.getData())) {
-                c.delete();
-                mapEntriesDeleted++;
-                totalEntriesDeleted++;
-                if (mapEntriesDeleted >= DELETE_BATCH_SIZE) {
-                  c.close();
-                  tx.commit();
-                  mapEntriesDeleted = 0;
-                  tx = ptp.newTransaction();
-                  c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
-                  if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-                    if (partialMatch(idb, key.getData())) {
-                      c.delete();
-                      mapEntriesDeleted++;
-                      totalEntriesDeleted++;
-                    } else {
-                      break;
-                    }
-                  }
-                }
-              } else {
-                break;
-              }
-            } while (c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
-          }
-        } catch (Exception t) {
-          throw new TCDatabaseException(t.getMessage());
+      for (ObjectID id : oids) {
+
+        // if not a map type
+        if (!extantMapTypeOidSet.contains(id)) {
+          continue;
         }
+
+        // else start deleting
+        while (true) {
+          mapEntriesDeleted = markForDeletion(id, tx);
+          totalEntriesDeleted += mapEntriesDeleted;
+          if (mapEntriesDeleted >= DELETE_BATCH_SIZE) {
+            tx.commit();
+            tx = ptp.newTransaction();
+          } else {
+            break;
+          }
+        }
+
       }
-    } catch (Exception e) {
-      throw new TCDatabaseException(e.getMessage());
     } finally {
-      c.close();
       if (mapEntriesDeleted > 0) {
         tx.commit();
       }
     }
     return totalEntriesDeleted;
+  }
+
+  private int markForDeletion(ObjectID id, PersistenceTransaction tx) throws TCDatabaseException {
+    int mapEntriesDeleted = 0;
+    byte idb[] = Conversion.long2Bytes(id.toLong());
+    DatabaseEntry key = new DatabaseEntry();
+    key.setData(idb);
+    DatabaseEntry value = new DatabaseEntry();
+    value.setPartial(0, 0, true);
+    Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
+    if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
+      try {
+        do {
+          if (partialMatch(idb, key.getData())) {
+            c.delete();
+            mapEntriesDeleted++;
+          } else {
+            break;
+          }
+        } while (mapEntriesDeleted < DELETE_BATCH_SIZE
+                 && c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
+      } catch (Exception t) {
+        throw new TCDatabaseException(t.getMessage());
+      } finally {
+        c.close();
+      }
+    }
+
+    return mapEntriesDeleted;
   }
 
   private boolean partialMatch(byte[] idbytes, byte[] key) {

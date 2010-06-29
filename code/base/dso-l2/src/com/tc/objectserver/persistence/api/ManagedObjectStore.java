@@ -30,7 +30,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   /**
    * synchronous
    */
-  public void removeAllObjectsByIDNow(PersistenceTransaction tx, SortedSet<ObjectID> objectIds);
+  public void removeAllObjectsByIDNow(SortedSet<ObjectID> objectIds);
 
   /**
    * Returns a copy of the set of all object ids, hence a relatively costly operation

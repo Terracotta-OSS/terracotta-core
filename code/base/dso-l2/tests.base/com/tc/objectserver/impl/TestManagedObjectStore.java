@@ -60,13 +60,13 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     return out.print(getClass().getName());
   }
 
-  public void removeAllObjectsByIDNow(final PersistenceTransaction tx, final SortedSet<ObjectID> objectIds) {
+  public void removeAllObjectsByIDNow(final SortedSet<ObjectID> objectIds) {
     this.count -= objectIds.size();
     return;
   }
 
   public void removeAllObjectsByID(final GCResultContext gcResult) {
-    removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
+    removeAllObjectsByIDNow(new TreeSet(gcResult.getGCedObjectIDs()));
   }
 
   public void shutdown() {

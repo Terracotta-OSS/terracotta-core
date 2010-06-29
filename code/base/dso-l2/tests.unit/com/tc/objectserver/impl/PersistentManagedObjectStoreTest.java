@@ -61,7 +61,7 @@ public class PersistentManagedObjectStoreTest extends TestCase {
       // remove should remove the local reference.
       TreeSet toDelete = new TreeSet();
       toDelete.add(o.getID());
-      objectStore.removeAllObjectsByIDNow(null, toDelete);
+      objectStore.removeAllObjectsByIDNow(toDelete);
       assertFalse(objectStore.containsObject(o.getID()));
 
       // put should commit the object to the data store.
@@ -72,14 +72,14 @@ public class PersistentManagedObjectStoreTest extends TestCase {
     }
 
     // removeAll should enqueue an event on the sink to remove all of them.
-    objectStore.removeAllObjectsByIDNow(null, managedIDs);
+    objectStore.removeAllObjectsByIDNow(managedIDs);
 
     // clear the object store...
     for (Iterator i = managed.iterator(); i.hasNext();) {
       ManagedObject o = (ManagedObject) i.next();
       TreeSet toDelete = new TreeSet();
       toDelete.add(o.getID());
-      objectStore.removeAllObjectsByIDNow(null, toDelete);
+      objectStore.removeAllObjectsByIDNow(toDelete);
       assertFalse(objectStore.containsObject(o.getID()));
       assertFalse(map.containsKey(o.getID()));
     }

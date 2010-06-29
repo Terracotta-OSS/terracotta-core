@@ -232,7 +232,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     this.testSleepycatCollectionsPersistor.setCounter(0);
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.deleteAllObjects(toDelete);
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
     } finally {
       ptx.commit();
@@ -311,7 +311,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     // this.testSleepycatCollectionsPersistor.setCounter(0);
     PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.deleteAllObjects(toDelete);
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
     } finally {
       ptx.commit();
@@ -343,7 +343,8 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     @Override
-    public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) {
+    public long deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds,
+                                    SortedSet<ObjectID> mapObjectIds) {
       this.counter += mapIds.size();
       return counter;
     }

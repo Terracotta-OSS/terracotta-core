@@ -222,7 +222,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.deleteAllObjects(toDelete);
     } finally {
       ptx.commit();
     }
@@ -256,7 +256,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(objectIds);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
+      this.managedObjectPersistor.deleteAllObjects(objectIds);
     } finally {
       ptx.commit();
     }
@@ -321,7 +321,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, toDelete);
+      this.managedObjectPersistor.deleteAllObjects(toDelete);
     } finally {
       ptx.commit();
     }
@@ -360,7 +360,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(objectIds);
-      this.managedObjectPersistor.deleteAllObjectsByID(ptx, objectIds);
+      this.managedObjectPersistor.deleteAllObjects(objectIds);
     } finally {
       ptx.commit();
     }
@@ -388,11 +388,12 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
     }
 
     @Override
-    public int deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds) {
+    public long deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds,
+                                    SortedSet<ObjectID> mapObjectIds) {
       ++this.counter;
       return counter;
     }
-    
+
     public void setCounter(final int value) {
       this.counter = value;
     }

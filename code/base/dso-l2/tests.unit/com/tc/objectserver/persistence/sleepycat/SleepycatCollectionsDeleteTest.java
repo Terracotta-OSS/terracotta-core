@@ -93,7 +93,7 @@ public class SleepycatCollectionsDeleteTest extends TCTestCase {
 
     System.out.println("XXX total entries: " + totalEntries);
     long start = System.currentTimeMillis();
-    int objectsDeleted = this.collectionsPersistor.deleteAllCollections(ptp, deleteIds);
+    long objectsDeleted = this.collectionsPersistor.deleteAllCollections(ptp, deleteIds, deleteIds);
     System.out.println("time taken to delete " + (System.currentTimeMillis() - start) + "ms");
     Assert.assertEquals(totalEntries, objectsDeleted);
     Assert.assertEquals(0, this.env.getMapsDatabase().count());

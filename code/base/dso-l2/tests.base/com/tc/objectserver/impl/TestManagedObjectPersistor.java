@@ -79,7 +79,7 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     }
   }
 
-  public void deleteObjectByID(final PersistenceTransaction tx, final ObjectID id) {
+  public void deleteObjectByID(final ObjectID id) {
     this.map.remove(id);
   }
 
@@ -99,9 +99,9 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     throw new ImplementMe();
   }
 
-  public void deleteAllObjectsByID(final PersistenceTransaction tx, final SortedSet<ObjectID> sortedOids) {
+  public void deleteAllObjects(final SortedSet<ObjectID> sortedOids) {
     for (final Object element : sortedOids) {
-      deleteObjectByID(tx, (ObjectID) element);
+      deleteObjectByID((ObjectID) element);
     }
     removeAllFromOtherExtantSets(sortedOids);
   }

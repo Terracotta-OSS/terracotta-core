@@ -63,20 +63,20 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
     // Nothing to do here since its in memory DB
   }
 
-  private void removeObjectByID(final PersistenceTransaction tx, final ObjectID id) {
+  private void removeObjectByID(final ObjectID id) {
     this.managed.remove(id);
     this.evictables.remove(id);
   }
 
-  public synchronized void removeAllObjectsByIDNow(final PersistenceTransaction tx, final SortedSet<ObjectID> objectIds) {
+  public synchronized void removeAllObjectsByIDNow(final SortedSet<ObjectID> objectIds) {
     assertNotInShutdown();
-    for (final Object element : objectIds) {
-      removeObjectByID(tx, (ObjectID) element);
+    for (final ObjectID element : objectIds) {
+      removeObjectByID(element);
     }
   }
 
   public void removeAllObjectsByID(final GCResultContext gcResult) {
-    removeAllObjectsByIDNow(null, new TreeSet(gcResult.getGCedObjectIDs()));
+    removeAllObjectsByIDNow(new TreeSet(gcResult.getGCedObjectIDs()));
   }
 
   public synchronized ObjectIDSet getAllObjectIDs() {

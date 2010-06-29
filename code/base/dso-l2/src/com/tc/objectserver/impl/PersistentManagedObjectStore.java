@@ -90,9 +90,9 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     this.objectPersistor.saveAllObjects(tx, managed);
   }
 
-  public void removeAllObjectsByIDNow(final PersistenceTransaction tx, final SortedSet<ObjectID> ids) {
+  public void removeAllObjectsByIDNow(final SortedSet<ObjectID> ids) {
     assertNotInShutdown();
-    this.objectPersistor.deleteAllObjectsByID(tx, ids);
+    this.objectPersistor.deleteAllObjects(ids);
   }
 
   /**

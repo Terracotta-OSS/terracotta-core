@@ -22,6 +22,8 @@ import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor.SleepycatPersistorBase;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
@@ -61,6 +63,14 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
                                                                              }
                                                                            }
                                                                          };
+
+  private static final int                        DELETE_BATCH_SIZE      = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getInt(
+                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                                     5000);
+
+  private static final long                       REMOVE_THRESHOLD       = 300;
 
   private static final Object                     MO_PERSISTOR_KEY       = ManagedObjectPersistorImpl.class.getName()
                                                                            + ".saveAllObjects";
@@ -164,10 +174,6 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   public ObjectIDSet snapshotObjectIDs() {
     return this.extantObjectIDs.snapshot();
-  }
-
-  private boolean containsMapType(final ObjectID id) {
-    return this.extantMapTypeOidSet.contains(id);
   }
 
   private boolean addMapTypeObject(final ObjectID id) {
@@ -496,42 +502,52 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private void deleteAllMaps(SortedSet<ObjectID> sortedOids) throws TCDatabaseException {
-    SortedSet<ObjectID> mapIds = new TreeSet<ObjectID>();
-    for(ObjectID id : sortedOids){
-      validateID(id);
-      if(containsMapType(id)){
-        mapIds.add(id);
-      }
-    }
-    
-    if(mapIds.size() > 0){
-      this.collectionsPersistor.deleteAllCollections(this.ptp, mapIds);
+    if (sortedOids.size() > 0) {
+      this.collectionsPersistor.deleteAllCollections(this.ptp, sortedOids, this.extantMapTypeOidSet.snapshot());
     }
   }
 
-  /*
+  /**
    * This method takes a SortedSet of Object ID to delete for two reasons. 1) to maintain lock ordering - check
-   * saveAllObjects 2) for performance reason
+   * saveAllObjects 2) for performance reason The way we delete the objects is to delete all the entries of all the maps
+   * first and then delete all the entries from the object manager. While deleting the entries from the map we delete it
+   * in batches. See DEV-3881 for more details.
    */
-  public void deleteAllObjectsByID(PersistenceTransaction tx, SortedSet<ObjectID> sortedOids) {
+  public void deleteAllObjects(SortedSet<ObjectID> sortedGarbage) {
     try {
-      deleteAllMaps(sortedOids);
+      deleteAllMaps(sortedGarbage);
     } catch (TCDatabaseException e) {
       throw new TCRuntimeException(e);
     }
-    for (ObjectID element : sortedOids) {
-      deleteObjectByID(tx, element);
+
+    splitAndRemoveFromStore(sortedGarbage.iterator());
+  }
+
+  private void splitAndRemoveFromStore(Iterator<ObjectID> iterator) {
+    while (iterator.hasNext()) {
+      long start = System.currentTimeMillis();
+      PersistenceTransaction tx = this.ptp.newTransaction();
+      SortedSet<ObjectID> split = new TreeSet<ObjectID>();
+      for (int i = 0; i < DELETE_BATCH_SIZE && iterator.hasNext(); i++) {
+        ObjectID oid = iterator.next();
+        deleteObjectByID(tx, oid);
+        split.add(oid);
+      }
+
+      try {
+        this.objectIDManager.deleteAll(tx, split, this.extantMapTypeOidSet, this.extantEvictableOidSet);
+      } catch (final TCDatabaseException de) {
+        throw new TCRuntimeException(de);
+      }
+      tx.commit();
+
+      // NOTE:: Deleting from MapType and Evictable Oids after we use the info for deleting from collections DB.
+      removeAllFromOtherExtantSets(split);
+      long elapsed = System.currentTimeMillis() - start;
+      if (elapsed > REMOVE_THRESHOLD) {
+        logger.info("Removed " + split.size() + " objects in " + elapsed + " ms.");
+      }
     }
-
-    try {
-      this.objectIDManager.deleteAll(tx, sortedOids, this.extantMapTypeOidSet, this.extantEvictableOidSet);
-    } catch (final TCDatabaseException de) {
-      throw new TCRuntimeException(de);
-    }
-
-    // NOTE:: Deleting from MapType and Evictable Oids after we use the info for deleting from collections DB.
-    removeAllFromOtherExtantSets(sortedOids);
-
   }
 
   /**

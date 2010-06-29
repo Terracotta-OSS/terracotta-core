@@ -164,7 +164,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     tx = this.ptp.newTransaction();
     SortedSet<ObjectID> idsToDelete = new TreeSet<ObjectID>();
     idsToDelete.add(id);
-    Assert.assertEquals(40, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete));
+    Assert.assertEquals(40, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
     tx.commit();
 
     tx = this.ptp.newTransaction();
@@ -178,7 +178,7 @@ public class SleepycatCollectionsTest extends TCTestCase {
     equals(new HashMap(), sMap2);
 
     tx = this.ptp.newTransaction();
-    Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete));
+    Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
     tx.commit();
 
   }
