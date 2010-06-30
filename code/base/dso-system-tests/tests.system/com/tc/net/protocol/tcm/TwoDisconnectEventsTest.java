@@ -36,6 +36,7 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
+import com.terracottatech.config.BindPort;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -206,8 +207,14 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
       TestTVSConfigurationSetupManagerFactory factory = configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
       ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue("127.0.0.1");
-      ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoPort);
-      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
+
+      BindPort dsoBindPort = BindPort.Factory.newInstance();
+      dsoBindPort.setIntValue(dsoPort);
+      ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+      
+      BindPort jmxBindPort = BindPort.Factory.newInstance();
+      jmxBindPort.setIntValue(jmxPort);
+      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxBindPort);
 
       server = new TCServerImpl(manager);
       server.start();
