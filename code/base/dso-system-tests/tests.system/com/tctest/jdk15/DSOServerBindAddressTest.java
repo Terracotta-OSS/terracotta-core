@@ -22,6 +22,7 @@ import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
+import com.terracottatech.config.BindPort;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -157,8 +158,16 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
     ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue(bindAddress);
-    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoPort);
-    ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
+    
+    BindPort dsoBindPort = BindPort.Factory.newInstance();
+    dsoBindPort.setIntValue(dsoPort);
+    dsoBindPort.setBind(bindAddress);
+    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+    
+    BindPort jmxBindPort = BindPort.Factory.newInstance();
+    jmxBindPort.setIntValue(jmxPort);
+    jmxBindPort.setBind(bindAddress);
+    ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxBindPort);
     return manager;
   }
 }
