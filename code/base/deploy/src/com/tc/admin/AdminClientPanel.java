@@ -42,6 +42,7 @@ import com.tc.util.ProductInfo;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
@@ -1083,6 +1084,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       final XContainer msg = new XContainer(new BorderLayout());
       XTextPane textPane = new XTextPane();
       msg.add(new XScrollPane(textPane));
+      textPane.setPreferredSize(new Dimension(550, 280));
       textPane.addPropertyChangeListener("page", new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent pce) {
           JOptionPane.showMessageDialog(AdminClientPanel.this, msg);
