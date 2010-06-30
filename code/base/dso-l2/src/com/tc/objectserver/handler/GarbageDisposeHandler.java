@@ -5,42 +5,49 @@
 package com.tc.objectserver.handler;
 
 import com.tc.async.api.AbstractEventHandler;
+import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
+import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
-import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
+import com.tc.objectserver.persistence.api.ManagedObjectStore;
 
 import java.util.SortedSet;
 
 public class GarbageDisposeHandler extends AbstractEventHandler {
 
-  private final ManagedObjectPersistor         managedObjectPersistor;
   private final GarbageCollectionInfoPublisher publisher;
+  private ManagedObjectStore                   objectStore;
 
-  public GarbageDisposeHandler(GarbageCollectionInfoPublisher publisher, ManagedObjectPersistor managedObjectPersistor) {
-    this.managedObjectPersistor = managedObjectPersistor;
+  public GarbageDisposeHandler(final GarbageCollectionInfoPublisher publisher) {
     this.publisher = publisher;
   }
 
   @Override
-  public void handleEvent(EventContext context) {
-    GCResultContext gcResult = (GCResultContext) context;
-    GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
+  public void handleEvent(final EventContext context) {
+    final GCResultContext gcResult = (GCResultContext) context;
+    final GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
 
-    publisher.fireGCDeleteEvent(gcInfo);
-    long start = System.currentTimeMillis();
-    SortedSet<ObjectID> sortedGarbage = gcResult.getGCedObjectIDs();
+    this.publisher.fireGCDeleteEvent(gcInfo);
+    final long start = System.currentTimeMillis();
+    final SortedSet<ObjectID> sortedGarbage = gcResult.getGCedObjectIDs();
     gcInfo.setActualGarbageCount(sortedGarbage.size());
-    this.managedObjectPersistor.deleteAllObjects(sortedGarbage);
+    this.objectStore.removeAllObjectsByIDNow(sortedGarbage);
 
-    long elapsed = System.currentTimeMillis() - start;
+    final long elapsed = System.currentTimeMillis() - start;
     gcInfo.setDeleteStageTime(elapsed);
-    long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
+    final long elapsedTime = System.currentTimeMillis() - gcInfo.getStartTime();
     gcInfo.setElapsedTime(elapsedTime);
-    gcInfo.setEndObjectCount(managedObjectPersistor.getObjectCount());
-    publisher.fireGCCompletedEvent(gcInfo);
+    gcInfo.setEndObjectCount(this.objectStore.getObjectCount());
+    this.publisher.fireGCCompletedEvent(gcInfo);
   }
 
+  @Override
+  public void initialize(final ConfigurationContext context) {
+    super.initialize(context);
+    final ServerConfigurationContext scc = (ServerConfigurationContext) context;
+    this.objectStore = scc.getObjectStore();
+  }
 }

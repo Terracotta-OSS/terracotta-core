@@ -46,60 +46,61 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
   private final SleepycatCollectionFactory collectionFactory;
   private final TCObjectOutputStream       oo;
 
-  public SleepycatCollectionsPersistor(TCLogger logger, Database mapsDatabase,
-                                       SleepycatCollectionFactory sleepycatCollectionFactory) {
+  public SleepycatCollectionsPersistor(final TCLogger logger, final Database mapsDatabase,
+                                       final SleepycatCollectionFactory sleepycatCollectionFactory) {
     this.database = mapsDatabase;
     this.collectionFactory = sleepycatCollectionFactory;
-    DSOSerializerPolicy policy = new DSOSerializerPolicy();
+    final DSOSerializerPolicy policy = new DSOSerializerPolicy();
     this.serializer = new BasicSerializer(policy);
     this.bao = new ByteArrayOutputStream(1024);
-    this.oo = new TCObjectOutputStream(bao);
+    this.oo = new TCObjectOutputStream(this.bao);
   }
 
-  public int saveCollections(PersistenceTransaction tx, ManagedObjectState state) throws IOException,
+  public int saveCollections(final PersistenceTransaction tx, final ManagedObjectState state) throws IOException,
       TCDatabaseException {
-    PersistableObjectState persistabeState = (PersistableObjectState) state;
-    PersistableCollection collection = persistabeState.getPersistentCollection();
-    return collection.commit(this, tx, database);
+    final PersistableObjectState persistabeState = (PersistableObjectState) state;
+    final PersistableCollection collection = persistabeState.getPersistentCollection();
+    return collection.commit(this, tx, this.database);
   }
 
-  public synchronized byte[] serialize(long id, Object o) throws IOException {
-    oo.writeLong(id);
-    serializer.serializeTo(o, oo);
-    oo.flush();
-    byte b[] = bao.toByteArray();
-    bao.reset();
+  public synchronized byte[] serialize(final long id, final Object o) throws IOException {
+    this.oo.writeLong(id);
+    this.serializer.serializeTo(o, this.oo);
+    this.oo.flush();
+    final byte b[] = this.bao.toByteArray();
+    this.bao.reset();
     return b;
   }
 
-  public synchronized byte[] serialize(Object o) throws IOException {
-    serializer.serializeTo(o, oo);
-    oo.flush();
-    byte b[] = bao.toByteArray();
-    bao.reset();
+  public synchronized byte[] serialize(final Object o) throws IOException {
+    this.serializer.serializeTo(o, this.oo);
+    this.oo.flush();
+    final byte b[] = this.bao.toByteArray();
+    this.bao.reset();
     return b;
   }
 
-  public void loadCollectionsToManagedState(PersistenceTransaction tx, ObjectID id, ManagedObjectState state)
-      throws IOException, ClassNotFoundException, TCDatabaseException {
+  public void loadCollectionsToManagedState(final PersistenceTransaction tx, final ObjectID id,
+                                            final ManagedObjectState state) throws IOException, ClassNotFoundException,
+      TCDatabaseException {
     Assert.assertTrue(PersistentCollectionsUtil.isPersistableCollectionType(state.getType()));
 
-    PersistableObjectState persistableState = (PersistableObjectState) state;
+    final PersistableObjectState persistableState = (PersistableObjectState) state;
     Assert.assertNull(persistableState.getPersistentCollection());
-    PersistableCollection collection = PersistentCollectionsUtil.createPersistableCollection(id, collectionFactory,
-                                                                                             state.getType());
-    collection.load(this, tx, database);
+    final PersistableCollection collection = PersistentCollectionsUtil
+        .createPersistableCollection(id, this.collectionFactory, state.getType());
+    collection.load(this, tx, this.database);
     persistableState.setPersistentCollection(collection);
   }
 
-  public Object deserialize(int start, byte[] data) throws IOException, ClassNotFoundException {
-    if (start >= data.length) return null;
-    ByteArrayInputStream bai = new ByteArrayInputStream(data, start, data.length - start);
-    ObjectInput ois = new TCObjectInputStream(bai);
-    return serializer.deserializeFrom(ois);
+  public Object deserialize(final int start, final byte[] data) throws IOException, ClassNotFoundException {
+    if (start >= data.length) { return null; }
+    final ByteArrayInputStream bai = new ByteArrayInputStream(data, start, data.length - start);
+    final ObjectInput ois = new TCObjectInputStream(bai);
+    return this.serializer.deserializeFrom(ois);
   }
 
-  public Object deserialize(byte[] data) throws IOException, ClassNotFoundException {
+  public Object deserialize(final byte[] data) throws IOException, ClassNotFoundException {
     return deserialize(0, data);
   }
 
@@ -107,33 +108,25 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
    * This method is slightly dubious in that it assumes that the ObjectID is the first 8 bytes of the Key in the entire
    * collections database.(which is true, but that logic is spread elsewhere)
    * 
-   * @param extantMapTypeOidSet
+   * @param ptp - PersistenceTransactionProvider
+   * @param oids - Object IDs to delete
+   * @param extantMapTypeOidSet - a copy of the map OIDs
    * @throws TCDatabaseException
    */
-  public long deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> oids,
-                                   SortedSet<ObjectID> extantMapTypeOidSet) throws TCDatabaseException {
-    // These are the possible ways for isolation
-    // CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor.
-    // CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
-    // data read by this cursor to be modified or deleted prior to the commit of the transaction.
-    // CursorConfig.READ_UNCOMMITTED : A convenience instance to configure read operations performed by the cursor to
-    // return modified but not yet committed data.
-    // During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
-    // over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
-    // avoided
+  public long deleteAllCollections(final PersistenceTransactionProvider ptp, final SortedSet<ObjectID> oids,
+                                   final SortedSet<ObjectID> extantMapTypeOidSet) throws TCDatabaseException {
+
     PersistenceTransaction tx = ptp.newTransaction();
     long totalEntriesDeleted = 0;
     int mapEntriesDeleted = 0;
 
     try {
-      for (ObjectID id : oids) {
-
-        // if not a map type
+      for (final ObjectID id : oids) {
         if (!extantMapTypeOidSet.contains(id)) {
+          // Not a map type
           continue;
         }
 
-        // else start deleting
         while (true) {
           mapEntriesDeleted = markForDeletion(id, tx);
           totalEntriesDeleted += mapEntriesDeleted;
@@ -144,24 +137,38 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
             break;
           }
         }
-
       }
     } finally {
-      if (mapEntriesDeleted > 0) {
-        tx.commit();
-      }
+      // probably a good idea to commit irrespective of mapEntriesDeleted
+      tx.commit();
     }
     return totalEntriesDeleted;
   }
 
-  private int markForDeletion(ObjectID id, PersistenceTransaction tx) throws TCDatabaseException {
+  /**
+   * <p>
+   * These are the possible ways for isolation. <br>
+   * CursorConfig.DEFAULT : Default configuration used if null is passed to methods that create a cursor. <br>
+   * CursorConfig.READ_COMMITTED : This ensures the stability of the current data item read by the cursor but permits
+   * data read by this cursor to be modified or deleted prior to the commit of the transaction. <br>
+   * CursorConfig.READ_UNCOMMITTED : A convenience instance to configure read operations performed by the cursor to
+   * return modified but not yet committed data. <br>
+   * <p>
+   * During our testing we found that READ_UNCOMMITTED does not raise any problem and gives a performance enhancement
+   * over READ_COMMITTED. Since we never read the map which has been marked for deletion by the DGC the deadlocks are
+   * avoided
+   * 
+   * @return number of entries in Maps database deleted, if less than DELETE_BATCH_SIZE, then there could be more
+   *         entries for the same map ID.
+   */
+  private int markForDeletion(final ObjectID id, final PersistenceTransaction tx) throws TCDatabaseException {
     int mapEntriesDeleted = 0;
-    byte idb[] = Conversion.long2Bytes(id.toLong());
-    DatabaseEntry key = new DatabaseEntry();
+    final byte idb[] = Conversion.long2Bytes(id.toLong());
+    final DatabaseEntry key = new DatabaseEntry();
     key.setData(idb);
-    DatabaseEntry value = new DatabaseEntry();
+    final DatabaseEntry value = new DatabaseEntry();
     value.setPartial(0, 0, true);
-    Cursor c = database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
+    final Cursor c = this.database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
     if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
       try {
         do {
@@ -173,7 +180,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
           }
         } while (mapEntriesDeleted < DELETE_BATCH_SIZE
                  && c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
-      } catch (Exception t) {
+      } catch (final Exception t) {
         throw new TCDatabaseException(t.getMessage());
       } finally {
         c.close();
@@ -183,10 +190,10 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     return mapEntriesDeleted;
   }
 
-  private boolean partialMatch(byte[] idbytes, byte[] key) {
-    if (key.length < idbytes.length) return false;
+  private boolean partialMatch(final byte[] idbytes, final byte[] key) {
+    if (key.length < idbytes.length) { return false; }
     for (int i = 0; i < idbytes.length; i++) {
-      if (idbytes[i] != key[i]) return false;
+      if (idbytes[i] != key[i]) { return false; }
     }
     return true;
   }

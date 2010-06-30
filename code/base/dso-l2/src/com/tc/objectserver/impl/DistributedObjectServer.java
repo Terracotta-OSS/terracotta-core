@@ -460,8 +460,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final AddressChecker addressChecker = new AddressChecker();
     if (!addressChecker.isLegalBindAddress(jmxBind)) { throw new IOException("Invalid bind address [" + jmxBind
-                                                                          + "]. Local addresses are "
-                                                                          + addressChecker.getAllLocalAddresses()); }
+                                                                             + "]. Local addresses are "
+                                                                             + addressChecker.getAllLocalAddresses()); }
 
     // setup the statistics subsystem
     this.statisticsAgentSubSystem = new StatisticsAgentSubSystemImpl();
@@ -484,7 +484,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // start the JMX server
     try {
-      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(), new RemoteJMXProcessor());
+      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(),
+                     new RemoteJMXProcessor());
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
       consoleLogger.error(msg);
@@ -583,11 +584,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                  + " Accepted Values are : <LRU>/<LFU> Please check tc.properties");
       }
       final int gcDeleteThreads = this.l2Properties.getInt("seda.gcdeletestage.threads");
-      final Sink gcDisposerSink = stageManager.createStage(
-                                                           ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
-                                                           new GarbageDisposeHandler(gcPublisher, this.persistor
-                                                               .getManagedObjectPersistor()),
-                                                           gcDeleteThreads, maxStageSize).getSink();
+      final Sink gcDisposerSink = stageManager.createStage(ServerConfigurationContext.GC_DELETE_FROM_DISK_STAGE,
+                                                           new GarbageDisposeHandler(gcPublisher), gcDeleteThreads,
+                                                           maxStageSize).getSink();
 
       this.objectStore = new PersistentManagedObjectStore(this.persistor.getManagedObjectPersistor(), gcDisposerSink);
     } else {
@@ -768,9 +767,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.statisticsAgentSubSystem.setDefaultAgentDifferentiator("L2/" + serverPort);
 
-    String dsoBind = l2DSOConfig.dsoPort().getBindAddress();
-    this.l1Listener = this.communicationsManager.createListener(sessionManager, new TCSocketAddress(dsoBind, serverPort),
-                                                                true, this.connectionIdFactory, this.httpSink);
+    final String dsoBind = l2DSOConfig.dsoPort().getBindAddress();
+    this.l1Listener = this.communicationsManager.createListener(sessionManager,
+                                                                new TCSocketAddress(dsoBind, serverPort), true,
+                                                                this.connectionIdFactory, this.httpSink);
 
     final ClientTunnelingEventHandler cteh = new ClientTunnelingEventHandler();
     this.stripeIDStateManager = new StripeIDStateManagerImpl(this.haConfig, this.persistor.getPersistentStateStore());
@@ -955,7 +955,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                  : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME,
                                                              transactionStorePTP);
     toInit.add(this.serverMapEvictor);
-    dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE,
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, maxStageSize);
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,

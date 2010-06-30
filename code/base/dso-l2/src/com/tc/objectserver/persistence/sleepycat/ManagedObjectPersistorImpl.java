@@ -166,9 +166,9 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   public ObjectIDSet snapshotEvictableObjectIDs() {
-    ObjectIDSet evictables = this.extantEvictableOidSet.snapshot();
+    final ObjectIDSet evictables = this.extantEvictableOidSet.snapshot();
     // As deleted objects are not deleted from extantEvictableOidSet inline, we want to only return things that are
-    evictables.retainAll(extantObjectIDs);
+    evictables.retainAll(this.extantObjectIDs);
     return evictables;
   }
 
@@ -492,16 +492,16 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
 
   private void deleteObjectByID(final PersistenceTransaction tx, final ObjectID id) {
     validateID(id);
-    DatabaseEntry key = new DatabaseEntry();
+    final DatabaseEntry key = new DatabaseEntry();
     setObjectIDData(key, id);
-    OperationStatus status = this.objectDB.delete(pt2nt(tx), key);
+    final OperationStatus status = this.objectDB.delete(pt2nt(tx), key);
     if (!(OperationStatus.NOTFOUND.equals(status) || OperationStatus.SUCCESS.equals(status))) {
       // make the formatter happy
       throw new DBException("Unable to remove ManagedObject for object id: " + id + ", status: " + status);
     }
   }
 
-  private void deleteAllMaps(SortedSet<ObjectID> sortedOids) throws TCDatabaseException {
+  private void deleteAllMaps(final SortedSet<ObjectID> sortedOids) throws TCDatabaseException {
     if (sortedOids.size() > 0) {
       this.collectionsPersistor.deleteAllCollections(this.ptp, sortedOids, this.extantMapTypeOidSet.snapshot());
     }
@@ -513,23 +513,24 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
    * first and then delete all the entries from the object manager. While deleting the entries from the map we delete it
    * in batches. See DEV-3881 for more details.
    */
-  public void deleteAllObjects(SortedSet<ObjectID> sortedGarbage) {
+  public void deleteAllObjects(final SortedSet<ObjectID> sortedGarbage) {
     try {
       deleteAllMaps(sortedGarbage);
-    } catch (TCDatabaseException e) {
+      deleteAllObjectsFromStore(sortedGarbage);
+    } catch (final TCDatabaseException e) {
+      this.logger.error("Exception trying to delete oids : " + sortedGarbage.size(), e);
       throw new TCRuntimeException(e);
     }
-
-    splitAndRemoveFromStore(sortedGarbage.iterator());
   }
 
-  private void splitAndRemoveFromStore(Iterator<ObjectID> iterator) {
+  private void deleteAllObjectsFromStore(final SortedSet<ObjectID> sortedGarbage) {
+    final Iterator<ObjectID> iterator = sortedGarbage.iterator();
     while (iterator.hasNext()) {
-      long start = System.currentTimeMillis();
-      PersistenceTransaction tx = this.ptp.newTransaction();
-      SortedSet<ObjectID> split = new TreeSet<ObjectID>();
+      final long start = System.currentTimeMillis();
+      final PersistenceTransaction tx = this.ptp.newTransaction();
+      final SortedSet<ObjectID> split = new TreeSet<ObjectID>();
       for (int i = 0; i < DELETE_BATCH_SIZE && iterator.hasNext(); i++) {
-        ObjectID oid = iterator.next();
+        final ObjectID oid = iterator.next();
         deleteObjectByID(tx, oid);
         split.add(oid);
       }
@@ -541,11 +542,11 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
       }
       tx.commit();
 
-      // NOTE:: Deleting from MapType and Evictable Oids after we use the info for deleting from collections DB.
+      // NOTE:: Deleting from MapType and Evictable OIDs after we use the info for deleting from collections DB.
       removeAllFromOtherExtantSets(split);
-      long elapsed = System.currentTimeMillis() - start;
+      final long elapsed = System.currentTimeMillis() - start;
       if (elapsed > REMOVE_THRESHOLD) {
-        logger.info("Removed " + split.size() + " objects in " + elapsed + " ms.");
+        this.logger.info("Removed " + split.size() + " objects in " + elapsed + " ms.");
       }
     }
   }
@@ -572,8 +573,7 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
   }
 
   private void validateID(final ObjectID id) {
-    Assert.assertNotNull(id);
-    Assert.eval(!ObjectID.NULL_ID.equals(id));
+    if (id == null || ObjectID.NULL_ID.equals(id)) { throw new AssertionError("Not a valid ObjectID : " + id); }
   }
 
   private void setObjectIDData(final DatabaseEntry entry, final ObjectID objectID) {
