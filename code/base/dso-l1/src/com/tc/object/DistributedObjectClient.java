@@ -1013,6 +1013,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       }
     }
 
-    CommonShutDownHook.shutdown(true);
+    CommonShutDownHook.shutdown();
   }
 }

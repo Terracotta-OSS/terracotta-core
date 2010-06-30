@@ -4,29 +4,29 @@
  */
 package com.tc.util;
 
+import com.tc.util.concurrent.SetOnceFlag;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class CommonShutDownHook implements Runnable {
-  private static final List runnables = new ArrayList();
-  private static Thread     hooker;                     // ;-)
-  private static boolean    shutdown;
+  private static final SetOnceFlag run       = new SetOnceFlag();
+  private static final List        runnables = new ArrayList();
+  private static Thread            hooker;                       // ;-)
+  private static boolean           shutdown;
 
-  public static void shutdown(boolean runHooks) {
+  public static void shutdown() {
     synchronized (runnables) {
       if (shutdown) return;
       shutdown = true;
-    }
 
-    if (hooker != null) {
-      try {
-        Runtime.getRuntime().removeShutdownHook(hooker);
-      } finally {
+      runHooks();
+
+      if (hooker != null) {
         try {
-          hooker.start();
-          hooker.join();
-        } catch (InterruptedException e) {
-          //
+          Runtime.getRuntime().removeShutdownHook(hooker);
+        } catch (IllegalStateException ise) {
+          // expected if we're entering this code path from another shutdown hook
         } finally {
           hooker = null;
           runnables.clear();
@@ -52,6 +52,12 @@ public class CommonShutDownHook implements Runnable {
   }
 
   public void run() {
+    runHooks();
+  }
+
+  private static void runHooks() {
+    if (!run.attemptSet()) return;
+
     // Use a copy of the hooks for good measure (to avoid a possible ConcurrentModificationException here)
     final Runnable[] hooks;
     synchronized (runnables) {
@@ -66,4 +72,5 @@ public class CommonShutDownHook implements Runnable {
       }
     }
   }
+
 }
