@@ -52,23 +52,17 @@ public class TestConfigBeanSet {
     initialServer.setHost(DEFAULT_HOST);
     initialServer.setName(DEFAULT_SERVER_NAME);
     
-    BindPort dsoPort = BindPort.Factory.newInstance();
+    BindPort dsoPort = initialServer.addNewDsoPort();
     dsoPort.setIntValue(0);
     dsoPort.setBind("0.0.0.0");
-    initialServer.addNewDsoPort();
-    initialServer.setDsoPort(dsoPort);
     
-    BindPort jmxPort = BindPort.Factory.newInstance();
+    BindPort jmxPort = initialServer.addNewJmxPort();
     jmxPort.setIntValue(0);
     jmxPort.setBind("0.0.0.0");
-    initialServer.addNewJmxPort();
-    initialServer.setJmxPort(jmxPort);
 
-    BindPort groupPort = BindPort.Factory.newInstance();
+    BindPort groupPort = initialServer.addNewL2GroupPort();
     groupPort.setIntValue(0);
     groupPort.setBind("0.0.0.0");
-    initialServer.addNewL2GroupPort();
-    initialServer.setL2GroupPort(groupPort);
     
     Ha commonHa = this.rootServersBean.addNewHa();
     commonHa.setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);

@@ -333,6 +333,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
     BindPort dsoBindPort = BindPort.Factory.newInstance();
     dsoBindPort.setIntValue(dsoPort);
+    dsoBindPort.setBind("0.0.0.0");
     ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
 
     BindPort jmxBindPort = BindPort.Factory.newInstance();
