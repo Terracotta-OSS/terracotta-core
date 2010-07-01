@@ -168,9 +168,10 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     key.setData(idb);
     final DatabaseEntry value = new DatabaseEntry();
     value.setPartial(0, 0, true);
-    final Cursor c = this.database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
-    if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
-      try {
+    Cursor c = null;
+    try {
+      c = this.database.openCursor(pt2nt(tx), CursorConfig.READ_UNCOMMITTED);
+      if (c.getSearchKeyRange(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS) {
         do {
           if (partialMatch(idb, key.getData())) {
             c.delete();
@@ -180,9 +181,11 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
           }
         } while (mapEntriesDeleted < DELETE_BATCH_SIZE
                  && c.getNext(key, value, LockMode.DEFAULT) == OperationStatus.SUCCESS);
-      } catch (final Exception t) {
-        throw new TCDatabaseException(t.getMessage());
-      } finally {
+      }
+    } catch (final Exception t) {
+      throw new TCDatabaseException(t.getMessage());
+    } finally {
+      if (c != null) {
         c.close();
       }
     }
