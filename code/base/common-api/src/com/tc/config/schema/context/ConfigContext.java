@@ -59,6 +59,6 @@ public interface ConfigContext {
 
   BooleanConfigItem booleanItem(String xpath, boolean defaultValue);
 
-  BindPortConfigItem bindPortItem(String xpath, BindPort bindPort);
+  BindPortConfigItem bindPortItem(String xpath, BindPort defaultValue);
 
 }

@@ -7,6 +7,7 @@ package com.tc.object.config.schema;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
@@ -15,6 +16,7 @@ import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
 import com.tc.util.Assert;
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
 
@@ -54,13 +56,28 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
     this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
 
-    Server server = (Server) this.context.bean();
-    this.dsoPort = this.context.bindPortItem("dso-port", server.getDsoPort());
-    this.l2GroupPort = this.context.bindPortItem("l2-group-port", server.getL2GroupPort());
+    this.bind = this.context.stringItem("@bind");
     this.host = this.context.stringItem("@host");
     this.serverName = this.context.stringItem("@name");
-    this.bind = this.context.stringItem("@bind");
 
+    int listenPort = this.context.intItem("dso-port").getInt();
+    int tempGroupPort = this.context.intItem("dso-port").getInt()
+                        + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
+        : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
+    
+    
+    BindPort defaultDsoPort = BindPort.Factory.newInstance();
+    defaultDsoPort.setIntValue(listenPort);
+    defaultDsoPort.setBind(this.bind.getString());
+    this.dsoPort = this.context.bindPortItem("dso-port", defaultDsoPort);
+    
+
+    BindPort defaultL2GroupPort = BindPort.Factory.newInstance();
+    defaultL2GroupPort.setIntValue(defaultGroupPort);
+    defaultL2GroupPort.setBind(this.bind.getString());
+    this.l2GroupPort = this.context.bindPortItem("l2-group-port", defaultL2GroupPort);
+    
   }
 
   public BindPortConfigItem dsoPort() {

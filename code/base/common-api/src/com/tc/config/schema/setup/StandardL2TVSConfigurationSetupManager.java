@@ -206,9 +206,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private void verifyServerPortUsed(Set<String> serverPorts, Server server) throws ConfigurationSetupException {
     String hostname = server.getHost();
-    verifyPortUsed(serverPorts, hostname, server.getDsoPort().getIntValue());
-    verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
-    verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
+    if (server.isSetDsoPort()) verifyPortUsed(serverPorts, hostname, server.getDsoPort().getIntValue());
+    if (server.isSetJmxPort()) verifyPortUsed(serverPorts, hostname, server.getJmxPort().getIntValue());
+    if (server.isSetL2GroupPort()) verifyPortUsed(serverPorts, hostname, server.getL2GroupPort().getIntValue());
   }
 
   private void validateGroups() throws ConfigurationSetupException {

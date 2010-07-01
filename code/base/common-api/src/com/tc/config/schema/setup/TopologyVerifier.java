@@ -9,6 +9,8 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.server.ServerConnectionValidator;
+import com.tc.util.Assert;
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
@@ -199,12 +201,17 @@ public class TopologyVerifier {
    * check ports, persistence and mode
    */
   private boolean checkServer(Server oldServer, Server newServer) {
-    if ((oldServer.getDsoPort() != newServer.getDsoPort()) || (oldServer.getJmxPort() != newServer.getJmxPort())
-        || (oldServer.getL2GroupPort() != newServer.getL2GroupPort())) {
+    if (!validatePorts(oldServer.getDsoPort(), newServer.getDsoPort())
+        || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
+        || !validatePorts(oldServer.getL2GroupPort(), newServer.getL2GroupPort())) {
       logger.warn("Server port configuration was changed for server " + oldServer.getName()
-                  + ". [dso-port, l2-group-port, jmx-port] [" + oldServer.getDsoPort() + ", "
-                  + oldServer.getL2GroupPort() + ", " + oldServer.getJmxPort() + "] to [" + newServer.getDsoPort()
-                  + ", " + newServer.getL2GroupPort() + ", " + newServer.getJmxPort() + "]");
+                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort().getBind() + ":"
+                  + oldServer.getDsoPort().getIntValue() + "}, {" + oldServer.getL2GroupPort().getBind() + ":"
+                  + oldServer.getL2GroupPort().getIntValue() + "}, {" + oldServer.getJmxPort().getBind() + ":"
+                  + oldServer.getJmxPort().getIntValue() + "}] to [ {" + newServer.getDsoPort().getBind() + ":"
+                  + newServer.getDsoPort().getIntValue() + "}, {" + newServer.getL2GroupPort().getBind() + ":"
+                  + newServer.getL2GroupPort().getIntValue() + "}, {" + newServer.getJmxPort().getBind() + ":"
+                  + newServer.getJmxPort().getIntValue() + "}]");
       return false;
     }
 
@@ -223,4 +230,19 @@ public class TopologyVerifier {
     return true;
   }
 
+  private boolean validatePorts(BindPort oldValue, BindPort newValue) {
+    Assert.assertNotNull(oldValue);
+    Assert.assertNotNull(newValue);
+
+    if (oldValue.getIntValue() != newValue.getIntValue()) return false;
+    return validatePortAddress(oldValue.getBind(), newValue.getBind());
+  }
+
+  private boolean validatePortAddress(String oldValue, String newValue) {
+    if (oldValue != null && newValue != null) {
+      return oldValue.equals(newValue);
+    } else {
+      return (oldValue == newValue);
+    }
+  }
 }

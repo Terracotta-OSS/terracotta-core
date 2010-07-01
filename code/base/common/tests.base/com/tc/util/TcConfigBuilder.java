@@ -1,18 +1,11 @@
 package com.tc.util;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.Loader;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.defaults.FromSchemaDefaultValueProvider;
-import com.tc.object.config.schema.NewL2DSOConfig;
 import com.terracottatech.config.AppGroup;
 import com.terracottatech.config.Autolock;
-import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Include;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Module;
@@ -20,7 +13,6 @@ import com.terracottatech.config.Property;
 import com.terracottatech.config.QualifiedClassName;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.WebApplication;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
@@ -58,11 +50,6 @@ public class TcConfigBuilder {
       tcConfig = tcConfigDocument.getTcConfig();
     } catch (Exception e) {
       throw new RuntimeException(e);
-    }
-    try {
-      initBindPorts(tcConfig.getServers());
-    } catch (XmlException e) {
-      throw new RuntimeException("failed to initialize bind ports", e);
     }
   }
 
@@ -107,6 +94,9 @@ public class TcConfigBuilder {
     ensureServers();
     Server server = tcConfig.getServers().getServerArray(serverIndex);
     Assert.assertNotNull(server);
+    if (!server.isSetDsoPort()) {
+      server.addNewDsoPort();
+    }
     server.getDsoPort().setIntValue(portNo);
   }
 
@@ -118,6 +108,9 @@ public class TcConfigBuilder {
     ensureServers();
     Server server = tcConfig.getServers().getServerArray(serverIndex);
     Assert.assertNotNull(server);
+    if (!server.isSetL2GroupPort()) {
+      server.addNewL2GroupPort();
+    }
     server.getL2GroupPort().setIntValue(portNo);
   }
 
@@ -149,6 +142,9 @@ public class TcConfigBuilder {
     ensureServers();
     Server server = tcConfig.getServers().getServerArray(serverIndex);
     Assert.assertNotNull(server);
+    if (!server.isSetJmxPort()) {
+      server.addNewJmxPort();
+    }
     server.getJmxPort().setIntValue(portNo);
   }
 
@@ -343,8 +339,13 @@ public class TcConfigBuilder {
     PortChooser pc = new PortChooser();
     Server[] servers = getServers();
     for (Server server : servers) {
+      if (!server.isSetDsoPort()) server.addNewDsoPort();
       server.getDsoPort().setIntValue(pc.chooseRandomPort());
+      
+      if(!server.isSetJmxPort()) server.addNewJmxPort();
       server.getJmxPort().setIntValue(pc.chooseRandomPort());
+      
+      if(!server.isSetL2GroupPort()) server.addNewL2GroupPort();
       server.getL2GroupPort().setIntValue(pc.chooseRandomPort());
     }
   }
@@ -463,57 +464,6 @@ public class TcConfigBuilder {
       return aCopy;
     } catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-  
-  private void initBindPorts(Servers servers) throws XmlException {
-    Server[] serverArray = servers.getServerArray();
-    for (Server server : serverArray) {
-
-      if (!server.isSetDsoPort()) {
-        BindPort dsoBindPort = BindPort.Factory.newInstance();
-        dsoBindPort.setBind(server.getBind());
-
-        final DefaultValueProvider defaultValueProvider = new FromSchemaDefaultValueProvider();
-        if (defaultValueProvider.hasDefault(server.schemaType(), "dso-port")) {
-          final XmlInteger defaultValue = (XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso-port");
-          int dsoPort = defaultValue.getBigIntegerValue().intValue();
-          dsoBindPort.setIntValue(dsoPort);
-        }
-
-        server.addNewDsoPort();
-        server.setDsoPort(dsoBindPort);
-      } else if (!server.getDsoPort().isSetBind()) {
-        server.getDsoPort().setBind(server.getBind());
-      }
-
-      if (!server.isSetJmxPort()) {
-        BindPort jmxBindPort = BindPort.Factory.newInstance();
-        jmxBindPort.setBind(server.getBind());
-
-        int tempJmxPort = server.getDsoPort().getIntValue() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-        int defaultJmxPort = ((tempJmxPort <= NewCommonL2Config.MAX_PORTNUMBER) ? tempJmxPort
-            : (tempJmxPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-        jmxBindPort.setIntValue(defaultJmxPort);
-
-        server.addNewJmxPort();
-        server.setJmxPort(jmxBindPort);
-      } else if (!server.getJmxPort().isSetBind()) {
-        server.getJmxPort().setBind(server.getBind());
-      }
-
-      if (!server.isSetL2GroupPort()) {
-        BindPort l2GroupBindPort = BindPort.Factory.newInstance();
-        l2GroupBindPort.setBind(server.getBind());
-
-        int tempGroupPort = server.getDsoPort().getIntValue() + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-        int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
-            : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-        l2GroupBindPort.setIntValue(defaultGroupPort);
-
-        server.addNewL2GroupPort();
-        server.setL2GroupPort(l2GroupBindPort);
-      } else if (!server.getL2GroupPort().isSetBind()) server.getL2GroupPort().setBind(server.getBind());
     }
   }
 }

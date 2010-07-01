@@ -126,8 +126,8 @@ public class StandardConfigContext implements ConfigContext {
     return "<ConfigContext around repository: " + this.beanRepository + ">";
   }
 
-  public BindPortConfigItem bindPortItem(String xpath, BindPort bindPort) {
-    return new BindPortXPathBasedConfigObject(this, xpath, bindPort);
+  public BindPortConfigItem bindPortItem(String xpath, BindPort defaultValue) {
+    return new BindPortXPathBasedConfigObject(this, xpath, defaultValue);
   }
 
 }

@@ -13,6 +13,7 @@ import com.tc.license.LicenseCheck;
 import com.tc.license.util.LicenseConstants;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.AuthenticationMode;
+import com.terracottatech.config.BindPort;
 import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.Server;
 
@@ -103,7 +104,14 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     }
     this.userRealmFile = userRealm;
 
-    this.jmxPort = context.bindPortItem("jmx-port", server.getJmxPort());
+    int tempJmxPort = context.intItem("dso-port").getInt() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int defaultJmxPort = ((tempJmxPort <= NewCommonL2Config.MAX_PORTNUMBER) ? tempJmxPort
+        : (tempJmxPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
+
+    BindPort defJmxPort = BindPort.Factory.newInstance();
+    defJmxPort.setIntValue(defaultJmxPort);
+    defJmxPort.setBind(this.context.stringItem("@bind").getString());
+    this.jmxPort = context.bindPortItem("jmx-port", defJmxPort);
   }
 
   public FileConfigItem dataPath() {

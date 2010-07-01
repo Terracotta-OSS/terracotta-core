@@ -4,14 +4,19 @@
  */
 package com.tc.config.schema.test;
 
+import com.tc.config.schema.test.PortConfigBuilder.PortType;
+
 /**
  * Allows you to build valid config for an L2. This class <strong>MUST NOT</strong> invoke the actual XML beans to do
  * its work; one of its purposes is, in fact, to test that those beans are set up correctly.
  */
 public class L2ConfigBuilder extends BaseConfigBuilder {
 
-  private String host;
-  private String name;
+  private String            host;
+  private String            name;
+  private PortConfigBuilder jmxPortBuilder   = null;
+  private PortConfigBuilder dsoPortBuilder   = null;
+  private PortConfigBuilder groupPortBuilder = null;
 
   public L2ConfigBuilder() {
     super(3, ALL_PROPERTIES);
@@ -45,20 +50,46 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("logs", logs);
   }
 
-  public void setDSOPort(int data) {
-    setProperty("dso-port", data);
+  public synchronized void setDSOPort(int data) {
+    if (this.dsoPortBuilder == null) {
+      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+    }
+    this.dsoPortBuilder.setBindPort(data);
   }
 
-  public void setJMXPort(int data) {
-    setProperty("jmx-port", data);
+  public synchronized void setDSOBindAddress(String data) {
+    if (this.dsoPortBuilder == null) {
+      this.dsoPortBuilder = new PortConfigBuilder(PortType.DSOPORT);
+    }
+    this.dsoPortBuilder.setBindAddress(data);
   }
 
-  public void setJMXPort(String data) {
-    setProperty("jmx-port", data);
+  public synchronized void setJMXPort(int data) {
+    if (this.jmxPortBuilder == null) {
+      this.jmxPortBuilder = new PortConfigBuilder(PortType.JMXPORT);
+    }
+    this.jmxPortBuilder.setBindPort(data);
   }
 
-  public void setL2GroupPort(int data) {
-    setProperty("l2-group-port", data);
+  public synchronized void setJMXBindAddress(String data) {
+    if (this.jmxPortBuilder == null) {
+      this.jmxPortBuilder = new PortConfigBuilder(PortType.JMXPORT);
+    }
+    this.jmxPortBuilder.setBindAddress(data);
+  }
+
+  public synchronized void setL2GroupPort(int data) {
+    if (this.groupPortBuilder == null) {
+      this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
+    }
+    this.groupPortBuilder.setBindPort(data);
+  }
+
+  public synchronized void setL2GroupPortBindAddress(String data) {
+    if (this.groupPortBuilder == null) {
+      this.groupPortBuilder = new PortConfigBuilder(PortType.GROUPPORT);
+    }
+    this.groupPortBuilder.setBindAddress(data);
   }
 
   public void setPasswordFile(String data) {
@@ -104,8 +135,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("interval", data);
   }
 
-  private static final String[] L2                  = new String[] { "data", "logs", "data-backup", "dso-port",
-      "jmx-port", "l2-group-port", "statistics"    };
+  private static final String[] L2                  = new String[] { "data", "logs", "data-backup", "statistics" };
 
   private static final String[] DSO_PERSISTENCE     = new String[] { "mode" };
   private static final String[] DSO_RECONNECTWINDOW = new String[] { "client-reconnect-window" };
@@ -123,12 +153,28 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     out += indent() + "<server host=" + (this.host != null ? this.host : "\"%i\"")
            + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
-    out += elements(L2) + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
+    out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
            + elements(DSO_RECONNECTWINDOW) + elementGroup("persistence", DSO_PERSISTENCE)
            + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
 
     out += closeElement("server");
 
+    return out;
+  }
+
+  private String getPortsConfig() {
+    String out = "";
+
+    if (this.dsoPortBuilder != null) {
+      out += this.dsoPortBuilder.toString() + "\n";
+    }
+    if (this.jmxPortBuilder != null) {
+      out += this.jmxPortBuilder.toString() + "\n";
+    }
+    if (this.groupPortBuilder != null) {
+      out += this.groupPortBuilder.toString() + "\n";
+    }
+    
     return out;
   }
 
