@@ -228,7 +228,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     for (int i = 0; i < nodes; ++i) {
       groupManagers[i].join(allNodes[i], nodeStore);
     }
-    ThreadUtil.reallySleep(1000 * nodes);
+    ThreadUtil.reallySleep(2000 + 1000 * nodes);
 
     // verification
     for (int i = 0; i < nodes; ++i) {
