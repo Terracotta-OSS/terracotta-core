@@ -128,7 +128,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
       super.applyMethod(objectID, includeIDs, method, params);
     }
-    if (method == SerializationUtil.PUT && !this.evictionInitiated
+    if (method == SerializationUtil.PUT && this.targetMaxTotalCount > 0 && !this.evictionInitiated
         && this.references.size() > this.targetMaxTotalCount * 1.15) { // 15 % overshoot
       this.evictionInitiated = true;
       includeIDs.initiateEvictionFor(objectID);
