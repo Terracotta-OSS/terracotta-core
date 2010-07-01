@@ -99,7 +99,7 @@ artifacts:
     destination: quartz
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/quartz/quartz-1.8.3.tar.gz
+    url: http://download.terracotta.org/quartz/quartz-1.8.4.tar.gz
 # end QUARTZ
 
 # begin express products
