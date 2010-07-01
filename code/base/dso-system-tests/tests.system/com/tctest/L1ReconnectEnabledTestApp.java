@@ -1,6 +1,5 @@
 package com.tctest;
 
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -49,8 +48,6 @@ public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
                                                                                                   new FatalIllegalConfigurationChangeHandler());
     int portNumber = Integer.parseInt(appCfg.getAttribute(PORT_NUMBER));
     int jmxPort = Integer.parseInt(appCfg.getAttribute(JMX_PORT));
-    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(portNumber);
-    ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxPort);
     factory.addServerToL1Config(null, portNumber, jmxPort);
     try {
       DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(factory
