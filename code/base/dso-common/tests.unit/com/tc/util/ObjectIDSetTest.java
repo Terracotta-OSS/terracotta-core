@@ -25,7 +25,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ObjectIDSetTest extends TCTestCase {
-  
+
   public void testContain() {
     ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
     ObjectIDSet rangeBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
@@ -796,6 +796,115 @@ public class ObjectIDSetTest extends TCTestCase {
       // expected
     } finally {
       objectIDSet.remove(new ObjectID(99));
+    }
+  }
+
+  public void testAddAll() {
+   
+    final int SIZE_MILLION = 1000000;
+    final ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    final ObjectIDSet rangeBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+    
+    //validate addAll
+    addToReferencesRandom(bitSetBasedObjectIDSet, SIZE_MILLION);
+    int randomSize = bitSetBasedObjectIDSet.size();
+    
+    final ObjectIDSet bitSetBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    
+    long startTime = System.currentTimeMillis();
+    bitSetBasedObjectIDSet2.addAll(bitSetBasedObjectIDSet);
+    long addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("bitSet.addAll random total time took: " + addAllTime + " ms. ");
+    
+    //validate addAll
+    assertEquals(randomSize, bitSetBasedObjectIDSet2.size());
+    
+    for(ObjectID id : bitSetBasedObjectIDSet) {
+      assertTrue(bitSetBasedObjectIDSet2.contains(id));
+    }
+    
+    
+    ///do serial
+    final ObjectIDSet bitSetBasedObjectIDSetSerial = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    addToReferencesSerial(bitSetBasedObjectIDSetSerial, SIZE_MILLION);
+    
+    assertEquals(SIZE_MILLION, bitSetBasedObjectIDSetSerial.size());
+    
+    startTime = System.currentTimeMillis();
+    bitSetBasedObjectIDSet2.addAll(bitSetBasedObjectIDSetSerial);
+    addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("bitSet.addAll serial total time took: " + addAllTime + " ms. ");
+   
+    //validate addAll
+    assertEquals(randomSize + SIZE_MILLION, bitSetBasedObjectIDSet2.size());
+    
+    for(ObjectID id : bitSetBasedObjectIDSetSerial) {
+      assertTrue(bitSetBasedObjectIDSet2.contains(id));
+    }
+    
+    
+    // RANGE SET
+  
+    addToReferencesRandom(rangeBasedObjectIDSet, SIZE_MILLION);
+    randomSize = rangeBasedObjectIDSet.size();
+    
+    final ObjectIDSet rangeBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+    
+    startTime = System.currentTimeMillis();
+    rangeBasedObjectIDSet2.addAll(rangeBasedObjectIDSet);
+    addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("rangeSet.addAll random total time took: " + addAllTime + " ms. ");
+    
+   //validate addAll
+    assertEquals(randomSize, rangeBasedObjectIDSet2.size());
+    
+    for(ObjectID id : rangeBasedObjectIDSet) {
+      assertTrue(rangeBasedObjectIDSet2.contains(id));
+    }
+    
+    //do serial
+    final ObjectIDSet rangeBasedObjectIDSetSerial = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+    addToReferencesSerial(rangeBasedObjectIDSetSerial, SIZE_MILLION);
+       
+    assertEquals(SIZE_MILLION, rangeBasedObjectIDSetSerial.size());
+       
+    
+    startTime = System.currentTimeMillis();
+    rangeBasedObjectIDSet2.addAll(rangeBasedObjectIDSetSerial);
+    addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("rangeSet.addAll serial total time took: " + addAllTime + " ms. ");
+    
+    //validate addAll
+    assertEquals(randomSize + SIZE_MILLION, rangeBasedObjectIDSet2.size());
+    
+    for(ObjectID id : rangeBasedObjectIDSetSerial) {
+      assertTrue(rangeBasedObjectIDSet2.contains(id));
+    }
+  
+    
+    
+  }
+  
+  
+  private void addToReferencesSerial(ObjectIDSet set, int size) {
+    for (int i = 2 * size; i < size + (2 * size); i++) {
+      set.add(new ObjectID(i));
+    }
+  }
+  
+
+  private void addToReferencesRandom(ObjectIDSet set, int size) {
+    final SecureRandom sr = new SecureRandom();
+    long seed = sr.nextLong();
+    System.err.println("testContain : Seed for Random is " + seed);
+    final Random r = new Random(seed);
+
+    for (int i = 0; i < size; i++) {
+      set.add(new ObjectID(r.nextInt(size)));
     }
   }
 
