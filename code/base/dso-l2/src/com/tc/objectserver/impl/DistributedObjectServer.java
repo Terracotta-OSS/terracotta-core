@@ -813,6 +813,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                 syncWriteTxnRecvdAckStage
                                                                                                     .getSink());
     toInit.add(transactionBatchManager);
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(transactionBatchManager));
 
     final TransactionAcknowledgeAction taa = new TransactionAcknowledgeActionImpl(channelManager,
                                                                                   transactionBatchManager);

@@ -25,6 +25,8 @@ import com.tc.object.tx.TxnType;
 import com.tc.objectserver.context.SyncWriteTransactionReceivedContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
+import com.tc.text.PrettyPrintable;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.SequenceValidator;
 
@@ -32,16 +34,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class TransactionBatchManagerImpl implements TransactionBatchManager, PostInit {
+public class TransactionBatchManagerImpl implements TransactionBatchManager, PostInit, PrettyPrintable {
 
   private static final TCLogger                logger       = TCLogging.getLogger(TransactionBatchManagerImpl.class);
 
-  private final Map                            map          = new HashMap();
-
+  private final Map<NodeID, BatchStats>        map          = new HashMap<NodeID, BatchStats>();
   private final SequenceValidator              sequenceValidator;
   private final MessageRecycler                messageRecycler;
   private final Object                         lock         = new Object();
@@ -155,7 +158,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   private BatchStats getOrCreateStats(final NodeID nid) {
-    BatchStats bs = (BatchStats) this.map.get(nid);
+    BatchStats bs = this.map.get(nid);
     if (bs == null) {
       bs = new BatchStats(nid);
       this.map.put(nid, bs);
@@ -164,7 +167,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   public synchronized boolean batchComponentComplete(final NodeID nid, final TransactionID txnID) {
-    final BatchStats bs = (BatchStats) this.map.get(nid);
+    final BatchStats bs = this.map.get(nid);
     Assert.assertNotNull(bs);
     return bs.batchComplete(txnID);
   }
@@ -188,7 +191,7 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
   }
 
   private synchronized void shutdownBatchStats(final NodeID nodeID) {
-    final BatchStats bs = (BatchStats) this.map.get(nodeID);
+    final BatchStats bs = this.map.get(nodeID);
     if (bs != null) {
       bs.shutdownNode();
     }
@@ -286,5 +289,15 @@ public class TransactionBatchManagerImpl implements TransactionBatchManager, Pos
     for (final TransactionBatchListener listener : this.txnListeners) {
       listener.notifyTransactionBatchAdded(ctm);
     }
+  }
+
+  public synchronized PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
+    out.print("BatchStats: " + this.map.size()).flush();
+    for (Iterator<Entry<NodeID, BatchStats>> i = this.map.entrySet().iterator(); i.hasNext();) {
+      Entry<NodeID, BatchStats> e = i.next();
+      out.duplicateAndIndent().indent().print(e.getKey() + " => " + e.getValue()).flush();
+    }
+    return out;
   }
 }
