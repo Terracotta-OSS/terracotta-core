@@ -884,9 +884,55 @@ public class ObjectIDSetTest extends TCTestCase {
     }
     */
 
+    //now lets add to serial, and see if the random set exist in it
+    rangeBasedObjectIDSetSerial.addAll(rangeBasedObjectIDSet);
+    
+    for(ObjectID id : rangeBasedObjectIDSet) {
+      assertTrue(rangeBasedObjectIDSetSerial.contains(id));
+    }
+    
+    
   }
-
-  private void addToReferencesSerial(final ObjectIDSet set, final int size) {
+  
+  public void testAddAllPerformance() {
+    
+    final int SIZE_10_MILLION = 10000000;
+    final ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    final ObjectIDSet bitSetBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    addToReferencesRandom(bitSetBasedObjectIDSet, SIZE_10_MILLION);
+    addToReferencesSerial(bitSetBasedObjectIDSet2, SIZE_10_MILLION);
+    int bitSize = bitSetBasedObjectIDSet.size();
+    int bitSize2 = bitSetBasedObjectIDSet2.size();
+    
+    long startTime = System.currentTimeMillis();
+    bitSetBasedObjectIDSet.addAll(bitSetBasedObjectIDSet2);   
+    long addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("bitSet.addAll random total time took: " + addAllTime + " ms. ");
+    assertEquals(bitSize + bitSize2, bitSetBasedObjectIDSet.size());
+    
+  
+    
+    final ObjectIDSet rangeBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+    final ObjectIDSet rangeBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+    addToReferencesRandom(rangeBasedObjectIDSet, SIZE_10_MILLION);
+    addToReferencesSerial(rangeBasedObjectIDSet2, SIZE_10_MILLION);
+    
+    int rangeSize = rangeBasedObjectIDSet.size();
+    int rangeSize2 = rangeBasedObjectIDSet2.size();
+    
+    startTime = System.currentTimeMillis();
+    rangeBasedObjectIDSet.addAll(rangeBasedObjectIDSet2);   
+    addAllTime = System.currentTimeMillis() - startTime;
+    
+    System.out.println("rangeSet.addAll random total time took: " + addAllTime + " ms. ");
+    
+    assertEquals(rangeSize + rangeSize2, rangeBasedObjectIDSet.size());
+    
+  }
+  
+  
+  private void addToReferencesSerial(ObjectIDSet set, int size) {
     for (int i = 2 * size; i < size + (2 * size); i++) {
       set.add(new ObjectID(i));
     }
