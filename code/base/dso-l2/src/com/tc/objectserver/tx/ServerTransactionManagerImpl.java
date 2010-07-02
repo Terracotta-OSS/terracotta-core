@@ -205,11 +205,12 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   public void start(final Set cids) {
     synchronized (this.transactionAccounts) {
-      final int sizeB4 = this.transactionAccounts.size();
-      this.transactionAccounts.keySet().retainAll(cids);
-      final int sizeAfter = this.transactionAccounts.size();
-      if (sizeB4 != sizeAfter) {
-        logger.warn("Cleaned up Transaction Accounts for : " + (sizeB4 - sizeAfter) + " clients");
+      for (Iterator<NodeID> i = transactionAccounts.keySet().iterator(); i.hasNext();) {
+        NodeID node = i.next();
+        if (!cids.contains(node)) {
+          logger.warn("Cleaning up transaction account for " + node + " : " + transactionAccounts.get(node));
+          i.remove();
+        }
       }
     }
     // XXX:: The server could have crashed right after a client crash/disconnect before it had a chance to remove
