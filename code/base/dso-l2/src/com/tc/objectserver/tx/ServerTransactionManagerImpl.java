@@ -134,11 +134,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     synchronized (this.transactionAccounts) {
       out.indent().print("transactionAccounts: ").visit(this.transactionAccounts).flush();
-      for (Entry<NodeID, TransactionAccount> entry : this.transactionAccounts.entrySet()) {
+      for (final Entry<NodeID, TransactionAccount> entry : this.transactionAccounts.entrySet()) {
         out.duplicateAndIndent().indent().print(entry.getValue()).flush();
       }
     }
@@ -158,7 +158,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     boolean callBackAdded = false;
     synchronized (this.transactionAccounts) {
 
-      TransactionAccount deadClientTA = this.transactionAccounts.get(deadNodeID);
+      final TransactionAccount deadClientTA = this.transactionAccounts.get(deadNodeID);
       if (deadClientTA != null) {
         deadClientTA.nodeDead(new TransactionAccount.CallBackOnComplete() {
           public void onComplete(final NodeID dead) {
@@ -176,7 +176,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         callBackAdded = true;
       }
 
-      TransactionAccount tas[] = this.transactionAccounts.values()
+      final TransactionAccount tas[] = this.transactionAccounts.values()
           .toArray(new TransactionAccount[this.transactionAccounts.size()]);
       for (final TransactionAccount client : tas) {
         if (client == deadClientTA) {
@@ -327,7 +327,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       final DNA change = new VersionizedDNAWrapper(orgDNA, version, true);
       final ManagedObject mo = (ManagedObject) objects.get(change.getObjectID());
       mo.apply(change, txnID, applyInfo, instanceMonitor, !active);
-      if (this.broadcastStatsLoggingEnabled || this.objectStatsRecorder.getBroadcastDebug()) {
+      if ((this.broadcastStatsLoggingEnabled || this.objectStatsRecorder.getBroadcastDebug())
+          && (orgDNA instanceof DNAImpl)) {
         // This ugly code exists so that Broadcast change handler can log more stats about the broadcasts that are
         // taking place there. This type info was lost from the DNA in one of the performance optimizations that we did.
         final DNAImpl dnaImpl = (DNAImpl) orgDNA;
@@ -567,7 +568,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     synchronized (this.transactionAccounts) {
       // DEV-1874, MNK-683 :: Register before adding pending server transaction ids to avoid race.
       addTransactionListener(callBack);
-      for (Object element : this.transactionAccounts.entrySet()) {
+      for (final Object element : this.transactionAccounts.entrySet()) {
         final Entry entry = (Entry) element;
         final TransactionAccount client = (TransactionAccount) entry.getValue();
         client.addAllPendingServerTransactionIDsTo(txnsInSystem);
@@ -691,11 +692,11 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
 
     @Override
-    public void clearAllTransactionsFor(NodeID deadNode) {
-      Set<ServerTransactionID> deadNodesTxns = new HashSet<ServerTransactionID>();
+    public void clearAllTransactionsFor(final NodeID deadNode) {
+      final Set<ServerTransactionID> deadNodesTxns = new HashSet<ServerTransactionID>();
       synchronized (this.txnsInSystem) {
-        for (Iterator<ServerTransactionID> i = this.txnsInSystem.iterator(); i.hasNext();) {
-          ServerTransactionID sid = i.next();
+        for (final Iterator<ServerTransactionID> i = this.txnsInSystem.iterator(); i.hasNext();) {
+          final ServerTransactionID sid = i.next();
           if (sid.getSourceID().equals(deadNode)) {
             deadNodesTxns.add(sid);
             i.remove();
