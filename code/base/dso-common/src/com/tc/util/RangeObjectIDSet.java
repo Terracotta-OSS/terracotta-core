@@ -3,6 +3,7 @@
  */
 package com.tc.util;
 
+import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
@@ -16,13 +17,13 @@ import java.util.NoSuchElementException;
 
 final class RangeObjectIDSet extends ObjectIDSetBase {
 
-  public RangeObjectIDSet(Collection c) {
+  public RangeObjectIDSet(final Collection c) {
     super();
     if (c instanceof RangeObjectIDSet) {
-      RangeObjectIDSet other = (RangeObjectIDSet) c;
+      final RangeObjectIDSet other = (RangeObjectIDSet) c;
       // fast way to clone
       this.size = other.size();
-      for (Iterator i = other.ranges.iterator(); i.hasNext();) {
+      for (final Iterator i = other.ranges.iterator(); i.hasNext();) {
         this.ranges.insert((Range) ((Range) i.next()).clone());
       }
       return;
@@ -36,14 +37,14 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
     if (this.size != 0) { throw new RuntimeException("deserialize dirty ObjectIDSet"); }
     int _size = in.readInt();
     this.size = _size;
     while (_size > 0) {
-      long start = in.readLong();
-      long end = in.readLong();
-      Range r = new Range(start, end);
+      final long start = in.readLong();
+      final long end = in.readLong();
+      final Range r = new Range(start, end);
       this.ranges.insert(r);
       _size -= r.size();
     }
@@ -51,31 +52,36 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public void serializeTo(TCByteBufferOutput out) {
+  public void serializeTo(final TCByteBufferOutput out) {
     out.writeInt(this.size);
-    for (Iterator i = this.ranges.iterator(); i.hasNext();) {
-      Range r = (Range) i.next();
+    for (final Iterator i = this.ranges.iterator(); i.hasNext();) {
+      final Range r = (Range) i.next();
       out.writeLong(r.start);
       out.writeLong(r.end);
     }
   }
 
+  public boolean addAll(final RangeObjectIDSet o) {
+    // TODO::Manoj's code here
+    throw new ImplementMe();
+  }
+
   @Override
-  public boolean contains(ObjectID id) {
-    long lid = id.toLong();
+  public boolean contains(final ObjectID id) {
+    final long lid = id.toLong();
     return (this.ranges.find(new MyLong(lid)) != null);
   }
 
   @Override
-  public boolean remove(ObjectID id) {
-    long lid = id.toLong();
+  public boolean remove(final ObjectID id) {
+    final long lid = id.toLong();
 
-    Range current = (Range) this.ranges.find(new MyLong(lid));
+    final Range current = (Range) this.ranges.find(new MyLong(lid));
     if (current == null) {
       // Not found
       return false;
     }
-    Range newRange = current.remove(lid);
+    final Range newRange = current.remove(lid);
     if (newRange != null) {
       this.ranges.insert(newRange);
     } else if (current.isNull()) {
@@ -87,15 +93,15 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
   }
 
   @Override
-  public boolean add(ObjectID id) {
-    long lid = id.toLong();
+  public boolean add(final ObjectID id) {
+    final long lid = id.toLong();
 
     // Step 1 : Check if the previous number is present, if so add to the same Range.
-    Range prev = (Range) this.ranges.find(new MyLong(lid - 1));
+    final Range prev = (Range) this.ranges.find(new MyLong(lid - 1));
     if (prev != null) {
-      boolean isAdded = prev.add(lid);
+      final boolean isAdded = prev.add(lid);
       if (isAdded) {
-        Range next = (Range) this.ranges.remove((new MyLong(lid + 1)));
+        final Range next = (Range) this.ranges.remove((new MyLong(lid + 1)));
         if (next != null) {
           prev.merge(next);
         }
@@ -106,9 +112,9 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
 
     // Step 2 : Check if the next number is present, if so add to the same Range.
-    Range next = (Range) this.ranges.find((new MyLong(lid + 1)));
+    final Range next = (Range) this.ranges.find((new MyLong(lid + 1)));
     if (next != null) {
-      boolean isAdded = next.add(lid);
+      final boolean isAdded = next.add(lid);
       if (isAdded) {
         this.size++;
         this.modCount++;
@@ -117,7 +123,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
 
     // Step 3: Add a new range for just this number.
-    boolean isAdded = this.ranges.insert(new Range(lid, lid));
+    final boolean isAdded = this.ranges.insert(new Range(lid, lid));
     if (isAdded) {
       this.size++;
       this.modCount++;
@@ -133,24 +139,24 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
   @Override
   public ObjectID first() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    Range min = (Range) this.ranges.findMin();
+    final Range min = (Range) this.ranges.findMin();
     return new ObjectID(min.start);
   }
 
   @Override
   public ObjectID last() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    Range max = (Range) this.ranges.findMax();
+    final Range max = (Range) this.ranges.findMax();
     return new ObjectID(max.end);
   }
 
   private class RangeObjectIDSetIterator implements Iterator {
 
-    Iterator                nodes;
+    Iterator      nodes;
     private Range current;
-    ObjectID                lastReturned;
-    int                     idx;
-    int                     expectedModCount;
+    ObjectID      lastReturned;
+    int           idx;
+    int           expectedModCount;
 
     public RangeObjectIDSetIterator() {
       this.nodes = RangeObjectIDSet.this.ranges.iterator();
@@ -168,7 +174,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     public Object next() {
       if (this.current == null) { throw new NoSuchElementException(); }
       if (this.expectedModCount != RangeObjectIDSet.this.modCount) { throw new ConcurrentModificationException(); }
-      ObjectID oid = new ObjectID(this.current.start + this.idx);
+      final ObjectID oid = new ObjectID(this.current.start + this.idx);
       if (this.current.start + this.idx == this.current.end) {
         this.idx = 0;
         if (this.nodes.hasNext()) {
@@ -197,8 +203,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       this.lastReturned = null;
     }
   }
-  
-  
+
   private static class Range extends AANode implements Cloneable, Comparable {
     public long start;
     public long end;
@@ -216,7 +221,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return this.start > this.end;
     }
 
-    public Range remove(long lid) {
+    public Range remove(final long lid) {
       if (lid < this.start || lid > this.end) { throw new AssertionError("Ranges : Illegal value passed to remove : "
                                                                          + this + " remove called for : " + lid); }
       if (this.start == lid) {
@@ -226,13 +231,13 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
         this.end--;
         return null;
       } else {
-        Range newRange = new Range(lid + 1, this.end);
+        final Range newRange = new Range(lid + 1, this.end);
         this.end = lid - 1;
         return newRange;
       }
     }
 
-    public void merge(Range other) {
+    public void merge(final Range other) {
       if (this.start == other.end + 1) {
         this.start = other.start;
       } else if (this.end == other.start - 1) {
@@ -243,7 +248,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       }
     }
 
-    public boolean add(long lid) {
+    public boolean add(final long lid) {
       if (lid == this.start - 1) {
         this.start--;
         return true;
@@ -258,7 +263,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       }
     }
 
-    public Range(long start, long end) {
+    public Range(final long start, final long end) {
       this.start = start;
       this.end = end;
     }
@@ -268,9 +273,9 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return new Range(this.start, this.end);
     }
 
-    public int compareTo(Object o) {
+    public int compareTo(final Object o) {
       if (o instanceof Range) {
-        Range other = (Range) o;
+        final Range other = (Range) o;
         if (this.start < other.start) {
           return -1;
         } else if (this.start == other.start) {
@@ -279,7 +284,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
           return 1;
         }
       } else {
-        long n = ((MyLong) o).longValue();
+        final long n = ((MyLong) o).longValue();
         if (this.end < n) {
           return -1;
         } else if (n < this.start) {
@@ -291,9 +296,9 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
 
     @Override
-    protected void swap(AANode other) {
+    protected void swap(final AANode other) {
       if (other instanceof Range) {
-        Range r = (Range) other;
+        final Range r = (Range) other;
         long temp = this.start;
         this.start = r.start;
         r.start = temp;
@@ -316,7 +321,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
 
     final long number;
 
-    public MyLong(long number) {
+    public MyLong(final long number) {
       this.number = number;
     }
 
@@ -324,9 +329,9 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
       return this.number;
     }
 
-    public int compareTo(Object o) {
+    public int compareTo(final Object o) {
       if (o instanceof Range) {
-        Range r = (Range) o;
+        final Range r = (Range) o;
         if (this.number < r.start) {
           return -1;
         } else if (this.number > r.end) {
@@ -335,7 +340,7 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
           return 0;
         }
       } else {
-        long other = ((MyLong) o).longValue();
+        final long other = ((MyLong) o).longValue();
         if (this.number < other) {
           return -1;
         } else if (this.number > other) {

@@ -27,8 +27,7 @@ import java.util.SortedSet;
  * <p>
  * This one uses a balanced tree internally to store ranges instead of an ArrayList
  */
-public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable,
-    TCSerializable {
+public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<ObjectID>, PrettyPrintable, TCSerializable {
 
   public static enum ObjectIDSetType {
     RANGE_BASED_SET, BITSET_BASED_SET
@@ -48,7 +47,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     this.oidSet = new BitSetObjectIDSet();
   }
 
-  public ObjectIDSet(ObjectIDSetType oidSetType) {
+  public ObjectIDSet(final ObjectIDSetType oidSetType) {
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET) {
       this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
       this.oidSet = new RangeObjectIDSet();
@@ -58,16 +57,16 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
   }
 
-  public ObjectIDSet(Collection c) {
+  public ObjectIDSet(final Collection c) {
     if (c instanceof ObjectIDSet) {
-      ObjectIDSet o = (ObjectIDSet) c;
+      final ObjectIDSet o = (ObjectIDSet) c;
       if (o.type == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
         this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
         this.oidSet = new BitSetObjectIDSet(o.oidSet);
       } else if (o.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
         this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
         this.oidSet = new RangeObjectIDSet(o.oidSet);
-      }else{
+      } else {
         throw new AssertionError("wrong ObjectIDSet type: " + o.type);
       }
     } else {
@@ -76,7 +75,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
   }
 
-  public ObjectIDSet(Collection c, ObjectIDSetType oidSetType) {
+  public ObjectIDSet(final Collection c, final ObjectIDSetType oidSetType) {
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET) {
       this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
       this.oidSet = new RangeObjectIDSet(c);
@@ -86,7 +85,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
   }
 
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+  public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
     this.type = in.readInt();
     if (this.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
       this.oidSet = new RangeObjectIDSet();
@@ -100,7 +99,27 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this;
   }
 
-  public void serializeTo(TCByteBufferOutput out) {
+  /**
+   * Optimized version of addAll to make it faster for ObjectIDSet
+   */
+  @Override
+  public boolean addAll(final Collection c) {
+    if (c instanceof ObjectIDSet) {
+      final ObjectIDSet o = (ObjectIDSet) c;
+      if (o.type == this.type) {
+        if (this.type == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
+          return ((BitSetObjectIDSet) this.oidSet).addAll((BitSetObjectIDSet) o.oidSet);
+        } else if (this.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
+          return ((RangeObjectIDSet) this.oidSet).addAll((RangeObjectIDSet)o.oidSet);
+        } else {
+          throw new AssertionError("wrong ObjectIDSet type: " + o.type);
+        }
+      }
+    }
+    return super.addAll(c);
+  }
+
+  public void serializeTo(final TCByteBufferOutput out) {
     out.writeInt(this.type);
     this.oidSet.serializeTo(out);
   }
@@ -115,26 +134,26 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.size();
   }
 
-  public boolean contains(ObjectID id) {
+  public boolean contains(final ObjectID id) {
     return this.oidSet.contains(id);
   }
 
-   @Override
-  public boolean contains(Object id) {
+  @Override
+  public boolean contains(final Object id) {
     return this.oidSet.contains(id);
   }
 
-  public boolean remove(ObjectID id) {
+  public boolean remove(final ObjectID id) {
     return this.oidSet.remove(id);
   }
-  
+
   @Override
-  public boolean remove(Object o) {
+  public boolean remove(final Object o) {
     return this.oidSet.remove(o);
   }
 
   @Override
-  public boolean removeAll(Collection c) {
+  public boolean removeAll(final Collection c) {
     return this.oidSet.removeAll(c);
   }
 
@@ -144,10 +163,9 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
   }
 
   @Override
-  public boolean add(ObjectID id) {
+  public boolean add(final ObjectID id) {
     return this.oidSet.add(id);
   }
-
 
   @Override
   public String toString() {
@@ -162,7 +180,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.toShortString();
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(toShortString());
     return out;
   }
@@ -177,29 +195,29 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.last();
   }
 
-  public static ObjectIDSet unmodifiableObjectIDSet(ObjectIDSet s) {
+  public static ObjectIDSet unmodifiableObjectIDSet(final ObjectIDSet s) {
     return new UnmodifiableObjectIDSet(s);
   }
 
   static class UnmodifiableObjectIDSet extends ObjectIDSet {
     final ObjectIDSet s;
 
-    UnmodifiableObjectIDSet(ObjectIDSet s) {
+    UnmodifiableObjectIDSet(final ObjectIDSet s) {
       this.s = s;
     }
 
     @Override
-    public Object deserializeFrom(TCByteBufferInput in) throws IOException {
+    public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
       return this.s.deserializeFrom(in);
     }
 
     @Override
-    public void serializeTo(TCByteBufferOutput out) {
+    public void serializeTo(final TCByteBufferOutput out) {
       this.s.serializeTo(out);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       return o == this || this.s.equals(o);
     }
 
@@ -219,7 +237,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
 
     @Override
-    public boolean contains(Object o) {
+    public boolean contains(final Object o) {
       return this.s.contains(o);
     }
 
@@ -253,27 +271,27 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
 
     @Override
-    public boolean remove(Object o) {
+    public boolean remove(final Object o) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean containsAll(Collection coll) {
+    public boolean containsAll(final Collection coll) {
       return this.s.containsAll(coll);
     }
 
     @Override
-    public boolean addAll(Collection coll) {
+    public boolean addAll(final Collection coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(Collection coll) {
+    public boolean removeAll(final Collection coll) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean retainAll(Collection coll) {
+    public boolean retainAll(final Collection coll) {
       throw new UnsupportedOperationException();
     }
 
@@ -293,7 +311,7 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
 
     @Override
-    public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
       return this.s.prettyPrint(out);
     }
   }
@@ -304,15 +322,15 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return null;
   }
 
-  public SortedSet headSet(ObjectID arg0) {
+  public SortedSet headSet(final ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
 
-  public SortedSet subSet(ObjectID arg0, ObjectID arg1) {
+  public SortedSet subSet(final ObjectID arg0, final ObjectID arg1) {
     throw new UnsupportedOperationException();
   }
 
-  public SortedSet tailSet(ObjectID arg0) {
+  public SortedSet tailSet(final ObjectID arg0) {
     throw new UnsupportedOperationException();
   }
 
