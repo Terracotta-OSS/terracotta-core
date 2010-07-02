@@ -151,7 +151,7 @@ public class ServerStat {
     TcConfig tcConfig = tcConfigDocument.getTcConfig();
     Server[] servers = tcConfig.getServers().getServerArray();
     for (int i = 0; i < servers.length; i++) {
-      String host = servers[i].getJmxPort().getBind();
+      String host = servers[i].getHost();
       int jmxPort = servers[i].getJmxPort().getIntValue() == 0 ? DEFAULT_JMX_PORT : servers[i].getJmxPort().getIntValue();
       ServerStat stat = new ServerStat(username, password, host, jmxPort);
       System.out.println(stat.toString());
