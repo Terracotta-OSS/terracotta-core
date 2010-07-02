@@ -3,7 +3,6 @@
  */
 package com.tc.util;
 
-import com.tc.exception.ImplementMe;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
@@ -61,11 +60,6 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
   }
 
-  public boolean addAll(final RangeObjectIDSet o) {
-    // TODO::Manoj's code here
-    throw new ImplementMe();
-  }
-
   @Override
   public boolean contains(final ObjectID id) {
     final long lid = id.toLong();
@@ -89,6 +83,63 @@ final class RangeObjectIDSet extends ObjectIDSetBase {
     }
     this.size--;
     this.modCount++;
+    return true;
+  }
+
+  /**
+   * Optimized addAll method if the other collection is a RangeObjectIDSet too. <br>
+   * 
+   * XXX: Use iterator for both the range sets as they give sorted sets. find() is costlier. 
+   * XXX: More optimizations can be done. refer BitObjectIDSet.addAll
+   * XXX: Add more tests for corner cases
+   */
+  public boolean addAll(final RangeObjectIDSet rangeObjectIDSet) {
+    for (Iterator i = rangeObjectIDSet.ranges.iterator(); i.hasNext();) {
+      Range rangeToAdd = (Range) i.next();
+      if (rangeToAdd.size() <= 0) continue;
+      Range startRange = (Range) this.ranges.find(new MyLong(rangeToAdd.start));
+      Range endRange = (Range) this.ranges.find(new MyLong(rangeToAdd.end));
+
+      if (startRange != null && endRange != null) {
+        for (long l = startRange.end + 1; l < endRange.start; l++) {
+          Range o = (Range) this.ranges.find(new MyLong(l));
+          if (o != null) {
+            this.ranges.remove(o);
+            this.size -= o.size();
+          }
+        }
+        this.size += (endRange.start - startRange.end - 1);
+        startRange.end = endRange.end;
+      } else if ((startRange != null) && (endRange == null)) {
+        Range endNextRange = ((Range) this.ranges.find(new MyLong(rangeToAdd.end + 1)));
+        if (endNextRange != null) {
+          startRange.end = rangeToAdd.end;
+          startRange.merge(endNextRange);
+          this.ranges.remove(endNextRange);
+        } else {
+          startRange.end = rangeToAdd.end;
+        }
+        this.size += (rangeToAdd.end - startRange.end);
+      } else if ((endRange != null) && (startRange == null)) {
+        Range startPrevRange = ((Range) this.ranges.find(new MyLong(rangeToAdd.start - 1)));
+        if (startPrevRange != null) {
+          endRange.start = rangeToAdd.start;
+          endRange.merge(startPrevRange);
+          this.ranges.remove(startPrevRange);
+        } else {
+          endRange.start = rangeToAdd.start;
+        }
+        this.size += (endRange.start - rangeToAdd.end);
+      } else if ((endRange == null) && (startRange == null)) {
+        this.ranges.insert((Range) rangeToAdd.clone());
+        this.size += rangeToAdd.size();
+      } else {
+        // range add not needed
+      }
+      this.modCount++;
+    }
+    
+    //XXX: validate and return 
     return true;
   }
 
