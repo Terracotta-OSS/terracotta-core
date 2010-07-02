@@ -61,6 +61,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
 
     MockStage stageBo = new MockStage("Bo");
     MockStage stageCo = new MockStage("Co");
+    MockStage stageCpEv = new MockStage("CpEv");
     this.broadcastSink = stageBo.sink;
     TestServerConfigurationContext context = new TestServerConfigurationContext();
     context.transactionManager = this.transactionManager;
@@ -68,6 +69,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     context.l2Coordinator = new L2HADisabledCooridinator();
     context.addStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, stageBo);
     context.addStage(ServerConfigurationContext.COMMIT_CHANGES_STAGE, stageCo);
+    context.addStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE, stageCpEv);
     context.lockManager = this.lockManager;
 
     this.handler.initializeContext(context);
