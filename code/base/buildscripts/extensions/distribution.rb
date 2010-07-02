@@ -20,6 +20,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # the kit and bundle into a patch tarball.
   def patch(product_code = 'DSO', flavor = 'OPENSOURCE')
     @no_demo = true
+    $patch = true
     
     # Do error checking first, before going through the lengthy dist target
     descriptor_file = self.patch_descriptor_file.to_s
