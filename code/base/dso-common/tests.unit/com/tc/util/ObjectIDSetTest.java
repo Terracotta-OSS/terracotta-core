@@ -801,134 +801,87 @@ public class ObjectIDSetTest extends TCTestCase {
 
   public void testAddAll() {
 
-    final int SIZE_MILLION = 1000000;
-    final ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
-
-    // validate addAll
-    addToReferencesRandom(bitSetBasedObjectIDSet, SIZE_MILLION);
-    int randomSize = bitSetBasedObjectIDSet.size();
-
-    final ObjectIDSet bitSetBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
-
-    long startTime = System.currentTimeMillis();
-    bitSetBasedObjectIDSet2.addAll(bitSetBasedObjectIDSet);
-    long addAllTime = System.currentTimeMillis() - startTime;
-
-    System.out.println("bitSet.addAll random total time took: " + addAllTime + " ms. ");
-
-    // validate addAll
-    assertEquals(randomSize, bitSetBasedObjectIDSet2.size());
-
-    for (final ObjectID id : bitSetBasedObjectIDSet) {
-      assertTrue(bitSetBasedObjectIDSet2.contains(id));
-    }
-
-    // /do serial
-    final ObjectIDSet bitSetBasedObjectIDSetSerial = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
-    addToReferencesSerial(bitSetBasedObjectIDSetSerial, SIZE_MILLION);
-
-    assertEquals(SIZE_MILLION, bitSetBasedObjectIDSetSerial.size());
-
-    startTime = System.currentTimeMillis();
-    bitSetBasedObjectIDSet2.addAll(bitSetBasedObjectIDSetSerial);
-    addAllTime = System.currentTimeMillis() - startTime;
-
-    System.out.println("bitSet.addAll serial total time took: " + addAllTime + " ms. ");
-
-    // validate addAll
-    assertEquals(randomSize + SIZE_MILLION, bitSetBasedObjectIDSet2.size());
-
-    for (final ObjectID id : bitSetBasedObjectIDSetSerial) {
-      assertTrue(bitSetBasedObjectIDSet2.contains(id));
-    }
+    internalTestAddAll(ObjectIDSetType.BITSET_BASED_SET);
 
     // RANGE SET
     // TODO:: Uncomment once Range set implements addAll
-    /*
-    final ObjectIDSet rangeBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
-    addToReferencesRandom(rangeBasedObjectIDSet, SIZE_MILLION);
-    randomSize = rangeBasedObjectIDSet.size();
+   // internalTestAddAll(ObjectIDSetType.RANGE_BASED_SET);
 
-    final ObjectIDSet rangeBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
+  }
 
-    startTime = System.currentTimeMillis();
-    rangeBasedObjectIDSet2.addAll(rangeBasedObjectIDSet);
-    addAllTime = System.currentTimeMillis() - startTime;
-
-    System.out.println("rangeSet.addAll random total time took: " + addAllTime + " ms. ");
+  private void internalTestAddAll(ObjectIDSetType type) {
+    final int SIZE_MILLION = 1000000;
+    final ObjectIDSet set = new ObjectIDSet(type);
 
     // validate addAll
-    assertEquals(randomSize, rangeBasedObjectIDSet2.size());
+    addToReferencesRandom(set, SIZE_MILLION);
+    int randomSize = set.size();
 
-    for (final ObjectID id : rangeBasedObjectIDSet) {
-      assertTrue(rangeBasedObjectIDSet2.contains(id));
-    }
+    final ObjectIDSet set2 = new ObjectIDSet(type);
 
-    // do serial
-    final ObjectIDSet rangeBasedObjectIDSetSerial = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
-    addToReferencesSerial(rangeBasedObjectIDSetSerial, SIZE_MILLION);
+    long startTime = System.currentTimeMillis();
+    set2.addAll(set);
+    long addAllTime = System.currentTimeMillis() - startTime;
 
-    assertEquals(SIZE_MILLION, rangeBasedObjectIDSetSerial.size());
-
-    startTime = System.currentTimeMillis();
-    rangeBasedObjectIDSet2.addAll(rangeBasedObjectIDSetSerial);
-    addAllTime = System.currentTimeMillis() - startTime;
-
-    System.out.println("rangeSet.addAll serial total time took: " + addAllTime + " ms. ");
+    System.out.println( type + "Set.addAll random total time took: " + addAllTime + " ms. ");
 
     // validate addAll
-    assertEquals(randomSize + SIZE_MILLION, rangeBasedObjectIDSet2.size());
+    assertEquals(randomSize, set2.size());
 
-    for (final ObjectID id : rangeBasedObjectIDSetSerial) {
-      assertTrue(rangeBasedObjectIDSet2.contains(id));
+    for (final ObjectID id : set) {
+      assertTrue(set2.contains(id));
     }
-   
 
-    //now lets add to serial, and see if the random set exist in it
-    rangeBasedObjectIDSetSerial.addAll(rangeBasedObjectIDSet);
-    
-    for(ObjectID id : rangeBasedObjectIDSet) {
-      assertTrue(rangeBasedObjectIDSetSerial.contains(id));
+    // /do serial
+    final ObjectIDSet setSerial = new ObjectIDSet(type);
+    addToReferencesSerial(setSerial, SIZE_MILLION);
+
+    assertEquals(SIZE_MILLION, setSerial.size());
+
+    startTime = System.currentTimeMillis();
+    set2.addAll(setSerial);
+    addAllTime = System.currentTimeMillis() - startTime;
+
+    System.out.println(type + "Set.addAll serial total time took: " + addAllTime + " ms. ");
+
+    // validate addAll
+    assertEquals(randomSize + SIZE_MILLION, set2.size());
+
+    for (final ObjectID id : setSerial) {
+      assertTrue(set2.contains(id));
     }
     
-     */
+  //now lets add to serial, and see if the random set exist in it
+    setSerial.addAll(set);
+    
+    for(ObjectID id : set) {
+      assertTrue(setSerial.contains(id));
+    }
+    
   }
   
   public void testAddAllPerformance() {
     
+    internalAddAllPerformance(ObjectIDSetType.BITSET_BASED_SET);
+   // internalAddAllPerformance(ObjectIDSetType.RANGE_BASED_SET);
+      
+  }
+
+  private void internalAddAllPerformance(ObjectIDSetType type) {
     final int SIZE_10_MILLION = 10000000;
-    final ObjectIDSet bitSetBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
-    final ObjectIDSet bitSetBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
-    addToReferencesRandom(bitSetBasedObjectIDSet, SIZE_10_MILLION);
-    addToReferencesSerial(bitSetBasedObjectIDSet2, SIZE_10_MILLION);
-    int bitSize = bitSetBasedObjectIDSet.size();
-    int bitSize2 = bitSetBasedObjectIDSet2.size();
+    final ObjectIDSet set = new ObjectIDSet(type);
+    final ObjectIDSet set2 = new ObjectIDSet(type);
+    addToReferencesRandom(set, SIZE_10_MILLION);
+    addToReferencesSerial(set2, SIZE_10_MILLION);
+    int bitSize = set.size();
+    int bitSize2 = set2.size();
     
     long startTime = System.currentTimeMillis();
-    bitSetBasedObjectIDSet.addAll(bitSetBasedObjectIDSet2);   
+    set.addAll(set2);   
     long addAllTime = System.currentTimeMillis() - startTime;
     
-    System.out.println("bitSet.addAll random total time took: " + addAllTime + " ms. ");
-    assertEquals(bitSize + bitSize2, bitSetBasedObjectIDSet.size());
-    
-  
-    
-    final ObjectIDSet rangeBasedObjectIDSet = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
-    final ObjectIDSet rangeBasedObjectIDSet2 = new ObjectIDSet(ObjectIDSetType.RANGE_BASED_SET);
-    addToReferencesRandom(rangeBasedObjectIDSet, SIZE_10_MILLION);
-    addToReferencesSerial(rangeBasedObjectIDSet2, SIZE_10_MILLION);
-    
-    int rangeSize = rangeBasedObjectIDSet.size();
-    int rangeSize2 = rangeBasedObjectIDSet2.size();
-    
-    startTime = System.currentTimeMillis();
-    rangeBasedObjectIDSet.addAll(rangeBasedObjectIDSet2);   
-    addAllTime = System.currentTimeMillis() - startTime;
-    
-    System.out.println("rangeSet.addAll random total time took: " + addAllTime + " ms. ");
-    
-    assertEquals(rangeSize + rangeSize2, rangeBasedObjectIDSet.size());
-    
+    System.out.println(type + "Set.addAll performance random total time took: " + addAllTime + " ms. ");
+    assertEquals(bitSize + bitSize2, set.size());
   }
   
   
