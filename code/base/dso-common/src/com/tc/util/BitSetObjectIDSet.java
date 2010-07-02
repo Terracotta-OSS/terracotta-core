@@ -336,7 +336,6 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     public void addAll(final BitSet other) {
       if (this.start != other.start) { throw new AssertionError("Ranges : Start is not the same. mine : " + this.start
                                                                 + " other : " + other.start); }
-      // TODO::Is this right ?
       this.nextLongs |= other.nextLongs;
     }
 
