@@ -612,6 +612,9 @@ public interface TCPropertiesConsts {
    *  storageStrategy.dcv2.localcache.enabled
    *                            : The property enabled/disables the local cache when ehcache has a 
    *                              storage strategy of DCV2
+   *  storageStrategy.dcv2.eviction.period.enabled
+   *                            : The property enabled/disables the periodic eviction when ehcache has a 
+   *                              storage strategy of DCV2
    * </code>
    ********************************************************************************************************************/
   public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                            = "ehcache.clusterAllCacheManagers";
@@ -627,6 +630,7 @@ public interface TCPropertiesConsts {
   public static final String   EHCAHCE_LOCK_WRITELEVEL                                       = "ehcache.lock.writeLevel";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED               = "ehcache.storageStrategy.dcv2.localcache.enabled";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED       = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_EVICTION_PERIOD_ENABLED          = "ehcache.storageStrategy.dcv2.eviction.period.enabled";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Lock Manager Properties
