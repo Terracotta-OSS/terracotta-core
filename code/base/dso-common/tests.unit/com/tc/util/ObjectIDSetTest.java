@@ -800,13 +800,8 @@ public class ObjectIDSetTest extends TCTestCase {
   }
 
   public void testAddAll() {
-
     internalTestAddAll(ObjectIDSetType.BITSET_BASED_SET);
-
-    // RANGE SET
-    // TODO:: Uncomment once Range set implements addAll
-   // internalTestAddAll(ObjectIDSetType.RANGE_BASED_SET);
-
+    internalTestAddAll(ObjectIDSetType.RANGE_BASED_SET);
   }
 
   private void internalTestAddAll(ObjectIDSetType type) {
@@ -823,7 +818,7 @@ public class ObjectIDSetTest extends TCTestCase {
     set2.addAll(set);
     long addAllTime = System.currentTimeMillis() - startTime;
 
-    System.out.println( type + "Set.addAll random total time took: " + addAllTime + " ms. ");
+    System.out.println(type + "Set.addAll random total time took: " + addAllTime + " ms. ");
 
     // validate addAll
     assertEquals(randomSize, set2.size());
@@ -850,21 +845,19 @@ public class ObjectIDSetTest extends TCTestCase {
     for (final ObjectID id : setSerial) {
       assertTrue(set2.contains(id));
     }
-    
-  //now lets add to serial, and see if the random set exist in it
+
+    // now lets add to serial, and see if the random set exist in it
     setSerial.addAll(set);
-    
-    for(ObjectID id : set) {
+
+    for (ObjectID id : set) {
       assertTrue(setSerial.contains(id));
     }
-    
+
   }
-  
+
   public void testAddAllPerformance() {
-    
     internalAddAllPerformance(ObjectIDSetType.BITSET_BASED_SET);
-   // internalAddAllPerformance(ObjectIDSetType.RANGE_BASED_SET);
-      
+    internalAddAllPerformance(ObjectIDSetType.RANGE_BASED_SET);
   }
 
   private void internalAddAllPerformance(ObjectIDSetType type) {
@@ -875,16 +868,15 @@ public class ObjectIDSetTest extends TCTestCase {
     addToReferencesSerial(set2, SIZE_10_MILLION);
     int bitSize = set.size();
     int bitSize2 = set2.size();
-    
+
     long startTime = System.currentTimeMillis();
-    set.addAll(set2);   
+    set.addAll(set2);
     long addAllTime = System.currentTimeMillis() - startTime;
-    
+
     System.out.println(type + "Set.addAll performance random total time took: " + addAllTime + " ms. ");
     assertEquals(bitSize + bitSize2, set.size());
   }
-  
-  
+
   private void addToReferencesSerial(ObjectIDSet set, int size) {
     for (int i = 2 * size; i < size + (2 * size); i++) {
       set.add(new ObjectID(i));
