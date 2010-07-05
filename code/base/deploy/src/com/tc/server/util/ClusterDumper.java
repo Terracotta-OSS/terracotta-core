@@ -7,8 +7,6 @@ import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
-import com.tc.logging.CustomerLogging;
-import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -23,15 +21,14 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 
 public class ClusterDumper {
-  private static final TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
 
-  private final String          host;
-  private final int             port;
-  private final String          username;
-  private final String          password;
+  private final String       host;
+  private final int          port;
+  private final String       username;
+  private final String       password;
 
-  public static final String    DEFAULT_HOST  = "localhost";
-  public static final int       DEFAULT_PORT  = 9520;
+  public static final String DEFAULT_HOST = "localhost";
+  public static final int    DEFAULT_PORT = 9520;
 
   public static void main(String[] args) throws Exception {
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(ClusterDumper.class.getName(), args);
@@ -69,7 +66,6 @@ public class ClusterDumper {
     String host = commandLineBuilder.getOptionValue('n');
     String portString = commandLineBuilder.getOptionValue('p');
     int port = portString != null ? parsePort(commandLineBuilder.getOptionValue('p')) : DEFAULT_PORT;
-    
 
     if (arguments.length == 1) {
       host = DEFAULT_HOST;
@@ -80,15 +76,15 @@ public class ClusterDumper {
     }
 
     host = host == null ? DEFAULT_HOST : host;
-    
+
     try {
-      consoleLogger.info("Taking dumps by connecting " + host + ":" + port);
+      System.out.println("Taking dumps by connecting " + host + ":" + port);
       new ClusterDumper(host, port, username, password).takeDump();
     } catch (IOException ioe) {
-      consoleLogger.error("Unable to connect to host '" + host + "', port " + port
-                          + ". Are you sure there is a Terracotta server instance running there?");
+      System.out.println("Unable to connect to host '" + host + "', port " + port
+                         + ". Are you sure there is a Terracotta server instance running there?");
     } catch (SecurityException se) {
-      consoleLogger.error(se.getMessage());
+      System.out.println(se.getMessage());
       commandLineBuilder.usageAndDie();
     }
   }
@@ -99,7 +95,7 @@ public class ClusterDumper {
       port = Integer.parseInt(portString);
     } catch (NumberFormatException e) {
       port = DEFAULT_PORT;
-      consoleLogger.warn("Invalid port number specified. Using default port '" + port + "'");
+      System.out.println("Invalid port number specified. Using default port '" + port + "'");
     }
     return port;
   }
@@ -120,7 +116,7 @@ public class ClusterDumper {
 
     doServerDumps(serverGrpInfos);
     findActiveAndDumpClients(serverGrpInfos);
-    consoleLogger.info("All dumps taken. Exiting!!");
+    System.out.println("All dumps taken. Exiting!!");
   }
 
   private void doServerDumps(ServerGroupInfo[] serverGrpInfos) {
@@ -133,14 +129,14 @@ public class ClusterDumper {
         try {
           String hostName = members[j].host();
           int jmxPort = members[j].jmxPort();
-          consoleLogger.info("trying to take server dump for " + hostName + ":" + jmxPort);
+          System.out.println("trying to take server dump for " + hostName + ":" + jmxPort);
           jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
           final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
           mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, false);
           mbean.doServerDump();
-          consoleLogger.info("server dump taken for " + hostName + ":" + jmxPort);
+          System.out.println("server dump taken for " + hostName + ":" + jmxPort);
         } catch (Exception e) {
-          consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+          System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
         } finally {
           if (jmxConnector != null) {
             try {
@@ -163,7 +159,7 @@ public class ClusterDumper {
     }
 
     if (l2Infos == null) {
-      consoleLogger.warn("Active coordinator group not found, clients dump are not taken.");
+      System.out.println("Active coordinator group not found, clients dump are not taken.");
       return;
     }
 
@@ -214,7 +210,7 @@ public class ClusterDumper {
   }
 
   private void doClientsDump(String hostName, int jmxPort) {
-    consoleLogger.info("trying to take client dumps by connecting " + hostName + ":" + jmxPort);
+    System.out.println("trying to take client dumps by connecting " + hostName + ":" + jmxPort);
     JMXConnector jmxConnector = null;
     try {
       jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
@@ -225,10 +221,10 @@ public class ClusterDumper {
       for (Iterator iterator = allL1DumperMBeans.iterator(); iterator.hasNext();) {
         ObjectName l1DumperBean = (ObjectName) iterator.next();
         mbs.invoke(l1DumperBean, "doClientDump", new Object[] {}, new String[] {});
-        consoleLogger.info("dumping client " + l1DumperBean.getCanonicalName());
+        System.out.println("dumping client " + l1DumperBean.getCanonicalName());
       }
     } catch (Exception e) {
-      consoleLogger.error((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
+      System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
     } finally {
       if (jmxConnector != null) {
         try {
