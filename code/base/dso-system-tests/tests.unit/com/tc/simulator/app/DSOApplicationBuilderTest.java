@@ -10,6 +10,7 @@ import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.DSOClientConfigHelper;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.server.TCServerImpl;
 import com.tc.simulator.container.IsolationClassLoaderFactory;
 import com.tc.simulator.listener.MockListenerProvider;
@@ -32,7 +33,8 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
     server = new TCServerImpl(manager);
     server.start();
 
-    makeClientUsePort(server.getDSOListenPort());
+    factory.addServerToL1Config("localhost", server.getDSOListenPort(), 0);
+    factory.addTcPropertyToConfig(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED, "false");
 
     this.applicationConfig = new SimpleApplicationConfig();
 
