@@ -15,16 +15,18 @@ import java.util.Random;
 import java.util.Set;
 
 public final class PortChooser {
-  public static final int     MAX          = 65535;
+  public static final int           MAX          = 65535;
 
-  private static final Object VM_WIDE_LOCK = (PortChooser.class.getName() + "LOCK").intern();
-  private static final Set    chosen       = new HashSet();
-  private static final Random random       = new Random();
-  private static final Range  exclude      = EphemeralPorts.getRange();
+  private static final Object       VM_WIDE_LOCK = (PortChooser.class.getName() + "LOCK").intern();
+  private static final Set<Integer> chosen       = new HashSet<Integer>();
+  private static final Random       random       = new Random();
+  private static final Range        exclude      = EphemeralPorts.getRange();
 
   public int chooseRandomPort() {
     synchronized (VM_WIDE_LOCK) {
-      return choose();
+      int portNum = choose();
+      Assert.assertTrue(chosen.add(new Integer(portNum)));
+      return portNum;
     }
   }
 
@@ -35,7 +37,8 @@ public final class PortChooser {
         port = choose();
         if (port + 1 >= MAX) continue;
         if (!isPortUsed(port + 1)) {
-          chosen.add(new Integer(port + 1));
+          Assert.assertTrue(chosen.add(new Integer(port)));
+          Assert.assertTrue(chosen.add(new Integer(port + 1)));
           break;
         }
       } while (true);
@@ -62,8 +65,8 @@ public final class PortChooser {
         }
       } while (true);
 
-      for (int i = 1; i < numOfPorts; i++) {
-        chosen.add(new Integer(port + i));
+      for (int i = 0; i < numOfPorts; i++) {
+        Assert.assertTrue(chosen.add(new Integer(port + i)));
       }
     }
     return port;
@@ -101,12 +104,11 @@ public final class PortChooser {
 
   private synchronized int choose() {
     while (true) {
-      final Integer attempt = new Integer(getNonEphemeralPort());
-      boolean added = chosen.add(attempt);
-      if (!added) {
+      final int attempt = getNonEphemeralPort();
+      if (chosen.contains(new Integer(attempt))) {
         continue; // already picked at some point, try again
       }
-      if (canBind(attempt.intValue())) return (attempt.intValue());
+      if (canBind(attempt)) return attempt;
     }
   }
 

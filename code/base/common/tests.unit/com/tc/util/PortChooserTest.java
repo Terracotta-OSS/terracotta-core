@@ -30,7 +30,7 @@ public class PortChooserTest extends TCTestCase {
     Assert.assertTrue(this.portChooser.isPortUsed(portNum2));
     Assert.assertTrue(this.portChooser.isPortUsed(portNum2 + 1));
 
-    int numOfPorts = 10000;
+    int numOfPorts = 1000;
     int portNum3 = this.portChooser.chooseRandomPorts(numOfPorts);
     for (int i = 0; i < numOfPorts; i++) {
       Assert.assertTrue(this.portChooser.isPortUsed(portNum3 + i));
