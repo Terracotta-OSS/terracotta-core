@@ -75,7 +75,7 @@ postscripts:
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema
-        - schema
+        - config-samples/schema
   - make-eclipse-manifest:
       args:
         - lib
