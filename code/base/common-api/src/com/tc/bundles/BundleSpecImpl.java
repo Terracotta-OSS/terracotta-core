@@ -4,7 +4,7 @@
  */
 package com.tc.bundles;
 
-import org.knopflerfish.framework.VersionRange;
+import com.tc.util.version.VersionRange;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -104,6 +104,16 @@ final class BundleSpecImpl extends BundleSpec {
     return (verspec == null) ? "" : verspec;
   }
 
+  private String getMavenVersion() {
+    String mavenVersion = getVersionSpec();
+    mavenVersion = mavenVersion.replace(".SNAPSHOT", "-SNAPSHOT");
+
+    if (!mavenVersion.startsWith("[") && !mavenVersion.startsWith("(")) {
+      mavenVersion = "[" + mavenVersion + ",]";
+    }
+    return mavenVersion;
+  }
+
   @Override
   public boolean isCompatible(final String symName, final String version) {
     // symbolic-names must match
@@ -114,12 +124,7 @@ final class BundleSpecImpl extends BundleSpec {
     if (!isVersionSpecified()) return true;
 
     // otherwise check if the version is within range of the specified required version
-    final Version target = new Version(version);
-    VersionRange range = new VersionRange(getVersionSpec());
-    return range.withinRange(target);
-
-    // check for equality - we don't support version ranges yet
-    // return getVersion().equals(version);
+    VersionRange range = new VersionRange(getMavenVersion());
+    return range.contains(OSGiToMaven.bundleVersionToProjectVersion(version));
   }
-
 }

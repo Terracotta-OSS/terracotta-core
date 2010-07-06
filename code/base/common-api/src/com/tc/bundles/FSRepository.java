@@ -8,9 +8,9 @@ import org.apache.commons.io.filefilter.AndFileFilter;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.knopflerfish.framework.VersionRange;
 
 import com.tc.logging.TCLogger;
+import com.tc.util.version.VersionRange;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -35,18 +35,16 @@ public class FSRepository implements Repository {
     Collection<URL> paths = new ArrayList<URL>();
     String root = ResolverUtils.canonicalize(repoFile);
 
-    VersionRange range = new VersionRange(version.replace('-', '.'));
+    version = version.replace(".SNAPSHOT", "-SNAPSHOT");
+
+    if (!version.startsWith("[") && !version.startsWith("(")) {
+      version = "[" + version + ",]";
+    }
+
+    VersionRange range = new VersionRange(version);
 
     for (File dir : getDirs(new File(OSGiToMaven.makeBundlePathnamePrefix(root, groupId, name)))) {
-      final Version ver;
-      try {
-        ver = Version.parse(dir.getName());
-      } catch (Exception e) {
-        logger.warn("Skipping " + dir.getAbsolutePath() + " in search", e);
-        continue;
-      }
-
-      if (range.withinRange(ver)) {
+      if (range.contains(dir.getName())) {
         addIfValid(paths, OSGiToMaven.makeBundlePathname(root, groupId, name, dir.getName()));
       }
     }

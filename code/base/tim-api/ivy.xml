@@ -2,7 +2,7 @@
 <ivy-module version="2.0">
   <info organisation="org.terracotta" module="tim-api"/>
   <dependencies defaultconf="default">
-    <dependency name="knopflerfish-tc" rev="2.0.1" org="knopflerfish-tc"/>
+    <dependency name="knopflerfish-tc" rev="2.0.1-20100706" org="knopflerfish-tc"/>
     <dependency name="tim-api" rev="1.3.0-SNAPSHOT" org="org.terracotta.api" changing="true"/>
   </dependencies>
 </ivy-module>
