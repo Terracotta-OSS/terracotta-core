@@ -1852,8 +1852,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         return config;
       }
     }
-
-    logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
+    
+    // log this for custom mode only
+    if (hasBootJar) {
+      logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
+    }
+    
     return null;
   }
 
