@@ -106,11 +106,9 @@ final class BundleSpecImpl extends BundleSpec {
 
   private String getMavenVersion() {
     String mavenVersion = getVersionSpec();
-    mavenVersion = mavenVersion.replace(".SNAPSHOT", "-SNAPSHOT");
 
-    if (!mavenVersion.startsWith("[") && !mavenVersion.startsWith("(")) {
-      mavenVersion = "[" + mavenVersion + ",]";
-    }
+    mavenVersion = OSGiToMaven.mavenVersionFromOsgiVersion(mavenVersion);
+
     return mavenVersion;
   }
 

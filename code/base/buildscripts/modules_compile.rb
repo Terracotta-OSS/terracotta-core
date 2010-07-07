@@ -104,8 +104,8 @@ class BuildSubtree
     end
 
     create_data_file(config_source, build_results.classes_directory(self).to_s, :build_data)
-    if $patch
-      create_data_file(config_source, build_results.classes_directory(self).to_s, :patch_data)
+    if $patch     
+      create_data_file(config_source, build_results.classes_directory(self).to_s, :patch_data, $XXX_patch_level)
     end
   end
 
@@ -155,8 +155,14 @@ class BuildModule
         maven = MavenDeploy.new(:repository_url => repo,
           :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
           :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
-        classifier = config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
-        maven.deploy_file(module_info.jarfile.to_s, MODULES_GROUP_ID, module_info.artifact_id, classifier, module_info.version)
+        classifier = nil # no classifier
+
+        version = module_info.version
+        if (config_source[MAVEN_CLASSIFIER_CONFIG_KEY])
+          version = version + "-" + config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+        end
+
+        maven.deploy_file(module_info.jarfile.to_s, MODULES_GROUP_ID, module_info.artifact_id, classifier, version)
       end
     end
   end

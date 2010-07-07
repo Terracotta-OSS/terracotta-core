@@ -35,11 +35,7 @@ public class FSRepository implements Repository {
     Collection<URL> paths = new ArrayList<URL>();
     String root = ResolverUtils.canonicalize(repoFile);
 
-    version = version.replace(".SNAPSHOT", "-SNAPSHOT");
-
-    if (!version.startsWith("[") && !version.startsWith("(")) {
-      version = "[" + version + ",]";
-    }
+    version = OSGiToMaven.mavenVersionFromOsgiVersion(version);
 
     VersionRange range = new VersionRange(version);
 

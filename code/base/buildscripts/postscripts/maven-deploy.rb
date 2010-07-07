@@ -47,9 +47,12 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
         group = arg['groupId']
         artifact = arg['artifact']
-        classifier = arg['classifier'] || config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+        classifier = arg['classifier'] 
         version = arg[MAVEN_VERSION_CONFIG_KEY] || config_source[MAVEN_VERSION_CONFIG_KEY] ||
           config_source['version'] || build_environment.version
+        if (config_source[MAVEN_CLASSIFIER_CONFIG_KEY])
+          version = version + "-" + config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+        end
 
         # Allow override of version if a version key is specified.  If so, the value of the key
         # is the property to look up as defined in build-config.global, etc.

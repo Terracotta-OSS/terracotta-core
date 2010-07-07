@@ -21,6 +21,22 @@ public class OSGiToMaven {
     return name;
   }
 
+  public static void main(String[] args) {
+    System.err.println(mavenVersionFromOsgiVersion("1.0.SNAPSHOT"));
+    System.err.println(mavenVersionFromOsgiVersion("1.0.0.SNAPSHOT"));
+    System.err.println(mavenVersionFromOsgiVersion("1.0.0.patch1"));
+  }
+
+  public static String mavenVersionFromOsgiVersion(String version) {
+    version = version.replace(".SNAPSHOT", "-SNAPSHOT");
+    version = version.replace(".patch", "-patch");
+
+    if (!version.startsWith("[") && !version.startsWith("(")) {
+      version = "[" + version + ",]";
+    }
+    return version;
+  }
+
   public static String groupIdFromSymbolicName(final String symbolicName) {
     String name = artifactIdFromSymbolicName(symbolicName);
     int i = symbolicName.lastIndexOf(name);
@@ -42,7 +58,7 @@ public class OSGiToMaven {
     return (isSymbolicName ? artifactIdFromSymbolicName(name) : name) + "-" + bundleVersionToProjectVersion(version)
            + ".jar";
   }
-  
+
   public static String makeBundlePathname(final String root, final String symbolicName, final String version) {
     String groupId = groupIdFromSymbolicName(symbolicName);
     String artifactId = artifactIdFromSymbolicName(symbolicName);
@@ -58,7 +74,7 @@ public class OSGiToMaven {
     buf.append(makeBundleFilename(artifactId, version, false));
     return buf.toString().replace('/', File.separatorChar);
   }
-  
+
   public static String makeBundlePathnamePrefix(final String root, final String groupId, final String artifactId) {
     StringBuffer buf = new StringBuffer(root).append('/');
     if (groupId.length() > 0) buf.append(groupId.replace('.', '/')).append('/');
@@ -70,12 +86,12 @@ public class OSGiToMaven {
     return makeFlatBundlePathname(root, symbolicName, version, true);
   }
 
-  public static String makeFlatBundlePathname(final String root, final String name, final String version, final boolean isSymbolicName) {
+  public static String makeFlatBundlePathname(final String root, final String name, final String version,
+                                              final boolean isSymbolicName) {
     String artifactId = isSymbolicName ? artifactIdFromSymbolicName(name) : name;
     StringBuffer buf = new StringBuffer(root).append('/');
     buf.append(makeBundleFilename(artifactId, version, isSymbolicName));
     return buf.toString().replace('/', File.separatorChar);
   }
-
 
 }
