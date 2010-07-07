@@ -39,20 +39,20 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
    * is used to make iterators on Collection-views of the HashMap fail-fast. (See ConcurrentModificationException).
    */
 
-  private int             type;
+  private ObjectIDSetType type;
   private ObjectIDSetBase oidSet;
 
   public ObjectIDSet() {
-    this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
+    this.type = ObjectIDSetType.BITSET_BASED_SET;
     this.oidSet = new BitSetObjectIDSet();
   }
 
   public ObjectIDSet(final ObjectIDSetType oidSetType) {
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET) {
-      this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
+      this.type = ObjectIDSetType.RANGE_BASED_SET;
       this.oidSet = new RangeObjectIDSet();
     } else {
-      this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
+      this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
     }
   }
@@ -60,67 +60,54 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
   public ObjectIDSet(final Collection c) {
     if (c instanceof ObjectIDSet) {
       final ObjectIDSet o = (ObjectIDSet) c;
-      if (o.type == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
-        this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
+      if (o.type == ObjectIDSetType.BITSET_BASED_SET) {
+        this.type = ObjectIDSetType.BITSET_BASED_SET;
         this.oidSet = new BitSetObjectIDSet(o.oidSet);
-      } else if (o.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
-        this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
+      } else if (o.type == ObjectIDSetType.RANGE_BASED_SET) {
+        this.type = ObjectIDSetType.RANGE_BASED_SET;
         this.oidSet = new RangeObjectIDSet(o.oidSet);
       } else {
         throw new AssertionError("wrong ObjectIDSet type: " + o.type);
       }
     } else {
-      this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
+      this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet(c);
     }
   }
 
   public ObjectIDSet(final Collection c, final ObjectIDSetType oidSetType) {
     if (oidSetType == ObjectIDSetType.RANGE_BASED_SET) {
-      this.type = ObjectIDSetType.RANGE_BASED_SET.ordinal();
+      this.type = ObjectIDSetType.RANGE_BASED_SET;
       this.oidSet = new RangeObjectIDSet(c);
     } else {
-      this.type = ObjectIDSetType.BITSET_BASED_SET.ordinal();
+      this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet(c);
     }
   }
 
+  /* Used by Unmodifiable ObjectIDSet */
+  private ObjectIDSet(ObjectIDSetType type, ObjectIDSetBase oidSet) {
+    this.type = type;
+    this.oidSet = oidSet;
+  }
+
   public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
-    this.type = in.readInt();
-    if (this.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
+    int oidSetType = in.readInt();
+    if (oidSetType == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
+      this.type = ObjectIDSetType.RANGE_BASED_SET;
       this.oidSet = new RangeObjectIDSet();
-      this.oidSet.deserializeFrom(in);
-    } else if (this.type == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
+    } else if (oidSetType == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
+      this.type = ObjectIDSetType.BITSET_BASED_SET;
       this.oidSet = new BitSetObjectIDSet();
-      this.oidSet.deserializeFrom(in);
     } else {
       throw new AssertionError("wrong type: " + this.type);
     }
+    this.oidSet.deserializeFrom(in);
     return this;
   }
 
-  /**
-   * Optimized version of addAll to make it faster for ObjectIDSet
-   */
-  @Override
-  public boolean addAll(final Collection c) {
-    if (c instanceof ObjectIDSet) {
-      final ObjectIDSet o = (ObjectIDSet) c;
-      if (o.type == this.type) {
-        if (this.type == ObjectIDSetType.BITSET_BASED_SET.ordinal()) {
-          return ((BitSetObjectIDSet) this.oidSet).addAll((BitSetObjectIDSet) o.oidSet);
-        } else if (this.type == ObjectIDSetType.RANGE_BASED_SET.ordinal()) {
-          return ((RangeObjectIDSet) this.oidSet).addAll((RangeObjectIDSet)o.oidSet);
-        } else {
-          throw new AssertionError("wrong ObjectIDSet type: " + o.type);
-        }
-      }
-    }
-    return super.addAll(c);
-  }
-
   public void serializeTo(final TCByteBufferOutput out) {
-    out.writeInt(this.type);
+    out.writeInt(this.type.ordinal());
     this.oidSet.serializeTo(out);
   }
 
@@ -167,6 +154,26 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.add(id);
   }
 
+  /**
+   * Optimized version of addAll to make it faster for ObjectIDSet
+   */
+  @Override
+  public boolean addAll(final Collection c) {
+    if (c instanceof ObjectIDSet) {
+      final ObjectIDSet o = (ObjectIDSet) c;
+      if (o.type == this.type) {
+        if (this.type == ObjectIDSetType.BITSET_BASED_SET) {
+          return ((BitSetObjectIDSet) this.oidSet).addAll((BitSetObjectIDSet) o.oidSet);
+        } else if (this.type == ObjectIDSetType.RANGE_BASED_SET) {
+          return ((RangeObjectIDSet) this.oidSet).addAll((RangeObjectIDSet) o.oidSet);
+        } else {
+          throw new AssertionError("wrong ObjectIDSet type: " + o.type);
+        }
+      }
+    }
+    return super.addAll(c);
+  }
+
   @Override
   public String toString() {
     return this.oidSet.toString();
@@ -195,66 +202,38 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     return this.oidSet.last();
   }
 
+  public Comparator comparator() {
+    return null;
+  }
+
+  public SortedSet headSet(final ObjectID arg0) {
+    throw new UnsupportedOperationException();
+  }
+
+  public SortedSet subSet(final ObjectID arg0, final ObjectID arg1) {
+    throw new UnsupportedOperationException();
+  }
+
+  public SortedSet tailSet(final ObjectID arg0) {
+    throw new UnsupportedOperationException();
+  }
+
+  // =======================Unmodifiable ObjectIDSet Methods==================================
+
   public static ObjectIDSet unmodifiableObjectIDSet(final ObjectIDSet s) {
     return new UnmodifiableObjectIDSet(s);
   }
 
   static class UnmodifiableObjectIDSet extends ObjectIDSet {
-    final ObjectIDSet s;
 
     UnmodifiableObjectIDSet(final ObjectIDSet s) {
-      this.s = s;
-    }
-
-    @Override
-    public Object deserializeFrom(final TCByteBufferInput in) throws IOException {
-      return this.s.deserializeFrom(in);
-    }
-
-    @Override
-    public void serializeTo(final TCByteBufferOutput out) {
-      this.s.serializeTo(out);
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      return o == this || this.s.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-      return this.s.hashCode();
-    }
-
-    @Override
-    public int size() {
-      return this.s.size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-      return this.s.isEmpty();
-    }
-
-    @Override
-    public boolean contains(final Object o) {
-      return this.s.contains(o);
-    }
-
-    @Override
-    public Object[] toArray() {
-      return this.s.toArray();
-    }
-
-    @Override
-    public String toString() {
-      return this.s.toString();
+      super(s.type, s.oidSet);
     }
 
     @Override
     public Iterator iterator() {
       return new Iterator() {
-        Iterator i = UnmodifiableObjectIDSet.this.s.iterator();
+        Iterator i = UnmodifiableObjectIDSet.super.iterator();
 
         public boolean hasNext() {
           return this.i.hasNext();
@@ -271,13 +250,18 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
     }
 
     @Override
-    public boolean remove(final Object o) {
+    public boolean remove(final ObjectID id) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean containsAll(final Collection coll) {
-      return this.s.containsAll(coll);
+    public boolean add(final ObjectID id) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean remove(final Object o) {
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -300,38 +284,6 @@ public class ObjectIDSet extends AbstractSet<ObjectID> implements SortedSet<Obje
       throw new UnsupportedOperationException();
     }
 
-    @Override
-    public String toVerboseString() {
-      return this.s.toVerboseString();
-    }
-
-    @Override
-    public String toShortString() {
-      return this.s.toShortString();
-    }
-
-    @Override
-    public PrettyPrinter prettyPrint(final PrettyPrinter out) {
-      return this.s.prettyPrint(out);
-    }
-  }
-
-  // =======================SortedSet Interface Methods==================================
-
-  public Comparator comparator() {
-    return null;
-  }
-
-  public SortedSet headSet(final ObjectID arg0) {
-    throw new UnsupportedOperationException();
-  }
-
-  public SortedSet subSet(final ObjectID arg0, final ObjectID arg1) {
-    throw new UnsupportedOperationException();
-  }
-
-  public SortedSet tailSet(final ObjectID arg0) {
-    throw new UnsupportedOperationException();
   }
 
 }
