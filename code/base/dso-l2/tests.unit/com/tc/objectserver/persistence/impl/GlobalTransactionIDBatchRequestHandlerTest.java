@@ -65,7 +65,7 @@ public class GlobalTransactionIDBatchRequestHandlerTest extends TCTestCase {
       nextBatchQueue.put(new Object[] { new Long(start), new Long(end) });
     }
 
-    public boolean hasNext() {
+    public boolean isBatchRequestPending() {
       return true;
     }
 

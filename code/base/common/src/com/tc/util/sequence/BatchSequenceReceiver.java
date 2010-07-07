@@ -6,5 +6,5 @@ package com.tc.util.sequence;
 public interface BatchSequenceReceiver {
   public void setNextBatch(long start, long end);
   
-  public boolean hasNext();
+  public boolean isBatchRequestPending();
 }

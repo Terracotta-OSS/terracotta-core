@@ -73,8 +73,8 @@ public final class BatchSequence implements BatchSequenceReceiver, Sequence {
 
   // The currentBatch is not considered here as we want to greedily get the next set even if the
   // current set has some available.
-  public synchronized boolean hasNext() {
-    return this.nextBatch.hasNext();
+  public synchronized boolean isBatchRequestPending() {
+    return !this.nextBatch.hasNext();
   }
 
   public synchronized BatchSequenceProvider getProvider() {

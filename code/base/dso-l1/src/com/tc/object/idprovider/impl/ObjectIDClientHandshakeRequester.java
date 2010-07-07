@@ -26,7 +26,7 @@ public class ObjectIDClientHandshakeRequester implements ClientHandshakeCallback
 
   public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
     if (GroupID.ALL_GROUPS.equals(requestTo) || remoteNode.equals(requestTo)) {
-      handshakeMessage.setIsObjectIDsRequested(!sequence.hasNext());
+      handshakeMessage.setIsObjectIDsRequested(sequence.isBatchRequestPending());
     } else {
       handshakeMessage.setIsObjectIDsRequested(false);
     }
