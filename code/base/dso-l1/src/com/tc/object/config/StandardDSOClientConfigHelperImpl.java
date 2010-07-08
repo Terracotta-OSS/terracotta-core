@@ -32,6 +32,8 @@ import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.jam.transform.ReflectClassBuilderAdapter;
+import com.tc.license.LicenseCheck;
+import com.tc.license.util.LicenseConstants;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
@@ -1842,6 +1844,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public SessionConfiguration getSessionConfiguration(String name) {
+    LicenseCheck.checkCapability(LicenseConstants.SESSIONS);
+    
     name = ClassProcessorHelper.computeAppName(name);
 
     for (Entry<String, SessionConfiguration> entry : webApplications.entrySet()) {
