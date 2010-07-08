@@ -107,7 +107,14 @@ public class TunnelingEventHandler extends AbstractEventHandler implements Chann
       }
     }
     acceptOk = false;
-    return messageConnection;
+
+    MessageConnection rv = messageConnection;
+    if (rv == null) {
+      // if we return null here it will cause an uncaught exception and trigger VM exit prematurely
+      throw new IOException("no connection");
+    }
+
+    return rv;
   }
 
   protected synchronized void stopAccept() {
