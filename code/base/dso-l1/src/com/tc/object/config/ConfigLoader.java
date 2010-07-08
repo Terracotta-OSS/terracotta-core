@@ -120,8 +120,6 @@ public class ConfigLoader {
   }
 
   private void addWebApplication(final WebApplication webApp) {
-    LicenseCheck.checkCapability(LicenseConstants.SESSIONS);
-
     int lockType = webApp.getSynchronousWrite() ? com.tc.object.locks.LockLevel.SYNCHRONOUS_WRITE.toInt()
         : com.tc.object.locks.LockLevel.WRITE.toInt();
 
