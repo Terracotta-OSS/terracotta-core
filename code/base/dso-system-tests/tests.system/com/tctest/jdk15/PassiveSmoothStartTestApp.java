@@ -145,13 +145,19 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
   private void verifyDirtyObjectDbBackupDirs(File dirtyObjectDB, int expectedBackupCount) {
     File[] dirtyObjectDBTimeStampedDirs = dirtyObjectDB.listFiles();
+
+    while (dirtyObjectDBTimeStampedDirs.length != expectedBackupCount) {
+      System.out.println("XXX waiting for data backup dir creation. current backups: "
+                         + dirtyObjectDBTimeStampedDirs.length + "; expected: " + expectedBackupCount);
+      ThreadUtil.reallySleep(5000);
+    }
+
     for (int i = 0; i < dirtyObjectDBTimeStampedDirs.length; i++) {
       Assert.eval(new String(dirtyObjectDBTimeStampedDirs[0].getName())
           .startsWith(NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX));
       System.out.println("XXX Successfully created Timestamped DirtyObjectDB Backup dir "
                          + dirtyObjectDBTimeStampedDirs[i].getAbsolutePath());
     }
-    Assert.assertEquals(expectedBackupCount, dirtyObjectDBTimeStampedDirs.length);
   }
 
   private void checkClusterStates(int activeIndex, int passiveIndex) {
