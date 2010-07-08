@@ -4,6 +4,8 @@
 package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
@@ -429,6 +431,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
+        if (this.greediness.isGreedy()) {
+          // This should never happen.
+          // So assert here after taking a dump
+          dumpClientState();
+          String message = "Awarded mutiple times lockID=" + lock + " level=" + level;
+          System.out.println(message);
+          throw new AssertionError(message);
+        }
+
         this.greediness = this.greediness.awarded(level);
       }
       unparkFirstQueuedAcquire();
@@ -447,6 +458,11 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         acquire.unpark();
       }
     }
+  }
+
+  private void dumpClientState() {
+    TCLogger logger = TCLogging.getDumpLogger();
+    logger.warn("Hello, current client state at time of 2 greedy award = " + this.toString());
   }
 
   /**
@@ -924,13 +940,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
 
       remote.recallCommit(this.lock, contexts);
-      
+
       this.greediness = this.greediness.recallCommitted();
-      
-      if(this.greediness.isGreedy()) {
+
+      if (this.greediness.isGreedy()) {
         unparkFirstQueuedAcquire();
       }
-      
+
       return this.greediness;
     }
   }
