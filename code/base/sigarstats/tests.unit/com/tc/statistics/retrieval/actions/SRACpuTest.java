@@ -29,13 +29,44 @@ public class SRACpuTest extends TestCase {
   }
 
   public void testRetrieval() throws Exception {
+
     int cpuCount = sigar.getCpuInfoList().length;
 
     StatisticRetrievalAction action = new SRACpu();
 
-    StatisticData[] data1 = action.retrieveStatisticData();
+    StatisticData[] data1;
+    BigDecimal[][] values1;
+    
+    final MathContext mathcontext = new MathContext(1, RoundingMode.UP);
 
-    BigDecimal[][] values1 = assertCpuData(cpuCount, data1);
+    // continue looping until the CPU measurements are within the expected ranges to do the test
+    while (true) {
+      // wait a while before kicking off this test, trying to ensure that the CPU is doing as little as possible
+      Thread.sleep(5000);
+
+      data1 = action.retrieveStatisticData();
+      values1 = assertCpuData(cpuCount, data1);
+      
+      int cpuOkCount = 0;
+      for (int i = 0; i < cpuCount; i++) {
+        // applying rounding for some occasional sampling errors compensation
+        BigDecimal values1_0 = values1[i][0].round(mathcontext);
+        BigDecimal values1_1 = values1[i][1].round(mathcontext);
+        
+        System.out.println("baseline test values for cpu " + i + ": " + values1_0 + " <= 0.9, " + values1_1 + " >= 0.0");
+
+        if (values1_0.compareTo(new BigDecimal("0.9")) <= 0 &&
+            values1_1.compareTo(new BigDecimal("0.0")) >= 0) {
+          cpuOkCount++;
+        }
+      }
+      
+      if (cpuCount == cpuOkCount) {
+        System.out.println("baseline test values are acceptable, proceeding to next test phase");
+        break;
+      }
+      System.out.println("baseline test values not acceptable, doing another sampling");
+    }
 
     // creating more threads than CPUs, this should have at least one of these threads running on each CPU
     int threadCount = cpuCount*2;
@@ -59,8 +90,6 @@ public class SRACpuTest extends TestCase {
     for (int i = 0; i < threadCount; i++) {
       threads[i].join();
     }
-
-    final MathContext mathcontext = new MathContext(2, RoundingMode.UP);
 
     // assert that the cpu usage was higher during the second data collection
     for (int i = 0; i < cpuCount; i++) {
