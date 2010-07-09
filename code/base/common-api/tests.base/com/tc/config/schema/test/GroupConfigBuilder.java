@@ -35,8 +35,10 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
     out += openElement("mirror-group", attr);
 
     out += this.members.toString();
-
-    out += this.ha.toString();
+    
+    if (ha != null) {
+      out += this.ha.toString();
+    }
 
     out += closeElement("mirror-group");
 

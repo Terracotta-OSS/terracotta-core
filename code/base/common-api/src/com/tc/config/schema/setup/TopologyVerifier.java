@@ -3,13 +3,15 @@
  */
 package com.tc.config.schema.setup;
 
+import org.apache.xmlbeans.XmlException;
+
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.server.ServerConnectionValidator;
-import com.tc.util.Assert;
+import com.tc.util.ActiveCoordinatorHelper;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
@@ -22,19 +24,22 @@ import java.util.Map;
 import java.util.Set;
 
 public class TopologyVerifier {
-  private final Servers                   oldServersBean;
-  private final Servers                   newServersBean;
-  private final ActiveServerGroupsConfig  oldGroupsInfo;
-  private final ServerConnectionValidator serverConnectionValidator;
+  private final Servers                                oldServersBean;
+  private final Servers                                newServersBean;
+  private final ActiveServerGroupsConfig               oldGroupsInfo;
+  private final ServerConnectionValidator              serverConnectionValidator;
+  private final StandardL2TVSConfigurationSetupManager setupManager;
 
-  private static final TCLogger           logger = TCLogging.getLogger(TopologyVerifier.class);
+  private static final TCLogger                        logger = TCLogging.getLogger(TopologyVerifier.class);
 
   TopologyVerifier(MutableBeanRepository oldServers, MutableBeanRepository newServers,
-                   ActiveServerGroupsConfig oldGroupsInfo, ServerConnectionValidator serverConnectionValidator) {
+                   ActiveServerGroupsConfig oldGroupsInfo, ServerConnectionValidator serverConnectionValidator,
+                   StandardL2TVSConfigurationSetupManager setupManager) {
     this.oldServersBean = (Servers) oldServers.bean();
     this.newServersBean = (Servers) newServers.bean();
     this.oldGroupsInfo = oldGroupsInfo;
     this.serverConnectionValidator = serverConnectionValidator;
+    this.setupManager = setupManager;
   }
 
   /**
@@ -140,23 +145,37 @@ public class TopologyVerifier {
   }
 
   private boolean isHaModeSame() {
-    MirrorGroup[] newGroupsInfo = newServersBean.getMirrorGroups().getMirrorGroupArray();
-    for (MirrorGroup newGroupInfo : newGroupsInfo) {
-      String groupName = newGroupInfo.getGroupName();
-      for (String member : newGroupInfo.getMembers().getMemberArray()) {
-        ActiveServerGroupConfig oldAsgc = this.oldGroupsInfo.getActiveServerGroupForL2(member);
-        if (oldAsgc != null) {
-          Ha newHa = newGroupInfo.getHa();
-          Ha oldHa = oldAsgc.getHaHolder().getHa();
-          if (!oldHa.getMode().equals(newHa.getMode())) {
-            logger.warn("The mirror group " + groupName + " High Availability mode has changed.");
-            return false;
+    MirrorGroup[] newServerGroupsInfo = ActiveCoordinatorHelper.generateGroupNames(newServersBean.getMirrorGroups()
+        .getMirrorGroupArray());
+    MirrorGroup[] oldServerGroupsInfo = ActiveCoordinatorHelper.generateGroupNames(oldServersBean.getMirrorGroups()
+        .getMirrorGroupArray());
+
+    for (MirrorGroup newGroupInfo : newServerGroupsInfo) {
+      for (MirrorGroup oldGroupInfo : oldServerGroupsInfo) {
+        if (oldGroupInfo.getGroupName().equals(newGroupInfo.getGroupName())) {
+          if (isHaModeSame(oldGroupInfo.getHa(), newGroupInfo.getHa())) {
+            continue;
           }
-          break;
+          logger.warn("The mirror group " + oldGroupInfo.getGroupName() + " High Availability mode has changed.");
+          return false;
         }
       }
     }
+
     return true;
+  }
+
+  private boolean isHaModeSame(Ha oldHa, Ha newHa) {
+    if (newHa == null) {
+      try {
+        newHa = this.setupManager.getCommomOrDefaultHa().getHa();
+      } catch (XmlException e) {
+        return false;
+      }
+    }
+
+    if (oldHa.getMode().equals(newHa.getMode())) { return true; }
+    return false;
   }
 
   private TopologyReloadStatus checkExistingServerConfigIsSame() {
@@ -205,13 +224,11 @@ public class TopologyVerifier {
         || !validatePorts(oldServer.getJmxPort(), newServer.getJmxPort())
         || !validatePorts(oldServer.getL2GroupPort(), newServer.getL2GroupPort())) {
       logger.warn("Server port configuration was changed for server " + oldServer.getName()
-                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort().getBind() + ":"
-                  + oldServer.getDsoPort().getIntValue() + "}, {" + oldServer.getL2GroupPort().getBind() + ":"
-                  + oldServer.getL2GroupPort().getIntValue() + "}, {" + oldServer.getJmxPort().getBind() + ":"
-                  + oldServer.getJmxPort().getIntValue() + "}] to [ {" + newServer.getDsoPort().getBind() + ":"
-                  + newServer.getDsoPort().getIntValue() + "}, {" + newServer.getL2GroupPort().getBind() + ":"
-                  + newServer.getL2GroupPort().getIntValue() + "}, {" + newServer.getJmxPort().getBind() + ":"
-                  + newServer.getJmxPort().getIntValue() + "}]");
+                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort() + "}, {"
+                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] :"
+                  + ". [dso-port, l2-group-port, jmx-port] [ {" + oldServer.getDsoPort() + "}, {"
+                  + oldServer.getL2GroupPort() + "}, {" + oldServer.getJmxPort() + "}] to [ {" + newServer.getDsoPort()
+                  + "}, {" + newServer.getL2GroupPort() + "}, {" + newServer.getJmxPort() + "}]");
       return false;
     }
 
@@ -231,11 +248,16 @@ public class TopologyVerifier {
   }
 
   private boolean validatePorts(BindPort oldValue, BindPort newValue) {
-    Assert.assertNotNull(oldValue);
-    Assert.assertNotNull(newValue);
+    Integer oldPort = oldValue != null ? oldValue.getIntValue() : null;
+    Integer newPort = newValue != null ? newValue.getIntValue() : null;
 
-    if (oldValue.getIntValue() != newValue.getIntValue()) return false;
-    return validatePortAddress(oldValue.getBind(), newValue.getBind());
+    if ((oldPort == null && newPort == null)) {
+      return true;
+    } else if (oldPort != null && oldPort.equals(newPort)) {
+      // check the bind address
+      return validatePortAddress(oldValue.getBind(), newValue.getBind());
+    }
+    return false;
   }
 
   private boolean validatePortAddress(String oldValue, String newValue) {

@@ -155,7 +155,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.configurationCreator.reloadServersConfiguration(changedL2sBeanRepository, false);
 
     TopologyVerifier topologyVerifier = new TopologyVerifier(serversBeanRepository(), changedL2sBeanRepository,
-                                                             this.activeServerGroupsConfig, serverConnectionValidator);
+                                                             this.activeServerGroupsConfig, serverConnectionValidator, this);
     TopologyReloadStatus status = topologyVerifier.checkAndValidateConfig();
     if (TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE != status) { return status; }
 
