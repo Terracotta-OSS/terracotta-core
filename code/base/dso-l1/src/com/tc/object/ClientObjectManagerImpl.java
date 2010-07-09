@@ -77,6 +77,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Semaphore;
 
 public class ClientObjectManagerImpl implements ClientObjectManager, ClientHandshakeCallback, PortableObjectProvider,
     Evictable, PrettyPrintable {
@@ -140,6 +141,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                                                                                }
 
                                                                              };
+  private final Semaphore                       creationSemaphore            = new Semaphore(1, true);
 
   public ClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                  final DSOClientConfigHelper clientConfiguration, final ObjectIDProvider idProvider,
@@ -325,9 +327,10 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   public TCObject lookupOrCreate(final Object pojo) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
-    return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), GroupID.NULL_ID);
+    return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo),
+                                    GroupID.NULL_ID);
   }
-  
+
   public TCObject lookupOrCreate(final Object pojo, GroupID gid) {
     if (pojo == null) { return TCObjectFactory.NULL_TC_OBJECT; }
     return lookupOrCreateIfNecesary(pojo, this.appEventContextFactory.createNonPortableEventContext(pojo), gid);
@@ -868,7 +871,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
       // TODO:: Optimize this, do lazy instantiation
       TCObject root = null;
       if (isLiteralPojo(rootPojo)) {
-        root = basicCreateIfNecessary(rootPojo, GroupID.NULL_ID);
+        root = basicCreate(rootPojo);
       } else {
         root = lookupOrCreate(rootPojo, this.appEventContextFactory.createNonPortableRootContext(rootName, rootPojo));
       }
@@ -887,6 +890,11 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
 
     return lookupObject(rootID, null, noDepth);
+  }
+
+  private TCObject basicCreate(final Object rootPojo) {
+    reserveObjectIds(1, GroupID.NULL_ID);
+    return basicCreateIfNecessary(rootPojo, GroupID.NULL_ID);
   }
 
   private TCObject basicLookupByID(final ObjectID id) {
@@ -939,7 +947,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     }
   }
 
-  private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action, GroupID gid) {
+  private void traverse(final Object root, final NonPortableEventContext context, final TraversalAction action,
+                        GroupID gid) {
     // if set this will be final exception thrown
     Throwable exception = null;
 
@@ -1073,13 +1082,38 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return obj;
   }
 
-  private synchronized List basicCreateIfNecessary(final List pojos, GroupID gid) {
-    waitUntilRunning();
-    final List tcObjects = new ArrayList(pojos.size());
-    for (final Iterator i = pojos.iterator(); i.hasNext();) {
-      tcObjects.add(basicCreateIfNecessary(i.next(), gid));
+  private List basicCreateIfNecessary(final List pojos, GroupID gid) {
+    synchronized (this) {
+      waitUntilRunning();
     }
-    return tcObjects;
+
+    canCreate();
+    reserveObjectIds(pojos.size(), gid);
+
+    synchronized (this) {
+      final List tcObjects = new ArrayList(pojos.size());
+      for (final Iterator i = pojos.iterator(); i.hasNext();) {
+        tcObjects.add(basicCreateIfNecessary(i.next(), gid));
+      }
+      allowCreation();
+      return tcObjects;
+    }
+  }
+
+  private void allowCreation() {
+    creationSemaphore.release();
+  }
+
+  private void canCreate() {
+    try {
+      creationSemaphore.acquire();
+    } catch (InterruptedException e) {
+      // do nothing
+    }
+  }
+
+  private void reserveObjectIds(int size, GroupID gid) {
+    this.idProvider.reserve(size, gid);
   }
 
   private ObjectID nextObjectID(final ClientTransaction txn, final Object pojo, GroupID gid) {

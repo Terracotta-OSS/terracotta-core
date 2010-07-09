@@ -15,4 +15,6 @@ public interface ObjectIDProvider {
 
   public ObjectID next(ClientTransaction txn, Object pojo, GroupID gid);
 
+  public void reserve(int size, GroupID gid);
+
 }
