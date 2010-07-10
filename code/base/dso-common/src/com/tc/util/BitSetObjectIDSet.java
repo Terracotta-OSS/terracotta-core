@@ -45,9 +45,16 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     final Iterator otherRanges = o.ranges.iterator();
     final ArrayList toAdd = new ArrayList();
     BitSet currentMine = null;
-    while (myRanges.hasNext() && otherRanges.hasNext()) {
+    while (otherRanges.hasNext()) {
       if (currentMine == null) {
-        currentMine = (BitSet) myRanges.next();
+        // First Iteration
+        if (myRanges.hasNext()) {
+          currentMine = (BitSet) myRanges.next();
+        } else {
+          // No ranges in this set, just clone and add and return
+          cloneAndAddAll(otherRanges);
+          break;
+        }
       }
       final BitSet nextOther = (BitSet) otherRanges.next();
       while (currentMine.start < nextOther.start && myRanges.hasNext()) {
@@ -59,12 +66,15 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
         currentMine.addAll(nextOther);
         this.size += currentMine.size() - sizeBefore;
       } else {
-        // Either currentMine.start > nextOther.start || !myRanges.hasNext()
+        // currentMine.start > nextOther.start || !myRanges.hasNext()
         toAdd.add(nextOther);
+        if (currentMine.start < nextOther.start && !myRanges.hasNext()) {
+          // No more ranges in this set, copy the rest directly saving a copy
+          cloneAndAddAll(otherRanges);
+        }
       }
     }
     cloneAndAddAll(toAdd.iterator());
-    cloneAndAddAll(otherRanges);
     return (oldSize < this.size);
   }
 
@@ -72,7 +82,8 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     for (; i.hasNext();) {
       final BitSet cloned = (BitSet) ((BitSet) i.next()).clone();
       this.size += cloned.size();
-      this.ranges.insert(cloned);
+      boolean added = this.ranges.insert(cloned);
+      if (!added) { throw new AssertionError("cloned : " + cloned + " is not added to this set : " + this); }
     }
   }
 
