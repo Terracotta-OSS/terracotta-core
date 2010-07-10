@@ -4,12 +4,15 @@
  */
 package com.tc.util;
 
+import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.TCRuntimeException;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.ObjectID;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet.ObjectIDSetType;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +50,147 @@ public class ObjectIDSetTest extends TCTestCase {
       Assert.assertTrue(bitSetBasedObjectIDSet.contains(oid));
       Assert.assertTrue(rangeBasedObjectIDSet.contains(oid));
     }
+  }
+
+  public void testFailingAddAll() {
+    ObjectIDSet oidSet1 = new ObjectIDSet();
+    HashSet hashSet = new HashSet();
+    long failedIDs[] = new long[] { 1884, 1371, 595, 440, 730, 1382, 1781, 217, 1449, 1043, 1556, 1679, 347, 860, 1020,
+        1619, 1801, 1146, 769, 19, 532, 655, 692, 1268, 1793, 1533, 1616, 1702, 1241, 1754, 633, 1192, 166, 1312, 179,
+        945, 44, 755, 1390, 1070, 431, 293, 1319, 339, 852, 103, 141, 874, 1643, 592, 1477, 242, 1165, 777, 953, 1580,
+        554, 866, 1441, 1520, 507, 807, 301, 1327, 609, 1098, 369, 364, 1182, 1062, 36, 714, 74, 1228, 453, 399, 1275,
+        581, 1684, 325, 897, 1929, 1566, 1324, 1401, 475, 1846, 298, 1423, 660, 564, 977, 1503, 408, 1625, 1569, 148,
+        1054, 1334, 1646, 605, 1198, 336, 249, 13, 392, 1135, 1235, 231, 131, 1037, 76, 1586, 809, 1858, 985, 1345,
+        186, 526, 784, 838, 1253, 1542, 485, 998, 620, 1096, 910, 1416, 5, 1839, 958, 557, 239, 164, 241, 1898, 1728,
+        113, 1029, 1772, 383, 675, 518, 698, 1261, 1764, 1143, 105, 1379, 68, 639, 918, 801, 1206, 1511, 1594, 1149,
+        792, 1917, 493, 1006, 54, 1080, 172, 1791, 320, 1267, 757, 746, 1316, 1854, 290, 572, 683, 467, 1298, 1535,
+        631, 738, 690, 341, 1342, 1649, 1495, 1361, 123, 832, 1216, 1432, 1705, 446, 891, 1640, 808, 1812, 851, 1530,
+        650, 1537, 218, 367, 1088, 636, 1244, 1452, 1893, 266, 1023, 1782, 22, 178, 1166, 535, 1794, 296, 1697, 1370,
+        575, 437, 1297, 612, 1189, 1128, 510, 422, 786, 1063, 1179, 677, 816, 950, 1292, 668, 1442, 1885, 596, 83,
+        1522, 432, 1579, 1721, 1802, 357, 865, 1992, 966, 43, 551, 942, 1480, 454, 108, 1668, 153, 794, 1254, 1353,
+        1909, 1284, 833, 311, 1694, 1387, 1439, 193, 841, 1867, 1219, 1553, 132, 1488, 462, 661, 35, 1040, 707, 824,
+        1733, 974, 1550, 376, 1615, 733, 1820, 589, 1759, 100, 1676, 258, 1015, 1457, 1109, 1622, 859, 1101, 413, 1048,
+        140, 30, 607, 1561, 201, 352, 543, 928, 1227, 715, 287, 1174, 1687, 502, 1305, 881, 1741, 400, 1331, 621, 819,
+        1855, 328, 1171, 645, 91, 1093, 1053, 1545, 389, 1404, 776, 990, 1278, 1916, 1396, 1606, 902, 1504, 478, 1587,
+        51, 210, 185, 1236, 722, 1262, 1671, 1748, 1775, 335, 250, 1859, 1415, 1388, 461, 75, 1487, 519, 628, 1323,
+        1836, 1908, 1710, 762, 1158, 848, 14, 1136, 588, 1197, 1032, 999, 486, 1118, 1144, 1656, 384, 1071, 1584, 1465,
+        1380, 67, 234, 701, 747, 913, 674, 161, 344, 1713, 873, 1315, 1828, 1079, 754, 405, 1007, 494, 580, 116, 934,
+        421, 1641, 6, 279, 856, 1205, 1664, 1339, 1152, 1901, 319, 693, 1362, 226, 1790, 739, 567, 445, 1514, 1985,
+        1087, 682, 1431, 169, 982, 1270, 1874, 59, 1496, 470, 896, 124, 827, 1213, 1595 };
+
+    for (long failedID : failedIDs) {
+      ObjectID oid = new ObjectID(failedID, 1);
+      oidSet1.add(oid);
+      hashSet.add(oid);
+    }
+
+    Assert.assertEquals(435, oidSet1.size());
+    Assert.assertEquals(hashSet.size(), oidSet1.size());
+    Assert.assertEquals(failedIDs.length, oidSet1.size());
+
+    ObjectIDSet oidSet2 = new ObjectIDSet();
+    oidSet2.add(new ObjectID(410, 1));
+
+    boolean added = oidSet1.addAll(oidSet2);
+    Assert.assertTrue(added);
+
+    hashSet.addAll(oidSet2);
+
+    Assert.assertEquals(failedIDs.length + 1, oidSet1.size());
+    Assert.assertEquals(hashSet, oidSet1);
+  }
+
+  public void testFailingAddAll2() {
+    long thisIDs[] = new long[] { 72057594037928192l,
+        parseLong("10000000000000000000000000000000000000000000000000000000", 2), 72057594037928768l,
+        parseLong("10", 2), 72057594037929216l, Long.parseLong("10000", 2), 72057594037929600l,
+        parseLong("1000000000000000000000000000000", 2) };
+    long otherIDs[] = new long[] { 72057594037927936l,
+        parseLong("1111000011110000101101001111001011110000111100101101001011011", 2), 72057594037928000l,
+        parseLong("1111000010110100101001011011010010101101100001111000111100001111", 2), 72057594037928064l,
+        parseLong("101101101111001010010110110101101001000111010011111000011110000", 2), 72057594037928128l,
+        parseLong("1010010110100100000111100001111001011010000111100111101001011010", 2), 72057594037928192l,
+        parseLong("1111000001110001011000000110000111100001111010011110000111100101", 2), 72057594037928256l,
+        parseLong("111100011110010110100000111101011011010110101111000101011000", 2), 72057594037928320l,
+        parseLong("1010011110000110100001011010011010110110101101010001111010110101", 2), 72057594037928384l,
+        parseLong("1111001011110010110100101101111100001111000011110010110100001", 2), 72057594037928448l,
+        parseLong("10010110100100000011010010110010111100001111010011010010110100", 2), 72057594037928512l,
+        parseLong("100101001011011111000010100101110001111000011110111101000011111", 2), 72057594037928576l,
+        parseLong("1111000011110010101101001101010011000000111000101101001111110000", 2), 72057594037928640l,
+        parseLong("111100001111010010110100101100101111001001001011110010111100", 2), 72057594037928704l,
+        parseLong("101101111111010111000001110000110000010110000101101001111010011", 2), 72057594037928768l,
+        parseLong("1010010000001110001111100011110001111001101101011010011010010100", 2), 72057594037928832l,
+        parseLong("111100001011000010110100111100101101000011110000110101101001", 2), 72057594037928896l,
+        parseLong("11110010111100101101001011010011010000111100001111010010010011", 2), 72057594037928960l,
+        parseLong("1111000011110000111110000111100000111011010110110100101101001010", 2), 72057594037929024l,
+        parseLong("1000111100001111000111100001111111000010101101001011011010110100", 2), 72057594037929088l,
+        parseLong("111100100100101101001011000011111100001111010011010010111100001", 2), 72057594037929152l,
+        parseLong("1101001001010110010110100001101110000110100101101001111000011110", 2), 72057594037929216l,
+        parseLong("10110110101101100011111000111111100011110000011010010111100100", 2), 72057594037929280l,
+        parseLong("111100101111001111110010111000001111000001111010100100000111001", 2), 72057594037929344l,
+        parseLong("1000011110100111100001101101101010010110100101100001011010010110", 2), 72057594037929408l,
+        parseLong("110100100101001111011010010100101101001011010011111100001101001", 2), 72057594037929472l,
+        parseLong("1111100001111001111100001111000010010110101101100111011010010101", 2), 72057594037929536l,
+        parseLong("11110100101101000111100011110100101001011010011000111101101000", 2), 72057594037929600l,
+        parseLong("1101000011010010111100001111000010110111110000111101001111000011", 2), 72057594037929664l,
+        parseLong("111100000111101101001000010010110101101001111010010111100101100", 2), 72057594037929728l,
+        parseLong("1000011100000111010110110101101101011011110010011100001110000010", 2), 72057594037929792l,
+        parseLong("1101001011010000111100001101001011010010101101001011100001111001", 2), 72057594037929856l,
+        parseLong("10110101001111010010110100101101001011010010110100100100101100", 2), 72057594037929920l,
+        parseLong("1111000011010011", 2) };
+
+    ObjectIDSet oidSet = createBitSetObjectFrom(thisIDs);
+    ObjectIDSet other = createBitSetObjectFrom(otherIDs);
+
+    HashSet oidHashSet = new HashSet(oidSet);
+    HashSet otherHashSet = new HashSet(other);
+
+    oidSet.addAll(other);
+    oidHashSet.addAll(otherHashSet);
+
+    Assert.assertEquals(oidSet.size(), oidHashSet.size());
+    Assert.assertEquals(oidSet, oidHashSet);
+  }
+
+  private long parseLong(String longStr, int base) {
+    if (longStr.length() < 64) {
+      return Long.parseLong(longStr, base);
+    } else {
+      long l = Long.parseLong(longStr.substring(1), base);
+      long highBit = 1L << 63;
+      l |= highBit;
+      Assert.assertEquals(longStr, Long.toBinaryString(l));
+      return l;
+    }
+  }
+
+  private ObjectIDSet createBitSetObjectFrom(long[] ids) {
+    ObjectIDSet oidSet = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    assertEquals(0, ids.length % 2);
+    int size = getSizeFromBitSetIDs(ids);
+    TCByteBufferOutputStream stream = new TCByteBufferOutputStream();
+    stream.writeInt(ObjectIDSetType.BITSET_BASED_SET.ordinal());
+    stream.writeInt(size);
+    for (long id : ids) {
+      stream.writeLong(id);
+    }
+    stream.close();
+    TCByteBuffer[] data = stream.toArray();
+    TCByteBufferInputStream input = new TCByteBufferInputStream(data);
+    try {
+      oidSet.deserializeFrom(input);
+    } catch (IOException e) {
+      throw new TCRuntimeException(e);
+    }
+    return oidSet;
+  }
+
+  private int getSizeFromBitSetIDs(long[] ids) {
+    int size = 0;
+    for (int i = 1; i < ids.length; i += 2) {
+      size += Long.bitCount(ids[i]);
+    }
+    return size;
   }
 
   public void testIterator() {
