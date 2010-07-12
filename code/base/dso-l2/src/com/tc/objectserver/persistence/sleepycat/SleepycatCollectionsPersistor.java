@@ -119,6 +119,7 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
     PersistenceTransaction tx = ptp.newTransaction();
     long totalEntriesDeleted = 0;
     int mapEntriesDeleted = 0;
+    int accumulatedDeletes = 0;
 
     try {
       for (final ObjectID id : oids) {
@@ -130,8 +131,10 @@ public class SleepycatCollectionsPersistor extends SleepycatPersistorBase {
         while (true) {
           mapEntriesDeleted = markForDeletion(id, tx);
           totalEntriesDeleted += mapEntriesDeleted;
-          if (mapEntriesDeleted >= DELETE_BATCH_SIZE) {
+          accumulatedDeletes += mapEntriesDeleted;
+          if (accumulatedDeletes >= DELETE_BATCH_SIZE) {
             tx.commit();
+            accumulatedDeletes = 0;
             tx = ptp.newTransaction();
           } else {
             break;
