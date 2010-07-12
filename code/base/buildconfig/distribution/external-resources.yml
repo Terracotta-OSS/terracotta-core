@@ -85,7 +85,7 @@ artifacts:
   - maven_artifact: false
     name: EHCACHE-CORE-LICENSE.txt
     destination: ehcache/licenses
-    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/LICENSE.txt
+    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/EHCACHE-CORE-LICENSE.txt
 
   - maven_artifact: false
     name: THIRD-PARTY-LICENSES.txt
