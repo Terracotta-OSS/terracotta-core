@@ -151,14 +151,14 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
       } else {
         debugLog("A DIFF-session client is trying to connect - reply FAIL");
         logger.info("Sending OOO handshake fail message to a different session client " + getConnectionId());
-        OOOProtocolMessage reply = createHandshakeReplyFailMessage(delivery.getReceiver().getReceived());
-        sendMessage(reply);
+        long localAck = delivery.getReceiver().getReceived();
+        sendMessage(createHandshakeReplyFailMessage(localAck));
         handshakeMode.set(false);
         if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, false);
         channelConnected.set(false);
         resetStack();
         delivery.resume();
-        delivery.receive(reply);
+        delivery.receive(createHandshakeReplyFailMessage(localAck));
         if (!channelConnected.get()) {
           channelConnected.set(true);
           receiveLayer.notifyTransportConnected(this);
