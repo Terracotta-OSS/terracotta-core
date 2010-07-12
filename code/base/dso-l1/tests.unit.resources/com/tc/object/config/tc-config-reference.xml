@@ -290,7 +290,7 @@
 
          Default: 'networked-active-passive'
       -->
-      <mode>disk-based-active-passive</mode>
+      <mode>networked-active-passive</mode>
       
       <!-- This section allows you to declare the election time window, 
          which is used when servers run in network-based active-passive mode. 
