@@ -27,6 +27,7 @@ public abstract class AbstractStatisticsTransparentTestBase extends TransparentT
 
   protected void waitForAllNodesToConnectToGateway(final StatisticsGatewayMBean statGateway, final int nodeCount) throws InterruptedException {
     int currentNodeCount;
+    Thread.sleep(2000);
     while ((currentNodeCount = statGateway.getConnectedAgentChannelIDs().length) < nodeCount) {
       Thread.sleep(500);
       System.out.println("Currently "+currentNodeCount+" nodes connected to gateway, waiting for "+nodeCount);
