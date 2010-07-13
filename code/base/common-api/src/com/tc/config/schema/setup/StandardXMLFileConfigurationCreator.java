@@ -170,7 +170,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       String portText = matcher.group(2);
 
       try {
-        return new ServerConfigurationSource(host, Integer.parseInt(portText));
+        return new ServerConfigurationSource(host.trim(), Integer.parseInt(portText.trim()));
       } catch (Exception e) {/**/
       }
     }
