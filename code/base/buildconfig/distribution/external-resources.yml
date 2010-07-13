@@ -59,13 +59,13 @@ artifacts:
     groupId: org.slf4j
     artifactId: slf4j-api
     version: 1.5.11
-    destination: ehcache
+    destination: ehcache/lib
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
     version: 1.5.11
-    destination: ehcache
+    destination: ehcache/lib
     
   - maven_artifact: false
     name: README.html
