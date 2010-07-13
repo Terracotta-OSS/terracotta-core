@@ -199,6 +199,15 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } finally {
       moveWaiterToPending(waiter);
       acquireAll(remote, thread, waiter.getReacquires());
+      // Temporary assert: check to see that all the contexts for this thread have been removed from the queue.
+      for (final LockStateNode s : this) {
+        if (!(s instanceof LockHold) && s.getOwner().equals(waiter.getOwner())) {
+          dumpClientState();
+          throw new AssertionError("Found a wait context thread id which shouldn't have been there. See dump of lock. "
+                                   + lock);
+        }
+      }
+
     }
   }
 
@@ -431,7 +440,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
-        if (this.greediness.isGreedy()) {
+        if (this.greediness.isGreedy() || holdCount(LockLevel.READ) > 0 || holdCount(LockLevel.WRITE) > 0) {
           // This should never happen.
           // So assert here after taking a dump
           dumpClientState();
