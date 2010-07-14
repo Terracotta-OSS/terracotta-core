@@ -4,8 +4,6 @@
 package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
@@ -199,15 +197,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     } finally {
       moveWaiterToPending(waiter);
       acquireAll(remote, thread, waiter.getReacquires());
-      // Temporary assert: check to see that all the contexts for this thread have been removed from the queue.
-      for (final LockStateNode s : this) {
-        if (!(s instanceof LockHold) && s.getOwner().equals(waiter.getOwner())) {
-          dumpClientState();
-          throw new AssertionError("Found a wait context thread id which shouldn't have been there. See dump of lock. "
-                                   + lock);
-        }
-      }
-
     }
   }
 
@@ -440,15 +429,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       throws GarbageLockException {
     if (ThreadID.VM_ID.equals(thread)) {
       synchronized (this) {
-        if (this.greediness.isGreedy() || holdCount(LockLevel.READ) > 0 || holdCount(LockLevel.WRITE) > 0) {
-          // This should never happen.
-          // So assert here after taking a dump
-          dumpClientState();
-          String message = "Awarded mutiple times lockID=" + lock + " level=" + level;
-          System.out.println(message);
-          throw new AssertionError(message);
-        }
-
         this.greediness = this.greediness.awarded(level);
       }
       unparkFirstQueuedAcquire();
@@ -467,11 +447,6 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         acquire.unpark();
       }
     }
-  }
-
-  private void dumpClientState() {
-    TCLogger logger = TCLogging.getDumpLogger();
-    logger.warn("Hello, current client state at time of 2 greedy award = " + this.toString());
   }
 
   /**

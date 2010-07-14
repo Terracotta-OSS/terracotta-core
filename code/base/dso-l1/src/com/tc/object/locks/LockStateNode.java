@@ -143,12 +143,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
   static class PendingLockHold extends LockStateNode {
     private final LockLevel  level;
     private final Thread     javaThread;
-    final Semaphore          permit      = new Semaphore(0);
-    
-    private volatile boolean delegates   = true;
+    final Semaphore          permit           = new Semaphore(0);
 
-    volatile boolean         responded   = false;
-    volatile boolean         awarded     = false;
+    private volatile boolean delegates        = true;
+
+    volatile boolean         responded        = false;
+    volatile boolean         awarded          = false;
 
     private volatile String  delegationMethod = "Not Delegated";
 
@@ -352,10 +352,15 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     void unpark() {
-      synchronized (waitObject) {
-        unparked = true;
-        waitObject.notifyAll();
-      }
+      LOCK_TIMER.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          synchronized (waitObject) {
+            unparked = true;
+            waitObject.notifyAll();
+          }
+        }
+      }, 0);
     }
 
     @Override
