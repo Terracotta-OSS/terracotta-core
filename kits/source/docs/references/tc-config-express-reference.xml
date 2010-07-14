@@ -158,7 +158,7 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
          like, but note that ports below 1024 typically require 'root'
          privileges to use on Un*x-style systems (Linux, Solaris).
 
-         Default: 9520
+         Default: dso port +10
       -->
       <jmx-port>9520</jmx-port>
 
@@ -168,7 +168,7 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
          typically require 'root' privileges to use on Un*x-style systems
          (Linux, Solaris).
 
-         Default: 9530
+         Default: dso port + 20
       -->
       <l2-group-port>9530</l2-group-port>
       
