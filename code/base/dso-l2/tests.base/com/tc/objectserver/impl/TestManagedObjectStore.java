@@ -113,4 +113,8 @@ public class TestManagedObjectStore implements ManagedObjectStore {
     throw new ImplementMe();
   }
 
+  public ObjectIDSet getAllMapTypeObjectIDs() {
+    throw new ImplementMe();
+  }
+
 }

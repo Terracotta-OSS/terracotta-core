@@ -38,6 +38,8 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   public ObjectIDSet getAllObjectIDs();
 
   public ObjectIDSet getAllEvictableObjectIDs();
+  
+  public ObjectIDSet getAllMapTypeObjectIDs();
 
   public boolean containsObject(ObjectID id);
 

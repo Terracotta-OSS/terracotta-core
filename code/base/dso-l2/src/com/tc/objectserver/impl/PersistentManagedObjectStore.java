@@ -115,6 +115,11 @@ public class PersistentManagedObjectStore implements ManagedObjectStore {
     assertNotInShutdown();
     return this.objectPersistor.snapshotEvictableObjectIDs();
   }
+  
+  public ObjectIDSet getAllMapTypeObjectIDs() {
+    assertNotInShutdown();
+    return this.objectPersistor.snapshotMapTypeObjectIDs();
+  }
 
   public ManagedObject getObjectByID(final ObjectID id) {
     assertNotInShutdown();

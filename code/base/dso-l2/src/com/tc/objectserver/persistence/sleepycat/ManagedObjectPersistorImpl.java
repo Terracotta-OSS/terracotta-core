@@ -165,6 +165,10 @@ public final class ManagedObjectPersistorImpl extends SleepycatPersistorBase imp
     this.extantObjectIDs.removeAll(ids);
   }
 
+  public ObjectIDSet snapshotMapTypeObjectIDs() {
+    return this.extantMapTypeOidSet.snapshot();
+  }
+  
   public ObjectIDSet snapshotEvictableObjectIDs() {
     final ObjectIDSet evictables = this.extantEvictableOidSet.snapshot();
     // As deleted objects are not deleted from extantEvictableOidSet inline, we want to only return things that are

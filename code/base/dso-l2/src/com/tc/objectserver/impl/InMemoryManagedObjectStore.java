@@ -158,4 +158,8 @@ public class InMemoryManagedObjectStore implements ManagedObjectStore {
   public ObjectIDSet getAllEvictableObjectIDs() {
     return new ObjectIDSet(this.evictables);
   }
+
+  public ObjectIDSet getAllMapTypeObjectIDs() {
+    throw new UnsupportedOperationException();
+  }
 }

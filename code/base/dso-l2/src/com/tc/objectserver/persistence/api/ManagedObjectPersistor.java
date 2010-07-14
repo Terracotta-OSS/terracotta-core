@@ -51,4 +51,6 @@ public interface ManagedObjectPersistor {
 
   public ObjectIDSet snapshotEvictableObjectIDs();
 
+  public ObjectIDSet snapshotMapTypeObjectIDs();
+
 }

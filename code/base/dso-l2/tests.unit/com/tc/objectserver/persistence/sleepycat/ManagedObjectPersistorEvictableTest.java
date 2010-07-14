@@ -200,6 +200,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   private void waitForBackgroupTasks() {
     this.objectStore.getAllObjectIDs();
     this.objectStore.getAllEvictableObjectIDs();
+    this.objectStore.getAllMapTypeObjectIDs();
   }
 
   public void testEvictableObjectsStep1() throws Exception {

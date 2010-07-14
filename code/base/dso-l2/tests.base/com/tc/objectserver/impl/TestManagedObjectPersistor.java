@@ -119,4 +119,8 @@ public class TestManagedObjectPersistor implements ManagedObjectPersistor {
     return -1;
   }
 
+  public ObjectIDSet snapshotMapTypeObjectIDs() {
+    throw new ImplementMe();
+  }
+
 }
