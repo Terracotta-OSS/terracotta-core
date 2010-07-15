@@ -500,17 +500,26 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertEquals(0, result.size());
   }
 
-  void testGetKeysForLocalValuesNotPartial() {
-    synchronized (treeMap) {
-      treeMap.put("key1", new Object());
-      treeMap.put("key2", new Object());
-      treeMap.put("key3", new Object());
+  void testGetKeysForLocalValuesNotPartial() throws InterruptedException, BrokenBarrierException {
+    final int nodeId = barrier.await();
+
+    if (0 == nodeId) {
+      synchronized (treeMap) {
+        treeMap.put("key1", new Object());
+        treeMap.put("key2", new Object());
+        treeMap.put("key3", new Object());
+      }
     }
-    try {
-      final Set result = cluster.getKeysForLocalValues(treeMap);
-      Assert.assertNotNull(result);
-      Assert.assertEquals(3, result.size());
-    } finally {
+    
+    barrier.await();
+    
+    final Set result = cluster.getKeysForLocalValues(treeMap);
+    Assert.assertNotNull(result);
+    Assert.assertEquals(3, result.size());
+    
+    barrier.await();
+
+    if (0 == nodeId) {
       synchronized (treeMap) {
         treeMap.clear();
       }
