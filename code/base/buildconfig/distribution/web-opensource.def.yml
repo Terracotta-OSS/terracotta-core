@@ -31,6 +31,7 @@ bundled_components:
         - management
         - management-api
         - thirdparty
+        - tim-api
         - tim-get-tool:
             kit-resources:
               - tim-get.properties
@@ -64,7 +65,7 @@ postscripts:
         - eclipse/org.terracotta.dso/lib/resources
   - modify-tim-get-properties:
       args:
-        - location: lib/resources/tim-get.properties
+        - location: eclipse/org.terracotta.dso/lib/resources/tim-get.properties
         - kit-type:
             final:
               org.terracotta.modules.tool.dataFileUrl: http://www.terracotta.org/download/reflector/releases/tim-get/3/index.xml.gz
@@ -75,7 +76,6 @@ postscripts:
   - include-schemas:
       args:
         - eclipse/org.terracotta.dso/html/ref/schema
-        - config-samples/schema
   - make-eclipse-manifest:
       args:
         - lib
