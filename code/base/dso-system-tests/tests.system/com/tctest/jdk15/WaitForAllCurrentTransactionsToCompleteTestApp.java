@@ -68,13 +68,14 @@ public class WaitForAllCurrentTransactionsToCompleteTestApp extends AbstractTran
           Assert.assertEquals(numOfPut + getParticipantCount() - 1, queue.size());
           logger.info("XXX Txns in the system");
           getPendingTransactionsCount();
-          waitTxnComplete();
+        }
+        barrier.await();
+        waitTxnComplete();
+        barrier.await();
+        if (index == 0) {
+          ThreadUtil.reallySleep(1000);
           logger.info("XXX Txns in the system, after txn complete");
           Assert.assertEquals(0, getPendingTransactionsCount());
-        } else {
-          // sleep here to let index 0 thread to complete job first without introduce transaction by barrier
-          ThreadUtil.reallySleep(2000);
-          logger.info("XXX Client-" + ManagerUtil.getClientID() + " wakeup");
         }
         barrier.await();
         if (index != 0) {
