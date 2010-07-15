@@ -13,8 +13,8 @@ public class NullHealthCheckerSocketConnectImpl implements HealthCheckerSocketCo
     return false;
   }
 
-  public boolean start() {
-    return false;
+  public SocketConnectStartStatus start() {
+    return SocketConnectStartStatus.NOT_STARTED;
   }
 
   public void closeEvent(TCConnectionEvent event) {

@@ -13,6 +13,7 @@ import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NullProtocolAdaptor;
+import com.tc.net.protocol.transport.HealthCheckerSocketConnect.SocketConnectStartStatus;
 import com.tc.util.Assert;
 import com.tc.util.State;
 
@@ -83,14 +84,18 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
   // RMP-343
   private void initCallbackPortVerification() {
     if (config.isSocketConnectOnPingFail()) {
-      if (!initSocketConnectProbe()) {
-        // 1. may be callback port not handshaked or
-        // 2. callback port not reachable
-        // error logging already done.
+      SocketConnectStartStatus status = initSocketConnectProbe();
+      if (status == SocketConnectStartStatus.FAILED) {
+        // 1. callback port handshaked and not reachable -- upgrade the config factor
+        callbackPortVerificationFailed();
+      } else if (status == SocketConnectStartStatus.NOT_STARTED) {
+        // 2. callback port not handshaked -- just log it, no config upgrade, move to next state
         changeState(START);
-      } else {
+      } else if (status.equals(SocketConnectStartStatus.STARTED)) {
         // async socket connect to callback port has started. HC state remains at INIT. state change happens on
         // connection events
+      } else {
+        throw new AssertionError("initCallbackPortVerification: Unexpected SocketConnectStart Status");
       }
     } else {
       logger
@@ -123,17 +128,16 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
     return this.maxProbeCountWithoutReply * this.configFactor;
   }
 
-  private boolean initSocketConnectProbe() {
+  private SocketConnectStartStatus initSocketConnectProbe() {
     // trigger the socket connect
     presentConnection = getNewConnection(connectionManager);
     sockectConnect = getHealthCheckerSocketConnector(presentConnection, transport, logger, config);
     sockectConnect.addSocketConnectEventListener(this);
-    if (sockectConnect.start()) {
-      return true;
-    } else {
+    SocketConnectStartStatus status = sockectConnect.start();
+    if ((status == SocketConnectStartStatus.FAILED) || (status == SocketConnectStartStatus.NOT_STARTED)) {
       clearPresentConnection();
-      return false;
     }
+    return status;
   }
 
   protected TCConnection getNewConnection(TCConnectionManager connManager) {
@@ -224,7 +228,8 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         changeState(AWAIT_PINGREPLY);
       } else if (config.isSocketConnectOnPingFail()) {
         changeState(SOCKET_CONNECT);
-        if (!initSocketConnectProbe()) {
+        SocketConnectStartStatus status = initSocketConnectProbe();
+        if ((status == SocketConnectStartStatus.FAILED) || (status == SocketConnectStartStatus.NOT_STARTED)) {
           changeState(DEAD);
         }
       } else {

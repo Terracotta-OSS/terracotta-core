@@ -14,7 +14,11 @@ import com.tc.net.core.event.TCConnectionEventListener;
  */
 public interface HealthCheckerSocketConnect extends TCConnectionEventListener {
 
-  public boolean start();
+  enum SocketConnectStartStatus {
+    STARTED, NOT_STARTED, FAILED
+  }
+
+  public SocketConnectStartStatus start();
 
   /* Once in a probe interval, the health checker queries to get the connect status if wanted */
   public boolean probeConnectStatus();

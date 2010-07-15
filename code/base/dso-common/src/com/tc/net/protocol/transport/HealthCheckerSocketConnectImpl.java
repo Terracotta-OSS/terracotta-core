@@ -60,7 +60,7 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
     currentState = newState;
   }
 
-  public synchronized boolean start() {
+  public synchronized SocketConnectStartStatus start() {
     Assert.eval(!currentState.equals(SOCKETCONNECT_IN_PROGRESS));
     socketConnectNoReplyWaitCount = 0;
     try {
@@ -70,14 +70,14 @@ public class HealthCheckerSocketConnectImpl implements HealthCheckerSocketConnec
       conn.removeListener(this);
       changeState(SOCKETCONNECT_FAIL);
       logger.info("Socket Connect to " + remoteNodeDesc + " failed: " + e);
-      return false;
+      return SocketConnectStartStatus.FAILED;
     }
 
     if (logger.isDebugEnabled()) {
       logger.debug("Socket Connect triggered for " + remoteNodeDesc);
     }
     changeState(SOCKETCONNECT_IN_PROGRESS);
-    return true;
+    return SocketConnectStartStatus.STARTED;
   }
 
   private void stop() {
