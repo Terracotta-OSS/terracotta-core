@@ -74,12 +74,13 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   private static final String   AUTO_CONNECT        = ServersHelper.AUTO_CONNECT;
 
   ClusterNode(IAdminClientContext adminClientContext) {
-    this(adminClientContext, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
+    this(adminClientContext, new ClusterModel(ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
+                                              ConnectionContext.DEFAULT_AUTO_CONNECT),
          ConnectionContext.DEFAULT_AUTO_CONNECT);
   }
 
-  ClusterNode(IAdminClientContext adminClientContext, final String host, final int jmxPort, final boolean autoConnect) {
-    super(new ClusterModel(host, jmxPort, autoConnect));
+  public ClusterNode(IAdminClientContext adminClientContext, ClusterModel model, final boolean autoConnect) {
+    super(model);
 
     this.adminClientContext = adminClientContext;
     clusterModel = (ClusterModel) getClusterElement();

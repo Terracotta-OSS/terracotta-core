@@ -15,7 +15,7 @@ import javax.swing.event.EventListenerList;
 
 public class ServerGroup implements IServerGroup {
   private final IClusterModel         clusterModel;
-  private final Server[]              members;
+  protected final Server[]            members;
   private final boolean               isCoordinator;
   private final String                name;
   private final int                   id;
@@ -37,12 +37,16 @@ public class ServerGroup implements IServerGroup {
 
     L2Info[] l2Infos = info.members();
     members = new Server[l2Infos.length];
-    for (int i = 0; i < l2Infos.length; i++) {
-      members[i] = new Server(getClusterModel(), this, l2Infos[i]);
-    }
+    initMembers(l2Infos);
     name = info.name();
     id = info.id();
     isCoordinator = info.isCoordinator();
+  }
+
+  protected void initMembers(L2Info[] l2Infos) {
+    for (int i = 0; i < l2Infos.length; i++) {
+      members[i] = new Server(getClusterModel(), this, l2Infos[i]);
+    }
   }
 
   public IClusterModel getClusterModel() {

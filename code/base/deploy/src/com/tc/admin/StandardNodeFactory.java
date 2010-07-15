@@ -4,6 +4,8 @@
  */
 package com.tc.admin;
 
+import com.tc.admin.model.ClusterModel;
+
 
 public class StandardNodeFactory extends AbstractNodeFactory {
   @Override
@@ -14,7 +16,7 @@ public class StandardNodeFactory extends AbstractNodeFactory {
   @Override
   public ClusterNode createClusterNode(IAdminClientContext adminClientContext, String host, int jmxPort,
                                        boolean autoConnect) {
-    return new ClusterNode(adminClientContext, host, jmxPort, autoConnect);
+    return new ClusterNode(adminClientContext,new ClusterModel(host, jmxPort, autoConnect), autoConnect);
   }
 
 }

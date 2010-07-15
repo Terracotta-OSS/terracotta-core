@@ -227,11 +227,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     ready = false;
   }
 
-  private synchronized Set<ObjectName> getReadySet() {
+  protected synchronized Set<ObjectName> getReadySet() {
     return readySet;
   }
 
-  private synchronized void initReadySet() {
+  protected synchronized void initReadySet() {
     Set<ObjectName> theReadySet = getReadySet();
     if (theReadySet != null) {
       theReadySet.add(L2MBeanNames.TC_SERVER_INFO);
@@ -1254,7 +1254,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return scm != null ? scm.safeGetHostAddress() : "not connected";
   }
 
-  private static final IServer[] EMPTY_SERVER_ARRAY = {};
+  protected static final IServer[] EMPTY_SERVER_ARRAY = {};
 
   public IServer[] getClusterServers() {
     IServer[] result = EMPTY_SERVER_ARRAY;
@@ -1269,7 +1269,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return result;
   }
 
-  private static final IServerGroup[] EMPTY_SERVER_GROUP_ARRAY = {};
+  protected static final IServerGroup[] EMPTY_SERVER_GROUP_ARRAY = {};
 
   public IServerGroup[] getClusterServerGroups() {
     IServerGroup[] result = EMPTY_SERVER_GROUP_ARRAY;
