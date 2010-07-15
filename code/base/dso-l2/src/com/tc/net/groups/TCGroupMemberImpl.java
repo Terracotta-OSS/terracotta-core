@@ -63,7 +63,8 @@ public class TCGroupMemberImpl implements TCGroupMember, ChannelEventListener {
   }
 
   public String toString() {
-    return ("Group Member: " + localNodeID + " <-> " + peerNodeID + " " + channel);
+    return ("Group Member: " + localNodeID + " <-> " + peerNodeID + " " + channel + "; Ready:" + ready + "; Joined: "
+            + joined + "; memberAdding:" + memberAdding + "; HighPri: " + isHighPriorityNode());
   }
 
   public void notifyChannelEvent(ChannelEvent event) {
