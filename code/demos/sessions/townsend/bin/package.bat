@@ -17,7 +17,7 @@ set tc_install_dir=..\..\..
 rmdir /q /s target
 mkdir target\classes 2> NUL
 
-for %%f in (%tc_install_dir%\ehcache\ehcache-core*.jar) do (
+for %%f in (%tc_install_dir%\ehcache\lib\ehcache-core*.jar) do (
   set ehcache_core=%%f
 )
 
@@ -52,7 +52,7 @@ if not %errorlevel% == 0  (
 )
 
 rem packaging ehcache-terracotta
-xcopy /y /q %tc_install_dir%\ehcache\ehcache-terracotta*.jar target\WEB-INF\lib 1> NUL
+xcopy /y /q %tc_install_dir%\ehcache\lib\ehcache-terracotta*.jar target\WEB-INF\lib 1> NUL
 if not %errorlevel% == 0  (
   echo Couldn't package ehcache-terracotta. Do you have a complete kit?
   exit /b 1

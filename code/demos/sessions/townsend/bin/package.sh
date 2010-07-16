@@ -22,7 +22,7 @@ jetty2=$root/jetty6.1/9082/webapps
 rm -rf target/*
 mkdir -p target/classes
 
-ehcache_core=`\ls -1 $tc_install_dir/ehcache/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
+ehcache_core=`\ls -1 $tc_install_dir/ehcache/lib/ehcache-core-*.jar | grep -v "sources" | grep -v "javadoc" | head -1`
 if [ ! -f $ehcache_core ]; then
   echo "Couldn't find ehcache-core jar. Do you have a full kit?"
   exit 1
@@ -54,7 +54,7 @@ if [ $? -ne 0 ]; then
 fi
 
 #packaging ehcache-terracotta
-cp $tc_install_dir/ehcache/ehcache-terracotta*.jar target/WEB-INF/lib
+cp $tc_install_dir/ehcache/lib/ehcache-terracotta*.jar target/WEB-INF/lib
 if [ $? -ne 0 ]; then
   echo "Couldn't package ehcache-terracotta. Do you have a complete kit?"
   exit 1
