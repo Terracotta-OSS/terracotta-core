@@ -229,7 +229,7 @@ public class TestConfigObject {
     throw new RuntimeException(buf.toString());
   }
 
-  private String getProperty(String key, String defaultValue) {
+  public String getProperty(String key, String defaultValue) {
     String result = this.properties.getProperty(key);
     if (result == null) {
       result = defaultValue;
@@ -237,7 +237,7 @@ public class TestConfigObject {
     return result;
   }
 
-  private String getProperty(String key) {
+  public String getProperty(String key) {
     return getProperty(key, null);
   }
 
@@ -439,7 +439,8 @@ public class TestConfigObject {
     this.springTest = springTest;
   }
   
-  public boolean isExpressMode() {
+  public boolean isExpressModeForAppserver() {
     return "express".equals(properties.getProperty(APP_SERVER_TEST_MODE, "custom"));
   }
+  
 }
