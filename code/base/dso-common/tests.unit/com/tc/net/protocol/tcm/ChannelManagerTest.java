@@ -406,7 +406,11 @@ public class ChannelManagerTest extends TestCase {
         System.out.println("waiting for server to send final Tx ACK for client connection");
         ThreadUtil.reallySleep(1000);
       }
-      assertTrue(channel.isConnected());
+
+      while (!channel.isConnected()) {
+        System.out.println("waiting for client channel connected");
+        ThreadUtil.reallySleep(1000);
+      }
 
       proxy.setDelay(100 * 1000);
 
