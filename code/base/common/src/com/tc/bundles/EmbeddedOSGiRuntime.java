@@ -9,11 +9,14 @@ import org.osgi.framework.BundleException;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
+import com.terracottatech.config.Module;
 import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +50,11 @@ public interface EmbeddedOSGiRuntime {
   static class Factory {
 
     public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules) throws BundleException, Exception {
+      return createOSGiRuntime(modules, Collections.EMPTY_LIST);
+    }
+
+    public static EmbeddedOSGiRuntime createOSGiRuntime(final Modules modules, Collection<Repository> addlRepos)
+        throws BundleException, Exception {
       List repoList = new ArrayList();
       int repoCount = modules.sizeOfRepositoryArray();
       for (int i = 0; i < repoCount; i++) {
@@ -54,8 +62,12 @@ public interface EmbeddedOSGiRuntime {
         final File file = Resolver.resolveRepositoryLocation(location);
         if (file != null) repoList.add(file.toURI().toURL());
       }
-      return new KnopflerfishOSGi((URL[]) repoList.toArray(new URL[0]));
+      return new KnopflerfishOSGi((URL[]) repoList.toArray(new URL[0]), addlRepos);
     }
   }
+
+  URL[] resolve(Module[] modules) throws BundleException;
+
+  URL resolveToolkitIfNecessary() throws BundleException;
 
 }

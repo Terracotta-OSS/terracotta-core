@@ -33,8 +33,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
 
 public class Resolver {
 
@@ -52,6 +54,9 @@ public class Resolver {
   private final List<Entry>      registry              = new ArrayList<Entry>();
 
   private final VersionMatcher   versionMatcher;
+
+  private ToolkitVersion         maxToolkitVersion     = null;
+  private final AtomicBoolean    toolkitVersionFrozen  = new AtomicBoolean();
 
   public Resolver(final String[] repositoryStrings, final String tcVersion, final String apiVersion)
       throws MissingDefaultRepositoryException {
@@ -81,6 +86,32 @@ public class Resolver {
     }
 
     versionMatcher = new VersionMatcher(tcVersion, apiVersion);
+  }
+
+  public ToolkitVersion getMaxToolkitVersion() {
+    return maxToolkitVersion;
+  }
+
+  public URL attemptToolkitFreeze() throws BundleException {
+    if (maxToolkitVersion == null) { return null; }
+
+    boolean frozen = toolkitVersionFrozen.compareAndSet(false, true);
+    if (frozen) {
+      logger.info("Freezing version: " + maxToolkitVersion);
+      URL toolkitURL = resolve(maxToolkitVersion.asModule());
+
+      Manifest tookitManifest = getManifest(toolkitURL);
+      BundleSpec[] requirements = getRequirements(tookitManifest);
+      if (requirements.length > 0) {
+        // since we skip the toolkit during dependency traversal the toolkit itself must not depend on others
+        throw new AssertionError(maxToolkitVersion + " is not allowed to have additional bundle dependencies ["
+                                 + toolkitURL + "]");
+      }
+
+      return toolkitURL;
+    }
+
+    return null;
   }
 
   private void injectDefaultRepositories() throws MissingDefaultRepositoryException {
@@ -163,6 +194,8 @@ public class Resolver {
     final String name = module.getName();
     String version = module.getVersion();
     final String groupId = module.getGroupId();
+
+    inspectToolkit(groupId + "." + name, true);
 
     // Resolve null versions by finding newest candidate in available repositories
     if (version == null) {
@@ -441,18 +474,58 @@ public class Resolver {
   }
 
   private void ensureBundle(final BundleSpec spec, DependencyStack stack) throws BundleException {
+    if (inspectToolkit(spec.getSymbolicName(), false)) { return; }
+
     validateBundleSpec(spec);
     URL required = findInRegistry(spec);
     if (required == null) {
       required = resolveBundle(spec);
       if (required == null) {
-        String msg = formatMessage(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED, new Object[] { spec.getName(),
-            spec.getVersion(), spec.getGroupId() });
+        String msg = formatMessage(Message.ERROR_BUNDLE_DEPENDENCY_UNRESOLVED,
+                                   new Object[] { spec.getName(), spec.getVersion(), spec.getGroupId() });
         throw new MissingBundleException(msg, spec.getGroupId(), spec.getName(), spec.getVersion(), repositories, stack);
       }
       addToRegistry(required, getManifest(required));
       resolveDependencies(required, stack);
     }
+  }
+
+  private boolean inspectToolkit(String symbolicName, boolean topLevelReference) throws BundleException {
+    Matcher toolkitMatcher = ToolkitConstants.TOOLKIT_SYMBOLIC_NAME_PATTERN.matcher(symbolicName);
+    if (toolkitMatcher.matches()) {
+      if (topLevelReference && toolkitVersionFrozen.get()) { return false; }
+
+      ToolkitVersion ver = new ToolkitVersion(toolkitMatcher.group(1), toolkitMatcher.group(2));
+
+      if (this.maxToolkitVersion == null) {
+        logger.info("First toolkit reference found: " + ver);
+        maxToolkitVersion = ver;
+        if (topLevelReference) {
+          attemptToolkitFreeze();
+        }
+      } else {
+        if (maxToolkitVersion.getMajor() != ver.getMajor()) {
+          // Major versions of all toolkit references must be equal
+          throw new ConflictingModuleException(ToolkitConstants.TOOLKIT_SYMBOLIC_NAME_PATTERN.pattern(),
+                                               maxToolkitVersion.toString(), ver.toString());
+        }
+
+        if (maxToolkitVersion.getMinor() < ver.getMinor()) {
+          if (toolkitVersionFrozen.get()) {
+            // once the version is frozen we can't be asked to load another (higher) version
+            throw new ConflictingModuleException(ToolkitConstants.TOOLKIT_SYMBOLIC_NAME_PATTERN.pattern(),
+                                                 maxToolkitVersion.toString(), ver.toString());
+          }
+
+          logger.info("Higher toolkit version reference found: " + ver);
+          maxToolkitVersion = ver;
+        }
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   private URL addToRegistry(final URL location, final Manifest manifest) {
@@ -595,8 +668,8 @@ public class Resolver {
 
   static {
     try {
-      resourceBundle = ResourceBundle.getBundle(Resolver.class.getName(), Locale.getDefault(), Resolver.class
-          .getClassLoader());
+      resourceBundle = ResourceBundle.getBundle(Resolver.class.getName(), Locale.getDefault(),
+                                                Resolver.class.getClassLoader());
     } catch (MissingResourceException mre) {
       throw new RuntimeException("No resource bundle exists for " + Resolver.class.getName());
     } catch (Throwable t) {

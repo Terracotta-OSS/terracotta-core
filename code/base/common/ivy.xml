@@ -10,7 +10,7 @@
     <dependency name="commons-lang" rev="2.0" org="commons-lang"/>
     <dependency name="commons-logging" rev="1.0.3" org="commons-logging"/>
     <dependency name="concurrent" rev="1.3.4" org="concurrent"/>
-    <dependency name="knopflerfish-tc" rev="2.0.1-20100706" org="knopflerfish-tc"/>
+    <dependency name="knopflerfish-tc" rev="2.0.1-20100720" org="knopflerfish-tc"/>
     <dependency name="je" rev="4.0.103" org="berkeleydb"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
     <dependency name="log4j" rev="1.2.9" org="log4j"/>

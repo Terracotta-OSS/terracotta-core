@@ -18,8 +18,6 @@ import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
 import com.tc.bundles.Repository;
-import com.tc.bundles.Resolver;
-import com.tc.bundles.ResolverUtils;
 import com.tc.bundles.exception.BundleExceptionSummary;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.logging.CustomerLogging;
@@ -42,7 +40,6 @@ import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.timapi.Version;
 import com.tc.util.Assert;
-import com.tc.util.ProductInfo;
 import com.tc.util.StringUtil;
 import com.tc.util.UUID;
 import com.tc.util.VendorVmSignature;
@@ -132,9 +129,9 @@ public class ModulesLoader {
       }
 
       try {
-        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+        osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules, addlRepos);
         initModules(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, modules.getModuleArray(),
-                    forBootJar, addlRepos);
+                    forBootJar);
       } catch (BundleException e) {
         if (e instanceof BundleExceptionSummary) {
           String msg = ((BundleExceptionSummary) e).getSummary();
@@ -161,14 +158,6 @@ public class ModulesLoader {
   static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
                           final ClassProvider classProvider, final TunneledDomainUpdater tunneledDomainUpdater,
                           final Module[] modules, final boolean forBootJar) throws Exception {
-    initModules(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, modules, forBootJar,
-                Collections.EMPTY_LIST);
-  }
-
-  static void initModules(final EmbeddedOSGiRuntime osgiRuntime, final DSOClientConfigHelper configHelper,
-                          final ClassProvider classProvider, final TunneledDomainUpdater tunneledDomainUpdater,
-                          final Module[] modules, final boolean forBootJar, Collection<Repository> addlRepos)
-      throws Exception {
 
     if (configHelper instanceof StandardDSOClientConfigHelper) {
       final Dictionary serviceProps = new Hashtable();
@@ -188,11 +177,7 @@ public class ModulesLoader {
     moduleList.addAll(Arrays.asList(modules));
 
     final Module[] allModules = (Module[]) moduleList.toArray(new Module[moduleList.size()]);
-    final URL[] osgiRepositories = osgiRuntime.getRepositories();
-    final ProductInfo info = ProductInfo.getInstance();
-    final Resolver resolver = new Resolver(ResolverUtils.urlsToStrings(osgiRepositories), true, info
-        .mavenArtifactsVersion(), info.timApiVersion(), addlRepos);
-    final URL[] locations = resolver.resolve(allModules);
+    final URL[] locations = osgiRuntime.resolve(allModules);
 
     installAndStartBundles(osgiRuntime, configHelper, classProvider, tunneledDomainUpdater, forBootJar, locations);
   }
@@ -201,7 +186,15 @@ public class ModulesLoader {
                                             final DSOClientConfigHelper configHelper,
                                             final ClassProvider classProvider,
                                             final TunneledDomainUpdater tunneledDomainUpdater,
-                                            final boolean forBootJar, final URL[] locations) throws Exception {
+                                            final boolean forBootJar, URL[] locations) throws Exception {
+    URL toolkitUrl = osgiRuntime.resolveToolkitIfNecessary();
+    if (toolkitUrl != null) {
+      URL[] tmpLocations = new URL[locations.length + 1];
+      tmpLocations[0] = toolkitUrl;
+      System.arraycopy(locations, 0, tmpLocations, 1, locations.length);
+      locations = tmpLocations;
+    }
+
     final Map<Bundle, URL> bundleURLs = osgiRuntime.installBundles(locations);
     configHelper.recordBundleURLs(bundleURLs);
 
@@ -251,7 +244,7 @@ public class ModulesLoader {
       getModulesSpecs(osgiRuntime, configHelper);
       getMBeanSpecs(osgiRuntime, configHelper);
       getSRASpecs(osgiRuntime, configHelper);
-      
+
       if (tunneledDomainUpdater != null) {
         tunneledDomainUpdater.sendCurrentTunneledDomains();
       }
@@ -360,11 +353,10 @@ public class ModulesLoader {
     }
   }
 
-  private static void installTunneledMBeanDomains(final String tunneledMBeanDomains, final DSOClientConfigHelper configHelper) {
-    if (null == tunneledMBeanDomains) {
-      return;
-    }
-    
+  private static void installTunneledMBeanDomains(final String tunneledMBeanDomains,
+                                                  final DSOClientConfigHelper configHelper) {
+    if (null == tunneledMBeanDomains) { return; }
+
     String[] domains = tunneledMBeanDomains.split(":");
     for (String domain : domains) {
       configHelper.addTunneledMBeanDomain(domain);
@@ -379,9 +371,9 @@ public class ModulesLoader {
     }
 
     if (serviceReferences == null) { return; }
-    for (int i = 0; i < serviceReferences.length; i++) {
-      configHelper.addModuleSpec((ModuleSpec) osgiRuntime.getService(serviceReferences[i]));
-      osgiRuntime.ungetService(serviceReferences[i]);
+    for (ServiceReference serviceReference : serviceReferences) {
+      configHelper.addModuleSpec((ModuleSpec) osgiRuntime.getService(serviceReference));
+      osgiRuntime.ungetService(serviceReference);
     }
   }
 

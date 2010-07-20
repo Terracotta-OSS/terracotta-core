@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -31,7 +32,7 @@ public class KnopflerfishOSGiTest extends TestCase {
 
   @Override
   public void setUp() throws Exception {
-    osgiRuntime = new KnopflerfishOSGi(new URL[0]);
+    osgiRuntime = new KnopflerfishOSGi(new URL[0], Collections.EMPTY_LIST);
   }
 
   @Override

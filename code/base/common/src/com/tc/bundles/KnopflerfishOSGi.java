@@ -18,9 +18,11 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
+import com.terracottatech.config.Module;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,17 +42,24 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
 
   private final URL[]           repositories;
   private final Framework       framework;
+  private final Resolver        resolver;
 
   static {
     System.setProperty(Constants.FRAMEWORK_BOOTDELEGATION, "*");
     System.setProperty(KF_BUNDLESTORAGE_PROP, KF_BUNDLESTORAGE_PROP_DEFAULT);
   }
 
-  KnopflerfishOSGi(final URL[] bundleRepositories) throws Exception {
+  KnopflerfishOSGi(final URL[] bundleRepositories, Collection<Repository> addlRepos) throws Exception {
     this.repositories = bundleRepositories;
+
+    final ProductInfo info = ProductInfo.getInstance();
+    resolver = new Resolver(ResolverUtils.urlsToStrings(repositories), true, info.mavenArtifactsVersion(),
+                            info.timApiVersion(), addlRepos);
+
     System.setProperty("org.knopflerfish.osgi.registerserviceurlhandler", "false");
     framework = new Framework(null);
     framework.launch(0);
+
   }
 
   public URL[] getRepositories() {
@@ -95,7 +104,7 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
       consoleLogger.error("Failed to start bundle: " + bundle.getSymbolicName(), be);
       throw be;
     }
-    
+
     if ((bundle.getState() & Bundle.ACTIVE) != bundle.getState()) {
       StringBuffer msg = new StringBuffer();
       msg.append("Failed to start bundle: ").append(bundle.getSymbolicName());
@@ -257,4 +266,11 @@ final class KnopflerfishOSGi extends AbstractEmbeddedOSGiRuntime {
     info(Message.SHUTDOWN, new Object[0]);
   }
 
+  public URL[] resolve(Module[] modules) throws BundleException {
+    return resolver.resolve(modules);
+  }
+
+  public URL resolveToolkitIfNecessary() throws BundleException {
+    return resolver.attemptToolkitFreeze();
+  }
 }
