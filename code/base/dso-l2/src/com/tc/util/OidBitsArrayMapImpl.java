@@ -18,13 +18,18 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     this.bitsLength = longsPerDiskUnit * OidLongArray.BITS_PER_LONG;
     map = new TreeMap();
   }
-  
+
   public Long oidIndex(ObjectID id) {
-    return new Long(id.toLong() / bitsLength * bitsLength);
+    return oidIndex(id.toLong());
   }
-  
+
   public Long oidIndex(long oid) {
-    return new Long(oid / bitsLength * bitsLength);
+    long idx = oid / bitsLength * bitsLength;
+    if ((oid < 0) && ((oid % bitsLength) != 0)) {
+      // take left-most bit as base
+      idx -= bitsLength;
+    }
+    return new Long(idx);
   }
 
   public OidLongArray getBitsArray(long oid) {
@@ -39,14 +44,18 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     map.put(mapIndex, longAry);
     return longAry;
   }
-  
+
   protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex) {
     return new OidLongArray(lPerDiskUnit, mapIndex);
   }
-  
+
+  private int arrayOffset(long oid) {
+    return (int) (Math.abs(oid) % bitsLength);
+  }
+
   private OidLongArray getAndModify(long oid, boolean doSet) {
     OidLongArray longAry = getOrLoadBitsArray(oid);
-    int oidInArray = (int) (oid % bitsLength);
+    int oidInArray = arrayOffset(oid);
     if (doSet) {
       longAry.setBit(oidInArray);
     } else {
@@ -54,7 +63,6 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     }
     return (longAry);
   }
-  
 
   public OidLongArray getAndSet(ObjectID id) {
     return (getAndModify(id.toLong(), true));
@@ -69,7 +77,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     Long mapIndex = oidIndex(oid);
     if (map.containsKey(mapIndex)) {
       OidLongArray longAry = map.get(mapIndex);
-      return (longAry.isSet((int) oid % bitsLength));
+      return (longAry.isSet(arrayOffset(oid)));
     }
     return (false);
   }
