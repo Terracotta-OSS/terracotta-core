@@ -160,6 +160,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     if (TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE != status) { return status; }
 
     this.configurationCreator.reloadServersConfiguration(serversBeanRepository(), true);
+    this.l2ConfigData.clear();
 
     try {
       this.activeServerGroupsConfig = createActiveServerGroupsConfig();

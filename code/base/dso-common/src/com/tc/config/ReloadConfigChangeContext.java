@@ -24,4 +24,9 @@ public class ReloadConfigChangeContext {
   public List<Node> getNodesRemoved() {
     return nodesRemoved;
   }
+
+  @Override
+  public String toString() {
+    return "ReloadConfigChangeContext [nodesAdded=" + nodesAdded + ", nodesRemoved=" + nodesRemoved + "]";
+  }
 }
