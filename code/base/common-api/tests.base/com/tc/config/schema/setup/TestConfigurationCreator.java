@@ -91,7 +91,7 @@ public class TestConfigurationCreator implements ConfigurationCreator {
     this.allRepositoriesStoredInto.add(theRepository);
   }
 
-  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean b) {
+  public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean b, boolean reportToConsole) {
     throw new UnsupportedOperationException();
   }
 

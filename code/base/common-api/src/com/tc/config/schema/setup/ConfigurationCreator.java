@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.setup;
 
@@ -31,18 +32,18 @@ public interface ConfigurationCreator {
   File directoryConfigurationLoadedFrom();
 
   /**
-   * @return true if the ConfigurationSource was a trusted one.
-   * Non-trusted sources require that the server be queried to enforce
-   * that the configuration-mode is development.
+   * @return true if the ConfigurationSource was a trusted one. Non-trusted sources require that the server be queried
+   *         to enforce that the configuration-mode is development.
    */
   boolean loadedFromTrustedSource();
-  
+
   /**
    * Return the config text as retrieved from source.
    */
   String rawConfigText();
-  
+
   String describeSources();
 
-  void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogConfig) throws ConfigurationSetupException;
+  void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogConfig,
+                                  boolean reportToConsole) throws ConfigurationSetupException;
 }

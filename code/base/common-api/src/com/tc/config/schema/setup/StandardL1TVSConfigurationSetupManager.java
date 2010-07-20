@@ -111,7 +111,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public void reloadServersConfiguration() throws ConfigurationSetupException {
-    configurationCreator.reloadServersConfiguration(serversBeanRepository(), true);
+    configurationCreator.reloadServersConfiguration(serversBeanRepository(), true, false);
     // reload L2 config here as well
     L2ConfigForL1 tempL2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
                                                               createContext(systemBeanRepository(), null));
