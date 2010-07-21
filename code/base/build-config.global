@@ -9,34 +9,6 @@ tc.tests.configuration.transparent-tests.mode=normal
 tc.tests.configuration.variants.selected.spring=256
 tc.tests.configuration.reuse_boot_jars=true
 
-# for container tests, you can also specify 'appserver=xxxx' on command line
-appserver=tomcat-6.0.24
-
-#appserver=tomcat-6.0.24
-#appserver=tomcat-5.5.28
-#appserver=tomcat-5.0.30
-#appserver=weblogic-10.3.0
-#appserver=weblogic-10.0.mp1
-#appserver=weblogic-9.2.mp3
-#appserver=weblogic-9.2.mp2
-#appserver=jboss-5.1.0
-#appserver=jboss-4.2.3
-#appserver=jboss-4.0.5
-#appserver=jboss-3.2.8.sp1
-#appserver=jetty-6.1.5
-#appserver=glassfish-v1.ur1-p01-b02
-#appserver=glassfish-v2.ur2-b04
-#appserver=wasce-1.0.1.2
-#appserver=resin-3.1.8
-
-# you only need one of these specified to run containter tests
-# if both specified, appserver.home takes precedent
-
-# comma separated list of repo urls
-tc.tests.configuration.appserver.repository=http://download.terracotta.org/appservers,http://kong.terracotta.lan/resources/appservers
-
-#tc.tests.configuration.appserver.home=C:/tomcat-5.5.23
-
 maven.version=3.4.0-SNAPSHOT
 maven.snapshot=true
 

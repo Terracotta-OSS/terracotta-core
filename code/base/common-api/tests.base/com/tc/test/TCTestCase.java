@@ -131,6 +131,18 @@ public class TCTestCase extends TestCase {
     if (false) throw new AssertionError(); // silence compiler warning
   }
 
+  protected boolean isContainerTest() {
+    return false;
+  }
+  
+  protected boolean isConfiguredToRunWithAppServer() {
+    return !"unknown".equals(TestConfigObject.getInstance().appServerInfo().getName());
+  }
+  
+  protected boolean shouldBeSkipped() {
+    return !isContainerTest() && isConfiguredToRunWithAppServer();
+  }
+  
   @Override
   public void runBare() throws Throwable {
     printOutCurrentJavaProcesses();
@@ -149,6 +161,11 @@ public class TCTestCase extends TestCase {
       System.out.println("NOTE: Test method " + testMethod + "() is disabled until "
                          + this.disabledUntil.get(testMethod));
       System.out.flush();
+      return;
+    }
+    
+    if (shouldBeSkipped()) {
+      Banner.infoBanner("Test " + this.getClass().getName() + " is skipped because it's not a container test and the run is configured with appserver " + TestConfigObject.getInstance().appServerInfo() );
       return;
     }
 
