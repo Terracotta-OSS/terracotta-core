@@ -1111,19 +1111,24 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       'branch' => @build_environment.current_branch,
       'is_ee_branch' => @build_environment.is_ee_branch?,
       'revision' => @build_environment.combo_revision,
-
-      'appserver' => config_source['tc.tests.configuration.appserver.factory.name'] + "-"  +
-        config_source['tc.tests.configuration.appserver.major-version'] + "." +
-        config_source['tc.tests.configuration.appserver.minor-version'],
+      
       'jvmargs'  => config_source['jvmargs'],
 
-      'tests-jdk' => @jvm_set['tests-jdk'].short_description,
       'JAVA_HOME_15' => @jvm_set['1.5'].short_description,
       'JAVA_HOME_16' => @jvm_set['1.6'].short_description
     }
 
-
-
+    if config_source['tc.tests.configuration.appserver.factory.name']
+      name = config_source['tc.tests.configuration.appserver.factory.name']
+      major = config_source['tc.tests.configuration.appserver.major-version']
+      minor = config_source['tc.tests.configuration.appserver.minor-version']
+      configuration_data['appserver'] = "#{name}-#{major}.#{minor}"
+    end
+    
+    if @jvm_set['tests-jdk']
+      configuration_data['tests-jdk'] = @jvm_set['tests-jdk'].short_description
+    end
+    
     # Parameters data.
     parameters_data = {
       # nothing right now
