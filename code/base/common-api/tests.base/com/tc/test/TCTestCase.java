@@ -134,15 +134,15 @@ public class TCTestCase extends TestCase {
   protected boolean isContainerTest() {
     return false;
   }
-  
+
   protected boolean isConfiguredToRunWithAppServer() {
     return !"unknown".equals(TestConfigObject.getInstance().appServerInfo().getName());
   }
-  
+
   protected boolean shouldBeSkipped() {
     return !isContainerTest() && isConfiguredToRunWithAppServer();
   }
-  
+
   @Override
   public void runBare() throws Throwable {
     printOutCurrentJavaProcesses();
@@ -163,9 +163,11 @@ public class TCTestCase extends TestCase {
       System.out.flush();
       return;
     }
-    
+
     if (shouldBeSkipped()) {
-      Banner.infoBanner("Test " + this.getClass().getName() + " is skipped because it's not a container test and the run is configured with appserver " + TestConfigObject.getInstance().appServerInfo() );
+      Banner.infoBanner("Test " + this.getClass().getName()
+                        + " is skipped because it's not a container test and the run is configured with appserver "
+                        + TestConfigObject.getInstance().appServerInfo());
       return;
     }
 
@@ -559,8 +561,8 @@ public class TCTestCase extends TestCase {
       assertEquals("Object and [de]serialized object failed equals() comparison", obj, deserializedObj);
     }
     if (checkHashCode) {
-      assertEquals("Object and [de]serialized object failed hashCode() comparison", obj.hashCode(), deserializedObj
-          .hashCode());
+      assertEquals("Object and [de]serialized object failed hashCode() comparison", obj.hashCode(),
+                   deserializedObj.hashCode());
     }
   }
 
