@@ -165,9 +165,10 @@ public class TCTestCase extends TestCase {
     }
 
     if (shouldBeSkipped()) {
-      Banner.infoBanner("Test " + this.getClass().getName()
-                        + " is skipped because it's not a container test and the run is configured with appserver "
-                        + TestConfigObject.getInstance().appServerInfo());
+      Banner
+          .infoBanner("Test "
+                      + this.getClass().getName()
+                      + " is skipped because sytem test trying to run with appserver or container test running without an appserver. ");
       return;
     }
 
