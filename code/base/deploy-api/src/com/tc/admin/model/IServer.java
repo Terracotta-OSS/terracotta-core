@@ -4,8 +4,6 @@
  */
 package com.tc.admin.model;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.management.lock.stats.LockSpec;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.GCStats;
@@ -200,24 +198,6 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   int getLiveObjectCount();
 
-  boolean isDBBackupSupported();
-
-  void addDBBackupListener(DBBackupListener listener);
-
-  void removeDBBackupListener(DBBackupListener listener);
-
-  void backupDB() throws IOException;
-
-  void backupDB(String path) throws IOException;
-
-  boolean isDBBackupRunning();
-
-  String getDefaultDBBackupPath();
-
-  boolean isDBBackupEnabled();
-
-  String getDBHome();
-
   boolean isGarbageCollectionEnabled();
 
   int getGarbageCollectionInterval();
@@ -284,5 +264,4 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   void setCommitDebug(boolean commitDebug);
 
-  TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException;
 }

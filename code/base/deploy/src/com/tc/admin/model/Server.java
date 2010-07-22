@@ -13,13 +13,9 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
-import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.EnterpriseTCServerMbean;
 import com.tc.management.beans.object.ObjectManagementMonitorMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.LockSpec;
@@ -88,11 +84,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected Map<ObjectName, DSOClient>    clientMap;
   private ClientChangeListener            clientChangeListener;
   protected EventListenerList             listenerList;
-  protected OperatorEventsListener        operatorEventsListener;
   protected List<DSOClient>               pendingClients;
   protected Exception                     connectException;
   protected TCServerInfoMBean             serverInfoBean;
-  protected EnterpriseTCServerMbean       enterpriseServerBean;
   protected DSOMBean                      dsoBean;
   protected ObjectManagementMonitorMBean  objectManagementMonitorBean;
   protected boolean                       serverDBBackupSupported;
@@ -208,12 +202,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  private void init() {
+  protected void init() {
     name = null;
     startTime = activateTime = -1;
     displayLabel = connectManager.toString();
     listenerList = new EventListenerList();
-    operatorEventsListener = new OperatorEventsListener(listenerList);
     logListener = new LogListener();
     pendingClients = new ArrayList<DSOClient>();
     clients = new ArrayList<DSOClient>();
@@ -236,12 +229,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (theReadySet != null) {
       theReadySet.add(L2MBeanNames.TC_SERVER_INFO);
       theReadySet.add(L2MBeanNames.DSO);
-      // theReadySet.add(L2MBeanNames.SERVER_DB_BACKUP);
       theReadySet.add(L2MBeanNames.OBJECT_MANAGEMENT);
       theReadySet.add(L2MBeanNames.LOGGER);
       theReadySet.add(L2MBeanNames.LOCK_STATISTICS);
       theReadySet.add(StatisticsMBeanNames.STATISTICS_GATHERER);
-      // theReadySet.add(MBeanNames.OPERATOR_EVENTS_PUBLIC);
     }
   }
 
@@ -689,18 +680,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return serverInfoBean;
   }
 
-  protected synchronized EnterpriseTCServerMbean getEnterpriseServerInfoBean() {
-    if (enterpriseServerBean == null) {
-      ConnectionContext cc = getConnectionContext();
-      if (cc != null) {
-        if (cc.mbsc == null) { return null; }
-        enterpriseServerBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.ENTERPRISE_TC_SERVER,
-                                                                        EnterpriseTCServerMbean.class, false);
-      }
-    }
-    return enterpriseServerBean;
-  }
-
   protected synchronized DSOMBean getDSOBean() {
     if (dsoBean == null) {
       ConnectionContext cc = getConnectionContext();
@@ -978,16 +957,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     testInitRegisteredBean(theReadySet, beanName);
   }
 
-  private void testInitRegisteredBean(Set<ObjectName> theReadySet, ObjectName beanName) {
-    /**
-     * This is lame as the registration of these EE beans will not be tied to the Server being ready. There should be EE
-     * versions of the cluster model types.
-     */
-    if (beanName.equals(MBeanNames.OPERATOR_EVENTS_PUBLIC)) {
-      initOperatorEventsBean();
-    } else if (beanName.equals(L2MBeanNames.SERVER_DB_BACKUP)) {
-      initServerDBBackupBean();
-    }
+  protected void testInitRegisteredBean(Set<ObjectName> theReadySet, ObjectName beanName) {
 
     if (theReadySet.contains(beanName)) {
       if (beanName.equals(L2MBeanNames.DSO)) {
@@ -1016,17 +986,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (cc != null) {
       try {
         cc.addNotificationListener(L2MBeanNames.TC_SERVER_INFO, this);
-      } catch (Exception e) {
-        /**/
-      }
-    }
-  }
-
-  private void initOperatorEventsBean() {
-    ConnectionContext cc = getConnectionContext();
-    if (cc != null) {
-      try {
-        cc.addNotificationListener(MBeanNames.OPERATOR_EVENTS_PUBLIC, this.operatorEventsListener);
       } catch (Exception e) {
         /**/
       }
@@ -1068,10 +1027,15 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  private synchronized DSOClient addClient(ObjectName clientBeanName) {
+  protected synchronized DSOClient addClient(ObjectName clientBeanName) {
     assertGroupLeader();
 
-    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel, operatorEventsListener);
+    DSOClient client = new DSOClient(getConnectionContext(), clientBeanName, clusterModel);
+    initializeDSOClient(client, clientBeanName);
+    return client;
+  }
+  
+  protected void initializeDSOClient(DSOClient client, ObjectName clientBeanName){
     client.addPropertyChangeListener(clientChangeListener);
     clients.add(client);
     // Don't notify the client's existence until it's ready
@@ -1081,8 +1045,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       pendingClients.add(client);
     }
     clientMap.put(clientBeanName, client);
-
-    return client;
   }
 
   private synchronized DSOClient removeClient(ObjectName clientBeanName) {
@@ -1181,7 +1143,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return false;
   }
 
-  private void assertGroupLeader() {
+  protected void assertGroupLeader() {
     boolean isGroupLeader = isGroupLeader();
     if (!isGroupLeader) {
       Thread.dumpStack();
@@ -1269,10 +1231,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return result;
   }
 
-  protected static final IServerGroup[] EMPTY_SERVER_GROUP_ARRAY = {};
+  private static final ServerGroup[] EMPTY_SERVER_GROUP_ARRAY = {};
 
-  public IServerGroup[] getClusterServerGroups() {
-    IServerGroup[] result = EMPTY_SERVER_GROUP_ARRAY;
+  public ServerGroup[] getClusterServerGroups() {
+    ServerGroup[] result = EMPTY_SERVER_GROUP_ARRAY;
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
     if (theServerInfoBean != null) {
       ServerGroupInfo[] serverGroupInfos = theServerInfoBean.getServerGroupInfo();
@@ -1591,148 +1553,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     } catch (UndeclaredThrowableException ute) {
       return false;
     }
-  }
-
-  public synchronized void initServerDBBackupBean() {
-    ConnectionContext cc = getConnectionContext();
-    if (cc != null) {
-      try {
-        serverDBBackupBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.SERVER_DB_BACKUP,
-                                                                      ServerDBBackupMBean.class, true);
-        serverDBBackupSupported = serverDBBackupBean.isBackupEnabled();
-        cc.addNotificationListener(L2MBeanNames.SERVER_DB_BACKUP, new ServerDBBackupListener());
-      } catch (Exception e) {
-        serverDBBackupSupported = false;
-      }
-    }
-  }
-
-  public synchronized ServerDBBackupMBean getServerDBBackupBean() {
-    return serverDBBackupBean;
-  }
-
-  private class ServerDBBackupListener implements NotificationListener {
-    public void handleNotification(Notification notification, Object handback) {
-      String type = notification.getType();
-
-      if (ServerDBBackupMBean.BACKUP_ENABLED.equals(type)) {
-        serverDBBackupSupported = Boolean.valueOf((String) handback);
-        fireDBBackupEnabled();
-      } else if (ServerDBBackupMBean.BACKUP_STARTED.equals(type)) {
-        fireDBBackupStarted();
-      } else if (ServerDBBackupMBean.BACKUP_COMPLETED.equals(type)) {
-        fireDBBackupCompleted();
-      } else if (ServerDBBackupMBean.PERCENTAGE_COPIED.equals(type)) {
-        String message = notification.getMessage();
-        String value = message.substring(0, message.indexOf(' '));
-        int percentCopied = Integer.parseInt(value);
-        fireDBBackupProgress(percentCopied);
-      } else if (ServerDBBackupMBean.BACKUP_FAILED.equals(type)) {
-        fireDBBackupFailed(notification.getMessage());
-      }
-    }
-  }
-
-  public void addDBBackupListener(DBBackupListener listener) {
-    removeDBBackupListener(listener);
-    listenerList.add(DBBackupListener.class, listener);
-  }
-
-  public void removeDBBackupListener(DBBackupListener listener) {
-    listenerList.remove(DBBackupListener.class, listener);
-  }
-
-  private void fireDBBackupEnabled() {
-    Object[] listeners = listenerList.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == DBBackupListener.class) {
-        ((DBBackupListener) listeners[i + 1]).backupEnabled();
-      }
-    }
-  }
-
-  private void fireDBBackupStarted() {
-    Object[] listeners = listenerList.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == DBBackupListener.class) {
-        ((DBBackupListener) listeners[i + 1]).backupStarted();
-      }
-    }
-  }
-
-  private void fireDBBackupCompleted() {
-    Object[] listeners = listenerList.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == DBBackupListener.class) {
-        ((DBBackupListener) listeners[i + 1]).backupCompleted();
-      }
-    }
-  }
-
-  private void fireDBBackupFailed(String message) {
-    Object[] listeners = listenerList.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == DBBackupListener.class) {
-        ((DBBackupListener) listeners[i + 1]).backupFailed(message);
-      }
-    }
-  }
-
-  private void fireDBBackupProgress(int percentCopied) {
-    Object[] listeners = listenerList.getListenerList();
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == DBBackupListener.class) {
-        ((DBBackupListener) listeners[i + 1]).backupProgress(percentCopied);
-      }
-    }
-  }
-
-  public synchronized boolean isDBBackupSupported() {
-    return serverDBBackupSupported;
-  }
-
-  private void ensureDBBackupEnabled() {
-    if (!isDBBackupSupported()) { throw new IllegalStateException("DBBackup not supported"); }
-  }
-
-  public synchronized void backupDB() throws IOException {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      backupBean.runBackUp();
-    }
-  }
-
-  public synchronized void backupDB(String path) throws IOException {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) {
-      ensureDBBackupEnabled();
-      backupBean.runBackUp(path);
-    }
-  }
-
-  public synchronized boolean isDBBackupRunning() {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) { return backupBean.isBackUpRunning(); }
-    return false;
-  }
-
-  public synchronized String getDefaultDBBackupPath() {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) { return backupBean.getDefaultPathForBackup(); }
-    return "not connected";
-  }
-
-  public synchronized boolean isDBBackupEnabled() {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) { return backupBean.isBackupEnabled(); }
-    return false;
-  }
-
-  public synchronized String getDBHome() {
-    ServerDBBackupMBean backupBean = getServerDBBackupBean();
-    if (backupBean != null) { return backupBean.getDbHome(); }
-    return "not connected";
   }
 
   public synchronized void initLockProfilerBean() {
@@ -2203,14 +2023,4 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     getServerInfoBean().setVerboseGC(verboseGC);
   }
 
-  public TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException {
-    EnterpriseTCServerMbean enterpriseMbean = getEnterpriseServerInfoBean();
-
-    TopologyReloadStatus status = null;
-    if (enterpriseMbean != null) {
-      status = enterpriseMbean.reloadConfiguration();
-    }
-
-    return status;
-  }
 }

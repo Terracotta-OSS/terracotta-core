@@ -4,7 +4,6 @@
  */
 package com.tc.admin.model;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
@@ -47,6 +46,4 @@ public interface IClient extends IClusterNode {
   void killClient();
 
   String dump();
-
-  void reloadConfiguration() throws ConfigurationSetupException;
 }
