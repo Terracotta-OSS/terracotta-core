@@ -71,8 +71,6 @@ public class AppServerInfo {
   }
 
   public int getId() {
-    if (id < 0)
-      throw new RuntimeException("App server [" + name + "] is not yet defined!");
     return id;
   }
 
