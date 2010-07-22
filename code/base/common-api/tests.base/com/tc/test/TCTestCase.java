@@ -166,7 +166,7 @@ public class TCTestCase extends TestCase {
 
     if (shouldBeSkipped()) {
       Banner
-          .infoBanner("Test "
+          .warnBanner("Test "
                       + this.getClass().getName()
                       + " is skipped because sytem test trying to run with appserver or container test running without an appserver. ");
       return;
