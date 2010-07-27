@@ -213,6 +213,7 @@ public class TCLogging {
     if (currentLoggingDirectoryFileLock != null) {
       try {
         currentLoggingDirectoryFileLock.release();
+        currentLoggingDirectoryFileLock.channel().close();
         currentLoggingDirectoryFileLock = null;
       } catch (IOException ioe) {
         throw Assert.failure("Unable to release file lock?", ioe);

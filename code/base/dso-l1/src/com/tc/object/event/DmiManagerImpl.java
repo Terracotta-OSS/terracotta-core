@@ -18,6 +18,7 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.util.Assert;
+import com.tc.util.VicariousThreadLocal;
 import com.tcclient.object.DistributedMethodCall;
 
 import java.lang.reflect.InvocationTargetException;
@@ -45,7 +46,7 @@ public class DmiManagerImpl implements DmiManager {
     this.objMgr = om;
     this.runtimeLogger = rl;
     this.feedBack = new ThreadLocal();
-    this.nesting = new ThreadLocal();
+    this.nesting = new VicariousThreadLocal();
   }
 
   public boolean distributedInvoke(Object receiver, String method, Object[] params, boolean runOnAllNodes) {
@@ -79,7 +80,7 @@ public class DmiManagerImpl implements DmiManager {
   public void distributedInvokeCommit() {
     if (feedBack.get() != null) { return; }
     Assert.pre(nesting.get() != null);
-    nesting.set(null);
+    nesting.remove();
   }
 
   public void invoke(DistributedMethodCall dmc) {
@@ -96,7 +97,7 @@ public class DmiManagerImpl implements DmiManager {
           .getParameterDesc(), e);
       if (logger.isDebugEnabled()) logger.debug("Ignoring distributed method call", e);
     } finally {
-      feedBack.set(null);
+      feedBack.remove();
     }
   }
 

@@ -820,4 +820,13 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
   public static final String   DEV_CONSOLE_MAX_OPERATOR_EVENTS                               = "dev.console.max.operator.events";
   public static final String   L2_OPERATOR_EVENTS_STORE                                      = "l2.operator.events.store";
+  
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  L1 Shutdown Settings
+   * l1.shutdown.threadgroup.gracetime - time allowed for termination of all threads in the TC thread group (in milliseconds).
+   * </code>
+   ********************************************************************************************************************/
+  public static final String   L1_SHUTDOWN_THREADGROUP_GRACETIME                             = "l1.shutdown.threadgroup.gracetime";
+
 }

@@ -137,7 +137,7 @@ public class FieldUtils {
     try {
       field.set(target, value);
     } finally {
-      allowAccess.set(null);
+      allowAccess.remove();
     }
 
   }

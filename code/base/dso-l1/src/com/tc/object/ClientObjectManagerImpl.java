@@ -56,6 +56,7 @@ import com.tc.util.NonPortableReason;
 import com.tc.util.State;
 import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.Util;
+import com.tc.util.VicariousThreadLocal;
 import com.tc.util.concurrent.ResetableLatch;
 import com.tc.util.concurrent.StoppableThread;
 
@@ -133,7 +134,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   private final boolean                         sendErrors                   = System.getProperty("project.name") != null;
 
   private final Map                             objectLatchStateMap          = new HashMap();
-  private final ThreadLocal                     localLookupContext           = new ThreadLocal() {
+  private final ThreadLocal                     localLookupContext           = new VicariousThreadLocal() {
 
                                                                                @Override
                                                                                protected synchronized Object initialValue() {

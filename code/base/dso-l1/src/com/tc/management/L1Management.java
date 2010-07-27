@@ -68,6 +68,8 @@ public class L1Management extends TerracottaManagement {
 
   private JMXConnectorServer             connServer;
 
+  private volatile boolean               stopped;
+  
   public L1Management(final TunnelingEventHandler tunnelingHandler,
                       final StatisticsAgentSubSystem statisticsAgentSubSystem, final RuntimeLogger runtimeLogger,
                       final InstrumentationLogger instrumentationLogger, final String rawConfigText,
@@ -95,6 +97,8 @@ public class L1Management extends TerracottaManagement {
   }
 
   public synchronized void stop() throws IOException {
+    stopped = true;
+    
     if (connServer != null) {
       try {
         connServer.stop();
@@ -136,41 +140,51 @@ public class L1Management extends TerracottaManagement {
       private final int MAX_ATTEMPTS = 60 * 5;
 
       public void run() {
-        boolean registered = false;
-        int attemptCounter = 0;
-        while (!registered && attemptCounter++ < MAX_ATTEMPTS) {
-          try {
-            if (logger.isDebugEnabled()) {
-              logger.debug("Attempt #" + (attemptCounter + 1) + " to find the MBeanServer and register the L1 MBeans");
-            }
-            attemptToRegister(createDedicatedMBeanServer);
-            registered = true;
-            if (logger.isDebugEnabled()) {
-              logger.debug("L1 MBeans registered with the MBeanServer successfully after " + (attemptCounter + 1)
-                           + " attempts");
-            }
-          } catch (InstanceAlreadyExistsException e) {
-            logger
-                .error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
-            return;
-          } catch (Exception e) {
-            // Ignore and try again after 1 second, give the VM a chance to get started
-            if (logger.isDebugEnabled()) {
-              logger.debug("Caught exception while trying to register L1 MBeans", e);
-            }
+        try {
+          boolean registered = false;
+          int attemptCounter = 0;
+          while (!registered && attemptCounter++ < MAX_ATTEMPTS) {
             try {
-              Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-              new Exception("JMX registration thread interrupted, management beans will not be available", ie)
-                  .printStackTrace();
+              if (logger.isDebugEnabled()) {
+                logger.debug("Attempt #" + (attemptCounter + 1) + " to find the MBeanServer and register the L1 MBeans");
+              }
+              attemptToRegister(createDedicatedMBeanServer);
+              registered = true;
+              if (logger.isDebugEnabled()) {
+                logger.debug("L1 MBeans registered with the MBeanServer successfully after " + (attemptCounter + 1)
+                             + " attempts");
+              }
+            } catch (InstanceAlreadyExistsException e) {
+              logger
+                  .error("Exception while registering the L1 MBeans, they already seem to exist in the MBeanServer.", e);
+              return;
+            } catch (Exception e) {
+              // Ignore and try again after 1 second, give the VM a chance to get started
+              if (logger.isDebugEnabled()) {
+                logger.debug("Caught exception while trying to register L1 MBeans", e);
+              }
+              try {
+                Thread.sleep(1000);
+              } catch (InterruptedException ie) {
+                new Exception("JMX registration thread interrupted, management beans will not be available", ie)
+                    .printStackTrace();
+              }
             }
           }
-        }
-        if (registered) {
-          tunnelingHandler.jmxIsReady();
-        } else {
-          logger.error("Aborted attempts to register management" + " beans after " + (MAX_ATTEMPTS / 60)
-                       + " min of trying.");
+          if (registered) {
+            tunnelingHandler.jmxIsReady();
+          } else {
+            logger.error("Aborted attempts to register management" + " beans after " + (MAX_ATTEMPTS / 60)
+                         + " min of trying.");
+          }
+        } finally {
+          if (stopped) {
+            try {
+              L1Management.this.stop();
+            } catch (IOException e) {
+              logger.error("Error stopping L1 management from registration thread");
+            }
+          }
         }
       }
     }, "L1Management JMX registration");

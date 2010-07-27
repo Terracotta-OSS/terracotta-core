@@ -20,7 +20,7 @@ public abstract class JdbcHelper {
     try {
       capture.execute();
     } finally {
-      checksumCalculator.set(null);
+      checksumCalculator.remove();
     }
   }
 

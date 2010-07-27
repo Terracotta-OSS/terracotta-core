@@ -196,6 +196,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This is the main point of entry into the DSO client.
@@ -1014,5 +1016,63 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
 
     CommonShutDownHook.shutdown();
+    
+    if (threadGroup != null) {
+      boolean interrupted = false;
+      
+      try {
+        long end = System.currentTimeMillis() + l1Properties.getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
+
+        while (threadGroup.activeCount() > 0 && System.currentTimeMillis() < end) {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+        if (threadGroup.activeCount() > 0) {
+          logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
+                     + "Live threads: " + getLiveThreads(threadGroup));
+        } else {
+          logger.info("Destroying TC thread group");
+          threadGroup.destroy();
+        }
+      } catch (Throwable t) {
+        logger.error("Error destroying TC thread group", t);
+      } finally {
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+      }
+    }
+    
+    try {
+      TCLogging.closeFileAppender();
+      TCLogging.disableLocking();
+    } catch (Throwable t) {
+      Logger.getAnonymousLogger().log(Level.WARNING, "Error shutting down TC logging system", t);
+    }
+  }
+  
+  private static List<Thread> getLiveThreads(ThreadGroup group) {
+    int estimate = group.activeCount();
+    
+    Thread[] threads = new Thread[estimate + 1];
+
+    while (true) {
+      int count = group.enumerate(threads);
+      
+      if (count < threads.length) {
+        List<Thread> l = new ArrayList<Thread>(count);
+        for (Thread t : threads) {
+          if (t != null) {
+            l.add(t);
+          }
+        }
+        return l;
+      } else {
+        threads = new Thread[threads.length * 2];
+      }
+    }
   }
 }

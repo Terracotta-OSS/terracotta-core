@@ -5,6 +5,7 @@
 package com.tc.util.runtime;
 
 import com.tc.object.locks.ThreadID;
+import com.tc.util.VicariousThreadLocal;
 
 public class ThreadIDManagerImpl implements ThreadIDManager {
 
@@ -13,7 +14,7 @@ public class ThreadIDManagerImpl implements ThreadIDManager {
   private final ThreadIDMap threadIDMap;
 
   public ThreadIDManagerImpl(final ThreadIDMap threadIDMap) {
-    this.threadID = new ThreadLocal();
+    this.threadID = new VicariousThreadLocal();
     this.threadIDMap = threadIDMap;
   }
 

@@ -37,6 +37,7 @@ import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.StringUtil;
 import com.tc.util.Util;
+import com.tc.util.VicariousThreadLocal;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -48,7 +49,7 @@ import java.util.Map.Entry;
 public class ClientTransactionManagerImpl implements ClientTransactionManager, PrettyPrintable {
   private static final TCLogger                logger      = TCLogging.getLogger(ClientTransactionManagerImpl.class);
 
-  private final ThreadLocal                    transaction = new ThreadLocal() {
+  private final ThreadLocal                    transaction = new VicariousThreadLocal() {
                                                              @Override
                                                              protected Object initialValue() {
                                                                return new ThreadTransactionContext();
@@ -58,7 +59,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   // We need to remove initialValue() here because read auto locking now calls Manager.isDsoMonitored() which will
   // checks if isTransactionLogging is disabled. If it runs in the context of class loading, it will try to load
   // the class ThreadTransactionContext and thus throws a LinkageError.
-  private final ThreadLocal                    txnLogging  = new ThreadLocal();
+  private final ThreadLocal                    txnLogging  = new VicariousThreadLocal();
 
   private final ClientTransactionFactory       txFactory;
   private final RemoteTransactionManager       remoteTxManager;

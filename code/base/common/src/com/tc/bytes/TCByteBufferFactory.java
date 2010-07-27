@@ -12,6 +12,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.VicariousThreadLocal;
 
 /**
  * TCByteBuffer source that hides JDK dependencies and that can pool instances. Instance pooling is likely to be a good
@@ -37,7 +38,7 @@ public class TCByteBufferFactory {
   private static final BoundedLinkedQueue directCommonFreePool    = new BoundedLinkedQueue(commonPoolMaxBufCount);
   private static final BoundedLinkedQueue nonDirectCommonFreePool = new BoundedLinkedQueue(commonPoolMaxBufCount);
 
-  private static final ThreadLocal        directFreePool          = new ThreadLocal() {
+  private static final ThreadLocal        directFreePool          = new VicariousThreadLocal() {
                                                                     @Override
                                                                     protected Object initialValue() {
                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
@@ -50,7 +51,7 @@ public class TCByteBufferFactory {
                                                                       }
                                                                     }
                                                                   };
-  private static final ThreadLocal        nonDirectFreePool       = new ThreadLocal() {
+  private static final ThreadLocal        nonDirectFreePool       = new VicariousThreadLocal() {
                                                                     @Override
                                                                     protected Object initialValue() {
                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
