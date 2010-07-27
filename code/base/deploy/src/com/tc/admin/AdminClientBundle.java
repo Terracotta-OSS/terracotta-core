@@ -256,7 +256,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "classes.config.snippet", "Config snippet" }, { "current.view.type", "Current View Type:" },
         { "select.view", "Select View:" }, { "aggregate.view", "Aggregate View" },
         { "object.browser.cluster.heap", "Cluster Heap" },
-        { "runtime.stats.aggregate.server.stats", "Aggregrate Server Stats" },
+        { "runtime.stats.aggregate.server.stats", "Aggregate Server Stats" },
         { "runtime.stats.per.server.view", "Per Server View" }, { "runtime.stats.per.client.view", "Per Client View" },
         { "dashboard.txn-rate", "Write Txn/s" }, { "dashboard.lock-recall-rate", "Lock Recall/s" },
         { "dashboard.object-creation-rate", "Objects Created/s" }, { "dashboard.broadcast-rate", "Broadcasts/s" },

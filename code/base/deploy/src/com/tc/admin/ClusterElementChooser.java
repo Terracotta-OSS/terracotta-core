@@ -69,8 +69,9 @@ public abstract class ClusterElementChooser extends TreeComboBox {
       IClusterModel theClusterModel = getClusterModel();
       if (theClusterModel == null) { return; }
 
-      if (!inited && theClusterModel.isReady()) {
+      if (theClusterModel.isReady()) {
         setupTreeModel();
+        reSetToLastSelectedPath();
       } else if (inited && !theClusterModel.isReady()) {
         reset();
       }

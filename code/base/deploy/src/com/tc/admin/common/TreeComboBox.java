@@ -230,8 +230,8 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
       for (int i = listeners.length - 2; i >= 0; i -= 2) {
         if (listeners[i] == ActionListener.class) {
           if (e == null) {
-            e = new ActionEvent(TreeComboBox.this, ActionEvent.ACTION_PERFORMED, "ElementSelected", System
-                .currentTimeMillis(), 0);
+            e = new ActionEvent(TreeComboBox.this, ActionEvent.ACTION_PERFORMED, "ElementSelected",
+                                System.currentTimeMillis(), 0);
           }
           ((ActionListener) listeners[i + 1]).actionPerformed(e);
         }
@@ -286,6 +286,15 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
 
   public void setSelectedPath(TreePath path) {
     if (!isSelectedPath(path)) {
+      tree.setSelectionPath(selectionPath = path);
+      fireActionPerformed(null);
+      selectionRenderer.repaint();
+    }
+  }
+
+  public void reSetToLastSelectedPath() {
+    TreePath path = getSelectedPath();
+    if (path != null) {
       tree.setSelectionPath(selectionPath = path);
       fireActionPerformed(null);
       selectionRenderer.repaint();
@@ -425,9 +434,11 @@ public class TreeComboBox extends JPanel implements TreeWillExpandListener, Tree
   }
 
   protected AbstractButton createArrowButton() {
-    AbstractButton button = new BasicToggleArrowButton(SwingConstants.SOUTH, UIManager
-        .getColor("ComboBox.buttonBackground"), UIManager.getColor("ComboBox.buttonShadow"), UIManager
-        .getColor("ComboBox.buttonDarkShadow"), UIManager.getColor("ComboBox.buttonHighlight"));
+    AbstractButton button = new BasicToggleArrowButton(SwingConstants.SOUTH,
+                                                       UIManager.getColor("ComboBox.buttonBackground"),
+                                                       UIManager.getColor("ComboBox.buttonShadow"),
+                                                       UIManager.getColor("ComboBox.buttonDarkShadow"),
+                                                       UIManager.getColor("ComboBox.buttonHighlight"));
     button.setOpaque(true);
     return button;
   }
