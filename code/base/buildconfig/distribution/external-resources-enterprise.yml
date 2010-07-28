@@ -13,13 +13,13 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.0-runtime-ee
-    version: 1.0.0-SNAPSHOT
+    version: 2.0.0-SNAPSHOT
     destination: common
   
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.0-runtime-ee
-    version: 1.0.0-SNAPSHOT
+    version: 2.0.0-SNAPSHOT
     classifier: javadoc
     destination: common/docs/javadoc
     explode: true
@@ -27,5 +27,5 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta-ee
-    version: 2.2.0-SNAPSHOT
+    version: 2.2.1-SNAPSHOT
     destination: ehcache

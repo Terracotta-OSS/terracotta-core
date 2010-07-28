@@ -13,7 +13,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache
     artifactId: colorcache
     classifier: distribution
-    version: 3.4.0-SNAPSHOT
+    version: 3.3.1-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/colorcache
     explode: true
@@ -24,7 +24,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache.hibernate
     artifactId: events
     classifier: distribution
-    version: 3.4.0-SNAPSHOT
+    version: 3.3.1-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/hibernate
     explode: true
@@ -36,23 +36,15 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 2.2.0-SNAPSHOT
+    version: 2.2.0
     destination: ehcache
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 2.2.0-SNAPSHOT
+    version: 2.2.0
     destination: ehcache/javadoc
-    explode: true
-    
-  - maven_artifact: true
-    groupId: net.sf.ehcache
-    artifactId: ehcache-core
-    classifier: sources
-    version: 2.2.0-SNAPSHOT
-    destination: ehcache/src
     explode: true
     
   - maven_artifact: true
@@ -70,12 +62,12 @@ artifacts:
   - maven_artifact: false
     name: README.html
     destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/branches/taraval-rc/ehcache-express-kit/src/assemble/README.html
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html
 
   - maven_artifact: false
     name: QUICK-START.html
     destination: ehcache
-    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/branches/taraval-rc/ehcache-express-kit/src/assemble/QUICK-START.html
+    url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html
     
   - maven_artifact: false
     name: CHANGELOG.txt
@@ -121,13 +113,13 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta.quartz
     artifactId: quartz-terracotta
-    version: 1.2.0-SNAPSHOT
+    version: 1.2.1-SNAPSHOT
     destination: quartz
 
   - maven_artifact: true
     groupId: org.terracotta.session
     artifactId: terracotta-session
-    version: 1.1.0-SNAPSHOT
+    version: 1.1.1-SNAPSHOT
     destination: sessions
 #end
 
