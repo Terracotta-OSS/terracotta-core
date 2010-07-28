@@ -10,9 +10,10 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.Assert;
 
 public class GCLogger {
-  private final TCLogger logger;
-  private final boolean  verboseGC;
-  private final String   prefix;
+  private static final long NOT_INITIALIZED = -1L;
+  private final TCLogger    logger;
+  private final boolean     verboseGC;
+  private final String      prefix;
 
   public GCLogger(TCLogger logger, boolean verboseGC) {
     this("DGC", logger, verboseGC);
@@ -64,11 +65,21 @@ public class GCLogger {
   public void log_cycleComplete(GarbageCollectionID id, GarbageCollectionInfo gcInfo) {
     if (verboseGC()) {
       logGC(id, "notifying gc complete...");
-      logGC(id, "rescue 1 time   : " + gcInfo.getRescue1Time() + " ms.");
-      logGC(id, "rescue 2 time   : " + gcInfo.getRescue2Time() + " ms.");
-      logGC(id, "paused gc time  : " + gcInfo.getPausedStageTime() + " ms.");
-      logGC(id, "delete in-memory garbage time  : " + gcInfo.getDeleteStageTime() + " ms.");
-      logGC(id, "total mark cycle time   : " + gcInfo.getTotalMarkCycleTime() + " ms.");
+      if (gcInfo.getRescue1Time() != NOT_INITIALIZED) {
+        logGC(id, "rescue 1 time   : " + gcInfo.getRescue1Time() + " ms.");
+      }
+      if (gcInfo.getRescue2Time() != NOT_INITIALIZED) {
+        logGC(id, "rescue 2 time   : " + gcInfo.getRescue2Time() + " ms.");
+      }
+      if (gcInfo.getPausedStageTime() != NOT_INITIALIZED) {
+        logGC(id, "paused gc time  : " + gcInfo.getPausedStageTime() + " ms.");
+      }
+      if (gcInfo.getDeleteStageTime() != NOT_INITIALIZED) {
+        logGC(id, "delete in-memory garbage time  : " + gcInfo.getDeleteStageTime() + " ms.");
+      }
+      if (gcInfo.getTotalMarkCycleTime() != NOT_INITIALIZED) {
+        logGC(id, "total mark cycle time   : " + gcInfo.getTotalMarkCycleTime() + " ms.");
+      }
       logGC(id, "" + (gcInfo.isFullGC() ? "Full DGC" : "YoungGen DGC") + " STOP ");
     } else {
       logGC(id, "complete : " + gcInfo);
