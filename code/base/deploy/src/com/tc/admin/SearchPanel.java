@@ -148,13 +148,15 @@ public class SearchPanel extends XContainer {
     public void actionPerformed(ActionEvent e) {
       JTextComponent source = (JTextComponent) e.getSource();
       SearchPanel searchPanel = (SearchPanel) source.getClientProperty("search-panel");
-      String content = e.getActionCommand();
-      int mod = e.getModifiers();
-      if ((content != null) && (content.length() > 0)
-          && ((mod & ActionEvent.ALT_MASK) == (mod & ActionEvent.CTRL_MASK))) {
-        char c = content.charAt(0);
-        if ((c >= 0x20) && (c != 0x7F)) {
-          searchPanel.doIncrementalSearch(content);
+      if (searchPanel != null) {
+        String content = e.getActionCommand();
+        int mod = e.getModifiers();
+        if ((content != null) && (content.length() > 0)
+            && ((mod & ActionEvent.ALT_MASK) == (mod & ActionEvent.CTRL_MASK))) {
+          char c = content.charAt(0);
+          if ((c >= 0x20) && (c != 0x7F)) {
+            searchPanel.doIncrementalSearch(content);
+          }
         }
       }
     }
@@ -221,7 +223,7 @@ public class SearchPanel extends XContainer {
 
     public void insertUpdate(DocumentEvent e) {
       testSetFieldEnabled(e.getDocument());
-      if (!incremental) return;
+      if (!incremental) { return; }
       if (fFindField.isFocusOwner() && fTextComponent != null && !fTextComponent.isEditable()) {
         doSearch(true);
       }
@@ -229,7 +231,7 @@ public class SearchPanel extends XContainer {
 
     public void removeUpdate(DocumentEvent e) {
       testSetFieldEnabled(e.getDocument());
-      if (!incremental) return;
+      if (!incremental) { return; }
       int selStart = fFindField.getSelectionStart();
       int selEnd = fFindField.getSelectionEnd();
       int docLen = fFindField.getDocument().getLength();

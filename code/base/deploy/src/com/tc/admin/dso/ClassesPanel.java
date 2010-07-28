@@ -100,6 +100,7 @@ public class ClassesPanel extends XContainer {
     configDescriptionText.setEditable(false);
     configPanel.add(configDescriptionText, BorderLayout.NORTH);
     configPanel.add(new XScrollPane(configText = new XTextArea()));
+    configText.setEditable(false);
     tabbedPane.addTab(appContext.getString("classes.config.snippet"), configPanel);
 
     KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0, true);
@@ -182,11 +183,14 @@ public class ClassesPanel extends XContainer {
           if (classInfo != null) {
             for (DSOClassInfo info : classInfo) {
               String className = info.getClassName();
-              if (className.startsWith("com.tcclient")) continue;
+              if (className.startsWith("com.tcclient")) {
+                continue;
+              }
               if (className.startsWith("[")) {
                 int i = 0;
-                while (className.charAt(i) == '[')
+                while (className.charAt(i) == '[') {
                   i++;
+                }
                 if (className.charAt(i) == 'L') {
                   className = className.substring(i + 1, className.length() - 1);
                 } else {
@@ -217,7 +221,9 @@ public class ClassesPanel extends XContainer {
                 }
                 className = sb.toString();
               }
-              map.put(className, Integer.valueOf(info.getInstanceCount()));
+              Integer instanceCount = map.get(className);
+              int currentCount = instanceCount != null ? instanceCount.intValue() : 0;
+              map.put(className, Integer.valueOf(info.getInstanceCount() + currentCount));
             }
           }
         }
@@ -263,7 +269,7 @@ public class ClassesPanel extends XContainer {
   private boolean ignoreClass(String className) {
     if (LiteralValues.isLiteral(className)) { return true; }
     for (String pattern : IGNORE_CLASS_LIST) {
-      if (className.startsWith(pattern)) return true;
+      if (className.startsWith(pattern)) { return true; }
     }
     return false;
   }

@@ -12,8 +12,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
 
 public class ButtonSet extends XContainer {
-  private ButtonGroup  buttonGroup;
-  private JRadioButton nullSelection;
+  private final ButtonGroup buttonGroup;
+  private JRadioButton      nullSelection;
 
   public ButtonSet() {
     super();
@@ -60,6 +60,7 @@ public class ButtonSet extends XContainer {
     return nullSelection.getModel();
   }
 
+  @Override
   protected void addImpl(java.awt.Component comp, Object constraints, int index) {
     if (comp == null) { return; }
     if (!JToggleButton.class.isAssignableFrom(comp.getClass())) { throw new IllegalArgumentException(
@@ -70,13 +71,12 @@ public class ButtonSet extends XContainer {
     buttonGroup.add(button);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ae) {
-        AbstractButton btn = (AbstractButton) ae.getSource();
-        buttonGroup.setSelected(btn.getModel(), true);
         fireActionPerformed(ae);
       }
     });
   }
 
+  @Override
   public void remove(int index) {
     buttonGroup.remove((AbstractButton) getComponent(index));
     super.remove(index);
@@ -109,8 +109,8 @@ public class ButtonSet extends XContainer {
           if ((actionCmd = event.getActionCommand()) == null) {
             actionCmd = getActionCommand();
           }
-          e = new ActionEvent(ButtonSet.this, ActionEvent.ACTION_PERFORMED, actionCmd, event.getWhen(), event
-              .getModifiers());
+          e = new ActionEvent(ButtonSet.this, ActionEvent.ACTION_PERFORMED, actionCmd, event.getWhen(),
+                              event.getModifiers());
         }
         ((ActionListener) listeners[i + 1]).actionPerformed(e);
       }
