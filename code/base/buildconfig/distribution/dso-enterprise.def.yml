@@ -119,7 +119,6 @@ postscripts:
   - include-external-resources:
       args:
         - buildconfig/distribution/external-resources.yml
-        - buildconfig/distribution/external-resources-enterprise.yml
   - delete-tim-get-index
   - include-schemas:
       args:

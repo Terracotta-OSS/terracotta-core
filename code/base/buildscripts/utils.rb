@@ -202,8 +202,9 @@ def download_external(default_repos, dest_dir, artifact)
       success = true
       break
     end
+    break unless artifact['maven_artifact'] == true
   end
-  raise("Couldn't find artifact #{artifact} on any of the repos") unless success
+  raise("Couldn't find artifact #{artifact['name'] || artifact['artifactId']} on any of the repos") unless success
 end
 
 def create_maven_url(repo, artifact)

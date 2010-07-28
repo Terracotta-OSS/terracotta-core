@@ -24,10 +24,18 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def assemble_external_resource(resource_def)
     resource_config = YAML.load_file(File.join(@basedir.to_s, resource_def))
     default_repos = resource_config['default_repos']
-    puts "default repos: #{default_repos.join(',')}"
+    puts "Repos for external resources: \n#{default_repos.join("\n")}"
     artifacts = resource_config['artifacts']
     artifacts.each do |artifact|
       next if @no_demo && artifact['is_demo'] == true
+      
+      artifact['kit_edition'] ||= 'both'
+      if @flavor =~ /enterprise/
+        next if artifact['kit_edition'] =~ /opensource/i
+      else
+        next if artifact['kit_edition'] =~ /enterprise/i
+      end
+
       download_external(default_repos, product_directory.to_s, artifact)
     end
   end
