@@ -71,6 +71,10 @@ module DistributionUtils
     FilePath.new(@build_results.build_dir, "dist")
   end
 
+  def package_directory
+    FilePath.new(@build_results.build_dir, "packages")
+  end
+
   def product_directory
     FilePath.new(@distribution_results.build_dir, root_directory).ensure_directory
   end

@@ -66,6 +66,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       :basedir          => srcdir.to_s, 
       :input            => config, 
       :output           => installer_package_name)
+    
+    izpack_dir.delete
+    installer_package_name
   end
   
   private
