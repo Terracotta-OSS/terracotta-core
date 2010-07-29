@@ -72,7 +72,7 @@ module DistributionUtils
   end
 
   def product_directory
-    FilePath.new(@distribution_results.build_dir, get_config(:root_directory)).ensure_directory
+    FilePath.new(@distribution_results.build_dir, root_directory).ensure_directory
   end
 
   def dorevpath(component)
@@ -95,6 +95,13 @@ module DistributionUtils
 
   def package_filename
     pattern = get_config(:kit_name_pattern)
+    pattern = adjust_for_nightly(pattern)
+    pattern
+  end
+
+  def root_directory
+    pattern = get_config(:root_directory)
+    pattern = adjust_for_nightly(pattern)
     pattern
   end
 
@@ -120,16 +127,6 @@ module DistributionUtils
     else
       @config[symbol.to_s] || default
     end
-    
-    # append revision number to kitname and root directory in
-    # case of building a nightly
-    if @build_environment.version =~ /nightly/ && out =~ /terracotta/
-      case symbol
-      when :kit_name_pattern then out += "-revrevision"
-      when :root_directory then out += "-revrevision"
-      end
-    end
-    
     out = interpolate(out) unless out.nil?
     out
   end
@@ -148,6 +145,13 @@ module DistributionUtils
   end
 
   private
+
+  def adjust_for_nightly(pattern)
+    if @config_source['kit-type'] == "nightly"
+      pattern = pattern.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
+    end
+    pattern
+  end
 
   # Maps variable names to interpolated values.  If a variable is mapped to a String,
   # then the interpolated value is retrieved from the @config_source object using that

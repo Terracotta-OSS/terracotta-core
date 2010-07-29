@@ -886,7 +886,19 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def deploy_ee_releases
     deploy(ENTERPRISE, false, TERRACOTTA_EE_RELEASES_REPO_ID, TERRACOTTA_EE_RELEASES_REPO)
   end
-  
+
+  def build_nightly_kits
+    @internal_config_source['kit-type'] = 'nightly'
+    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
+    publish_all_packages(OPENSOURCE)
+  end
+
+  def build_nightly_ee_kits
+    @internal_config_source['kit-type'] = 'nightly'
+    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
+    publish_all_packages(ENTERPRISE)
+  end
+
   private
 
   def deploy(flavor, snapshot, repo_id, repo_url)

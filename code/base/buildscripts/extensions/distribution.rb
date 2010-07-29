@@ -82,8 +82,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
         unless patch_bin_files.empty?
           ant.tarfileset(:dir => Dir.pwd,
-                         :includes => patch_bin_files.join(','),
-                         :mode => 755)
+            :includes => patch_bin_files.join(','),
+            :mode => 755)
         end
       end
       
@@ -153,7 +153,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     @flavor = flavor.downcase
 
     depends :init, :compile
-    srcdir        = @static_resources.distribution_config_directory(flavor).canonicalize.to_s
+    srcdir        = @static_resources.distribution_config_directory.canonicalize.to_s
     product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
     product_codes.each do |product_code|
       @product_code = product_code.sub(/\-.*$/, '')
@@ -177,7 +177,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     @flavor = flavor.downcase
 
     depends :init, :compile
-    srcdir        = @static_resources.distribution_config_directory(flavor.downcase!).canonicalize.to_s
+    srcdir        = @static_resources.distribution_config_directory.canonicalize.to_s
     product_codes = Dir.entries(srcdir).delete_if { |entry| (/\-(#{flavor})\.def\.yml$/i !~ entry) || (/^x\-/i =~ entry) }
     product_codes.each do |product_code|
       @product_code = product_code.sub(/\-.*$/, '')

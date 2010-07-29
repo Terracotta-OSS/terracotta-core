@@ -93,10 +93,7 @@ bundled_modules:
         - jdk15-preinst-config
         - standard-config
 packaging:
-  - tar:
-      assert: '@build_environment.os_type !~ /^\s*windows\s*$/i'
-  - zip:
-      assert: '@build_environment.os_type =~ /^\s*windows\s*$/i'
+  - tar
   - izpack
 postscripts:
   - fix-bin-perms
