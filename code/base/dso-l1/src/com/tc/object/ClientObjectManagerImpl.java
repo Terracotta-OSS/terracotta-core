@@ -173,12 +173,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
                         + cache.getCacheCapacity());
     }
     startReaper();
-    ensureLocalLookupContextLoaded();
+    ensureKeyClassesLoaded();
   }
 
-  private void ensureLocalLookupContextLoaded() {
+  private void ensureKeyClassesLoaded() {
     // load LocalLookupContext early to avoid ClassCircularityError: DEV-1386
     new LocalLookupContext();
+
+    /*
+     *  Exercise isManaged path early to preload classes and avoid ClassCircularityError
+     *  during any subsequent calls
+     */
+    isManaged(new Object());
   }
 
   public Class getClassFor(final String className, final LoaderDescription desc) throws ClassNotFoundException {
