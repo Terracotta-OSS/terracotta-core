@@ -47,7 +47,7 @@ module BuildData
 
       file.puts("#{keyspace}.productname=terracotta")
       file.puts("#{keyspace}.edition=#{build_environment.edition}")
-      file.puts("#{keyspace}.version=#{build_environment.version}")
+      file.puts("#{keyspace}.version=#{build_environment.maven_version}")
       file.puts("#{keyspace}.maven.artifacts.version=#{build_environment.maven_version}")
       file.puts("#{keyspace}.host=#{build_environment.build_hostname}")
       file.puts("#{keyspace}.user=#{build_environment.build_username}")

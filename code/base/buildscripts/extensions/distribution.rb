@@ -171,6 +171,16 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     call_actions :__assemble, :__package, :__publish
   end
 
+  # assemble, package, and publish the kit for the product code supplied
+  def publish_packages(product_codes, flavor)
+    depends :init, :compile
+    product_codes.each do |product_code|
+      @product_code = product_code
+      @flavor = flavor.downcase
+      call_actions :__assemble, :__package, :__publish
+    end
+  end
+
   # assemble, package, and publish all possible kits (based on the configuration
   # files found under buildconfig/distribution directory)
   def publish_all_packages(flavor='OPENSOURCE')

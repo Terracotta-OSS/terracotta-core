@@ -95,13 +95,11 @@ module DistributionUtils
 
   def package_filename
     pattern = get_config(:kit_name_pattern)
-    pattern = adjust_for_nightly(pattern)
     pattern
   end
 
   def root_directory
     pattern = get_config(:root_directory)
-    pattern = adjust_for_nightly(pattern)
     pattern
   end
 
@@ -145,13 +143,6 @@ module DistributionUtils
   end
 
   private
-
-  def adjust_for_nightly(pattern)
-    if @config_source['kit-type'] == "nightly"
-      pattern = pattern.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
-    end
-    pattern
-  end
 
   # Maps variable names to interpolated values.  If a variable is mapped to a String,
   # then the interpolated value is retrieved from the @config_source object using that

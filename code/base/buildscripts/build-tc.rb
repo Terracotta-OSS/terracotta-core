@@ -888,18 +888,27 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   end
 
   def build_nightly_kits
-    @internal_config_source['kit-type'] = 'nightly'
-    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
-    publish_all_packages(OPENSOURCE)
+    setup_config_for_nightly_kits()
+    publish_packages(['dso', 'web'], OPENSOURCE)
   end
 
   def build_nightly_ee_kits
-    @internal_config_source['kit-type'] = 'nightly'
-    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
-    publish_all_packages(ENTERPRISE)
+    setup_config_for_nightly_kits()
+    publish_packages(['dso'], ENTERPRISE)
   end
 
   private
+
+  def setup_config_for_nightly_kits
+    @internal_config_source['kit-type'] = 'nightly'
+    if @build_environment.current_branch == 'trunk'
+      version = 'trunk-SNAPSHOT'
+    else
+      version = @build_environment.version
+    end
+    @internal_config_source['version'] = version.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
+    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
+  end
 
   def deploy(flavor, snapshot, repo_id, repo_url)
     @internal_config_source[MAVEN_SNAPSHOT_CONFIG_KEY] = snapshot.to_s
