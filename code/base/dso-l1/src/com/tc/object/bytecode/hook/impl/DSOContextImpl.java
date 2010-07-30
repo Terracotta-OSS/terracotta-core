@@ -32,6 +32,7 @@ import com.tc.object.loaders.ClassProvider;
 import com.tc.object.loaders.SingleLoaderClassProvider;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.RuntimeLoggerImpl;
+import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
 import com.tc.plugins.ModulesLoader;
 import com.tc.timapi.Version;
@@ -116,9 +117,16 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createStandaloneContext(String configSpec, ClassLoader loader,
-                                                   Map<String, URL> virtualTimJars, Collection<URL> additionalModules)
-      throws ConfigurationSetupException {
-    // XXX: refactor this to not duplicate createContext() so much
+                                                   Map<String, URL> virtualTimJars, Collection<URL> additionalModules,
+                                                   URL bootJarURL) throws ConfigurationSetupException {
+    // XXX: refactor this method to not duplicate createContext() so much
+
+    try {
+      BootJar.verifyTCVersion(bootJarURL);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
                                                                                                           StandardTVSConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
@@ -367,8 +375,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
-        .getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(),
+                                         manager.getTunneledDomainUpdater(), false, modules);
   }
 
   public void shutdown() {

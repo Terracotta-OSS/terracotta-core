@@ -23,6 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
@@ -80,6 +82,19 @@ public class BootJar {
 
   public static BootJar getBootJarForReading(File bootJar) throws IOException, BootJarException {
     return getBootJarForReading(bootJar, BootJarSignature.getSignatureForThisVM());
+  }
+
+  public static void verifyTCVersion(URL bootJar) throws IOException, BootJarException {
+    InputStream in = null;
+
+    try {
+      in = bootJar.openStream();
+      JarInputStream jarIn = new JarInputStream(in);
+
+      new BootJarMetaData(jarIn.getManifest());
+    } finally {
+      IOUtils.closeQuietly(in);
+    }
   }
 
   static BootJar getBootJarForWriting(File bootJar, String vmSignature) {
