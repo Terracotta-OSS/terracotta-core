@@ -158,7 +158,7 @@ module DistributionUtils
   VARIABLE_MAP = {
     'tim-api.version' => lambda { @config_source['tim-api.version'] || 'unknown' },
     'kitversion' => 'kit.version',
-    'version' => :version,
+    'version' => 'version',
     'branch' => :current_branch,
     'platform' => lambda { @build_environment.os_family.downcase },
     'revision' => :os_revision,
