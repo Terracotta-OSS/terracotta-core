@@ -149,5 +149,20 @@ public class LRUEvictionPolicyTest extends TCTestCase {
     public int accessCount() {
       return accessed;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if(obj instanceof TestCacheable) {
+        TestCacheable t2 = (TestCacheable)obj;
+        return getObjectID().equals(t2.getObjectID());
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return getObjectID().hashCode();
+    }
+    
   }
 }

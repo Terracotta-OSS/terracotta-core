@@ -4,6 +4,9 @@
  */
 package com.tc.object;
 
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import EDU.oswego.cs.dl.util.concurrent.BrokenBarrierException;
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
@@ -16,12 +19,15 @@ import com.tc.object.TestClassFactory.MockTCField;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.bytecode.TransparentAccess;
+import com.tc.object.cache.CacheStats;
+import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.cache.EvictionPolicy;
 import com.tc.object.cache.NullCache;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.field.TCField;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.loaders.ClassProvider;
@@ -29,12 +35,17 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.logging.RuntimeLogger;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.MockTransactionManager;
+import com.tc.object.util.ToggleableStrongReference;
 import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.concurrent.ThreadUtil;
 
+import gnu.trove.TLinkable;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -78,6 +89,58 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
                                            this.classFactory, this.objectFactory,
                                            new PortabilityImpl(this.clientConfiguration), null, null);
     this.mgr.setTransactionManager(new MockTransactionManager());
+  }
+
+  public void testEvictCache() {
+    ClockEvictionPolicy evictionPolicy = new ClockEvictionPolicy(-1);
+    CacheStats stats = mock(CacheStats.class);
+    ClientObjectManagerImpl mgrImpl = new ClientObjectManagerImpl(
+                                                                  this.remoteObjectManager,
+                                                                  this.clientConfiguration,
+                                                                  this.idProvider,
+                                                                  evictionPolicy,
+                                                                  this.runtimeLogger,
+                                                                  new ClientIDProviderImpl(new TestChannelIDProvider()),
+                                                                  this.classProvider, this.classFactory,
+                                                                  this.objectFactory,
+                                                                  new PortabilityImpl(this.clientConfiguration), null,
+                                                                  null);
+    ClientTransactionManager txnManager = mock(ClientTransactionManager.class);
+    mgrImpl.setTransactionManager(txnManager);
+    
+    Collection removedCandidates = new ArrayList();
+    for (int i = 0; i < 5; i++) {
+      TCObject c = new TestTCObject(new ObjectID(0), 1);
+      removedCandidates.add(c);
+      evictionPolicy.add(c);
+    }
+  
+    when(stats.getObjectCountToEvict(anyInt())).thenReturn(5);
+    mgrImpl.evictCache(stats);
+    
+    for(Iterator iter = removedCandidates.iterator(); iter.hasNext();) {
+      TestTCObject c = (TestTCObject)iter.next();
+      assertTrue(c.cleared);
+      evictionPolicy.remove(c);
+    }
+    
+    removedCandidates = new ArrayList();
+    for (int i = 0; i < 10; i++) {
+      TCObject c = new TestTCObject(new ObjectID(0), 1);
+      removedCandidates.add(c);
+      evictionPolicy.add(c);
+    }
+   
+    mgrImpl.evictCache(stats);
+    
+    mgrImpl.evictCache(stats);
+     
+    for(Iterator iter = removedCandidates.iterator(); iter.hasNext();) {
+      TestTCObject c = (TestTCObject)iter.next();
+      assertTrue(c.cleared);
+      evictionPolicy.remove(c);
+    }
+
   }
 
   public void testObjectNotFoundConcurrentLookup() throws Exception {
@@ -569,6 +632,245 @@ public class ClientObjectManagerTest extends BaseDSOTestCase {
     public TCObject __tc_managed() {
       return this.tcObject;
     }
+  }
+
+  private static class TestTCObject implements TCObject {
+
+    private final ObjectID id;
+    private final int      clearReferences;
+    private TLinkable      next;
+    private TLinkable      previous;
+    public boolean        cleared = false;
+
+    public TestTCObject(ObjectID id, int clearReferences) {
+      this.id = id;
+      this.clearReferences = clearReferences;
+    }
+
+    public boolean autoLockingDisabled() {
+      throw new ImplementMe();
+    }
+
+    public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void clearReference(String fieldName) {
+      throw new ImplementMe();
+
+    }
+
+    public int clearReferences(int toClear) {
+      cleared = true;
+      return clearReferences;
+    }
+
+    public void dehydrate(DNAWriter writer) {
+      throw new ImplementMe();
+
+    }
+
+    public void disableAutoLocking() {
+      throw new ImplementMe();
+
+    }
+
+    public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public String getFieldNameByOffset(long fieldOffset) {
+      throw new ImplementMe();
+    }
+
+    public ObjectID getObjectID() {
+      return id;
+    }
+
+    public ToggleableStrongReference getOrCreateToggleRef() {
+      throw new ImplementMe();
+    }
+
+    public Object getPeerObject() {
+      return new Object();
+    }
+
+    public Object getResolveLock() {
+      throw new ImplementMe();
+    }
+
+    public TCClass getTCClass() {
+      throw new ImplementMe();
+    }
+
+    public long getVersion() {
+      throw new ImplementMe();
+    }
+
+    public void hydrate(DNA from, boolean force) {
+      throw new ImplementMe();
+
+    }
+
+    public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public boolean isFieldPortableByOffset(long fieldOffset) {
+      throw new ImplementMe();
+    }
+
+    public boolean isNew() {
+      throw new ImplementMe();
+    }
+
+    public boolean isShared() {
+      throw new ImplementMe();
+    }
+
+    public void literalValueChanged(Object newValue, Object oldValue) {
+      throw new ImplementMe();
+
+    }
+
+    public void logicalInvoke(int method, String methodSignature, Object[] params) {
+      throw new ImplementMe();
+
+    }
+
+    public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void objectArrayChanged(int startPos, Object[] array, int length) {
+      throw new ImplementMe();
+
+    }
+
+    public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void primitiveArrayChanged(int startPos, Object array, int length) {
+      throw new ImplementMe();
+
+    }
+
+    public void resolveAllReferences() {
+      throw new ImplementMe();
+
+    }
+
+    public void resolveArrayReference(int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void resolveReference(String fieldName) {
+      throw new ImplementMe();
+
+    }
+
+    public void setArrayReference(int index, ObjectID id) {
+      throw new ImplementMe();
+
+    }
+
+    public void setLiteralValue(Object newValue) {
+      throw new ImplementMe();
+
+    }
+
+    public void setNext(final TLinkable link) {
+      this.next = link;
+    }
+
+    public void setPrevious(final TLinkable link) {
+      this.previous = link;
+    }
+
+    public TLinkable getNext() {
+      return this.next;
+    }
+
+    public TLinkable getPrevious() {
+      return this.previous;
+    }
+
+    public void setNotNew() {
+      throw new ImplementMe();
+
+    }
+
+    public ObjectID setReference(String fieldName, ObjectID id) {
+      throw new ImplementMe();
+    }
+
+    public void setValue(String fieldName, Object obj) {
+      throw new ImplementMe();
+
+    }
+
+    public void setVersion(long version) {
+      throw new ImplementMe();
+
+    }
+
+    public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+      throw new ImplementMe();
+
+    }
+
+    public void unresolveReference(String fieldName) {
+      throw new ImplementMe();
+    }
+
+    public int accessCount(int factor) {
+      throw new ImplementMe();
+    }
+
+    public boolean canEvict() {
+      return true;
+    }
+
+    public void clearAccessed() {
+      throw new ImplementMe();
+
+    }
+
+    public void markAccessed() {
+      //
+    }
+
+    public boolean recentlyAccessed() {
+      return false;
+    }
+
   }
 
   private static class StupidTestObject implements TransparentAccess {
