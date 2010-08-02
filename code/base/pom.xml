@@ -215,6 +215,26 @@
 
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
+        <groupId>org.terracotta.modules</groupId>
+        <artifactId>excludes-config</artifactId>
+        <version>${tcVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.modules</groupId>
+        <artifactId>guimodels-config</artifactId>
+        <version>${tcVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.modules</groupId>
+        <artifactId>jdk15-preinst-config</artifactId>
+        <version>${tcVersion}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.modules</groupId>
+        <artifactId>standard-config</artifactId>
+        <version>${tcVersion}</version>
+      </dependency>         
+      <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tcconfig</artifactId>
         <version>${tcVersion}</version>
