@@ -149,6 +149,13 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
   def init
     # set flavor property passed in by users
     @internal_config_source['flavor'] = @flavor
+
+    # this setup is for kit packaging naming pattern
+    # it's overwritten by build nightly kits target to add revision to the name
+    unless @internal_config_source['version_string']
+      @internal_config_source['version_string'] = @build_environment.version
+    end
+    
     write_build_info_file if monkey?
   end
 
@@ -904,9 +911,9 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     if @build_environment.current_branch == 'trunk'
       version = 'trunk-SNAPSHOT'
     else
-      version = @build_environment.version
+      version = @build_environment.maven_version
     end
-    @internal_config_source['version'] = version.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
+    @internal_config_source['version_string'] = version.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
     @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
   end
 

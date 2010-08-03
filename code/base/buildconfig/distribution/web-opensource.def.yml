@@ -6,7 +6,7 @@
 
 name: Website Product Content
 internal_name: web
-kit_name_pattern: terracotta-eclipse-plugin-version{_kitversion}
+kit_name_pattern: terracotta-eclipse-plugin-version_string{_kitversion}
 root_directory: web
 bundled_components:
   - common:
