@@ -155,7 +155,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.configurationCreator.reloadServersConfiguration(changedL2sBeanRepository, false, false);
 
     TopologyVerifier topologyVerifier = new TopologyVerifier(serversBeanRepository(), changedL2sBeanRepository,
-                                                             this.activeServerGroupsConfig, serverConnectionValidator, this);
+                                                             this.activeServerGroupsConfig, serverConnectionValidator,
+                                                             this);
     TopologyReloadStatus status = topologyVerifier.checkAndValidateConfig();
     if (TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE != status) { return status; }
 
@@ -385,8 +386,8 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
           Server rv = autoChooseThisL2(l2Array);
           if (rv == null) {
             throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
-                                                  + " there are" + l2Array.length
-                                                  + "servers defined in the Terracotta configuration file. "
+                                                  + " there are " + l2Array.length
+                                                  + " servers defined in the Terracotta configuration file. "
                                                   + " Pass the desired server name to the startup script using "
                                                   + "the -n flag.");
 
@@ -432,9 +433,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
               myL2 = server;
             } else {
               throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
-                                                    + " there are" + servers.length
-                                                    + "servers defined in the Terracotta configuration file. "
-                                                    + "The startup script cannot automatically choose between "
+                                                    + " there are " + servers.length
+                                                    + " servers defined in the Terracotta configuration file. "
+                                                    + "The startup script can not automatically choose between "
                                                     + "the following server names: " + myL2.getName() + ", "
                                                     + server.getName()
                                                     + ". Pass the desired server name to the startup script using "
