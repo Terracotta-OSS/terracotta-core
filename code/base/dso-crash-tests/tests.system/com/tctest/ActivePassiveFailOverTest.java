@@ -12,7 +12,6 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.util.Assert;
 import com.tc.util.TcConfigBuilder;
 import com.tc.util.concurrent.ThreadUtil;
-import com.tc.util.runtime.Os;
 import com.tctest.process.ExternalDsoClient;
 import com.tctest.process.ExternalDsoServer;
 
@@ -36,7 +35,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
   @Override
   protected void setUp() throws Exception {
     configBuilder = new TcConfigBuilder("/com/tc/active-passive-fail-over-test.xml");
-     configBuilder.randomizePorts();
+    configBuilder.randomizePorts();
 
     jmxPort_1 = configBuilder.getJmxPort(0);
     jmxPort_2 = configBuilder.getJmxPort(1);
@@ -66,13 +65,8 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
     System.out.println("server2 became active");
     server_1.start();
     System.out.println("server1 started");
-    if (Os.isSolaris()) {
-      ThreadUtil.reallySleep(20000);
-    } else {
-      ThreadUtil.reallySleep(10000);
-    }
-    if (server_1.isRunning()) {
-      server_1.dumpServerControl();
+    while (server_1.isRunning()) {
+      ThreadUtil.reallySleep(1000);
     }
     Assert.assertFalse(server_1.isRunning());
   }
@@ -95,7 +89,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
         try {
           jmxConnector.close();
         } catch (Exception e) {
-           System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+          System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
         }
       }
     }
@@ -121,7 +115,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
         try {
           jmxConnector.close();
         } catch (Exception e) {
-           System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
+          System.out.println("Exception while trying to close the JMX connector for port no: " + jmxPort);
         }
       }
     }
