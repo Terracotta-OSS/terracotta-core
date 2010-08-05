@@ -12,8 +12,8 @@ import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.properties.TCProperties;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.runner.AbstractTransparentApp;
@@ -30,10 +30,12 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
   private File             configFile;
   private int              jmxPort;
 
+  @Override
   protected Class getApplicationClass() {
     return L1ReconnectEnabledTestApp.class;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     t.initializeTestRunner();
@@ -44,6 +46,7 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
     cfg.setAttribute(L1ReconnectEnabledTestApp.JMX_PORT, String.valueOf(jmxPort));
   }
 
+  @Override
   protected void setJvmArgsL1Reconnect(final ArrayList jvmArgs) {
     super.setJvmArgsL1Reconnect(jvmArgs);
 
@@ -53,16 +56,18 @@ public class L1ReconnectEnabledTest extends TransparentTestBase {
     jvmArgs.add("-Dcom.tc." + TCPropertiesConsts.L2_L1RECONNECT_TIMEOUT_MILLS + "=" + L1_RECONNECT_TIMEOUT);
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(), jvmArgs);
     doSetUp(this);
   }
 

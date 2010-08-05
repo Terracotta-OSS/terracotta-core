@@ -30,6 +30,7 @@ public class LockStatisticsJMXTest extends TransparentTestBase {
   private File             configFile;
   private int              adminPort;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -40,18 +41,21 @@ public class LockStatisticsJMXTest extends TransparentTestBase {
     cfg.setAttribute(LockStatisticsJMXTestApp.JMX_PORT, String.valueOf(adminPort));
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LockStatisticsJMXTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath(),
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath(),
                           getExtraJVMArgs());
     doSetUp(this);
   }

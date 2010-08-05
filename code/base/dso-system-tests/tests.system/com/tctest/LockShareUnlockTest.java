@@ -24,15 +24,17 @@ import junit.framework.Assert;
 public class LockShareUnlockTest extends TransparentTestBase {
 
   private static final int NODE_COUNT = 1;
-  
-  private int  port;
-  private File configFile;
-  private int  jmxPort;
 
+  private int              port;
+  private File             configFile;
+  private int              jmxPort;
+
+  @Override
   protected Class getApplicationClass() {
     return LockShareUnlockTestApp.class;
   }
-  
+
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -43,14 +45,16 @@ public class LockShareUnlockTest extends TransparentTestBase {
     cfg.setAttribute(LockShareUnlockTestApp.JMX_PORT, String.valueOf(jmxPort));
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), null);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(), null);
     doSetUp(this);
   }
 
@@ -70,25 +74,25 @@ public class LockShareUnlockTest extends TransparentTestBase {
 
     tcConfigBuilder.getServers().getL2s()[0].setDSOPort(port);
     tcConfigBuilder.getServers().getL2s()[0].setJMXPort(adminPort);
-    
+
     tcConfigBuilder.getClient().setFaultCount(1);
 
     String testClassAppName = LockShareUnlockTestApp.class.getName();
-    
 
     InstrumentedClassConfigBuilder instrumented = new InstrumentedClassConfigBuilderImpl();
     instrumented.setClassExpression(testClassAppName + "*");
 
-    tcConfigBuilder.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] {instrumented});
+    tcConfigBuilder.getApplication().getDSO()
+        .setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented });
 
     Class<?> klass = LockShareUnlockTestApp.class;
-    RootConfigBuilder[] roots = {new RootConfigBuilderImpl(klass, "root", "root")};
+    RootConfigBuilder[] roots = { new RootConfigBuilderImpl(klass, "root", "root") };
     tcConfigBuilder.getApplication().getDSO().setRoots(roots);
 
     LockConfigBuilder lock1 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock1.setMethodExpression("* " + klass.getName() + ".addToRoot(..)");
     lock1.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-    
+
     LockConfigBuilder lock2 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock2.setMethodExpression("* " + klass.getName() + ".testUnbalancedWriteWrite(..)");
     lock2.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
@@ -96,7 +100,7 @@ public class LockShareUnlockTest extends TransparentTestBase {
     LockConfigBuilder lock3 = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
     lock3.setMethodExpression("* " + klass.getName() + ".testUnbalancedReadWrite(..)");
     lock3.setLockLevel(LockConfigBuilder.LEVEL_READ);
-    
+
     tcConfigBuilder.getApplication().getDSO().setLocks(new LockConfigBuilder[] { lock1, lock2, lock3 });
 
     return tcConfigBuilder;

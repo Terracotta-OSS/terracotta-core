@@ -36,20 +36,24 @@ public class LockInfoThreadDumpTest extends TransparentTestBase {
   private int              adminPort;
   private File             configFile;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
     t.getTransparentAppConfig().setAttribute(LockInfoThreadDumpTestApp.JMXPORT, String.valueOf(adminPort));
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LockInfoThreadDumpTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
     TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
@@ -58,8 +62,8 @@ public class LockInfoThreadDumpTest extends TransparentTestBase {
                                                                                                   new FatalIllegalConfigurationChangeHandler());
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
-        .getAbsolutePath());
+    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, groupPort,
+                          configFile.getAbsolutePath());
     doSetUp(this);
   }
 

@@ -31,17 +31,20 @@ public class MapsSystemTest extends TransparentTestBase {
     t.initializeTestRunner();
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     int port = pc.chooseRandomPort();
     int jmxPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
 
     writeConfigFile(port, jmxPort);
 
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(),
+                          jvmArgs);
     doSetUp(this);
   }
 

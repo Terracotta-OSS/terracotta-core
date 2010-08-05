@@ -45,10 +45,11 @@ public class ClusterMetaDataAfterNodeLeftTest extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 

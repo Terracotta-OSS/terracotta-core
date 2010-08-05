@@ -28,9 +28,10 @@ public class JMXHeartBeatTest extends TransparentTestBase {
   private int              adminPort;
 
   public JMXHeartBeatTest() {
-    //this.disableAllUntil("2007-06-25");
+    // this.disableAllUntil("2007-06-25");
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -41,18 +42,21 @@ public class JMXHeartBeatTest extends TransparentTestBase {
     cfg.setAttribute(JMXHeartBeatTestApp.JMX_PORT, String.valueOf(adminPort));
   }
 
+  @Override
   protected Class getApplicationClass() {
     return JMXHeartBeatTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 

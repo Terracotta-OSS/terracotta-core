@@ -32,9 +32,9 @@ import java.io.FileOutputStream;
 
 public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
 
-  private int              port;
-  private File             configFile;
-  private int              adminPort;
+  private int  port;
+  private File configFile;
+  private int  adminPort;
 
   @Override
   public void doSetUp(final TransparentTestIface t) throws Exception {
@@ -56,10 +56,11 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 
@@ -104,15 +105,19 @@ public class ClusterMetaDataOrphanedValuesTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented6 = new InstrumentedClassConfigBuilderImpl();
     instrumented6.setClassExpression(MyMojo.class.getName() + "*");
 
-    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3, instrumented4, instrumented5, instrumented6 });
+    out.getApplication().getDSO().setInstrumentedClasses(
+                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
+                                                             instrumented2, instrumented3, instrumented4,
+                                                             instrumented5, instrumented6 });
 
     RootConfigBuilder map = new RootConfigBuilderImpl(ClusterMetaDataOrphanedValuesTestApp.L1Client.class, "map", "map");
-    out.getApplication().getDSO().setRoots( new RootConfigBuilder[] { map });
+    out.getApplication().getDSO().setRoots(new RootConfigBuilder[] { map });
 
-    LockConfigBuilder l1ClientAutoLocks = new LockConfigBuilderImpl( LockConfigBuilder.TAG_AUTO_LOCK);
-    l1ClientAutoLocks.setMethodExpression("* " + ClusterMetaDataOrphanedValuesTestApp.L1Client.class.getName() + "*.*(..)");
+    LockConfigBuilder l1ClientAutoLocks = new LockConfigBuilderImpl(LockConfigBuilder.TAG_AUTO_LOCK);
+    l1ClientAutoLocks.setMethodExpression("* " + ClusterMetaDataOrphanedValuesTestApp.L1Client.class.getName()
+                                          + "*.*(..)");
     l1ClientAutoLocks.setLockLevel(LockConfigBuilder.LEVEL_WRITE);
-    out.getApplication().getDSO().setLocks( new LockConfigBuilder[] { l1ClientAutoLocks });
+    out.getApplication().getDSO().setLocks(new LockConfigBuilder[] { l1ClientAutoLocks });
 
     return out;
   }

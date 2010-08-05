@@ -40,6 +40,7 @@ public class RogueClientTest extends TransparentTestBase {
   private File             configFile;
   private int              adminPort;
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
@@ -50,14 +51,17 @@ public class RogueClientTest extends TransparentTestBase {
     cfg.setAttribute(RogueClientTestApp.JMX_PORT, String.valueOf(adminPort));
   }
 
+  @Override
   protected Class getApplicationClass() {
     return RogueClientTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
     TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
@@ -66,8 +70,8 @@ public class RogueClientTest extends TransparentTestBase {
                                                                                                   new FatalIllegalConfigurationChangeHandler());
 
     L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
-    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, configFile
-        .getAbsolutePath());
+    setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, groupPort,
+                          configFile.getAbsolutePath());
     doSetUp(this);
   }
 

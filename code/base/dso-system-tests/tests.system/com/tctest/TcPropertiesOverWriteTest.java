@@ -38,6 +38,7 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
   public static String     L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES_VALUE = "5678";
   public static String     L1_CACHEMANAGER_LEASTCOUNT_VALUE               = "15";
 
+  @Override
   protected Class getApplicationClass() {
     return TcPropertiesOverWriteTestApp.class;
   }
@@ -46,6 +47,7 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     return true;
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     t.initializeTestRunner();
@@ -56,16 +58,17 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     cfg.setAttribute(TcPropertiesOverWriteTestApp.JMX_PORT, String.valueOf(jmxPort));
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     // set the properties to be overwritten, these properties would be overwridden by the tc-config
     propertiesToTest = new TcProperty[NUMBER_OF_TC_PROPERTIES];
     propertiesToTest[0] = new TcProperty(TCPropertiesConsts.L1_CACHEMANAGER_ENABLED, L1_CACHEMANAGER_ENABLED_VALUE);
-    propertiesToTest[1] = new TcProperty(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE,
-                                         L1_LOGGING_MAX_LOGFILE_SIZE_VALUE);
+    propertiesToTest[1] = new TcProperty(TCPropertiesConsts.LOGGING_MAX_LOGFILE_SIZE, L1_LOGGING_MAX_LOGFILE_SIZE_VALUE);
 
     // this property is also given as a system property which has higher precedence to tc-config
     // this would not get overridden
@@ -76,7 +79,7 @@ public class TcPropertiesOverWriteTest extends TransparentTestBase {
     propertiesToTest[3] = new TcProperty(TCPropertiesConsts.L1_CACHEMANAGER_LEASTCOUNT, "9000");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), null);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(), null);
     doSetUp(this);
   }
 

@@ -26,6 +26,7 @@ public class ClientAbscondAfterServerCrashTest extends TransparentTestBase {
   private File client1Workspace;
   private File client2Workspace;
 
+  @Override
   protected Class getApplicationClass() {
     return ClientAbscondAfterServerCrashTestApp.class;
   }
@@ -36,6 +37,7 @@ public class ClientAbscondAfterServerCrashTest extends TransparentTestBase {
     PortChooser portChooser = new PortChooser();
     dsoPort = portChooser.chooseRandomPort();
     adminPort = portChooser.chooseRandomPort();
+    int groupPort = portChooser.chooseRandomPort();
     configDir = getTempDirectory();
     configFile = new File(configDir, "abscondingClient-tc-config.xml");
 
@@ -47,6 +49,7 @@ public class ClientAbscondAfterServerCrashTest extends TransparentTestBase {
       L2ConfigBuilder l2 = builder.getServers().getL2s()[0];
       l2.setDSOPort(dsoPort);
       l2.setJMXPort(adminPort);
+      l2.setL2GroupPort(groupPort);
       l2.setData(configDir + File.separator + "data");
       l2.setLogs(configDir + File.separator + "logs");
       l2.setReconnectWindowForPrevConnectedClients(15);
@@ -61,8 +64,8 @@ public class ClientAbscondAfterServerCrashTest extends TransparentTestBase {
       throw new AssertionError(e);
     }
 
-    //External L2. We need to crash the server and reboot from app.
-    setUpControlledServer(configFactory(), configHelper(), dsoPort, adminPort, configFile.getAbsolutePath());
+    // External L2. We need to crash the server and reboot from app.
+    setUpControlledServer(configFactory(), configHelper(), dsoPort, adminPort, groupPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 

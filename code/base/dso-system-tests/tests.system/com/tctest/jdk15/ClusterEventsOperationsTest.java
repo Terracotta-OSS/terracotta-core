@@ -50,10 +50,11 @@ public class ClusterEventsOperationsTest extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath());
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath());
     doSetUp(this);
   }
 
@@ -88,7 +89,9 @@ public class ClusterEventsOperationsTest extends TransparentTestBase {
     InstrumentedClassConfigBuilder instrumented3 = new InstrumentedClassConfigBuilderImpl();
     instrumented3.setClassExpression(testEventsListenerClass);
 
-    out.getApplication().getDSO().setInstrumentedClasses(new InstrumentedClassConfigBuilder[] { instrumented1, instrumented2, instrumented3 });
+    out.getApplication().getDSO().setInstrumentedClasses(
+                                                         new InstrumentedClassConfigBuilder[] { instrumented1,
+                                                             instrumented2, instrumented3 });
 
     return out;
   }

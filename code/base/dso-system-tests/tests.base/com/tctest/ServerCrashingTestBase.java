@@ -38,34 +38,37 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     this(nodeCount, null);
   }
 
+  @Override
   public void setUp() throws Exception {
 
     // for some test cases to enable l1reconnect
     if (enableL1Reconnect()) {
       setJvmArgsL1Reconnect((ArrayList) jvmArgs);
     }
-    
+
     if (enableL2Reconnect()) {
-      setJvmArgsL2Reconnect((ArrayList)jvmArgs);
+      setJvmArgsL2Reconnect((ArrayList) jvmArgs);
     }
 
     // XXX: ERR! HACK! Will collide eventually
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     adminPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
     BindPort dsoBindPort = BindPort.Factory.newInstance();
     dsoBindPort.setIntValue(port);
     ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-    
+
     BindPort jmxBindPort = BindPort.Factory.newInstance();
     jmxBindPort.setIntValue(adminPort);
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
     setupConfigLogDataStatisticsPaths(configFactory());
 
-    setUpControlledServer(configFactory(), configHelper(), port, adminPort, configFile.getAbsolutePath(), jvmArgs);
+    setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath(),
+                          jvmArgs);
 
     getTransparentAppConfig().setClientCount(nodeCount);
     initializeTestRunner();
@@ -101,6 +104,7 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     return port;
   }
 
+  @Override
   public int getAdminPort() {
     return adminPort;
   }

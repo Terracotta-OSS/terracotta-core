@@ -35,10 +35,12 @@ public class JmxMaxThreadsTest extends TransparentTestBase {
     cfg.setAttribute(JmxMaxThreadsTestApp.JMX_PORT, String.valueOf(jmxPort));
   }
 
+  @Override
   public void setUp() throws Exception {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
+    int groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
 
     writeConfigFile();
@@ -46,7 +48,8 @@ public class JmxMaxThreadsTest extends TransparentTestBase {
     ArrayList jvmArgs = new ArrayList();
     setJvmArgsL1Reconnect(jvmArgs);
 
-    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, configFile.getAbsolutePath(), jvmArgs);
+    setUpControlledServer(configFactory(), configHelper(), port, jmxPort, groupPort, configFile.getAbsolutePath(),
+                          jvmArgs);
     doSetUp(this);
   }
 

@@ -60,37 +60,37 @@ import junit.framework.AssertionFailedError;
 
 public abstract class TransparentTestBase extends BaseDSOTestCase implements TransparentTestIface, TestConfigurator {
 
-  public static final int             DEFAULT_CLIENT_COUNT            = 2;
-  public static final int             DEFAULT_INTENSITY               = 10;
-  public static final int             DEFAULT_VALIDATOR_COUNT         = 0;
-  public static final int             DEFAULT_ADAPTED_MUTATOR_COUNT   = 0;
-  public static final int             DEFAULT_ADAPTED_VALIDATOR_COUNT = 0;
+  public static final int                   DEFAULT_CLIENT_COUNT            = 2;
+  public static final int                   DEFAULT_INTENSITY               = 10;
+  public static final int                   DEFAULT_VALIDATOR_COUNT         = 0;
+  public static final int                   DEFAULT_ADAPTED_MUTATOR_COUNT   = 0;
+  public static final int                   DEFAULT_ADAPTED_VALIDATOR_COUNT = 0;
 
-  protected DistributedTestRunner     runner;
+  protected DistributedTestRunner           runner;
 
-  private DistributedTestRunnerConfig runnerConfig                    = new DistributedTestRunnerConfig(
-                                                                                                        getTimeoutValueInSeconds());
-  private TransparentAppConfig        transparentAppConfig;
-  private ApplicationConfigBuilder    possibleApplicationConfigBuilder;
+  private final DistributedTestRunnerConfig runnerConfig                    = new DistributedTestRunnerConfig(
+                                                                                                              getTimeoutValueInSeconds());
+  private TransparentAppConfig              transparentAppConfig;
+  private ApplicationConfigBuilder          possibleApplicationConfigBuilder;
 
-  private String                      mode;
-  private ServerControl               serverControl;
-  protected boolean                   controlledCrashMode             = false;
-  private ServerCrasher               crasher;
-  protected File                      javaHome;
-  protected int                       pid                             = -1;
-  private final ProxyConnectManager   proxyMgr                        = new ProxyConnectManagerImpl();
+  private String                            mode;
+  private ServerControl                     serverControl;
+  protected boolean                         controlledCrashMode             = false;
+  private ServerCrasher                     crasher;
+  protected File                            javaHome;
+  protected int                             pid                             = -1;
+  private final ProxyConnectManager         proxyMgr                        = new ProxyConnectManagerImpl();
 
-  private TestState                   crashTestState;
+  private TestState                         crashTestState;
 
   // used by ResolveTwoActiveServersTest only
-  private ServerControl[]             serverControls                  = null;
-  private TCPProxy[]                  proxies                         = null;
+  private ServerControl[]                   serverControls                  = null;
+  private TCPProxy[]                        proxies                         = null;
 
-  private int                         dsoPort                         = -1;
-  private int                         adminPort                       = -1;
-  private int                         groupPort                       = -1;
-  private final List                  postActions                     = new ArrayList();
+  private int                               dsoPort                         = -1;
+  private int                               adminPort                       = -1;
+  private int                               groupPort                       = -1;
+  private final List                        postActions                     = new ArrayList();
 
   protected TestConfigObject getTestConfigObject() {
     return TestConfigObject.getInstance();
@@ -161,6 +161,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     // to be overwritten
   }
 
+  @Override
   protected void setUp() throws Exception {
     setUpTransparent(configFactory(), configHelper());
 
@@ -207,17 +208,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       dsoBindPort.setIntValue(dsoPort);
       dsoBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-      
+
       BindPort jmxBindPort = BindPort.Factory.newInstance();
       jmxBindPort.setIntValue(adminPort);
       jmxBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
-      
+
       BindPort groupBindPort = BindPort.Factory.newInstance();
       groupBindPort.setIntValue(groupPort);
       groupBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
-      
+
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, adminPort);
       serverControl = helper.getServerControl();
     } else if (isMultipleServerTest()) {
@@ -230,17 +231,17 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       dsoBindPort.setIntValue(dsoPort);
       dsoBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-      
+
       BindPort jmxBindPort = BindPort.Factory.newInstance();
       jmxBindPort.setIntValue(adminPort);
       jmxBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
-      
+
       BindPort groupBindPort = BindPort.Factory.newInstance();
       groupBindPort.setIntValue(groupPort);
       groupBindPort.setBind("0.0.0.0");
       ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
-      
+
       if (!canRunL1ProxyConnect()) configFactory().addServerToL1Config(null, dsoPort, -1);
     }
 
@@ -276,8 +277,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   public int getAdminPort() {
     return adminPort;
   }
-  
-  public int getGroupPort(){
+
+  public int getGroupPort() {
     return this.groupPort;
   }
 
@@ -346,12 +347,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jmxBindPort.setIntValue(adminPort);
     jmxBindPort.setBind("0.0.0.0");
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
-    
+
     BindPort groupBindPort = BindPort.Factory.newInstance();
     groupBindPort.setIntValue(groupPort);
     groupBindPort.setBind("0.0.0.0");
     ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(groupBindPort);
-    
+
     configFactory().addServerToL1Config(null, dsoProxyPort, -1);
     disableL1L2ConfigValidationCheck();
   }
@@ -400,8 +401,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   // only used by regular system tests (not crash or active-passive)
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
-                                             String configFile) throws Exception {
-    setUpControlledServer(factory, helper, serverPort, adminPort, configFile, null);
+                                             int groupPort, String configFile) throws Exception {
+    setUpControlledServer(factory, helper, serverPort, adminPort, groupPort, configFile, null);
   }
 
   protected final void setUpForMultipleExternalProcesses(TestTVSConfigurationSetupManagerFactory factory,
@@ -433,17 +434,18 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
 
   protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
-                                             String configFile, List jvmArgs) throws Exception {
+                                             int groupPort, String configFile, List jvmArgs) throws Exception {
     controlledCrashMode = true;
     if (jvmArgs == null) {
       jvmArgs = new ArrayList();
     }
     addTestTcPropertiesFile(jvmArgs);
-    setUpExternalProcess(factory, helper, serverPort, adminPort, configFile, jvmArgs);
+    setUpExternalProcess(factory, helper, serverPort, adminPort, groupPort, configFile, jvmArgs);
   }
 
   protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
-                                      int serverPort, int adminPort, String configFile, List jvmArgs) throws Exception {
+                                      int serverPort, int adminPort, int groupPort, String configFile, List jvmArgs)
+      throws Exception {
     setJavaHome();
     assertNotNull(jvmArgs);
     serverControl = new ExtraProcessServerControl("localhost", serverPort, adminPort, configFile, true, javaHome,
@@ -459,7 +461,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jmxBindPort.setIntValue(adminPort);
     jmxBindPort.setBind("0.0.0.0");
     ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
-    
+
+    BindPort l2GroupPort = BindPort.Factory.newInstance();
+    jmxBindPort.setIntValue(groupPort);
+    jmxBindPort.setBind("0.0.0.0");
+    ((SettableConfigItem) configFactory().l2DSOConfig().l2GroupPort()).setValue(l2GroupPort);
+
     configFactory().addServerToL1Config(null, serverPort, adminPort);
   }
 
@@ -739,6 +746,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jmxConnector.close();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     if (controlledCrashMode) {
       if (isCrashy() && canRunCrash()) {
@@ -766,6 +774,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     super.tearDown();
   }
 
+  @Override
   protected void doDumpServerDetails() {
     try {
       dumpServers();
