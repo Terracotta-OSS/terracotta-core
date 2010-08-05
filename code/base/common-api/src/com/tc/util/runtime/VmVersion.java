@@ -33,7 +33,7 @@ public final class VmVersion {
   /**
    * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
    * java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
-   *
+   * 
    * @param Properties Typically System.getProperties()
    * @throws UnknownJvmVersionException If JVM version is unknown
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
@@ -44,7 +44,7 @@ public final class VmVersion {
 
   /**
    * Construct with specific version information
-   *
+   * 
    * @param vendorVersion Version pattern like 1.4.2_12
    * @param runtimeVersion Runtime version pattern like 1.4.2_12-269
    * @param isJRockit True if BEA JRockit JVM
@@ -79,7 +79,8 @@ public final class VmVersion {
             patch = version_patch + serviceRelease;
           }
         } else {
-          throw new UnknownRuntimeVersionException(vendorVersion, runtimeVersion);
+          patch = version_patch;
+          // throw new UnknownRuntimeVersionException(vendorVersion, runtimeVersion);
         }
       } else {
         patch = version_patch;
@@ -93,7 +94,7 @@ public final class VmVersion {
   /**
    * Given the history of SunOS and Java version numbering by Sun, this will return '1' for a long time to come. Mega
    * version = 1 in 1.2.3
-   *
+   * 
    * @return Mega version
    */
   public int getMegaVersion() {
@@ -102,7 +103,7 @@ public final class VmVersion {
 
   /**
    * Get major version (ie 2 in 1.2.3)
-   *
+   * 
    * @return Major version
    */
   public int getMajorVersion() {
@@ -111,7 +112,7 @@ public final class VmVersion {
 
   /**
    * Get minor version (ie 3 in 1.2.3)
-   *
+   * 
    * @return Minor version
    */
   public int getMinorVersion() {
@@ -120,7 +121,7 @@ public final class VmVersion {
 
   /**
    * Get patch level (ie 12 in 1.2.3_12)
-   *
+   * 
    * @return Patch level
    */
   public String getPatchLevel() {
@@ -180,6 +181,7 @@ public final class VmVersion {
    * @param o Other version
    * @return True if other version has identical version string
    */
+  @Override
   public boolean equals(final Object o) {
     if (!(o instanceof VmVersion)) { return false; }
 
@@ -187,10 +189,12 @@ public final class VmVersion {
     return vmVersion.equals(other.vmVersion);
   }
 
+  @Override
   public int hashCode() {
     return vmVersion.hashCode();
   }
 
+  @Override
   public String toString() {
     return vmVersion;
   }
@@ -221,9 +225,7 @@ public final class VmVersion {
       if (is != null) {
         props.load(is);
         String version = props.getProperty("sdk.version");
-        if (version != null) {
-          return version;
-        }
+        if (version != null) { return version; }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
