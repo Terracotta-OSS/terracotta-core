@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
+import com.tc.objectserver.persistence.db.PersistableCollection;
 
 public interface PersistableObjectState {
 

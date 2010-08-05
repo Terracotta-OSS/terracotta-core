@@ -8,7 +8,7 @@ import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SyncObjectIdSet;
 import com.tc.util.SyncObjectIdSetImpl;

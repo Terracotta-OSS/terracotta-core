@@ -9,7 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.objectserver.context.CommitTransactionContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 

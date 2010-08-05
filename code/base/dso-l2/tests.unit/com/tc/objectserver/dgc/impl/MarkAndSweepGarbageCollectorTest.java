@@ -13,8 +13,8 @@ import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 
 import java.util.ArrayList;
 import java.util.HashSet;

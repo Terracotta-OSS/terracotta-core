@@ -4,7 +4,6 @@
  */
 package com.tc.objectserver.managedobject;
 
-import com.sleepycat.je.CursorConfig;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -17,15 +16,15 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.db.ManagedObjectPersistorImpl;
+import com.tc.objectserver.persistence.db.PersistableCollectionFactory;
+import com.tc.objectserver.persistence.db.TCCollectionsPersistor;
+import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.ManagedObjectPersistorImpl;
-import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
-import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionsPersistor;
-import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
-import com.tc.objectserver.persistence.sleepycat.SleepycatSerializationAdapterFactory;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -35,7 +34,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   private final TCLogger                     logger   = TCLogging.getTestingLogger(getClass());
   private ObjectID                           objectID = new ObjectID(2000);
 
-  private DBEnvironment                      env;
+  private BerkeleyDBEnvironment              env;
   private ManagedObjectPersistorImpl         managedObjectPersistor;
   private TestPersistenceTransactionProvider ptp;
 
@@ -44,25 +43,18 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     super.setUp();
 
     this.env = newDBEnvironment();
-    final SleepycatSerializationAdapterFactory sleepycatSerializationAdapterFactory = new SleepycatSerializationAdapterFactory();
-
-    final SleepycatPersistor persistor = new SleepycatPersistor(this.logger, this.env,
+    final CustomSerializationAdapterFactory sleepycatSerializationAdapterFactory = new CustomSerializationAdapterFactory();
+    final DBPersistorImpl persistor = new DBPersistorImpl(this.logger, this.env,
                                                                 sleepycatSerializationAdapterFactory);
 
     this.ptp = new TestPersistenceTransactionProvider();
-    final CursorConfig rootDBCursorConfig = new CursorConfig();
-    final SleepycatCollectionFactory sleepycatCollectionFactory = new SleepycatCollectionFactory();
-    final SleepycatCollectionsPersistor sleepycatCollectionsPersistor = new SleepycatCollectionsPersistor(
-                                                                                                          this.logger,
-                                                                                                          this.env
-                                                                                                              .getMapsDatabase(),
-                                                                                                          sleepycatCollectionFactory);
-
-    this.managedObjectPersistor = new ManagedObjectPersistorImpl(this.logger, this.env.getClassCatalogWrapper()
-        .getClassCatalog(), sleepycatSerializationAdapterFactory, this.env, new TestMutableSequence(), this.env
-        .getRootDatabase(), rootDBCursorConfig, this.ptp, sleepycatCollectionsPersistor, this.env.isParanoidMode(),
+    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory();
+    final TCCollectionsPersistor sleepycatCollectionsPersistor = new TCCollectionsPersistor(logger, env
+        .getMapsDatabase(), sleepycatCollectionFactory);
+    this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, sleepycatSerializationAdapterFactory, env,
+                                                                 new TestMutableSequence(), env.getRootDatabase(), ptp,
+                                                                 sleepycatCollectionsPersistor, env.isParanoidMode(),
                                                                  new ObjectStatsRecorder());
-
     final NullManagedObjectChangeListenerProvider listenerProvider = new NullManagedObjectChangeListenerProvider();
     ManagedObjectStateFactory.disableSingleton(true);
     ManagedObjectStateFactory.createInstance(listenerProvider, persistor);
@@ -71,10 +63,10 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     this.managedObjectPersistor.snapshotObjectIDs();
   }
 
-  private DBEnvironment newDBEnvironment() throws Exception {
+  private BerkeleyDBEnvironment newDBEnvironment() throws Exception {
     final File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
     dbHome.mkdirs();
-    return new DBEnvironment(true, dbHome);
+    return new BerkeleyDBEnvironment(true, dbHome);
   }
 
   @Override

@@ -6,8 +6,8 @@ package com.tc.objectserver.persistence.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
-import com.tc.objectserver.persistence.sleepycat.SleepycatCollectionFactory;
+import com.tc.objectserver.persistence.db.PersistableCollection;
+import com.tc.objectserver.persistence.db.PersistableCollectionFactory;
 
 public class PersistentCollectionsUtil {
 
@@ -37,7 +37,7 @@ public class PersistentCollectionsUtil {
   }
 
   public static PersistableCollection createPersistableCollection(final ObjectID id,
-                                                                  final SleepycatCollectionFactory collectionFactory,
+                                                                  final PersistableCollectionFactory collectionFactory,
                                                                   final byte type) {
     switch (type) {
       case ManagedObjectState.MAP_TYPE:

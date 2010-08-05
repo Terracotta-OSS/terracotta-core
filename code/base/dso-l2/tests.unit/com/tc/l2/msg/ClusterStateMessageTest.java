@@ -19,9 +19,9 @@ import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
 import com.tc.objectserver.impl.PersistentManagedObjectStore;
 import com.tc.objectserver.impl.TestManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.Persistor;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
-import com.tc.objectserver.persistence.sleepycat.ConnectionIDFactoryImpl;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.util.State;
 import com.tc.util.sequence.ObjectIDSequence;
 

@@ -4,7 +4,7 @@
  */
 package com.tc.cli.command;
 
-import com.tc.objectserver.persistence.sleepycat.util.FastLoadOidlogAnalysis;
+import com.tc.objectserver.storage.util.FastLoadOidlogAnalysis;
 
 import java.io.File;
 import java.io.Writer;

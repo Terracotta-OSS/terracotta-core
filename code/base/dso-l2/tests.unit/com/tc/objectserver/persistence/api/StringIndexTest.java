@@ -4,7 +4,7 @@
 package com.tc.objectserver.persistence.api;
 
 import com.tc.io.serializer.api.StringIndex;
-import com.tc.objectserver.persistence.impl.StringIndexImpl;
+import com.tc.objectserver.persistence.inmemory.StringIndexImpl;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import gnu.trove.TLongObjectHashMap;

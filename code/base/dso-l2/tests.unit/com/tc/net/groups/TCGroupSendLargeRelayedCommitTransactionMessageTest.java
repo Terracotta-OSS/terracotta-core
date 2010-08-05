@@ -30,7 +30,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.objectserver.tx.TestCommitTransactionMessage;
 import com.tc.objectserver.tx.TestCommitTransactionMessageFactory;
 import com.tc.objectserver.tx.TestServerTransaction;

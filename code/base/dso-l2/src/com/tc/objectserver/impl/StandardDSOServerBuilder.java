@@ -48,6 +48,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageToTransactionBatchReader;
 import com.tc.objectserver.tx.PassThruTransactionFilter;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -200,7 +201,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                          L2TVSConfigurationSetupManager configSetupManager,
                                          DistributedObjectServer distributedObjectServer, InetAddress bind,
                                          int jmxPort, Sink remoteEventsSink,
-                                         ServerConnectionValidator serverConnectionValidator) throws Exception {
+                                         ServerConnectionValidator serverConnectionValidator, DBFactory dbFactory)
+      throws Exception {
     return new L2Management(tcServerInfoMBean, lockStatisticsMBean, statisticsAgentSubSystem, statisticsGateway,
                             configSetupManager, distributedObjectServer, bind, jmxPort, remoteEventsSink);
   }

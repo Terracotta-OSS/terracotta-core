@@ -198,23 +198,25 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ClientStatePersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.Persistor;
 import com.tc.objectserver.persistence.api.TransactionPersistor;
 import com.tc.objectserver.persistence.api.TransactionStore;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
-import com.tc.objectserver.persistence.impl.InMemorySequenceProvider;
-import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.NullTransactionPersistor;
-import com.tc.objectserver.persistence.impl.TransactionStoreImpl;
-import com.tc.objectserver.persistence.sleepycat.ConnectionIDFactoryImpl;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.DBException;
-import com.tc.objectserver.persistence.sleepycat.DatabaseDirtyException;
-import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
-import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
+import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
+import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.db.DBException;
+import com.tc.objectserver.persistence.db.DatabaseDirtyException;
+import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
+import com.tc.objectserver.persistence.db.DBPersistorImpl;
+import com.tc.objectserver.persistence.db.TCDatabaseException;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemorySequenceProvider;
+import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.inmemory.NullTransactionPersistor;
+import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
+import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
@@ -241,7 +243,7 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.statistics.retrieval.actions.SRABerkeleyDB;
+import com.tc.statistics.retrieval.actions.SRAForDB;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
@@ -482,10 +484,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     NIOWorkarounds.solaris10Workaround();
 
+    DBFactory dbFactory = new BerkeleyDBFactory();
+
     // start the JMX server
     try {
       startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(),
-                     new RemoteJMXProcessor());
+                     new RemoteJMXProcessor(), dbFactory);
     } catch (final Exception e) {
       final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
       consoleLogger.error(msg);
@@ -530,8 +534,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     logger.debug("server swap enabled: " + swapEnabled);
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
-    SRABerkeleyDB sraBdb = null;
+    SRAForDB sraForDb = null;
 
+    final DBEnvironment dbenv;
     if (swapEnabled) {
       final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath().getFile(),
                                    NewL2DSOConfig.OBJECTDB_DIRNAME);
@@ -548,16 +553,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
       this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-      final DBEnvironment dbenv = new DBEnvironment(persistent, dbhome, this.l2Properties
-          .getPropertiesFor("berkeleydb").addAllPropertiesTo(new Properties()));
+      dbenv = dbFactory.createEnvironment(persistent, dbhome, this.l2Properties.getPropertiesFor("berkeleydb")
+          .addAllPropertiesTo(new Properties()));
       final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
 
-      this.persistor = new SleepycatPersistor(TCLogging.getLogger(SleepycatPersistor.class), dbenv,
+      this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), dbenv,
                                               serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                   .dataPath().getFile(), this.objectStatsRecorder);
-      sraBdb = new SRABerkeleyDB((SleepycatPersistor) this.persistor);
-
-      this.l2Management.init(dbenv);
+      sraForDb = dbFactory.createSRAForDB(dbenv);
+      // Setting the DB environment for the bean which takes backup of the active server
+      if (persistent) {
+        this.l2Management.initBackupMbean(dbenv);
+      }
       // DONT DELETE ::This commented code is for replacing SleepyCat with MemoryDataStore as an in-memory DB for
       // testing purpose. You need to include MemoryDataStore in tc.jar and enable with tc.properties
       // l2.memorystore.enabled=true.
@@ -1105,7 +1112,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl, sraBdb);
+                                        serverTransactionSequencerImpl, sraForDb);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1289,7 +1296,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                    final MessageMonitor messageMonitor,
                                                    final ServerTransactionManagerImpl txnManager,
                                                    final ServerTransactionSequencerStats serverTransactionSequencerStats,
-                                                   final SRABerkeleyDB sraBdb) {
+                                                   final SRAForDB sraBdb) {
     if (this.statisticsAgentSubSystem.isActive()) {
       final StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -1535,7 +1542,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.operatorEventHistoryProvider;
   }
 
-  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink) throws Exception {
+  private void startJMXServer(final InetAddress bind, int jmxPort, final Sink remoteEventsSink,
+                              final DBFactory dbFactory) throws Exception {
     if (jmxPort == 0) {
       jmxPort = new PortChooser().chooseRandomPort();
     }
@@ -1543,7 +1551,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l2Management = this.serverBuilder.createL2Management(this.tcServerInfoMBean, this.lockStatisticsMBean,
                                                               this.statisticsAgentSubSystem, this.statisticsGateway,
                                                               this.configSetupManager, this, bind, jmxPort,
-                                                              remoteEventsSink, this);
+                                                              remoteEventsSink, this, dbFactory);
 
     this.l2Management.start();
   }

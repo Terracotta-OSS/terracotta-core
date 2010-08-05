@@ -4,7 +4,7 @@
 package com.tc.objectserver.persistence.api;
 
 import com.tc.net.protocol.tcm.ChannelID;
-import com.tc.objectserver.persistence.impl.ClientNotFoundException;
+import com.tc.objectserver.persistence.inmemory.ClientNotFoundException;
 import com.tc.util.sequence.MutableSequence;
 
 import java.util.Set;

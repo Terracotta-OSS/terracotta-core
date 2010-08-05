@@ -231,9 +231,9 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     }
   }
 
-  public void setDbEnvironment(Environment environment, File environmentHome) {
-    this.env = environment;
-    if (environmentHome != null) this.envHome = environmentHome.getAbsolutePath();
+  public void setDbEnvironment(Environment bdbEnv, File bdbEnvHome) {
+    this.env = bdbEnv;
+    if (bdbEnvHome != null) this.envHome = bdbEnvHome.getAbsolutePath();
     setBackupEnabled(env != null && envHome != null);
   }
 

@@ -11,7 +11,7 @@ import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;

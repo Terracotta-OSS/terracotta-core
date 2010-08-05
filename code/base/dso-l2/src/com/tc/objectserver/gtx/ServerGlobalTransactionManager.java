@@ -8,7 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDGenerator;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.sequence.Sequence;
 
 import java.util.Collection;

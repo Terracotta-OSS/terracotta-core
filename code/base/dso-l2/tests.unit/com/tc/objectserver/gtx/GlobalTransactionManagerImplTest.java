@@ -10,10 +10,10 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.handler.GlobalTransactionIDBatchRequestHandler;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.impl.TestPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.impl.TestTransactionStore;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.SimpleSequence;
 

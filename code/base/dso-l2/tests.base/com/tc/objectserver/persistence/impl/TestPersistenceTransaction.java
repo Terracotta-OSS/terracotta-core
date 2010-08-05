@@ -7,7 +7,7 @@ package com.tc.objectserver.persistence.impl;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 public final class TestPersistenceTransaction implements PersistenceTransaction {
 
@@ -24,11 +24,7 @@ public final class TestPersistenceTransaction implements PersistenceTransaction 
     }
   }
 
-  public Object getProperty(Object key) {
-    return null;
-  }
-
-  public Object setProperty(Object key, Object value) {
-    return null;
+  public void abort() {
+    throw new UnsupportedOperationException();
   }
 }

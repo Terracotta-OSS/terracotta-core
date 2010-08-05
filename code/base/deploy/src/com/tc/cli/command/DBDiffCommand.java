@@ -4,7 +4,7 @@
  */
 package com.tc.cli.command;
 
-import com.tc.objectserver.persistence.sleepycat.util.DBDiff;
+import com.tc.objectserver.storage.util.DBDiff;
 
 import java.io.File;
 import java.io.Writer;

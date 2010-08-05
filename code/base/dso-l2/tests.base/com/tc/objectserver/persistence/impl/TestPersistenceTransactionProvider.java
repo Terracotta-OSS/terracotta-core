@@ -6,8 +6,8 @@ package com.tc.objectserver.persistence.impl;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
 import com.tc.exception.TCRuntimeException;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 
 public final class TestPersistenceTransactionProvider implements PersistenceTransactionProvider {
   

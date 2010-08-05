@@ -36,7 +36,7 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;

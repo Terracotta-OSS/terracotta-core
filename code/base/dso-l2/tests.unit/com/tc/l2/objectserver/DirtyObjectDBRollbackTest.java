@@ -10,11 +10,11 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.persistence.api.PersistentMapStore;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.DirtyObjectDbCleaner;
-import com.tc.objectserver.persistence.sleepycat.SleepycatMapStore;
+import com.tc.objectserver.persistence.db.DirtyObjectDbCleaner;
+import com.tc.objectserver.persistence.db.TCMapStore;
+import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
@@ -30,7 +30,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
 
   private File                     dbHome;
   private File                     dataPath;
-  private DBEnvironment            dbenv;
+  private BerkeleyDBEnvironment    dbenv;
   private TCFile                   dirtyDbBackupPath = null;
   private TCLogger                 logger            = TCLogging.getLogger(DirtyObjectDBRollbackTest.class);
   private TestDirtyObjectDBCleaner dbCleaner;
@@ -46,11 +46,11 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBEnvironment(true, dbHome);
+    dbenv = new BerkeleyDBEnvironment(true, dbHome);
     dbenv.open();
 
     PersistenceTransactionProvider persistentTxProvider = new NullPersistenceTransactionProvider();
-    PersistentMapStore persistentMapStore = new SleepycatMapStore(persistentTxProvider, logger, dbenv
+    PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger, dbenv
         .getClusterStateStoreDatabase());
 
     // create db backup dir

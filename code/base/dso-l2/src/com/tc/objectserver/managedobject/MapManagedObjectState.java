@@ -15,7 +15,7 @@ import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.MapEntryFacade;
 import com.tc.objectserver.mgmt.MapEntryFacadeImpl;
-import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
+import com.tc.objectserver.persistence.db.PersistableCollection;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 

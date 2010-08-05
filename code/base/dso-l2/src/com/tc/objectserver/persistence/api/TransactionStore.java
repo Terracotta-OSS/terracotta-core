@@ -8,6 +8,7 @@ import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 import java.util.Collection;
 import java.util.Set;

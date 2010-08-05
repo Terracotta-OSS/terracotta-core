@@ -60,10 +60,10 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
+import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
+import com.tc.objectserver.persistence.db.DBPersistorImpl;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
@@ -92,8 +92,8 @@ public class ObjectRequestManagerTest extends TestCase {
     super.setUp();
 
     ManagedObjectStateFactory.disableSingleton(true);
-    final SleepycatPersistor persistor = new SleepycatPersistor(TCLogging.getLogger(ObjectRequestManagerTest.class),
-                                                                new DBEnvironment(true, new File(".")),
+    final DBPersistorImpl persistor = new DBPersistorImpl(TCLogging.getLogger(ObjectRequestManagerTest.class),
+                                                                new BerkeleyDBEnvironment(true, new File(".")),
                                                                 new CustomSerializationAdapterFactory());
 
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();

@@ -11,7 +11,7 @@ import com.tc.object.TestDNACursor;
 import com.tc.object.TestDNAWriter;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.core.api.ManagedObjectState;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.util.Assert;
 
 import java.io.ByteArrayInputStream;

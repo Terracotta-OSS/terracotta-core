@@ -13,7 +13,7 @@ import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.TestDNA;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

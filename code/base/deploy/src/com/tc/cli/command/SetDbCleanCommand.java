@@ -4,7 +4,7 @@
  */
 package com.tc.cli.command;
 
-import com.tc.objectserver.persistence.sleepycat.util.SetDbClean;
+import com.tc.objectserver.storage.util.SetDbClean;
 
 import java.io.File;
 import java.io.Writer;

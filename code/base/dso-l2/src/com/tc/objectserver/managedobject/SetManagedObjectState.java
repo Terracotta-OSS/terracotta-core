@@ -12,7 +12,7 @@ import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.sleepycat.PersistableCollection;
+import com.tc.objectserver.persistence.db.PersistableCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;

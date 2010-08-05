@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.ObjectIDSet;
 
 import java.util.Collection;

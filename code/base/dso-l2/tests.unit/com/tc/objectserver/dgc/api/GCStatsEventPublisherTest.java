@@ -12,8 +12,8 @@ import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
 import com.tc.objectserver.l1.api.TestClientStateManager;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
-import com.tc.objectserver.persistence.impl.NullPersistenceTransactionProvider;
+import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;

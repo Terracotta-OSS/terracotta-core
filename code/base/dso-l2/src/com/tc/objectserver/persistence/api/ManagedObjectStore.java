@@ -8,6 +8,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ManagedObjectProvider;
 import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.core.api.ManagedObject;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.sequence.ObjectIDSequence;

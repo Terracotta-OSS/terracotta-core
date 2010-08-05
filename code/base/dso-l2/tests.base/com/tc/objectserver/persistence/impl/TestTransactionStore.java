@@ -11,8 +11,8 @@ import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.gtx.GlobalTransactionDescriptor;
 import com.tc.objectserver.gtx.TransactionCommittedError;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
 import com.tc.objectserver.persistence.api.TransactionStore;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
 import java.util.Collection;

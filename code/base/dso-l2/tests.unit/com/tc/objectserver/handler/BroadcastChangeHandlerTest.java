@@ -55,7 +55,7 @@ import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionListener;
 import com.tc.objectserver.tx.ServerTransactionManager;

@@ -7,7 +7,7 @@ package com.tc.objectserver.managedobject;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNACursor;
 import com.tc.objectserver.managedobject.bytecode.ClassNotCompatableException;
-import com.tc.objectserver.persistence.impl.InMemoryPersistor;
+import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 
 import java.util.Collection;
 import java.util.HashMap;

@@ -19,8 +19,8 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 

@@ -5,7 +5,7 @@
 package com.tc.cli.command;
 
 import com.tc.object.ObjectID;
-import com.tc.objectserver.persistence.sleepycat.util.ManagedObjectReport;
+import com.tc.objectserver.storage.util.ManagedObjectReport;
 
 import java.io.File;
 import java.io.Writer;

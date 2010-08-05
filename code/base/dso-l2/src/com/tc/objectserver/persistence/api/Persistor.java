@@ -6,6 +6,7 @@ package com.tc.objectserver.persistence.api;
 
 import com.tc.io.serializer.api.StringIndex;
 import com.tc.object.persistence.api.PersistentMapStore;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.sequence.MutableSequence;
 
 public interface Persistor {

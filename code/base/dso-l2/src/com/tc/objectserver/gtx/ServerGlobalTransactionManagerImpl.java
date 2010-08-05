@@ -7,9 +7,9 @@ package com.tc.objectserver.gtx;
 import com.tc.net.NodeID;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
-import com.tc.objectserver.persistence.api.PersistenceTransactionProvider;
 import com.tc.objectserver.persistence.api.TransactionStore;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.util.SequenceValidator;
 import com.tc.util.sequence.Sequence;
 

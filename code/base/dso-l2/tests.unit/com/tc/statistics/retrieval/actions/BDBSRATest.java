@@ -3,14 +3,7 @@
  */
 package com.tc.statistics.retrieval.actions;
 
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
-import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.sleepycat.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.DBEnvironment;
-import com.tc.objectserver.persistence.sleepycat.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.sleepycat.SleepycatPersistor;
-import com.tc.objectserver.persistence.sleepycat.TCDatabaseException;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.test.TCTestCase;
@@ -22,12 +15,10 @@ import java.io.IOException;
 
 public class BDBSRATest extends TCTestCase {
 
-  public void test() throws IOException, TCDatabaseException {
-    SerializationAdapterFactory saf = new CustomSerializationAdapterFactory();
+  public void test() throws IOException {
     File dbHome = newDBHome();
-    DBEnvironment env = new DBEnvironment(true, dbHome);
-    TCLogger logger = TCLogging.getLogger(getClass());
-    SRABerkeleyDB sras = new SRABerkeleyDB(new SleepycatPersistor(logger, env, saf, null, new ObjectStatsRecorder()));
+    BerkeleyDBEnvironment env = new BerkeleyDBEnvironment(true, dbHome);
+    SRAForDB sras = new SRAForDB(env);
     sras.retrieveStatisticData();
     ThreadUtil.reallySleep(10 * 1000);
     // check for SRAs to be 0

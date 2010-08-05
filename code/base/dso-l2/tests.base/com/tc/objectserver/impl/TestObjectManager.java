@@ -20,7 +20,7 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.persistence.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
