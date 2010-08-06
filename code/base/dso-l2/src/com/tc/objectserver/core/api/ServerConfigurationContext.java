@@ -77,6 +77,7 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_MAP_RESPOND_STAGE                           = "server_map_response_stage";
   public static final String SERVER_MAP_CAPACITY_EVICTION_STAGE                 = "server_map_capacity_eviction_stage";
   public static final String SERVER_MAP_EVICTION_PROCESSOR_STAGE                = "server_map_eviction_processor_stage";
+  public static final String SERVER_MAP_EVICTION_BROADCAST_STAGE                = "server_map_eviction_broadcast_stage";
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";

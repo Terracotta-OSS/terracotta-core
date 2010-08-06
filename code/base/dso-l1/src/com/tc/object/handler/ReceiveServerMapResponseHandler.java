@@ -11,7 +11,7 @@ import com.tc.object.msg.GetValueServerMapResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
 
 public class ReceiveServerMapResponseHandler extends AbstractEventHandler {
-
+  
   private final RemoteServerMapManager remoteServerMapManager;
 
   public ReceiveServerMapResponseHandler(final RemoteServerMapManager remoteServerMapManager) {
@@ -32,10 +32,12 @@ public class ReceiveServerMapResponseHandler extends AbstractEventHandler {
                                                                 responseMsg.getMapID(), responseMsg
                                                                     .getGetValueResponses(), responseMsg
                                                                     .getSourceNodeID());
-    } else {
+    } else if (context instanceof ObjectNotFoundServerMapResponseMessage) {
       final ObjectNotFoundServerMapResponseMessage notFoundMsg = (ObjectNotFoundServerMapResponseMessage) context;
       this.remoteServerMapManager.objectNotFoundFor(notFoundMsg.getLocalSessionID(), notFoundMsg.getMapID(),
                                                      notFoundMsg.getRequestID(), notFoundMsg.getSourceNodeID());
+    } else {
+      throw new AssertionError("Unknown message type received from server - " + context.getClass().getName());
     }
   }
 }

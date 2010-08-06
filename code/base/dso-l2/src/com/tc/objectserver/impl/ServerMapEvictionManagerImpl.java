@@ -12,6 +12,7 @@ import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
+import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
 import com.tc.objectserver.context.ServerMapEvictionContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
@@ -78,6 +79,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
                                                                                          true);
 
   private Sink                                 evictorSink;
+  private Sink                                 evictionBroadcastSink;
 
   public ServerMapEvictionManagerImpl(final ObjectManager objectManager, final ManagedObjectStore objectStore,
                                       final ClientStateManager clientStateManager, final long evictionSleepTime,
@@ -91,6 +93,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
   public void initializeContext(final ConfigurationContext context) {
     this.evictorSink = context.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE).getSink();
+    this.evictionBroadcastSink = context.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE).getSink();
   }
 
   public void startEvictor() {
@@ -220,7 +223,15 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
         }
       }
     }
-    evictFrom(oid, candidates);
+    if (candidates.size() > 0) {
+      evictFrom(oid, candidates);
+      broadcastEvictedEntries(oid, candidates);
+    }
+  }
+
+  private void broadcastEvictedEntries(ObjectID oid, HashMap candidates) {
+    // maybe we can batch up the broadcasts
+    evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(oid, Collections.unmodifiableSet(candidates.keySet())));
   }
 
   private void evictFrom(final ObjectID oid, final HashMap candidates) {

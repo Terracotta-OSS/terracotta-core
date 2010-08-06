@@ -94,4 +94,9 @@ public interface TCObjectServerMap extends TCObject {
    * Runs Target capacity eviction to evict Cached Entries from local cache
    */
   public void doCapacityEviction();
+  
+  /**
+   * Clears local cache for the corresponding key
+   */
+  public void removeFromLocalCache(Object key);
 }
