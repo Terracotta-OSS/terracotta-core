@@ -35,7 +35,7 @@ import java.util.Map;
  * files underneath it, when you create another instance of the environment on the same directory, the data may still be
  * there in cache. This makes it difficult to test in a JUnit scenario.
  */
-public class DBEnvironmentTest extends TCTestCase {
+public class BerkeleyDBEnvironmentTest extends TCTestCase {
   private File              envHome;
   private EnvironmentConfig ecfg;
   private DatabaseConfig    dbcfg;
@@ -253,13 +253,27 @@ public class DBEnvironmentTest extends TCTestCase {
 
   private void assertDatabasesOpen(List databases) throws Exception {
     for (Iterator i = databases.iterator(); i.hasNext();) {
-      assertTrue(isDatabaseOpen((Database) i.next()));
+      Object o = i.next();
+      Database db = null;
+      if (o instanceof AbstractBerkeleyDatabase) {
+        db = ((AbstractBerkeleyDatabase) i.next()).getDatabase();
+      } else if (o instanceof Database) {
+        db = (Database) o;
+      }
+      assertTrue(isDatabaseOpen(db));
     }
   }
 
   private void assertDatabasesClosed(List databases) throws Exception {
     for (Iterator i = databases.iterator(); i.hasNext();) {
-      assertFalse(isDatabaseOpen((Database) i.next()));
+      Object o = i.next();
+      Database db = null;
+      if (o instanceof AbstractBerkeleyDatabase) {
+        db = ((AbstractBerkeleyDatabase) i.next()).getDatabase();
+      } else if (o instanceof Database) {
+        db = (Database) o;
+      }
+      assertFalse(isDatabaseOpen(db));
     }
   }
 

@@ -15,9 +15,11 @@ import java.io.IOException;
 
 public class BDBSRATest extends TCTestCase {
 
-  public void test() throws IOException {
+  public void test() throws Exception {
     File dbHome = newDBHome();
     BerkeleyDBEnvironment env = new BerkeleyDBEnvironment(true, dbHome);
+    env.open();
+
     SRAForDB sras = new SRAForDB(env);
     sras.retrieveStatisticData();
     ThreadUtil.reallySleep(10 * 1000);

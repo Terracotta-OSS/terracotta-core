@@ -15,7 +15,8 @@ public abstract class AbstractBerkeleyDatabase {
   }
 
   protected Transaction pt2nt(PersistenceTransaction tx) {
-    return (tx != null) ? ((BerkeleyDBPersistenceTransaction) tx).getTransaction() : null;
+    return (tx instanceof BerkeleyDBPersistenceTransaction) ? ((BerkeleyDBPersistenceTransaction) tx).getTransaction()
+        : null;
   }
 
   public final Database getDatabase() {

@@ -30,8 +30,6 @@ public class SRAForDB implements StatisticRetrievalAction {
   }
 
   private void forceUpdate() {
-    if (dbEnv == null) return;
-
     EnvironmentStats stats;
     try {
       stats = dbEnv.getStats();
