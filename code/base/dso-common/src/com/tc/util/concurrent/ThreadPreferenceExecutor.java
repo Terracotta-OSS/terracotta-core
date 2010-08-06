@@ -70,7 +70,9 @@ public class ThreadPreferenceExecutor implements Executor {
     newThread.start();
     if (newThreadCreateCount % 5 == 0) {
       newThreadCreateCount = 0;
-      logger.info(getName() + " thread count : " + numberOfActiveThreads);
+      if (numberOfActiveThreads > (maxThreads - 10)) {
+        logger.info(getName() + " thread count : " + numberOfActiveThreads);
+      }
     }
     return true;
   }
