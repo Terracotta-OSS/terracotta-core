@@ -47,6 +47,7 @@ public class LRUEvictionPolicyTest extends TCTestCase {
     c = slc.getRemovalCandidates(-1);
     assertTrue(c.iterator().next() == cacheables[4]);
 
+ 
     slc.add(new TestCacheable(new ObjectID(14)));
     c = slc.getRemovalCandidates(-1);
 

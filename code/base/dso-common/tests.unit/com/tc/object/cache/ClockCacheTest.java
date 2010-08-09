@@ -4,17 +4,18 @@
 package com.tc.object.cache;
 
 import com.tc.object.ObjectID;
+
 import java.util.Collection;
 
 
 public class ClockCacheTest extends LRUEvictionPolicyTest {
   public EvictionPolicy createNewCache(int size) {
-    return new ClockEvictionPolicy(size, 100);
+    return new ClockEvictionPolicy(size);
   }
   
   public void testsClockMovement() throws Exception {
     int cacheSize = 10;
-    EvictionPolicy slc = createNewCache(cacheSize/2);
+    EvictionPolicy slc = new ClockEvictionPolicy(cacheSize/2, 100);
     Cacheable[] cacheables = new Cacheable[cacheSize];
     for (int i = 0; i < cacheSize; i++) {
       cacheables[i] = new TestCacheable(new ObjectID(i));
@@ -49,4 +50,5 @@ public class ClockCacheTest extends LRUEvictionPolicyTest {
       assertTrue(c.contains(cache2));
     }
   }
+  
 }
