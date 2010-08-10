@@ -11,12 +11,14 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.RecallBatchContext;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.LockRequestMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.locks.LockManager;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Makes the request for a lock on behalf of a client
@@ -32,7 +34,7 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
     LockID lid = lrm.getLockID();
     NodeID cid = lrm.getSourceNodeID();
     ThreadID tid = lrm.getThreadID();
-    
+
     switch (lrm.getRequestType()) {
       case LOCK:
         lockManager.lock(lid, (ClientID) cid, tid, lrm.getLockLevel());
@@ -55,6 +57,13 @@ public class RequestLockUnLockHandler extends AbstractEventHandler {
         return;
       case INTERRUPT_WAIT:
         lockManager.interrupt(lid, (ClientID) cid, tid);
+        return;
+      case BATCHED_RECALL_COMMIT:
+        LinkedList<RecallBatchContext> recallContexts = lrm.getRecallBatchedContexts();
+        for (RecallBatchContext recallContext : recallContexts) {
+          Collection<ClientServerExchangeLockContext> lockState = recallContext.getContexts();
+          lockManager.recallCommit(recallContext.getLockID(), (ClientID) cid, lockState);
+        }
         return;
     }
   }

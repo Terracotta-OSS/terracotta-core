@@ -209,7 +209,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (this.greediness.isFree()) {
       remote.wait(this.lock, thread, timeout);
     } else if (this.greediness.isRecalled() && canRecallNow()) {
-      this.greediness = recallCommit(remote);
+      this.greediness = recallCommit(remote, false);
     }
 
     return waiter;
@@ -391,12 +391,13 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
    * blocking future read recalls if a write recall is pending. This can be a problem when the write recall was
    * triggered by a tryLock that no longer requires the lock.
    */
-  public synchronized boolean recall(final RemoteLockManager remote, final ServerLockLevel interest, final int lease) {
+  public synchronized boolean recall(final RemoteLockManager remote, final ServerLockLevel interest, final int lease,
+                                     boolean batch) {
     // transition the greediness state
     this.greediness = this.greediness.recalled(this, lease, interest);
 
     if (this.greediness.isRecalled()) {
-      this.greediness = doRecall(remote);
+      this.greediness = doRecall(remote, batch);
       return false;
     } else if (this.greediness.isGreedy()) {
       return true;
@@ -542,7 +543,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
       synchronized (this) {
         if (this.greediness.isRecalled() && canRecallNow()) {
-          this.greediness = recallCommit(remote);
+          this.greediness = recallCommit(remote, false);
         }
         node.delegated("Waiting For Recall...");
         return LockAcquireResult.USED_SERVER;
@@ -637,7 +638,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     if (this.greediness.isFree()) {
       remoteUnlock(remote, unlock);
     } else if (this.greediness.isRecalled() && canRecallNow()) {
-      this.greediness = recallCommit(remote);
+      this.greediness = recallCommit(remote, false);
     }
 
     // this is wrong - but shouldn't break anything
@@ -883,20 +884,20 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return null;
   }
 
-  private synchronized ClientGreediness doRecall(final RemoteLockManager remote) {
+  private synchronized ClientGreediness doRecall(final RemoteLockManager remote, final boolean batch) {
     if (canRecallNow()) {
       final LockFlushCallback callback = new LockFlushCallback() {
         public void transactionsForLockFlushed(final LockID id) {
           synchronized (ClientLockImpl.this) {
             if (ClientLockImpl.this.greediness.isRecallInProgress()) {
-              ClientLockImpl.this.greediness = recallCommit(remote);
+              ClientLockImpl.this.greediness = recallCommit(remote, batch);
             }
           }
         }
       };
 
       if (remote.asyncFlush(this.lock, callback, this.greediness.getFlushLevel())) {
-        return recallCommit(remote);
+        return recallCommit(remote, batch);
       } else {
         return this.greediness.recallInProgress();
       }
@@ -905,7 +906,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     }
   }
 
-  private synchronized ClientGreediness recallCommit(final RemoteLockManager remote) {
+  private synchronized ClientGreediness recallCommit(final RemoteLockManager remote, boolean batch) {
     if (this.greediness.isFree()) {
       return this.greediness;
     } else {
@@ -923,7 +924,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       }
 
-      remote.recallCommit(this.lock, contexts);
+      remote.recallCommit(this.lock, contexts, batch);
 
       this.greediness = this.greediness.recallCommitted();
 
@@ -942,13 +943,16 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     return true;
   }
 
+  /**
+   * This is always called from Lock GC. so recall commits from here will be batched
+   */
   public synchronized boolean tryMarkAsGarbage(final RemoteLockManager remote) {
     if (!this.pinned && isEmpty() && this.gcCycleCount > 0) {
       this.greediness = this.greediness.markAsGarbage();
       if (this.greediness.isGarbage()) {
         return true;
       } else {
-        recall(remote, ServerLockLevel.WRITE, -1);
+        recall(remote, ServerLockLevel.WRITE, -1, true);
         return false;
       }
     } else {

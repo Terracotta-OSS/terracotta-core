@@ -32,7 +32,7 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public void award(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
-                        final ServerLockLevel level) {
+                    final ServerLockLevel level) {
     return;
   }
 
@@ -69,8 +69,12 @@ public class TestLockManager implements ClientLockManager {
   public void notified(final LockID lockID, final ThreadID threadID) {
     return;
   }
-
+  
   public void recall(final LockID lockID, final ServerLockLevel level, final int leaseTime) {
+    return;
+  }
+
+  public void recall(final LockID lockID, final ServerLockLevel level, final int leaseTime, boolean batch) {
     return;
   }
 
@@ -90,7 +94,8 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
-  public void info(final LockID lock, final ThreadID threadID, final Collection<ClientServerExchangeLockContext> contexts) {
+  public void info(final LockID lock, final ThreadID threadID,
+                   final Collection<ClientServerExchangeLockContext> contexts) {
     throw new ImplementMe();
   }
 
@@ -115,10 +120,10 @@ public class TestLockManager implements ClientLockManager {
   }
 
   public void refuse(final NodeID nid, final SessionID sessionID, final LockID id, final ThreadID threadID,
-                              final ServerLockLevel type) {
+                     final ServerLockLevel type) {
     throw new ImplementMe();
   }
-  
+
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     throw new ImplementMe();
   }
@@ -127,7 +132,7 @@ public class TestLockManager implements ClientLockManager {
                                   final ClientHandshakeMessage handshakeMessage) {
     throw new ImplementMe();
   }
-  
+
   public void shutdown() {
     // NOP
   }
@@ -166,12 +171,12 @@ public class TestLockManager implements ClientLockManager {
 
   public void pinLock(LockID lock) {
     throw new ImplementMe();
-    
+
   }
 
   public void unpinLock(LockID lock) {
     throw new ImplementMe();
-    
+
   }
 
   public boolean isLockedByCurrentThread(LockLevel level) {

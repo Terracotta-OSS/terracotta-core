@@ -20,7 +20,7 @@ public interface RemoteLockManager {
 
   public void interrupt(LockID lock, ThreadID thread);
 
-  public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState);
+  public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch);
 
   public void flush(LockID lock, ServerLockLevel level);
 

@@ -20,6 +20,11 @@ public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCal
    * Called by a Terracotta thread to request the return of a greedy lock previously awarded to the client.
    */
   public void recall(LockID lock, ServerLockLevel level, int lease);
+  
+  /**
+   * Called by a Terracotta thread to request the return of a greedy lock previously awarded to the client.
+   */
+  public void recall(LockID lock, ServerLockLevel level, int lease, boolean batch);
 
   /**
    * Called by a Terracotta thread to award a per-thread or greedy lock to the client.
@@ -41,5 +46,4 @@ public interface ClientLockManager extends TerracottaLocking, ClientHandshakeCal
    * Returns a complete dump (in pseudo-portable format) of the state of all locks.
    */
   public Collection<ClientServerExchangeLockContext> getAllLockContexts();
-  
 }

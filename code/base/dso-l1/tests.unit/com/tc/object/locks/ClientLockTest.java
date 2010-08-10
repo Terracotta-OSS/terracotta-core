@@ -6,6 +6,7 @@ package com.tc.object.locks;
 import com.tc.exception.TCLockUpgradeNotSupportedError;
 import com.tc.net.ClientID;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,7 +19,7 @@ import junit.framework.TestCase;
 
 public class ClientLockTest extends TestCase {
 
-  private static final LockID LOCK_ID = new StringLockID("testlock");
+  private static final LockID                LOCK_ID            = new StringLockID("testlock");
 
   private static final Collection<LockLevel> WRITE_LEVELS;
   private static final Collection<LockLevel> READ_LEVELS;
@@ -33,21 +34,21 @@ public class ClientLockTest extends TestCase {
         read.add(level);
       }
     }
-    
+
     WRITE_LEVELS = write;
     READ_LEVELS = read;
   }
-  
-  private static final WaitListener NULL_WAIT_LISTENER = new WaitListener() {
-    public void handleWaitEvent() {
-      //
-    }
-  };
-  
+
+  private static final WaitListener          NULL_WAIT_LISTENER = new WaitListener() {
+                                                                  public void handleWaitEvent() {
+                                                                    //
+                                                                  }
+                                                                };
+
   private ClientLock getFreshClientLock() {
     return new ClientLockImpl(LOCK_ID);
   }
-  
+
   public void testBasicLockFunctionality() {
     ClientLock lock = getFreshClientLock();
 
@@ -56,7 +57,8 @@ public class ClientLockTest extends TestCase {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
@@ -70,25 +72,29 @@ public class ClientLockTest extends TestCase {
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1), level));
+        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
+                                       level));
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testBasicTryLockWithTimeoutFunctionality() {
     ClientLock lock = getFreshClientLock();
 
     try {
       for (LockLevel level : LockLevel.values()) {
         checkLockQueryMethods(lock, 0, 0);
-        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1), level, 0));
+        Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(1),
+                                       level, 0));
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
@@ -97,7 +103,7 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testBasicLockInterruptiblyFunctionality() {
     ClientLock lock = getFreshClientLock();
 
@@ -106,7 +112,8 @@ public class ClientLockTest extends TestCase {
         checkLockQueryMethods(lock, 0, 0);
         lock.lockInterruptibly(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
@@ -115,7 +122,7 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testLockExclusionProperties() {
     ClientLock lock = getFreshClientLock();
 
@@ -136,10 +143,11 @@ public class ClientLockTest extends TestCase {
           }
         }
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
-      
+
       for (LockLevel level : READ_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
@@ -148,23 +156,26 @@ public class ClientLockTest extends TestCase {
           if (nested.isWrite()) {
             Assert.assertFalse(lock.tryLock(new AssertingRemoteLockManager(lock), new ThreadID(2), nested));
           } else {
-            Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK), new ThreadID(2), nested));
+            Assert.assertTrue(lock.tryLock(new AssertingRemoteLockManager(lock, RemoteOperation.TRY_LOCK),
+                                           new ThreadID(2), nested));
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level), hold(new ThreadID(2), nested));
-            lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(2), nested);
+            lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                        new ThreadID(2), nested);
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
           }
         }
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testLockNestingProperties() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       for (LockLevel level : WRITE_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
@@ -176,10 +187,11 @@ public class ClientLockTest extends TestCase {
           lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH), new ThreadID(1), nested);
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
         }
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
-      
+
       for (LockLevel level : READ_LEVELS) {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
@@ -199,7 +211,8 @@ public class ClientLockTest extends TestCase {
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
           }
         }
-        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+        lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                    new ThreadID(1), level);
         checkLockQueryMethods(lock, 0, 0);
       }
     } catch (GarbageLockException e) {
@@ -209,7 +222,7 @@ public class ClientLockTest extends TestCase {
 
   public void testTimeoutOfTryLock() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -234,16 +247,17 @@ public class ClientLockTest extends TestCase {
           Assert.failure("Unexpected Exception ", e);
         }
       }
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testPreInterruptingTimedTryLock() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -269,16 +283,17 @@ public class ClientLockTest extends TestCase {
           Assert.failure("Unexpected Exception ", e);
         }
       }
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testInterruptingTimedTryLock() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -315,16 +330,17 @@ public class ClientLockTest extends TestCase {
           Assert.failure("Unexpected Exception ", e);
         }
       }
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testPreInterruptingInterruptibleLock() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -351,16 +367,17 @@ public class ClientLockTest extends TestCase {
           Assert.failure("Unexpected Exception ", e);
         }
       }
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testInterruptingInterruptibleLock() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -397,7 +414,8 @@ public class ClientLockTest extends TestCase {
           Assert.failure("Unexpected Exception ", e);
         }
       }
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.UNLOCK), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
@@ -411,7 +429,7 @@ public class ClientLockTest extends TestCase {
       for (LockLevel lockLevel : LockLevel.values()) {
         for (LockLevel unlockLevel : LockLevel.values()) {
           if (lockLevel == unlockLevel) continue;
-          
+
           checkLockQueryMethods(lock, 0, 0);
           lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), lockLevel);
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), lockLevel));
@@ -430,7 +448,8 @@ public class ClientLockTest extends TestCase {
             }
           } finally {
             checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), lockLevel));
-            lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), lockLevel);
+            lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                        new ThreadID(1), lockLevel);
             checkLockQueryMethods(lock, 0, 0);
           }
         }
@@ -442,10 +461,10 @@ public class ClientLockTest extends TestCase {
 
   public void testGreedyReadFunctionality() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);      
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ));
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ), hold(new ThreadID(2), LockLevel.READ));
@@ -453,20 +472,24 @@ public class ClientLockTest extends TestCase {
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
-      
+
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(3), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(3), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(3), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
-      
-      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT), ServerLockLevel.WRITE, 0);
-      
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);      
+
+      lock
+          .recall(
+                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+                  ServerLockLevel.WRITE, 0, false);
+
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.READ));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
 
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.RECALL_COMMIT), new ThreadID(1), LockLevel.WRITE);
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.FLUSH, RemoteOperation.RECALL_COMMIT),
+                new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -474,13 +497,13 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testGreedyWriteFunctionality() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);      
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE), hold(new ThreadID(1), LockLevel.READ));
@@ -488,15 +511,18 @@ public class ClientLockTest extends TestCase {
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
-      
+
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
-      
-      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT), ServerLockLevel.WRITE, 0);
-      
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);      
+
+      lock
+          .recall(
+                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+                  ServerLockLevel.WRITE, 0, false);
+
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
@@ -504,17 +530,19 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testWaitNotifyTimesOut() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
+      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
+                new ThreadID(1), null, 500);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
@@ -522,10 +550,10 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testWaitNotifyWhenGreedyTimesOut() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -540,10 +568,10 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testWaitNotifyIsNotifiable() {
     final ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -564,10 +592,12 @@ public class ClientLockTest extends TestCase {
           }
         }
       }.start();
-      
-      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER, new ThreadID(1), null);
+
+      lock.wait(new AssertingRemoteLockManager(lock, RemoteOperation.WAIT, RemoteOperation.FLUSH), NULL_WAIT_LISTENER,
+                new ThreadID(1), null);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
@@ -578,7 +608,7 @@ public class ClientLockTest extends TestCase {
 
   public void testGreedyWaitNotifyIsNotifiable() {
     final ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
@@ -591,7 +621,7 @@ public class ClientLockTest extends TestCase {
           } catch (InterruptedException e) {
             // ignore
           }
-          
+
           try {
             lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.WRITE);
             checkLockQueryMethods(lock, 0, 1, hold(new ThreadID(2), LockLevel.WRITE));
@@ -604,7 +634,7 @@ public class ClientLockTest extends TestCase {
           }
         }
       }.start();
-      
+
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
@@ -616,10 +646,10 @@ public class ClientLockTest extends TestCase {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
   public void testWaitIllegalMonitorState() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
       Assert.fail("Expected IllegalMonitorStateException");
@@ -631,7 +661,7 @@ public class ClientLockTest extends TestCase {
 
     for (LockLevel level : LockLevel.values()) {
       if (level.isWrite()) continue;
-      
+
       try {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
@@ -640,7 +670,8 @@ public class ClientLockTest extends TestCase {
           lock.wait(new AssertingRemoteLockManager(lock), NULL_WAIT_LISTENER, new ThreadID(1), null, 500);
         } finally {
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                      new ThreadID(1), level);
           checkLockQueryMethods(lock, 0, 0);
         }
         Assert.fail("Expected IllegalMonitorStateException");
@@ -653,10 +684,10 @@ public class ClientLockTest extends TestCase {
       }
     }
   }
-  
+
   public void testNotifyIllegalMonitorState() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       lock.notify(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
       Assert.fail("Expected IllegalMonitorStateException");
@@ -666,7 +697,7 @@ public class ClientLockTest extends TestCase {
 
     for (LockLevel level : LockLevel.values()) {
       if (level.isWrite()) continue;
-      
+
       try {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
@@ -675,7 +706,8 @@ public class ClientLockTest extends TestCase {
           lock.notify(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
         } finally {
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                      new ThreadID(1), level);
           checkLockQueryMethods(lock, 0, 0);
         }
         Assert.fail("Expected IllegalMonitorStateException");
@@ -689,7 +721,7 @@ public class ClientLockTest extends TestCase {
 
   public void testNotifyAllIllegalMonitorState() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       lock.notifyAll(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
       Assert.fail("Expected IllegalMonitorStateException");
@@ -699,7 +731,7 @@ public class ClientLockTest extends TestCase {
 
     for (LockLevel level : LockLevel.values()) {
       if (level.isWrite()) continue;
-      
+
       try {
         checkLockQueryMethods(lock, 0, 0);
         lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), level);
@@ -708,7 +740,8 @@ public class ClientLockTest extends TestCase {
           lock.notifyAll(new AssertingRemoteLockManager(lock), new ThreadID(1), null);
         } finally {
           checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), level));
-          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), level);
+          lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH),
+                      new ThreadID(1), level);
           checkLockQueryMethods(lock, 0, 0);
         }
         Assert.fail("Expected IllegalMonitorStateException");
@@ -719,25 +752,26 @@ public class ClientLockTest extends TestCase {
       }
     }
   }
-  
+
   public void testLockGarbageCollection() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
-      
+
       for (int i = 0; i < 100; i++) {
         checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
         Assert.assertFalse(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
       }
 
-      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1), LockLevel.WRITE);
+      lock.unlock(new AssertingRemoteLockManager(lock, RemoteOperation.UNLOCK, RemoteOperation.FLUSH), new ThreadID(1),
+                  LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
-      
+
       Assert.assertFalse(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
       Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
-      
+
       try {
         lock.lock(new AssertingRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
         Assert.fail("Expected GarbageLockException");
@@ -747,47 +781,73 @@ public class ClientLockTest extends TestCase {
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
-    
+
   }
 
   public void testLockPinningPreventsGC() {
     ClientLock lock = getFreshClientLock();
-    
+
     lock.pinLock();
 
     for (int i = 0; i < 100; i++) {
       checkLockQueryMethods(lock, 0, 0);
       Assert.assertFalse(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
     }
-    
+
     lock.unpinLock();
-    
-    Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));    
+
+    Assert.assertTrue(lock.tryMarkAsGarbage(new AssertingRemoteLockManager(lock)));
   }
-  
+
   public void testGreedyWriteOnReadRecall() {
     ClientLock lock = getFreshClientLock();
-    
+
     try {
       checkLockQueryMethods(lock, 0, 0);
-      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);      
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
-      
+
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0);
-      
-      lock.recall(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT), ServerLockLevel.READ, 0);
-      
+
+      lock
+          .recall(
+                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+                  ServerLockLevel.READ, 0, false);
+
       lock.lock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(2), LockLevel.READ));
-      
+
       lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(2), LockLevel.READ);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
       Assert.failure("Unexpected Exception ", e);
     }
   }
-  
+
+  public void testBatchedRecalls() {
+    ClientLock lock = getFreshClientLock();
+
+    try {
+      checkLockQueryMethods(lock, 0, 0);
+      lock.lock(new AssertingGreedyRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
+      checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
+
+      lock.unlock(new AssertingGreedyRemoteLockManager(lock), new ThreadID(1), LockLevel.WRITE);
+      checkLockQueryMethods(lock, 0, 0);
+
+      lock
+          .recall(
+                  new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
+                  ServerLockLevel.READ, 0, true);
+      
+      ThreadUtil.reallySleep(10);
+      checkLockQueryMethods(lock, 0, 0);
+    } catch (GarbageLockException e) {
+      Assert.failure("Unexpected Exception ", e);
+    }
+  }
+
   static LockHold hold(ThreadID thread, LockLevel level) {
     return new LockHold(thread, level);
   }
@@ -797,15 +857,15 @@ public class ClientLockTest extends TestCase {
       this.thread = thread;
       this.level = level;
     }
-    
-    final ThreadID thread;
+
+    final ThreadID  thread;
     final LockLevel level;
   }
-  
+
   private void checkLockQueryMethods(ClientLock lock, int pending, int waiting, LockHold... holds) {
     for (LockLevel level : LockLevel.values()) {
       if (level == LockLevel.CONCURRENT) continue;
-      
+
       int count = 0;
       for (LockHold h : holds) {
         if (h.level == level) {
@@ -813,7 +873,7 @@ public class ClientLockTest extends TestCase {
           Assert.assertTrue(lock.isLockedBy(h.thread, level));
         }
       }
-      
+
       if (count > 0) {
         Assert.assertTrue(lock.isLocked(level));
       }
@@ -825,17 +885,9 @@ public class ClientLockTest extends TestCase {
   }
 
   enum RemoteOperation {
-    FLUSH,
-    INTERRUPT,
-    LOCK,
-    QUERY,
-    RECALL_COMMIT,
-    TRY_LOCK,
-    UNLOCK,
-    WAIT,
-    TXN_FLUSHED;
+    FLUSH, INTERRUPT, LOCK, QUERY, RECALL_COMMIT, TRY_LOCK, UNLOCK, WAIT, TXN_FLUSHED;
   }
-  
+
   static class AssertingGreedyRemoteLockManager extends AssertingRemoteLockManager {
 
     public AssertingGreedyRemoteLockManager(ClientLock lock, RemoteOperation... legal) {
@@ -855,18 +907,18 @@ public class ClientLockTest extends TestCase {
       });
     }
   }
-  
+
   static class AssertingRemoteLockManager implements RemoteLockManager {
 
-    protected final Executor executor = Executors.newSingleThreadExecutor();
-    protected final ClientLock target;
+    protected final Executor                  executor = Executors.newSingleThreadExecutor();
+    protected final ClientLock                target;
     private final Collection<RemoteOperation> legal;
-    
+
     public AssertingRemoteLockManager(ClientLock lock, RemoteOperation... legal) {
       this.target = lock;
       this.legal = Arrays.asList(legal);
     }
-    
+
     public void flush(LockID lock, ServerLockLevel level) {
       Assert.assertTrue(legal.contains(RemoteOperation.FLUSH));
     }
@@ -893,7 +945,7 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.QUERY));
     }
 
-    public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState) {
+    public void recallCommit(LockID lock, Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
       Assert.assertTrue(legal.contains(RemoteOperation.RECALL_COMMIT));
       for (ClientServerExchangeLockContext c : lockState) {
         switch (c.getState().getType()) {
@@ -927,17 +979,17 @@ public class ClientLockTest extends TestCase {
       Assert.assertTrue(legal.contains(RemoteOperation.WAIT));
 
       if (waitTime == 0) return;
-      
+
       try {
         TimeUnit.MILLISECONDS.sleep(waitTime);
       } catch (InterruptedException e) {
         // ignore
       }
-      
+
       notifyLock(thread);
       awardLock(thread, ServerLockLevel.WRITE);
     }
-    
+
     protected void awardLock(final ThreadID thread, final ServerLockLevel level) {
       executor.execute(new Runnable() {
         public void run() {
@@ -949,7 +1001,7 @@ public class ClientLockTest extends TestCase {
         }
       });
     }
-    
+
     protected void notifyLock(final ThreadID thread) {
       executor.execute(new Runnable() {
         public void run() {

@@ -161,7 +161,7 @@ public interface ClientLock {
    * Called by a Terracotta thread to request the return of a greedy lock previously
    * awarded to the client.
    */
-  public boolean recall(RemoteLockManager remote, ServerLockLevel interest, int lease);
+  public boolean recall(RemoteLockManager remote, ServerLockLevel interest, int lease, boolean batch);
 
   /**
    * Called by a Terracotta thread to award a per-thread or greedy lock to the client.

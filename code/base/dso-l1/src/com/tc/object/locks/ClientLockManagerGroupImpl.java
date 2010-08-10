@@ -127,6 +127,10 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     getClientLockManagerFor(lock).recall(lock, level, lease);
   }
 
+  public void recall(LockID lock, ServerLockLevel level, int lease, boolean batch) {
+    getClientLockManagerFor(lock).recall(lock, level, lease, batch);
+  }
+
   public void award(NodeID node, SessionID session, LockID lock, ThreadID thread, ServerLockLevel level) {
     getClientLockManagerFor(lock).award(node, session, lock, thread, level);
   }

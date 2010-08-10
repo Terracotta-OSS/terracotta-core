@@ -63,8 +63,13 @@ public class ManagerImplTest extends BaseDSOTestCase {
       throw new ImplementMe();
 
     }
-
+    
     public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
+      throw new ImplementMe();
+
+    }
+
+    public void recall(final LockID lock, final ServerLockLevel level, final int lease, boolean batch) {
       throw new ImplementMe();
 
     }

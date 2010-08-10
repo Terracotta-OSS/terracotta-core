@@ -14,6 +14,7 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.RecallBatchContext;
 import com.tc.object.locks.ServerLockLevel;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ThreadIDFactory;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Set;
 
 /**
@@ -33,21 +35,23 @@ import java.util.Set;
  */
 public class LockRequestMessage extends DSOMessageBase implements MultiThreadedEventContext {
 
-  private final static byte LOCK_ID      = 1;
-  private final static byte LOCK_LEVEL   = 2;
-  private final static byte THREAD_ID    = 3;
-  private final static byte REQUEST_TYPE = 4;
-  private final static byte WAIT_MILLIS  = 5;
-  private static final byte CONTEXT      = 6;
+  private final static byte LOCK_ID                = 1;
+  private final static byte LOCK_LEVEL             = 2;
+  private final static byte THREAD_ID              = 3;
+  private final static byte REQUEST_TYPE           = 4;
+  private final static byte WAIT_MILLIS            = 5;
+  private final static byte CONTEXT                = 6;
+  private final static byte BATCHED_RECALL_CONTEXT = 7;
 
   // request types
   public static enum RequestType {
-    LOCK, UNLOCK, WAIT, RECALL_COMMIT, QUERY, TRY_LOCK, INTERRUPT_WAIT;
+    LOCK, UNLOCK, WAIT, RECALL_COMMIT, QUERY, TRY_LOCK, INTERRUPT_WAIT, BATCHED_RECALL_COMMIT;
   }
 
   private static final ThreadIDFactory               threadIDFactory = new ThreadIDFactory();
 
   private final Set<ClientServerExchangeLockContext> contexts        = new LinkedHashSet<ClientServerExchangeLockContext>();
+  private final LinkedList<RecallBatchContext>       recallContexts  = new LinkedList<RecallBatchContext>();
 
   private LockID                                     lockID          = null;
   private ServerLockLevel                            lockLevel       = null;
@@ -106,6 +110,11 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
           putNVPair(CONTEXT, (TCSerializable) i.next());
         }
         break;
+      case BATCHED_RECALL_COMMIT:
+        for (RecallBatchContext batchContext : recallContexts) {
+          putNVPair(BATCHED_RECALL_CONTEXT, batchContext);
+        }
+        break;
     }
   }
 
@@ -120,6 +129,9 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     }
     if (contexts.size() > 0) {
       rv.append("Holder/Waiters/Pending contexts size = ").append(contexts.size()).append('\n');
+    }
+    if (recallContexts.size() > 0) {
+      rv.append("RecallCommits contexts size = ").append(recallContexts.size()).append('\n');
     }
 
     return rv.toString();
@@ -154,6 +166,9 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
       case CONTEXT:
         contexts.add((ClientServerExchangeLockContext) getObject(new ClientServerExchangeLockContext()));
         return true;
+      case BATCHED_RECALL_CONTEXT:
+        recallContexts.add((RecallBatchContext) getObject(new RecallBatchContext()));
+        return true;
       default:
         return false;
     }
@@ -179,8 +194,16 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     Assert.assertTrue(contexts.add(ctxt));
   }
 
+  public void addRecallBatchContext(RecallBatchContext recallBatchContext) {
+    this.recallContexts.add(recallBatchContext);
+  }
+
   public Collection<ClientServerExchangeLockContext> getContexts() {
     return contexts;
+  }
+
+  public LinkedList<RecallBatchContext> getRecallBatchedContexts() {
+    return recallContexts;
   }
 
   public long getTimeout() {
@@ -215,6 +238,10 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
     initialize(lid, ThreadID.VM_ID, null, RequestType.RECALL_COMMIT, -1);
   }
 
+  public void initializeBatchedRecallCommit() {
+    initialize(null, ThreadID.VM_ID, null, RequestType.BATCHED_RECALL_COMMIT, -1);
+  }
+
   private void initialize(LockID lid, ThreadID id, ServerLockLevel level, RequestType reqType, long millis) {
     this.lockID = lid;
     this.lockLevel = level;
@@ -226,5 +253,4 @@ public class LockRequestMessage extends DSOMessageBase implements MultiThreadedE
   public Object getKey() {
     return this.getSourceNodeID();
   }
-
 }

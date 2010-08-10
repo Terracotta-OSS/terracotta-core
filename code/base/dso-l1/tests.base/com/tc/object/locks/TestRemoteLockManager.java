@@ -136,7 +136,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
     return;
   }
 
-  public void recallCommit(LockID lockID, Collection contexts) {
+  public void recallCommit(LockID lockID, Collection contexts, boolean batch) {
     return;
   }
 

@@ -442,6 +442,10 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   }
 
   public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
+    recall(lock, level, lease, false);
+  }
+  
+  public void recall(final LockID lock, final ServerLockLevel level, final int lease, final boolean batch) {
     this.stateGuard.readLock().lock();
     try {
       if (paused()) {
@@ -451,12 +455,12 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
       final ClientLock lockState = getClientLockState(lock);
       if (lockState != null) {
-        if (lockState.recall(this.remoteManager, level, lease)) {
+        if (lockState.recall(this.remoteManager, level, lease, batch)) {
           // schedule the greedy lease
           this.lockLeaseTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-              ClientLockManagerImpl.this.recall(lock, level, -1);
+              ClientLockManagerImpl.this.recall(lock, level, -1, batch);
             }
           }, lease);
         }

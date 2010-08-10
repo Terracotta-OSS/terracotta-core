@@ -71,8 +71,9 @@ public abstract class ServerCrashingAppBase extends AbstractErrorCatchingTranspa
     client.start();
     client.mergeSTDERR();
     client.mergeSTDOUT();
-    client.waitFor();
     System.err.println("\n### Started New Client");
+    client.waitFor();
+    System.err.println("\n### Wait completed for New Client");
     return client;
   }
 

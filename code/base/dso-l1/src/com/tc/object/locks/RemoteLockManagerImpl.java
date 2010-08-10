@@ -12,13 +12,24 @@ import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RemoteLockManagerImpl implements RemoteLockManager {
+  private final static int                     MAX_BATCHED_RECALL_COMMITS  = 10000;
+  private final static long                    MAX_TIME_IN_QUEUE           = 1;
 
   private final LockRequestMessageFactory      messageFactory;
   private final ClientGlobalTransactionManager globalTxManager;
   private final GroupID                        group;
   private final ClientIDProvider               clientIdProvider;
+
+  private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
+  private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
+  private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
 
   @Deprecated
   private final ClientLockStatManager          statManager;
@@ -52,12 +63,16 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   public void interrupt(final LockID lock, final ThreadID thread) {
+    sendPendingRecallCommits();
+
     final LockRequestMessage msg = createMessage();
     msg.initializeInterruptWait(lock, thread);
     sendMessage(msg);
   }
 
   public void lock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+    sendPendingRecallCommits();
+
     fireRemoteCall(lock, thread);
 
     final LockRequestMessage msg = createMessage();
@@ -66,12 +81,16 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   public void query(final LockID lock, final ThreadID thread) {
+    sendPendingRecallCommits();
+
     final LockRequestMessage msg = createMessage();
     msg.initializeQuery(lock, thread);
     sendMessage(msg);
   }
 
   public void tryLock(final LockID lock, final ThreadID thread, final ServerLockLevel level, final long timeout) {
+    sendPendingRecallCommits();
+
     fireRemoteCall(lock, thread);
 
     final LockRequestMessage msg = createMessage();
@@ -80,24 +99,83 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   public void unlock(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
+    sendPendingRecallCommits();
+
     final LockRequestMessage msg = createMessage();
     msg.initializeUnlock(lock, thread, level);
     sendMessage(msg);
   }
 
   public void wait(final LockID lock, final ThreadID thread, final long waitTime) {
+    sendPendingRecallCommits();
+
     final LockRequestMessage msg = createMessage();
     msg.initializeWait(lock, thread, waitTime);
     sendMessage(msg);
   }
 
-  public void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState) {
+  private void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState) {
+    sendPendingRecallCommits();
+
     final LockRequestMessage msg = createMessage();
     msg.initializeRecallCommit(lock);
     for (final ClientServerExchangeLockContext context : lockState) {
       msg.addContext(context);
     }
     sendMessage(msg);
+  }
+
+  public void recallCommit(final LockID lock, final Collection<ClientServerExchangeLockContext> lockState, boolean batch) {
+    if (!batch) {
+      recallCommit(lock, lockState);
+      return;
+    }
+
+    // add it to the queue
+    // check if it needs to be send immediately
+    synchronized (queue) {
+      queue.add(new RecallBatchContext(lockState, lock));
+      if (queue.size() >= MAX_BATCHED_RECALL_COMMITS) {
+        sendPendingRecallCommits();
+        return;
+      }
+      // start a timer to send the request, if not already started
+      if (batchRecallCommitsTimerTask == null) {
+        batchRecallCommitsTimerTask = new BatchRecallCommitsTimerTask();
+        timer.schedule(batchRecallCommitsTimerTask, MAX_TIME_IN_QUEUE);
+      }
+    }
+  }
+
+  private void cancelTimerTask() {
+    if (batchRecallCommitsTimerTask != null) {
+      batchRecallCommitsTimerTask.cancel();
+    }
+
+    batchRecallCommitsTimerTask = null;
+  }
+
+  public void sendPendingRecallCommits() {
+    synchronized (queue) {
+      sendBatchedRequestsImmediately();
+      cancelTimerTask();
+    }
+  }
+
+  private void sendBatchedRequestsImmediately() {
+    if (queue.size() == 0) { return; }
+    // create a message and send it to the server
+    LockRequestMessage lrm = createMessage();
+    lrm.initializeBatchedRecallCommit();
+
+    Iterator<RecallBatchContext> contexts = queue.iterator();
+    while (contexts.hasNext()) {
+      RecallBatchContext context = contexts.next();
+      lrm.addRecallBatchContext(context);
+    }
+
+    queue.clear();
+    sendMessage(lrm);
   }
 
   private LockRequestMessage createMessage() {
@@ -112,6 +190,16 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private void fireRemoteCall(final LockID lock, final ThreadID thread) {
     if (this.statManager.isEnabled()) {
       this.statManager.recordLockHopped(lock, thread);
+    }
+  }
+
+  private class BatchRecallCommitsTimerTask extends TimerTask {
+    @Override
+    public void run() {
+      synchronized (queue) {
+        sendBatchedRequestsImmediately();
+        batchRecallCommitsTimerTask = null;
+      }
     }
   }
 }
