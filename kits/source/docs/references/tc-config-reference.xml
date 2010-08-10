@@ -55,7 +55,7 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
     instead allow you to designate the intended use of a configuration file
     using one of two recommended modes.
 
-    In development, you may want each client might have its own configuration,
+    In development, you may want each client to have its own configuration,
     independent of the server or any other client. This approach is useful for
     development, but should not be used in production as it can result in shared
     data being corrupted or lost if, for instance, two different clients specify
@@ -150,30 +150,33 @@ All content copyright Terracotta, Inc., unless otherwise indicated. All rights r
       <!-- On what port should the DSO server listen for connections from DSO
          clients? This can be any port you like, but note that
          ports below 1024 typically require 'root' privileges to use
-         on Un*x-style systems (Linux, Solaris).
+         on Un*x-style systems (Linux, Solaris). Optionally, you can bind
+         the port to a specific interface.
 
          Default: 9510
       -->
-      <dso-port>9510</dso-port>
+      <dso-port bind="12.345.678.9">9510</dso-port>
 
       <!-- On what port should the server listen for connections from the
          Terracotta administration console? This can be any port you
          like, but note that ports below 1024 typically require 'root'
          privileges to use on Un*x-style systems (Linux, Solaris).
+         Optionally, you can bind the port to a specific interface.
 
          Default: 9520
       -->
-      <jmx-port>9520</jmx-port>
+      <jmx-port bind="12.345.678.9">9520</jmx-port>
 
       <!-- On what port should the server listen for communication from
          other servers participating in an networked-active-passive setup.
          This can be any port you like, but note that ports below 1024
          typically require 'root' privileges to use on Un*x-style systems
-         (Linux, Solaris).
+         (Linux, Solaris). Optionally, you can bind the port to a specific
+         interface.
 
          Default: 9530
       -->
-      <l2-group-port>9530</l2-group-port>
+      <l2-group-port bind="12.345.678.9">9530</l2-group-port>
       
       <!-- Turn on authentication for the Terracotta server. An empty tag
          <authentication> defaults to the standard Java JMX authentication
