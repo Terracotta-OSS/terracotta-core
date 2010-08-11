@@ -89,9 +89,7 @@ public class UpdateModulesAction extends Action implements IActionDelegate, IWor
     checkCancel(monitor);
     monitor.subTask("Please wait...");
 
-    for (int i = 0; i < configs.length; i++) {
-      ILaunchConfiguration config = configs[i];
-
+    for (ILaunchConfiguration config : configs) {
       if (config.getName().equals(LAUNCH_LABEL)) {
         config.delete();
         break;

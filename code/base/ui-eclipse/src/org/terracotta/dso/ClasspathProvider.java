@@ -59,7 +59,9 @@ public class ClasspathProvider extends StandardClasspathProvider {
     String sep = System.getProperty("path.separator");
 
     for (int i = 0; i < paths.length; i++) {
-      if (i > 0) sb.append(sep);
+      if (i > 0) {
+        sb.append(sep);
+      }
       sb.append(paths[i].toOSString());
     }
 

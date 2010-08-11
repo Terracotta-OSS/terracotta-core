@@ -26,20 +26,16 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class ClientsPanel extends ConfigurationEditorPanel implements ConfigurationEditorRoot,
     XmlObjectStructureListener {
-  private IProject                               m_project;
-  private TcConfig                               m_config;
-  private Client                                 m_client;
-
-  private final Layout                           m_layout;
-
-  private final LogsBrowseSelectionHandler       m_logsBrowseSelectionHandler;
-  private final StatisticsBrowseSelectionHandler m_statisticsBrowseSelectionHandler;
+  private IProject                         m_project;
+  private TcConfig                         m_config;
+  private Client                           m_client;
+  private final Layout                     m_layout;
+  private final LogsBrowseSelectionHandler m_logsBrowseSelectionHandler;
 
   public ClientsPanel(Composite parent, int style) {
     super(parent, style);
     m_layout = new Layout(this);
     m_logsBrowseSelectionHandler = new LogsBrowseSelectionHandler();
-    m_statisticsBrowseSelectionHandler = new StatisticsBrowseSelectionHandler();
     SWTUtil.setBGColorRecurse(this.getDisplay().getSystemColor(SWT.COLOR_WHITE), this);
   }
 
@@ -81,9 +77,6 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
     m_layout.m_logsBrowse.addSelectionListener(m_logsBrowseSelectionHandler);
     ((XmlStringField) m_layout.m_logsLocation.getData()).addXmlObjectStructureListener(this);
 
-    m_layout.m_statisticsBrowse.addSelectionListener(m_statisticsBrowseSelectionHandler);
-    ((XmlStringField) m_layout.m_statisticsLocation.getData()).addXmlObjectStructureListener(this);
-
     m_layout.m_dsoClientDataPanel.addXmlObjectStructureListener(this);
     m_layout.m_modulesPanel.addXmlObjectStructureListener(this);
 
@@ -92,9 +85,6 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
   private void removeListeners() {
     m_layout.m_logsBrowse.removeSelectionListener(m_logsBrowseSelectionHandler);
     ((XmlStringField) m_layout.m_logsLocation.getData()).removeXmlObjectStructureListener(this);
-
-    m_layout.m_statisticsBrowse.removeSelectionListener(m_statisticsBrowseSelectionHandler);
-    ((XmlStringField) m_layout.m_statisticsLocation.getData()).removeXmlObjectStructureListener(this);
 
     m_layout.m_dsoClientDataPanel.removeXmlObjectStructureListener(this);
     m_layout.m_modulesPanel.removeXmlObjectStructureListener(this);
@@ -130,29 +120,23 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
   }
 
   private class Layout {
-    private static final String      LOGS       = "Logs";
-    private static final String      STATISTICS = "Statistics";
-    private static final String      BROWSE     = "Browse...";
+    private static final String      LOGS   = "Logs";
+    private static final String      BROWSE = "Browse...";
 
     private final Button             m_logsBrowse;
     private final Text               m_logsLocation;
-
-    private final Button             m_statisticsBrowse;
-    private final Text               m_statisticsLocation;
 
     private final DsoClientDataPanel m_dsoClientDataPanel;
     private final ModulesPanel       m_modulesPanel;
 
     void setup(Client client) {
       ((XmlStringField) m_logsLocation.getData()).setup(client);
-      ((XmlStringField) m_statisticsLocation.getData()).setup(client);
       m_dsoClientDataPanel.setup(client);
       m_modulesPanel.setup(client);
     }
 
     void tearDown() {
       ((XmlStringField) m_logsLocation.getData()).tearDown();
-      ((XmlStringField) m_statisticsLocation.getData()).tearDown();
       m_dsoClientDataPanel.tearDown();
       m_modulesPanel.tearDown();
     }
@@ -183,17 +167,6 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
       m_logsBrowse.setText(BROWSE);
       SWTUtil.applyDefaultButtonSize(m_logsBrowse);
 
-      Label statisticsLabel = new Label(comp, SWT.NONE);
-      statisticsLabel.setText(STATISTICS);
-
-      m_statisticsLocation = new Text(comp, SWT.BORDER);
-      m_statisticsLocation.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-      initStringField(m_statisticsLocation, Client.class, "statistics");
-
-      m_statisticsBrowse = new Button(comp, SWT.PUSH);
-      m_statisticsBrowse.setText(BROWSE);
-      SWTUtil.applyDefaultButtonSize(m_statisticsBrowse);
-
       m_dsoClientDataPanel = new DsoClientDataPanel(panel, SWT.NONE);
       m_dsoClientDataPanel.setLayout(new GridLayout());
       m_dsoClientDataPanel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -214,16 +187,4 @@ public class ClientsPanel extends ConfigurationEditorPanel implements Configurat
       }
     }
   }
-
-  private class StatisticsBrowseSelectionHandler extends SelectionAdapter {
-    @Override
-    public void widgetSelected(SelectionEvent e) {
-      IFolder folder = SWTUtil.openSelectFolderDialog(m_project, "Select statistics folder",
-                                                      "Choose a folder for the statistics database area");
-      if (folder != null) {
-        setStringField(m_layout.m_statisticsLocation, folder.getProjectRelativePath().toString());
-      }
-    }
-  }
-
 }
