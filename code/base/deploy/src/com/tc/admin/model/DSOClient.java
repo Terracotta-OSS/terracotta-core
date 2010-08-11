@@ -7,6 +7,7 @@ package com.tc.admin.model;
 import com.tc.admin.ConnectionContext;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.admin.model.IClusterModel.PollScope;
+import com.tc.management.beans.L1DumperMBean;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
@@ -47,6 +48,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   private boolean                     ready;
   private boolean                     isListeningForTunneledBeans;
   private L1InfoMBean                 l1InfoBean;
+  private L1DumperMBean               l1DumperBean;
   private InstrumentationLoggingMBean instrumentationLoggingBean;
   private RuntimeLoggingMBean         runtimeLoggingBean;
   private RuntimeOutputOptionsMBean   runtimeOutputOptionsBean;
@@ -100,6 +102,10 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
         .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
     addMBeanNotificationListener(delegate.getRuntimeOutputOptionsBeanName(), this, "RuntimeOutputOptionsMBean");
+
+    l1DumperBean = (L1DumperMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate
+        .getL1DumperBeanName(),
+                                                                             L1DumperMBean.class, true);
 
     fireTunneledBeansRegistered();
   }
@@ -158,8 +164,8 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       propertyChangeSupport.firePropertyChange(pce);
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
-                                                        acn.getNewValue());
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
+          .getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }
@@ -328,6 +334,12 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     if (zippedByte == null) { return MESSAGE_ON_EXCEPTION; }
     ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
     return decompress(zIn);
+  }
+
+  public String takeClusterDump() {
+    if (l1DumperBean == null) return "not connected";
+    l1DumperBean.doClientDump();
+    return "client dump taken";
   }
 
   public int getLiveObjectCount() {

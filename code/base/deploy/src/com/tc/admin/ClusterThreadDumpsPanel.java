@@ -83,11 +83,16 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
   }
 
   private boolean isWaiting() {
-    return threadDumpButton.getText().equals(appContext.getString("cancel"));
+    return threadDumpButton.getText().equals(appContext.getString("cancel"))
+           || clusterDumpButton.getText().equals(appContext.getString("cancel"));
   }
 
   public ClusterThreadDumpEntry newEntry() {
     return clusterThreadDumpProvider.takeThreadDump();
+  }
+
+  private ClusterThreadDumpEntry newClusterDumpEntry() {
+    return clusterThreadDumpProvider.takeClusterDump();
   }
 
   @Override
@@ -104,6 +109,23 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
       ClusterThreadDumpEntry tde = (ClusterThreadDumpEntry) root.getLastChild();
       tde.cancel();
     }
+  }
+
+  @Override
+  protected void takeClusterDump() {
+    XTreeNode root = (XTreeNode) threadDumpTreeModel.getRoot();
+    if (!isWaiting()) {
+      exportButton.setEnabled(false);
+      clusterDumpButton.setText(appContext.getString("cancel"));
+
+      ClusterThreadDumpEntry tde = newClusterDumpEntry();
+      threadDumpTreeModel.insertNodeInto(tde, root, 0);
+      threadDumpTree.setSelectionPath(new TreePath(tde.getPath()));
+    } else {
+      ClusterThreadDumpEntry tde = (ClusterThreadDumpEntry) root.getLastChild();
+      tde.cancel();
+    }
+
   }
 
   private class ThreadDumpTreeSelectionListener implements TreeSelectionListener {
@@ -209,6 +231,7 @@ public class ClusterThreadDumpsPanel extends BasicThreadDumpsPanel implements Tr
     if (isDone) {
       updateSelectedContent();
       threadDumpButton.setText(appContext.getString("thread.dump.take"));
+      clusterDumpButton.setText(appContext.getString("cluster.dump.take"));
     }
   }
 

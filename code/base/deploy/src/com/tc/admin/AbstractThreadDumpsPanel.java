@@ -62,6 +62,8 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
 
   protected abstract Future<String> getThreadDumpText() throws Exception;
 
+  protected abstract Future<String> getClusterDump() throws Exception;
+
   private ThreadDumpEntry createThreadDumpEntry() throws Exception {
     return new TDE(getThreadDumpText());
   }
@@ -71,6 +73,7 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
       super(AbstractThreadDumpsPanel.this.appContext, threadDumpFuture);
     }
 
+    @Override
     public void run() {
       super.run();
       SwingUtilities.invokeLater(new Runnable() {
@@ -86,8 +89,34 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
     }
   }
 
+  private ThreadDumpEntry createClusterDumpEntry() throws Exception {
+    return new CDE(getClusterDump());
+  }
+
+  private class CDE extends ThreadDumpEntry {
+    CDE(Future<String> threadDumpFuture) {
+      super(AbstractThreadDumpsPanel.this.appContext, threadDumpFuture);
+    }
+
+    @Override
+    public void run() {
+      super.run();
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          int row = entryListModel.indexOf(CDE.this);
+          if (entryList.isSelectedIndex(row)) {
+            textArea.setText(getContent());
+          }
+          clusterDumpButton.setText(appContext.getString("cluster.dump.take"));
+          exportButton.setEnabled(true);
+        }
+      });
+    }
+  }
+
   private boolean isWaiting() {
-    return threadDumpButton.getText().equals(appContext.getString("cancel"));
+    return threadDumpButton.getText().equals(appContext.getString("cancel"))
+           || clusterDumpButton.getText().equals(appContext.getString("cancel"));
   }
 
   @Override
@@ -97,6 +126,23 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
         exportButton.setEnabled(false);
         threadDumpButton.setText(appContext.getString("cancel"));
         entryListModel.addElement(createThreadDumpEntry());
+        entryList.setSelectedIndex(entryListModel.getSize() - 1);
+      } else {
+        ThreadDumpEntry tde = (ThreadDumpEntry) entryListModel.getElementAt(entryListModel.getSize() - 1);
+        tde.cancel();
+      }
+    } catch (Exception e) {
+      appContext.log(e);
+    }
+  }
+
+  @Override
+  public void takeClusterDump() {
+    try {
+      if (!isWaiting()) {
+        exportButton.setEnabled(false);
+        clusterDumpButton.setText(appContext.getString("cancel"));
+        entryListModel.addElement(createClusterDumpEntry());
         entryList.setSelectedIndex(entryListModel.getSize() - 1);
       } else {
         ThreadDumpEntry tde = (ThreadDumpEntry) entryListModel.getElementAt(entryListModel.getSize() - 1);
@@ -175,6 +221,7 @@ public abstract class AbstractThreadDumpsPanel extends BasicThreadDumpsPanel {
     }
   }
 
+  @Override
   protected void exportAsText() throws Exception {
     FastFileChooser chooser = new FastFileChooser();
     if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);

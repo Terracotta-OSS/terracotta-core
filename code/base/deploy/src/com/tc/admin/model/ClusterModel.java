@@ -606,6 +606,14 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     });
   }
 
+  private static Future<String> clusterDumpFuture(ExecutorService pool, final IClusterNode node) {
+    return pool.submit(new Callable<String>() {
+      public String call() throws Exception {
+        return node.isReady() ? node.takeClusterDump() : "";
+      }
+    });
+  }
+
   public synchronized Future<String> takeThreadDump(IClusterNode node) {
     return threadDumpFuture(executor, node, System.currentTimeMillis());
   }
@@ -623,6 +631,31 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
       for (IServerGroup group : getServerGroups()) {
         for (IServer server : group.getMembers()) {
           map.put(server, threadDumpFuture(pool, server, requestMillis));
+        }
+      }
+      pool.shutdown();
+      return map;
+    }
+
+    return Collections.emptyMap();
+  }
+
+  public synchronized Future<String> takeClusterDump(IClusterNode node) {
+    return clusterDumpFuture(executor, node);
+  }
+
+  public synchronized Map<IClusterNode, Future<String>> takeClusterDump() {
+    IServer activeCoord = getActiveCoordinator();
+
+    if (activeCoord != null) {
+      ExecutorService pool = Executors.newCachedThreadPool();
+      Map<IClusterNode, Future<String>> map = new LinkedHashMap<IClusterNode, Future<String>>();
+      for (IClient client : activeCoord.getClients()) {
+        map.put(client, clusterDumpFuture(pool, client));
+      }
+      for (IServerGroup group : getServerGroups()) {
+        for (IServer server : group.getMembers()) {
+          map.put(server, clusterDumpFuture(pool, server));
         }
       }
       pool.shutdown();

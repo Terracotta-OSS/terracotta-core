@@ -22,6 +22,7 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
     this.server = server;
   }
 
+  @Override
   protected Future<String> getThreadDumpText() throws Exception {
     return appContext.submitTask(new Callable<String>() {
       public String call() throws Exception {
@@ -30,10 +31,21 @@ public class ServerThreadDumpsPanel extends AbstractThreadDumpsPanel {
     });
   }
 
+  @Override
+  protected Future<String> getClusterDump() throws Exception {
+    return appContext.submitTask(new Callable<String>() {
+      public String call() throws Exception {
+        return server != null ? server.takeClusterDump() : "";
+      }
+    });
+  }
+
+  @Override
   protected String getNodeName() {
     return server.toString();
   }
 
+  @Override
   public void tearDown() {
     super.tearDown();
     server = null;

@@ -715,6 +715,18 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     return tde;
   }
 
+  public ClusterThreadDumpEntry takeClusterDump() {
+    ClusterThreadDumpEntry tde = new ClusterThreadDumpEntry(adminClientContext);
+    Map<IClusterNode, Future<String>> map = getClusterModel().takeClusterDump();
+    Iterator<Map.Entry<IClusterNode, Future<String>>> iter = map.entrySet().iterator();
+    while (iter.hasNext()) {
+      Map.Entry<IClusterNode, Future<String>> entry = iter.next();
+      tde.add(entry.getKey().toString(), entry.getValue());
+    }
+    testTriggerThreadDumpSRA();
+    return tde;
+  }
+
   void testTriggerThreadDumpSRA() {
     final IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null && activeCoord.isActiveClusterStatsSession()) {

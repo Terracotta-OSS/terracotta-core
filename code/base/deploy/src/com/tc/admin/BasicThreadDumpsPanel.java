@@ -23,12 +23,14 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.prefs.Preferences;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 
 public abstract class BasicThreadDumpsPanel extends XContainer {
   protected ApplicationContext appContext;
   protected XButton            threadDumpButton;
+  protected XButton            clusterDumpButton;
   protected XButton            exportButton;
   protected XScrollPane        itemScroller;
   protected XTextArea          textArea;
@@ -55,6 +57,11 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
     gbc.gridx++;
     topPanel.add(exportButton = new XButton("Export All..."), gbc);
     exportButton.addActionListener(new ExportButtonHandler());
+    gbc.gridx++;
+    gbc.anchor = GridBagConstraints.EAST;
+    topPanel.add(clusterDumpButton = new XButton("Take Cluster State Dump"), gbc);
+    clusterDumpButton.addActionListener(new ClusterDumpButtonHandler());
+    clusterDumpButton.setText(appContext.getString("cluster.dump.take"));
 
     // filler
     gbc.weightx = 1.0;
@@ -142,9 +149,26 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
 
   protected abstract void takeThreadDump();
 
+  protected abstract void takeClusterDump();
+
   class ThreadDumpButtonHandler implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
       takeThreadDump();
+    }
+  }
+
+  class ClusterDumpButtonHandler implements ActionListener {
+    private static final String DISPLAY_MESSAGE = "Cluster dump may affect the performance of the cluster. \nAre you sure to take cluster dump?";
+    private static final String TITLE           = "Terracotta Cluster State Dump";
+
+    public void actionPerformed(ActionEvent e) {
+      Object[] options = { "Yes, Take Cluster Dump", "No, thanks" };
+      int choice = JOptionPane.showOptionDialog(null, DISPLAY_MESSAGE, TITLE, JOptionPane.YES_NO_CANCEL_OPTION,
+                                                JOptionPane.QUESTION_MESSAGE, HelpHelper.getHelper().getHelpIcon(),
+                                                options, options[1]);
+      if (choice == 0) {
+        takeClusterDump();
+      }
     }
   }
 
@@ -167,6 +191,7 @@ public abstract class BasicThreadDumpsPanel extends XContainer {
 
     appContext = null;
     threadDumpButton = null;
+    clusterDumpButton = null;
     exportButton = null;
     itemScroller = null;
     textArea = null;

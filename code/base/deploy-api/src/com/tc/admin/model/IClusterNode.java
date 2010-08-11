@@ -54,6 +54,8 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
 
   String takeThreadDump(long moment);
 
+  String takeClusterDump();
+
   int getLiveObjectCount();
 
   PolledAttribute getPolledAttribute(String name);

@@ -29,6 +29,8 @@ public interface DSOClientMBean extends TerracottaMBean {
 
   L1InfoMBean getL1InfoBean();
 
+  ObjectName getL1DumperBeanName();
+
   ObjectName getInstrumentationLoggingBeanName();
 
   InstrumentationLoggingMBean getInstrumentationLoggingBean();

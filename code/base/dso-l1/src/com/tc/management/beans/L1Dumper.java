@@ -51,7 +51,7 @@ public class L1Dumper extends AbstractTerracottaMBean implements L1DumperMBean {
   public void doThreadDump() throws Exception {
     debugPrintln("ThreadDumping:  count=[" + threadDumpCount + "] interval=[" + threadDumpInterval + "]");
     for (int i = 0; i < threadDumpCount; i++) {
-      debugPrintln(ThreadDumpUtil.getThreadDump());
+      TCLogging.getDumpLogger().info(ThreadDumpUtil.getThreadDump());
       Thread.sleep(threadDumpInterval);
     }
   }

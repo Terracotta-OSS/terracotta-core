@@ -52,6 +52,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
   private boolean                              isListeningForTunneledBeans;
   private ObjectName                           l1InfoBeanName;
   private L1InfoMBean                          l1InfoBean;
+  private final ObjectName                     l1DumperBeanName;
   private ObjectName                           instrumentationLoggingBeanName;
   private InstrumentationLoggingMBean          instrumentationLoggingBean;
   private ObjectName                           runtimeLoggingBeanName;
@@ -104,6 +105,7 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
     this.runtimeOutputOptionsBeanName = getTunneledBeanName(L1MBeanNames.RUNTIME_OUTPUT_OPTIONS_PUBLIC);
     this.l1OperatorEventsBeanName = getTunneledBeanName(MBeanNames.OPERATOR_EVENTS_PUBLIC);
     this.enterpriseMBeanName = getTunneledBeanName(L1MBeanNames.ENTERPRISE_TC_CLIENT);
+    this.l1DumperBeanName = getTunneledBeanName(MBeanNames.L1DUMPER_INTERNAL);
 
     testSetupTunneledBeans();
   }
@@ -215,6 +217,10 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   public L1InfoMBean getL1InfoBean() {
     return l1InfoBean;
+  }
+
+  public ObjectName getL1DumperBeanName() {
+    return this.l1DumperBeanName;
   }
 
   public ObjectName getInstrumentationLoggingBeanName() {

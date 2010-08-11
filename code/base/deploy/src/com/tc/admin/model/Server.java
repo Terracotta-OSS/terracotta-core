@@ -13,6 +13,7 @@ import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
+import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.LockStatisticsMonitorMBean;
 import com.tc.management.beans.TCServerInfoMBean;
@@ -87,6 +88,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected List<DSOClient>               pendingClients;
   protected Exception                     connectException;
   protected TCServerInfoMBean             serverInfoBean;
+  protected L2DumperMBean                 serverDumperBean;
   protected DSOMBean                      dsoBean;
   protected ObjectManagementMonitorMBean  objectManagementMonitorBean;
   protected boolean                       serverDBBackupSupported;
@@ -678,6 +680,18 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     }
     return serverInfoBean;
+  }
+
+  protected synchronized L2DumperMBean getServerDumperBean() {
+    if (serverDumperBean == null) {
+      ConnectionContext cc = getConnectionContext();
+      if (cc != null) {
+        if (cc.mbsc == null) { return null; }
+        serverDumperBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DUMPER, L2DumperMBean.class,
+                                                                  false);
+      }
+    }
+    return serverDumperBean;
   }
 
   protected synchronized DSOMBean getDSOBean() {
@@ -1309,6 +1323,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (zippedByte == null) { return MESSAGE_ON_EXCEPTION; }
     ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
     return decompress(zIn);
+  }
+
+  public synchronized String takeClusterDump() {
+    L2DumperMBean theServerDumperBean = getServerDumperBean();
+    if (theServerDumperBean == null) return "not connected";
+    theServerDumperBean.doServerDump();
+    return "server dump taken";
   }
 
   public synchronized void addServerLogListener(ServerLogListener listener) {

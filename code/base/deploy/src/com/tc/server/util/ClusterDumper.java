@@ -155,6 +155,7 @@ public class ClusterDumper {
     for (int i = 0; i < serverGrpInfos.length; i++) {
       if (serverGrpInfos[i].isCoordinator()) {
         l2Infos = serverGrpInfos[i].members();
+        break;
       }
     }
 

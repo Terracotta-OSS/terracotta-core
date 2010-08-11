@@ -5,4 +5,6 @@ package com.tc.admin;
 
 public interface ClusterThreadDumpProvider {
   ClusterThreadDumpEntry takeThreadDump();
+
+  ClusterThreadDumpEntry takeClusterDump();
 }
