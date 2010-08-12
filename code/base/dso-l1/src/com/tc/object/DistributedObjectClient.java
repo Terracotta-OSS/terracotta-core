@@ -1060,7 +1060,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
       try {
         long end = System.currentTimeMillis()
-                   + l1Properties.getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
+                   + TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
 
         while (threadGroup.activeCount() > 0 && System.currentTimeMillis() < end) {
           try {
