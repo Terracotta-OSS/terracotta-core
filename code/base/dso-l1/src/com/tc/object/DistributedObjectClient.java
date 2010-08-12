@@ -249,7 +249,17 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
                                  final StatisticsAgentSubSystem statisticsAgentSubSystem,
                                  final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
-    super(threadGroup, BoundedLinkedQueue.class.getName());
+    this(config, threadGroup, classProvider, connectionComponents, manager, statisticsAgentSubSystem, dsoCluster,
+         runtimeLogger, BoundedLinkedQueue.class.getName());
+  }
+
+  public DistributedObjectClient(final DSOClientConfigHelper config, final TCThreadGroup threadGroup,
+                                 final ClassProvider classProvider,
+                                 final PreparedComponentsFromL2Connection connectionComponents, final Manager manager,
+                                 final StatisticsAgentSubSystem statisticsAgentSubSystem,
+                                 final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                 final String sedaStageQueueClassName) {
+    super(threadGroup, sedaStageQueueClassName);
     Assert.assertNotNull(config);
     this.config = config;
     this.classProvider = classProvider;
@@ -756,8 +766,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                   final MessageChannel mChannel,
                                                                   final TCMessageHeader msgHeader,
                                                                   final TCByteBuffer[] data) {
-                                     return new ServerMapEvictionBroadcastMessageImpl(sid, monitor, mChannel, msgHeader,
-                                                                                     data, encoding);
+                                     return new ServerMapEvictionBroadcastMessageImpl(sid, monitor, mChannel,
+                                                                                      msgHeader, data, encoding);
                                    }
 
                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
@@ -810,8 +820,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage
         .getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE, receiveServerMapEvictionBroadcastStage.getSink(),
-                                  hydrateSink);
+    this.channel.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
+                                  receiveServerMapEvictionBroadcastStage.getSink(), hydrateSink);
 
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
@@ -1044,12 +1054,13 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
 
     CommonShutDownHook.shutdown();
-    
+
     if (threadGroup != null) {
       boolean interrupted = false;
-      
+
       try {
-        long end = System.currentTimeMillis() + l1Properties.getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
+        long end = System.currentTimeMillis()
+                   + l1Properties.getLong(TCPropertiesConsts.L1_SHUTDOWN_THREADGROUP_GRACETIME);
 
         while (threadGroup.activeCount() > 0 && System.currentTimeMillis() < end) {
           try {
@@ -1060,7 +1071,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         }
         if (threadGroup.activeCount() > 0) {
           logger.warn("Timed out waiting for TC thread group threads to die - probable shutdown memory leak\n"
-                     + "Live threads: " + getLiveThreads(threadGroup));
+                      + "Live threads: " + getLiveThreads(threadGroup));
         } else {
           logger.info("Destroying TC thread group");
           threadGroup.destroy();
@@ -1073,7 +1084,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         }
       }
     }
-    
+
     try {
       TCLogging.closeFileAppender();
       TCLogging.disableLocking();
@@ -1081,15 +1092,15 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       Logger.getAnonymousLogger().log(Level.WARNING, "Error shutting down TC logging system", t);
     }
   }
-  
+
   private static List<Thread> getLiveThreads(ThreadGroup group) {
     int estimate = group.activeCount();
-    
+
     Thread[] threads = new Thread[estimate + 1];
 
     while (true) {
       int count = group.enumerate(threads);
-      
+
       if (count < threads.length) {
         List<Thread> l = new ArrayList<Thread>(count);
         for (Thread t : threads) {

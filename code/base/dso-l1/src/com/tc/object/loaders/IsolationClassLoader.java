@@ -69,10 +69,10 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   }
 
   private Manager createManager(boolean startClient, ClientObjectManager objectManager,
-                                ClientTransactionManager txManager, ClientLockManager lockManager, 
+                                ClientTransactionManager txManager, ClientLockManager lockManager,
                                 DSOClientConfigHelper theConfig, PreparedComponentsFromL2Connection connectionComponents) {
-    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, theConfig, connectionComponents, false, null,
-                                 null);
+    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, theConfig, connectionComponents,
+                                 false, null, null, false);
     rv.registerNamedLoader(this, null);
     return rv;
   }
@@ -101,7 +101,7 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
         }
       }
     }
-    
+
     // "com.tc." classes are delegated to the system loader so that test classes can catch the same exception types as
     // the DSO runtime (which is in the system loader). "org.apache.commons.logging" classes are also delegated so that
     // the stupid checks in commons logging about multiple versions don't go off

@@ -28,5 +28,6 @@ public abstract class AbstractClientFactory extends AbstractFactory {
                                                        PreparedComponentsFromL2Connection connectionComponents,
                                                        Manager manager,
                                                        StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                                       DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger);
+                                                       DsoClusterInternal dsoCluster, RuntimeLogger runtimeLogger,
+                                                       boolean isExpressMode);
 }

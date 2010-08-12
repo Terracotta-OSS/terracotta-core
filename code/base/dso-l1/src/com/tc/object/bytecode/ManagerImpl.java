@@ -81,6 +81,7 @@ public class ManagerImpl implements Manager {
   private final DsoClusterInternal                 dsoCluster;
   private final RuntimeLogger                      runtimeLogger;
   private final LockIdFactory                      lockIdFactory;
+  private final boolean                            isExpressMode;
 
   private final InstrumentationLogger              instrumentationLogger;
 
@@ -95,20 +96,20 @@ public class ManagerImpl implements Manager {
   private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(this.serializer);
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
-    this(true, null, null, null, config, connectionComponents, true, null, null);
+    this(true, null, null, null, config, connectionComponents, true, null, null, false);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
-    this(startClient, objectManager, txManager, lockManager, config, connectionComponents, true, null, null);
+    this(startClient, objectManager, txManager, lockManager, config, connectionComponents, true, null, null, false);
   }
 
   public ManagerImpl(final boolean startClient, final ClientObjectManager objectManager,
                      final ClientTransactionManager txManager, final ClientLockManager lockManager,
                      final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents,
                      final boolean shutdownActionRequired, final RuntimeLogger runtimeLogger,
-                     final ClassProvider classProvider) {
+                     final ClassProvider classProvider, final boolean isExpressMode) {
     this.objectManager = objectManager;
     this.portability = config.getPortability();
     this.txManager = txManager;
@@ -132,6 +133,7 @@ public class ManagerImpl implements Manager {
       registerStandardLoaders();
     }
     this.lockIdFactory = new LockIdFactory(this);
+    this.isExpressMode = isExpressMode;
   }
 
   private void registerStandardLoaders() {
@@ -222,7 +224,8 @@ public class ManagerImpl implements Manager {
                                                           ManagerImpl.this.classProvider,
                                                           ManagerImpl.this.connectionComponents, ManagerImpl.this,
                                                           ManagerImpl.this.statisticsAgentSubSystem,
-                                                          ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger);
+                                                          ManagerImpl.this.dsoCluster, ManagerImpl.this.runtimeLogger,
+                                                          ManagerImpl.this.isExpressMode);
 
         if (forTests) {
           ManagerImpl.this.dso.setCreateDedicatedMBeanServer(true);

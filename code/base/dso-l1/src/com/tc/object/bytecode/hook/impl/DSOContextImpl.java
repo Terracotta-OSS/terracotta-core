@@ -150,7 +150,7 @@ public class DSOContextImpl implements DSOContext {
     // state too
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
     Manager manager = new ManagerImpl(true, null, null, null, configHelper, l2Connection, true, runtimeLogger,
-                                      classProvider);
+                                      classProvider, true);
 
     Collection<Repository> repos = new ArrayList<Repository>();
     repos.add(new VirtualTimRepository(virtualTimJars));
@@ -375,8 +375,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(),
-                                         manager.getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
+        .getTunneledDomainUpdater(), false, modules);
   }
 
   public void shutdown() {

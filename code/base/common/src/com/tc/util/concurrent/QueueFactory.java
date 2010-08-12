@@ -10,10 +10,11 @@ import com.tc.util.Assert;
 import com.tc.util.runtime.Vm;
 
 import java.lang.reflect.Constructor;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class QueueFactory {
   public static final String BOUNDED_LINKED_QUEUE  = BoundedLinkedQueue.class.getName();
-  public static final String LINKED_BLOCKING_QUEUE = "java.util.concurrent.LinkedBlockingQueue";
+  public static final String LINKED_BLOCKING_QUEUE = LinkedBlockingQueue.class.getName();
   private boolean            useBoundedLinkedQueue = false;
 
   /**

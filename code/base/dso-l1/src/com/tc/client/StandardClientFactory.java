@@ -14,6 +14,8 @@ import com.tc.object.logging.RuntimeLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tcclient.cluster.DsoClusterInternal;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 public class StandardClientFactory extends AbstractClientFactory {
 
   @Override
@@ -22,7 +24,11 @@ public class StandardClientFactory extends AbstractClientFactory {
                                               final PreparedComponentsFromL2Connection connectionComponents,
                                               final Manager manager,
                                               final StatisticsAgentSubSystem statisticsAgentSubSystem,
-                                              final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger) {
+                                              final DsoClusterInternal dsoCluster, final RuntimeLogger runtimeLogger,
+                                              final boolean isExpressMode) {
+    if (isExpressMode) { return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents,
+                                                            manager, statisticsAgentSubSystem, dsoCluster,
+                                                            runtimeLogger, LinkedBlockingQueue.class.getName()); }
     return new DistributedObjectClient(config, threadGroup, classProvider, connectionComponents, manager,
                                        statisticsAgentSubSystem, dsoCluster, runtimeLogger);
   }
