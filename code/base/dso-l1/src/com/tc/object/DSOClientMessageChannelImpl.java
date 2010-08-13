@@ -187,15 +187,8 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
 
-  public ServerMapRequestMessage newServerTCMapRequestMessage(final NodeID nodeID, final ServerMapRequestType type) {
-    switch (type) {
-      case GET_SIZE:
-        return (ServerMapRequestMessage) this.channel.createMessage(TCMessageType.GET_SIZE_SERVER_MAP_REQUEST_MESSAGE);
-      case GET_VALUE_FOR_KEY:
-        return (ServerMapRequestMessage) this.channel.createMessage(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE);
-      default:
-        throw new AssertionError("Wrong Type : " + type);
-    }
+  public ServerMapRequestMessage newServerMapRequestMessage(final NodeID nodeID, final ServerMapRequestType type) {
+    return type.createRequestMessage(this.channel);
   }
 
   public NodeMetaDataMessage newNodeMetaDataMessage() {

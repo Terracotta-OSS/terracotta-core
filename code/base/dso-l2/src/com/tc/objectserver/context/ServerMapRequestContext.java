@@ -37,9 +37,9 @@ public final class ServerMapRequestContext implements ObjectManagerResultsContex
     this(ServerMapRequestType.GET_VALUE_FOR_KEY, null, clientID, mapID, destinationSink, getValueRequests);
   }
 
-  public ServerMapRequestContext(final ServerMapRequestID requestID, final ClientID clientID, final ObjectID mapID,
+  public ServerMapRequestContext(final ServerMapRequestType type, final ServerMapRequestID requestID, final ClientID clientID, final ObjectID mapID,
                                  final Sink destinationSink) {
-    this(ServerMapRequestType.GET_SIZE, requestID, clientID, mapID, destinationSink, null);
+    this(type, requestID, clientID, mapID, destinationSink, null);
   }
 
   private ServerMapRequestContext(final ServerMapRequestType requestType, final ServerMapRequestID requestID,
@@ -58,9 +58,9 @@ public final class ServerMapRequestContext implements ObjectManagerResultsContex
     return this.requestType;
   }
 
-  public ServerMapRequestID getSizeRequestID() {
-    if (this.requestType != ServerMapRequestType.GET_SIZE) { throw new AssertionError(
-                                                                                      " Request type is not GET SIZE : "
+  public ServerMapRequestID getRequestID() {
+    if (this.requestType == ServerMapRequestType.GET_VALUE_FOR_KEY) { throw new AssertionError(
+                                                                                      " Request type is not GET VALUE FOR KEY shouldn't exist : "
                                                                                           + this); }
     return this.getSizeRequestID;
   }

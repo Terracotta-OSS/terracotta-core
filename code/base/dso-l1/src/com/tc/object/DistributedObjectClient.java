@@ -108,6 +108,8 @@ import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.GetSizeServerMapRequestMessageImpl;
 import com.tc.object.msg.GetSizeServerMapResponseMessageImpl;
+import com.tc.object.msg.GetAllKeysServerMapRequestMessageImpl;
+import com.tc.object.msg.GetAllKeysServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.JMXMessage;
@@ -758,6 +760,29 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                   + " shouldn't be created using this constructor at the client.");
                                    }
                                  });
+    this.channel.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                 GetAllKeysServerMapRequestMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
+                                 // Special handling to get the applicator encoding
+                                                              new GeneratedMessageFactory() {
+
+                                                                public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                                               final MessageChannel mChannel,
+                                                                                               final TCMessageHeader msgHeader,
+                                                                                               final TCByteBuffer[] data) {
+                                                                  return new GetAllKeysServerMapResponseMessageImpl(sid, monitor, mChannel, msgHeader,
+                                                                                                                  data, encoding);
+                                                                }
+
+                                                                public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                                               final TCByteBufferOutputStream output,
+                                                                                               final MessageChannel mChannel,
+                                                                                               final TCMessageType type) {
+                                                                  throw new AssertionError(
+                                                                                           GetAllKeysServerMapRequestMessageImpl.class.getName()
+                                                                                               + " shouldn't be created using this constructor at the client.");
+                                                                }
+                                                              });  
     this.channel.addClassMapping(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
     // Special handling to get the applicator encoding
                                  new GeneratedMessageFactory() {
@@ -817,6 +842,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
+                                  hydrateSink);
+    this.channel.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage
         .getSink(), hydrateSink);

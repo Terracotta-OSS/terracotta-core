@@ -14,12 +14,17 @@ import java.util.Set;
 
 public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
-  public Object getMappingForKey(ObjectID oid, Object portableKey);
+  public Object getMappingForKey(ObjectID mapID, Object portableKey);
+  
+  public Set getAllKeys(ObjectID mapID);
 
   public int getSize(ObjectID mapID);
 
   public void addResponseForKeyValueMapping(SessionID localSessionID, ObjectID mapID,
                                             Collection<ServerMapGetValueResponse> responses, NodeID nodeID);
+  
+  public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
+                                            Set keys, NodeID nodeID);
 
   public void addResponseForGetSize(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
                                     Integer size, NodeID sourceNodeID);

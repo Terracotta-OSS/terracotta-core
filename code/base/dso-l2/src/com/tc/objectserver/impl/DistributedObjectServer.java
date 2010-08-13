@@ -108,6 +108,8 @@ import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
 import com.tc.object.msg.GetSizeServerMapRequestMessageImpl;
 import com.tc.object.msg.GetSizeServerMapResponseMessageImpl;
+import com.tc.object.msg.GetAllKeysServerMapRequestMessageImpl;
+import com.tc.object.msg.GetAllKeysServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
 import com.tc.object.msg.JMXMessage;
@@ -849,6 +851,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createCounter(sampledCumulativeCounterConfig);
     final SampledCumulativeCounter globalServerMapGetValueRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
         .createCounter(sampledCumulativeCounterConfig);
+    final SampledCumulativeCounter globalServerMapGetSnapshotRequestsCounter = (SampledCumulativeCounter) this.sampledCounterManager
+    .createCounter(sampledCumulativeCounterConfig);
 
     final DSOGlobalServerStatsImpl serverStats = new DSOGlobalServerStatsImpl(globalObjectFlushCounter,
                                                                               globalObjectFaultCounter,
@@ -859,7 +863,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               changesPerBroadcast,
                                                                               transactionSizeCounter, globalLockCount);
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)
-        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter);
+        .serverMapGetValueRequestsCounter(globalServerMapGetValueRequestsCounter)
+        .serverMapGetSnapshotRequestsCounter(globalServerMapGetSnapshotRequestsCounter);
 
     final TransactionStore transactionStore = new TransactionStoreImpl(transactionPersistor,
                                                                        globalTransactionIDSequence);
@@ -948,7 +953,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage serverMapRequestStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_MAP_REQUEST_STAGE,
                      new ServerMapRequestHandler(globalServerMapGetSizeRequestsCounter,
-                                                 globalServerMapGetValueRequestsCounter), 8, maxStageSize);
+                                                 globalServerMapGetValueRequestsCounter,
+                                                 globalServerMapGetSnapshotRequestsCounter), 8, maxStageSize);
     final Stage respondToServerTCMapStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
                      maxStageSize);
@@ -1201,6 +1207,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.GET_SIZE_SERVER_MAP_REQUEST_MESSAGE,
                                      serverMapRequestStage.getSink(), hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                     serverMapRequestStage.getSink(), hydrateSink);
 
   }
 
@@ -1252,6 +1260,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                     GetSizeServerMapRequestMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
                                     GetSizeServerMapResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                    GetAllKeysServerMapRequestMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
+                                    GetAllKeysServerMapResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
                                     GetValueServerMapRequestMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,

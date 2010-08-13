@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.Map.Entry;
 
@@ -173,6 +174,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
 
   public int getSize() {
     return this.references.size();
+  }
+  
+  public Set getAllKeys() {
+    return this.references.keySet();
   }
 
   public int getTTISeconds() {

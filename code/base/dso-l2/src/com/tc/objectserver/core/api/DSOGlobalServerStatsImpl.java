@@ -27,6 +27,7 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
   private final SampledRateCounter       transactionSizeCounter;
   private SampledCumulativeCounter serverMapGetSizeRequestsCounter;
   private SampledCumulativeCounter serverMapGetValueRequestsCounter;
+  private SampledCumulativeCounter serverMapGetSnapshotRequestsCounter;
 
   public DSOGlobalServerStatsImpl(SampledCounter flushCounter, SampledCounter faultCounter, SampledCounter txnCounter,
                                   ObjectManagerStatsImpl objMgrStats, SampledCounter broadcastCounter,
@@ -57,7 +58,10 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     this.serverMapGetValueRequestsCounter = counter;
     return this;
   }
-
+  public DSOGlobalServerStatsImpl serverMapGetSnapshotRequestsCounter(final SampledCumulativeCounter counter) {
+    this.serverMapGetValueRequestsCounter = counter;
+    return this;
+  }
   public SampledCounter getObjectFlushCounter() {
     return this.flushCounter;
   }
@@ -112,6 +116,10 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
 
   public SampledCumulativeCounter getServerMapGetValueRequestsCounter() {
     return serverMapGetValueRequestsCounter;
+  }
+  
+  public SampledCumulativeCounter getServerMapGetSnapshotRequestsCounter() {
+    return serverMapGetSnapshotRequestsCounter;
   }
 
 }

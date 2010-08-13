@@ -5,6 +5,8 @@ package com.tc.object;
 
 import com.tc.object.bytecode.TCServerMap;
 
+import java.util.Set;
+
 public interface TCObjectServerMap extends TCObject {
 
   /**
@@ -57,6 +59,16 @@ public interface TCObjectServerMap extends TCObject {
    */
   public Object getValueButDontCache(final TCServerMap map, final Object key);
 
+  
+  /**
+   * Returns a snapshot of keys for the giver ServerTCMap
+   * 
+   * @param map ServerTCMap
+   * @return set Set return snapshot of keys
+   */
+  public Set keySet(final TCServerMap map);
+  
+  
   /**
    * Returns the value for a particular Key in a ServerTCMap.
    * 

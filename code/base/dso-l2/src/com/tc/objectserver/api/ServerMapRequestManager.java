@@ -15,6 +15,8 @@ import java.util.Collection;
 public interface ServerMapRequestManager extends PrettyPrintable {
 
   public void requestSize(ServerMapRequestID requestID, ClientID clientID, ObjectID mapID);
+  
+  public void requestAllKeys(ServerMapRequestID requestID, ClientID clientID, ObjectID mapID);
 
   public void sendResponseFor(ObjectID mapID, ManagedObject managedObject);
   

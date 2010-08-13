@@ -8,6 +8,6 @@ import com.tc.object.ServerMapRequestType;
 
 public interface ServerMapMessageFactory {
 
-  public ServerMapRequestMessage newServerTCMapRequestMessage(NodeID nodeID, ServerMapRequestType type);
+  public ServerMapRequestMessage newServerMapRequestMessage(NodeID nodeID, ServerMapRequestType type);
 
 }

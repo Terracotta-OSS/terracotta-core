@@ -11,6 +11,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapRequestType;
 import com.tc.object.msg.GetSizeServerMapRequestMessage;
+import com.tc.object.msg.GetAllKeysServerMapRequestMessage;
 import com.tc.object.msg.GetValueServerMapRequestMessage;
 import com.tc.object.net.ChannelStats;
 import com.tc.objectserver.api.ServerMapRequestManager;
@@ -26,11 +27,13 @@ public class ServerMapRequestHandler extends AbstractEventHandler implements Eve
   private ServerMapRequestManager serverMapRequestManager;
   private final Counter           globalGetValueRequestCounter;
   private final Counter           globalGetSizeRequestCounter;
+  private final Counter           globalGetSnapshotRequestCounter;
   private ChannelStats            channelStats;
 
-  public ServerMapRequestHandler(Counter globalGetSizeRequestCounter, Counter globalGetValueRequestCounter) {
+  public ServerMapRequestHandler(Counter globalGetSizeRequestCounter, Counter globalGetValueRequestCounter, Counter globalGetSnapshotRequestCounter) {
     this.globalGetSizeRequestCounter = globalGetSizeRequestCounter;
     this.globalGetValueRequestCounter = globalGetValueRequestCounter;
+    this.globalGetSnapshotRequestCounter = globalGetSnapshotRequestCounter;
   }
 
   @Override
@@ -40,16 +43,22 @@ public class ServerMapRequestHandler extends AbstractEventHandler implements Eve
       globalGetSizeRequestCounter.increment();
       this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_SIZE, smContext.getChannel(), 1);
       this.serverMapRequestManager.requestSize(smContext.getRequestID(), smContext.getClientID(), smContext.getMapID());
-    } else {
+    } else if (context instanceof GetValueServerMapRequestMessage){
       final GetValueServerMapRequestMessage smContext = (GetValueServerMapRequestMessage) context;
       final Map<ObjectID, Collection<ServerMapGetValueRequest>> requests = smContext.getRequests();
       int numRequests = requests.size();
       globalGetValueRequestCounter.increment(numRequests);
-      this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_VALUE_FOR_KEY, smContext.getChannel(),
-                                               numRequests);
+      this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_VALUE_FOR_KEY, smContext.getChannel(), numRequests);
       for (final Entry<ObjectID, Collection<ServerMapGetValueRequest>> e : requests.entrySet()) {
         this.serverMapRequestManager.requestValues(smContext.getClientID(), e.getKey(), e.getValue());
       }
+    } else if (context instanceof GetAllKeysServerMapRequestMessage) {
+      final GetAllKeysServerMapRequestMessage smContext = (GetAllKeysServerMapRequestMessage) context;
+      globalGetSnapshotRequestCounter.increment();
+      this.channelStats.notifyServerMapRequest(ServerMapRequestType.GET_ALL_KEYS, smContext.getChannel(), 1);
+      this.serverMapRequestManager.requestAllKeys(smContext.getRequestID(), smContext.getClientID(), smContext.getMapID());         
+    } else {
+      throw new AssertionError("Unknown message type: " + context.getClass());
     }
   }
 

@@ -41,6 +41,11 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   public Object getMappingForKey(final ObjectID oid, final Object portableKey) {
     return null;
   }
+  
+  public Set getAllKeys(ObjectID oid) {
+    //
+    return null;
+  }
 
   public void flush(final LockID lockID) {
     //
@@ -76,4 +81,10 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   public void expired(final TCObjectServerMap serverMap, final CachedItem ci) {
     //
   }
+
+  public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
+                                        Set keys, NodeID nodeID) {
+   //
+  }
+
 }
