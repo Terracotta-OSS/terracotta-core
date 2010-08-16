@@ -128,7 +128,7 @@ public class TestClientTransaction implements ClientTransaction {
     return Collections.EMPTY_LIST;
   }
 
-  public void addDmiDescritor(DmiDescriptor dd) {
+  public void addDmiDescriptor(DmiDescriptor dd) {
     throw new ImplementMe();
   }
 

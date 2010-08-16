@@ -80,7 +80,7 @@ public class NullClientTransaction extends AbstractClientTransaction {
     return Collections.EMPTY_LIST;
   }
 
-  public void addDmiDescritor(DmiDescriptor dd) {
+  public void addDmiDescriptor(DmiDescriptor dd) {
     return;
   }
 

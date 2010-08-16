@@ -451,7 +451,7 @@ public class TransactionBatchTest extends TestCase {
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txnWithDMI = new ClientTransactionImpl(new NullRuntimeLogger());
     txnWithDMI.setTransactionContext(tc);
-    txnWithDMI.addDmiDescritor(new DmiDescriptor(new ObjectID(12), new ObjectID(13), new DmiClassSpec[] {}, true));
+    txnWithDMI.addDmiDescriptor(new DmiDescriptor(new ObjectID(12), new ObjectID(13), new DmiClassSpec[] {}, true));
 
     tc = new TransactionContextImpl(lid1, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txnWithNotify = new ClientTransactionImpl(new NullRuntimeLogger());

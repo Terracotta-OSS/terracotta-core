@@ -155,7 +155,7 @@ public class ClientTransactionImpl extends AbstractClientTransaction {
     return getNotifies().size();
   }
 
-  public void addDmiDescritor(DmiDescriptor dd) {
+  public void addDmiDescriptor(DmiDescriptor dd) {
     if (dmis == null) {
       dmis = new ArrayList();
     }

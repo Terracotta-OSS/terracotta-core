@@ -211,7 +211,7 @@ public interface ClientTransaction {
    *
    * @param dd Descriptor
    */
-  public void addDmiDescritor(DmiDescriptor dd);
+  public void addDmiDescriptor(DmiDescriptor dd);
 
   /**
    * Get all DmiDescriptors

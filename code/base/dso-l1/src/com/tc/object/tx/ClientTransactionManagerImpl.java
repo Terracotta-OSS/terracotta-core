@@ -673,7 +673,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   public void addDmiDescriptor(final DmiDescriptor dd) {
-    getTransaction().addDmiDescritor(dd);
+    getTransaction().addDmiDescriptor(dd);
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
