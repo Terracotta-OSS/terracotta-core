@@ -20,6 +20,7 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
       Thread.sleep(30 * 1000);
     } catch (InterruptedException e1) {
       e1.printStackTrace();
+      Thread.currentThread().interrupt();
     }
     // at top layer DistributedObjectClient to kill this client
   }

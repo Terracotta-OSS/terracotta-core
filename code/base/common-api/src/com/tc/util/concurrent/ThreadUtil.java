@@ -3,8 +3,6 @@
  */
 package com.tc.util.concurrent;
 
-import com.tc.util.Assert;
-
 /**
  * Some shortcut stuff for doing common thread stuff
  * 
@@ -17,16 +15,23 @@ public class ThreadUtil {
   }
   
   public static void reallySleep(long millis, int nanos) {
+    boolean interrupted = false;
     try {
       long millisLeft = millis;
       while (millisLeft > 0 || nanos > 0) {
         long start = System.currentTimeMillis();
-        Thread.sleep(millisLeft, nanos);
+        try {
+          Thread.sleep(millisLeft, nanos);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
         millisLeft -= System.currentTimeMillis() - start;
         nanos = 0 ; // Not using System.nanoTime() since it is 1.5 specific
       }
-    } catch (InterruptedException ie) {
-      Assert.fail("Interrupted while attempting to sleep for " + millis + " millis and " + nanos + " nanos.");
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

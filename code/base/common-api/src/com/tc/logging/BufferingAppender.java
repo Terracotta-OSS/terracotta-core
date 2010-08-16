@@ -29,7 +29,7 @@ public class BufferingAppender extends AppenderSkeleton {
       try {
         this.buffer.offer(event, 0);
       } catch (InterruptedException ie) {
-        // oh, well -- and we can't even log this; that would cause infinite recursion.
+        Thread.currentThread().interrupt();
       }
     }
   }
@@ -53,7 +53,7 @@ public class BufferingAppender extends AppenderSkeleton {
         if (event == null) break;
         otherAppender.doAppend(event);
       } catch (InterruptedException ie) {
-        // ok, whatever
+        Thread.currentThread().interrupt();
       }
     }
   }

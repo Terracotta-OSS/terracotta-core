@@ -277,6 +277,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
         try {
           this.wait();
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           return active;
         }
       }

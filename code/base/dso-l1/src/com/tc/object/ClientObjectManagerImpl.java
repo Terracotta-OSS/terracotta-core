@@ -1091,16 +1091,19 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
   private List basicCreateIfNecessary(final List pojos, GroupID gid) {
     canCreate();
-    reserveObjectIds(pojos.size(), gid);
-
-    synchronized (this) {
-      waitUntilRunning();
-      final List tcObjects = new ArrayList(pojos.size());
-      for (final Iterator i = pojos.iterator(); i.hasNext();) {
-        tcObjects.add(basicCreateIfNecessary(i.next(), gid));
+    try {
+      reserveObjectIds(pojos.size(), gid);
+  
+      synchronized (this) {
+        waitUntilRunning();
+        final List tcObjects = new ArrayList(pojos.size());
+        for (final Iterator i = pojos.iterator(); i.hasNext();) {
+          tcObjects.add(basicCreateIfNecessary(i.next(), gid));
+        }
+        return tcObjects;
       }
+    } finally {
       allowCreation();
-      return tcObjects;
     }
   }
 
@@ -1109,11 +1112,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   }
 
   private void canCreate() {
-    try {
-      creationSemaphore.acquire();
-    } catch (InterruptedException e) {
-      // do nothing
-    }
+    creationSemaphore.acquireUninterruptibly();
   }
 
   private void reserveObjectIds(int size, GroupID gid) {

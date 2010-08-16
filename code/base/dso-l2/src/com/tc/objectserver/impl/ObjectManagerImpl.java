@@ -44,6 +44,7 @@ import com.tc.util.Assert;
 import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
+import com.tc.util.Util;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
@@ -388,12 +389,18 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private synchronized void reapCache(final Collection removalCandidates, final Collection<ManagedObject> toFlush,
                                       final Collection<ManagedObjectReference> removedObjects) {
-    while (this.collector.isPausingOrPaused()) {
-      try {
-        this.wait();
-      } catch (final InterruptedException e) {
-        logger.error(e);
+    boolean interrupted = false;
+    try {
+      while (this.collector.isPausingOrPaused()) {
+        try {
+          this.wait();
+        } catch (final InterruptedException e) {
+          interrupted = true;
+          logger.error(e);
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(interrupted);
     }
     for (final Object cand : removalCandidates) {
       final ManagedObjectReference removalCandidate = (ManagedObjectReference) cand;

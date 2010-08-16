@@ -491,6 +491,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         return latch.attempt(timeout);
       } catch (InterruptedException e) {
         logger.warn("close interrupted");
+        Thread.currentThread().interrupt();
         return isConnected();
       }
     }

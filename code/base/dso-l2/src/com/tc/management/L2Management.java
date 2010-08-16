@@ -285,6 +285,7 @@ public class L2Management extends TerracottaManagement {
           return (Message) future.get();
         } catch (InterruptedException e) {
           logger.debug("remote JMX call interrupted");
+          Thread.currentThread().interrupt();
           return null;
         } catch (TCExceptionResultException e) {
           throw new RuntimeException(e.getCause());

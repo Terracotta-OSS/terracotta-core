@@ -240,6 +240,7 @@ public class ElectionManagerImpl implements ElectionManager {
         wait(diff);
       } catch (InterruptedException e) {
         logger.error("Interrupted during election : ", e);
+        Thread.currentThread().interrupt();
         break;
       }
       diff = diff - (System.currentTimeMillis() - start);

@@ -309,24 +309,29 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       final int tries = 3;
 
-      for (int i = 0; i < tries; i++) {
-        try {
-          selector1 = Selector.open();
-          return selector1;
-        } catch (IOException ioe) {
-          throw new RuntimeException(ioe);
-        } catch (NullPointerException npe) {
-          if (i < tries && NIOWorkarounds.selectorOpenRace(npe)) {
-            System.err.println("Attempting to work around sun bug 6427854 (attempt " + (i + 1) + " of " + tries + ")");
-            try {
-              Thread.sleep(new Random().nextInt(20) + 5);
-            } catch (InterruptedException ie) {
-              //
+      boolean interrupted = false;
+      try {
+        for (int i = 0; i < tries; i++) {
+          try {
+            selector1 = Selector.open();
+            return selector1;
+          } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+          } catch (NullPointerException npe) {
+            if (i < tries && NIOWorkarounds.selectorOpenRace(npe)) {
+              System.err.println("Attempting to work around sun bug 6427854 (attempt " + (i + 1) + " of " + tries + ")");
+              try {
+                Thread.sleep(new Random().nextInt(20) + 5);
+              } catch (InterruptedException ie) {
+                interrupted = true;
+              }
+              continue;
             }
-            continue;
+            throw npe;
           }
-          throw npe;
         }
+      } finally {
+        Util.selfInterruptIfNeeded(interrupted);
       }
 
       return selector1;

@@ -4,6 +4,8 @@
  */
 package com.tc.util.concurrent;
 
+import com.tc.util.Util;
+
 import EDU.oswego.cs.dl.util.concurrent.Channel;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
@@ -11,12 +13,14 @@ public class NoExceptionLinkedQueue implements Channel {
   public final LinkedQueue queue = new LinkedQueue();
 
   public void put(Object o) {
+    boolean interrupted = false;
     while (true) {
       try {
         queue.put(o);
+        Util.selfInterruptIfNeeded(interrupted);
         return;
       } catch (InterruptedException e) {
-        //
+        interrupted = true;
       }
     }
   }
@@ -25,6 +29,7 @@ public class NoExceptionLinkedQueue implements Channel {
     try {
       return queue.offer(o, l);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       return false;
     }
   }
@@ -41,16 +46,20 @@ public class NoExceptionLinkedQueue implements Channel {
     try {
       return queue.poll(arg0);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       return null;
     }
   }
 
   public Object take() {
+    boolean interrupted = false;
     while (true) {
       try {
-        return queue.take();
+        Object o = queue.take();
+        Util.selfInterruptIfNeeded(interrupted);
+        return o;
       } catch (InterruptedException e) {
-        //
+        interrupted = true;
       }
     }
   }

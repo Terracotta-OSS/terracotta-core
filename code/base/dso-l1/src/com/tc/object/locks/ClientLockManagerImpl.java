@@ -740,19 +740,24 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.inFlightLockQueries.put(current, lock);
     this.remoteManager.query(lock, this.threadManager.getThreadID());
 
-    while (true) {
-      synchronized (lock) {
-        final Object data = this.inFlightLockQueries.get(current);
-        if (data instanceof Collection) {
-          return (Collection<ClientServerExchangeLockContext>) data;
-        } else {
-          try {
-            lock.wait();
-          } catch (final InterruptedException e) {
-            //
+    boolean interrupted = true;
+    try {
+      while (true) {
+        synchronized (lock) {
+          final Object data = this.inFlightLockQueries.get(current);
+          if (data instanceof Collection) {
+            return (Collection<ClientServerExchangeLockContext>) data;
+          } else {
+            try {
+              lock.wait();
+            } catch (final InterruptedException e) {
+              interrupted = true;
+            }
           }
         }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(interrupted);
     }
   }
 

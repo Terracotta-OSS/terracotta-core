@@ -28,6 +28,7 @@ import com.tc.logging.TCLogging;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ThreadUtil;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
@@ -359,12 +360,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private void sleepIfNecessaryToAvoidPoundingSources(long lastLoopStartTime) {
     long delay = MIN_RETRY_TIMEOUT - (System.currentTimeMillis() - lastLoopStartTime);
     if (delay > 0) {
-      try {
-        logger.info("Waiting " + delay + " ms until we try to get configuration data again...");
-        Thread.sleep(delay);
-      } catch (InterruptedException ie) {
-        // whatever
-      }
+      logger.info("Waiting " + delay + " ms until we try to get configuration data again...");
+      ThreadUtil.reallySleep(delay);
     }
   }
 

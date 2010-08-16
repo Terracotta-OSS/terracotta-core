@@ -104,6 +104,7 @@ final class TCListenerJDK14 implements TCListener {
         future.get(timeout);
       } catch (InterruptedException e) {
         logger.warn("stop interrupted");
+        Thread.currentThread().interrupt();
         return;
       } catch (TCExceptionResultException e) {
         logger.error(e);

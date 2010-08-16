@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -145,15 +146,17 @@ public class BootJarHandler {
     InputStream in = null;
     OutputStream out = null;
     try {
+      boolean interrupted = false;
       // wait until it's okay to copy over the bootjar
       tmplck = new File(dest.getParentFile(), "tc-bootjar.lck");
       while (tmplck.exists()) {
         try {
           Thread.sleep(1000);
         } catch (InterruptedException e) {
-          //throw e;
+          interrupted = true;
         }
       }
+      Util.selfInterruptIfNeeded(interrupted);
       
       // block everyone else from copying over their bootjar
       tmplck.createNewFile();

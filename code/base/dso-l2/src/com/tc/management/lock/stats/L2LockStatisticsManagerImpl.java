@@ -255,7 +255,7 @@ public class L2LockStatisticsManagerImpl extends LockStatisticsManager implement
         wait();
       }
     } catch (InterruptedException e) {
-      // ignore interrupt and return;
+      Thread.currentThread().interrupt();
     }
 
     for (Iterator<LockStatisticsInfo> i = lockStats.values().iterator(); i.hasNext();) {

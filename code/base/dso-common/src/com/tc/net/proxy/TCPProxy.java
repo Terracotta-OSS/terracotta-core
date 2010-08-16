@@ -202,6 +202,7 @@ public class TCPProxy {
         acceptThread.join(10000);
       } catch (InterruptedException e) {
         log("Interrupted while join()'ing acceptor thread", e);
+        Thread.currentThread().interrupt();
       }
     } finally {
       acceptThread = null;
@@ -570,7 +571,7 @@ public class TCPProxy {
         try {
           Thread.sleep(sleep);
         } catch (InterruptedException e) {
-          // ignore
+          Thread.currentThread().interrupt();
         }
       }
     }
@@ -669,7 +670,7 @@ public class TCPProxy {
           try {
             thread.join(1000);
           } catch (InterruptedException ie) {
-            // ignore
+            Thread.currentThread().interrupt();
           }
         }
       } finally {

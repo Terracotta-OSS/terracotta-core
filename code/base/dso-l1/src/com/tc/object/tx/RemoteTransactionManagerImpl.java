@@ -193,6 +193,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
           }
         } catch (final InterruptedException e) {
           this.logger.warn("stop(): Interrupted " + e);
+          Thread.currentThread().interrupt();
         }
         if (this.status != STOPPED) {
           this.logger.error("stop() : There are still UNACKed Transactions! incompleteBatches.size() = "

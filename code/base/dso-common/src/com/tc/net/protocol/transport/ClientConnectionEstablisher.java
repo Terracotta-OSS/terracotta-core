@@ -256,7 +256,7 @@ public class ClientConnectionEstablisher {
       try {
         Thread.sleep(CONNECT_RETRY_INTERVAL);
       } catch (InterruptedException e1) {
-        //
+        Thread.currentThread().interrupt();
       }
     }
   }

@@ -15,7 +15,6 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
 import com.tc.stats.Stats;
 import com.tc.util.Assert;
-import com.tc.util.Util;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.TCQueue;
 
@@ -144,9 +143,8 @@ public class StageQueueImpl implements Sink {
     }
 
     if (interrupted) {
-      Util.selfInterruptIfNeeded(interrupted);
+      Thread.currentThread().interrupt();
     }
-
   }
 
   private SourceQueueImpl getSourceQueueFor(MultiThreadedEventContext context) {

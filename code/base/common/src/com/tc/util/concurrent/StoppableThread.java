@@ -61,7 +61,7 @@ public class StoppableThread extends Thread implements LifeCycleState {
     try {
       join(timeout);
     } catch (InterruptedException e) {
-      //
+      Thread.currentThread().interrupt();
     }
     return !isAlive();
   }

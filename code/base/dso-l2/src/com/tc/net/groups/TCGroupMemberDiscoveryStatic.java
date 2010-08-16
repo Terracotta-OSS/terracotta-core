@@ -203,6 +203,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
           local.wait(timeout);
         } catch (InterruptedException e) {
           logger.debug("Timeouted while waiting for connecting completed");
+          Thread.currentThread().interrupt();
         }
       }
     }
@@ -239,7 +240,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
       try {
         wait();
       } catch (InterruptedException e) {
-        //
+        Thread.currentThread().interrupt();
       }
     }
   }

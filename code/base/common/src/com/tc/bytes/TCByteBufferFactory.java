@@ -205,6 +205,7 @@ public class TCByteBufferFactory {
       }
     } catch (InterruptedException e) {
       logger.warn("interrupted while getting buffer from pool", e);
+      Thread.currentThread().interrupt();
       return null;
     }
     return buf;
@@ -230,6 +231,7 @@ public class TCByteBufferFactory {
           bufferPool.offer(buf);
         } catch (InterruptedException e) {
           logger.warn("interrupted while trying to return buffer", e);
+          Thread.currentThread().interrupt();
         }
       }
     }

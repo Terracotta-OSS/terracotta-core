@@ -39,6 +39,7 @@ import com.tc.timapi.Version;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
 import com.tc.util.TCTimeoutException;
+import com.tc.util.Util;
 import com.terracottatech.config.ConfigurationModel;
 
 import java.io.ByteArrayOutputStream;
@@ -331,33 +332,38 @@ public class DSOContextImpl implements DSOContext {
     long startTime = System.currentTimeMillis();
     long lastTrial = 0;
 
-    while (System.currentTimeMillis() < (startTime + MAX_HTTP_FETCH_TIME)) {
-      try {
-        long untilNextTrial = HTTP_FETCH_RETRY_INTERVAL - (System.currentTimeMillis() - lastTrial);
-
-        if (untilNextTrial > 0) {
-          try {
-            Thread.sleep(untilNextTrial);
-          } catch (InterruptedException ie) {
-            // whatever; just try again now
+    boolean interrupted = false;
+    try {
+      while (System.currentTimeMillis() < (startTime + MAX_HTTP_FETCH_TIME)) {
+        try {
+          long untilNextTrial = HTTP_FETCH_RETRY_INTERVAL - (System.currentTimeMillis() - lastTrial);
+  
+          if (untilNextTrial > 0) {
+            try {
+              Thread.sleep(untilNextTrial);
+            } catch (InterruptedException ie) {
+              interrupted = true;
+            }
           }
+  
+          logger.debug("Opening connection to: " + theURL + " to fetch server configuration.");
+  
+          lastTrial = System.currentTimeMillis();
+          InputStream in = theURL.openStream();
+          logger.debug("Got input stream to: " + theURL);
+          ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  
+          CopyUtils.copy(in, baos);
+  
+          return baos.toString();
+        } catch (ConnectException ce) {
+          logger.warn("Unable to fetch configuration mode from L2 at '" + theURL + "'; trying again. "
+                      + "(Is an L2 running at that address?): " + ce.getLocalizedMessage());
+          // oops -- try again
         }
-
-        logger.debug("Opening connection to: " + theURL + " to fetch server configuration.");
-
-        lastTrial = System.currentTimeMillis();
-        InputStream in = theURL.openStream();
-        logger.debug("Got input stream to: " + theURL);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        CopyUtils.copy(in, baos);
-
-        return baos.toString();
-      } catch (ConnectException ce) {
-        logger.warn("Unable to fetch configuration mode from L2 at '" + theURL + "'; trying again. "
-                    + "(Is an L2 running at that address?): " + ce.getLocalizedMessage());
-        // oops -- try again
       }
+    } finally {
+      Util.selfInterruptIfNeeded(interrupted);
     }
 
     throw new TCTimeoutException("We tried for " + (int) ((System.currentTimeMillis() - startTime) / 1000)

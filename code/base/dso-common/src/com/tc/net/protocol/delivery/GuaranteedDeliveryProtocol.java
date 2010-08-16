@@ -8,7 +8,6 @@ import com.tc.async.api.Sink;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
-import com.tc.util.Util;
 
 /**
  * This implements an asynchronous Once and only once protocol. Sent messages go out on the sent queue received messages
@@ -31,17 +30,19 @@ class GuaranteedDeliveryProtocol {
 
   public void send(TCNetworkMessage message) {
     boolean interrupted = false;
-    do {
-      try {
-        sender.put(message);
-        break;
-      } catch (InterruptedException e) {
-        interrupted = true;
+    try {
+      do {
+        try {
+          sender.put(message);
+          break;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      } while (true);
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
-    } while (true);
-
-    if (interrupted) {
-      Util.selfInterruptIfNeeded(interrupted);
     }
 
     send.addEvent(new OOOProtocolEvent());
