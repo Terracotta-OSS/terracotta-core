@@ -740,7 +740,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     this.inFlightLockQueries.put(current, lock);
     this.remoteManager.query(lock, this.threadManager.getThreadID());
 
-    boolean interrupted = true;
+    boolean interrupted = false;
     try {
       while (true) {
         synchronized (lock) {
