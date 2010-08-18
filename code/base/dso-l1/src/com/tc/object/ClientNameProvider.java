@@ -7,7 +7,7 @@ import com.tc.net.NodeNameProvider;
 import com.tc.object.net.DSOClientMessageChannel;
 
 public class ClientNameProvider implements NodeNameProvider {
-  
+
   private final DSOClientMessageChannel channel;
 
   public ClientNameProvider(DSOClientMessageChannel channel) {
@@ -15,7 +15,8 @@ public class ClientNameProvider implements NodeNameProvider {
   }
 
   public String getNodeName() {
-    return this.channel.channel().getLocalNodeID().toString();
+    return this.channel.channel().getLocalNodeID().toString() + " "
+           + this.channel.channel().getLocalAddress().getCanonicalStringForm();
   }
 
 }
