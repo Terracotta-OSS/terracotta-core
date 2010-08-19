@@ -86,7 +86,7 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
 
       case GET_ALL_KEYS_SIZE:
         int size = getIntValue();
-        this.keys = new HashSet();
+        this.keys = new HashSet((int)(size * 1.5));
         final TCByteBufferInputStream inputStream = getInputStream();
         while (size-- > 0) {
           try {

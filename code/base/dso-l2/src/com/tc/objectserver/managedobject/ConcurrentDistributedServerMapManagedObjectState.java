@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -177,7 +178,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   }
   
   public Set getAllKeys() {
-    return this.references.keySet();
+    return new HashSet(this.references.keySet());
   }
 
   public int getTTISeconds() {

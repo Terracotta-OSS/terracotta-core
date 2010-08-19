@@ -36,7 +36,6 @@ import com.tc.util.concurrent.TCConcurrentMultiMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -231,7 +230,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     final GetAllKeysServerMapResponseMessage responseMessage = (GetAllKeysServerMapResponseMessage) channel
         .createMessage(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE);
   
-    responseMessage.initializeGetAllKeysResponse(mapID, requestID, new HashSet(cdsmState.getAllKeys()));
+    responseMessage.initializeGetAllKeysResponse(mapID, requestID, cdsmState.getAllKeys());
     responseMessage.send();
   }
 
