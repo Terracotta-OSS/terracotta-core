@@ -59,7 +59,7 @@ public class DSOGlobalServerStatsImpl implements DSOGlobalServerStats {
     return this;
   }
   public DSOGlobalServerStatsImpl serverMapGetSnapshotRequestsCounter(final SampledCumulativeCounter counter) {
-    this.serverMapGetValueRequestsCounter = counter;
+    this.serverMapGetSnapshotRequestsCounter = counter;
     return this;
   }
   public SampledCounter getObjectFlushCounter() {
