@@ -103,6 +103,14 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     setFlag(IS_DIRTY_OFFSET, b);
   }
 
+  private synchronized boolean compareAndSetFlag(final int offset, final boolean expected, final boolean value) {
+    if (getFlag(offset) == expected) {
+      this.flags = Conversion.setFlag(this.flags, offset, value);
+      return true;
+    }
+    return false;
+  }
+
   private synchronized void setFlag(final int offset, final boolean value) {
     this.flags = Conversion.setFlag(this.flags, offset, value);
   }
@@ -293,12 +301,12 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     return getFlag(REMOVE_ON_RELEASE_OFFSET);
   }
 
-  public void markReference() {
-    setFlag(REFERENCED_OFFSET, true);
+  public boolean markReference() {
+    return compareAndSetFlag(REFERENCED_OFFSET, false, true);
   }
 
-  public void unmarkReference() {
-    setFlag(REFERENCED_OFFSET, false);
+  public boolean unmarkReference() {
+    return compareAndSetFlag(REFERENCED_OFFSET, true, false);
   }
 
   public boolean isReferenced() {
@@ -372,7 +380,8 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public synchronized boolean canEvict() {
-    return !(isPinned() || isReferenced() || isNew());
+    return !(isPinned() || isReferenced() || isNew()
+             || this.state.getType() == ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE || this.state.getType() == ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
   }
 
   public long getVersion() {

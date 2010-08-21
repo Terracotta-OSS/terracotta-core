@@ -1,9 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
 
 import com.tc.text.PrettyPrinter;
+import com.tc.util.Assert;
+
 import gnu.trove.TLinkedList;
 
 import java.util.Collection;
@@ -20,27 +23,28 @@ public class ClockEvictionPolicy implements EvictionPolicy {
   private final int         evictionSize;
   private Cacheable         save;
 
-  public ClockEvictionPolicy(int size) {
+  public ClockEvictionPolicy(final int size) {
     this(size, (int) ((size * 0.1)));
   }
 
-  public ClockEvictionPolicy(int capacity, int evictionSize) {
+  public ClockEvictionPolicy(final int capacity, final int evictionSize) {
     this.capacity = capacity;
     this.evictionSize = (evictionSize <= 0 ? 1 : evictionSize);
   }
 
-  public synchronized boolean add(Cacheable obj) {
-    if (hand == null) {
-      cache.addLast(obj);
+  public synchronized boolean add(final Cacheable obj) {
+    Assert.assertTrue(obj.getNext() == null && obj.getPrevious() == null);
+    if (this.hand == null) {
+      this.cache.addLast(obj);
     } else {
-      cache.addBefore(hand, obj);
+      this.cache.addBefore(this.hand, obj);
     }
     markReferenced(obj);
     return isCacheFull();
   }
 
   private boolean isCacheFull() {
-    if (capacity <= 0 || cache.size() <= capacity) {
+    if (this.capacity <= 0 || this.cache.size() <= this.capacity) {
       return false;
     } else {
       return true;
@@ -48,20 +52,20 @@ public class ClockEvictionPolicy implements EvictionPolicy {
   }
 
   public synchronized Collection getRemovalCandidates(int maxCount) {
-    if (capacity > 0) {
-      if (!isCacheFull()) return Collections.EMPTY_LIST;
-      if (maxCount <= 0 || maxCount > evictionSize) {
-        maxCount = evictionSize;
+    if (this.capacity > 0) {
+      if (!isCacheFull()) { return Collections.EMPTY_LIST; }
+      if (maxCount <= 0 || maxCount > this.evictionSize) {
+        maxCount = this.evictionSize;
       }
     } else if (maxCount <= 0) {
       // disallow negetative maxCount when capacity is negative
-      throw new AssertionError("Please specify maxcount > 0 as capacity is set to : " + capacity + " Max Count = "
+      throw new AssertionError("Please specify maxcount > 0 as capacity is set to : " + this.capacity + " Max Count = "
                                + maxCount);
     }
-    Collection rv = new HashSet();
-    int count = Math.min(cache.size(), maxCount);
-    while (cache.size() - rv.size() > capacity && count > 0 && moveHand()) {
-      rv.add(hand);
+    final Collection rv = new HashSet();
+    int count = Math.min(this.cache.size(), maxCount);
+    while (this.cache.size() - rv.size() > this.capacity && count > 0 && moveHand()) {
+      rv.add(this.hand);
       count--;
     }
     erasePosition();
@@ -76,40 +80,40 @@ public class ClockEvictionPolicy implements EvictionPolicy {
     this.save = this.hand;
   }
 
-  public synchronized void remove(Cacheable obj) {
-    if (hand != null && obj == hand) {
-      hand = (Cacheable) hand.getPrevious();
+  public synchronized void remove(final Cacheable obj) {
+    if (this.hand != null && obj == this.hand) {
+      this.hand = (Cacheable) this.hand.getPrevious();
     }
-    cache.remove(obj);
+    this.cache.remove(obj);
   }
 
-  public void markReferenced(Cacheable obj) {
+  public void markReferenced(final Cacheable obj) {
     obj.markAccessed();
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return null;
   }
 
   private boolean moveHand() {
     boolean found = false;
     while (!found) {
-      if (hand == null || hand.getNext() == null) {
-        hand = (Cacheable) cache.getFirst();
+      if (this.hand == null || this.hand.getNext() == null) {
+        this.hand = (Cacheable) this.cache.getFirst();
       } else {
-        this.hand = (Cacheable) hand.getNext();
+        this.hand = (Cacheable) this.hand.getNext();
       }
-      if (hand.recentlyAccessed()) {
-        hand.clearAccessed();
-      } else if (hand.canEvict()) {
+      if (this.hand.recentlyAccessed()) {
+        this.hand.clearAccessed();
+      } else if (this.hand.canEvict()) {
         found = true;
         break;
       }
-      if (hand == save) {
+      if (this.hand == this.save) {
         // logger.info("Cache Evictor : Couldnt find any more ! - cache.size () = " + cache.size());
         break;
       }
-      if (save == null) {
+      if (this.save == null) {
         markPosition();
       }
     }
@@ -117,6 +121,6 @@ public class ClockEvictionPolicy implements EvictionPolicy {
   }
 
   public int getCacheCapacity() {
-    return capacity;
+    return this.capacity;
   }
 }

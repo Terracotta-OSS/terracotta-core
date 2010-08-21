@@ -117,6 +117,18 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     return Collections.unmodifiableSet(set);
   }
 
+  /**
+   * Checks the presence of some mapping for the key.
+   * 
+   * @return true is a mapping exists, false otherwise
+   * @throws NullPointerException if key is null
+   */
+  public boolean containsKey(final K key) {
+    final Set<V> set = this.store.get(key);
+    if (set == null) { return false; }
+    return true;
+  }
+
   private static final class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
     public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
@@ -145,7 +157,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     }
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.visit(this.store).flush();
     return out;
   }

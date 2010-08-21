@@ -21,40 +21,42 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
   public NoReferencesIDStoreImpl() {
     if (FAULTING_OPTIMIZATION) {
-      delegate = new OidSetStore();
-    } else  {
-      delegate = NoReferencesIDStore.NULL_NO_REFERENCES_ID_STORE;
+      this.delegate = new OidSetStore();
+    } else {
+      this.delegate = NoReferencesIDStore.NULL_NO_REFERENCES_ID_STORE;
     }
   }
 
-  public void addToNoReferences(ManagedObject mo) {
-    delegate.addToNoReferences(mo);
+  public void addToNoReferences(final ManagedObject mo) {
+    this.delegate.addToNoReferences(mo);
   }
 
-  public void clearFromNoReferencesStore(ObjectID id) {
-    delegate.clearFromNoReferencesStore(id);
+  public void clearFromNoReferencesStore(final ObjectID id) {
+    this.delegate.clearFromNoReferencesStore(id);
   }
 
-  public boolean hasNoReferences(ObjectID id) {
-    return delegate.hasNoReferences(id);
+  public boolean hasNoReferences(final ObjectID id) {
+    return this.delegate.hasNoReferences(id);
   }
 
   public class OidSetStore implements NoReferencesIDStore {
 
     private final ObjectIDSet store = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
 
-    public void addToNoReferences(ManagedObject mo) {
+    public void addToNoReferences(final ManagedObject mo) {
       if (mo.getManagedObjectState().hasNoReferences()) {
-        this.store.add(mo.getID());
+        synchronized (this) {
+          this.store.add(mo.getID());
+        }
       }
     }
 
-    public void clearFromNoReferencesStore(ObjectID id) {
-      store.remove(id);
+    public synchronized void clearFromNoReferencesStore(final ObjectID id) {
+      this.store.remove(id);
     }
 
-    public boolean hasNoReferences(ObjectID id) {
-      return store.contains(id);
+    public synchronized boolean hasNoReferences(final ObjectID id) {
+      return this.store.contains(id);
     }
 
   }

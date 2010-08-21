@@ -10,6 +10,7 @@ import com.tc.objectserver.impl.ManagedObjectReference;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,19 +26,22 @@ public class ManagedObjectTraverser {
   private int                        maxReachableObjects;
   private final Map<ObjectID, State> oids = new HashMap<ObjectID, State>();
 
-  public ManagedObjectTraverser(int maxReachableObjects) {
+  public ManagedObjectTraverser(final int maxReachableObjects) {
     this.maxReachableObjects = maxReachableObjects;
   }
 
-  public void traverse(Set<ManagedObjectReference> objects) {
-    markProcessed(objects, true);
+  public void traverse(final Collection<ManagedObject> lookedUpObjects) {
+    markProcessed(lookedUpObjects, true);
   }
 
-  private void markProcessed(Set<ManagedObjectReference> objects, boolean traverse) {
-    for (final ManagedObjectReference ref : objects) {
-      ManagedObject mo = ref.getObject();
-      oids.put(mo.getID(), State.PROCESSED);
-      maxReachableObjects--;
+  private void markProcessed(final Collection<ManagedObject> lookedUpObjects, final boolean traverse) {
+    for (final ManagedObject mo : lookedUpObjects) {
+      final ManagedObjectReference ref = mo.getReference();
+      if (!ref.isReferenced()) { throw new AssertionError(
+                                                          "Objects should be marked referenced before calling into this method : "
+                                                              + mo); }
+      this.oids.put(mo.getID(), State.PROCESSED);
+      this.maxReachableObjects--;
       if (traverse) {
         mo.addObjectReferencesTo(this);
       }
@@ -45,13 +49,13 @@ public class ManagedObjectTraverser {
   }
 
   public Set<ObjectID> getObjectsToLookup() {
-    HashSet<ObjectID> oidsToLookup = new HashSet<ObjectID>(oids.size() < 512 ? oids.size() : 512);
-    for (final Entry<ObjectID, State> e : oids.entrySet()) {
-      State _state = e.getValue();
+    final HashSet<ObjectID> oidsToLookup = new HashSet<ObjectID>(this.oids.size() < 512 ? this.oids.size() : 512);
+    for (final Entry<ObjectID, State> e : this.oids.entrySet()) {
+      final State _state = e.getValue();
       if (_state == State.REQUIRED) {
         oidsToLookup.add(e.getKey());
         e.setValue(State.LOOKUP_REQUIRED);
-      } else if (maxReachableObjects - oidsToLookup.size() > 0 && _state == State.REACHABLE) {
+      } else if (this.maxReachableObjects - oidsToLookup.size() > 0 && _state == State.REACHABLE) {
         oidsToLookup.add(e.getKey());
         e.setValue(State.LOOKUP_REACHABLE);
       }
@@ -59,13 +63,13 @@ public class ManagedObjectTraverser {
     return oidsToLookup;
   }
 
-  public ObjectIDSet getPendingObjectsToLookup(Set<ManagedObjectReference> lookedUpObjects) {
+  public ObjectIDSet getPendingObjectsToLookup(final Collection<ManagedObject> lookedUpObjects) {
     if (lookedUpObjects.size() > 0) {
       markProcessed(lookedUpObjects, false);
     }
-    ObjectIDSet oidsToLookup = new ObjectIDSet();
-    for (final Entry<ObjectID, State> e : oids.entrySet()) {
-      State _state = e.getValue();
+    final ObjectIDSet oidsToLookup = new ObjectIDSet();
+    for (final Entry<ObjectID, State> e : this.oids.entrySet()) {
+      final State _state = e.getValue();
       Assert.assertTrue(_state != State.REQUIRED);
       if (_state == State.LOOKUP_REQUIRED) {
         oidsToLookup.add(e.getKey());
@@ -74,23 +78,27 @@ public class ManagedObjectTraverser {
     return oidsToLookup;
   }
 
-  public void addRequiredObjectIDs(Set<ObjectID> objectReferences) {
+  public void addRequiredObjectIDs(final Set<ObjectID> objectReferences) {
     for (final ObjectID oid : objectReferences) {
-      if (oid.isNull()) continue;
-      Object state = oids.get(oid);
+      if (oid.isNull()) {
+        continue;
+      }
+      final Object state = this.oids.get(oid);
       if (state == null || state == State.REACHABLE) {
-        oids.put(oid, State.REQUIRED);
+        this.oids.put(oid, State.REQUIRED);
       }
     }
   }
 
-  public void addReachableObjectIDs(Set<ObjectID> objectReferences) {
-    if (maxReachableObjects <= 0) return;
+  public void addReachableObjectIDs(final Set<ObjectID> objectReferences) {
+    if (this.maxReachableObjects <= 0) { return; }
     for (final ObjectID oid : objectReferences) {
-      if (oid.isNull()) continue;
-      Object state = oids.get(oid);
+      if (oid.isNull()) {
+        continue;
+      }
+      final Object state = this.oids.get(oid);
       if (state == null) {
-        oids.put(oid, State.REACHABLE);
+        this.oids.put(oid, State.REACHABLE);
       }
     }
   }

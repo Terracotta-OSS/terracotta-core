@@ -153,12 +153,20 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
 
   boolean referenced = false;
 
-  public void markReference() {
-    this.referenced = true;
+  public boolean markReference() {
+    if (!this.referenced) {
+      this.referenced = true;
+      return true;
+    }
+    return false;
   }
 
-  public void unmarkReference() {
-    this.referenced = false;
+  public boolean unmarkReference() {
+    if (this.referenced) {
+      this.referenced = false;
+      return true;
+    }
+    return false;
   }
 
   public boolean isReferenced() {

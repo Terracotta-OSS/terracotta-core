@@ -11,23 +11,23 @@ import gnu.trove.TLinkable;
 
 public class FaultingManagedObjectReference implements ManagedObjectReference {
 
-  private final ObjectID id;
-  private boolean        inProgress;
+  private final ObjectID   id;
+  private volatile boolean inProgress;
 
-  public FaultingManagedObjectReference(ObjectID id) {
+  public FaultingManagedObjectReference(final ObjectID id) {
     this.id = id;
     this.inProgress = true;
   }
 
   public boolean isFaultingInProgress() {
-    return inProgress;
+    return this.inProgress;
   }
 
   public void faultingFailed() {
     this.inProgress = false;
   }
 
-  public void setRemoveOnRelease(boolean removeOnRelease) {
+  public void setRemoveOnRelease(final boolean removeOnRelease) {
     // NOP
   }
 
@@ -35,16 +35,18 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return true;
   }
 
-  public void markReference() {
+  public boolean markReference() {
     // This Object is always referenced.
+    return false;
   }
 
-  public void unmarkReference() {
+  public boolean unmarkReference() {
     // This Object is always referenced.
+    return false;
   }
 
   public boolean isReferenced() {
-    return inProgress;
+    return this.inProgress;
   }
 
   public boolean isNew() {
@@ -56,7 +58,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
   }
 
   public ObjectID getObjectID() {
-    return id;
+    return this.id;
   }
 
   public void markAccessed() {
@@ -71,7 +73,7 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return true;
   }
 
-  public int accessCount(int factor) {
+  public int accessCount(final int factor) {
     return 0;
   }
 
@@ -85,12 +87,12 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return null;
   }
 
-  public void setNext(TLinkable linkable) {
+  public void setNext(final TLinkable linkable) {
     // this object should never go into the cache
     throw new AssertionError("This should never be called");
   }
 
-  public void setPrevious(TLinkable linkable) {
+  public void setPrevious(final TLinkable linkable) {
     // this object should never go into the cache
     throw new AssertionError("This should never be called");
   }
@@ -99,8 +101,9 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return false;
   }
 
+  @Override
   public String toString() {
-    return "FaultingManagedObjectReference [ " + id + " inProgress : " + inProgress + " ]";
+    return "FaultingManagedObjectReference [ " + this.id + " inProgress : " + this.inProgress + " ]";
   }
 
 }

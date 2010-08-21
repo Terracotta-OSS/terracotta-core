@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.impl;
 
@@ -8,56 +9,59 @@ import com.tc.objectserver.api.ObjectManagerStatsListener;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.TimeStampedCounterValue;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Implements the object manager stats
  */
 public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, ObjectManagerStats {
 
-  private long                 cacheHits      = 0L;
-  private long                 cacheMisses    = 0L;
-  private long                 objectsCreated = 0L;
+  private final AtomicLong     cacheHits      = new AtomicLong();
+  private final AtomicLong     cacheMisses    = new AtomicLong();
+  private final AtomicLong     objectsCreated = new AtomicLong();
   private final SampledCounter newObjectCounter;
   private final SampledCounter faultRateCounter;
   private final SampledCounter flushRateCounter;
 
-  public ObjectManagerStatsImpl(SampledCounter newObjectCounter, SampledCounter faultRateCounter, SampledCounter flushRateCounter) {
+  public ObjectManagerStatsImpl(SampledCounter newObjectCounter, SampledCounter faultRateCounter,
+                                SampledCounter flushRateCounter) {
     this.newObjectCounter = newObjectCounter;
     this.faultRateCounter = faultRateCounter;
     this.flushRateCounter = flushRateCounter;
   }
 
-  public synchronized void cacheHit() {
-    this.cacheHits++;
+  public void cacheHit() {
+    this.cacheHits.incrementAndGet();
   }
 
-  public synchronized void cacheMiss() {
-    this.cacheMisses++;
+  public void cacheMiss() {
+    this.cacheMisses.incrementAndGet();
     this.faultRateCounter.increment();
   }
 
-  public synchronized void newObjectCreated() {
-    this.objectsCreated++;
+  public void newObjectCreated() {
+    this.objectsCreated.incrementAndGet();
     this.newObjectCounter.increment();
   }
 
-  public synchronized double getCacheHitRatio() {
-    return ((double) cacheHits) / ((double) getTotalRequests());
+  public double getCacheHitRatio() {
+    return ((double) this.cacheHits.get()) / (getTotalRequests());
   }
 
-  public synchronized long getTotalRequests() {
-    return this.cacheHits + this.cacheMisses;
+  public long getTotalRequests() {
+    return this.cacheHits.get() + this.cacheMisses.get();
   }
 
-  public synchronized long getTotalCacheMisses() {
-    return this.cacheMisses;
+  public long getTotalCacheMisses() {
+    return this.cacheMisses.get();
   }
 
-  public synchronized long getTotalCacheHits() {
-    return this.cacheHits;
+  public long getTotalCacheHits() {
+    return this.cacheHits.get();
   }
 
   public long getTotalObjectsCreated() {
-    return this.objectsCreated;
+    return this.objectsCreated.get();
   }
 
   public TimeStampedCounterValue getCacheMissRate() {
@@ -71,5 +75,4 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
   public TimeStampedCounterValue getFlushedRate() {
     return this.flushRateCounter.getMostRecentSample();
   }
-
 }
