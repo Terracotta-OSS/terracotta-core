@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.persistence.db;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -50,6 +51,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
       }
     } catch (TCDatabaseException e) {
       logger.error("Reading object ID " + oid + ":" + e.getMessage());
+      throw new TCRuntimeException(e);
     }
     if (longAry == null) longAry = super.loadArray(oid, lPerDiskUnit, mapIndex);
     return longAry;
@@ -81,7 +83,8 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
         }
       } else {
         // OperationStatus.NOTFOUND happened if added and then deleted in the same batch
-        if (this.oidDB.delete(key, txn) != Status.SUCCESS) {
+        Status status = this.oidDB.delete(key, txn);
+        if (status != Status.SUCCESS && status != Status.NOT_FOUND) {
           //
           throw new TCDatabaseException("Failed to delete oidDB at " + bits.getKey());
         }

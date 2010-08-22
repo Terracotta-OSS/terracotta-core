@@ -4,6 +4,7 @@
  */
 package com.tc.objectserver.persistence.db;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
@@ -267,6 +268,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
       } catch (final TCDatabaseException e) {
         logger.error("Error ojectID checkpoint: " + e);
         abortOnError(tx);
+        throw new TCRuntimeException(e);
       }
     }
     return isAllFlushed;
@@ -385,6 +387,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
         }
       } catch (final Throwable t) {
         logger.error("Error Reading Object IDs", t);
+        throw new TCRuntimeException(t);
       } finally {
         safeClose(cursor);
         this.syncObjectIDSet.stopPopulating(tmp);
