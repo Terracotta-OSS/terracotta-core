@@ -28,8 +28,8 @@ public class SampledCumulativeCounterTest extends TestCase {
     SampledCumulativeCounterConfig config = new SampledCumulativeCounterConfig(1, 300, resetOnSample, 0);
     SampledCumulativeCounter counter = (SampledCumulativeCounter) manager.createCounter(config);
     for (int i = 0; i < 5; i++) {
-      // sleep between 2 to 3 secs, at least 2
-      int sleep = rand.nextInt(1000) + 2000;
+      // sleep between 3 to 4 secs, at least 3
+      int sleep = rand.nextInt(1000) + 3000;
       System.out.println("Sleeping for " + sleep + " millis");
       ThreadUtil.reallySleep(sleep);
       // assert last value is always 0
