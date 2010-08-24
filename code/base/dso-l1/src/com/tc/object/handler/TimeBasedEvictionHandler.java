@@ -28,8 +28,10 @@ public class TimeBasedEvictionHandler extends AbstractEventHandler {
       final Object value = ci.getValue();
       if (value != null) { // If null, its Already removed
         serverMap.evictExpired(ci.getKey(), value);
-        // recall the locks in-line to save memory and also to keep the local cache count in check
-        this.lockManager.recall(ci.getLockID(), ServerLockLevel.WRITE, -1);
+        if (ci.getLockID() != null) {          
+          // recall the locks in-line to save memory and also to keep the local cache count in check
+          this.lockManager.recall(ci.getLockID(), ServerLockLevel.WRITE, -1);
+        }
       }
     }
   }

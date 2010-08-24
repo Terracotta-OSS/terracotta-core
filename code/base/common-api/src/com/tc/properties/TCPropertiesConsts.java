@@ -615,6 +615,8 @@ public interface TCPropertiesConsts {
    *  storageStrategy.dcv2.periodicEviction.enabled
    *                            : The property enabled/disables the periodic eviction when ehcache has a 
    *                              storage strategy of DCV2
+   *  storageStrategy.dcv2.localcache.incoherentCachedItemsRecycleMillis
+   *                            : The maximum time in millis after which incoherent cached items will be discarded from the local cache.
    * </code>
    ********************************************************************************************************************/
   public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                            = "ehcache.clusterAllCacheManagers";
@@ -631,6 +633,7 @@ public interface TCPropertiesConsts {
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED               = "ehcache.storageStrategy.dcv2.localcache.enabled";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED       = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED         = "ehcache.storageStrategy.dcv2.periodicEviction.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_ITEMS_RECYCLE_TIME    = "ehcache.storageStrategy.dcv2.localcache.incoherentCachedItemsRecycleMillis";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Lock Manager Properties

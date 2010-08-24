@@ -79,4 +79,9 @@ public class CachedItem {
   public void markExpired() {
     this.expired = true;
   }
+
+  public DisposeListener getListener() {
+    return listener;
+  }
+
 }
