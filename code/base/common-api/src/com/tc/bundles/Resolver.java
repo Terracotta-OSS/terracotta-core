@@ -15,6 +15,7 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.version.VersionMatcher;
@@ -42,6 +43,9 @@ public class Resolver {
 
   static final String            BUNDLE_VERSION        = "Bundle-Version";
   static final String            BUNDLE_SYMBOLICNAME   = "Bundle-SymbolicName";
+
+  private static final int       TOOLKIT_SEARCH_RANGE  = TCPropertiesImpl.getProperties()
+                                                           .getInt(TCPropertiesConsts.L1_MODULES_TOOLKIT_SEARCH_RANGE);
 
   private static final String    TC_PROPERTIES_SECTION = "l1.modules";
 
@@ -97,8 +101,30 @@ public class Resolver {
 
     boolean frozen = toolkitVersionFrozen.compareAndSet(false, true);
     if (frozen) {
-      logger.info("Freezing version: " + maxToolkitVersion);
-      URL toolkitURL = resolve(maxToolkitVersion.asModule());
+      logger.info("Freezing toolkit major version from: " + maxToolkitVersion);
+      ToolkitVersion toolkitVer = maxToolkitVersion;
+
+      Module toolkitModule = toolkitVer.asModule();
+      URL toolkitURL = null;
+
+      for (int i = 0; i < TOOLKIT_SEARCH_RANGE; i++) {
+        String resolvedVersion = findNewestVersion(toolkitModule.getGroupId(), toolkitModule.getName());
+        if (resolvedVersion != null) {
+          toolkitModule.setVersion(resolvedVersion);
+          toolkitURL = resolve(toolkitModule);
+          break;
+        } else {
+          toolkitVer = toolkitVer.nextMinorVersion();
+          toolkitModule = toolkitVer.asModule();
+        }
+      }
+
+      if (toolkitURL == null) {
+        //
+        throw new BundleException("Cannot resolve a suitable toolkit module for " + maxToolkitVersion);
+      }
+
+      logger.info("Actual toolkit API version resolved: " + toolkitVer + " " + toolkitModule);
 
       Manifest tookitManifest = getManifest(toolkitURL);
       BundleSpec[] requirements = getRequirements(tookitManifest);

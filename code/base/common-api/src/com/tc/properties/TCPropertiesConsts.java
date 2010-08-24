@@ -333,6 +333,7 @@ public interface TCPropertiesConsts {
   public static final String   L1_MODULES_DEFAULT                                            = "l1.modules.default";
   public static final String   L1_MODULES_ADDITIONAL                                         = "l1.modules.additional";
   public static final String   L1_MODULES_TC_VERSION_CHECK                                   = "l1.modules.tc-version-check";
+  public static final String   L1_MODULES_TOOLKIT_SEARCH_RANGE                               = "l1.modules.toolkitSearchRange";
 
   /*********************************************************************************************************************
    * <code>
@@ -484,9 +485,9 @@ public interface TCPropertiesConsts {
    * Description : This section contains the defaults for the ServerMap manager for the L1
    * remote.maxRequestSentImmediately
    *                         : Maximum number of requests send immediately after which it will be batched
-   * remote.batchLookupTimePeriod   
+   * remote.batchLookupTimePeriod
    *                         : Time to wait before sending batch requests
-   *
+   * 
    * </code>
    ********************************************************************************************************************/
   public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY       = "l1.servermapmanager.remote.maxRequestSentImmediately";
@@ -610,10 +611,10 @@ public interface TCPropertiesConsts {
    *  writeLevel                : The lock level used during cache write operations.  Allowed values are
    *                              WRITE (default), and CONCURRENT.  WRITE is strongly recommended.
    *  storageStrategy.dcv2.localcache.enabled
-   *                            : The property enabled/disables the local cache when ehcache has a 
+   *                            : The property enabled/disables the local cache when ehcache has a
    *                              storage strategy of DCV2
    *  storageStrategy.dcv2.periodicEviction.enabled
-   *                            : The property enabled/disables the periodic eviction when ehcache has a 
+   *                            : The property enabled/disables the periodic eviction when ehcache has a
    *                              storage strategy of DCV2
    *  storageStrategy.dcv2.localcache.incoherentCachedItemsRecycleMillis
    *                            : The maximum time in millis after which incoherent cached items will be discarded from the local cache.
@@ -718,7 +719,7 @@ public interface TCPropertiesConsts {
    *                         connecting to the peer node. On timeout, healthchecker
    *                         concludes peer node as dead irrespective of previous
    *                         successful socket connects
-   *</code>
+   * </code>
    ********************************************************************************************************************/
   public static final String   L2_HEALTHCHECK_L1_PING_ENABLED                                = "l2.healthcheck.l1.ping.enabled";
   public static final String   L2_HEALTHCHECK_L1_PING_IDLETIME                               = "l2.healthcheck.l1.ping.idletime";
@@ -816,14 +817,14 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * <code>
    * Dev console Settings
-   *  console.max.operator.events   -   Number of operator events dev console will show 
+   *  console.max.operator.events   -   Number of operator events dev console will show
    *                                    in the panel before it starts recycling
-   *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events                                 
+   *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events
    * </code>
    ********************************************************************************************************************/
   public static final String   DEV_CONSOLE_MAX_OPERATOR_EVENTS                               = "dev.console.max.operator.events";
   public static final String   L2_OPERATOR_EVENTS_STORE                                      = "l2.operator.events.store";
-  
+
   /*********************************************************************************************************************
    * <code>
    * Section :  L1 Shutdown Settings

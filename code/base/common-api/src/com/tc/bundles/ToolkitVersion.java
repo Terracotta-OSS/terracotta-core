@@ -63,4 +63,8 @@ public class ToolkitVersion {
     return module;
   }
 
+  public ToolkitVersion nextMinorVersion() {
+    return new ToolkitVersion(major, minor + 1);
+  }
+
 }

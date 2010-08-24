@@ -326,7 +326,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals(2, elemList.size());
 
       // tim-ehache-1.3
-      Module module = new Module(null, elemList.get(0), testConfig.getRelativeUrlBase());
+      Module module = new Module(null, elemList.get(0), testConfig.getRelativeUrlBase(), 100);
       assertEquals("tim-ehcache-1.3", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());
@@ -336,14 +336,13 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("Copyright (c) 2007 Terracotta, Inc.", module.copyright());
       assertEquals("Terracotta Integration Module", module.category());
       assertEquals("Terracotta Integration Module for clustering Ehcache", module.description());
-      assertEquals(
-                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
+      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar",
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-1.3/1.0.2"), module
           .installPath().toString());
       assertEquals(FilenameUtils
-          .separatorsToSystem("/dummy/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar"), module
-          .installLocationInRepository(new File("/dummy")).toString());
+                       .separatorsToSystem("/dummy/org/terracotta/modules/tim-ehcache-1.3/1.0.2/tim-ehcache-1.3-1.0.2.jar"),
+                   module.installLocationInRepository(new File("/dummy")).toString());
       assertEquals("tim-ehcache-1.3-1.0.2.jar", module.filename());
 
       assertFalse(module.docUrl().toURI().equals(module.website().toURI()));
@@ -359,8 +358,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("modules-common", dependency.artifactId());
       assertEquals("2.5.2", dependency.version());
       assertEquals("org.terracotta.modules", dependency.groupId());
-      assertEquals(
-                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
+      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
                    dependency.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/modules-common/2.5.2"), dependency
           .installPath().toString());
@@ -373,7 +371,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("org.terracotta.modules", reference.groupId());
 
       // tim-ehache-commons
-      module = new Module(null, elemList.get(1), testConfig.getRelativeUrlBase());
+      module = new Module(null, elemList.get(1), testConfig.getRelativeUrlBase(), 100);
       assertEquals("tim-ehcache-commons", module.artifactId());
       assertEquals("1.0.2", module.version());
       assertEquals("org.terracotta.modules", module.groupId());
@@ -383,8 +381,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("Copyright (c) 2007 Terracotta, Inc.", module.copyright());
       assertEquals("Terracotta Integration Module", module.category());
       assertEquals("Terracotta Integration Module for clustering Ehcache", module.description());
-      assertEquals(
-                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-commons/1.0.2/tim-ehcache-commons-1.0.2.jar",
+      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/tim-ehcache-commons/1.0.2/tim-ehcache-commons-1.0.2.jar",
                    module.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/tim-ehcache-commons/1.0.2"), module
           .installPath().toString());
@@ -400,8 +397,7 @@ public final class ModuleTest extends TCTestCase {
       assertEquals("modules-common", dependency.artifactId());
       assertEquals("2.5.2", dependency.version());
       assertEquals("org.terracotta.modules", dependency.groupId());
-      assertEquals(
-                   "http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
+      assertEquals("http://forge-dev.terracotta.lan/repo/org/terracotta/modules/modules-common/2.5.2/modules-common-2.5.2.jar",
                    dependency.repoUrl().toString());
       assertEquals(FilenameUtils.separatorsToSystem("org/terracotta/modules/modules-common/2.5.2"), dependency
           .installPath().toString());
@@ -562,7 +558,7 @@ public final class ModuleTest extends TCTestCase {
     for (String key : Arrays.asList(excludes)) {
       attributes.remove(key);
     }
-    return new Module(null, attributes, testConfig.getRelativeUrlBase());
+    return new Module(null, attributes, testConfig.getRelativeUrlBase(), 100);
   }
 
   @Override

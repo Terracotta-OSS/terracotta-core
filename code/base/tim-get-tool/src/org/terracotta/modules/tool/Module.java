@@ -13,6 +13,7 @@ import org.terracotta.modules.tool.commands.KitTypes;
 import org.w3c.dom.Element;
 
 import com.google.inject.Inject;
+import com.tc.bundles.ToolkitConstants;
 import com.tc.util.version.VersionMatcher;
 
 import java.io.File;
@@ -25,19 +26,23 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Module extends AttributesModule implements Installable {
 
   private final Modules modules;
+  private final int     toolkitRange;
 
-  public Module(Modules modules, Element module, URI relativeUrlBase) {
-    this(modules, DocumentToAttributes.transform(module), relativeUrlBase);
+  public Module(Modules modules, Element module, URI relativeUrlBase, int toolkitRange) {
+    this(modules, DocumentToAttributes.transform(module), relativeUrlBase, toolkitRange);
   }
 
   @Inject
-  Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase) {
+  Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase, int toolkitRange) {
     super(attributes, relativeUrlBase);
     this.modules = modules;
+    this.toolkitRange = toolkitRange;
   }
 
   protected Modules owner() {
@@ -203,8 +208,15 @@ public class Module extends AttributesModule implements Installable {
     for (AbstractModule dependency : dependencies()) {
       if (dependency instanceof Reference) {
         Module module = modules.get(dependency.groupId(), dependency.artifactId(), dependency.version());
-        // XXX bad data happened - maybe we should be more forgiving here
-        if (module == null) throw new IllegalStateException("No listing found for dependency: " + dependency);
+
+        if (module == null) {
+          module = adjustToolkitMinorVersion(dependency);
+
+          if (module == null) {
+            // XXX bad data happened - maybe we should be more forgiving here
+            throw new IllegalStateException("No listing found for dependency: " + dependency);
+          }
+        }
 
         // instance of reference located, include entries from its install manifest into the install manifest
         for (AbstractModule entry : module.manifest()) {
@@ -215,6 +227,33 @@ public class Module extends AttributesModule implements Installable {
       manifest.add(dependency);
     }
     return manifest;
+  }
+
+  private Module adjustToolkitMinorVersion(AbstractModule dependency) {
+    if (!dependency.groupId().equals(ToolkitConstants.GROUP_ID)) { return null; }
+
+    final String startArtifactId = dependency.artifactId;
+    Pattern verPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX);
+    Matcher matcher = verPattern.matcher(dependency.artifactId());
+    if (!matcher.matches()) {
+      //
+      throw new AssertionError("Toolkit artifact does not match pattern: " + dependency.artifactId());
+    }
+
+    final int major = Integer.valueOf(matcher.group(1));
+    int minor = Integer.valueOf(matcher.group(2));
+    final String startVer = major + "." + minor;
+
+    for (int i = 0; i < toolkitRange; i++) {
+      minor++;
+
+      String nextArtifactId = startArtifactId.replace(startVer, major + "." + minor);
+
+      Module module = modules.get(dependency.groupId(), nextArtifactId, dependency.version());
+      if (module != null) { return module; }
+    }
+
+    return null;
   }
 
   private void notifyListener(InstallListener listener, AbstractModule source, InstallNotification type, String message) {
