@@ -54,6 +54,9 @@ class ExternalResourceResolver
   end
 
   def explode(archive, dest_dir, options = {})
+    unless options.has_key?('delete_archive')
+      options['delete_archive'] = true
+    end
     tmp_dir = File.join("build", "tmp")
     FileUtils.mkdir_p(tmp_dir)
     exploded_dir = File.join(tmp_dir, "exploded")
@@ -88,6 +91,7 @@ class ExternalResourceResolver
       end
     end
     FileUtils.rm_rf(tmp_dir)
+    FileUtils.remove(archive) if options['delete_archive']
   end
   
   def maven_artifact_path(artifact)
