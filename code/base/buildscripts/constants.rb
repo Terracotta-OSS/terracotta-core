@@ -29,6 +29,7 @@ module MavenConstants
   MAVEN_REPO_LOCAL = 'local'
   DEFAULT_GROUP_ID = 'org.terracotta'
   MODULES_GROUP_ID = 'org.terracotta.modules'
+  MAVEN_USE_LOCAL_REPO_KEY = 'maven.useLocalRepo'
 
   TERRACOTTA_SNAPSHOTS_REPO_ID = 'terracotta-snapshots'
   TERRACOTTA_STAGING_REPO_ID = 'terracotta-staging'

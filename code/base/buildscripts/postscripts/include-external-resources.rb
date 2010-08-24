@@ -11,7 +11,7 @@ require 'cgi'
 class BaseCodeTerracottaBuilder <  TerracottaBuilder
   protected
 
-  # - extract hibernate referecne config from standalone agent jar
+  # - extract hibernate reference config from standalone agent jar
   def postscript(ant, build_environment, product_directory, *args)
     return if @no_extra
     return if @no_external_resources
@@ -25,6 +25,8 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     resource_config = YAML.load_file(File.join(@basedir.to_s, resource_def))
     default_repos = resource_config['default_repos']
     puts "Repos for external resources: \n#{default_repos.join("\n")}"
+    resolver = ExternalResourceResolver.new(default_repos,
+                                            config_source['maven.useLocalRepo'])
     artifacts = resource_config['artifacts']
     artifacts.each do |artifact|
       next if @no_demo && artifact['is_demo'] == true
@@ -36,7 +38,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         next if artifact['kit_edition'] =~ /enterprise/i
       end
 
-      download_external(default_repos, product_directory.to_s, artifact)
+      resolver.retrieve(artifact, product_directory.to_s)
     end
   end
 end
