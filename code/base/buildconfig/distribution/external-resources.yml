@@ -127,14 +127,14 @@ artifacts:
 # begin toolkit runtime
   - maven_artifact: true
     groupId: org.terracotta
-    artifactId: terracotta-toolkit-1.0-runtime-ee
+    artifactId: terracotta-toolkit-1.1-runtime-ee
     version: 2.0.0-SNAPSHOT
     destination: common
     kit_edition: enterprise
 
   - maven_artifact: true
     groupId: org.terracotta
-    artifactId: terracotta-toolkit-1.0-runtime-ee
+    artifactId: terracotta-toolkit-1.1-runtime-ee
     version: 2.0.0-SNAPSHOT
     classifier: javadoc
     destination: common/docs/javadoc
@@ -143,14 +143,14 @@ artifacts:
 
   - maven_artifact: true
     groupId: org.terracotta
-    artifactId: terracotta-toolkit-1.0-runtime
+    artifactId: terracotta-toolkit-1.1-runtime
     version: 2.0.0-SNAPSHOT
     destination: common
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: org.terracotta
-    artifactId: terracotta-toolkit-1.0-runtime
+    artifactId: terracotta-toolkit-1.1-runtime
     version: 2.0.0-SNAPSHOT
     classifier: javadoc
     destination: common/docs/javadoc
