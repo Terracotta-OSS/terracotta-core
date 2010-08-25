@@ -45,7 +45,7 @@ class ExternalResourceResolver
       end
     end
 
-    raise("Couldn't find artifact #{artifact['name'] || artifact['artifactId']} on any of the repos") unless success
+    raise("Couldn't find artifact #{resource['name'] || resource['artifactId']} on any of the repos") unless success
     result
   end
 
