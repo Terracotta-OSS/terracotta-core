@@ -141,4 +141,14 @@ public interface TCObjectServerMap extends TCObject {
    * Clears local cache for the corresponding key
    */
   public void removeFromLocalCache(Object key);
+  
+  /**
+   * Get set of keys present in the local cache.
+   */
+  public Set getLocalKeySet();
+  
+  /**
+   * Get from local cache.
+   */
+  public Object getValueFromLocalCache(Object key);
 }
