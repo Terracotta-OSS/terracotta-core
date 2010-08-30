@@ -144,6 +144,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     XContainer leftSide = createLeftSide();
     nodeView = new XContainer(new BorderLayout());
     XSplitPane leftSplitter = new XSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftSide, nodeView);
+    leftSplitter.setResizeWeight(0.0);
     leftSide.setMinimumSize(leftSide.getPreferredSize());
     leftSplitter.setDefaultDividerLocation(0);
     leftSplitter.setName("LeftSplitter");
@@ -152,6 +153,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     logsPanel = new LogsPanel(adminClientContext);
 
     XSplitPane mainSplitter = new XSplitPane(JSplitPane.VERTICAL_SPLIT, leftSplitter, logsPanel);
+    mainSplitter.setResizeWeight(1.0);
     mainSplitter.setDefaultDividerLocation(0.72);
     mainSplitter.setName("MainSplitter");
     mainSplitter.setPreferences(getPreferences().node(mainSplitter.getName()));
@@ -659,7 +661,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       }
 
       String msg = adminClientContext.format(key, adminClientContext.getMessage("quit.anyway"));
-      Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, this);
+      Frame frame = getFrame();
       int answer = JOptionPane.showConfirmDialog(this, msg, frame.getTitle(), JOptionPane.OK_CANCEL_OPTION);
       return answer == JOptionPane.OK_OPTION;
     }
@@ -1087,7 +1089,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textPane.setPreferredSize(new Dimension(550, 280));
       textPane.addPropertyChangeListener("page", new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent pce) {
-          JOptionPane.showMessageDialog(AdminClientPanel.this, msg);
+          Frame frame = getFrame();
+          JOptionPane.showMessageDialog(AdminClientPanel.this, msg, frame.getTitle(), JOptionPane.INFORMATION_MESSAGE);
         }
       });
       try {
