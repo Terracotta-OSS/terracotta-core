@@ -271,6 +271,12 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   private boolean markReferenced(final ManagedObjectReference reference) {
     final boolean marked = reference.markReference();
     if (marked) {
+      if (reference != this.references.get(reference.getObjectID())) {
+        // This reference was removed by someone else and then unmarked before this thread got a chance to call
+        // markReferenced.
+        reference.unmarkReference();
+        return false;
+      }
       this.checkedOutCount.incrementAndGet();
     }
     return marked;
@@ -778,7 +784,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         throw new AssertionError(mor + " is DIRTY");
       }
       final Object removed = this.references.remove(mor.getObjectID());
-      Assert.assertNotNull(removed);
+      if (removed == null) { throw new AssertionError("Removed is null : " + mor); }
     }
   }
 
