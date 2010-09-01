@@ -4,7 +4,6 @@
  */
 package com.tc.net.groups;
 
-import com.tc.net.TCSocketAddress;
 
 public class Node {
 
@@ -12,22 +11,16 @@ public class Node {
   private final int    port;
   private final int    groupPort;
   private final int    hashCode;
-  private final String bind;
 
   public Node(final String host, final int port) {
-    this(host, port, TCSocketAddress.WILDCARD_IP);
+    this(host, port, 0);
   }
 
-  public Node(final String host, final int port, final String bind) {
-    this(host, port, 0, bind);
-  }
-
-  public Node(final String host, final int port, final int groupPort, final String bind) {
+  public Node(final String host, final int port, final int groupPort) {
     checkArgs(host, port);
     this.host = host.trim();
     this.port = port;
     this.groupPort = groupPort;
-    this.bind = bind; // not part of equals()
     this.hashCode = (host + "-" + port).hashCode();
   }
 
@@ -43,10 +36,6 @@ public class Node {
     return groupPort;
   }
 
-  public String getBind() {
-    return bind;
-  }
-  
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Node) {

@@ -6,6 +6,7 @@ package com.tc.config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.net.GroupID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.util.Assert;
@@ -65,7 +66,11 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     for (int i = 0; i < serverNames.length; i++) {
       try {
         NewL2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
-        tempNodeNamesToServerNames.put(l2Config.host().getString() + ":" + l2Config.dsoPort().getBindPort(), serverNames[i]);
+        String host = l2Config.l2GroupPort().getBindAddress();
+        if (TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
+          host = l2Config.host().getString();
+        }
+        tempNodeNamesToServerNames.put(host + ":" + l2Config.dsoPort().getBindPort(), serverNames[i]);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }
@@ -74,6 +79,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   }
 
   public String getNodeNameFromServerName(String serverName) {
+
     return nodeNamesToServerNames.get(serverName);
   }
 

@@ -21,7 +21,6 @@ import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.ObjectID;
 import com.tc.object.TestDNACursor;
@@ -63,8 +62,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     final PortChooser pc = new PortChooser();
     final int p1 = pc.chooseRandom2Port();
     final int p2 = pc.chooseRandom2Port();
-    final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1, TCSocketAddress.WILDCARD_IP),
-        new Node(LOCALHOST, p2, p2 + 1, TCSocketAddress.WILDCARD_IP) };
+    final Node[] allNodes = new Node[] { new Node(LOCALHOST, p1, p1 + 1), new Node(LOCALHOST, p2, p2 + 1) };
 
     final StageManager stageManager1 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)),
                                                             new QueueFactory());

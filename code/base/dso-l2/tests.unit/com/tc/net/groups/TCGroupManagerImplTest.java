@@ -23,7 +23,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.ChannelEvent;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.MessageMonitor;
@@ -86,7 +85,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     for (int i = 0; i < n; ++i) {
       ports[i] = pc.chooseRandom2Port();
       groupPorts[i] = ports[i] + 1;
-      nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i], TCSocketAddress.WILDCARD_IP);
+      nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
       StageManager stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging

@@ -46,6 +46,7 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -180,7 +181,10 @@ public class TCServerImpl extends SEDA implements TCServer {
           name = L2Info.IMPLICIT_L2_NAME;
         }
 
-        String host = config.host().getString();
+        String host = config.jmxPort().getBindAddress();
+        if (TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
+          host = config.host().getString();
+        }
         if (StringUtils.isBlank(host)) {
           host = name;
         }

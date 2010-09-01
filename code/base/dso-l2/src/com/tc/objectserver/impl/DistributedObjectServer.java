@@ -208,9 +208,9 @@ import com.tc.objectserver.persistence.api.TransactionStore;
 import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.DBException;
+import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.persistence.db.DatabaseDirtyException;
 import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.objectserver.persistence.inmemory.InMemorySequenceProvider;
@@ -247,10 +247,10 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsSystemType;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
-import com.tc.statistics.retrieval.actions.SRAForDB;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvictRequest;
 import com.tc.statistics.retrieval.actions.SRACacheObjectsEvicted;
 import com.tc.statistics.retrieval.actions.SRADistributedGC;
+import com.tc.statistics.retrieval.actions.SRAForDB;
 import com.tc.statistics.retrieval.actions.SRAGlobalLockRecallCount;
 import com.tc.statistics.retrieval.actions.SRAL1ReferenceCount;
 import com.tc.statistics.retrieval.actions.SRAL1ToL2FlushRate;
@@ -1280,7 +1280,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
-    final Node node = new Node(l2DSOConfig.host().getString(), l2DSOConfig.dsoPort().getBindPort());
+    String host = l2DSOConfig.l2GroupPort().getBindAddress();
+    if (TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
+      host = l2DSOConfig.host().getString();
+    }
+    final Node node = new Node(host, l2DSOConfig.dsoPort().getBindPort());
     final ServerID aNodeID = new ServerID(node.getServerNodeName(), UUID.getUUID().toString().getBytes());
     logger.info("Creating server nodeID: " + aNodeID);
     return aNodeID;

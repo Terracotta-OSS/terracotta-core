@@ -11,6 +11,7 @@ import org.apache.xmlbeans.XmlObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
+import com.tc.net.TCSocketAddress;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.Members;
@@ -76,7 +77,13 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
 
           for (int i = 0; i < data.length; ++i) {
             Server l2 = l2Array[i];
-            String host = l2.getHost();
+            String host = null;
+            if (l2.isSetDsoPort() && l2.getDsoPort().isSetBind()) {
+              host = l2.getDsoPort().getBind();
+            }
+            if (host == null || TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
+              host = l2.getHost();
+            }
             String name = l2.getName();
 
             // if (host == null) host = l2.getName();

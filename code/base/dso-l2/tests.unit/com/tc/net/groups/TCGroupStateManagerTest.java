@@ -24,7 +24,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.test.TCTestCase;
 import com.tc.util.PortChooser;
@@ -179,7 +178,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
       ports[i] = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1);
     }
 
     StateManager[] managers = new StateManager[nodes];
@@ -250,7 +249,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
       ports[i] = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1);
     }
 
     StateManager[] managers = new StateManager[nodes];
@@ -302,7 +301,7 @@ public class TCGroupStateManagerTest extends TCTestCase {
     Node[] allNodes = new Node[nodes];
     for (int i = 0; i < nodes; ++i) {
       ports[i] = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1, TCSocketAddress.WILDCARD_IP);
+      allNodes[i] = new Node(LOCALHOST, ports[i], ports[i] + 1);
     }
 
     final StateManager[] managers = new StateManager[nodes];

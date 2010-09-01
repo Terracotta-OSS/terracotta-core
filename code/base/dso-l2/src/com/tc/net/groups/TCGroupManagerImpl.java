@@ -155,7 +155,11 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       groupConnectPort = TCPropertiesImpl.getProperties()
           .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
-      socketAddress = new TCSocketAddress(l2DSOConfig.l2GroupPort().getBindAddress(), groupConnectPort);
+      String bindAddress = l2DSOConfig.l2GroupPort().getBindAddress();
+      if (TCSocketAddress.WILDCARD_IP.equals(bindAddress) || TCSocketAddress.LOOPBACK_IP.equals(bindAddress)) {
+        bindAddress = l2DSOConfig.host().getString();
+      }
+      socketAddress = new TCSocketAddress(bindAddress, groupConnectPort);
     } catch (UnknownHostException e) {
       throw new TCRuntimeException(e);
     }

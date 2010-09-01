@@ -181,8 +181,11 @@ public class HaConfigImpl implements HaConfig {
   }
 
   public static Node makeNode(NewL2DSOConfig l2) {
-    return new Node(l2.host().getString(), l2.dsoPort().getBindPort(), l2.l2GroupPort().getBindPort(),
-                    TCSocketAddress.WILDCARD_IP);
+    String host = l2.l2GroupPort().getBindAddress();
+    if (TCSocketAddress.LOOPBACK_IP.equals(host) || TCSocketAddress.WILDCARD_IP.equals(host)) {
+      host = l2.host().getString();
+    }
+    return new Node(host, l2.dsoPort().getBindPort(), l2.l2GroupPort().getBindPort());
   }
 
   public boolean isActiveCoordinatorGroup() {

@@ -17,7 +17,6 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
-import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -141,7 +140,7 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     PortChooser pc = new PortChooser();
     for (int i = 0; i < nodes; ++i) {
       int port = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, port, port + 1, TCSocketAddress.WILDCARD_IP);
+      allNodes[i] = new Node(LOCALHOST, port, port + 1);
     }
 
     for (int i = 0; i < nodes; ++i) {
@@ -195,12 +194,12 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     PortChooser pc = new PortChooser();
     for (int i = 0; i < nodes; ++i) {
       int port = pc.chooseRandom2Port();
-      allNodes[i] = new Node(LOCALHOST, port, port + 1, TCSocketAddress.WILDCARD_IP);
+      allNodes[i] = new Node(LOCALHOST, port, port + 1);
 
       int proxyPort = pc.chooseRandomPort();
       proxy[i] = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), port + 1, 0, false, null);
       proxy[i].start();
-      proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort, TCSocketAddress.WILDCARD_IP);
+      proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort);
     }
 
     for (int i = 0; i < nodes; ++i) {
