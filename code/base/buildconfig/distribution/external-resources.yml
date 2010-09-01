@@ -39,6 +39,14 @@ artifacts:
     artifactId: ehcache-core
     version: 2.3.0-SNAPSHOT
     destination: ehcache/lib
+    kit_edition: opensource
+
+  - maven_artifact: true
+    groupId: net.sf.ehcache
+    artifactId: ehcache-core-ee
+    version: 2.3.0-SNAPSHOT
+    destination: ehcache/lib
+    kit_edition: enterprise
 
   - maven_artifact: true
     groupId: net.sf.ehcache
