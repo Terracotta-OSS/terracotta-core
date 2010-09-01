@@ -287,6 +287,13 @@ class TerracottaBuilder
     end
   end
 
+  def maven(goals, *args)
+    mvn_cmd = [FilePath.new('mvn').batch_extension.to_s]
+    mvn_cmd << goals
+    mvn_cmd += args
+    system(*mvn_cmd)
+  end
+
   protected
 
   def tim_get_command(subcommand, *flags)

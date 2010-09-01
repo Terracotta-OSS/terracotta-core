@@ -164,6 +164,10 @@ class StaticResources
     FilePath.new(module_set['common'].subtree('src').resource_root, "com", "tc", "config", "schema")
   end
 
+  def external_projects_directory
+    FilePath.new(@root_directory, 'external')
+  end
+
   # 2006-07-19 andrew -- HACK HACK HACK. This is ONLY in support of 'tc.install_dir' in
   # BuildSubtree.create_build_configuration_file. Once that's gone, we should remove it
   # here, too.

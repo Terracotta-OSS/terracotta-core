@@ -138,6 +138,13 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     @internal_config_source['exclude-default-modules'] = 'true' # DEV-4134, modules_compile.rb picks this up
     dist_maven('ENTERPRISE')
   end
+
+  def dist_dev(product_code = 'DSO', flavor = 'OPENSOURCE')
+    dist_maven
+    dist_maven_ee
+    build_external
+    dist(product_code, flavor)
+  end
   
   # assemble and package the kits  for the product code supplied
   def create_package(product_code='DSO', flavor='OPENSOURCE')

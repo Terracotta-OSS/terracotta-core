@@ -318,6 +318,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  def build_external
+    builder = ExternalProjectBuilder.new(@static_resources.external_projects_directory)
+    builder.build_all
+  end
+
   # Produces Javadoc documentation in the build/doc/api directory.
   # The set of modules to include is specified in modules.def.yml
   def javadoc
