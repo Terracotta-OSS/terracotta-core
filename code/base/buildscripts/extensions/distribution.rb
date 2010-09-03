@@ -135,13 +135,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   def dist_maven_ee
     fail("Can only run this target under an EE checkout") unless @build_environment.is_ee_branch?
+    dist_maven
     @internal_config_source['exclude-default-modules'] = 'true' # DEV-4134, modules_compile.rb picks this up
     dist_maven('ENTERPRISE')
   end
 
-  def dist_dev(product_code = 'DSO', flavor = 'OPENSOURCE')
-    dist_maven
-    dist_maven_ee
+  def dist_dev(product_code = 'DSO', flavor = nil)
+    flavor ||= @build_environment.is_ee_branch? ? 'ENTERPRISE' : 'OPENSOURCE'
+    if flavor == 'ENTERPRISE' then dist_maven_ee else dist_maven end
     build_external
     dist(product_code, flavor)
   end
