@@ -83,6 +83,10 @@ public class ManagerImplTest extends BaseDSOTestCase {
     public LockID generateLockIdentifier(final String str) {
       throw new ImplementMe();
     }
+    
+    public LockID generateLockIdentifier(final long l) {
+      throw new ImplementMe();
+    }
 
     public LockID generateLockIdentifier(final Object obj) {
       throw new ImplementMe();

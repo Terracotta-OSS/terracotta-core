@@ -15,7 +15,9 @@ public class LockIdFactory {
   }
 
   public LockID generateLockIdentifier(final Object obj) {
-    if (obj instanceof String) {
+    if (obj instanceof Long) {
+      return generateLockIdentifier(((Long) obj).longValue());
+    } else if (obj instanceof String) {
       return generateLockIdentifier((String) obj);
     } else {
       final TCObjectExternal tco = this.mgr.lookupExistingOrNull(obj);
@@ -50,6 +52,10 @@ public class LockIdFactory {
     } else {
       return new DsoVolatileLockID(tco.getObjectID(), fieldName);
     }
+  }
+
+  public LockID generateLockIdentifier(final long l) {
+    return new LongLockID(l);
   }
 
   public LockID generateLockIdentifier(final String str) {

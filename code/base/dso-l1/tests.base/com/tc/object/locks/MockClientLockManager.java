@@ -66,6 +66,10 @@ public class MockClientLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  public LockID generateLockIdentifier(long l) {
+    throw new ImplementMe();
+  }
+
   public LockID generateLockIdentifier(Object obj) {
     throw new ImplementMe();
   }

@@ -14,9 +14,9 @@ import com.tc.cluster.DsoClusterImpl;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
@@ -68,7 +68,7 @@ import java.util.Map;
 
 import javax.management.MBeanServer;
 
-public class ManagerImpl implements Manager {
+public class ManagerImpl implements ManagerInternal {
   private static final TCLogger                    logger        = TCLogging.getLogger(Manager.class);
   private final SetOnceFlag                        clientStarted = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
@@ -700,6 +700,10 @@ public class ManagerImpl implements Manager {
     public TCObject __tc_managed() {
       return null;
     }
+  }
+
+  public LockID generateLockIdentifier(final long l) {
+    return this.lockIdFactory.generateLockIdentifier(l);
   }
 
   public LockID generateLockIdentifier(final String str) {

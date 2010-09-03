@@ -154,6 +154,10 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
   public LockID generateLockIdentifier(String str) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
+  
+  public LockID generateLockIdentifier(long l) {
+    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
+  }
 
   public LockID generateLockIdentifier(Object obj) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
@@ -214,5 +218,4 @@ public class ClientLockManagerGroupImpl implements ClientLockManager {
     }
     return out;
   }
-  
 }

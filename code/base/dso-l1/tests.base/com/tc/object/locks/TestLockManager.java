@@ -145,6 +145,10 @@ public class TestLockManager implements ClientLockManager {
     throw new ImplementMe();
   }
 
+  public LockID generateLockIdentifier(long l) {
+    throw new ImplementMe();
+  }
+  
   public LockID generateLockIdentifier(String str) {
     throw new ImplementMe();
   }

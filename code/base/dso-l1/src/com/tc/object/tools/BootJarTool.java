@@ -104,10 +104,13 @@ import com.tc.object.bytecode.LinkedListAdapter;
 import com.tc.object.bytecode.LogicalClassSerializationAdapter;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.Manager;
+import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.ManagerUtil;
+import com.tc.object.bytecode.ManagerUtilInternal;
 import com.tc.object.bytecode.MergeTCToJavaClassAdapter;
 import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.NullManager;
+import com.tc.object.bytecode.NullManagerInternal;
 import com.tc.object.bytecode.NullTCObject;
 import com.tc.object.bytecode.OverridesHashCode;
 import com.tc.object.bytecode.ReentrantLockClassAdapter;
@@ -496,11 +499,14 @@ public class BootJarTool {
       loadTerracottaClass(ExpirableEntry.class.getName());
       loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
+      loadTerracottaClass(ManagerInternal.class.getName());
       loadTerracottaClass(InstrumentationLogger.class.getName());
       loadTerracottaClass(NullInstrumentationLogger.class.getName());
       loadTerracottaClass(NullManager.class.getName());
+      loadTerracottaClass(NullManagerInternal.class.getName());
       loadTerracottaClass(NullTCLogger.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName());
+      loadTerracottaClass(ManagerUtilInternal.class.getName());
       loadTerracottaClass(SessionConfiguration.class.getName());
       loadTerracottaClass(ManagerUtil.class.getName() + "$GlobalManagerHolder");
       loadTerracottaClass(TCObject.class.getName());
@@ -561,6 +567,7 @@ public class BootJarTool {
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName());
       loadTerracottaClass(com.tc.object.locks.LockLevel.class.getName() + "$1");
       loadTerracottaClass(com.tc.object.locks.TerracottaLocking.class.getName());
+      loadTerracottaClass(com.tc.object.locks.TerracottaLockingInternal.class.getName());
       loadTerracottaClass(com.tc.io.TCSerializable.class.getName());
 
       addManagementClasses();

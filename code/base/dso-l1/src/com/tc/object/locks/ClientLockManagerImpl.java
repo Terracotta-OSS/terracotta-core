@@ -365,6 +365,10 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public LockID generateLockIdentifier(final String str) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
+  
+  public LockID generateLockIdentifier(final long l) {
+    throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
+  }
 
   public LockID generateLockIdentifier(final Object obj) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");

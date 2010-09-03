@@ -7,7 +7,7 @@ import com.tc.object.bytecode.TCServerMap;
 
 import java.util.Set;
 
-public interface TCObjectServerMap extends TCObject {
+public interface TCObjectServerMap<L> extends TCObject {
 
   /**
    * Initializes the server map TCObject with TTI,TTL, max in memory capacity and max target count.
@@ -45,7 +45,7 @@ public interface TCObjectServerMap extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPut(final TCServerMap map, final String lockID, final Object key, final Object value);
+  public void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value);
 
   /**
    * Does a logical put but doesn't add it to the local cache, old cache entries could be cleared
@@ -108,7 +108,7 @@ public interface TCObjectServerMap extends TCObject {
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
    */
-  public Object getValue(final TCServerMap map, final String lockID, final Object key);
+  public Object getValue(final TCServerMap map, final L lockID, final Object key);
 
   /**
    * Returns the size of a ServerTCMap
