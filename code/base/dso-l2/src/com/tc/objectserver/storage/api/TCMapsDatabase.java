@@ -3,31 +3,61 @@
  */
 package com.tc.objectserver.storage.api;
 
+import com.tc.object.ObjectID;
+import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+
+import java.io.IOException;
+import java.util.Map;
 
 public interface TCMapsDatabase {
   /**
-   * Puts an <byte[], byte[]> key-value pair to the db. The id here is the object id of the map.
+   * Puts an entry<K,Y> for a particular map identified by id into the DB. The id here is the object id of the map.
+   * 
+   * @throws IOException
    */
-  public Status put(long id, byte[] key, byte[] value, PersistenceTransaction tx);
+  public int put(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
+  throws TCDatabaseException, IOException;
 
   /**
-   * Deletes a key from the map whose object id is passed in as the parmeter
+   * Deletes a key from the map whose object id is passed in as the parameter
+   * 
+   * @throws IOException
    */
-  public Status delete(long id, byte[] key, PersistenceTransaction tx);
+  public int delete(PersistenceTransaction tx, long id, Object key, TCCollectionsSerializer serializer)
+  throws TCDatabaseException, IOException;
 
   /**
-   * Returns no of bytes written
+   * Deletes an entire collection
    */
-  public int deleteCollection(long id, PersistenceTransaction tx) throws TCDatabaseException;
 
-  public TCMapsDatabaseCursor openCursor(PersistenceTransaction tx, long objectID);
-
-  public TCMapsDatabaseCursor openCursorUpdatable(PersistenceTransaction tx, long objectID);
+  public void deleteCollection(long id, PersistenceTransaction tx) throws TCDatabaseException;
 
   /**
-   * Used in tests
+   * Deletes a collection but only up to a max delete batch size and returns the number of entries deleted.
+   * 
+   * @return number of entries in Maps database deleted, if less than DELETE_BATCH_SIZE, then there could be more
+   *         entries for the same map ID.
+   * @throws TCDatabaseException
+   */
+  public int deleteCollectionBatched(long id, PersistenceTransaction tx, int maxDeleteBatchSize);
+
+  public void loadMap(PersistenceTransaction tx, long id, Map map, TCCollectionsSerializer serializer)
+  throws TCDatabaseException;
+
+  /**
+   * Return the number of entries in the database. Used in tests.
    */
   public long count();
+
+  /**
+   * Returns a factory that is used to create a map that is backed by this DB
+   */
+  public BackingMapFactory getBackingMapFactory(TCCollectionsSerializer serializer);
+
+  public interface BackingMapFactory {
+
+    public Map createBackingMapFor(ObjectID mapID);
+  }
+
 }

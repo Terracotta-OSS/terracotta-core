@@ -14,21 +14,21 @@ public class IncoherentCachedItem extends CachedItem {
   private static final long SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                       .getProperties()
                                                                                       .getLong(
-                                                                                               TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_ITEMS_RECYCLE_TIME);
+                                                                                               TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final long        lastCoherentTime;
 
-  public IncoherentCachedItem(CachedItem item) {
+  public IncoherentCachedItem(final CachedItem item) {
     this(item.getListener(), item.getLockID(), item.getKey(), item.getValue());
   }
 
-  public IncoherentCachedItem(DisposeListener listener, LockID lockID, Object key, Object value) {
+  public IncoherentCachedItem(final DisposeListener listener, final LockID lockID, final Object key, final Object value) {
     super(listener, lockID, key, value);
     this.lastCoherentTime = System.nanoTime();
   }
 
   public boolean isIncoherentTooLong() {
-    return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
+    return TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - this.lastCoherentTime)) >= SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS;
   }
 
 }

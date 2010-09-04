@@ -64,8 +64,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
 
   private static final int                        DELETE_BATCH_SIZE      = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
+                                                                             .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE,
                                                                                      5000);
 
   private static final long                       REMOVE_THRESHOLD       = 300;
@@ -79,7 +78,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
   private long                                    saveCount;
   private final TCLogger                          logger;
   private final PersistenceTransactionProvider    ptp;
-  private final TCCollectionsPersistor     collectionsPersistor;
+  private final TCCollectionsPersistor            collectionsPersistor;
   private final ObjectIDManager                   objectIDManager;
   private final SyncObjectIdSet                   extantObjectIDs;
   private final SyncObjectIdSet                   extantMapTypeOidSet;
@@ -108,8 +107,8 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
       this.objectIDManager = new NullObjectIDManager();
     } else {
       // read objectIDs from compressed DB
-      final MutableSequence sequence = env.getSequence(this.ptp, logger,
-                                                       DBSequenceKeys.OID_STORE_LOG_SEQUENCE_DB_NAME, 1000);
+      final MutableSequence sequence = env.getSequence(this.ptp, logger, DBSequenceKeys.OID_STORE_LOG_SEQUENCE_DB_NAME,
+                                                       1000);
       this.objectIDManager = new FastObjectIDManagerImpl(env, ptp, sequence);
     }
 

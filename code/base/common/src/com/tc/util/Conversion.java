@@ -5,9 +5,12 @@
 package com.tc.util;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.exception.TCException;
 import com.tc.exception.TCRuntimeException;
 
 import java.io.UnsupportedEncodingException;
+import java.text.DecimalFormat;
+import java.util.regex.Pattern;
 
 /**
  * Data conversion algorithms and whatnot can be found in java.io.DataInput and java.io.DataOutput. Contains methods for
@@ -58,7 +61,8 @@ public class Conversion {
     if ((length < 1) || (length > 4)) { throw new IllegalArgumentException("invalid byte array length: " + length); }
 
     if ((b.length - offset) < length) { throw new IllegalArgumentException("not enough data available for length "
-        + length + " starting at offset " + offset + " in a byte array of length " + b.length); }
+                                                                           + length + " starting at offset " + offset
+                                                                           + " in a byte array of length " + b.length); }
 
     long rv = 0;
 
@@ -243,9 +247,9 @@ public class Conversion {
   public static long bytes2Long(byte[] bytes, int offset) {
 
     return (((long) bytes[offset] << 56) + ((long) (bytes[offset + 1] & 0xFF) << 48)
-        + ((long) (bytes[offset + 2] & 0xFF) << 40) + ((long) (bytes[offset + 3] & 0xFF) << 32)
-        + ((long) (bytes[offset + 4] & 0xFF) << 24) + ((bytes[offset + 5] & 0xFF) << 16)
-        + ((bytes[offset + 6] & 0xFF) << 8) + ((bytes[offset + 7] & 0xFF) << 0));
+            + ((long) (bytes[offset + 2] & 0xFF) << 40) + ((long) (bytes[offset + 3] & 0xFF) << 32)
+            + ((long) (bytes[offset + 4] & 0xFF) << 24) + ((bytes[offset + 5] & 0xFF) << 16)
+            + ((bytes[offset + 6] & 0xFF) << 8) + ((bytes[offset + 7] & 0xFF) << 0));
   }
 
   public static byte[] long2Bytes(long l) {
@@ -319,8 +323,8 @@ public class Conversion {
 
   /**
    * @param hexString
-   * @return an array of bytes, decoded from the hex-encoded string, if <code>hexString</code> is <code>null</code>
-   *         or the length is not a multiple of two then <code>null</code> is returned.
+   * @return an array of bytes, decoded from the hex-encoded string, if <code>hexString</code> is <code>null</code> or
+   *         the length is not a multiple of two then <code>null</code> is returned.
    */
   public static byte[] hexToBytes(String hexString) {
     if (hexString == null || hexString.length() % 2 != 0) { return null; }
@@ -338,4 +342,96 @@ public class Conversion {
     buffer.get(bytes);
     return Conversion.bytes2String(bytes);
   }
+
+  enum MemorySizeUnits {
+    KILO("k"), MEGA("m"), GIGA("g");
+
+    private final String unit;
+
+    private MemorySizeUnits(final String unit) {
+      this.unit = unit;
+    }
+
+    public long getInBytes() throws MetricsFormatException {
+      if (this.unit.equals(KILO.getUnit())) {
+        return 1024;
+      } else if (this.unit.equals(MEGA.getUnit())) {
+        return 1024 * KILO.getInBytes();
+      } else if (this.unit.equals(GIGA.getUnit())) {
+        return 1024 * MEGA.getInBytes();
+      } else {
+        throw new MetricsFormatException("Unexpectes metrics: " + this);
+      }
+    }
+
+    @Override
+    public String toString() {
+      return "'" + this.unit + "'";
+    }
+
+    public String getUnit() {
+      return unit;
+    }
+
+  }
+
+  // XXX: FIX rename method
+  public static int memorySizeAsIntBytes(final String memorySizeInUnits) throws MetricsFormatException {
+    long rv = memorySizeAsLongBytes(memorySizeInUnits);
+    if (rv > Integer.MAX_VALUE) {
+      throw new MetricsFormatException(memorySizeInUnits + " is greater than integer range");
+    } else {
+      return (int) rv;
+    }
+  }
+
+  public static long memorySizeAsLongBytes(final String memorySizeInUnits) throws MetricsFormatException {
+    final String input = memorySizeInUnits.toLowerCase().trim();
+    // XXX: review pattern matcher regex
+    if (!Pattern.matches("[0-9]*([.][0-9]+)? *([kmg])?", input)) { throw new MetricsFormatException("Unexpected Size: "
+                                                                                                    + input); }
+    String[] str = input.split("[kmg]");
+    if (str.length > 1) { throw new MetricsFormatException("Unexpected size: " + input); }
+
+    double base = 0;
+    try {
+      base = Double.parseDouble(str[0].trim());
+    } catch (NumberFormatException nfe) {
+      throw new MetricsFormatException("Unexpectes metrics: " + input);
+    }
+
+    if (input.endsWith(MemorySizeUnits.KILO.getUnit())) {
+      return (long) (base * MemorySizeUnits.KILO.getInBytes());
+    } else if (input.endsWith(MemorySizeUnits.MEGA.getUnit())) {
+      return (long) (base * MemorySizeUnits.MEGA.getInBytes());
+    } else if (input.endsWith(MemorySizeUnits.GIGA.getUnit())) {
+      return (long) (base * MemorySizeUnits.GIGA.getInBytes());
+    } else {
+      return (long) base;
+    }
+  }
+
+  static DecimalFormat twoDForm = new DecimalFormat("#.##");
+
+  public static String memoryBytesAsSize(final long bytes) throws NumberFormatException, MetricsFormatException {
+    if (bytes < MemorySizeUnits.KILO.getInBytes()) {
+      return bytes + "b";
+    } else if (bytes < MemorySizeUnits.MEGA.getInBytes()) {
+      double rv = (bytes / (MemorySizeUnits.KILO.getInBytes() * 1.0));
+      return Double.valueOf(twoDForm.format(rv)) + "k";
+    } else if (bytes < MemorySizeUnits.GIGA.getInBytes()) {
+      double rv = (bytes / (MemorySizeUnits.MEGA.getInBytes() * 1.0));
+      return Double.valueOf(twoDForm.format(rv)) + "m";
+    } else {
+      double rv = (bytes / (MemorySizeUnits.GIGA.getInBytes() * 1.0));
+      return Double.valueOf(twoDForm.format(rv)) + "g";
+    }
+  }
+
+  public static class MetricsFormatException extends TCException {
+    public MetricsFormatException(String message) {
+      super(message);
+    }
+  }
+
 }

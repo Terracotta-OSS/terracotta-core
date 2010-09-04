@@ -6,22 +6,18 @@ package com.tc.objectserver.storage.api;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
-import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.objectserver.storage.api.TCMapsDatabaseCursor;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
+import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Map.Entry;
 
 public class TCMapsDatabaseTest extends TCTestCase {
   private final Random                   random = new Random();
@@ -34,64 +30,56 @@ public class TCMapsDatabaseTest extends TCTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    File dataPath = getTempDirectory();
+    final File dataPath = getTempDirectory();
 
-    dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
-    dbHome.mkdir();
+    this.dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
+    this.dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests().createEnvironment(true, dbHome, new Properties());
-    dbenv.open();
+    this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome);
+    this.dbenv.open();
 
-    ptp = dbenv.getPersistenceTransactionProvider();
-    database = dbenv.getMapsDatabase();
+    this.ptp = this.dbenv.getPersistenceTransactionProvider();
+    this.database = this.dbenv.getMapsDatabase();
   }
 
-  public void testPutDelete() {
+  public void testPutDelete() throws Exception {
     long objectId = 1;
+    TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
 
     byte[] key = getRandomlyFilledByteArray(objectId);
     byte[] value = getRandomlyFilledByteArray(objectId);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    Status status = database.put(objectId, key, value, tx);
+    int written = database.put(tx, objectId, key, value, serializer);
     tx.commit();
 
-    Assert.assertEquals(Status.SUCCESS, status);
+    Assert.assertTrue(written > 0);
 
     tx = ptp.newTransaction();
-    TCMapsDatabaseCursor cursor = database.openCursor(tx, objectId);
+    HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
+    database.loadMap(tx, objectId, map, serializer);
     int count = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
+    for (Entry<byte[], byte[]> entry : map.entrySet()) {
       Assert.assertTrue(Arrays.equals(key, entry.getKey()));
       Assert.assertTrue(Arrays.equals(value, entry.getValue()));
       count++;
     }
-    cursor.close();
     tx.commit();
 
     Assert.assertEquals(1, count);
 
     tx = ptp.newTransaction();
-    status = database.delete(objectId, key, tx);
+    written = database.delete(tx, objectId, key, serializer);
     tx.commit();
 
-    Assert.assertEquals(Status.SUCCESS, status);
+    Assert.assertTrue(written > 0);
 
     Assert.assertEquals(0, database.count());
-
-    count = 0;
-    tx = ptp.newTransaction();
-    cursor = database.openCursor(tx, objectId);
-    while (cursor.hasNext()) {
-      count++;
-    }
-    cursor.close();
-    tx.commit();
-    Assert.assertEquals(0, count);
   }
 
-  public void testDeleteCollections() throws TCDatabaseException {
+  public void testDeleteCollections() throws Exception {
+    TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
+
     long objectId1 = 1;
     byte[] key1 = getRandomlyFilledByteArray(objectId1);
     byte[] value1 = getRandomlyFilledByteArray(objectId1);
@@ -101,8 +89,8 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(objectId1, key1, value1, tx);
-    database.put(objectId2, key2, value2, tx);
+    database.put(tx, objectId1, key1, value1, serializer);
+    database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count());
@@ -114,25 +102,24 @@ public class TCMapsDatabaseTest extends TCTestCase {
     Assert.assertEquals(1, database.count());
 
     tx = ptp.newTransaction();
-    TCMapsDatabaseCursor cursor = database.openCursor(tx, objectId2);
+    HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
+    database.loadMap(tx, objectId2, map, serializer);
     int count = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
+    for (Entry<byte[], byte[]> entry : map.entrySet()) {
       Assert.assertTrue(Arrays.equals(key2, entry.getKey()));
       Assert.assertTrue(Arrays.equals(value2, entry.getValue()));
       count++;
     }
-    cursor.close();
     tx.commit();
 
     Assert.assertEquals(1, count);
   }
 
-  private byte[] getRandomlyFilledByteArray(long objectId) {
-    byte[] array = new byte[108];
-    random.nextBytes(array);
+  private byte[] getRandomlyFilledByteArray(final long objectId) {
+    final byte[] array = new byte[108];
+    this.random.nextBytes(array);
 
-    byte[] temp = Conversion.long2Bytes(objectId);
+    final byte[] temp = Conversion.long2Bytes(objectId);
     for (int i = 0; i < temp.length; i++) {
       array[i] = temp[i];
     }
@@ -143,9 +130,9 @@ public class TCMapsDatabaseTest extends TCTestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
     try {
-      dbenv.close();
-      FileUtils.cleanDirectory(dbHome);
-    } catch (Exception e) {
+      this.dbenv.close();
+      FileUtils.cleanDirectory(this.dbHome);
+    } catch (final Exception e) {
       e.printStackTrace();
     }
   }

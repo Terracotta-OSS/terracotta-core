@@ -27,4 +27,9 @@ public final class TestPersistenceTransaction implements PersistenceTransaction 
   public void abort() {
     throw new UnsupportedOperationException();
   }
+
+  public Object getTransaction() {
+    return null;
+  }
+
 }

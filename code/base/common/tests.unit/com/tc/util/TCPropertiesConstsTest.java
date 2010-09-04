@@ -30,6 +30,10 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_URL);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE);
   }
 
   private void loadDefaults(String propFile) {

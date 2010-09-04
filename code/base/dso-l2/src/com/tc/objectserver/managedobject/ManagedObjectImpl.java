@@ -33,10 +33,7 @@ import com.tc.util.Conversion;
 import gnu.trove.TLinkable;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.Set;
 
@@ -45,33 +42,32 @@ import java.util.Set;
  * having changes applied to it and keeping track of references for garbage collection. If you add fields to this object
  * that need to be serialized make sure you add them to the ManagedObjectSerializer
  */
-public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, Serializable, PrettyPrintable {
-  private static final TCLogger    logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
-  private static final DNAEncoding DNA_STORAGE_ENCODING     = new StorageDNAEncodingImpl();
+public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, PrettyPrintable {
+  private static final TCLogger        logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
+  private static final DNAEncoding     DNA_STORAGE_ENCODING     = new StorageDNAEncodingImpl();
 
-  private final static byte        IS_NEW_OFFSET            = 1;
-  private final static byte        IS_DIRTY_OFFSET          = 2;
-  private final static byte        REFERENCED_OFFSET        = 4;
-  private final static byte        REMOVE_ON_RELEASE_OFFSET = 8;
-  private final static byte        PINNED_OFFSET            = 16;
+  private final static byte            IS_NEW_OFFSET            = 1;
+  private final static byte            IS_DIRTY_OFFSET          = 2;
+  private final static byte            REFERENCED_OFFSET        = 4;
+  private final static byte            REMOVE_ON_RELEASE_OFFSET = 8;
+  private final static byte            PINNED_OFFSET            = 16;
 
-  private final static byte        INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
+  private final static byte            INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
 
-  private static final long        UNINITIALIZED_VERSION    = -1;
+  private static final long            UNINITIALIZED_VERSION    = -1;
 
-  final ObjectID                   id;
-
-  long                             version                  = UNINITIALIZED_VERSION;
-  transient ManagedObjectState     state;
+  private final ObjectID               id;
+  private long                         version                  = UNINITIALIZED_VERSION;
+  private transient ManagedObjectState state;
 
   // TODO::Split this flag into two so that concurrency is maintained
-  private volatile transient byte  flags                    = INITIAL_FLAG_VALUE;
+  private volatile transient byte      flags                    = INITIAL_FLAG_VALUE;
 
   // TODO:: Remove Cacheable interface from this Object and remove these two references
-  private transient TLinkable      previous;
-  private transient TLinkable      next;
+  private transient TLinkable          previous;
+  private transient TLinkable          next;
 
-  private transient int            accessed;
+  private transient int                accessed;
 
   public ManagedObjectImpl(final ObjectID id) {
     Assert.assertNotNull(id);
@@ -157,7 +153,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   public void apply(final DNA dna, final TransactionID txnID, final ApplyTransactionInfo applyInfo,
                     final ObjectInstanceMonitor instanceMonitor, final boolean ignoreIfOlderDNA) {
-    final boolean isInitialized = isInitialized();
+    final boolean isUninitialized = isUninitialized();
 
     final long dna_version = dna.getVersion();
     if (dna_version <= this.version) {
@@ -170,23 +166,23 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
                                  + " dna_version : " + dna_version);
       }
     }
-    if (dna.isDelta() && isInitialized) {
+    if (dna.isDelta() && isUninitialized) {
       throw new AssertionError("Uninitalized Object is applied with a delta DNA ! ManagedObjectImpl = " + toString()
                                + " DNA = " + dna + " TransactionID = " + txnID);
-    } else if (!dna.isDelta() && !isInitialized) {
+    } else if (!dna.isDelta() && !isUninitialized) {
       // New DNA applied on old object - a No No for logical objects.
       throw new AssertionError("Old Object is applied with a non-delta DNA ! ManagedObjectImpl = " + toString()
                                + " DNA = " + dna + " TransactionID = " + txnID);
     }
-    if (isInitialized) {
+    this.version = dna_version;
+    if (isUninitialized) {
       instanceMonitor.instanceCreated(dna.getTypeName());
     }
-    this.version = dna_version;
     final DNACursor cursor = dna.getCursor();
 
     if (this.state == null) {
-      this.state = getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(),
-                                                 dna.getDefiningLoaderDescription(), cursor);
+      setState(getStateFactory().createState(this.id, dna.getParentObjectID(), dna.getTypeName(),
+                                             dna.getDefiningLoaderDescription(), cursor));
     }
     try {
       try {
@@ -204,32 +200,30 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     // setBasicIsNew(false);
   }
 
-  private boolean isInitialized() {
+  private void setState(final ManagedObjectState newState) {
+    if (this.state != null) { throw new AssertionError("Trying to set state on already initialized object : " + this
+                                                       + " state : " + this.state); }
+    this.state = newState;
+    final ManagedObjectCacheStrategy strategy = ManagedObjectStateUtil.getCacheStrategy(newState);
+    if (strategy == ManagedObjectCacheStrategy.PINNED) {
+      pin();
+    } else if (strategy == ManagedObjectCacheStrategy.NOT_CACHED) {
+      setRemoveOnRelease(true);
+    }
+  }
+
+  private boolean isUninitialized() {
     return this.version == UNINITIALIZED_VERSION;
   }
 
   private void reinitializeState(final ObjectID pid, final String className, final String loaderDesc,
                                  final DNACursor cursor, final ManagedObjectState oldState) {
-    this.state = getStateFactory().recreateState(this.id, pid, className, loaderDesc, cursor, oldState);
+    this.state = null;
+    setState(getStateFactory().recreateState(this.id, pid, className, loaderDesc, cursor, oldState));
   }
 
   private ManagedObjectStateFactory getStateFactory() {
     return ManagedObjectStateFactory.getInstance();
-  }
-
-  private void writeObject(final ObjectOutputStream out) throws IOException {
-    if (this.state == null) { throw new AssertionError("Null state:" + this); }
-    out.defaultWriteObject();
-    out.writeByte(this.state.getType());
-    this.state.writeTo(out);
-  }
-
-  private void readObject(final ObjectInputStream in) throws IOException, ClassNotFoundException {
-    in.defaultReadObject();
-    final byte type = in.readByte();
-    this.state = getStateFactory().readManagedObjectStateFrom(in, type);
-    setBasicIsNew(false);
-    setBasicIsDirty(false);
   }
 
   public ManagedObjectState getManagedObjectState() {
@@ -249,7 +243,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
 
   @Override
   public String toString() {
-    // XXX: Um... this is gross.
     final StringWriter writer = new StringWriter();
     final PrintWriter pWriter = new PrintWriter(writer);
     new PrettyPrinterImpl(pWriter).visit(this);
@@ -380,12 +373,26 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public synchronized boolean canEvict() {
-    return !(isPinned() || isReferenced() || isNew()
-             || this.state.getType() == ManagedObjectState.CONCURRENT_DISTRIBUTED_MAP_TYPE || this.state.getType() == ManagedObjectState.CONCURRENT_DISTRIBUTED_SERVER_MAP_TYPE);
+    return !isReferenced();
+  }
+
+  public synchronized boolean isCacheManaged() {
+    return !(isNew() || isPinned() || isRemoveOnRelease());
   }
 
   public long getVersion() {
     return this.version;
+  }
+
+  void setDeserializedState(final long v, final ManagedObjectState s) {
+    if (!isUninitialized() || this.state != null) { throw new AssertionError(
+                                                                             "Calling setDeserializedState on initialized object : "
+                                                                                 + this + " version : " + v
+                                                                                 + " ManagedObjectState : " + s); }
+    this.version = v;
+    setState(s);
+    setIsDirty(false);
+    setIsNew(false);
   }
 
 }

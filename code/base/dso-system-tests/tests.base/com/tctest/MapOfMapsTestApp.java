@@ -44,16 +44,16 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   final SynchronizedInt    uid          = new SynchronizedInt(0);
   CyclicBarrier            barrier;
 
-  public MapOfMapsTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public MapOfMapsTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     if (Os.isSolaris()) {
       LOOP_COUNT = 10;
     }
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = MapOfMapsTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
+    final String testClass = MapOfMapsTestApp.class.getName();
+    final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
     spec.addRoot("root", "root");
     spec.addRoot("uid", "uid");
     spec.addRoot("barrier", "barrier");
@@ -70,7 +70,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   @Override
   public void runTest() throws BrokenBarrierException, InterruptedException {
     setCyclicBarrier();
-    int myid = uid.increment();
+    final int myid = this.uid.increment();
     if (myid == 1) {
       // Writer
       runCreateMaps();
@@ -82,18 +82,18 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
   private void runReadMaps() throws BrokenBarrierException, InterruptedException {
     int count = 0;
-    int mapCountNo = calculateMapCount(DEPTH_COUNT, BREATH_COUNT);
+    final int mapCountNo = calculateMapCount(DEPTH_COUNT, BREATH_COUNT);
     while (count++ < LOOP_COUNT) {
-      barrier.barrier();
+      this.barrier.barrier();
       log("Readers : Loop Count : " + count);
-      Map myRoot = read(String.valueOf(count), root);
-      int mapCount = countMaps(myRoot);
+      final Map myRoot = read(String.valueOf(count), this.root);
+      final int mapCount = countMaps(myRoot);
       log("Readers : No Of Maps = " + mapCount);
       Assert.assertEquals(mapCountNo, mapCount);
     }
   }
 
-  private int calculateMapCount(int depth, int breath) {
+  private int calculateMapCount(final int depth, final int breath) {
     int pow = breath;
     int count = 0;
     for (int i = 0; i <= depth; i++) {
@@ -103,11 +103,11 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     return count;
   }
 
-  private int countMaps(Map m) {
+  private int countMaps(final Map m) {
 
     int count = 0;
-    for (Iterator i = m.entrySet().iterator(); i.hasNext();) {
-      Map.Entry e = (Entry) i.next();
+    for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
+      final Map.Entry e = (Entry) i.next();
       if (e.getValue() instanceof Map) {
         count = count + 1 + countMaps((Map) e.getValue());
       }
@@ -119,50 +119,54 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     int count = 0;
     while (count++ < LOOP_COUNT) {
       log("Writer : Loop Count : " + count);
-      Map myRoot = new HashMap();
+      final Map myRoot = new HashMap();
       add2Root(String.valueOf(count), myRoot);
       populateMyRoot(myRoot, DEPTH_COUNT, BREATH_COUNT);
-      barrier.barrier();
+      this.barrier.barrier();
     }
   }
 
-  private void populateMyRoot(Map myRoot, int depth, int breath) {
-    List childs = new ArrayList();
+  private void populateMyRoot(final Map myRoot, int depth, final int breath) {
+    final List childs = new ArrayList();
     int b = breath;
     synchronized (myRoot) {
       while (b-- > 0) {
         childs.add(addToMap(String.valueOf(b), myRoot));
       }
+      myRoot.put(new Integer(10), "Testing");
+    }
+    synchronized (myRoot) {
+      myRoot.remove(new Integer(10));
     }
     if (depth-- > 0) {
-      for (Iterator i = childs.iterator(); i.hasNext();) {
-        Map child = (Map) i.next();
+      for (final Iterator i = childs.iterator(); i.hasNext();) {
+        final Map child = (Map) i.next();
         populateMyRoot(child, depth, breath);
       }
     }
   }
 
   private void setCyclicBarrier() {
-    int participationCount = getParticipantCount();
+    final int participationCount = getParticipantCount();
     log("Participation Count = " + participationCount);
-    barrier = new CyclicBarrier(participationCount);
+    this.barrier = new CyclicBarrier(participationCount);
   }
 
-  private void add2Root(String id, Map myRoot) {
-    synchronized (root) {
-      root.put(id, myRoot);
+  private void add2Root(final String id, final Map myRoot) {
+    synchronized (this.root) {
+      this.root.put(id, myRoot);
     }
   }
 
   static DateFormat formatter = new SimpleDateFormat("hh:mm:ss,S");
 
-  private static void log(String message) {
+  private static void log(final String message) {
     System.err.println(Thread.currentThread().getName() + " :: "
                        + formatter.format(new Date(System.currentTimeMillis())) + " : " + message);
   }
 
-  private Map addToMap(String id, Map m) {
-    Map child = getChild(m);
+  private Map addToMap(final String id, final Map m) {
+    final Map child = getChild(m);
     m.put(id, child);
     return child;
   }
@@ -171,7 +175,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
    * HashMap, Hashtable and LinkedHashMap supports partial collection and IdentityHashMap and TreeMap doesnt support it.
    * So both should be tested
    */
-  private Map getChild(Map m) {
+  private Map getChild(final Map m) {
     if (m instanceof HashMap) {
       return getPopulatedMap(new Hashtable());
     } else if (m instanceof Hashtable) {
@@ -187,15 +191,15 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
     }
   }
 
-  private Map getPopulatedMap(Map m) {
+  private Map getPopulatedMap(final Map m) {
     for (int i = 0; i < 10; i++) {
       m.put(StringUtil.reduce("Hello - " + i), StringUtil
-          .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
+            .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
     }
     return m;
   }
 
-  private Map read(String id, Map m) {
+  private Map read(final String id, final Map m) {
     synchronized (m) {
       return (Map) m.get(id);
     }

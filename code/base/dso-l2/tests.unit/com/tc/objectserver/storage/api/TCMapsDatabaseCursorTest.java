@@ -6,20 +6,17 @@ package com.tc.objectserver.storage.api;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.TCDatabaseEntry;
-import com.tc.objectserver.storage.api.TCMapsDatabase;
-import com.tc.objectserver.storage.api.TCMapsDatabaseCursor;
+import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Map.Entry;
 
 public class TCMapsDatabaseCursorTest extends TCTestCase {
   private final Random                   random = new Random();
@@ -37,14 +34,15 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests().createEnvironment(true, dbHome, new Properties());
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
     database = dbenv.getMapsDatabase();
   }
 
-  public void testBasicCursor() {
+  public void testBasicCursor() throws Exception {
+    TCCollectionsSerializerImpl serializer = new TCCollectionsSerializerImpl();
     long objectId1 = 1;
     byte[] key1 = getRandomlyFilledByteArray(objectId1);
     byte[] value1 = getRandomlyFilledByteArray(objectId1);
@@ -54,70 +52,29 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(objectId1, key1, value1, tx);
-    database.put(objectId2, key2, value2, tx);
+    database.put(tx, objectId1, key1, value1, serializer);
+    database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count());
 
     tx = ptp.newTransaction();
-    TCMapsDatabaseCursor cursor = database.openCursor(tx, objectId1);
+    HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
+    database.loadMap(tx, objectId1, map, serializer);
     int count = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
+    for (Entry<byte[], byte[]> entry : map.entrySet()) {
       Assert.assertTrue(Arrays.equals(key1, entry.getKey()));
       Assert.assertTrue(Arrays.equals(value1, entry.getValue()));
       count++;
     }
-    cursor.close();
-    tx.commit();
-
-    Assert.assertEquals(1, count);
-
-    tx = ptp.newTransaction();
-    cursor = database.openCursor(tx, objectId1);
-    count = 0;
-    while (cursor.hasNextKey()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.nextKey();
-      Assert.assertTrue(Arrays.equals(key1, entry.getKey()));
-      Assert.assertNull(entry.getValue());
-      count++;
-    }
-    cursor.close();
-    tx.commit();
-
-    Assert.assertEquals(1, count);
-
-    tx = ptp.newTransaction();
-    cursor = database.openCursor(tx, objectId2);
-    count = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
-      Assert.assertTrue(Arrays.equals(key2, entry.getKey()));
-      Assert.assertTrue(Arrays.equals(value2, entry.getValue()));
-      count++;
-    }
-    cursor.close();
-    tx.commit();
-
-    Assert.assertEquals(1, count);
-
-    tx = ptp.newTransaction();
-    cursor = database.openCursor(tx, objectId2);
-    count = 0;
-    while (cursor.hasNextKey()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.nextKey();
-      Assert.assertTrue(Arrays.equals(key2, entry.getKey()));
-      Assert.assertNull(entry.getValue());
-      count++;
-    }
-    cursor.close();
     tx.commit();
 
     Assert.assertEquals(1, count);
   }
 
-  public void testCursorDelete() {
+  public void testCursorDelete() throws Exception {
+    TCCollectionsSerializerImpl serializer = new TCCollectionsSerializerImpl();
+
     long objectId1 = 1;
     byte[] key1 = getRandomlyFilledByteArray(objectId1);
     byte[] value1 = getRandomlyFilledByteArray(objectId1);
@@ -127,43 +84,36 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
     PersistenceTransaction tx = ptp.newTransaction();
-    database.put(objectId1, key1, value1, tx);
-    database.put(objectId2, key2, value2, tx);
+    database.put(tx, objectId1, key1, value1, serializer);
+    database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
     Assert.assertEquals(2, database.count());
 
     tx = ptp.newTransaction();
-    TCMapsDatabaseCursor cursor = database.openCursorUpdatable(tx, objectId1);
-    int countDeleted = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
+    HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
+    database.loadMap(tx, objectId1, map, serializer);
+    for (Entry<byte[], byte[]> entry : map.entrySet()) {
       Assert.assertTrue(Arrays.equals(key1, entry.getKey()));
       Assert.assertTrue(Arrays.equals(value1, entry.getValue()));
-      countDeleted++;
-      cursor.delete();
     }
-    cursor.close();
+    tx.commit();
+    
+    tx = ptp.newTransaction();
+    int countDeleted = database.deleteCollectionBatched(objectId1, tx, 1);
     tx.commit();
 
     Assert.assertEquals(1, database.count());
     Assert.assertEquals(1, countDeleted);
 
     tx = ptp.newTransaction();
-    cursor = database.openCursorUpdatable(tx, objectId2);
-    countDeleted = 0;
-    while (cursor.hasNext()) {
-      TCDatabaseEntry<byte[], byte[]> entry = cursor.next();
+    map = new HashMap<byte[], byte[]>();
+    database.loadMap(tx, objectId2, map, serializer);
+    for (Entry<byte[], byte[]> entry : map.entrySet()) {
       Assert.assertTrue(Arrays.equals(key2, entry.getKey()));
       Assert.assertTrue(Arrays.equals(value2, entry.getValue()));
-      countDeleted++;
-      cursor.delete();
     }
-    cursor.close();
     tx.commit();
-
-    Assert.assertEquals(0, database.count());
-    Assert.assertEquals(1, countDeleted);
   }
 
   private byte[] getRandomlyFilledByteArray(long objectId) {

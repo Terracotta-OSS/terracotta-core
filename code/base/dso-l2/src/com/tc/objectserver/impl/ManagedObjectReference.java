@@ -22,4 +22,6 @@ public interface ManagedObjectReference extends Cacheable {
   public boolean isNew();
 
   public ManagedObject getObject();
+
+  public boolean isCacheManaged();
 }

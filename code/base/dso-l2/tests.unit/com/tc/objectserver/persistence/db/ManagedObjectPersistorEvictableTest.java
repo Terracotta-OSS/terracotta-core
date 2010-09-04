@@ -20,11 +20,6 @@ import com.tc.objectserver.managedobject.ApplyTransactionInfo;
 import com.tc.objectserver.managedobject.ManagedObjectTraverser;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.FastObjectIDManagerImpl;
-import com.tc.objectserver.persistence.db.ManagedObjectPersistorImpl;
-import com.tc.objectserver.persistence.db.PersistableCollectionFactory;
-import com.tc.objectserver.persistence.db.TCCollectionsPersistor;
 import com.tc.objectserver.persistence.db.FastObjectIDManagerImpl.StoppedFlag;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
@@ -50,7 +45,7 @@ import java.util.TreeSet;
 
 public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   private static final TCLogger             logger = TCLogging
-                                                       .getTestingLogger(ManagedObjectPersistorEvictableTest.class);
+  .getTestingLogger(ManagedObjectPersistorEvictableTest.class);
 
   private ManagedObjectPersistorImpl        managedObjectPersistor;
   private PersistentManagedObjectStore      objectStore;
@@ -74,15 +69,17 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     this.env = newDBEnvironment(paranoid);
     this.env.open();
     this.persistenceTransactionProvider = new BerkeleyDBPersistenceTransactionProvider(this.env.getEnvironment());
-    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory();
+    final PersistableCollectionFactory sleepycatCollectionFactory = new PersistableCollectionFactory(new HashMapBackingMapFactory(),
+                                                                                                     this.env.isParanoidMode());
     this.testSleepycatCollectionsPersistor = new TestSleepycatCollectionsPersistor(logger, this.env.getMapsDatabase(),
-                                                                                   sleepycatCollectionFactory);
+                                                                                   sleepycatCollectionFactory,
+                                                                                   new TCCollectionsSerializerImpl());
     this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, new CustomSerializationAdapterFactory(),
                                                                  this.env, new TestMutableSequence(), this.env
-                                                                     .getRootDatabase(),
+                                                                 .getRootDatabase(),
                                                                  this.persistenceTransactionProvider,
                                                                  this.testSleepycatCollectionsPersistor, this.env
-                                                                     .isParanoidMode(), new ObjectStatsRecorder());
+                                                                 .isParanoidMode(), new ObjectStatsRecorder());
     this.objectStore = new PersistentManagedObjectStore(this.managedObjectPersistor, new MockSink());
     this.oidManager = (FastObjectIDManagerImpl) this.managedObjectPersistor.getOibjectIDManager();
   }
@@ -100,7 +97,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   }
 
   private BerkeleyDBEnvironment newDBEnvironment(final boolean paranoid) throws Exception {
-    File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
+    final File dbHome = new File(getTempDirectory(), getClass().getName() + "db");
     dbHome.mkdir();
     assertTrue(dbHome.exists());
     assertTrue(dbHome.isDirectory());
@@ -122,7 +119,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
 
   private HashSet<ManagedObject> createRandomObjects(final int num, final byte stateType) {
     final Random r = new Random(System.currentTimeMillis());
-    HashSet<ManagedObject> objects = new HashSet<ManagedObject>();
+    final HashSet<ManagedObject> objects = new HashSet<ManagedObject>();
     for (int i = 0; i < num; i++) {
       final long id = (long) r.nextInt(num * 100) + 1;
       final ManagedObject mo = new TestPersistentStateManagedObject(new ObjectID(id), new ArrayList<ObjectID>(),
@@ -132,11 +129,11 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     return (objects);
   }
 
-  private HashSet<ManagedObject> addToObjectStore(HashSet<ManagedObject> objects, HashSet<ManagedObject> newObjects) {
-    HashSet<ManagedObject> duplicated = new HashSet<ManagedObject>();
-    ObjectIDSet evictableSet = this.objectStore.getAllEvictableObjectIDs();
+  private HashSet<ManagedObject> addToObjectStore(final HashSet<ManagedObject> objects, final HashSet<ManagedObject> newObjects) {
+    final HashSet<ManagedObject> duplicated = new HashSet<ManagedObject>();
+    final ObjectIDSet evictableSet = this.objectStore.getAllEvictableObjectIDs();
     newObjects.removeAll(objects);
-    for (ManagedObject mo : newObjects) {
+    for (final ManagedObject mo : newObjects) {
       if (!this.objectStore.containsObject(mo.getID()) && !evictableSet.contains(mo.getID())) {
         objects.add(mo);
         this.objectStore.addNewObject(mo);
@@ -262,7 +259,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   public void testEvictableObjectsStep2() throws Exception {
     waitForBackgroupTasks();
 
-    HashSet<ManagedObject> objects = globalAllObjects;
+    final HashSet<ManagedObject> objects = globalAllObjects;
     globalEvictableObjects = new HashSet<ManagedObject>(objects);
 
     // after restarted, evictable set shall be the same
@@ -271,16 +268,16 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     verify(objects);
 
     // add more objects
-    HashSet<ManagedObject> newObjects2 = createMapObjects(1344);
+    final HashSet<ManagedObject> newObjects2 = createMapObjects(1344);
     addToObjectStore(objects, newObjects2);
-    HashSet<ManagedObject> newObjects = createPhyscalObjects(1234);
+    final HashSet<ManagedObject> newObjects = createPhyscalObjects(1234);
     addToObjectStore(objects, newObjects);
-    HashSet<ManagedObject> newEvitcable = createCDSMObjects(700);
+    final HashSet<ManagedObject> newEvitcable = createCDSMObjects(700);
     addToObjectStore(objects, newEvitcable);
     globalEvictableObjects.addAll(newEvitcable);
     newObjects.addAll(newObjects2);
     newObjects.addAll(newEvitcable);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, newObjects);
     } finally {
@@ -300,10 +297,10 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   public void testEvictableObjectsStep3() throws Exception {
     waitForBackgroupTasks();
 
-    HashSet<ManagedObject> objects = globalAllObjects;
+    final HashSet<ManagedObject> objects = globalAllObjects;
 
     // after restarted, evictable set shall be the same
-    Collection evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    final Collection evictableSet = this.managedObjectPersistor.snapshotEvictableObjectIDs();
     verifyObjectIDSet(evictableSet, globalEvictableObjects);
     verify(objects);
 
@@ -316,7 +313,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     // this.testSleepycatCollectionsPersistor.setCounter(0);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.deleteAllObjects(toDelete);
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
@@ -330,10 +327,10 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
   public void testEvictableObjectsStep4() throws Exception {
     waitForBackgroupTasks();
 
-    Collection objects = getAllObjectIDs();
+    final Collection objects = getAllObjectIDs();
     assertEquals(0, objects.size());
 
-    Collection evictableSet = getAllEvictableObjectIDs();
+    final Collection evictableSet = getAllEvictableObjectIDs();
     assertEquals(0, evictableSet.size());
   }
 
@@ -345,15 +342,16 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     private int counter;
 
     public TestSleepycatCollectionsPersistor(final TCLogger logger, final TCMapsDatabase mapsDatabase,
-                                             final PersistableCollectionFactory sleepycatCollectionFactory) {
-      super(logger, mapsDatabase, sleepycatCollectionFactory);
+                                             final PersistableCollectionFactory sleepycatCollectionFactory,
+                                             final TCCollectionsSerializer serializer) {
+      super(logger, mapsDatabase, sleepycatCollectionFactory, serializer);
     }
 
     @Override
-    public long deleteAllCollections(PersistenceTransactionProvider ptp, SortedSet<ObjectID> mapIds,
-                                     SortedSet<ObjectID> mapObjectIds) {
+    public long deleteAllCollections(final PersistenceTransactionProvider ptp, final SortedSet<ObjectID> mapIds,
+                                     final SortedSet<ObjectID> mapObjectIds) {
       this.counter += mapIds.size();
-      return counter;
+      return this.counter;
     }
 
     public void setCounter(final int value) {
@@ -386,9 +384,9 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
       if (!(other instanceof TestPersistentStateManagedObject)) { return false; }
-      TestPersistentStateManagedObject o = (TestPersistentStateManagedObject) other;
+      final TestPersistentStateManagedObject o = (TestPersistentStateManagedObject) other;
       return getID().toLong() == o.getID().toLong();
     }
 

@@ -6,10 +6,6 @@ package com.tc.objectserver.storage.api;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -17,9 +13,9 @@ import com.tc.util.Assert;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Map.Entry;
 
 public class TCIntToBytesDatabaseTest extends TCTestCase {
   private final Random                   random = new Random();
@@ -37,7 +33,7 @@ public class TCIntToBytesDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests().createEnvironment(true, dbHome, new Properties());
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

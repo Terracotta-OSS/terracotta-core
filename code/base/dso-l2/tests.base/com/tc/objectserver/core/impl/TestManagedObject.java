@@ -226,6 +226,10 @@ public class TestManagedObject implements ManagedObject, ManagedObjectReference,
     return true;
   }
 
+  public boolean isCacheManaged() {
+    return true;
+  }
+
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {
     traverser.addReachableObjectIDs(getObjectReferences());
   }

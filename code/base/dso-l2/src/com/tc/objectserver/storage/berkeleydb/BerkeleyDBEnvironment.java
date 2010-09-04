@@ -19,6 +19,7 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.StatsConfig;
 import com.sleepycat.je.Transaction;
+import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -38,6 +39,8 @@ import com.tc.objectserver.storage.api.TCMapsDatabase;
 import com.tc.objectserver.storage.api.TCObjectDatabase;
 import com.tc.objectserver.storage.api.TCRootDatabase;
 import com.tc.objectserver.storage.api.TCStringToStringDatabase;
+import com.tc.statistics.StatisticRetrievalAction;
+import com.tc.statistics.retrieval.actions.SRAForBerkeleyDB;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.sequence.MutableSequence;
 
@@ -50,6 +53,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.management.NotCompliantMBeanException;
 
 public class BerkeleyDBEnvironment implements DBEnvironment {
 
@@ -286,9 +291,18 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     }
   }
 
+  public StatisticRetrievalAction getSRA() {
+    return new SRAForBerkeleyDB(this);
+  }
+
+  public ServerDBBackupMBean getServerDBBackupMBean(final L2TVSConfigurationSetupManager configurationSetupManager)
+      throws NotCompliantMBeanException {
+    return new ServerDBBackup(configurationSetupManager);
+  }
+
   public synchronized TCObjectDatabase getObjectDatabase() throws TCDatabaseException {
     assertOpen();
-    return (BerkeleyDBTCObjectDatabase) databasesByName.get(OBJECT_DB_NAME);
+    return (TCObjectDatabase) databasesByName.get(OBJECT_DB_NAME);
   }
 
   public synchronized TCBytesToBytesDatabase getObjectOidStoreDatabase() throws TCDatabaseException {
@@ -437,9 +451,10 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   private void newObjectDB(Environment e, String name) throws TCDatabaseException {
     try {
       Database db = e.openDatabase(null, name, dbcfg);
-      BerkeleyDBTCObjectDatabase bdb = new BerkeleyDBTCObjectDatabase(db);
-      createdDatabases.add(bdb);
-      databasesByName.put(name, bdb);
+      BerkeleyDBTCObjectDatabase objectDatabse = new BerkeleyDBTCObjectDatabase(db);
+
+      createdDatabases.add(objectDatabse);
+      databasesByName.put(name, objectDatabse);
     } catch (Exception de) {
       throw new TCDatabaseException(de.getMessage());
     }
@@ -575,8 +590,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
-        .get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
+                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {

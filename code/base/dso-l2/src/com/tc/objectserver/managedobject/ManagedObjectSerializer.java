@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.managedobject;
 
@@ -15,40 +16,37 @@ import java.io.ObjectOutput;
 public class ManagedObjectSerializer implements Serializer {
   private final ManagedObjectStateSerializer serializer;
 
-  public ManagedObjectSerializer(ManagedObjectStateSerializer serializer) {
+  public ManagedObjectSerializer(final ManagedObjectStateSerializer serializer) {
     this.serializer = serializer;
   }
 
-  public void serializeTo(Object mo, ObjectOutput out) {
+  public void serializeTo(final Object mo, final ObjectOutput out) {
     try {
       if (!(mo instanceof ManagedObjectImpl)) {
         //
         throw new AssertionError("Attempt to serialize an unknown type: " + mo);
       }
-      ManagedObjectImpl moi = (ManagedObjectImpl) mo;
-      out.writeLong(moi.version);
-      out.writeLong(moi.id.toLong());
-      serializer.serializeTo(moi.state, out);
-    } catch (IOException e) {
+      final ManagedObjectImpl moi = (ManagedObjectImpl) mo;
+      out.writeLong(moi.getVersion());
+      out.writeLong(moi.getObjectID().toLong());
+      this.serializer.serializeTo(moi.getManagedObjectState(), out);
+    } catch (final IOException e) {
       throw new TCRuntimeException(e);
     }
   }
 
-  public Object deserializeFrom(ObjectInput in) {
+  public Object deserializeFrom(final ObjectInput in) {
     try {
       // read data
-      long version = in.readLong();
-      ObjectID id = new ObjectID(in.readLong());
-      ManagedObjectState state = (ManagedObjectState) serializer.deserializeFrom(in);
+      final long version = in.readLong();
+      final ObjectID id = new ObjectID(in.readLong());
+      final ManagedObjectState state = (ManagedObjectState) this.serializer.deserializeFrom(in);
 
       // populate managed object...
-      ManagedObjectImpl rv = new ManagedObjectImpl(id);
-      rv.version = version;
-      rv.state = state;
-      rv.setIsDirty(false);
-      rv.setIsNew(false);
+      final ManagedObjectImpl rv = new ManagedObjectImpl(id);
+      rv.setDeserializedState(version, state);
       return rv;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new TCRuntimeException(e);
     }
   }

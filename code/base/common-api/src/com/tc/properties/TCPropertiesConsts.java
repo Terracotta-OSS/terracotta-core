@@ -14,7 +14,7 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
-  public static final String[] OLD_PROPERTIES                                                = {
+  public static final String[] OLD_PROPERTIES                                                  = {
       "l1.reconnect.enabled", "l1.reconnect.timeout.millis", "l2.nha.ooo.maxDelayedAcks", "l2.nha.ooo.sendWindow",
       "l2.objectmanager.loadObjectID.checkpoint.changes", "l2.objectmanager.loadObjectID.checkpoint.timeperiod",
       "l2.nha.groupcomm.type", "l2.nha.tribes.failuredetector.millis", "l2.nha.tribes.orderinterceptor.enabled",
@@ -42,15 +42,15 @@ public interface TCPropertiesConsts {
    *                           of the objects is not generally known
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_CACHEMANAGER_ENABLED                                       = "l2.cachemanager.enabled";
-  public static final String   L2_CACHEMANAGER_LOGGING_ENABLED                               = "l2.cachemanager.logging.enabled";
-  public static final String   L2_CACHEMANAGER_LEASTCOUNT                                    = "l2.cachemanager.leastCount";
-  public static final String   L2_CACHEMANAGER_PERCENTAGETOEVICT                             = "l2.cachemanager.percentageToEvict";
-  public static final String   L2_CACHEMANAGER_SLEEPINTERVAL                                 = "l2.cachemanager.sleepInterval";
-  public static final String   L2_CACHEMANAGER_CRITICALTHRESHOLD                             = "l2.cachemanager.criticalThreshold";
-  public static final String   L2_CACHEMANAGER_THRESHOLD                                     = "l2.cachemanager.threshold";
-  public static final String   L2_CACHEMANAGER_MONITOROLDGENONLY                             = "l2.cachemanager.monitorOldGenOnly";
-  public static final String   L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                       = "l2.cachemanager.criticalObjectThreshold";
+  public static final String   L2_CACHEMANAGER_ENABLED                                         = "l2.cachemanager.enabled";
+  public static final String   L2_CACHEMANAGER_LOGGING_ENABLED                                 = "l2.cachemanager.logging.enabled";
+  public static final String   L2_CACHEMANAGER_LEASTCOUNT                                      = "l2.cachemanager.leastCount";
+  public static final String   L2_CACHEMANAGER_PERCENTAGETOEVICT                               = "l2.cachemanager.percentageToEvict";
+  public static final String   L2_CACHEMANAGER_SLEEPINTERVAL                                   = "l2.cachemanager.sleepInterval";
+  public static final String   L2_CACHEMANAGER_CRITICALTHRESHOLD                               = "l2.cachemanager.criticalThreshold";
+  public static final String   L2_CACHEMANAGER_THRESHOLD                                       = "l2.cachemanager.threshold";
+  public static final String   L2_CACHEMANAGER_MONITOROLDGENONLY                               = "l2.cachemanager.monitorOldGenOnly";
+  public static final String   L2_CACHEMANAGER_CRITICALOBJECTTHRESHOLD                         = "l2.cachemanager.criticalObjectThreshold";
 
   /*********************************************************************************************************************
    * <code>
@@ -67,14 +67,14 @@ public interface TCPropertiesConsts {
    * passive.throttle.maxSleepSeconds  : Sleep time for active when passive throttles it
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_TRANSACTIONMANAGER_LOGGING_ENABLED                         = "l2.transactionmanager.logging.enabled";
-  public static final String   L2_TRANSACTIONMANAGER_LOGGING_VERBOSE                         = "l2.transactionmanager.logging.verbose";
-  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS                      = "l2.transactionmanager.logging.printStats";
-  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS                    = "l2.transactionmanager.logging.printCommits";
-  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS           = "l2.transactionmanager.logging.printBroadcastStats";
-  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED                = "l2.transactionmanager.passive.throttle.enabled";
-  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD              = "l2.transactionmanager.passive.throttle.threshold";
-  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS        = "l2.transactionmanager.passive.throttle.maxSleepSeconds";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_ENABLED                           = "l2.transactionmanager.logging.enabled";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_VERBOSE                           = "l2.transactionmanager.logging.verbose";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTSTATS                        = "l2.transactionmanager.logging.printStats";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINTCOMMITS                      = "l2.transactionmanager.logging.printCommits";
+  public static final String   L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS             = "l2.transactionmanager.logging.printBroadcastStats";
+  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED                  = "l2.transactionmanager.passive.throttle.enabled";
+  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD                = "l2.transactionmanager.passive.throttle.threshold";
+  public static final String   L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS          = "l2.transactionmanager.passive.throttle.maxSleepSeconds";
 
   /*********************************************************************************************************************
    * <code>
@@ -127,33 +127,33 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
-  public static final String   L2_OBJECTMANAGER_DELETEBATCHSIZE                              = "l2.objectmanager.deleteBatchSize";
-  public static final String   L2_OBJECTMANAGER_CACHEPOLICY                                  = "l2.objectmanager.cachePolicy";
-  public static final String   L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT                         = "l2.objectmanager.maxObjectsToCommit";
-  public static final String   L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING                 = "l2.objectmanager.maxObjectsInTxnObjGrouping";
-  public static final String   L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING                 = "l2.objectmanager.maxTxnsInTxnObjectGrouping";
-  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE                    = "l2.objectmanager.objectrequest.split.size";
-  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED               = "l2.objectmanager.objectrequest.logging.enabled";
-  public static final String   L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED                        = "l2.objectmanager.fault.logging.enabled";
-  public static final String   L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED                      = "l2.objectmanager.request.logging.enabled";
-  public static final String   L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                        = "l2.objectmanager.flush.logging.enabled";
-  public static final String   L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED                    = "l2.objectmanager.persistor.logging.enabled";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_LONGS_PERDISKENTRY              = "l2.objectmanager.loadObjectID.longsPerDiskEntry";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_CHANGES              = "l2.objectmanager.loadObjectID.checkpoint.changes";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXLIMIT             = "l2.objectmanager.loadObjectID.checkpoint.maxlimit";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_TIMEPERIOD           = "l2.objectmanager.loadObjectID.checkpoint.timeperiod";
-  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE                      = "l2.objectmanager.passive.sync.batch.size";
-  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                   = "l2.objectmanager.passive.sync.throttle.timeInMillis";
-  public static final String   L2_OBJECTMANAGER_DGC_THROTTLE_TIME                            = "l2.objectmanager.dgc.throttle.timeInMillis";
-  public static final String   L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                     = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
-  public static final String   L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION                    = "l2.objectmanager.dgc.faulting.optimization";
-  public static final String   L2_OBJECTMANAGER_DGC_YOUNG_ENABLED                            = "l2.objectmanager.dgc.young.enabled";
-  public static final String   L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                          = "l2.objectmanager.dgc.young.frequencyInMillis";
-  public static final String   L2_OBJECTMANAGER_DGC_ENTERPRISE_MARK_STAGE_INTERVAL           = "l2.objectmanager.dgc.enterpriseMarkStageInterval";
-  public static final String   L2_DATA_BACKUP_THROTTLE_TIME                                  = "l2.data.backup.throttle.timeInMillis";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY        = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                    = "l2.objectmanager.loadObjectID.measure.performance";
-  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP             = "l2.objectmanager.loadObjectID.checkpoint.maxsleep";
+  public static final String   L2_OBJECTMANAGER_DELETEBATCHSIZE                                = "l2.objectmanager.deleteBatchSize";
+  public static final String   L2_OBJECTMANAGER_CACHEPOLICY                                    = "l2.objectmanager.cachePolicy";
+  public static final String   L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT                           = "l2.objectmanager.maxObjectsToCommit";
+  public static final String   L2_OBJECTMANAGER_MAXOBJECTS_INTXNOBJ_GROUPING                   = "l2.objectmanager.maxObjectsInTxnObjGrouping";
+  public static final String   L2_OBJECTMANAGER_MAXTXNS_INTXNOBJECT_GROUPING                   = "l2.objectmanager.maxTxnsInTxnObjectGrouping";
+  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE                      = "l2.objectmanager.objectrequest.split.size";
+  public static final String   L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED                 = "l2.objectmanager.objectrequest.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED                          = "l2.objectmanager.fault.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED                        = "l2.objectmanager.request.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                          = "l2.objectmanager.flush.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED                      = "l2.objectmanager.persistor.logging.enabled";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_LONGS_PERDISKENTRY                = "l2.objectmanager.loadObjectID.longsPerDiskEntry";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_CHANGES                = "l2.objectmanager.loadObjectID.checkpoint.changes";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXLIMIT               = "l2.objectmanager.loadObjectID.checkpoint.maxlimit";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_TIMEPERIOD             = "l2.objectmanager.loadObjectID.checkpoint.timeperiod";
+  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE                        = "l2.objectmanager.passive.sync.batch.size";
+  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                     = "l2.objectmanager.passive.sync.throttle.timeInMillis";
+  public static final String   L2_OBJECTMANAGER_DGC_THROTTLE_TIME                              = "l2.objectmanager.dgc.throttle.timeInMillis";
+  public static final String   L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                       = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
+  public static final String   L2_OBJECTMANAGER_DGC_FAULTING_OPTIMIZATION                      = "l2.objectmanager.dgc.faulting.optimization";
+  public static final String   L2_OBJECTMANAGER_DGC_YOUNG_ENABLED                              = "l2.objectmanager.dgc.young.enabled";
+  public static final String   L2_OBJECTMANAGER_DGC_YOUNG_FREQUENCY                            = "l2.objectmanager.dgc.young.frequencyInMillis";
+  public static final String   L2_OBJECTMANAGER_DGC_ENTERPRISE_MARK_STAGE_INTERVAL             = "l2.objectmanager.dgc.enterpriseMarkStageInterval";
+  public static final String   L2_DATA_BACKUP_THROTTLE_TIME                                    = "l2.data.backup.throttle.timeInMillis";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MAPDB_LONGS_PERDISKENTRY          = "l2.objectmanager.loadObjectID.mapsdatabase.longsPerDiskEntry";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_MEASURE_PERF                      = "l2.objectmanager.loadObjectID.measure.performance";
+  public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXSLEEP               = "l2.objectmanager.loadObjectID.checkpoint.maxsleep";
 
   /*********************************************************************************************************************
    * <code>
@@ -172,13 +172,13 @@ public interface TCPropertiesConsts {
    *                                      (experimental, do not change)
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_SEDA_COMMITSTAGE                                           = "l2.seda.commitstage.threads";
-  public static final String   L2_SEDA_FAULTSTAGE_THREADS                                    = "l2.seda.faultstage.threads";
-  public static final String   L2_SEDA_FLUSHSTAGE_THREADS                                    = "l2.seda.flushstage.threads";
-  public static final String   L2_SEDA_GCDELETESTAGE_THREADS                                 = "l2.seda.gcdeletestage.threads";
-  public static final String   L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS                    = "l2.seda.managedobjectresponsestage.threads";
-  public static final String   L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS                     = "l2.seda.managedobjectrequeststage.threads";
-  public static final String   L2_SEDA_STAGE_SINK_CAPACITY                                   = "l2.seda.stage.sink.capacity";
+  public static final String   L2_SEDA_COMMITSTAGE                                             = "l2.seda.commitstage.threads";
+  public static final String   L2_SEDA_FAULTSTAGE_THREADS                                      = "l2.seda.faultstage.threads";
+  public static final String   L2_SEDA_FLUSHSTAGE_THREADS                                      = "l2.seda.flushstage.threads";
+  public static final String   L2_SEDA_GCDELETESTAGE_THREADS                                   = "l2.seda.gcdeletestage.threads";
+  public static final String   L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS                      = "l2.seda.managedobjectresponsestage.threads";
+  public static final String   L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS                       = "l2.seda.managedobjectrequeststage.threads";
+  public static final String   L2_SEDA_STAGE_SINK_CAPACITY                                     = "l2.seda.stage.sink.capacity";
 
   /*********************************************************************************************************************
    * <code>
@@ -187,7 +187,7 @@ public interface TCPropertiesConsts {
    * stage.sink.capacity  : Capacity of L1's seda stage queue, Integer.MAX_VALUE if not set
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_SEDA_STAGE_SINK_CAPACITY                                   = "l1.seda.stage.sink.capacity";
+  public static final String   L1_SEDA_STAGE_SINK_CAPACITY                                     = "l1.seda.stage.sink.capacity";
 
   /*********************************************************************************************************************
    * <code>
@@ -197,14 +197,14 @@ public interface TCPropertiesConsts {
    * (l2.berkeleydb is removed before giving to Berkeley DB JE)
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_BERKELEYDB_JE_LOCK_TIMEOUT                                 = "l2.berkeleydb.je.lock.timeout";
-  public static final String   L2_BERKELEYDB_JE_MAXMEMORYPERCENT                             = "l2.berkeleydb.je.maxMemoryPercent";
-  public static final String   L2_BERKELEYDB_JE_LOCK_NLOCK_TABLES                            = "l2.berkeleydb.je.lock.nLockTables";
-  public static final String   L2_BERKELEYDB_JE_CLEANER_BYTES_INTERVAL                       = "l2.berkeleydb.je.cleaner.bytesInterval";
-  public static final String   L2_BERKELEYDB_JE_CHECKPOINTER_BYTESINTERVAL                   = "l2.berkeleydb.je.checkpointer.bytesInterval";
-  public static final String   L2_BERKELEYDB_JE_CLEANER_DETAIL_MAXMEMORY_PERCENTAGE          = "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage";
-  public static final String   L2_BERKELEYDB_JE_CLEANER_LOOKAHEAD_CACHESIZE                  = "l2.berkeleydb.je.cleaner.lookAheadCacheSize";
-  public static final String   L2_BERKELEYDB_JE_CLEANER_MINAGE                               = "l2.berkeleydb.je.cleaner.minAge";
+  public static final String   L2_BERKELEYDB_JE_LOCK_TIMEOUT                                   = "l2.berkeleydb.je.lock.timeout";
+  public static final String   L2_BERKELEYDB_JE_MAXMEMORYPERCENT                               = "l2.berkeleydb.je.maxMemoryPercent";
+  public static final String   L2_BERKELEYDB_JE_LOCK_NLOCK_TABLES                              = "l2.berkeleydb.je.lock.nLockTables";
+  public static final String   L2_BERKELEYDB_JE_CLEANER_BYTES_INTERVAL                         = "l2.berkeleydb.je.cleaner.bytesInterval";
+  public static final String   L2_BERKELEYDB_JE_CHECKPOINTER_BYTESINTERVAL                     = "l2.berkeleydb.je.checkpointer.bytesInterval";
+  public static final String   L2_BERKELEYDB_JE_CLEANER_DETAIL_MAXMEMORY_PERCENTAGE            = "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage";
+  public static final String   L2_BERKELEYDB_JE_CLEANER_LOOKAHEAD_CACHESIZE                    = "l2.berkeleydb.je.cleaner.lookAheadCacheSize";
+  public static final String   L2_BERKELEYDB_JE_CLEANER_MINAGE                                 = "l2.berkeleydb.je.cleaner.minAge";
 
   /*********************************************************************************************************************
    * <code>
@@ -215,9 +215,9 @@ public interface TCPropertiesConsts {
    * debug.enabled                          - valid values true/false
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_LFU_AGINGFACTOR                                            = "l2.lfu.agingFactor";
-  public static final String   L2_LFU_RECENTLY_ACCESSED_IGNORE_PERCENTAGE                    = "l2.lfu.recentlyAccessedIgnorePercentage";
-  public static final String   L2_LFU_DEBUG_ENABLED                                          = "l2.lfu.debug.enabled";
+  public static final String   L2_LFU_AGINGFACTOR                                              = "l2.lfu.agingFactor";
+  public static final String   L2_LFU_RECENTLY_ACCESSED_IGNORE_PERCENTAGE                      = "l2.lfu.recentlyAccessedIgnorePercentage";
+  public static final String   L2_LFU_DEBUG_ENABLED                                            = "l2.lfu.debug.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -227,8 +227,8 @@ public interface TCPropertiesConsts {
    * port        : Port number for Beanshell
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_BEANSHELL_ENABLED                                          = "l2.beanshell.enabled";
-  public static final String   L2_BEANSHELL_PORT                                             = "l2.beanshell.port";
+  public static final String   L2_BEANSHELL_ENABLED                                            = "l2.beanshell.enabled";
+  public static final String   L2_BEANSHELL_PORT                                               = "l2.beanshell.port";
 
   /*********************************************************************************************************************
    * <code>
@@ -246,19 +246,19 @@ public interface TCPropertiesConsts {
    * send.timeout.millis                  - Number of milliseconds to retry sending a message
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                          = "l2.nha.tcgroupcomm.handshake.timeout";
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                          = "l2.nha.tcgroupcomm.reconnect.enabled";
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT                          = "l2.nha.tcgroupcomm.reconnect.timeout";
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP                    = "l2.nha.tcgroupcomm.reconnect.sendqueue.cap";
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS                  = "l2.nha.tcgroupcomm.reconnect.maxDelayedAcks";
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW                      = "l2.nha.tcgroupcomm.reconnect.sendWindow";
-  public static final String   L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                         = "l2.nha.tcgroupcomm.discovery.interval";
+  public static final String   L2_NHA_TCGROUPCOMM_HANDSHAKE_TIMEOUT                            = "l2.nha.tcgroupcomm.handshake.timeout";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED                            = "l2.nha.tcgroupcomm.reconnect.enabled";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT                            = "l2.nha.tcgroupcomm.reconnect.timeout";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP                      = "l2.nha.tcgroupcomm.reconnect.sendqueue.cap";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS                    = "l2.nha.tcgroupcomm.reconnect.maxDelayedAcks";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW                        = "l2.nha.tcgroupcomm.reconnect.sendWindow";
+  public static final String   L2_NHA_TCGROUPCOMM_DISCOVERY_INTERVAL                           = "l2.nha.tcgroupcomm.discovery.interval";
   // a hidden tc.properties only used for l2 proxy testing purpose
-  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT                  = "l2.nha.tcgroupcomm.l2proxytoport";
-  public static final String   L2_NHA_SEND_TIMEOUT_MILLS                                     = "l2.nha.send.timeout.millis";
-  public static final String   L2_NHA_DIRTYDB_AUTODELETE                                     = "l2.nha.dirtydb.autoDelete";
-  public static final String   L2_NHA_DIRTYDB_ROLLING                                        = "l2.nha.dirtydb.rolling";
-  public static final String   L2_NHA_AUTORESTART                                            = "l2.nha.autoRestart";
+  public static final String   L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT                    = "l2.nha.tcgroupcomm.l2proxytoport";
+  public static final String   L2_NHA_SEND_TIMEOUT_MILLS                                       = "l2.nha.send.timeout.millis";
+  public static final String   L2_NHA_DIRTYDB_AUTODELETE                                       = "l2.nha.dirtydb.autoDelete";
+  public static final String   L2_NHA_DIRTYDB_ROLLING                                          = "l2.nha.dirtydb.rolling";
+  public static final String   L2_NHA_AUTORESTART                                              = "l2.nha.autoRestart";
 
   /*********************************************************************************************************************
    * <code>
@@ -268,7 +268,7 @@ public interface TCPropertiesConsts {
    *                                directory while starting up
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_STARTUPLOCK_RETRIES_ENABLED                                = "l2.startuplock.retries.enabled";
+  public static final String   L2_STARTUPLOCK_RETRIES_ENABLED                                  = "l2.startuplock.retries.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -277,7 +277,7 @@ public interface TCPropertiesConsts {
    *                           (experimental, do not change)
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_SERVERARRAY_2PC_ENABLED                                    = "l2.serverarray.2pc.enabled";
+  public static final String   L2_SERVERARRAY_2PC_ENABLED                                      = "l2.serverarray.2pc.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -293,9 +293,9 @@ public interface TCPropertiesConsts {
    *                                      is chosen
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                         = "l1.serverarray.objectCreationStrategy";
-  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_GROUPAFFINITY_GROUPNAME = "l1.serverarray.objectCreationStrategy.groupAffinity.groupName";
-  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_ROUND_ROBIN_START_INDEX = "l1.serverarray.objectCreationStrategy.roundRobin.startIndex";
+  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY                           = "l1.serverarray.objectCreationStrategy";
+  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_GROUPAFFINITY_GROUPNAME   = "l1.serverarray.objectCreationStrategy.groupAffinity.groupName";
+  public static final String   L1_SERVERARRAY_OBJECTCREATIONSTRATEGY_ROUND_ROBIN_START_INDEX   = "l1.serverarray.objectCreationStrategy.roundRobin.startIndex";
 
   /*********************************************************************************************************************
    * <code>
@@ -305,7 +305,7 @@ public interface TCPropertiesConsts {
    *                           the current VM version running the L1 application
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_JVM_CHECK_COMPATIBILITY                                    = "l1.jvm.check.compatibility";
+  public static final String   L1_JVM_CHECK_COMPATIBILITY                                      = "l1.jvm.check.compatibility";
 
   /*********************************************************************************************************************
    * <code>
@@ -313,7 +313,7 @@ public interface TCPropertiesConsts {
    * Description : This property will check if the client has to match server config i.e. check cluster topology
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_L2_CONFIG_VALIDATION_ENABLED                               = "l1.l2.config.validation.enabled";
+  public static final String   L1_L2_CONFIG_VALIDATION_ENABLED                                 = "l1.l2.config.validation.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -329,11 +329,11 @@ public interface TCPropertiesConsts {
    * tc-version-check             - Off|warn|enforce|strict
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_MODULES_REPOSITORIES                                       = "l1.modules.repositories";
-  public static final String   L1_MODULES_DEFAULT                                            = "l1.modules.default";
-  public static final String   L1_MODULES_ADDITIONAL                                         = "l1.modules.additional";
-  public static final String   L1_MODULES_TC_VERSION_CHECK                                   = "l1.modules.tc-version-check";
-  public static final String   L1_MODULES_TOOLKIT_SEARCH_RANGE                               = "l1.modules.toolkitSearchRange";
+  public static final String   L1_MODULES_REPOSITORIES                                         = "l1.modules.repositories";
+  public static final String   L1_MODULES_DEFAULT                                              = "l1.modules.default";
+  public static final String   L1_MODULES_ADDITIONAL                                           = "l1.modules.additional";
+  public static final String   L1_MODULES_TC_VERSION_CHECK                                     = "l1.modules.tc-version-check";
+  public static final String   L1_MODULES_TOOLKIT_SEARCH_RANGE                                 = "l1.modules.toolkitSearchRange";
 
   /*********************************************************************************************************************
    * <code>
@@ -353,15 +353,15 @@ public interface TCPropertiesConsts {
    *                           of the objects is not generally known
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_CACHEMANAGER_ENABLED                                       = "l1.cachemanager.enabled";
-  public static final String   L1_CACHEMANAGER_LOGGING_ENABLED                               = "l1.cachemanager.logging.enabled";
-  public static final String   L1_CACHEMANAGER_LEASTCOUNT                                    = "l1.cachemanager.leastCount";
-  public static final String   L1_CACHEMANAGER_PERCENTAGE_TOEVICT                            = "l1.cachemanager.percentageToEvict";
-  public static final String   L1_CACHEMANAGER_SLEEPINTERVAL                                 = "l1.cachemanager.sleepInterval";
-  public static final String   L1_CACHEMANAGER_CRITICAL_THRESHOLD                            = "l1.cachemanager.criticalThreshold";
-  public static final String   L1_CACHEMANAGER_THRESHOLD                                     = "l1.cachemanager.threshold";
-  public static final String   L1_CACHEMANAGER_MONITOR_OLDGENONLY                            = "l1.cachemanager.monitorOldGenOnly";
-  public static final String   L1_CACHEMANAGER_CRITICAL_OBJECT_THRESHOLD                     = "l1.cachemanager.criticalObjectThreshold";
+  public static final String   L1_CACHEMANAGER_ENABLED                                         = "l1.cachemanager.enabled";
+  public static final String   L1_CACHEMANAGER_LOGGING_ENABLED                                 = "l1.cachemanager.logging.enabled";
+  public static final String   L1_CACHEMANAGER_LEASTCOUNT                                      = "l1.cachemanager.leastCount";
+  public static final String   L1_CACHEMANAGER_PERCENTAGE_TOEVICT                              = "l1.cachemanager.percentageToEvict";
+  public static final String   L1_CACHEMANAGER_SLEEPINTERVAL                                   = "l1.cachemanager.sleepInterval";
+  public static final String   L1_CACHEMANAGER_CRITICAL_THRESHOLD                              = "l1.cachemanager.criticalThreshold";
+  public static final String   L1_CACHEMANAGER_THRESHOLD                                       = "l1.cachemanager.threshold";
+  public static final String   L1_CACHEMANAGER_MONITOR_OLDGENONLY                              = "l1.cachemanager.monitorOldGenOnly";
+  public static final String   L1_CACHEMANAGER_CRITICAL_OBJECT_THRESHOLD                       = "l1.cachemanager.criticalObjectThreshold";
 
   /*********************************************************************************************************************
    * <code>
@@ -404,23 +404,23 @@ public interface TCPropertiesConsts {
    *                                 value 0 for infinite wait.
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_TRANSACTIONMANAGER_LOGGING_ENABLED                         = "l1.transactionmanager.logging.enabled";
-  public static final String   L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE                = "l1.transactionmanager.maxOutstandingBatchSize";
-  public static final String   L1_TRANSACTIONMANAGER_MAXBATCHSIZE_INKILOBYTES                = "l1.transactionmanager.maxBatchSizeInKiloBytes";
-  public static final String   L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES                      = "l1.transactionmanager.maxPendingBatches";
-  public static final String   L1_TRANSACTIONMANAGER_MAXSLEEPTIME_BEFOREHALT                 = "l1.transactionmanager.maxSleepTimeBeforeHalt";
-  public static final String   L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT             = "l1.transactionmanager.completedAckFlushTimeout";
-  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED                = "l1.transactionmanager.strings.compress.enabled";
-  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED        = "l1.transactionmanager.strings.compress.logging.enabled";
-  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                = "l1.transactionmanager.strings.compress.minSize";
-  public static final String   L1_TRANSACTIONMANAGER_FOLDING_ENABLED                         = "l1.transactionmanager.folding.enabled";
-  public static final String   L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT                    = "l1.transactionmanager.folding.object.limit";
-  public static final String   L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT                      = "l1.transactionmanager.folding.lock.limit";
-  public static final String   L1_TRANSACTIONMANAGER_FOLDING_DEBUG                           = "l1.transactionmanager.folding.debug";
-  public static final String   L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT                    = "l1.transactionmanager.timeoutForAckOnExit";
+  public static final String   L1_TRANSACTIONMANAGER_LOGGING_ENABLED                           = "l1.transactionmanager.logging.enabled";
+  public static final String   L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE                  = "l1.transactionmanager.maxOutstandingBatchSize";
+  public static final String   L1_TRANSACTIONMANAGER_MAXBATCHSIZE_INKILOBYTES                  = "l1.transactionmanager.maxBatchSizeInKiloBytes";
+  public static final String   L1_TRANSACTIONMANAGER_MAXPENDING_BATCHES                        = "l1.transactionmanager.maxPendingBatches";
+  public static final String   L1_TRANSACTIONMANAGER_MAXSLEEPTIME_BEFOREHALT                   = "l1.transactionmanager.maxSleepTimeBeforeHalt";
+  public static final String   L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT               = "l1.transactionmanager.completedAckFlushTimeout";
+  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_ENABLED                  = "l1.transactionmanager.strings.compress.enabled";
+  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_LOGGING_ENABLED          = "l1.transactionmanager.strings.compress.logging.enabled";
+  public static final String   L1_TRANSACTIONMANAGER_STRINGS_COMPRESS_MINSIZE                  = "l1.transactionmanager.strings.compress.minSize";
+  public static final String   L1_TRANSACTIONMANAGER_FOLDING_ENABLED                           = "l1.transactionmanager.folding.enabled";
+  public static final String   L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT                      = "l1.transactionmanager.folding.object.limit";
+  public static final String   L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT                        = "l1.transactionmanager.folding.lock.limit";
+  public static final String   L1_TRANSACTIONMANAGER_FOLDING_DEBUG                             = "l1.transactionmanager.folding.debug";
+  public static final String   L1_TRANSACTIONMANAGER_TIMEOUTFORACK_ONEXIT                      = "l1.transactionmanager.timeoutForAckOnExit";
 
-  public static final String   TC_TRANSPORT_HANDSHAKE_TIMEOUT                                = "tc.transport.handshake.timeout";
-  public static final String   TC_CONFIG_SOURCEGET_TIMEOUT                                   = "tc.config.getFromSource.timeout";
+  public static final String   TC_TRANSPORT_HANDSHAKE_TIMEOUT                                  = "tc.transport.handshake.timeout";
+  public static final String   TC_CONFIG_SOURCEGET_TIMEOUT                                     = "tc.config.getFromSource.timeout";
 
   /*********************************************************************************************************************
    * <code>
@@ -434,10 +434,10 @@ public interface TCPropertiesConsts {
    *                                     (values less than 10ms will be set to 10ms)
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_MAX_CONNECT_RETRIES                                        = "l1.max.connect.retries";
-  public static final String   L1_CONNECT_VERSION_MATCH_CHECK                                = "l1.connect.versionMatchCheck.enabled";
-  public static final String   L1_SOCKET_CONNECT_TIMEOUT                                     = "l1.socket.connect.timeout";
-  public static final String   L1_SOCKET_RECONNECT_WAIT_INTERVAL                             = "l1.socket.reconnect.waitInterval";
+  public static final String   L1_MAX_CONNECT_RETRIES                                          = "l1.max.connect.retries";
+  public static final String   L1_CONNECT_VERSION_MATCH_CHECK                                  = "l1.connect.versionMatchCheck.enabled";
+  public static final String   L1_SOCKET_CONNECT_TIMEOUT                                       = "l1.socket.connect.timeout";
+  public static final String   L1_SOCKET_RECONNECT_WAIT_INTERVAL                               = "l1.socket.reconnect.waitInterval";
 
   /*********************************************************************************************************************
    * <code>
@@ -451,11 +451,11 @@ public interface TCPropertiesConsts {
    * sendWindow     - Max number of messages that can be sent without getting an ack back
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_L1RECONNECT_ENABLED                                        = "l2.l1reconnect.enabled";
-  public static final String   L2_L1RECONNECT_TIMEOUT_MILLS                                  = "l2.l1reconnect.timeout.millis";
-  public static final String   L2_L1RECONNECT_SENDQUEUE_CAP                                  = "l2.l1reconnect.sendqueue.cap";
-  public static final String   L2_L1RECONNECT_MAX_DELAYEDACKS                                = "l2.l1reconnect.maxDelayedAcks";
-  public static final String   L2_L1RECONNECT_SEND_WINDOW                                    = "l2.l1reconnect.sendWindow";
+  public static final String   L2_L1RECONNECT_ENABLED                                          = "l2.l1reconnect.enabled";
+  public static final String   L2_L1RECONNECT_TIMEOUT_MILLS                                    = "l2.l1reconnect.timeout.millis";
+  public static final String   L2_L1RECONNECT_SENDQUEUE_CAP                                    = "l2.l1reconnect.sendqueue.cap";
+  public static final String   L2_L1RECONNECT_MAX_DELAYEDACKS                                  = "l2.l1reconnect.maxDelayedAcks";
+  public static final String   L2_L1RECONNECT_SEND_WINDOW                                      = "l2.l1reconnect.sendWindow";
 
   /*********************************************************************************************************************
    * <code>
@@ -471,13 +471,13 @@ public interface TCPropertiesConsts {
    * fault.logging.enabled   : Enable/disable object's fault logging
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                       = "l1.objectmanager.remote.maxDNALRUSize";
-  public static final String   L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED                       = "l1.objectmanager.remote.logging.enabled";
-  public static final String   L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY          = "l1.objectmanager.remote.maxRequestSentImmediately";
-  public static final String   L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD              = "l1.objectmanager.remote.batchLookupTimePeriod";
-  public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                        = "l1.objectmanager.objectid.request.size";
-  public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                        = "l1.objectmanager.flush.logging.enabled";
-  public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                        = "l1.objectmanager.fault.logging.enabled";
+  public static final String   L1_OBJECTMANAGER_REMOTE_MAX_DNALRU_SIZE                         = "l1.objectmanager.remote.maxDNALRUSize";
+  public static final String   L1_OBJECTMANAGER_REMOTE_LOGGING_ENABLED                         = "l1.objectmanager.remote.logging.enabled";
+  public static final String   L1_OBJECTMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY            = "l1.objectmanager.remote.maxRequestSentImmediately";
+  public static final String   L1_OBJECTMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD                = "l1.objectmanager.remote.batchLookupTimePeriod";
+  public static final String   L1_OBJECTMANAGER_OBJECTID_REQUEST_SIZE                          = "l1.objectmanager.objectid.request.size";
+  public static final String   L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED                          = "l1.objectmanager.flush.logging.enabled";
+  public static final String   L1_OBJECTMANAGER_FAULT_LOGGING_ENABLED                          = "l1.objectmanager.fault.logging.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -490,8 +490,8 @@ public interface TCPropertiesConsts {
    * 
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY       = "l1.servermapmanager.remote.maxRequestSentImmediately";
-  public static final String   L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD           = "l1.servermapmanager.remote.batchLookupTimePeriod";
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_MAX_REQUEST_SENT_IMMEDIATELY         = "l1.servermapmanager.remote.maxRequestSentImmediately";
+  public static final String   L1_SERVERMAPMANAGER_REMOTE_BATCH_LOOKUP_TIME_PERIOD             = "l1.servermapmanager.remote.batchLookupTimePeriod";
 
   /*********************************************************************************************************************
    * <code>
@@ -501,9 +501,9 @@ public interface TCPropertiesConsts {
    * longgc.threshold - DGC taking greater than the time mentioned will be logged
    * </code>
    ********************************************************************************************************************/
-  public static final String   LOGGING_MAXBACKUPS                                            = "logging.maxBackups";
-  public static final String   LOGGING_MAX_LOGFILE_SIZE                                      = "logging.maxLogFileSize";
-  public static final String   LOGGING_LONG_GC_THRESHOLD                                     = "logging.longgc.threshold";
+  public static final String   LOGGING_MAXBACKUPS                                              = "logging.maxBackups";
+  public static final String   LOGGING_MAX_LOGFILE_SIZE                                        = "logging.maxLogFileSize";
+  public static final String   LOGGING_LONG_GC_THRESHOLD                                       = "logging.longgc.threshold";
 
   /*********************************************************************************************************************
    * <code>
@@ -516,13 +516,13 @@ public interface TCPropertiesConsts {
    * bytebuffer.threadlocal.pool.maxcount : Thread pool size
    * </code>
    ********************************************************************************************************************/
-  public static final String   TC_STAGE_MONITOR_ENABLED                                      = "tc.stage.monitor.enabled";
-  public static final String   TC_STAGE_MONITOR_DELAY                                        = "tc.stage.monitor.delay";
-  public static final String   TC_BYTEBUFFER_POOLING_ENABLED                                 = "tc.bytebuffer.pooling.enabled";
-  public static final String   TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT                            = "tc.bytebuffer.common.pool.maxcount";
-  public static final String   TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT                       = "tc.bytebuffer.threadlocal.pool.maxcount";
-  public static final String   TC_MESSAGE_GROUPING_ENABLED                                   = "tc.messages.grouping.enabled";
-  public static final String   TC_MESSAGE_GROUPING_MAXSIZE_KB                                = "tc.messages.grouping.maxSizeKiloBytes";
+  public static final String   TC_STAGE_MONITOR_ENABLED                                        = "tc.stage.monitor.enabled";
+  public static final String   TC_STAGE_MONITOR_DELAY                                          = "tc.stage.monitor.delay";
+  public static final String   TC_BYTEBUFFER_POOLING_ENABLED                                   = "tc.bytebuffer.pooling.enabled";
+  public static final String   TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT                              = "tc.bytebuffer.common.pool.maxcount";
+  public static final String   TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT                         = "tc.bytebuffer.threadlocal.pool.maxcount";
+  public static final String   TC_MESSAGE_GROUPING_ENABLED                                     = "tc.messages.grouping.enabled";
+  public static final String   TC_MESSAGE_GROUPING_MAXSIZE_KB                                  = "tc.messages.grouping.maxSizeKiloBytes";
 
   /*********************************************************************************************************************
    * <code>
@@ -532,8 +532,8 @@ public interface TCPropertiesConsts {
    * enabled/disabled
    * </code>
    ********************************************************************************************************************/
-  public static final String   TC_MANAGEMENT_MBEANS_ENABLED                                  = "tc.management.mbeans.enabled";
-  public static final String   TC_MANAGEMENT_TEST_MBEANS_ENABLED                             = "tc.management.test.mbeans.enabled";
+  public static final String   TC_MANAGEMENT_MBEANS_ENABLED                                    = "tc.management.mbeans.enabled";
+  public static final String   TC_MANAGEMENT_TEST_MBEANS_ENABLED                               = "tc.management.test.mbeans.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -564,19 +564,19 @@ public interface TCPropertiesConsts {
    * session.debug.sessions          : output additional debug information when sessions are looked up, created, etc
    * </code>
    ********************************************************************************************************************/
-  public static final String   SESSION_INVALIDATOR_SLEEP                                     = "session.invalidator.sleep";
-  public static final String   SESSION_INVALIDATOR_BENCH_ENABLED                             = "session.invalidator.bench.enabled";
-  public static final String   SESSION_REQUEST_BENCH_ENABLED                                 = "session.request.bench.enabled";
-  public static final String   SESSION_REQUEST_TRACKING                                      = "session.request.tracking";
-  public static final String   SESSION_REQUEST_TRACKING_DUMP                                 = "session.request.tracking.dump";
-  public static final String   SESSION_REQUEST_TRACKING_INTERVAL                             = "session.request.tracking.interval";
-  public static final String   SESSION_REQUEST_TRACKING_THRESHOLD                            = "session.request.tracking.threshold";
-  public static final String   SESSION_DEBUG_HOPS                                            = "session.debug.hops";
-  public static final String   SESSION_DEBUG_HOPS_INTERVAL                                   = "session.debug.hops.interval";
-  public static final String   SESSION_DEBUG_INVALIDATE                                      = "session.debug.invalidate";
-  public static final String   SESSION_DEBUG_SESSIONS                                        = "session.debug.sessions";
-  public static final String   SESSION_VHOSTS_EXCLUDED                                       = "session.vhosts.excluded";
-  public static final String   SESSION_STATISTICS_ENABLED                                    = "session.statistics.enabled";
+  public static final String   SESSION_INVALIDATOR_SLEEP                                       = "session.invalidator.sleep";
+  public static final String   SESSION_INVALIDATOR_BENCH_ENABLED                               = "session.invalidator.bench.enabled";
+  public static final String   SESSION_REQUEST_BENCH_ENABLED                                   = "session.request.bench.enabled";
+  public static final String   SESSION_REQUEST_TRACKING                                        = "session.request.tracking";
+  public static final String   SESSION_REQUEST_TRACKING_DUMP                                   = "session.request.tracking.dump";
+  public static final String   SESSION_REQUEST_TRACKING_INTERVAL                               = "session.request.tracking.interval";
+  public static final String   SESSION_REQUEST_TRACKING_THRESHOLD                              = "session.request.tracking.threshold";
+  public static final String   SESSION_DEBUG_HOPS                                              = "session.debug.hops";
+  public static final String   SESSION_DEBUG_HOPS_INTERVAL                                     = "session.debug.hops.interval";
+  public static final String   SESSION_DEBUG_INVALIDATE                                        = "session.debug.invalidate";
+  public static final String   SESSION_DEBUG_SESSIONS                                          = "session.debug.sessions";
+  public static final String   SESSION_VHOSTS_EXCLUDED                                         = "session.vhosts.excluded";
+  public static final String   SESSION_STATISTICS_ENABLED                                      = "session.statistics.enabled";
 
   /*********************************************************************************************************************
    * <code>
@@ -584,7 +584,7 @@ public interface TCPropertiesConsts {
    * forcebasic : enable/disable only basic memory monitoring
    * </code>
    ********************************************************************************************************************/
-  public static final String   MEMORY_MONITOR_FORCEBASIC                                     = "memory.monitor.forcebasic";
+  public static final String   MEMORY_MONITOR_FORCEBASIC                                       = "memory.monitor.forcebasic";
 
   /*********************************************************************************************************************
    * <code>
@@ -620,21 +620,23 @@ public interface TCPropertiesConsts {
    *                            : The maximum time in millis after which incoherent cached items will be discarded from the local cache.
    * </code>
    ********************************************************************************************************************/
-  public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                            = "ehcache.clusterAllCacheManagers";
-  public static final String   EHCAHCE_LOGGING_ENABLED                                       = "ehcache.logging.enabled";
-  public static final String   EHCAHCE_EVICTOR_LOGGING_ENABLED                               = "ehcache.evictor.logging.enabled";
-  public static final String   EHCAHCE_EVICTOR_POOL_SIZE                                     = "ehcache.evictor.pool.size";
-  public static final String   EHCAHCE_CONCURRENCY                                           = "ehcache.concurrency";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_ENABLE                                = "ehcache.global.eviction.enable";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_FREQUENCY                             = "ehcache.global.eviction.frequency";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_SEGMENTS                              = "ehcache.global.eviction.segments";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_REST_TIMEMILLS                        = "ehcache.global.eviction.rest.timeMillis";
-  public static final String   EHCAHCE_LOCK_READLEVEL                                        = "ehcache.lock.readLevel";
-  public static final String   EHCAHCE_LOCK_WRITELEVEL                                       = "ehcache.lock.writeLevel";
-  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED               = "ehcache.storageStrategy.dcv2.localcache.enabled";
-  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED       = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";
-  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED         = "ehcache.storageStrategy.dcv2.periodicEviction.enabled";
-  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_ITEMS_RECYCLE_TIME    = "ehcache.storageStrategy.dcv2.localcache.incoherentCachedItemsRecycleMillis";
+  public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                              = "ehcache.clusterAllCacheManagers";
+  public static final String   EHCAHCE_LOGGING_ENABLED                                         = "ehcache.logging.enabled";
+  public static final String   EHCAHCE_EVICTOR_LOGGING_ENABLED                                 = "ehcache.evictor.logging.enabled";
+  public static final String   EHCAHCE_EVICTOR_POOL_SIZE                                       = "ehcache.evictor.pool.size";
+  public static final String   EHCAHCE_CONCURRENCY                                             = "ehcache.concurrency";
+  public static final String   EHCAHCE_GLOBAL_EVICTION_ENABLE                                  = "ehcache.global.eviction.enable";
+  public static final String   EHCAHCE_GLOBAL_EVICTION_FREQUENCY                               = "ehcache.global.eviction.frequency";
+  public static final String   EHCAHCE_GLOBAL_EVICTION_SEGMENTS                                = "ehcache.global.eviction.segments";
+  public static final String   EHCAHCE_GLOBAL_EVICTION_REST_TIMEMILLS                          = "ehcache.global.eviction.rest.timeMillis";
+  public static final String   EHCAHCE_LOCK_READLEVEL                                          = "ehcache.lock.readLevel";
+  public static final String   EHCAHCE_LOCK_WRITELEVEL                                         = "ehcache.lock.writeLevel";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED                 = "ehcache.storageStrategy.dcv2.localcache.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT = "ehcache.storageStrategy.dcv2.localcache.incoherentReadTimeout";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED         = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED           = "ehcache.storageStrategy.dcv2.periodicEviction.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PINSEGMENTS_ENABLED                = "ehcache.storageStrategy.dcv2.pinSegments.enabled";
+  public static final String   EHCACHE_STORAGESTRATEGY_DCV2_OFFHEAP_CACHEENTRIES_ENABLED       = "ehcache.storageStrategy.dcv2.offHeap.cacheEntries.enabled";
   /*********************************************************************************************************************
    * <code>
    * Section : L1 Lock Manager Properties
@@ -643,8 +645,8 @@ public interface TCPropertiesConsts {
    * timeout.interval  : time after which an unused lock will be a candidate for lock GC
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_LOCKMANAGER_STRIPED_COUNT                                  = "l1.lockmanager.striped.count";
-  public static final String   L1_LOCKMANAGER_TIMEOUT_INTERVAL                               = "l1.lockmanager.timeout.interval";
+  public static final String   L1_LOCKMANAGER_STRIPED_COUNT                                    = "l1.lockmanager.striped.count";
+  public static final String   L1_LOCKMANAGER_TIMEOUT_INTERVAL                                 = "l1.lockmanager.timeout.interval";
 
   /*********************************************************************************************************************
    * <code>
@@ -654,9 +656,9 @@ public interface TCPropertiesConsts {
    * l1.lock.statistics.gatherInterval  : Poll interval for gathering lock statistics
    * </code>
    ********************************************************************************************************************/
-  public static final String   LOCK_STATISTICS_ENABLED                                       = "lock.statistics.enabled";
-  public static final String   L1_LOCK_STATISTICS_TRACEDEPTH                                 = "l1.lock.statistics.traceDepth";
-  public static final String   L1_LOCK_STATISTICS_GATHERINTERVAL                             = "l1.lock.statistics.gatherInterval";
+  public static final String   LOCK_STATISTICS_ENABLED                                         = "lock.statistics.enabled";
+  public static final String   L1_LOCK_STATISTICS_TRACEDEPTH                                   = "l1.lock.statistics.traceDepth";
+  public static final String   L1_LOCK_STATISTICS_GATHERINTERVAL                               = "l1.lock.statistics.gatherInterval";
 
   /*********************************************************************************************************************
    * <code>
@@ -666,9 +668,9 @@ public interface TCPropertiesConsts {
    *                      are contending for them
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_LOCKMANAGER_GREEDY_LOCKS_ENABLED                           = "l2.lockmanager.greedy.locks.enabled";
-  public static final String   L2_LOCKMANAGER_GREEDY_LEASE_ENABLED                           = "l2.lockmanager.greedy.lease.enabled";
-  public static final String   L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS                 = "l2.lockmanager.greedy.lease.leaseTimeInMillis";
+  public static final String   L2_LOCKMANAGER_GREEDY_LOCKS_ENABLED                             = "l2.lockmanager.greedy.locks.enabled";
+  public static final String   L2_LOCKMANAGER_GREEDY_LEASE_ENABLED                             = "l2.lockmanager.greedy.lease.enabled";
+  public static final String   L2_LOCKMANAGER_GREEDY_LEASE_LEASETIME_INMILLS                   = "l2.lockmanager.greedy.lease.leaseTimeInMillis";
 
   /*********************************************************************************************************************
    * <code>
@@ -677,8 +679,8 @@ public interface TCPropertiesConsts {
    * keepalive  : Enable/disable tcp probe for running/broken connections
    * </code>
    ********************************************************************************************************************/
-  public static final String   NET_CORE_KEEPALIVE                                            = "net.core.keepalive";
-  public static final String   NET_CORE_TCP_NO_DELAY                                         = "net.core.tcpnodelay";
+  public static final String   NET_CORE_KEEPALIVE                                              = "net.core.keepalive";
+  public static final String   NET_CORE_TCP_NO_DELAY                                           = "net.core.tcpnodelay";
 
   /*********************************************************************************************************************
    * <code> Section :
@@ -692,12 +694,12 @@ public interface TCPropertiesConsts {
    *                                            supposed to be used by tests. False by default
    * </code>
    ********************************************************************************************************************/
-  public static final String   CVT_RETRIEVER_NOTIFICATION_INTERVAL                           = "cvt.retriever.notification.interval";
-  public static final String   CVT_STATISTICS_LOGGING_INTERVAL                               = "cvt.statistics.logging.interval";
-  public static final String   CVT_BUFFER_RANDOM_SUFFIX_ENABLED                              = "cvt.buffer.randomsuffix.enabled";
-  public static final String   CVT_STORE_RANDOM_SUFFIX_ENABLED                               = "cvt.store.randomsuffix.enabled";
-  public static final String   CVT_REST_INTERFACE_ENABLED                                    = "cvt.rest.interface.enabled";
-  public static final String   CVT_CLIENT_FAIL_BUFFER_OPEN                                   = "cvt.client.fail.buffer.open";
+  public static final String   CVT_RETRIEVER_NOTIFICATION_INTERVAL                             = "cvt.retriever.notification.interval";
+  public static final String   CVT_STATISTICS_LOGGING_INTERVAL                                 = "cvt.statistics.logging.interval";
+  public static final String   CVT_BUFFER_RANDOM_SUFFIX_ENABLED                                = "cvt.buffer.randomsuffix.enabled";
+  public static final String   CVT_STORE_RANDOM_SUFFIX_ENABLED                                 = "cvt.store.randomsuffix.enabled";
+  public static final String   CVT_REST_INTERFACE_ENABLED                                      = "cvt.rest.interface.enabled";
+  public static final String   CVT_CLIENT_FAIL_BUFFER_OPEN                                     = "cvt.client.fail.buffer.open";
 
   /*********************************************************************************************************************
    * <code>
@@ -721,31 +723,31 @@ public interface TCPropertiesConsts {
    *                         successful socket connects
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_HEALTHCHECK_L1_PING_ENABLED                                = "l2.healthcheck.l1.ping.enabled";
-  public static final String   L2_HEALTHCHECK_L1_PING_IDLETIME                               = "l2.healthcheck.l1.ping.idletime";
-  public static final String   L2_HEALTHCHECK_L1_PING_INTERVAL                               = "l2.healthcheck.l1.ping.interval";
-  public static final String   L2_HEALTHCHECK_L1_PING_PROBES                                 = "l2.healthcheck.l1.ping.probes";
-  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT                             = "l2.healthcheck.l1.socketConnect";
-  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT                     = "l2.healthcheck.l1.socketConnectTimeout";
-  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                       = "l2.healthcheck.l1.socketConnectCount";
+  public static final String   L2_HEALTHCHECK_L1_PING_ENABLED                                  = "l2.healthcheck.l1.ping.enabled";
+  public static final String   L2_HEALTHCHECK_L1_PING_IDLETIME                                 = "l2.healthcheck.l1.ping.idletime";
+  public static final String   L2_HEALTHCHECK_L1_PING_INTERVAL                                 = "l2.healthcheck.l1.ping.interval";
+  public static final String   L2_HEALTHCHECK_L1_PING_PROBES                                   = "l2.healthcheck.l1.ping.probes";
+  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT                               = "l2.healthcheck.l1.socketConnect";
+  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT_TIMEOUT                       = "l2.healthcheck.l1.socketConnectTimeout";
+  public static final String   L2_HEALTHCHECK_L1_SOCKECT_CONNECT_COUNT                         = "l2.healthcheck.l1.socketConnectCount";
 
-  public static final String   L2_HEALTHCHECK_L2_PING_ENABLED                                = "l2.healthcheck.l2.ping.enabled";
-  public static final String   L2_HEALTHCHECK_L2_PING_IDLETIME                               = "l2.healthcheck.l2.ping.idletime";
-  public static final String   L2_HEALTHCHECK_L2_PING_INTERVAL                               = "l2.healthcheck.l2.ping.interval";
-  public static final String   L2_HEALTHCHECK_L2_PING_PROBES                                 = "l2.healthcheck.l2.ping.probes";
-  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT                             = "l2.healthcheck.l2.socketConnect";
-  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT                     = "l2.healthcheck.l2.socketConnectTimeout";
-  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                       = "l2.healthcheck.l2.socketConnectCount";
+  public static final String   L2_HEALTHCHECK_L2_PING_ENABLED                                  = "l2.healthcheck.l2.ping.enabled";
+  public static final String   L2_HEALTHCHECK_L2_PING_IDLETIME                                 = "l2.healthcheck.l2.ping.idletime";
+  public static final String   L2_HEALTHCHECK_L2_PING_INTERVAL                                 = "l2.healthcheck.l2.ping.interval";
+  public static final String   L2_HEALTHCHECK_L2_PING_PROBES                                   = "l2.healthcheck.l2.ping.probes";
+  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT                               = "l2.healthcheck.l2.socketConnect";
+  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT                       = "l2.healthcheck.l2.socketConnectTimeout";
+  public static final String   L2_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                         = "l2.healthcheck.l2.socketConnectCount";
 
-  public static final String   L1_HEALTHCHECK_L2_BIND_ADDRESS                                = "l1.healthcheck.l2.bindAddress";
-  public static final String   L1_HEALTHCHECK_L2_BIND_PORT                                   = "l1.healthcheck.l2.bindPort";
-  public static final String   L1_HEALTHCHECK_L2_PING_ENABLED                                = "l1.healthcheck.l2.ping.enabled";
-  public static final String   L1_HEALTHCHECK_L2_PING_IDLETIME                               = "l1.healthcheck.l2.ping.idletime";
-  public static final String   L1_HEALTHCHECK_L2_PING_INTERVAL                               = "l1.healthcheck.l2.ping.interval";
-  public static final String   L1_HEALTHCHECK_L2_PING_PROBES                                 = "l1.healthcheck.l2.ping.probes";
-  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT                             = "l1.healthcheck.l2.socketConnect";
-  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT                     = "l1.healthcheck.l2.socketConnectTimeout";
-  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                       = "l1.healthcheck.l2.socketConnectCount";
+  public static final String   L1_HEALTHCHECK_L2_BIND_ADDRESS                                  = "l1.healthcheck.l2.bindAddress";
+  public static final String   L1_HEALTHCHECK_L2_BIND_PORT                                     = "l1.healthcheck.l2.bindPort";
+  public static final String   L1_HEALTHCHECK_L2_PING_ENABLED                                  = "l1.healthcheck.l2.ping.enabled";
+  public static final String   L1_HEALTHCHECK_L2_PING_IDLETIME                                 = "l1.healthcheck.l2.ping.idletime";
+  public static final String   L1_HEALTHCHECK_L2_PING_INTERVAL                                 = "l1.healthcheck.l2.ping.interval";
+  public static final String   L1_HEALTHCHECK_L2_PING_PROBES                                   = "l1.healthcheck.l2.ping.probes";
+  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT                               = "l1.healthcheck.l2.socketConnect";
+  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT_TIMEOUT                       = "l1.healthcheck.l2.socketConnectTimeout";
+  public static final String   L1_HEALTHCHECK_L2_SOCKECT_CONNECT_COUNT                         = "l1.healthcheck.l2.socketConnectCount";
 
   /*********************************************************************************************************************
    * <code>
@@ -754,8 +756,8 @@ public interface TCPropertiesConsts {
    * tcm.monitor.delay   - The delay (in seconds) between reporting to the log
    * </code>
    ********************************************************************************************************************/
-  public static final String   TCM_MONITOR_ENABLED                                           = "tcm.monitor.enabled";
-  public static final String   TCM_MONITOR_DELAY                                             = "tcm.monitor.delay";
+  public static final String   TCM_MONITOR_ENABLED                                             = "tcm.monitor.enabled";
+  public static final String   TCM_MONITOR_DELAY                                               = "tcm.monitor.delay";
 
   /*********************************************************************************************************************
    * <code>
@@ -765,9 +767,9 @@ public interface TCPropertiesConsts {
    * http.defaultservlet.attribute.dirallowed   - If true, directory listings are returned if no welcome file is found
    * </code>
    ********************************************************************************************************************/
-  public static final String   HTTP_DEFAULT_SERVLET_ENABLED                                  = "http.defaultservlet.enabled";
-  public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                        = "http.defaultservlet.attribute.aliases";
-  public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED                    = "http.defaultservlet.attribute.dirallowed";
+  public static final String   HTTP_DEFAULT_SERVLET_ENABLED                                    = "http.defaultservlet.enabled";
+  public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                          = "http.defaultservlet.attribute.aliases";
+  public static final String   HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED                      = "http.defaultservlet.attribute.dirallowed";
 
   /*********************************************************************************************************************
    * <code>
@@ -776,8 +778,8 @@ public interface TCPropertiesConsts {
    * l2.remotejmx.idletime                       - Idle timeout (in seconds) for remote jmx processing threads
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_REMOTEJMX_MAXTHREADS                                       = "l2.remotejmx.maxthreads";
-  public static final String   L2_REMOTEJMX_IDLETIME                                         = "l2.remotejmx.idletime";
+  public static final String   L2_REMOTEJMX_MAXTHREADS                                         = "l2.remotejmx.maxthreads";
+  public static final String   L2_REMOTEJMX_IDLETIME                                           = "l2.remotejmx.idletime";
 
   /*********************************************************************************************************************
    * <code>
@@ -785,7 +787,7 @@ public interface TCPropertiesConsts {
    * stats.printer.intervalInMillis              - Interval at which gathered stats are printed
    * </code>
    ********************************************************************************************************************/
-  public static final String   STATS_PRINTER_INTERVAL                                        = "stats.printer.intervalInMillis";
+  public static final String   STATS_PRINTER_INTERVAL                                          = "stats.printer.intervalInMillis";
 
   /*********************************************************************************************************************
    * <code>
@@ -794,9 +796,9 @@ public interface TCPropertiesConsts {
    * license.url                                 - URL to license key
    * </code>
    ********************************************************************************************************************/
-  public static final String   PRODUCTKEY_RESOURCE_PATH                                      = "productkey.resource.path";
-  public static final String   PRODUCTKEY_URL                                                = "productkey.url";
-  public static final String   PRODUCTKEY_PATH                                               = "productkey.path";
+  public static final String   PRODUCTKEY_RESOURCE_PATH                                        = "productkey.resource.path";
+  public static final String   PRODUCTKEY_URL                                                  = "productkey.url";
+  public static final String   PRODUCTKEY_PATH                                                 = "productkey.path";
 
   /*********************************************************************************************************************
    * <code>
@@ -804,7 +806,7 @@ public interface TCPropertiesConsts {
    * instrumentation.finalField.fastRead         - Enable/disable `dirty' reading of final fields
    * </code>
    ********************************************************************************************************************/
-  public static final String   INSTRUMENTATION_FINAL_FIELD_FAST_READ                         = "instrumentation.finalField.fastRead";
+  public static final String   INSTRUMENTATION_FINAL_FIELD_FAST_READ                           = "instrumentation.finalField.fastRead";
 
   /*********************************************************************************************************************
    * <code>
@@ -812,7 +814,7 @@ public interface TCPropertiesConsts {
    * happen within this timeout the server will exit (in seconds).
    * </code>
    ********************************************************************************************************************/
-  public static final String   L2_DUMP_ON_EXCEPTION_TIMEOUT                                  = "l2.dump.on.exception.timeout";
+  public static final String   L2_DUMP_ON_EXCEPTION_TIMEOUT                                    = "l2.dump.on.exception.timeout";
 
   /*********************************************************************************************************************
    * <code>
@@ -822,8 +824,8 @@ public interface TCPropertiesConsts {
    *  l2.operator.events.store      -   Number of operator events L2s will store to keep the history of the events
    * </code>
    ********************************************************************************************************************/
-  public static final String   DEV_CONSOLE_MAX_OPERATOR_EVENTS                               = "dev.console.max.operator.events";
-  public static final String   L2_OPERATOR_EVENTS_STORE                                      = "l2.operator.events.store";
+  public static final String   DEV_CONSOLE_MAX_OPERATOR_EVENTS                                 = "dev.console.max.operator.events";
+  public static final String   L2_OPERATOR_EVENTS_STORE                                        = "l2.operator.events.store";
 
   /*********************************************************************************************************************
    * <code>
@@ -831,6 +833,23 @@ public interface TCPropertiesConsts {
    * l1.shutdown.threadgroup.gracetime - time allowed for termination of all threads in the TC thread group (in milliseconds).
    * </code>
    ********************************************************************************************************************/
-  public static final String   L1_SHUTDOWN_THREADGROUP_GRACETIME                             = "l1.shutdown.threadgroup.gracetime";
+  public static final String   L1_SHUTDOWN_THREADGROUP_GRACETIME                               = "l1.shutdown.threadgroup.gracetime";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  OffHeap Cache Settings
+   * </code>
+   ********************************************************************************************************************/
+
+  public static final String   L2_OFFHEAP_CACHE_STATS_ENABLED                                  = "l2.offHeapCache.stats.enabled";
+  public static final String   L2_OFFHEAP_CACHE_MAP_PERCENTAGE                                 = "l2.offHeapCache.map.percentage";
+  public static final String   L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE                        = "l2.offHeapCache.object.initialDataSize";
+  public static final String   L2_OFFHEAP_OBJECT_CACHE_TABLESIZE                               = "l2.offHeapCache.object.tableSize";
+  public static final String   L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY                             = "l2.offHeapCache.object.concurrency";
+  public static final String   L2_OFFHEAP_MAP_CACHE_INITIAL_DATASIZE                           = "l2.offHeapCache.map.initialDataSize";
+  public static final String   L2_OFFHEAP_MAP_CACHE_TABLESIZE                                  = "l2.offHeapCache.map.tableSize";
+
+  // for tests
+  public static final String   L2_OFFHEAP_SKIP_JVMARG_CHECK                                    = "l2.offHeapCache.skip.jvmarg.check";
 
 }

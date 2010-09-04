@@ -13,43 +13,50 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
-public class TCPersistableSet extends AbstractSet implements PersistableCollection {
+class TCPersistableSet extends AbstractSet implements PersistableCollection {
 
   private final TCPersistableMap map;
-  private static final Boolean          VALUE = true;
+  private static final Boolean   VALUE = true;
 
-  public TCPersistableSet(ObjectID id) {
-    map = new TCPersistableMap(id);
+  TCPersistableSet(final ObjectID id, final Map backingMap) {
+    this.map = new TCPersistableMap(id, backingMap);
+  }
+
+  TCPersistableSet(final ObjectID id, final Map backingMap, final Map deltaMap) {
+    this.map = new TCPersistableMap(id, backingMap, deltaMap);
   }
 
   @Override
-  public boolean add(Object obj) {
-    return map.put(obj, VALUE) == null;
+  public boolean add(final Object obj) {
+    return this.map.put(obj, VALUE) == null;
   }
 
   @Override
   public void clear() {
-    map.clear();
+    this.map.clear();
   }
 
   @Override
-  public boolean contains(Object obj) {
-    return map.containsKey(obj);
+  public boolean contains(final Object obj) {
+    return this.map.containsKey(obj);
   }
 
   @Override
   public boolean isEmpty() {
-    return map.isEmpty();
+    return this.map.isEmpty();
   }
 
   @Override
-  public boolean retainAll(Collection c) {
-    int initialSize = size();
-    ArrayList list = new ArrayList();
-    for (Iterator iter = iterator(); iter.hasNext();) {
-      Object next = iter.next();
-      if (!c.contains(next)) list.add(next);
+  public boolean retainAll(final Collection c) {
+    final int initialSize = size();
+    final ArrayList list = new ArrayList();
+    for (final Iterator iter = iterator(); iter.hasNext();) {
+      final Object next = iter.next();
+      if (!c.contains(next)) {
+        list.add(next);
+      }
     }
     removeAll(list);
 
@@ -58,44 +65,45 @@ public class TCPersistableSet extends AbstractSet implements PersistableCollecti
 
   @Override
   public Iterator iterator() {
-    return map.keySet().iterator();
+    return this.map.keySet().iterator();
   }
 
   @Override
-  public boolean removeAll(Collection c) {
+  public boolean removeAll(final Collection c) {
     boolean modified = false;
-    for (Iterator i = c.iterator(); i.hasNext();)
+    for (final Iterator i = c.iterator(); i.hasNext();) {
       modified |= remove(i.next());
+    }
     return modified;
   }
 
   @Override
-  public boolean remove(Object obj) {
-    return map.remove(obj) != null;
+  public boolean remove(final Object obj) {
+    return this.map.remove(obj) != null;
   }
 
   @Override
   public int size() {
-    return map.size();
+    return this.map.size();
   }
 
   @Override
   public Object[] toArray() {
-    return map.keySet().toArray();
+    return this.map.keySet().toArray();
   }
 
   @Override
-  public Object[] toArray(Object[] objArr) {
-    return map.keySet().toArray(objArr);
+  public Object[] toArray(final Object[] objArr) {
+    return this.map.keySet().toArray(objArr);
   }
 
-  public int commit(TCCollectionsPersistor persistor, PersistenceTransaction tx, TCMapsDatabase db)
-      throws IOException, TCDatabaseException {
-    return map.commit(persistor, tx, db);
+  public int commit(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
+  throws IOException, TCDatabaseException {
+    return this.map.commit(serializer, tx, db);
   }
 
-  public void load(TCCollectionsPersistor persistor, PersistenceTransaction tx, TCMapsDatabase db)
-      throws TCDatabaseException {
-    map.load(persistor, tx, db);
+  public void load(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
+  throws TCDatabaseException {
+    this.map.load(serializer, tx, db);
   }
 }

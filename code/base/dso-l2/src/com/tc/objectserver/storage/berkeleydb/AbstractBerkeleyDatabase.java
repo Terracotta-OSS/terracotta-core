@@ -15,8 +15,13 @@ public abstract class AbstractBerkeleyDatabase {
   }
 
   protected Transaction pt2nt(PersistenceTransaction tx) {
-    return (tx instanceof BerkeleyDBPersistenceTransaction) ? ((BerkeleyDBPersistenceTransaction) tx).getTransaction()
-        : null;
+    Object o = (tx != null) ? tx.getTransaction() : null;
+    if (o != null) {
+      if (!(o instanceof Transaction)) { throw new AssertionError("Invalid transaction from " + tx + ": " + o); }
+      return (Transaction) o;
+    } else {
+      return null;
+    }
   }
 
   public final Database getDatabase() {

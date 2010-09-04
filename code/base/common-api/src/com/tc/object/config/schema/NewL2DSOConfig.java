@@ -5,6 +5,7 @@
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
+import com.tc.config.schema.OffHeapConfigItem;
 import com.tc.config.schema.dynamic.BindPortConfigItem;
 import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -30,14 +31,17 @@ public interface NewL2DSOConfig extends NewConfig {
   IntConfigItem garbageCollectionInterval();
 
   BindPortConfigItem dsoPort();
-  
+
   BindPortConfigItem l2GroupPort();
-  
+
   StringConfigItem host();
-  
+
   StringConfigItem serverName();
 
   IntConfigItem clientReconnectWindow();
 
   StringConfigItem bind();
+
+  OffHeapConfigItem offHeapConfig();
+
 }

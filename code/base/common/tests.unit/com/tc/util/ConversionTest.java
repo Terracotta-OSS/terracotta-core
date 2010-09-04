@@ -1,7 +1,11 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
+
+import com.tc.util.Conversion.MemorySizeUnits;
+import com.tc.util.Conversion.MetricsFormatException;
 
 import java.util.Arrays;
 
@@ -254,4 +258,75 @@ public class ConversionTest extends TestCase {
     //
   }
 
+  public void testMemorySizeAsBytes() {
+    try {
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("101010"), 101010);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("101010 "), 101010);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 101010 "), 101010);
+
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10m"), 10485760);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10 m"), 10485760);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10 m "), 10485760);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10  m "), 10485760);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 10  m "), 10485760);
+
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10g"), 10737418240L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10.1 m"), 10590617);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("0.75 g "), 805306368);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10.5  g "), 11274289152L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 10.0  g "), 10737418240L);
+
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 10.01   g "), 10748155658L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 10.01g "), 10748155658L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("0.5g"), 536870912);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(".5g"), 536870912);
+
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10.75K"), 11008);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("0.99G"), 1063004405L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("1.0M"), 1048576);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(".5G"), 536870912);
+
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes("10.75 K"), 11008);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 0.99G "), 1063004405L);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(" 1.0 M"), 1048576);
+      Assert.assertEquals(Conversion.memorySizeAsLongBytes(".50G"), 536870912);
+
+    } catch (MetricsFormatException mfe) {
+      Assert.fail("Not suppose to reach here : " + mfe);
+    }
+
+    String[] errStr = { "10 10", " 10 1 ", "10.0ag", " 1 0  m ", "10giga", " 10 mega", "100 100 g", "100.0 ki lo",
+        "mega 10 ", "m 10", " k10", "0.75GG", "50M M", "1Kilo" };
+
+    for (int i = 0; i < errStr.length; i++) {
+      try {
+        Conversion.memorySizeAsLongBytes(errStr[i]);
+        Assert.fail("Shouldn't have come here");
+      } catch (MetricsFormatException mfe) {
+        System.out.println("XXX got the expected exception during metrics conversion for " + errStr[i] + ": " + mfe);
+      }
+    }
+  }
+
+  public void testMemoryBytesAsSize() {
+
+    try {
+      Assert.assertEquals("1.0k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes()));
+      Assert.assertEquals("1.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes()));
+      Assert.assertEquals("1.0g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes()));
+
+      Assert.assertEquals("4.0k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() * 4));
+      Assert.assertEquals("8.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() * 8));
+      Assert.assertEquals("10.0g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() * 10));
+
+      Assert.assertEquals("924b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() - 100));
+      Assert.assertEquals("1024.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 100));
+      Assert.assertEquals("901b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() - 123));
+      Assert.assertEquals("1021.71k", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() - 2344));
+      Assert.assertEquals("933.84m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 94534540));
+    } catch (MetricsFormatException mfe) {
+      Assert.fail("failed: " + mfe);
+    }
+
+  }
 }

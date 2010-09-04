@@ -120,6 +120,9 @@ public class MultipleServersConfigCreator {
     boolean gcVerbose = configFactory.getGCVerbose();
     int gcIntervalInSec = configFactory.getGCIntervalInSec();
 
+    boolean offHeapEnabled = configFactory.isOffHeapEnabled();
+    String offHeapMaxSize = configFactory.getOffHeapMaxDataSize();
+
     L2ConfigBuilder[] l2s = new L2ConfigBuilder[serverCount];
     int serverIndex = 0;
     for (int i = 0; i < groupData.length; i++) {
@@ -146,6 +149,10 @@ public class MultipleServersConfigCreator {
         l2.setPersistenceMode(serverPersistence);
         l2.setGCEnabled(gcEnabled);
         l2.setGCVerbose(gcVerbose);
+        if (configFactory.isOffHeapEnabled()) {
+          l2.setOffHeapEnabled(offHeapEnabled);
+          l2.setOffHeapMaxDataSize(offHeapMaxSize);
+        }
         l2.setGCInterval(gcIntervalInSec);
         l2s[serverIndex] = l2;
         serverIndex++;

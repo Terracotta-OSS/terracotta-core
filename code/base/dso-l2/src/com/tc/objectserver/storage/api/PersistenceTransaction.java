@@ -4,11 +4,15 @@
  */
 package com.tc.objectserver.storage.api;
 
+
 /**
  * A transaction wrapper for the database transactions.
  */
 public interface PersistenceTransaction {
+
+  public Object getTransaction();
+
   public void commit();
-  
+
   public void abort();
 }

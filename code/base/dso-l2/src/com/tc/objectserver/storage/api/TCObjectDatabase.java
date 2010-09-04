@@ -4,7 +4,6 @@
 package com.tc.objectserver.storage.api;
 
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
-import com.tc.util.ObjectIDSet;
 
 public interface TCObjectDatabase {
   /**
@@ -27,8 +26,4 @@ public interface TCObjectDatabase {
    */
   public Status delete(long id, PersistenceTransaction tx);
 
-  /**
-   * Gets all objectids in the db. The transaction is committed within this method only.
-   */
-  public ObjectIDSet getAllObjectIds(PersistenceTransaction tx);
 }

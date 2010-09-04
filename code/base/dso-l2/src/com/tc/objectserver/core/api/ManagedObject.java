@@ -21,14 +21,18 @@ import java.util.Set;
 
 public interface ManagedObject {
 
+  enum ManagedObjectCacheStrategy {
+    CACHED, PINNED, NOT_CACHED
+  }
+
   public ObjectID getID();
 
   public ManagedObjectReference getReference();
 
   public Set getObjectReferences();
 
-  public void apply(DNA dna, TransactionID txnID, ApplyTransactionInfo includeIDs, ObjectInstanceMonitor instanceMonitor,
-                    boolean ignoreIfOlderDNA) throws DNAException;
+  public void apply(DNA dna, TransactionID txnID, ApplyTransactionInfo includeIDs,
+                    ObjectInstanceMonitor instanceMonitor, boolean ignoreIfOlderDNA) throws DNAException;
 
   public void toDNA(TCByteBufferOutputStream out, ObjectStringSerializer serializer, DNAType type);
 

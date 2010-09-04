@@ -382,17 +382,25 @@
       <xs:enumeration value="permanent-store" />
     </xs:restriction>
   </xs:simpleType>
+  
+  <xs:complexType name="offheap">
+    <xs:all>
+      <xs:element name="enabled" type="xs:boolean" minOccurs="0" default="false" />
+      <xs:element name="maxDataSize" type="xs:string" minOccurs="0" default="100m" />
+    </xs:all>
+  </xs:complexType>
 
   <xs:complexType name="persistence">
     <xs:all>
       <xs:element name="mode" type="persistence-mode" minOccurs="0" default="temporary-swap-only" />
+      <xs:element name="offheap" type="offheap" minOccurs="0" maxOccurs="1" />
     </xs:all>
   </xs:complexType>
 
   <xs:complexType name="dso-server-data">
     <xs:all>
       <xs:element name="client-reconnect-window" type="positive-int" minOccurs="0" default="120" />
-      <xs:element name="persistence" type="persistence" minOccurs="0"/>
+      <xs:element name="persistence" type="persistence" minOccurs="0" />
       <xs:element name="garbage-collection" type="garbage-collection" minOccurs="0" />
     </xs:all>
   </xs:complexType>

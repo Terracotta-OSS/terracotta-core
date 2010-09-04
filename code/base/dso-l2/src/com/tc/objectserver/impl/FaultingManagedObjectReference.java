@@ -101,9 +101,12 @@ public class FaultingManagedObjectReference implements ManagedObjectReference {
     return false;
   }
 
+  public boolean isCacheManaged() {
+    return false;
+  }
+
   @Override
   public String toString() {
     return "FaultingManagedObjectReference [ " + this.id + " inProgress : " + this.inProgress + " ]";
   }
-
 }

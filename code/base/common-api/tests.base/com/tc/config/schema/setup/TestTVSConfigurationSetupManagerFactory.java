@@ -14,6 +14,7 @@ import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.NewSystemConfig;
+import com.tc.config.schema.OffHeapConfigObject;
 import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.TestConfigObjectInvocationHandler;
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -176,6 +177,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private int                            gcIntervalInSec         = 3600;
 
   private boolean                        isConfigDone            = false;
+  private OffHeapConfigObject            offHeapConfigObject     = new OffHeapConfigObject(false, "-1m");
 
   public TestTVSConfigurationSetupManagerFactory(int mode, String l2Identifier,
                                                  IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
@@ -238,7 +240,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     //
     // // Make servers use dynamic ports, by default.
     // ((SettableConfigItem) l2DSOConfig().listenPort()).setValue(0);
-//    ((SettableConfigItem) l2CommonConfig().jmxPort()).setValue(0);
+    // ((SettableConfigItem) l2CommonConfig().jmxPort()).setValue(0);
 
     // We also set the data and log directories to strings that shouldn't be valid on any platform: you need to set
     // these yourself before you use this config. If you don't, you'll write all over the place as we create 'data' and
@@ -376,8 +378,8 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     isConfigDone = true;
   }
-  
-  // This is needed for add-new-stripe test. 
+
+  // This is needed for add-new-stripe test.
   // Allowing a new stripe be added to existing L1 config. Refer DEV-3989.
   public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] dsoPorts, int[] jmxPorts) {
 
@@ -387,7 +389,6 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
     addServerGroupToL1Config(gn, groupName, name);
   }
-
 
   private void assertIfCalledBefore() throws AssertionError {
     if (isConfigDone) throw new AssertionError("Config factory not used properly. Servers were added more than once.");
@@ -473,6 +474,11 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     }
   }
 
+  public void setOffHeapConfigObject(final OffHeapConfigObject offHeapConfigObject) {
+    this.offHeapConfigObject = offHeapConfigObject;
+    // ((SettableConfigItem) l2DSOConfig().offHeapConfig()).setValue(offHeapConfigObject);
+  }
+
   public void setGCEnabled(boolean val) {
     gcEnabled = val;
     ((SettableConfigItem) l2DSOConfig().garbageCollectionEnabled()).setValue(gcEnabled);
@@ -491,6 +497,14 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   public void setPersistenceMode(Enum val) {
     persistenceMode = val;
     ((SettableConfigItem) l2DSOConfig().persistenceMode()).setValue(persistenceMode);
+  }
+
+  public boolean isOffHeapEnabled() {
+    return this.offHeapConfigObject.isEnabled();
+  }
+
+  public String getOffHeapMaxDataSize() {
+    return this.offHeapConfigObject.getMaxDataSize();
   }
 
   public boolean getGCEnabled() {
@@ -552,8 +566,9 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   }
 
   public NewDSOApplicationConfig dsoApplicationConfig(String applicationName) {
-    return (NewDSOApplicationConfig) proxify(NewDSOApplicationConfig.class, this.beanSet
-        .applicationBeanFor(applicationName), this.sampleDSOApplication, "dso");
+    return (NewDSOApplicationConfig) proxify(NewDSOApplicationConfig.class,
+                                             this.beanSet.applicationBeanFor(applicationName),
+                                             this.sampleDSOApplication, "dso");
   }
 
   public NewDSOApplicationConfig dsoApplicationConfig() {
@@ -617,8 +632,14 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   public L2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(File tcConfig, String l2Identifier)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
-    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(new ConfigurationSpec(tcConfig
-        .getAbsolutePath(), ConfigMode.L2, tcConfig.getParentFile()), this.beanFactory);
+    ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(
+                                                                                        new ConfigurationSpec(
+                                                                                                              tcConfig
+                                                                                                                  .getAbsolutePath(),
+                                                                                                              ConfigMode.L2,
+                                                                                                              tcConfig
+                                                                                                                  .getParentFile()),
+                                                                                        this.beanFactory);
     return new StandardL2TVSConfigurationSetupManager(configurationCreator, effectiveL2Identifier,
                                                       this.defaultValueProvider, this.xmlObjectComparator,
                                                       this.illegalChangeHandler);

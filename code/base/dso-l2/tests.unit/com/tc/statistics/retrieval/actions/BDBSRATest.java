@@ -20,7 +20,7 @@ public class BDBSRATest extends TCTestCase {
     BerkeleyDBEnvironment env = new BerkeleyDBEnvironment(true, dbHome);
     env.open();
 
-    SRAForDB sras = new SRAForDB(env);
+    SRAForBerkeleyDB sras = new SRAForBerkeleyDB(env);
     sras.retrieveStatisticData();
     ThreadUtil.reallySleep(10 * 1000);
     // check for SRAs to be 0

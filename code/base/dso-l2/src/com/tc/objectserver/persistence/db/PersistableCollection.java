@@ -11,9 +11,10 @@ import java.io.IOException;
 
 public interface PersistableCollection {
 
-  public int commit(TCCollectionsPersistor persistor, PersistenceTransaction tx, TCMapsDatabase db)
-      throws IOException, TCDatabaseException;
+  public int commit(TCCollectionsSerializer serializer, PersistenceTransaction tx, TCMapsDatabase db)
+  throws IOException, TCDatabaseException;
 
-  public void load(TCCollectionsPersistor persistor, PersistenceTransaction tx, TCMapsDatabase db) throws IOException,
-      ClassNotFoundException, TCDatabaseException;
+  public void load(TCCollectionsSerializer serializer, PersistenceTransaction tx, TCMapsDatabase db) throws IOException,
+  ClassNotFoundException, TCDatabaseException;
+
 }

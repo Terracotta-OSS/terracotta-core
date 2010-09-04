@@ -11,7 +11,7 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
-public class SRAForDB implements StatisticRetrievalAction {
+public class SRAForBerkeleyDB implements StatisticRetrievalAction {
   public final static String          ACTION_NAME = "berkeley db stats";
 
   private final SRABDBLogging         sraLogging;
@@ -21,7 +21,7 @@ public class SRAForDB implements StatisticRetrievalAction {
 
   private final BerkeleyDBEnvironment dbEnv;
 
-  public SRAForDB(DBEnvironment env) {
+  public SRAForBerkeleyDB(DBEnvironment env) {
     sraLogging = new SRABDBLogging();
     sraCache = new SRABDBCache();
     sraCleaner = new SRABDBCleaner();
@@ -30,6 +30,8 @@ public class SRAForDB implements StatisticRetrievalAction {
   }
 
   private void forceUpdate() {
+    if (dbEnv == null) return;
+
     EnvironmentStats stats;
     try {
       stats = dbEnv.getStats();

@@ -17,6 +17,8 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
   private PortConfigBuilder jmxPortBuilder   = null;
   private PortConfigBuilder dsoPortBuilder   = null;
   private PortConfigBuilder groupPortBuilder = null;
+  private boolean           offheap_enabled  = false;
+  private String            offheap_maxDataSize;
 
   public L2ConfigBuilder() {
     super(3, ALL_PROPERTIES);
@@ -135,16 +137,26 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     setProperty("interval", data);
   }
 
-  private static final String[] L2                  = new String[] { "data", "logs", "data-backup", "statistics" };
+  public void setOffHeapEnabled(final boolean enabled) {
+    this.offheap_enabled = enabled;
+  }
 
-  private static final String[] DSO_PERSISTENCE     = new String[] { "mode" };
-  private static final String[] DSO_RECONNECTWINDOW = new String[] { "client-reconnect-window" };
-  private static final String[] DSO_GC              = new String[] { "enabled", "verbose", "interval" };
-  private static final String[] AUTHENTICATION      = new String[] { "password-file", "access-file" };
-  private static final String[] DSO                 = concat(new Object[] { DSO_RECONNECTWINDOW, DSO_PERSISTENCE,
-      DSO_GC                                       });
+  public void setOffHeapMaxDataSize(final String maxDataSize) {
+    this.offheap_maxDataSize = maxDataSize;
+  }
 
-  private static final String[] ALL_PROPERTIES      = concat(new Object[] { L2, AUTHENTICATION, DSO });
+  private static final String[] L2                   = new String[] { "data", "logs", "data-backup", "statistics" };
+
+  private static final String[] DSO_PERSISTENCE_MODE = new String[] { "mode" };
+  private static final String[] DSO_PERSISTENCE      = concat(new Object[] { DSO_PERSISTENCE_MODE });
+
+  private static final String[] DSO_RECONNECTWINDOW  = new String[] { "client-reconnect-window" };
+  private static final String[] DSO_GC               = new String[] { "enabled", "verbose", "interval" };
+  private static final String[] AUTHENTICATION       = new String[] { "password-file", "access-file" };
+
+  private static final String[] DSO                  = concat(new Object[] { DSO_RECONNECTWINDOW, DSO_PERSISTENCE,
+      DSO_GC                                        });
+  private static final String[] ALL_PROPERTIES       = concat(new Object[] { L2, AUTHENTICATION, DSO });
 
   @Override
   public String toString() {
@@ -154,11 +166,22 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
            + (this.name != null ? " name=\"" + this.name + "\"" : "") + ">\n";
 
     out += elements(L2) + getPortsConfig() + elementGroup("authentication", AUTHENTICATION) + openElement("dso", DSO)
-           + elements(DSO_RECONNECTWINDOW) + elementGroup("persistence", DSO_PERSISTENCE)
+           + elements(DSO_RECONNECTWINDOW) + openElement("persistence", DSO_PERSISTENCE)
+           + elements(DSO_PERSISTENCE_MODE) + getOffHeapConfig() + closeElement("persistence", DSO_PERSISTENCE)
            + elementGroup("garbage-collection", DSO_GC) + closeElement("dso", DSO);
 
     out += closeElement("server");
 
+    return out;
+  }
+
+  private String getOffHeapConfig() {
+    if (!offheap_enabled) return "\n";
+    String out = "\n";
+    out += "<offheap>\n";
+    out += "<enabled>" + offheap_enabled + "</enabled>\n";
+    out += "<maxDataSize>" + offheap_maxDataSize + "</maxDataSize>\n";
+    out += "</offheap>\n";
     return out;
   }
 
@@ -174,7 +197,7 @@ public class L2ConfigBuilder extends BaseConfigBuilder {
     if (this.groupPortBuilder != null) {
       out += this.groupPortBuilder.toString() + "\n";
     }
-    
+
     return out;
   }
 
