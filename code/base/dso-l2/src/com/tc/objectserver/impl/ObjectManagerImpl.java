@@ -425,18 +425,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         if (markReferenced(removalCandidate)) {
           // It is possible that before the cache evictor has a chance to mark the reference, the DGC could come and
           // remove the reference, hence we check in references map again - this order of checking is important
-          if (this.references.containsKey(removalCandidate.getObjectID())) {
+          final ObjectID id = removalCandidate.getObjectID();
+          if (this.references.containsKey(id)) {
             this.evictionPolicy.remove(removalCandidate);
             if (removalCandidate.getObject().isDirty()) {
               Assert.assertFalse(this.config.paranoid());
               toFlush.add(removalCandidate.getObject());
             } else {
               // paranoid mode or the object is not dirty - just remove from reference
-              final ManagedObjectReference inMap = this.references.remove(removalCandidate.getObjectID());
+              final ManagedObjectReference inMap = this.references.remove(id);
               if (inMap != removalCandidate) { throw new AssertionError("Not the same element : removalCandidate : "
                                                                         + removalCandidate + " inMap : " + inMap); }
               removedObjects.add(removalCandidate);
               unmarkReferenced(removalCandidate);
+              makeUnBlocked(id);
             }
           } else {
             unmarkReferenced(removalCandidate);
@@ -463,10 +465,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
         logger.warn("Object ID : " + mo.getID() + " was mapped to null but should have been mapped to a reference of  "
                     + mo);
       }
-      // Remove first and then check blocked to make sure we don't miss any request
-      if (isBlocked(oid)) {
-        makeUnBlocked(oid);
-      }
+      // Remove first and then unblock to make sure we don't miss any request
+      makeUnBlocked(oid);
     }
     this.checkedOutCount.addAndGet(-managedObjects.size());
     postRelease();
@@ -539,6 +539,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     } else {
       context.makeOldRequest();
       unmarkReferenced(objects.values());
+      // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be 
+      // processed after this request is (unblocked) and processed
       return addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
     }
   }
@@ -927,10 +929,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     this.pending.makeUnBlocked(id);
   }
 
-  private boolean isBlocked(final ObjectID id) {
-    return this.pending.isBlocked(id);
-  }
-
   private void makePending(final NodeID nodeID, final ObjectManagerLookupContext context, final int maxReachableObjects) {
     this.pending.addPending(new Pending(nodeID, context, maxReachableObjects));
   }
@@ -956,6 +954,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     final int evicted = (toFlush.size() + removed.size());
+    final boolean doPostRelease = !removed.isEmpty();
 
     this.stats.flushed(evicted);
 
@@ -971,6 +970,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     // TODO:: Send the right objects to the cache manager
     stat.objectEvicted(evicted, references_size(), Collections.EMPTY_LIST, true);
+    if (doPostRelease) {
+      // Only running postRelease when necessary to avoid hogging memory manager thread here.
+      postRelease();
+    }
   }
 
   private void updateFlushStats(final Collection<ManagedObject> toFlush,
@@ -1217,10 +1220,6 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       return success;
     }
 
-    public boolean isBlocked(final ObjectID id) {
-      return this.blocked.containsKey(id);
-    }
-
     public void makeUnBlocked(final ObjectID id) {
       final Set<Pending> blockedRequests = this.blocked.removeAll(id);
       if (blockedRequests.isEmpty()) { return; }
@@ -1243,7 +1242,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       out.print(this.getClass().getName()).flush();
       out.indent().print("pending lookups : ").visit(this.pending.size()).flush();
       out.indent().print("blocked count   : ").visit(this.blockedCount.get()).flush();
-      out.indent().print("blocked oids    : ").visit(this.pending).flush();
+      out.indent().print("blocked         : ").visit(this.blocked).flush();
+      out.indent().print("pending         : ").visit(this.pending).flush();
       return out;
     }
 
