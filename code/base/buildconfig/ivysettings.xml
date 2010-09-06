@@ -18,6 +18,14 @@
     <url name="tc-nexus-m2" m2compatible="true">
       <artifact pattern="http://nexus:8080/content/groups/public/${m2_pattern}"/>
     </url>
+
+    <url name="tc-kong-ee-snapshots-m2" m2compatible="true">
+      <artifact pattern="http://kong.terracotta.lan/repo/ee-snapshots/${m2_pattern}"/>
+    </url>
+
+    <url name="tc-kong-ee-releases-m2" m2compatible="true">
+      <artifact pattern="http://kong.terracotta.lan/repo/ee-releases/${m2_pattern}"/>
+    </url>
     
     <url name="tc-releases-m2" m2compatible="true">
       <artifact pattern="http://repo.terracotta.org/maven2/${m2_pattern}"/>
@@ -52,6 +60,8 @@
       <resolver ref="java.net" />
       <resolver ref="jboss" />
       <resolver ref="local-m2" />
+      <resolver ref="tc-kong-ee-snapshots-m2" />
+      <resolver ref="tc-kong-ee-releases-m2" />      
     </chain>
     
   </resolvers>
