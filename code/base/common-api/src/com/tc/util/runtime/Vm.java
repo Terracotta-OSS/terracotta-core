@@ -4,6 +4,9 @@
  */
 package com.tc.util.runtime;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 /**
  * Utility class for understanding the current JVM version. Access the VM version information by looking at
  * {@link #VERSION} directly or calling the static helper methods.
@@ -154,4 +157,79 @@ public class Vm {
     return VERSION.isAzul();
   }
 
+  /**
+   * @return true if Sun or Oracle VM
+   */
+  public static boolean isSun() {
+    return VERSION.isSun();
+  }
+
+  /**
+   * return maxDirectMemory
+   * if Sun, returns 66650112 if not set via jvmarg
+   * if JRockit, returns Long.MAX_VALUE if not set via jvmarg
+   * @return
+   */
+  @SuppressWarnings("restriction")
+  public static long maxDirectMemory() {
+    if (isSun() || isIBM()) {
+      return sun.misc.VM.maxDirectMemory(); 
+    } if (isJRockit()) {
+      return extractMaxDirectMemoryJrockit();
+    }
+    throw new RuntimeException("Don't know how to find maxDirectMemory for this VM");
+  }
+
+  /**
+   * returns reserved (used) direct memory
+   * @return reserved direct memory in bytes
+   */
+  public static long reservedDirectMemory() {
+    if (isSun() || isIBM()) {
+      return reservedDirectMemorySun();
+    } if (isJRockit()) {
+      return reservedDirectMemoryJrockit();
+    }
+    throw new RuntimeException("Don't know how to find reservedDirectMemory for this VM");
+  }
+  
+  private static long extractMaxDirectMemoryJrockit() {
+    //jrockit.vm.Memory.reserveDirectMemory(0); 
+    //return reflectiveRead(jrockit.vm.Memory.maxDirectMemory); 
+    Class<?> jrockitMemoryClass;
+    try {
+      jrockitMemoryClass = Class.forName("jrockit.vm.Memory");
+      Method reserveDirectMemoryMethod = jrockitMemoryClass.getDeclaredMethod("reserveDirectMemory", long.class);
+      reserveDirectMemoryMethod.invoke(null, Long.valueOf(0));
+      Field maxDirectMemoryField = jrockitMemoryClass.getDeclaredField("maxDirectMemory");
+      maxDirectMemoryField.setAccessible(true);
+      return maxDirectMemoryField.getLong(null);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to read max direct memory", e);
+    }
+  }
+  
+  private static long reservedDirectMemorySun() {
+    Class<?> bitsClass;
+    try {
+      bitsClass = Class.forName("java.nio.Bits");
+      Field reservedMemoryField = bitsClass.getDeclaredField("reservedMemory");
+      reservedMemoryField.setAccessible(true);
+      return reservedMemoryField.getLong(null);
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to read reservedMemory", e);
+    }
+  }
+  
+  private static long reservedDirectMemoryJrockit() {
+    Class<?> jrockitMemoryClass;
+    try {
+      jrockitMemoryClass = Class.forName("jrockit.vm.Memory");
+      Method getReservedDirectMemoryMethod = jrockitMemoryClass.getDeclaredMethod("getReservedDirectMemory", new Class[0]);
+      Long rv = (Long)getReservedDirectMemoryMethod.invoke(null, new Object[0]);
+      return rv.longValue();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to read reservedMemory", e);
+    }
+  }
 }

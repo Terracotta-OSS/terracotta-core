@@ -10,8 +10,7 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.license.LicenseCheck;
-import com.tc.license.util.LicenseConstants;
+import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.config.schema.ExcludedInstrumentedClass;
@@ -20,6 +19,7 @@ import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
+import com.tc.util.ProductInfo;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.AppGroup;
 import com.terracottatech.config.AppGroups;
@@ -76,9 +76,10 @@ public class ConfigLoader {
   }
 
   private void addRoot(final Root root) throws ConfigurationSetupException {
-
-    LicenseCheck.checkCapability(LicenseConstants.ROOTS);
-
+    if (ProductInfo.getInstance().isEnterprise()) {
+      LicenseManager.verifyRootCapability();
+    }
+    
     String rootName = root.getRootName();
     String fieldName = root.getFieldName();
     String fieldExpression = root.getFieldExpression();

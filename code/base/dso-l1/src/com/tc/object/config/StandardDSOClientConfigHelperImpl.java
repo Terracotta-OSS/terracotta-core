@@ -8,8 +8,8 @@ import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
-import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
+import org.terracotta.groupConfigForL1.ServerInfo;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -32,8 +32,7 @@ import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
 import com.tc.injection.exceptions.UnsupportedInjectedDsoInstanceTypeException;
 import com.tc.jam.transform.ReflectClassBuilderAdapter;
-import com.tc.license.LicenseCheck;
-import com.tc.license.util.LicenseConstants;
+import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
@@ -71,8 +70,9 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.UUID;
 import com.tc.util.ClassUtils.ClassSpec;
+import com.tc.util.ProductInfo;
+import com.tc.util.UUID;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
@@ -98,8 +98,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -1844,7 +1844,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public SessionConfiguration getSessionConfiguration(String name) {
-    LicenseCheck.checkCapability(LicenseConstants.SESSIONS);
+    if (ProductInfo.getInstance().isEnterprise()) {
+      LicenseManager.verifySessionCapability();
+    }
     
     name = ClassProcessorHelper.computeAppName(name);
 

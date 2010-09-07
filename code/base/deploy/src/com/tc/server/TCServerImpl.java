@@ -34,10 +34,10 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
-import com.tc.license.AbstractLicenseResolverFactory;
+import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -66,6 +66,7 @@ import com.tc.statistics.beans.impl.StatisticsLocalGathererMBeanImpl;
 import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
+import com.tc.util.ProductInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -199,7 +200,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public String getDescriptionOfCapabilities() {
-    return AbstractLicenseResolverFactory.getCapabilities().getLicensedCapabilitiesAsString();
+    if (ProductInfo.getInstance().isEnterprise()) {
+      return LicenseManager.licensedCapabilities();
+    } else {
+      return "Open source capabilities";
+    }
   }
 
   /**

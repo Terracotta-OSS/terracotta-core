@@ -31,8 +31,7 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.license.LicenseCheck;
-import com.tc.license.util.LicenseConstants;
+import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -578,7 +577,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   public void validateLicenseCapabilities() {
     if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
-      LicenseCheck.checkCapability(LicenseConstants.SERVER_STRIPING);
+      LicenseManager.verifyServerStripingCapability();
     }
   }
 

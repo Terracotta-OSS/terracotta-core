@@ -29,6 +29,7 @@ public final class VmVersion {
   private final boolean        isIBM;
   private final boolean        isJRockit;
   private final boolean        isAzul;
+  private final boolean        isSun;
 
   /**
    * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
@@ -39,7 +40,7 @@ public final class VmVersion {
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) throws UnknownJvmVersionException, UnknownRuntimeVersionException {
-    this(javaVersion(props), runtimeVersion(props), isJRockit(props), isIBM(props), isAzul(props));
+    this(javaVersion(props), runtimeVersion(props), isSun(props), isJRockit(props), isIBM(props), isAzul(props));
   }
 
   /**
@@ -52,9 +53,10 @@ public final class VmVersion {
    * @throws UnknownJvmVersionException If JVM version is unknown
    * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
-  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isJRockit,
+  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isSun, final boolean isJRockit,
                     final boolean isIBM, final boolean isAzul) throws UnknownJvmVersionException,
       UnknownRuntimeVersionException {
+    this.isSun = isSun;
     this.isIBM = isIBM;
     this.isJRockit = isJRockit;
     this.isAzul = isAzul;
@@ -176,6 +178,10 @@ public final class VmVersion {
   public boolean isJRockit() {
     return isJRockit;
   }
+  
+  public boolean isSun() {
+    return isSun;
+  }
 
   /**
    * @param o Other version
@@ -254,4 +260,8 @@ public final class VmVersion {
            || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
   }
 
+  private static boolean isSun(Properties props) {
+    String vendor = props.getProperty("java.vendor", "").toLowerCase();
+    return vendor.startsWith("sun") || vendor.startsWith("oracle") || vendor.startsWith("apple");
+  }
 }
