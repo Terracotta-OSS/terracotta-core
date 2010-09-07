@@ -10,9 +10,9 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_ROOTS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SESSIONS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP;
-import static org.terracotta.license.LicenseConstants.EHCACHE_MAX_OFFHEAP;
 import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_MAX_CLIENT_COUNT;
+import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
 import org.terracotta.license.AbstractLicenseResolverFactory;
 import org.terracotta.license.License;
@@ -65,12 +65,15 @@ public class LicenseManager {
    * check for null and expired license
    */
   public static void assertLicenseValid() {
-    if (getLicense() == null) { throw new LicenseException(
-                                                           "Terracotta license key is required for Enterprise feature. The license key could be placed in the root of resource path."); }
+    if (getLicense() == null) {
+      //
+      throw new LicenseException("Terracotta license key is required for Enterprise feature.");
+    }
     Date expirationDate = getLicense().expirationDate();
-    if (expirationDate != null && expirationDate.before(new Date())) { throw new LicenseException(
-                                                                                                  "Your Terracotta license has expired on "
-                                                                                                      + expirationDate); }
+    if (expirationDate != null && expirationDate.before(new Date())) {
+      //
+      throw new LicenseException("Your Terracotta license has expired on " + expirationDate);
+    }
   }
 
   private static void verifyCapability(String capability) {
@@ -117,13 +120,14 @@ public class LicenseManager {
   }
 
   public static void verifyServerArrayOffheapCapability(String maxOffheap) {
-    assertLicenseValid();
     verifyCapability(CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP);
     long maxHeapFromVMInBytes = Vm.maxDirectMemory();
-    if (maxHeapFromVMInBytes == 0 || maxHeapFromVMInBytes == Long.MAX_VALUE) { throw new LicenseException(
-                                                                                                          "No direct memory was set at JVM level. Please set it with -XX:MaxDirectMemorySize"); }
+    if (maxHeapFromVMInBytes == 0 || maxHeapFromVMInBytes == Long.MAX_VALUE) {
+      //
+      throw new LicenseException("No direct memory was set at JVM level. Please set it with -XX:MaxDirectMemorySize");
+    }
 
-    String maxHeapSizeFromLicense = getLicense().getRequiredProperty(EHCACHE_MAX_OFFHEAP);
+    String maxHeapSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
     long maxHeapAllowedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
 
     if (LOGGER.isDebugEnabled()) {
@@ -139,8 +143,7 @@ public class LicenseManager {
         unit = "MB";
       }
       throw new LicenseException("Your license only allows up to " + maxHeapSizeFromLicense
-                                 + " in offheap size. Your VM is configured with "
-                                 + maxHeapFromVM + unit);
+                                 + " in offheap size. Your VM is configured with " + maxHeapFromVM + unit);
     }
   }
 }
