@@ -184,6 +184,12 @@
         <artifactId>google-collections</artifactId>
         <version>1.0</version>
       </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>native-cache</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+      </dependency>
+      
 
       <!-- dependencies for tests -->
       <dependency>
