@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-// TODO::FIXME:: Need unit tests
 class TCPersistableMap implements Map, PersistableCollection {
 
   // This is a carefully selected ObjectID that will never be assigned to any object.
@@ -26,17 +25,17 @@ class TCPersistableMap implements Map, PersistableCollection {
   /*
    * This map contains the mappings already in the database
    */
-  private final Map           map;
+  private final Map             map;
 
   /*
    * This map contains the newly added mappings or removed mapping that are not in the database yet
    */
-  private final Map           delta;
+  private final Map             delta;
 
-  private final long          id;
+  private final long            id;
 
-  private int                 removeCount = 0;
-  private boolean             clear       = false;
+  private int                   removeCount = 0;
+  private boolean               clear       = false;
 
   /**
    * This constructor is used when in permanent store mode
@@ -97,7 +96,7 @@ class TCPersistableMap implements Map, PersistableCollection {
     } else if (old != null) {
       return old;
     } else {
-      return this.map.get(key);
+      return this.map.remove(key);
     }
   }
 
@@ -110,7 +109,7 @@ class TCPersistableMap implements Map, PersistableCollection {
       return old;
     } else {
       this.removeCount++;
-      return this.map.get(key);
+      return this.map.remove(key);
     }
   }
 
@@ -143,7 +142,7 @@ class TCPersistableMap implements Map, PersistableCollection {
   }
 
   public int commit(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
-  throws IOException, TCDatabaseException {
+      throws IOException, TCDatabaseException {
 
     int written = 0;
     // Clear the map first if necessary
@@ -197,7 +196,7 @@ class TCPersistableMap implements Map, PersistableCollection {
   }
 
   public void load(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
-  throws TCDatabaseException {
+      throws TCDatabaseException {
     Assert.assertTrue(this.map.isEmpty());
     db.loadMap(tx, this.id, this.map, serializer);
   }
@@ -320,7 +319,7 @@ class TCPersistableMap implements Map, PersistableCollection {
     private void moveToNext() {
       while (this.current.hasNext()) {
         this.next = (Entry) this.current.next();
-        if (!this.isDelta || !REMOVED.equals(this.next.getValue()) ) { return; }
+        if (!this.isDelta || !REMOVED.equals(this.next.getValue())) { return; }
       }
       if (this.isDelta) {
         this.next = null;
