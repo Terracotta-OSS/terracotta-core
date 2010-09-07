@@ -56,3 +56,15 @@ by tcbuild, they are not built until after said Maven artifacts have been
 constructed and deployed.  tcbuild invokes the build files with no arguments,
 except in the case of pom.xml files, for which tcbuild passes 'install' as the
 sole argument (as in "mvn install").
+
+To allow multiple developers to share a set of external projects, it is
+possible to use svn:externals to aggregate a group of projects together in a
+single Subversion directory.  This aggregate directory can then be checked out
+directly into the external directory to enable tcbuild integration.
+For example:
+
+  svn co $MY_AGGREGATE external
+
+This command would populate the external directory with all of the projects
+aggregated by the $MY_AGGREGATE directory.
+
