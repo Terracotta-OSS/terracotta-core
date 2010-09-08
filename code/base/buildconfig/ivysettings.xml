@@ -15,11 +15,11 @@
       <artifact pattern="http://download.terracotta.org/buildjars/eclipse-api/[artifact]-[revision].[ext]"/>
     </url>
     
-    <url name="tc-nexus-m2" m2compatible="true">
+    <url name="tc-nexus-m2" m2compatible="true" checkmodified="true" changingPattern=".*SNAPSHOT">
       <artifact pattern="http://nexus:8080/content/groups/public/${m2_pattern}"/>
     </url>
 
-    <url name="tc-kong-ee-snapshots-m2" m2compatible="true">
+    <url name="tc-kong-ee-snapshots-m2" m2compatible="true" checkmodified="true" changingPattern=".*SNAPSHOT">
       <artifact pattern="http://kong.terracotta.lan/repo/ee-snapshots/${m2_pattern}"/>
     </url>
 
