@@ -117,7 +117,7 @@ if CrossPlatform.is_jruby?
 
       # Use Ant to execute this.
       ant.exec(:executable => executable_path.to_s, :dir => exec_dir, :errorproperty => errorproperty,
-        :outputproperty => outputproperty, :failonerror => true, :resultproperty => resultproperty) {
+        :outputproperty => outputproperty, :failonerror => false, :resultproperty => resultproperty) {
         ant.arg(:line => line) unless line.blank?
       }
 
