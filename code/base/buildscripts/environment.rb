@@ -19,8 +19,8 @@ class Environment
   # What's the name of the host this code is running on?
   def hostname
     if @hostname.nil?
-      @hostname = @platform.get_env("COMPUTERNAME")
-      @hostname = @platform.get_env("HOSTNAME") if @hostname.blank?
+      @hostname = ENV["COMPUTERNAME"]
+      @hostname = ENV["HOSTNAME"] if @hostname.blank?
       @hostname = `hostname` if @hostname.blank?
       @hostname = @hostname.gsub(/\.terracotta\.lan/, '').strip
     end
