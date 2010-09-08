@@ -173,6 +173,27 @@
              Default: 'temporary-swap-only'
           -->
           <mode>temporary-swap-only</mode>
+          
+          <!-- Information about how servers use off-heap memory. -->
+          <offheap>
+          
+           	<!-- If 'true', active servers spill cached data to off-heap memory
+           	     before persisting it to disk. Data that is cached  off-heap 
+           	     provides faster access than data stored on disk.
+           	 
+          	     Default: false
+          	-->
+          	<enabled>false</enabled>
+          	
+          	<!-- Sets the maximum amount of off-heap memory that a server
+          	     can use. Values are given in k (Kilobytes), m (Megabytes)
+          	     or g (Gigabytes). 
+          	
+          	     Default: none
+          	-->
+          	<maxDataSize>5g</maxDataSize>
+          </offheap>
+          
         </persistence>
 
         <!-- Information about how DSO should perform distributed
