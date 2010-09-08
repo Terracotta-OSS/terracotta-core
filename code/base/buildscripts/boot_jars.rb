@@ -56,6 +56,11 @@ class BootJar
     @ant = Registry[:ant]
     @platform = Registry[:platform]
     @static_resources = Registry[:static_resources]
+    @extra_classpath = []
+  end
+
+  def add_extra_classpath(path)
+    @extra_classpath << path
   end
 
   # What's the fully-qualified path of this boot JAR? Returns a FilePath object. (This is
@@ -106,6 +111,9 @@ class BootJar
     unless exist?
       classpath = @module_set['dso-system-tests'].subtree('src').classpath(@build_results, :full, :runtime)
       classpath = PathSet.new(classpath, Registry[:emma_lib]).to_s if Registry[:emma]
+      @extra_classpath.each do |path|
+        classpath = PathSet.new(classpath, path)
+      end
       puts("Creating boot JAR with: #{@jvm} and config file: #{@config_file}")
 
       sysproperties = {
