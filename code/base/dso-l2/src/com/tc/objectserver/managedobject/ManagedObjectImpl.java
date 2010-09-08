@@ -207,8 +207,6 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
     final ManagedObjectCacheStrategy strategy = ManagedObjectStateUtil.getCacheStrategy(newState);
     if (strategy == ManagedObjectCacheStrategy.PINNED) {
       pin();
-    } else if (strategy == ManagedObjectCacheStrategy.NOT_CACHED) {
-      setRemoveOnRelease(true);
     }
   }
 

@@ -22,7 +22,7 @@ import java.util.Set;
 public interface ManagedObject {
 
   enum ManagedObjectCacheStrategy {
-    CACHED, PINNED, NOT_CACHED
+    PINNED, UNPINNED
   }
 
   public ObjectID getID();
