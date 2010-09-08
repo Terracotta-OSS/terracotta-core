@@ -21,7 +21,7 @@ class Environment
     if @hostname.nil?
       @hostname = @platform.get_env("COMPUTERNAME")
       @hostname = @platform.get_env("HOSTNAME") if @hostname.blank?
-      @hostname = @platform.exec("hostname") if @hostname.blank?
+      @hostname = `hostname` if @hostname.blank?
       @hostname = @hostname.gsub(/\.terracotta\.lan/, '').strip
     end
     
