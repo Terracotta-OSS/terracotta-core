@@ -32,7 +32,7 @@ public class LicenseManager {
   public static final String      EXIT_MESSAGE       = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
                                                        + "learn how to enable licensed usage of this feature. For more information, "
                                                        + "visit Terracotta support at http://www.terracotta.org.";
-  public static final String      EXPIRY_WARNING     = "Your product key is valid until %s. "
+  public static final String      EXPIRY_WARNING     = "Your license key is valid until %s. "
                                                        + "You have %s remaining until the expiration date. "
                                                        + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
   public static final String      EXPIRED_ERROR      = "Your product key expired on %s. " + EXIT_MESSAGE;
@@ -67,7 +67,7 @@ public class LicenseManager {
   public static void assertLicenseValid() {
     if (getLicense() == null) {
       //
-      throw new LicenseException("Terracotta license key is required for Enterprise feature.");
+      throw new LicenseException("Terracotta license key is required for Enterprise capabilities.");
     }
     Date expirationDate = getLicense().expirationDate();
     if (expirationDate != null && expirationDate.before(new Date())) {
