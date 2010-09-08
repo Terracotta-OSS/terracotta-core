@@ -108,7 +108,7 @@ class BuildEnvironment < Environment
 
   # Edition info: opensource or enterprise  
   def edition
-    @config_source['flavor'] =~ /enterprise/i ? 'Enterprise' : 'Opensource'
+    is_ee_branch? ? 'Enterprise' : 'Opensource'
   end
   
   # When was this build started? This returns a timestamp (a Time object) that's created in
