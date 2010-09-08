@@ -102,11 +102,6 @@ class BuildSubtree
         
       end
     end
-
-    create_data_file(config_source, build_results.classes_directory(self).to_s, :build_data)
-    if $patch     
-      create_data_file(config_source, build_results.classes_directory(self).to_s, :patch_data, $XXX_patch_level)
-    end
   end
 
   def copy_resources

@@ -20,18 +20,16 @@ module BuildData
   # Creates a 'build data' file at the given location, putting into it a number
   # of properties that specify when, where, and how the code in it was compiled.
   def create_build_data(config_source, destdir = self.build_data_dir)
-    create_data_file(config_source, destdir, :build_data)
+    create_data_file(config_source, destdir, :build_data, @build_environment.edition)
   end
 
   # Creates a 'patch data' file at the given location, putting into it a number
   # of properties that specify when, where, and how the patch in it was compiled.
   def create_patch_data(level, config_source, destdir = self.build_data_dir)
-    create_data_file(config_source, destdir, :patch_data, level)
+    create_data_file(config_source, destdir, :patch_data, @build_environment.edition, level)
   end
 
-  private
-
-  def create_data_file(config_source, destdir, type, level = nil)
+  def create_data_file(config_source, destdir, type, edition, level = nil)
     if type == :build_data
       keyspace    = "terracotta.build"
       output_file = FilePath.new(destdir, BUILD_DATA_FILE_NAME)
@@ -46,7 +44,7 @@ module BuildData
       file.puts("#{keyspace}.level=#{level}") if type == :patch_data
 
       file.puts("#{keyspace}.productname=terracotta")
-      file.puts("#{keyspace}.edition=#{build_environment.edition}")
+      file.puts("#{keyspace}.edition=#{edition}")
       file.puts("#{keyspace}.version=#{build_environment.maven_version}")
       file.puts("#{keyspace}.maven.artifacts.version=#{build_environment.maven_version}")
       file.puts("#{keyspace}.host=#{build_environment.build_hostname}")

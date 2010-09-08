@@ -28,7 +28,7 @@ end
 
 class BuildSubtree
   include PropertyUtils
-
+  
   # Creates a SubtreeTestRun object for this subtree and returns it. Most of the arguments
   # are self-explanatory (they're the obvious instances of the classes with the same names);
   # test_patterns is an array of Ant-style patterns (e.g., "**/*Test") that indicates
@@ -271,6 +271,7 @@ end
 # whatever you want with it.
 class SubtreeTestRun
   include PropertyUtils
+  include BuildData
 
   # The default timeout for tests, in seconds. Currently, this is 15 minutes.
   DEFAULT_TEST_TIMEOUT_SECONDS = 15 * 60
@@ -666,9 +667,15 @@ class SubtreeTestRun
 
     junit_formatter_classpath = @build_module.module_set['junit-formatter'].subtree('tests.base').classpath(@build_results, :module_only, :runtime)
 
+    edition = (@classpath.to_s =~ /ent-common/) ? 'Enterprise' : 'Opensource'
+    build_data_dir = FilePath.new(@cwd, "builddata").ensure_directory
+    create_data_file(@config_source, build_data_dir, :build_data, edition)
+
     # Run the tests. Most of the real magic here comes in the 'splice_into_ant_junit'
     # method, which puts the necessary <jvmarg>, <sysproperty>, and so forth elements
     # into the junit task.
+
+
 
     begin
       @ant.junit(
@@ -682,6 +689,7 @@ class SubtreeTestRun
         @ant.classpath {
           # add path to TCJUnitFormatter class
           @ant.pathelement( :path => junit_formatter_classpath)
+          @ant.pathelement( :path => build_data_dir.to_s)
         }
         splice_into_ant_junit
 
