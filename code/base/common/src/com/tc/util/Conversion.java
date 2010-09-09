@@ -360,7 +360,7 @@ public class Conversion {
       } else if (this.unit.equals(GIGA.getUnit())) {
         return 1024 * MEGA.getInBytes();
       } else {
-        throw new MetricsFormatException("Unexpectes metrics: " + this);
+        throw new MetricsFormatException("Unexpected size: " + toString());
       }
     }
 
