@@ -19,6 +19,7 @@ import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -145,9 +146,10 @@ public class ServerTransactionImpl implements ServerTransaction {
   @Override
   public String toString() {
     return "ServerTransaction[" + this.seqID + " , " + this.txID + "," + this.sourceID + "," + this.transactionType
-           + "] = { changes = " + this.changes.size() + ", notifies = " + this.notifies.size() + ", newRoots = "
-           + this.newRoots.size() + ", numTxns = " + getNumApplicationTxn() + ", oids =  " + this.objectIDs
-           + ", newObjectIDs = " + this.newObjectIDs + ",\n" + getChangesDetails() + " }";
+           + ", HighWaterMarks: " + Arrays.toString(this.highWaterMarks) + "] = { changes = " + this.changes.size()
+           + ", notifies = " + this.notifies.size() + ", newRoots = " + this.newRoots.size() + ", numTxns = "
+           + getNumApplicationTxn() + ", oids =  " + this.objectIDs + ", newObjectIDs = " + this.newObjectIDs + ",\n"
+           + getChangesDetails() + " }";
   }
 
   private String getChangesDetails() {

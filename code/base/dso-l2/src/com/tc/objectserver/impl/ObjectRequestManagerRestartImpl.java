@@ -132,6 +132,8 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getSimpleName()).flush();
+    out.indent().print("State: " + this.state).flush();
+    out.indent().print("ResentTransactionIDs : " + this.resentTransactionIDs).flush();
     out.indent().print("PendingRequests: " + this.pendingRequests.size()).flush();
     for (Iterator<ObjectRequestServerContext> i = this.pendingRequests.iterator(); i.hasNext();) {
       ObjectRequestServerContext objReqServerContext = i.next();
