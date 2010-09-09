@@ -29,7 +29,7 @@ public class UnSupportedServerStripingTest extends BaseDSOTestCase {
     assertFalse("Expected the server to fail due to unsupported feature", server.isRunning());
     server.stop();
 
-    List<CharSequence> result = Grep.grep("Feature 'server striping' is not supported in this edition of Terracotta",
+    List<CharSequence> result = Grep.grep("Terracotta license key is required for Enterprise capabilities",
                                           server.getServerLog());
     System.out.println("Output found: " + result);
     assertTrue(result.size() > 0);
