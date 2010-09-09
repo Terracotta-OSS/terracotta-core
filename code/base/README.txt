@@ -168,6 +168,11 @@ NOTE: Output of binaries are placed under code/base/build/dist
 --no-no
     only build a bare kit and skip ivy also
 
+maven.useLocalRepo=[true|false]
+    If true, tcbuild will first look in the local Maven repository for Maven
+    artifacts that are to be included in the kit.  The dist_dev target sets
+    this variable to true automatically.
+
 dist <product_code> <flavor> [maven.repo=URL] [kit.version=number]
     Create distribution binaries.
     <product_code> may be one of dso (the default), web, or api
@@ -182,6 +187,13 @@ dist <product_code> <flavor> [maven.repo=URL] [kit.version=number]
 dist_jars <product_code> <distribution_type>
     Acts like the dist target but will only build the jar files that will be found
     in a kit.
+
+dist_dev <product_code> <flavor>
+    Create a development kit using local versions of artifacts and external
+    resources to populate the kit.  Specifically, this target will set
+    maven.useLocalRepo=true and build all external projects before constructing
+    the kit.  See build_external for further details about building external
+    projects.
 
 create_package <product_code> [kit.version=number]
     Assembles and packages the kit. Product codes: dso, web
@@ -256,6 +268,10 @@ NOTE: The jdk= option, described in the JDK SELECTION section below, can be
 used to specify the JDK used by these targets.
 
 MISCELLANEOUS
+
+build_external
+    Build all external projects found in the external directory.
+    See README-EXTERNAL.txt for details.
 
 javadoc
     Generates Javadoc API documentation in build/doc/api.
