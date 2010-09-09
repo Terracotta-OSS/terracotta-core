@@ -11,6 +11,8 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SESSIONS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP;
 import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
+import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
+import static org.terracotta.license.LicenseConstants.LICENSE_PATH_KEY;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_MAX_CLIENT_COUNT;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
@@ -52,7 +54,7 @@ public class LicenseManager {
     license = factory.resolveLicense();
     afterInit(factory.getLicenseLocation());
   }
-  
+
   public static synchronized void loadLicenseFromStream(InputStream in, String licenseLocation) {
     license = factory.resolveLicense(in);
     afterInit(licenseLocation);
@@ -78,7 +80,11 @@ public class LicenseManager {
   public static void assertLicenseValid() {
     if (getLicense() == null) {
       //
-      throw new LicenseException("Terracotta license key is required for Enterprise capabilities.");
+      throw new LicenseException(
+                                 "Terracotta license key is required for Enterprise capabilities. Please place "
+                                     + LICENSE_KEY_FILENAME
+                                     + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
+                                     + LICENSE_PATH_KEY + "=/path/to/key");
     }
     Date expirationDate = getLicense().expirationDate();
     if (expirationDate != null && expirationDate.before(new Date())) {
