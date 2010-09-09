@@ -23,34 +23,45 @@ import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.util.runtime.Vm;
 
+import java.io.InputStream;
 import java.util.Date;
 
 public class LicenseManager {
-  private static final long       BYTES_PER_MEGABYTE = 1024 * 1024L;
-  private static final long       BYTES_PER_GIGABYTE = 1024 * 1024L * 1024L;
-  private static final TCLogger   LOGGER             = CustomerLogging.getConsoleLogger();
-  public static final String      EXIT_MESSAGE       = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
-                                                       + "learn how to enable licensed usage of this feature. For more information, "
-                                                       + "visit Terracotta support at http://www.terracotta.org.";
-  public static final String      EXPIRY_WARNING     = "Your license key is valid until %s. "
-                                                       + "You have %s remaining until the expiration date. "
-                                                       + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
-  public static final String      EXPIRED_ERROR      = "Your product key expired on %s. " + EXIT_MESSAGE;
-  public static final int         WARNING_MARK       = 240;
-  public static final long        HOUR               = 1000 * 60 * 60;
+  private static final long                           BYTES_PER_MEGABYTE = 1024 * 1024L;
+  private static final long                           BYTES_PER_GIGABYTE = 1024 * 1024L * 1024L;
+  private static final TCLogger                       LOGGER             = CustomerLogging.getConsoleLogger();
+  public static final String                          EXIT_MESSAGE       = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
+                                                                           + "learn how to enable licensed usage of this feature. For more information, "
+                                                                           + "visit Terracotta support at http://www.terracotta.org.";
+  public static final String                          EXPIRY_WARNING     = "Your license key is valid until %s. "
+                                                                           + "You have %s remaining until the expiration date. "
+                                                                           + "When the expiration date is reached TERRACOTTA WILL CEASE FUNCTIONING.";
+  public static final String                          EXPIRED_ERROR      = "Your product key expired on %s. "
+                                                                           + EXIT_MESSAGE;
+  public static final int                             WARNING_MARK       = 240;
+  public static final long                            HOUR               = 1000 * 60 * 60;
 
-  private static volatile boolean initialized;
+  private static volatile boolean                     initialized;
 
   // lazily-init, don't use directly
   // use getLicense() instead
-  private static License          license;
+  private static License                              license;
+  private static final AbstractLicenseResolverFactory factory            = AbstractLicenseResolverFactory.getFactory();
 
   private static synchronized void init() {
-    AbstractLicenseResolverFactory factory = AbstractLicenseResolverFactory.getFactory();
     license = factory.resolveLicense();
+    afterInit(factory.getLicenseLocation());
+  }
+  
+  public static synchronized void loadLicenseFromStream(InputStream in, String licenseLocation) {
+    license = factory.resolveLicense(in);
+    afterInit(licenseLocation);
+  }
+
+  private static void afterInit(String licenseLocation) {
     initialized = true;
     if (license != null) {
-      LOGGER.info("Terracotta license loaded from " + factory.getLicenseLocation() + "\n" + license.toString());
+      LOGGER.info("Terracotta license loaded from " + licenseLocation + "\n" + license.toString());
     }
   }
 
