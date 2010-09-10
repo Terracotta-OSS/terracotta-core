@@ -103,6 +103,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  def enterprise?
+    flavor = (@flavor || OPENSOURCE).downcase
+    flavor == 'enterprise'
+  end
 
   def handle_appserver_overwite()
     appserver = @config_source['tc.build-control.appserver'] || @config_source['appserver']
