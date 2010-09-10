@@ -5,6 +5,7 @@ package com.tc.objectserver.storage.berkeleydb;
 
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
+import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +18,9 @@ public class BerkeleyDBFactory implements DBFactory {
     this.properties = properties;
   }
 
-  public DBEnvironment createEnvironment(boolean paranoid, File envHome) throws IOException {
-    return new BerkeleyDBEnvironment(paranoid, envHome, properties);
+  public DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk)
+      throws IOException {
+    return new BerkeleyDBEnvironment(paranoid, envHome, properties, l2FaultFromDisk);
   }
 
 }

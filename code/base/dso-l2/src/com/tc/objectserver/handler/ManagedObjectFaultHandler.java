@@ -36,15 +36,13 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
   private final ObjectStatsRecorder objectStatsRecorder;
   // TODO::Remove this counter, its not needed if you remove the logging @see below
   private final AtomicLong          faultsCounter;
-  private final SampledCounter      faultFromDisk;
-  private final SampledCounter      time2FaultFromDisk;
+  private final SampledCounter      time2FaultFromStore;
   private final SampledCounter      time2Add2ObjMgr;
 
-  public ManagedObjectFaultHandler(SampledCounter faultFromDisk, SampledCounter time2FaultFromDisk,
-                                   SampledCounter time2Add2ObjMgr, ObjectStatsRecorder objectStatsRecorder) {
-    this.faultFromDisk = faultFromDisk;
+  public ManagedObjectFaultHandler(SampledCounter time2FaultFromDiskOrOffheap, SampledCounter time2Add2ObjMgr,
+                                   ObjectStatsRecorder objectStatsRecorder) {
     this.objectStatsRecorder = objectStatsRecorder;
-    this.time2FaultFromDisk = time2FaultFromDisk;
+    this.time2FaultFromStore = time2FaultFromDiskOrOffheap;
     this.time2Add2ObjMgr = time2Add2ObjMgr;
     this.faultsCounter = new AtomicLong();
   }
@@ -84,12 +82,12 @@ public class ManagedObjectFaultHandler extends AbstractEventHandler {
   }
 
   private void logStats(long time2Fault, long time2Add) {
-    this.faultFromDisk.increment();
-    this.time2FaultFromDisk.increment(time2Fault);
+    this.time2FaultFromStore.increment(time2Fault);
     this.time2Add2ObjMgr.increment(time2Add);
     long count = this.faultsCounter.incrementAndGet();
+    // this could be from offheap or disk
     if (count % 1000 == 0) {
-      logger.info("Number of Objects faulted from disk = " + count);
+      logger.info("Number of Objects faulted = " + count);
     }
   }
 

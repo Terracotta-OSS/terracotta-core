@@ -34,9 +34,9 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -616,8 +616,10 @@ public class TCServerImpl extends SEDA implements TCServer {
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
     GCStatsEventPublisher gcStatsPublisher = this.dsoServer.getGcStatsEventPublisher();
-    TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer.getOperatorEventsHistoryProvider();
-    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider);
+    TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer
+        .getOperatorEventsHistoryProvider();
+    DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,
+                           this.dsoServer.getOffheapStats());
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 

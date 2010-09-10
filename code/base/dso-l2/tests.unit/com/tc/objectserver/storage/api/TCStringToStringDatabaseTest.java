@@ -28,7 +28,7 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome);
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();

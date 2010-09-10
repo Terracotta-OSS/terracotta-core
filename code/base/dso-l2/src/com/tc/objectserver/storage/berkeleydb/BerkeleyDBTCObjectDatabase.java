@@ -12,15 +12,19 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
-import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
+import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.Conversion;
 
 public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase implements TCObjectDatabase {
   private static final TCLogger logger = TCLogging.getLogger(BerkeleyDBTCObjectDatabase.class);
 
-  public BerkeleyDBTCObjectDatabase(Database db) {
+  private final SampledCounter  l2FaultFromDisk;
+
+  public BerkeleyDBTCObjectDatabase(Database db, SampledCounter l2FaultFromDisk) {
     super(db);
+    this.l2FaultFromDisk = l2FaultFromDisk;
   }
 
   public Status delete(long id, PersistenceTransaction tx) {
@@ -40,6 +44,7 @@ public class BerkeleyDBTCObjectDatabase extends BerkeleyDBTCBytesBytesDatabase i
     DatabaseEntry value = new DatabaseEntry();
     OperationStatus status = this.db.get(pt2nt(tx), key, value, LockMode.DEFAULT);
     if (OperationStatus.SUCCESS.equals(status)) {
+      l2FaultFromDisk.increment();
       return value.getData();
     } else if (OperationStatus.NOTFOUND.equals(status)) { return null; }
 

@@ -29,6 +29,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   private final SampledCounter       globalLockRecallRate;
   private final SampledRateCounter   transactionSizeRate;
   private final SampledCounter       broadcastRate;
+  private final SampledCounter       l2DiskFaultRate;
 
   public DSOStatsImpl(ServerManagementContext context) {
     this.serverStats = context.getServerStats();
@@ -39,6 +40,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     this.globalLockRecallRate = serverStats.getGlobalLockRecallCounter();
     this.transactionSizeRate = serverStats.getTransactionSizeCounter();
     this.broadcastRate = serverStats.getBroadcastCounter();
+    this.l2DiskFaultRate = serverStats.getL2FaultFromDiskCounter();
   }
 
   public long getObjectFaultRate() {
@@ -64,7 +66,7 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   public long getFlushedRate() {
     return objMgrStats.getFlushedRate().getCounterValue();
   }
-  
+
   public long getGlobalLockRecallRate() {
     return globalLockRecallRate.getMostRecentSample().getCounterValue();
   }
@@ -75,6 +77,10 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
 
   public long getBroadcastRate() {
     return broadcastRate.getMostRecentSample().getCounterValue();
+  }
+
+  public long getL2DiskFaultRate() {
+    return this.l2DiskFaultRate.getMostRecentSample().getCounterValue();
   }
 
   public Number[] getStatistics(String[] names) {
@@ -109,8 +115,4 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
   public long getGlobalServerMapGetValueRequestsRate() {
     return serverStats.getServerMapGetValueRequestsCounter().getMostRecentSample().getCounterValue();
   }
-  
-  
-
- 
 }

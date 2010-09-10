@@ -34,7 +34,7 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome);
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
@@ -98,7 +98,7 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
       Assert.assertTrue(Arrays.equals(value1, entry.getValue()));
     }
     tx.commit();
-    
+
     tx = ptp.newTransaction();
     int countDeleted = database.deleteCollectionBatched(objectId1, tx, 1);
     tx.commit();

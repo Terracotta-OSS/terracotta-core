@@ -4,15 +4,16 @@
  */
 package com.tc.statistics.retrieval.actions;
 
+import com.tc.exception.ImplementMe;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.context.ManagedObjectFaultingContext;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.impl.TestServerConfigurationContext;
-import com.tc.objectserver.handler.ManagedObjectFaultHandler;
 import com.tc.objectserver.impl.TestManagedObjectStore;
 import com.tc.objectserver.impl.TestObjectManager;
-import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.TCObjectDatabase;
+import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -26,8 +27,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
 
-import java.util.Random;
-
 public class SRAL2FaultsFromDiskTest extends TCTestCase {
 
   static {
@@ -36,10 +35,10 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     System.out.println("set to true");
   }
 
-  private ManagedObjectFaultHandler managedObjectFaultHandler;
-  private DSOGlobalServerStatsImpl  dsoGlobalServerStats;
-  private static Random             random = new Random(System.currentTimeMillis());
+  private TCObjectDatabase         objectDatabase;
+  private DSOGlobalServerStatsImpl dsoGlobalServerStats;
 
+  @Override
   protected void setUp() throws Exception {
     final CounterManager counterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 10, true, 0L);
@@ -50,31 +49,29 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     dsoGlobalServerStats = new DSOGlobalServerStatsImpl(null, null, null, null, null, faultsFromDisk,
                                                         time2FaultCounter, time2AddCounter, null, null, null, null);
 
-    this.managedObjectFaultHandler = new ManagedObjectFaultHandler(faultsFromDisk, time2FaultCounter, time2AddCounter,
-                                                                   new ObjectStatsRecorder());
+    this.objectDatabase = new MyTCObjectDatabase(faultsFromDisk);
     final TestServerConfigurationContext serverConfigContext = new TestServerConfigurationContext();
     serverConfigContext.objectManager = new TestObjectManager() {
+      @Override
       public void addFaultedObject(final ObjectID oid, final ManagedObject mo, final boolean removeOnRelease) {
         ThreadUtil.reallySleep(100);
       }
     };
     serverConfigContext.objectStore = new TestManagedObjectStore();
-    managedObjectFaultHandler.initialize(serverConfigContext);
   }
 
+  @Override
   protected void tearDown() throws Exception {
-    this.managedObjectFaultHandler = null;
     this.dsoGlobalServerStats = null;
   }
 
   public void testL2FaultsFromDisk() throws InterruptedException {
     SRAL2FaultsFromDisk faultsFromDisk = new SRAL2FaultsFromDisk(dsoGlobalServerStats);
     Assert.assertEquals(StatisticType.SNAPSHOT, faultsFromDisk.getType());
-    ManagedObjectFaultingContext context = getContext();
 
     for (int i = 1; i <= 30; i++) {
       System.out.println("Simulating object fault from disk...");
-      managedObjectFaultHandler.handleEvent(context);
+      objectDatabase.get(-1, null);
       StatisticData[] data = faultsFromDisk.retrieveStatisticData();
       Assert.assertEquals(3, data.length);
       assertData(data[0], SRAL2FaultsFromDisk.ELEMENT_NAME_FAULT_COUNT);
@@ -94,7 +91,28 @@ public class SRAL2FaultsFromDiskTest extends TCTestCase {
     System.out.println("Asserted statistic data.");
   }
 
-  private ManagedObjectFaultingContext getContext() {
-    return new ManagedObjectFaultingContext(new ObjectID(random.nextLong()), true);
+  private static class MyTCObjectDatabase implements TCObjectDatabase {
+    private final SampledCounter faultCounter;
+
+    public MyTCObjectDatabase(SampledCounter faultCounter) {
+      this.faultCounter = faultCounter;
+    }
+
+    public Status delete(long id, PersistenceTransaction tx) {
+      throw new ImplementMe();
+    }
+
+    public byte[] get(long id, PersistenceTransaction tx) {
+      faultCounter.increment();
+      return null;
+    }
+
+    public Status insert(long id, byte[] b, PersistenceTransaction tx) {
+      throw new ImplementMe();
+    }
+
+    public Status update(long id, byte[] b, PersistenceTransaction tx) {
+      throw new ImplementMe();
+    }
   }
 }
