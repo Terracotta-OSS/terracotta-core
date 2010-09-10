@@ -205,10 +205,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
 
   public void start(final Set cids) {
     synchronized (this.transactionAccounts) {
-      for (Iterator<NodeID> i = transactionAccounts.keySet().iterator(); i.hasNext();) {
-        NodeID node = i.next();
+      for (final Iterator<NodeID> i = this.transactionAccounts.keySet().iterator(); i.hasNext();) {
+        final NodeID node = i.next();
         if (!cids.contains(node)) {
-          logger.warn("Cleaning up transaction account for " + node + " : " + transactionAccounts.get(node));
+          logger.warn("Cleaning up transaction account for " + node + " : " + this.transactionAccounts.get(node));
           i.remove();
         }
       }
