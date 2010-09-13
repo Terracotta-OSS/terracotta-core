@@ -63,10 +63,9 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     remoteAddress = delegate.getRemoteAddress();
 
     initPolledAttributes();
-    testSetupTunneledBeans();
   }
 
-  private void testSetupTunneledBeans() {
+  public void testSetupTunneledBeans() {
     if (delegate.isTunneledBeansRegistered()) {
       setupTunneledBeans();
     } else {

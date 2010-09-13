@@ -1050,6 +1050,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
   
   protected void initializeDSOClient(DSOClient client, ObjectName clientBeanName){
+    client.testSetupTunneledBeans();
     client.addPropertyChangeListener(clientChangeListener);
     clients.add(client);
     // Don't notify the client's existence until it's ready
