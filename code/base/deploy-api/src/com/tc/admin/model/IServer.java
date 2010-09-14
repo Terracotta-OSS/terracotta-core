@@ -27,20 +27,22 @@ import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 
 public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
-  static final IServer[] NULL_SET                               = {};
+  static final IServer[] NULL_SET                                = {};
 
-  static final String    PROP_CONNECTED                         = "connected";
-  static final String    PROP_CONNECT_ERROR                     = "connectError";
-  static final String    PROP_LOCK_STATS_TRACE_DEPTH            = "lockStatsTraceDepth";
-  static final String    PROP_LOCK_STATS_ENABLED                = "lockStatsEnabled";
+  static final String    PROP_CONNECTED                          = "connected";
+  static final String    PROP_CONNECT_ERROR                      = "connectError";
+  static final String    PROP_LOCK_STATS_TRACE_DEPTH             = "lockStatsTraceDepth";
+  static final String    PROP_LOCK_STATS_ENABLED                 = "lockStatsEnabled";
 
-  static final String    POLLED_ATTR_CACHE_MISS_RATE            = "CacheMissRate";
-  static final String    POLLED_ATTR_FLUSHED_RATE               = "FlushedRate";
-  static final String    POLLED_ATTR_LOCK_RECALL_RATE           = "GlobalLockRecallRate";
-  static final String    POLLED_ATTR_BROADCAST_RATE             = "BroadcastRate";
-  static final String    POLLED_ATTR_TRANSACTION_SIZE_RATE      = "TransactionSizeRate";
-  static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT = "PendingTransactionsCount";
-  static final String    POLLED_ATTR_CACHED_OBJECT_COUNT        = "CachedObjectCount";
+  static final String    POLLED_ATTR_CACHE_MISS_RATE             = "CacheMissRate";
+  static final String    POLLED_ATTR_FAULTED_RATE                = "L2DiskFaultRate";
+  static final String    POLLED_ATTR_FLUSHED_RATE                = "FlushedRate";
+  static final String    POLLED_ATTR_LOCK_RECALL_RATE            = "GlobalLockRecallRate";
+  static final String    POLLED_ATTR_BROADCAST_RATE              = "BroadcastRate";
+  static final String    POLLED_ATTR_TRANSACTION_SIZE_RATE       = "TransactionSizeRate";
+  static final String    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT  = "PendingTransactionsCount";
+  static final String    POLLED_ATTR_CACHED_OBJECT_COUNT         = "CachedObjectCount";
+  static final String    POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT = "OffheapObjectCachedCount";
 
   boolean isActiveCoordinator();
 
@@ -163,7 +165,7 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   DSOClassInfo[] getClassInfo();
 
   GCStats[] getGCStats();
-  
+
   List<TerracottaOperatorEvent> getOperatorEvents();
 
   void addDGCListener(DGCListener listener);

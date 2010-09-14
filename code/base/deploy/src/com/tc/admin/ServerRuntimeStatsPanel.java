@@ -8,6 +8,8 @@ import static com.tc.admin.model.IClusterNode.POLLED_ATTR_CPU_USAGE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_MAX_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FAULT_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FLUSH_RATE;
+import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_MAX_MEMORY;
+import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_USED_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_TRANSACTION_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_USED_MEMORY;
 import static com.tc.admin.model.IServer.POLLED_ATTR_CACHE_MISS_RATE;
@@ -16,11 +18,15 @@ import static com.tc.admin.model.IServer.POLLED_ATTR_FLUSHED_RATE;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.RangeType;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.BasicWorker;
+import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.StatusView;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -53,6 +59,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private StatusView               memoryMaxLabel;
   private TimeSeries               memoryUsedSeries;
   private StatusView               memoryUsedLabel;
+  private TimeSeries               offHeapMaxSeries;
+  private TimeSeries               offHeapUsedSeries;
 
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
@@ -73,17 +81,23 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   protected final String           txnRateLabelFormat       = "{0,number,integer} Txns/sec.";
   protected final String           diskFaultRateLabelFormat = "{0,number,integer} Faults/sec.";
   protected final String           diskFlushRateLabelFormat = "{0,number,integer} Flushes/sec.";
-  protected final String           memoryUsedLabelFormat    = "{0,number,integer} Used";
-  protected final String           memoryMaxLabelFormat     = "{0,number,integer} Max";
+  protected final String           memoryUsedLabelFormat    = "{0,number,integer} Heap Used";
+  protected final String           memoryMaxLabelFormat     = "{0,number,integer} Heap Max";
+  protected final String           offHeapUsedLabelFormat   = "{0,number,integer} OffHeap Used";
+  protected final String           offHeapMaxLabelFormat    = "{0,number,integer} OffHeap Max";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET     = new HashSet(Arrays.asList(POLLED_ATTR_CPU_USAGE,
-                                                                                        POLLED_ATTR_USED_MEMORY,
-                                                                                        POLLED_ATTR_MAX_MEMORY,
-                                                                                        POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                        POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                        POLLED_ATTR_TRANSACTION_RATE,
-                                                                                        POLLED_ATTR_CACHE_MISS_RATE,
-                                                                                        POLLED_ATTR_FLUSHED_RATE));
+  private static final Set<String> POLLED_ATTRIBUTE_SET     = new HashSet(
+                                                                          Arrays
+                                                                              .asList(POLLED_ATTR_CPU_USAGE,
+                                                                                      POLLED_ATTR_USED_MEMORY,
+                                                                                      POLLED_ATTR_MAX_MEMORY,
+                                                                                      POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                      POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                      POLLED_ATTR_TRANSACTION_RATE,
+                                                                                      POLLED_ATTR_CACHE_MISS_RATE,
+                                                                                      POLLED_ATTR_FLUSHED_RATE,
+                                                                                      POLLED_ATTR_OFFHEAP_MAX_MEMORY,
+                                                                                      POLLED_ATTR_OFFHEAP_USED_MEMORY));
 
   public ServerRuntimeStatsPanel(ApplicationContext appContext, IServer server) {
     super(appContext);
@@ -206,6 +220,12 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
         memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, n));
       }
 
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAX_MEMORY);
+      updateSeries(offHeapMaxSeries, n);
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_USED_MEMORY);
+      updateSeries(offHeapUsedSeries, n);
+
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
         handleCpuUsage(cpuTimeSeries, cpuUsageData);
@@ -294,6 +314,30 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     labelHolder.add(memoryUsedLabel = createStatusLabel(Color.blue));
     labelHolder.setOpaque(false);
     memoryPanel.add(labelHolder, gbc);
+
+    offHeapUsedSeries = createTimeSeries("OffHeap Used");
+    int maxItemCount = memoryMaxSeries.getMaximumItemCount();
+    offHeapUsedSeries.setMaximumItemCount(maxItemCount);
+    offHeapMaxSeries = createTimeSeries("OffHeap Max");
+    offHeapMaxSeries.setMaximumItemCount(maxItemCount);
+    plot.setDataset(1,
+                    DemoChartFactory.createTimeSeriesDataset(new TimeSeries[] { offHeapMaxSeries, offHeapUsedSeries }));
+    NumberAxis axis2 = createNumberAxis("");
+    plot.setRangeAxis(1, axis2);
+    XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(true, false);
+    plot.setRenderer(1, renderer);
+    renderer.setSeriesToolTipGenerator(1, StandardXYToolTipGenerator.getTimeSeriesInstance());
+    plot.mapDatasetToRangeAxis(1, 1);
+  }
+
+  private static NumberAxis createNumberAxis(String name) {
+    NumberAxis result = new NumberAxis(name);
+    result.setRangeType(RangeType.POSITIVE);
+    result.setStandardTickUnits(DemoChartFactory.DEFAULT_TICKS);
+    result.setAutoRangeMinimumSize(10.0);
+    result.setTickLabelFont(DemoChartFactory.regularFont);
+    result.setLabelFont(DemoChartFactory.regularFont);
+    return result;
   }
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {

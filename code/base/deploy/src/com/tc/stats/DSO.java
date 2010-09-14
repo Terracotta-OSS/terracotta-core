@@ -707,6 +707,42 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return new OffheapJMXStats(this.offheapStats);
   }
 
+  public long getMapAllocatedSize() {
+    return offheapStats.getMapAllocatedSize();
+  }
+
+  public long getMapMaxDataSize() {
+    return offheapStats.getMapMaxDataSize();
+  }
+
+  public long getObjectAllocatedSize() {
+    return offheapStats.getObjectAllocatedSize();
+  }
+
+  public long getObjectMaxDataSize() {
+    return offheapStats.getObjectMaxDataSize();
+  }
+
+  public long getOffheapFaultObjectCount() {
+    return offheapStats.getOffheapFaultObjectCount();
+  }
+
+  public long getOffheapFlushObjectCount() {
+    return offheapStats.getOffheapFlushObjectCount();
+  }
+
+  public long getOffheapMaxDataSize() {
+    return offheapStats.getOffheapMaxDataSize();
+  }
+
+  public long getOffheapAllocatedDataSize() {
+    return getMapAllocatedSize() + getObjectAllocatedSize();
+  }
+
+  public long getOffheapObjectCachedCount() {
+    return offheapStats.getOffheapObjectCachedCount();
+  }
+
   public long getL2DiskFaultRate() {
     return getStats().getL2DiskFaultRate();
   }

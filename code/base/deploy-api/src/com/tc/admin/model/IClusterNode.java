@@ -12,13 +12,15 @@ import java.util.Set;
 import javax.management.ObjectName;
 
 public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProvider {
-  static final String POLLED_ATTR_CPU_USAGE         = "CpuUsage";
-  static final String POLLED_ATTR_USED_MEMORY       = "UsedMemory";
-  static final String POLLED_ATTR_MAX_MEMORY        = "MaxMemory";
-  static final String POLLED_ATTR_OBJECT_FLUSH_RATE = "ObjectFlushRate";
-  static final String POLLED_ATTR_OBJECT_FAULT_RATE = "ObjectFaultRate";
-  static final String POLLED_ATTR_TRANSACTION_RATE  = "TransactionRate";
-  static final String POLLED_ATTR_LIVE_OBJECT_COUNT = "LiveObjectCount";
+  static final String POLLED_ATTR_CPU_USAGE           = "CpuUsage";
+  static final String POLLED_ATTR_USED_MEMORY         = "UsedMemory";
+  static final String POLLED_ATTR_MAX_MEMORY          = "MaxMemory";
+  static final String POLLED_ATTR_OBJECT_FLUSH_RATE   = "ObjectFlushRate";
+  static final String POLLED_ATTR_OBJECT_FAULT_RATE   = "ObjectFaultRate";
+  static final String POLLED_ATTR_TRANSACTION_RATE    = "TransactionRate";
+  static final String POLLED_ATTR_LIVE_OBJECT_COUNT   = "LiveObjectCount";
+  static final String POLLED_ATTR_OFFHEAP_MAX_MEMORY  = "OffheapMaxDataSize";
+  static final String POLLED_ATTR_OFFHEAP_USED_MEMORY = "OffheapAllocatedDataSize";
 
   IClusterModel getClusterModel();
 

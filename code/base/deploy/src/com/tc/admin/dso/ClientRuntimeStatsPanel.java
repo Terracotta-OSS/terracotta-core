@@ -16,6 +16,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
@@ -72,13 +73,15 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   protected final String           memoryUsedLabelFormat  = "{0,number,integer} Used";
   protected final String           memoryMaxLabelFormat   = "{0,number,integer} Max";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET   = new HashSet(Arrays
-                                                              .asList(POLLED_ATTR_CPU_USAGE, POLLED_ATTR_USED_MEMORY,
-                                                                      POLLED_ATTR_MAX_MEMORY,
-                                                                      POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                      POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                      POLLED_ATTR_TRANSACTION_RATE,
-                                                                      POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+  private static final Set<String> POLLED_ATTRIBUTE_SET   = new HashSet(
+                                                                        Arrays
+                                                                            .asList(POLLED_ATTR_CPU_USAGE,
+                                                                                    POLLED_ATTR_USED_MEMORY,
+                                                                                    POLLED_ATTR_MAX_MEMORY,
+                                                                                    POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                    POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                    POLLED_ATTR_TRANSACTION_RATE,
+                                                                                    POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public ClientRuntimeStatsPanel(ApplicationContext appContext, IClient client) {
     super(appContext);
@@ -150,25 +153,33 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
               if (map != null) {
                 n = (Number) map.get(POLLED_ATTR_TRANSACTION_RATE);
                 if (n != null) {
-                  if (txn >= 0) txn += n.longValue();
+                  if (txn >= 0) {
+                    txn += n.longValue();
+                  }
                 } else {
                   txn = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FLUSH_RATE);
                 if (n != null) {
-                  if (flush >= 0) flush += n.longValue();
+                  if (flush >= 0) {
+                    flush += n.longValue();
+                  }
                 } else {
                   flush = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FAULT_RATE);
                 if (n != null) {
-                  if (fault >= 0) fault += n.longValue();
+                  if (fault >= 0) {
+                    fault += n.longValue();
+                  }
                 } else {
                   fault = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
                 if (n != null) {
-                  if (pendingTxn >= 0) pendingTxn += n.longValue();
+                  if (pendingTxn >= 0) {
+                    pendingTxn += n.longValue();
+                  }
                 } else {
                   pendingTxn = -1;
                 }
@@ -312,6 +323,10 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     labelHolder.add(memoryUsedLabel = createStatusLabel(Color.blue));
     labelHolder.setOpaque(false);
     memoryPanel.add(labelHolder, gbc);
+
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, Color.red);
+    renderer.setSeriesPaint(1, Color.blue);
   }
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {

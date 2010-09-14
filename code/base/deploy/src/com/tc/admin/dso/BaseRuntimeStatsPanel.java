@@ -378,10 +378,14 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     List<XYPlot> plotList = new ArrayList<XYPlot>();
     java.awt.Component[] chartPanels = chartsPanel.getComponents();
     for (java.awt.Component comp : chartPanels) {
-      if (!(comp instanceof ChartPanel)) continue;
+      if (!(comp instanceof ChartPanel)) {
+        continue;
+      }
       ChartPanel chartPanel = (ChartPanel) comp;
       JFreeChart chart = chartPanel.getChart();
-      if (chart == null) continue;
+      if (chart == null) {
+        continue;
+      }
       Plot plot = chart.getPlot();
       if (plot instanceof XYPlot) {
         XYPlot xyPlot = ((XYPlot) chart.getPlot());
@@ -395,7 +399,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     rangeAxisSpace = new AxisSpace();
     rangeAxisSpace.setLeft(fixedRangeAxisSpace);
-    rangeAxisSpace.setRight(5);
+    rangeAxisSpace.setRight(fixedRangeAxisSpace);
 
     if (plotList.size() > 0) {
       Iterator<XYPlot> plotIter = plotList.iterator();

@@ -26,7 +26,7 @@ import javax.management.ObjectName;
  * aggregating statistical, configuration, and operational child interfaces.
  */
 
-public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
+public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMBean {
 
   DSOStats getStats();
 
@@ -88,4 +88,6 @@ public interface DSOMBean extends DSOStats, DGCMBean, TerracottaMBean {
   Map<ObjectName, Long> getServerMapGetValueRequestsRate();
 
   OffheapStats getOffheapStats();
+
+  long getOffheapAllocatedDataSize();
 }

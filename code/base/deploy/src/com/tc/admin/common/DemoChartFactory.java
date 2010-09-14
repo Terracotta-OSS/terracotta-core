@@ -49,7 +49,7 @@ public class DemoChartFactory {
   public static final TickUnitSource DEFAULT_INTEGER_TICKS = createIntegerTickUnits();
   public static final ResourceBundle bundle                = ResourceBundle
                                                                .getBundle("com.tc.admin.common.CommonBundle");
-  private static final Font          regularFont           = (Font) bundle.getObject("chart.regular.font");
+  public static final Font           regularFont           = (Font) bundle.getObject("chart.regular.font");
 
   static {
     // ChartFactory.setChartTheme(StandardChartTheme.createLegacyTheme());
@@ -301,8 +301,8 @@ public class DemoChartFactory {
   public static TimeSeriesCollection createTimeSeriesDataset(TimeSeries[] series) {
     TimeSeriesCollection dataset = new TimeSeriesCollection();
 
-    for (int i = 0; i < series.length; i++) {
-      dataset.addSeries(series[i]);
+    for (TimeSeries serie : series) {
+      dataset.addSeries(serie);
     }
 
     dataset.setDomainIsPointsInTime(true);

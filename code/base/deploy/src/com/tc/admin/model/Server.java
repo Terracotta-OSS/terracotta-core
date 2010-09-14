@@ -114,37 +114,45 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private StatisticsLocalGathererMBean    clusterStatsBean;
   private boolean                         clusterStatsSupported;
 
-  private static final PolledAttribute    PA_CPU_USAGE                  = new PolledAttribute(
-                                                                                              L2MBeanNames.TC_SERVER_INFO,
-                                                                                              POLLED_ATTR_CPU_USAGE);
-  private static final PolledAttribute    PA_USED_MEMORY                = new PolledAttribute(
-                                                                                              L2MBeanNames.TC_SERVER_INFO,
-                                                                                              POLLED_ATTR_USED_MEMORY);
-  private static final PolledAttribute    PA_MAX_MEMORY                 = new PolledAttribute(
-                                                                                              L2MBeanNames.TC_SERVER_INFO,
-                                                                                              POLLED_ATTR_MAX_MEMORY);
-  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE          = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_OBJECT_FLUSH_RATE);
-  private static final PolledAttribute    PA_OBJECT_FAULT_RATE          = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_OBJECT_FAULT_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_RATE           = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_TRANSACTION_RATE);
-  private static final PolledAttribute    PA_CACHE_MISS_RATE            = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_CACHE_MISS_RATE);
-  private static final PolledAttribute    PA_FLUSHED_RATE               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_FLUSHED_RATE);
-  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT          = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_LIVE_OBJECT_COUNT);
-  private static final PolledAttribute    PA_LOCK_RECALL_RATE           = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_LOCK_RECALL_RATE);
-  private static final PolledAttribute    PA_BROADCAST_RATE             = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_BROADCAST_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_SIZE_RATE      = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_TRANSACTION_SIZE_RATE);
-  private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-  private static final PolledAttribute    PA_CACHED_OBJECT_COUNT        = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                              POLLED_ATTR_CACHED_OBJECT_COUNT);
+  private static final PolledAttribute    PA_CPU_USAGE                       = new PolledAttribute(
+                                                                                                   L2MBeanNames.TC_SERVER_INFO,
+                                                                                                   POLLED_ATTR_CPU_USAGE);
+  private static final PolledAttribute    PA_USED_MEMORY                     = new PolledAttribute(
+                                                                                                   L2MBeanNames.TC_SERVER_INFO,
+                                                                                                   POLLED_ATTR_USED_MEMORY);
+  private static final PolledAttribute    PA_MAX_MEMORY                      = new PolledAttribute(
+                                                                                                   L2MBeanNames.TC_SERVER_INFO,
+                                                                                                   POLLED_ATTR_MAX_MEMORY);
+  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OBJECT_FLUSH_RATE);
+  private static final PolledAttribute    PA_OBJECT_FAULT_RATE               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OBJECT_FAULT_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_RATE                = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_TRANSACTION_RATE);
+  private static final PolledAttribute    PA_CACHE_MISS_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_FAULTED_RATE                    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_FAULTED_RATE);
+  private static final PolledAttribute    PA_FLUSHED_RATE                    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_FLUSHED_RATE);
+  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_LIVE_OBJECT_COUNT);
+  private static final PolledAttribute    PA_LOCK_RECALL_RATE                = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_LOCK_RECALL_RATE);
+  private static final PolledAttribute    PA_BROADCAST_RATE                  = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_BROADCAST_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_SIZE_RATE           = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_TRANSACTION_SIZE_RATE);
+  private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT      = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+  private static final PolledAttribute    PA_CACHED_OBJECT_COUNT             = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_CACHED_OBJECT_COUNT);
+  private static final PolledAttribute    PA_OFFHEAP_OBJECT_CACHED_COUNT     = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_MAX_MEMORY  = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OFFHEAP_MAX_MEMORY);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_USED_MEMORY = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OFFHEAP_USED_MEMORY);
 
   public Server(IClusterModel clusterModel) {
     this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
@@ -246,6 +254,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_OBJECT_FAULT_RATE);
     registerPolledAttribute(PA_TRANSACTION_RATE);
     registerPolledAttribute(PA_CACHE_MISS_RATE);
+    registerPolledAttribute(PA_FAULTED_RATE);
     registerPolledAttribute(PA_FLUSHED_RATE);
     registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
     registerPolledAttribute(PA_LOCK_RECALL_RATE);
@@ -253,6 +262,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_TRANSACTION_SIZE_RATE);
     registerPolledAttribute(PA_PENDING_TRANSACTIONS_COUNT);
     registerPolledAttribute(PA_CACHED_OBJECT_COUNT);
+    registerPolledAttribute(PA_OFFHEAP_OBJECT_CACHED_COUNT);
+    registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_MAX_MEMORY);
+    registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_USED_MEMORY);
   }
 
   private synchronized void filterReadySet() {
@@ -336,7 +348,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   private void connectionEstablished() {
     Set<ObjectName> theReadySet = getReadySet();
-    if (theReadySet == null) return;
+    if (theReadySet == null) { return; }
 
     try {
       ObjectName mbsd = getConnectionContext().queryName("JMImplementation:type=MBeanServerDelegate");
@@ -452,7 +464,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized void setHost(String host) {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectManager is null"); }
     if (!host.equals(scm.getHostname())) {
       scm.setHostname(host);
       displayLabel = getConnectionManager().toString();
@@ -467,7 +479,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized void setPort(int port) {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectManager is null"); }
     if (port != scm.getJMXPortNumber()) {
       scm.setJMXPortNumber(port);
       jmxPort = Integer.valueOf(port);
@@ -587,7 +599,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized void setAutoConnect(boolean autoConnect) {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectionManager is null"); }
     if (autoConnect) {
       refreshCachedCredentials();
     }
@@ -596,7 +608,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized void refreshCachedCredentials() {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectionManager is null"); }
     String[] creds = ServerConnectionManager.getCachedCredentials(scm);
     if (creds != null) {
       setConnectionCredentials(creds);
@@ -605,13 +617,13 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized void setConnectionCredentials(String[] creds) {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectionManager is null"); }
     scm.setCredentials(creds);
   }
 
   public synchronized void clearConnectionCredentials() {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectionManager is null"); }
     scm.clearCredentials();
   }
 
@@ -622,7 +634,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public void setJMXConnector(JMXConnector jmxc) throws IOException {
     ServerConnectionManager scm = getConnectionManager();
-    if (scm == null) throw new IllegalStateException("ServerConnectionManager is null");
+    if (scm == null) { throw new IllegalStateException("ServerConnectionManager is null"); }
     scm.setJMXConnector(jmxc);
   }
 
@@ -688,7 +700,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       if (cc != null) {
         if (cc.mbsc == null) { return null; }
         serverDumperBean = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, L2MBeanNames.DUMPER, L2DumperMBean.class,
-                                                                  false);
+                                                                    false);
       }
     }
     return serverDumperBean;
@@ -978,7 +990,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         try {
           setupFromDSOBean();
         } catch (Exception e) {
-          /**/
+          e.printStackTrace();
         }
       } else if (beanName.equals(StatisticsMBeanNames.STATISTICS_GATHERER)) {
         initClusterStatsBean();
@@ -1048,8 +1060,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     initializeDSOClient(client, clientBeanName);
     return client;
   }
-  
-  protected void initializeDSOClient(DSOClient client, ObjectName clientBeanName){
+
+  protected void initializeDSOClient(DSOClient client, ObjectName clientBeanName) {
+    client.testSetupTunneledBeans();
     client.testSetupTunneledBeans();
     client.addPropertyChangeListener(clientChangeListener);
     clients.add(client);
@@ -1215,8 +1228,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
-          .getNewValue());
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
+                                                        acn.getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }
@@ -1303,7 +1316,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private synchronized void reset() {
-    if (roots == null) return;
+    if (roots == null) { return; }
     startTime = activateTime = -1;
     connected = ready = false;
     initReadySet();
@@ -1319,7 +1332,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized String takeThreadDump(long moment) {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
-    if (theServerInfoBean == null) return "not connected";
+    if (theServerInfoBean == null) { return "not connected"; }
     byte[] zippedByte = theServerInfoBean.takeCompressedThreadDump(moment);
     if (zippedByte == null) { return MESSAGE_ON_EXCEPTION; }
     ZipInputStream zIn = new ZipInputStream(new ByteArrayInputStream(zippedByte));
@@ -1328,7 +1341,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   public synchronized String takeClusterDump() {
     L2DumperMBean theServerDumperBean = getServerDumperBean();
-    if (theServerDumperBean == null) return "not connected";
+    if (theServerDumperBean == null) { return "not connected"; }
     theServerDumperBean.doServerDump();
     return "server dump taken";
   }
@@ -1431,8 +1444,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
         if (fields != null && fields.length > 0) {
           trueSize += fields.length;
           if (!haveLimit) {
-            for (int i = 0; i < fields.length; i++) {
-              MapEntryFacade mapEntryFacade = (MapEntryFacade) safeGetFieldValue(field, fields[i]);
+            for (String field2 : fields) {
+              MapEntryFacade mapEntryFacade = (MapEntryFacade) safeGetFieldValue(field, field2);
               if (mapEntryFacade != null) {
                 list.add(mapEntryFacade);
                 if (list.size() >= limit) {
@@ -1615,7 +1628,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public int getLockProfilerTraceDepth() {
-    if (lockProfilerTraceDepth != -1) return lockProfilerTraceDepth;
+    if (lockProfilerTraceDepth != -1) { return lockProfilerTraceDepth; }
     LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
     if (theLockProfilerBean != null) { return lockProfilerTraceDepth = theLockProfilerBean.getTraceDepth(); }
     return -1;
@@ -1629,7 +1642,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   public boolean isLockProfilingEnabled() {
-    if (lockProfilingEnabled != null) return lockProfilingEnabled.booleanValue();
+    if (lockProfilingEnabled != null) { return lockProfilingEnabled.booleanValue(); }
     LockStatisticsMonitorMBean theLockProfilerBean = getLockProfilerBean();
     if (theLockProfilerBean != null) {
       lockProfilingEnabled = Boolean.valueOf(theLockProfilerBean.isLockStatisticsEnabled());
@@ -1816,8 +1829,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
     if (theClusterStatsBean != null) {
       theClusterStatsBean.createSession(sessionId);
-      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, Long
-          .valueOf(samplePeriodMillis));
+      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
+                                          Long.valueOf(samplePeriodMillis));
       theClusterStatsBean.enableStatistics(statsToRecord);
       theClusterStatsBean.startCapturing();
     }
