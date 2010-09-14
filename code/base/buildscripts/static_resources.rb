@@ -55,6 +55,10 @@ class StaticResources
     FilePath.new(@root_directory, '.tc-build-cache')
   end
 
+  def global_cache_directory
+    FilePath.new(ENV['HOME'], '.tc', 'cache').ensure_directory.canonicalize
+  end
+
   def build_config_directory
     FilePath.new(@root_directory, 'buildconfig')
   end
