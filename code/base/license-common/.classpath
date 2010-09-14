@@ -13,6 +13,7 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/commons-logging-1.0.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/junit-3.8.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.9.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/terracotta-license-1.0.0-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/terracotta-license-1.0.0-SNAPSHOT.jar" sourcepath="/terracotta-license"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/yamlbeans-0.9.2.jar"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

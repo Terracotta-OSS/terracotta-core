@@ -14,5 +14,6 @@
     <dependency name="xmlbeans" rev="2.4.0" org="org.apache.xmlbeans">
       <exclude module="stax-api" org="stax" />
     </dependency>
+    <dependency name="terracotta-license" rev="1.0.0-SNAPSHOT" org="org.terracotta.license" changing="true" />
   </dependencies>
 </ivy-module>

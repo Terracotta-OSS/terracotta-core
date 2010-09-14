@@ -28,7 +28,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_URL);
+    exemptedProperties.add(TCPropertiesConsts.LICENSE_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY);

@@ -62,7 +62,6 @@ bundled_components:
               - dso-l1
               - dso-system-tests
               - legacy-test-tree
-              - license-common
               - simulator
 
       # NOTE: this section also controls what goes into the 'tc.jar' file
@@ -71,7 +70,6 @@ bundled_components:
             exclude-runtime-libraries: true
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common

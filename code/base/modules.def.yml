@@ -14,9 +14,6 @@ modules:
   - junit-formatter:
       options:
         jdk: J2SE-1.5
-  - license-common:
-      options:
-        jdk: J2SE-1.5
   - thirdparty:
       options:
         jdk: J2SE-1.5
@@ -25,7 +22,6 @@ modules:
         jdk: J2SE-1.5
         javadoc: true
       dependencies:
-        - license-common
         - tim-api
   - common:
       options:
@@ -39,7 +35,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - thirdparty
         - tim-api
   - dso-statistics-api:
@@ -49,7 +44,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - tim-api
   - dso-l1-api:
       options:
@@ -59,7 +53,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - dso-statistics-api
         - tim-api
   - dso-common:
@@ -68,7 +61,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-l1-api
         - dso-statistics-api
         - sigarstats
@@ -79,7 +71,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-statistics-api
         - tim-api
@@ -90,7 +81,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-l1-api
         - dso-statistics-api
@@ -101,7 +91,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-l1-api
         - dso-statistics-api
@@ -113,7 +102,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
@@ -126,7 +114,6 @@ modules:
         javadoc: true
       dependencies:
         - common-api
-        - license-common
         - dso-l1-api
         - dso-l2-common
         - dso-statistics-api
@@ -138,7 +125,6 @@ modules:
         module: true
       dependencies:
         - common-api
-        - license-common
         - dso-l1-api
         - tim-api
   - guimodels-config:
@@ -147,7 +133,6 @@ modules:
         module: true
       dependencies:
         - common-api
-        - license-common
         - dso-l1-api
         - tim-api
   - jdk15-preinst-config:
@@ -156,7 +141,6 @@ modules:
         module: true
       dependencies:
         - common-api
-        - license-common
         - dso-l1-api
         - tim-api
   - standard-config:
@@ -165,7 +149,6 @@ modules:
         module: true
       dependencies:
         - common-api
-        - license-common
         - dso-l1-api
         - tim-api
   - sigarstats:
@@ -174,7 +157,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common 
         - dso-statistics-api
         - tim-api
   - dso-statistics:
@@ -183,7 +165,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
@@ -199,7 +180,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
@@ -216,7 +196,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-common
         - dso-common-jdk16
         - dso-l1-api
@@ -234,7 +213,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy-api
         - dso-common
         - dso-common-jdk16
@@ -263,7 +241,6 @@ modules:
         - dso-l2-common
         - dso-statistics
         - dso-statistics-api
-        - license-common
         - management-api
         - tim-api
   - ui-eclipse:
@@ -273,7 +250,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common
@@ -303,7 +279,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - tim-api
   - legacy-test-tree:
       options:
@@ -312,7 +287,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         # NOTE: The dependency on deploy is to allow DistributedTestRunner to instantiate
         # TCServerImpl via reflection.  However, classes in this module cannot refer directly
         # to classes in the deploy module because deploy is compiled with JDK 1.5, while this
@@ -339,7 +313,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common
@@ -363,7 +336,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common
@@ -387,7 +359,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common
@@ -411,7 +382,6 @@ modules:
         - aspectwerkz
         - common
         - common-api
-        - license-common
         - deploy
         - deploy-api
         - dso-common
@@ -437,7 +407,6 @@ modules:
       dependencies:
         - common
         - common-api
-        - license-common
         - dso-l1-api
         - tim-api
   - eclipsegen:
