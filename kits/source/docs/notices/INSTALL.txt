@@ -84,34 +84,34 @@ Terracotta.
 
 Note the following:
 
-* The name of the product-key file should not be changed.
+* The name of the terracotta-license file should not be changed.
 * Each Terracotta client and server instance in your cluster requires a copy of 
-  the product-key file.
+  the license file.
 * The number of Terracotta clients that can run simultaneously in the cluster is
-  fixed by the product key and cannot be changed without obtaining a new product
+  fixed by the product key and cannot be changed without obtaining a new terracotta-license
   key.
-* Trial product keys expire after a trial period. See the file product.key for 
+* Trial product keys expire after a trial period. See the file terracotta-license.key for 
   the limitations on the key you have. Expiration warnings are issued both to 
   logs and standard output to allow enough time to contact Terracotta for an 
   extension.
 * EXPRESS INSTALLATIONS: If you are using an express installation, such as for
   distributed Ehcache, you must set one of the following properties for your 
-  application, depending on the location of product.key.
+  application, depending on the location of terracotta-license.key.
 
-   1. If product.key is in the Terracotta installation directory:
+   1. If terracotta-license.key is in the Terracotta installation directory:
 
       -Dtc.install-root=/path/to/terracotta/installation
 
-   2. If product.key is in a different location:
+   2. If terracotta-license.key is in a different location:
 
-      -Dcom.tc.productkey.path=/path/to/product.key
+      -Dcom.tc.productkey.path=/path/to/terracotta-license.key
 
    3. If you are using a Terracotta configuration file (tc-config.xml by 
-      default), product.key can be specified in that file by adding the 
+      default), terracotta-license.key can be specified in that file by adding the 
       following to the beginning of the configuration:
 
       <tc-properties>
-           <property name="productkey.path" value="/path/to/product.key" />
+           <property name="productkey.path" value="/path/to/" />
       </tc-properties> 
 
 
