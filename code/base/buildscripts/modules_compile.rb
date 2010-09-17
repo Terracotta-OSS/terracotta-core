@@ -153,8 +153,7 @@ class BuildModule
     end
 
     if self.module?
-      module_info = build_results.module_info(self)
-      create_module_jar(ant, build_results) if source_updated? || !File.exists?(module_info.jarfile.to_s)
+      create_module_jar(ant, build_results) if source_updated?
     end
   end
 
