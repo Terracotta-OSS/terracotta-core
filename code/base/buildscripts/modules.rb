@@ -153,6 +153,7 @@ end
 # 'dso-spring', or 'dso-l2'.
 class BuildModule
   attr_reader :root, :name, :jdk, :javadoc, :aspectj, :module, :module_set, :dependencies, :groups
+  attr_accessor :source_updated
   alias javadoc? javadoc
   alias module? module
     alias aspectj? aspectj
@@ -179,6 +180,7 @@ class BuildModule
       @javadoc = data[:javadoc] || false
       @aspectj = data[:aspectj] || false
       @module = data[:module] || false
+      @source_updated = false
       @dependencies = data[:dependencies] || [ ]
       @groups = Array.new
 
@@ -225,6 +227,10 @@ class BuildModule
     # specify its own groupId.
     def group_id
       "org.terracotta.modules"
+    end
+
+    def source_updated?
+      @source_updated
     end
   end
 

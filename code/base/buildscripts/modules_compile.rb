@@ -58,6 +58,8 @@ class BuildSubtree
         end
       else
         puts "Compiling #{build_module.name}/#{name}... with #{jdk.short_description}"
+        compile_log = "build/compile.log"
+        ant.record(:name => compile_log, :action=>"start")
         ant.javac(
           :destdir => build_results.classes_directory(self).to_s,
           :debug => true,
@@ -73,6 +75,16 @@ class BuildSubtree
 
           ant.src(:path => source_root.to_s) { }
         }
+        ant.record(:name => compile_log, :action=>"stop")
+
+        s = File.open(compile_log, 'r') { |f| f.read }
+
+        if s.include?(build_module.name)
+          build_module.source_updated = true
+          puts "Module #{build_module.name} updated and recompiled"
+        end
+        
+        File.delete(compile_log)
         
         if Registry[:emma]
           prepare_emma_dir(build_results)
@@ -141,24 +153,8 @@ class BuildModule
     end
 
     if self.module?
-      module_info = create_module_jar(ant, build_results)
-
-      # Per DEV-4134, only install/deploy default modules to Maven repo
-      # when it's a OSS branch so we don't overwrite the OSS ones
-      # with builds from EE
-      if (repo = config_source[MAVEN_REPO_CONFIG_KEY]) && !config_source['exclude-default-modules']
-        maven = MavenDeploy.new(:repository_url => repo,
-          :repository_id => config_source[MAVEN_REPO_ID_CONFIG_KEY],
-          :snapshot => config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
-        classifier = nil # no classifier
-
-        version = module_info.version
-        if (config_source[MAVEN_CLASSIFIER_CONFIG_KEY])
-          version = version + "-" + config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
-        end
-
-        maven.deploy_file(module_info.jarfile.to_s, MODULES_GROUP_ID, module_info.artifact_id, classifier, version)
-      end
+      module_info = build_results.module_info(self)
+      create_module_jar(ant, build_results) if source_updated? || !File.exists?(module_info.jarfile.to_s)
     end
   end
 

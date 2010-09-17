@@ -9,7 +9,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   include BuildData
 
   # assemble the kit for the product code supplied
-  def dist(product_code='DSO', flavor='OPENSOURCE')
+  def dist(product_code='DSO', flavor=OPENSOURCE)
     check_if_type_supplied(product_code, flavor)
 
     depends :init, :compile
@@ -18,7 +18,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   # Assemble a kit just like 'dist', but then selectively extract elements from
   # the kit and bundle into a patch tarball.
-  def patch(product_code = 'DSO', flavor = 'OPENSOURCE')
+  def patch(product_code = 'DSO', flavor = OPENSOURCE)
     @no_demo = true
     $patch = true
     
@@ -94,7 +94,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
   end
 
-  def dist_all(flavor='OPENSOURCE')
+  def dist_all(flavor=OPENSOURCE)
     @flavor = flavor.downcase
     depends :init, :compile
     product_definition_files(flavor).each do |product_definition_file|
@@ -107,50 +107,25 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
   end
 
-  def dist_maven(flavor = 'OPENSOURCE')
-    unless config_source[MAVEN_REPO_CONFIG_KEY]
-      @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
-    end
-
-    original_no_extra = @no_extra
-    @no_extra = true
-    begin
-      product_definition_files(flavor).each do |def_file|
-        puts "Processing def file #{def_file}"
-        product_code = product_code(def_file)
-        config = product_config(product_code, flavor)
-        if postscripts = config['postscripts']
-          if postscripts.find { |entry| entry.is_a?(Hash) && entry['maven-deploy'] }
-            @product_code = product_code
-            @flavor = flavor.downcase
-            depends :init, :compile
-            call_actions :__assemble
-          end
-        end
-      end
-    ensure
-      @no_extra = original_no_extra
-    end
+  def dist_maven
+    @internal_config_source['dev_dist'] = 'true'
+    mvn_install(OPENSOURCE)
   end
 
   def dist_maven_ee
-    fail("Can only run this target under an EE checkout") unless @build_environment.is_ee_branch?
-    dist_maven
-    @internal_config_source['exclude-default-modules'] = 'true' # DEV-4134, modules_compile.rb picks this up
-    @flavor = 'ENTERPRISE'
-    @internal_config_source['flavor'] = @flavor
-    dist_maven('ENTERPRISE')
+    @internal_config_source['dev_dist'] = 'true'
+    mvn_install(ENTERPRISE)
   end
 
   def dist_dev(product_code = 'DSO', flavor = nil)
-    flavor ||= @build_environment.is_ee_branch? ? 'ENTERPRISE' : 'OPENSOURCE'
-    if flavor == 'ENTERPRISE' then dist_maven_ee else dist_maven end
+    flavor ||= @build_environment.is_ee_branch? ? ENTERPRISE : OPENSOURCE
+    if flavor == ENTERPRISE then dist_maven_ee else dist_maven end
     build_external
     dist(product_code, flavor)
   end
   
   # assemble and package the kits  for the product code supplied
-  def create_package(product_code='DSO', flavor='OPENSOURCE')
+  def create_package(product_code='DSO', flavor=OPENSOURCE)
     check_if_type_supplied(product_code, flavor)
 
     depends :init, :compile
@@ -159,7 +134,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   # assemble, package, and publish all possible kits (based on the configuration
   # files found under buildconfig/distribution directory)
-  def create_all_packages(flavor='OPENSOURCE')
+  def create_all_packages(flavor=OPENSOURCE)
     @flavor = flavor.downcase
 
     depends :init, :compile
@@ -174,7 +149,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   # assemble, package, and publish the kit for the product code supplied
-  def publish_package(product_code='DSO', flavor='OPENSOURCE')
+  def publish_package(product_code='DSO', flavor=OPENSOURCE)
     check_if_type_supplied(product_code, flavor)
 
     depends :init, :compile
@@ -193,7 +168,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   # assemble, package, and publish all possible kits (based on the configuration
   # files found under buildconfig/distribution directory)
-  def publish_all_packages(flavor='OPENSOURCE')
+  def publish_all_packages(flavor=OPENSOURCE)
     @flavor = flavor.downcase
 
     depends :init, :compile
@@ -211,7 +186,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # files found under buildconfig/distribution directory) for the opensource version
   # of the product
   def publish_opensource_packages
-    publish_all_packages('OPENSOURCE')
+    publish_all_packages(OPENSOURCE)
   end
 
   # HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
@@ -219,31 +194,56 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   # files found under buildconfig/distribution directory) for the enterprise version
   # of the product
   def publish_enterprise_packages
-    publish_all_packages('ENTERPRISE')
+    publish_all_packages(ENTERPRISE)
   end
 
   # build the JAR files for the product code supplied without assembling a full kit
-  def dist_jars(product_code='DSO', component_name='common', flavor='OPENSOURCE')
+  def dist_jars(product_code='DSO', component_name='common', flavor=OPENSOURCE)
     check_if_type_supplied(product_code, flavor)
 
     depends :init, :compile, :load_config
+
+    dist_jar_log = File.join(@build_results.build_dir.to_s, "dist_jar.log")
+    prev_dist_jar_flavor = 'unknown'
+    if File.exists?(dist_jar_log)
+      prev_dist_jar_flavor = YAML.load_file(dist_jar_log)['flavor']
+    end
+
+    if flavor != prev_dist_jar_flavor
+      @ant.delete(:dir => @build_results.artifacts_classes_directory.to_s)
+      @internal_config_source['fresh_dist_jars'] = 'true'
+    end
+
+
     component = get_spec(:bundled_components, []).find { |component| /^#{component_name}$/i =~ component[:name] }
-    libdir    = FilePath.new(@distribution_results.build_dir, 'lib.tmp').ensure_directory
-    destdir   = FilePath.new(@distribution_results.build_dir, 'lib').ensure_directory
-    add_binaries(component, libdir, destdir)
+    libdir    = FilePath.new(@build_results.build_dir, 'tmp').ensure_directory
+    destdir   = @build_results.artifacts_directory
+    add_binaries(component, libdir, destdir, false)
     libdir.delete
 
     add_module_packages(component, destdir)
-    ant.move(:todir => FilePath.new(File.dirname(destdir.to_s), 'tc-jars').to_s) do
-      ant.fileset(:dir => destdir.to_s, :includes => '**/*')
+    create_build_data(@config_source, File.join(destdir.to_s, 'resources'))
+
+    File.open(dist_jar_log, "w") do | f |
+      YAML.dump({'flavor' => flavor}, f)
     end
-    destdir.delete
+  end
+
+  def mvn_install(flavor=OPENSOURCE)
+    product_code = 'DSO'
+    check_if_type_supplied(product_code, flavor)
+    unless config_source[MAVEN_REPO_CONFIG_KEY]
+      @internal_config_source[MAVEN_REPO_CONFIG_KEY] = MAVEN_REPO_LOCAL
+    end
+    puts "Maven install #{flavor.upcase} artifacts to #{@internal_config_source[MAVEN_REPO_CONFIG_KEY]}"
+    dist_jars(product_code, 'common', flavor)
+    package_sources_artifacts(@config['package_sources']) if flavor.upcase == OPENSOURCE && @config_source['dev_dist'] != 'true'
+    deploy_maven_artifacts(@config['maven_deploy'])
   end
 
   private
   def call_actions(*actions)
     load_config
-    @distribution_results.clean(ant)
     actions.each { |action| method(action.to_sym).call }
   end
 
@@ -319,5 +319,76 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   def __package
     exec_section :packaging
     product_directory.delete
+  end
+
+  def package_sources_artifacts(args)
+    args.each do |arg|
+      destdir = FilePath.new(arg['dest']).ensure_directory
+      puts "packaging #{arg['artifact']} to #{destdir.to_s}"
+      ant.jar(:jarfile => "#{destdir.to_s}/#{arg['artifact']}.jar") do
+        ant.fileset(:dir => @basedir.to_s, :includes => arg['includes'], :excludes => arg['excludes'])
+      end
+    end
+  end
+
+  def deploy_maven_artifacts(args)
+    if repo = @config_source[MAVEN_REPO_CONFIG_KEY]
+      maven = MavenDeploy.new(:repository_url => repo,
+        :repository_id => @config_source[MAVEN_REPO_ID_CONFIG_KEY],
+        :snapshot => @config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
+
+      # rudimentary check to make sure we're not missing an artifact by mistake
+      artifact_count = args.shift
+      expected_count = artifact_count['artifact_count']
+      fail("Expecting to deploy #{expected_count} TC maven artifacts but found only #{args.size}") unless args.size == expected_count
+
+      args.each do |arg|
+        next if arg['dev_dist'] != true && @config_source['dev_dist'] == 'true'
+        if arg['file']
+          file = FilePath.new(@basedir, interpolate(arg['file']))
+        else
+          file = FilePath.new(arg['srcfile'])
+        end
+
+        if arg['inject']
+          # Copy jar to tmp jar in same dir
+          replacement_file = FilePath.new(file.directoryname) << file.filename + '.tmp'
+          @ant.copy(:tofile => replacement_file.to_s, :file => file.to_s)
+          file = replacement_file
+
+          arg['inject'].each do |inject|
+            # Inject resource into jar
+            inject_file = FilePath.new(@basedir, interpolate(inject))
+            @ant.create_jar(replacement_file,
+              :update => 'true',
+              :basedir => inject_file.directoryname,
+              :includes => inject_file.filename)
+          end
+        end
+
+        group = arg['groupId']
+        artifact = arg['artifact']
+        classifier = arg['classifier']
+        version = arg[MAVEN_VERSION_CONFIG_KEY] || @config_source[MAVEN_VERSION_CONFIG_KEY] ||
+          @config_source['version'] || @build_environment.version
+        if (@config_source[MAVEN_CLASSIFIER_CONFIG_KEY])
+          version = version + "-" + @config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+        end
+
+        # Allow override of version if a version key is specified.  If so, the value of the key
+        # is the property to look up as defined in build-config.global, etc.
+        if arg['version']
+          versionKey = arg['version']
+          version = arg[versionKey] || @config_source[versionKey]
+        end
+
+        maven.deploy_file(file.to_s, group, artifact, classifier, version, arg['pom'])
+
+        # clean up injected file if it existed
+        if arg['inject']
+          file.delete
+        end
+      end
+    end
   end
 end

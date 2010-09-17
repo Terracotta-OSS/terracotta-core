@@ -162,7 +162,8 @@ module DistributionUtils
     'branch' => :current_branch,
     'platform' => lambda { @build_environment.os_family.downcase },
     'revision' => :os_revision,
-    'edition' => :edition
+    'edition' => :edition,
+    'maven.version' => lambda { @config_source['maven.version'] || 'unknown' }
   }
 
   VARIABLE = /#{VARIABLE_MAP.keys.map {|key| "(#{key})" }.join("|")}/

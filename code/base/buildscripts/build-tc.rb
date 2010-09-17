@@ -930,11 +930,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     @internal_config_source[MAVEN_SNAPSHOT_CONFIG_KEY] = snapshot.to_s
     @internal_config_source[MAVEN_REPO_ID_CONFIG_KEY] = repo_id
     @internal_config_source[MAVEN_REPO_CONFIG_KEY] = repo_url
-    if flavor == ENTERPRISE
-      dist_maven_ee
-    else
-      dist_maven
-    end
+    mvn_install(flavor)
   end
 
   def generate_xmlbeans_class(target)

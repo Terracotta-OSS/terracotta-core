@@ -46,14 +46,10 @@ bundled_components:
   - common:
       module_packages:
         - terracotta-l1:
-            # install in 'api-jars' folder so it can be deleted later
-            install_directory: api-jars
             add_dependencies: true
             modules:
               - dso-l1
         - test-api:
-            # install in 'api-jars' folder so it can be deleted later
-            install_directory: api-jars
             source: tests.base
             filter: "**/*TestApp*.class"
             modules:
@@ -130,70 +126,89 @@ postscripts:
       args:
         - platform/samples/pojo
         - sessions/samples
-  - package-sources:
-      args:
-        - artifact: terracotta-sources
-          includes: **/src*/**
-          excludes: **/build.eclipse/**, **/build/**
-          dest: build/sources
-        - artifact: test-api-sources
-          includes: **/tests*/**
-          excludes: **/build.eclipse/**, **/build/**, **/*TestApp.java, **/*Test.java
-          dest: build/sources
-  - maven-deploy:
-      args:
-        - artifact_count: 11
-        - groupId: org.terracotta
-          artifact: parent
-          srcfile: pom.xml
-          pom: pom.xml
-        - groupId: org.terracotta
-          artifact: terracotta-core-parent
-          srcfile: poms/terracotta-core-parent-pom.xml
-          pom: poms/terracotta-core-parent-pom.xml
-        - groupId: org.terracotta
-          artifact: terracotta-l1-parent
-          srcfile: poms/terracotta-l1-parent-pom.xml
-          pom: poms/terracotta-l1-parent-pom.xml       
-        - groupId: org.terracotta
-          artifact: terracotta
-          classifier: sources
-          srcfile: build/sources/terracotta-sources.jar
-          pom: poms/terracotta-pom.xml
-        - groupId: org.terracotta
-          artifact: terracotta
-          file: lib/tc.jar
-          pom: poms/terracotta-pom.xml
-          inject: 
-            - lib/resources/build-data.txt
-            - lib/resources/tim-get.properties
-        - groupId: org.terracotta
-          artifact: terracotta-l1
-          file: api-jars/terracotta-l1.jar
-          pom: poms/terracotta-l1-os-pom.xml
-          inject: 
-            - lib/resources/build-data.txt           
-        - groupId: org.terracotta
-          artifact: tcconfig
-          file: lib/tcconfig-xmlbeans-generated.jar
-          pom: poms/tcconfig-pom.xml
-        - groupId: org.terracotta
-          artifact: tc-l1-reconnect-properties
-          file: lib/tc-l1-reconnect-properties.jar
-          pom: poms/tc-l1-reconnect-properties-pom.xml
-        - groupId: org.terracotta
-          artifact: tcstats
-          file: lib/tcstats-xmlbeans-generated.jar
-          pom: poms/tcstats-pom.xml
-        - groupId: org.terracotta.api
-          artifact: test-api
-          classifier: sources
-          srcfile: build/sources/test-api-sources.jar
-          pom: poms/terracotta-test-api-pom.xml
-        - groupId: org.terracotta.api
-          artifact: test-api
-          file: api-jars/test-api.jar
-          pom: poms/terracotta-test-api-pom.xml
-          inject: 
-            - lib/resources/build-data.txt
   - delete-api-jars
+
+package_sources:
+  - artifact: terracotta-sources
+    includes: **/src*/**
+    excludes: **/build.eclipse/**, **/build/**
+    dest: build/sources
+  - artifact: test-api-sources
+    includes: **/tests*/**
+    excludes: **/build.eclipse/**, **/build/**, **/*TestApp.java, **/*Test.java
+    dest: build/sources
+
+maven_deploy:
+  - artifact_count: 16
+  - groupId: org.terracotta.modules
+    artifact: clustered-surefire-2.3
+    file: build/modules/clustered-surefire-2.3-{maven.version}.jar  
+  - groupId: org.terracotta.modules
+    artifact: excludes-config
+    file: build/modules/excludes-config-{maven.version}.jar  
+  - groupId: org.terracotta.modules
+    artifact: guimodels-config
+    file: build/modules/guimodels-config-{maven.version}.jar  
+  - groupId: org.terracotta.modules
+    artifact: jdk15-preinst-config
+    file: build/modules/jdk15-preinst-config-{maven.version}.jar
+  - groupId: org.terracotta.modules
+    artifact: standard-config
+    file: build/modules/standard-config-{maven.version}.jar     
+  - groupId: org.terracotta
+    artifact: parent
+    srcfile: pom.xml
+    pom: pom.xml
+  - groupId: org.terracotta
+    artifact: terracotta-core-parent
+    srcfile: poms/terracotta-core-parent-pom.xml
+    pom: poms/terracotta-core-parent-pom.xml
+  - groupId: org.terracotta
+    artifact: terracotta-l1-parent
+    srcfile: poms/terracotta-l1-parent-pom.xml
+    pom: poms/terracotta-l1-parent-pom.xml       
+  - groupId: org.terracotta
+    artifact: terracotta
+    classifier: sources
+    srcfile: build/sources/terracotta-sources.jar
+    pom: poms/terracotta-pom.xml
+  - groupId: org.terracotta
+    artifact: terracotta
+    file: build/artifacts/tc.jar
+    pom: poms/terracotta-pom.xml
+    inject: 
+      - build/artifacts/resources/build-data.txt
+      - build/artifacts/resources/tim-get.properties
+    dev_dist: true
+  - groupId: org.terracotta
+    artifact: terracotta-l1
+    file: build/artifacts/terracotta-l1.jar
+    pom: poms/terracotta-l1-os-pom.xml
+    inject: 
+      - build/artifacts/resources/build-data.txt
+    dev_dist: true      
+  - groupId: org.terracotta
+    artifact: tcconfig
+    file: common-api/lib/tcconfig-xmlbeans-generated.jar
+    pom: poms/tcconfig-pom.xml
+  - groupId: org.terracotta
+    artifact: tc-l1-reconnect-properties
+    file: dso-common/lib/tc-l1-reconnect-properties.jar
+    pom: poms/tc-l1-reconnect-properties-pom.xml
+  - groupId: org.terracotta
+    artifact: tcstats
+    file: dso-statistics/lib/tcstats-xmlbeans-generated.jar
+    pom: poms/tcstats-pom.xml
+  - groupId: org.terracotta.api
+    artifact: test-api
+    classifier: sources
+    srcfile: build/sources/test-api-sources.jar
+    pom: poms/terracotta-test-api-pom.xml
+  - groupId: org.terracotta.api
+    artifact: test-api
+    file: build/artifacts/test-api.jar
+    pom: poms/terracotta-test-api-pom.xml
+    inject: 
+      - build/artifacts/resources/build-data.txt
+
+    

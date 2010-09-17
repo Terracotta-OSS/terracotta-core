@@ -167,8 +167,7 @@ class BuildResults
       manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
       module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT')
       artifact = build_module.name
-      output_dir = FilePath.new(self.modules_home, build_module.group_id.gsub(/\./, '/'),
-        artifact, module_version).ensure_directory
+      output_dir = FilePath.new(self.modules_home).ensure_directory
       jarfile  = "#{artifact}-#{module_version}.jar"
       ModuleInfo.new(artifact, module_version, FilePath.new(output_dir, jarfile), manifest)
     else
@@ -180,6 +179,14 @@ class BuildResults
   # the module does not produce a JAR file.
   def module_jar_file(build_module)
     module_info(build_module).jarfile
+  end
+
+  def artifacts_directory
+    FilePath.new(@build_dir, "artifacts").ensure_directory
+  end
+
+  def artifacts_classes_directory
+    FilePath.new(@build_dir, "artifacts-classes")
   end
 
   private

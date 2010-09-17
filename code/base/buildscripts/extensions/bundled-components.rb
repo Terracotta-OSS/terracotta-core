@@ -34,30 +34,36 @@ module BundledComponents
     end
   end
 
-  def add_binaries(component, libdir=libpath(component), destdir=libpath(component))
-    runtime_classes_dir = FilePath.new(@distribution_results.build_dir, 'tmp').ensure_directory
-    (component[:modules] || []).each do |a_module|
-      name = a_module
+  def add_binaries(component, libdir=libpath(component), destdir=libpath(component), include_runtime=true)
+    runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, 'tc').ensure_directory
+    (component[:modules] || []).each do |module_name|
+      name = module_name
       exclude_native_runtime_libraries = false
       exclude_runtime_libraries        = false
       kit_resources                    = []
-      if a_module.instance_of?(Hash)
-        name                             = a_module.keys.first
-        exclude_native_runtime_libraries = a_module.values.first['exclude-native-runtime-libraries']
-        exclude_runtime_libraries        = a_module.values.first['exclude-runtime-libraries']
-        kit_resources                    = a_module.values.first['kit-resources'] || []
+      if module_name.instance_of?(Hash)
+        name                             = module_name.keys.first
+        exclude_native_runtime_libraries = module_name.values.first['exclude-native-runtime-libraries']
+        exclude_runtime_libraries        = module_name.values.first['exclude-runtime-libraries']
+        kit_resources                    = module_name.values.first['kit-resources'] || []
       end
-      a_module = @module_set[name]
-      a_module.subtree('src').copy_native_runtime_libraries(libdir, ant, @build_environment) unless exclude_native_runtime_libraries
-      a_module.subtree('src').copy_runtime_libraries(libdir, ant)                            unless exclude_runtime_libraries
+      build_module = @module_set[name]
+
+      if include_runtime
+        build_module.subtree('src').copy_native_runtime_libraries(libdir, ant, @build_environment) unless exclude_native_runtime_libraries
+        build_module.subtree('src').copy_runtime_libraries(libdir, ant)                            unless exclude_runtime_libraries
+      end
 
       kit_resource_files = kit_resources.join(',')
-      a_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant,
-        :excludes => kit_resource_files)
 
+      if build_module.source_updated? || @internal_config_source['fresh_dist_jars'] == 'true'
+        build_module.subtree('src').copy_classes(@build_results, runtime_classes_dir, ant,
+          :excludes => kit_resource_files)
+      end
+      
       unless kit_resources.empty?
         kit_resources_dir = FilePath.new(destdir, 'resources').ensure_directory
-        a_module.subtree('src').copy_classes(@build_results, kit_resources_dir, ant,
+        build_module.subtree('src').copy_classes(@build_results, kit_resources_dir, ant,
           :includes => kit_resource_files)
       end
     end
@@ -73,7 +79,6 @@ module BundledComponents
         end 
       end
     end
-    runtime_classes_dir.delete
   end
 
   def add_dso_bootjar(component, destdir=libpath(component), build_anyway=false)
@@ -97,21 +102,26 @@ module BundledComponents
 
   def add_module_packages(component, destdir=libpath(component))
     (component[:module_packages] || []).each do |module_package|
-      runtime_classes_dir = FilePath.new(@distribution_results.build_dir, 'tmp').ensure_directory
       module_package.keys.each do |name|
+        runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, name).ensure_directory
         src      = module_package[name]['source'] || 'src'
         excludes = module_package[name]['filter'] || ''
         javadoc  = module_package[name]['javadoc']
         module_package[name]['modules'].each do |module_name|
           a_module = @module_set[module_name]
-          a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
 
+          if a_module.source_updated? || @internal_config_source['fresh_dist_jars'] == 'true'
+            a_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+          end
+          
           # also handling dependencies if set
           if module_package[name]['add_dependencies']
             puts "pacaking dependencies for #{a_module.name}"
             a_module.dependent_modules.each do |dependent_module|
               puts " .. #{dependent_module.name}"
-              dependent_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+              if dependent_module.source_updated? || @internal_config_source['fresh_dist_jars'] == 'true'
+                dependent_module.subtree(src).copy_classes(@build_results, runtime_classes_dir, ant, :excludes => excludes)
+              end
             end
           end
           
@@ -131,15 +141,14 @@ module BundledComponents
             puts "Done javadoc"
           end
         end
-        libdir  = FilePath.new(File.dirname(destdir.to_s), *(module_package[name]['install_directory'] || '').split('/')).ensure_directory
-        jarfile = FilePath.new(libdir, interpolate("#{name}.jar"))
+        install_directory = module_package[name]['install_directory'] || @build_results.artifacts_directory
+        jarfile = FilePath.new(install_directory, interpolate("#{name}.jar"))
         ant.create_jar(jarfile, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
           ant.manifest do
             add_build_info_manifest(ant)
           end
         end
       end
-      runtime_classes_dir.delete
     end
   end
 
