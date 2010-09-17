@@ -38,6 +38,7 @@ class ExternalResourceResolver
     end
 
     candidate_urls.each do |url|
+      puts "trying #{url}"
       dest_file = File.join(dest_dir, resource['name'] || File.basename(url))
       result = download(url, dest_file)
       if result

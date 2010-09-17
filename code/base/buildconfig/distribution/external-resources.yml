@@ -36,17 +36,21 @@ artifacts:
 # begin 'ehcache' folder
   - maven_artifact: true
     groupId: net.sf.ehcache
+    artifactId: ehcache-core-ee-kit
+    classifier: distribution
+    version: 2.3.0-SNAPSHOT
+    destination: ehcache
+    type: tar.gz
+    kit_edition: enterprise
+    explode: true
+    remove_root_folder: true
+    
+  - maven_artifact: true
+    groupId: net.sf.ehcache
     artifactId: ehcache-core
     version: 2.3.0-SNAPSHOT
     destination: ehcache/lib
     kit_edition: opensource
-
-  - maven_artifact: true
-    groupId: net.sf.ehcache
-    artifactId: ehcache-core-ee
-    version: 2.3.0-SNAPSHOT
-    destination: ehcache/lib
-    kit_edition: enterprise
 
   - maven_artifact: true
     groupId: net.sf.ehcache
@@ -67,12 +71,14 @@ artifacts:
     artifactId: slf4j-api
     version: 1.5.11
     destination: ehcache/lib
+    kit_edition: opensource
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
     version: 1.5.11
     destination: ehcache/lib
+    kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
@@ -81,6 +87,7 @@ artifacts:
     version: 2.3.0-SNAPSHOT
     destination: ehcache/javadoc
     explode: true
+    kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
@@ -95,41 +102,49 @@ artifacts:
     name: README.html
     destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/README.html
+    kit_edition: opensource
 
   - maven_artifact: false
     name: QUICK-START.html
     destination: ehcache
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html
+    kit_edition: opensource
     
   - maven_artifact: false
     name: CHANGELOG.txt
     destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/CHANGELOG.txt
+    kit_edition: opensource
     
   - maven_artifact: false
     name: EHCACHE-CORE-LICENSE.txt
     destination: ehcache/licenses
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/EHCACHE-CORE-LICENSE.txt
+    kit_edition: opensource
 
   - maven_artifact: false
     name: THIRD-PARTY-LICENSES.txt
     destination: ehcache/licenses
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/THIRD-PARTY-LICENSES.txt
+    kit_edition: opensource
 
   - maven_artifact: false
     name: EHCACHE-TERRACOTTA-LICENSE.txt
     destination: ehcache/licenses
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt 
+    kit_edition: opensource
 
   - maven_artifact: false
     name: ehcache.xml
     destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml
+    kit_edition: opensource
     
   - maven_artifact: false
     name: ehcache.xsd
     destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache.xsd
+    kit_edition: opensource
 # end EHCACHE
 
 # begin toolkit runtime

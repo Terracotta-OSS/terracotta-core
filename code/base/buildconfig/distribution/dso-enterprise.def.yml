@@ -1,7 +1,7 @@
 name: Terracotta DSO
 internal_name: dso
-kit_name_pattern: terracotta-version_string{_kitversion}-ee
-root_directory: terracotta-version_string{_kitversion}-ee
+kit_name_pattern: terracotta-ee-version_string{_kitversion}
+root_directory: terracotta-ee-version_string{_kitversion}
 bundled_demos:
   - pojo:
       install_directory: platform/samples/pojo

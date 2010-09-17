@@ -270,6 +270,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     end
   end
 
+  def clean_dist
+    FileUtils.rm_rf File.join(@basedir.to_s, "build/dist")
+  end
+
   def clean_cache
     FileUtils.rm_rf '.tc-build-cache'
   end
