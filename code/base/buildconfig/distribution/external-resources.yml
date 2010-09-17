@@ -138,7 +138,6 @@ artifacts:
     name: ehcache.xml
     destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml
-    kit_edition: opensource
     
   - maven_artifact: false
     name: ehcache.xsd
