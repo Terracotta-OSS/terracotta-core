@@ -146,7 +146,7 @@ class ExternalProjectBuilder
     private
 
     def do_build
-      exec('mvn', '-f', @file, '-Dmaven.test.skip=true', 'install')
+      exec('mvn', '-f', @file, '-DskipTests=true', 'install')
     end
   end
 end
