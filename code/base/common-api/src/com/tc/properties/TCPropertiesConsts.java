@@ -561,7 +561,8 @@ public interface TCPropertiesConsts {
    * debug.hops.interval             : Number of hops between debug printing
    * debug.invalidate                : Log session invalidation vhosts.excluded : comma separated list of virtual hosts that should never use Terracotta clustered
    *                                   sessions (tomcat only)
-   * session.debug.sessions          : output additional debug information when sessions are looked up, created, etc
+   * debug.sessions                  : output additional debug information when sessions are looked up, created, etc
+   * verify.set.attribute            : Snapshot attributes on access/mutation and report if the attribute has changed at the end of the request
    * </code>
    ********************************************************************************************************************/
   public static final String   SESSION_INVALIDATOR_SLEEP                                       = "session.invalidator.sleep";
@@ -577,6 +578,7 @@ public interface TCPropertiesConsts {
   public static final String   SESSION_DEBUG_SESSIONS                                          = "session.debug.sessions";
   public static final String   SESSION_VHOSTS_EXCLUDED                                         = "session.vhosts.excluded";
   public static final String   SESSION_STATISTICS_ENABLED                                      = "session.statistics.enabled";
+  public static final String   SESSION_VERIFY_SET_ATTRIBUTE                                    = "session.verify.set.attribute";
 
   /*********************************************************************************************************************
    * <code>
@@ -797,7 +799,6 @@ public interface TCPropertiesConsts {
   public static final String   PRODUCTKEY_RESOURCE_PATH                                        = "productkey.resource.path";
   public static final String   PRODUCTKEY_PATH                                                 = "productkey.path";
   public static final String   LICENSE_PATH                                                    = "license.path";
-  
 
   /*********************************************************************************************************************
    * <code>
