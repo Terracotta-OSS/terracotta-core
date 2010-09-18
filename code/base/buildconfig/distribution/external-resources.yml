@@ -38,7 +38,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core-ee-kit
     classifier: distribution
-    version: 2.3.0-SNAPSHOT
+    version: 2.3-BETA
     destination: ehcache
     type: tar.gz
     kit_edition: enterprise
@@ -138,6 +138,7 @@ artifacts:
     name: ehcache.xml
     destination: ehcache
     url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/main/config/ehcache-terracotta.xml
+    kit_edition: opensource
     
   - maven_artifact: false
     name: ehcache.xsd
