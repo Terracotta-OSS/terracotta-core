@@ -13,11 +13,6 @@ import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
 import com.tc.objectserver.persistence.api.PersistentCollectionFactory;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.TCCollectionsPersistor;
-import com.tc.objectserver.persistence.db.TCPersistableMap;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
@@ -30,17 +25,18 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class DBCollectionsTest extends TCTestCase {
 
-  private DBPersistorImpl             persistor;
+  private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private BerkeleyDBEnvironment          env;
   private PersistentCollectionFactory    collectionsFactory;
-  private TCCollectionsPersistor  collectionsPersistor;
+  private TCCollectionsPersistor         collectionsPersistor;
   private static int                     dbHomeCounter = 0;
   private static File                    tempDirectory;
 
@@ -185,6 +181,52 @@ public class DBCollectionsTest extends TCTestCase {
     tx = this.ptp.newTransaction();
     Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
     tx.commit();
+
+  }
+
+  public void testTCPersistableMapSize() {
+
+    final HashMap map1 = new HashMap();
+
+    final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
+        .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
+    TCPersistableMap map2 = (TCPersistableMap) state2.getPersistentCollection();
+
+    String key = "K1";
+    map1.put(key, "value1");
+    map2.put(key, "value1");
+
+    map1.remove(key);
+    map2.remove(key);
+
+    Assert.assertEquals(map1.size(), map2.size());
+
+    map1.put(key, "value2");
+    map2.put(key, "value2");
+
+    Assert.assertEquals(map1.size(), map2.size());
+
+    Random r = new Random();
+    r.setSeed(System.currentTimeMillis());
+
+    Integer tmp;
+    for (int i = 0; i < 10000; i++) {
+      if (r.nextInt(10) < 1) {
+        tmp = new Integer(r.nextInt(1000));
+        map1.remove(tmp);
+        map2.remove(tmp);
+      } else {
+        tmp = new Integer(r.nextInt(1000));
+        map1.put(tmp, "Katrina-" + r.nextInt(555));
+        map2.put(tmp, "Simran-" + r.nextInt(555));
+      }
+
+      if (i % 100 == 0) {
+        System.out.println("XXX " + map1.get(tmp) + "; " + map2.get(tmp));
+      }
+    }
+
+    Assert.assertEquals(map1.size(), map2.size());
 
   }
 

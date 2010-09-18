@@ -55,7 +55,10 @@ class TCPersistableMap implements Map, PersistableCollection {
   }
 
   public int size() {
-    return this.map.size() + this.delta.size() - this.removeCount;
+    int rv = (this.map.size() + this.delta.size() - this.removeCount);
+    if (rv < 0) { throw new AssertionError("TCPersistableMap Size error -  map:" + this.map.size() + "; delta:"
+                                           + this.delta.size() + "; removed: " + this.removeCount); }
+    return rv;
   }
 
   public boolean isEmpty() {
@@ -92,6 +95,7 @@ class TCPersistableMap implements Map, PersistableCollection {
   public Object put(final Object key, final Object value) {
     final Object old = this.delta.put(key, value);
     if (REMOVED.equals(old)) {
+      this.removeCount--;
       return null;
     } else if (old != null) {
       return old;
@@ -192,7 +196,7 @@ class TCPersistableMap implements Map, PersistableCollection {
   @Override
   public String toString() {
     return "TCPersistableMap(" + this.id + ")={ Map.size() = " + this.map.size() + ", delta.size() = "
-    + this.delta.size() + ", removeCount = " + this.removeCount + " }";
+           + this.delta.size() + ", removeCount = " + this.removeCount + " }";
   }
 
   public void load(final TCCollectionsSerializer serializer, final PersistenceTransaction tx, final TCMapsDatabase db)
