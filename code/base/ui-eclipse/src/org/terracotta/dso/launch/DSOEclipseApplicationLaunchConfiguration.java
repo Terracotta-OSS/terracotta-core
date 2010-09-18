@@ -36,23 +36,23 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
   private final LaunchHelper fLaunchHelper = new LaunchHelper(this);
 
   @Override
-  public void launch(ILaunchConfiguration config, String mode, ILaunch launch, IProgressMonitor monitor)
-      throws CoreException {
-    ILaunchConfigurationWorkingCopy wc = fLaunchHelper.setup(config, mode, launch, monitor);
+  public void launch(final ILaunchConfiguration config, final String mode, final ILaunch launch,
+                     final IProgressMonitor monitor) throws CoreException {
+    final ILaunchConfigurationWorkingCopy wc = this.fLaunchHelper.setup(config, mode, launch, monitor);
     if (wc != null) {
       super.launch(wc, mode, launch, monitor);
     }
   }
 
-  public IJavaProject getJavaProject(ILaunchConfiguration configuration) throws CoreException {
+  public IJavaProject getJavaProject(final ILaunchConfiguration configuration) throws CoreException {
     String projectName = getJavaProjectName(configuration);
 
     if (projectName != null) {
       projectName = projectName.trim();
 
       if (projectName.length() > 0) {
-        IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-        IJavaProject javaProject = JavaCore.create(project);
+        final IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+        final IJavaProject javaProject = JavaCore.create(project);
 
         if (javaProject != null && javaProject.exists()) { return javaProject; }
       }
@@ -61,44 +61,42 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
     return null;
   }
 
-  public String getJavaProjectName(ILaunchConfiguration configuration) throws CoreException {
-    @SuppressWarnings("static-access")
+  public String getJavaProjectName(final ILaunchConfiguration configuration) throws CoreException {
     String appNameRoot = configuration.getAttribute(IPDELauncherConstants.APPLICATION, (String) null);
 
     if (appNameRoot != null) {
       appNameRoot = appNameRoot.substring(0, appNameRoot.lastIndexOf('.'));
     } else {
-      String msg = "No application specified for launch configuration '" + configuration.getName() + "'";
-      Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+      final String msg = "No application specified for launch configuration '" + configuration.getName() + "'";
+      final Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
       throw new CoreException(status);
     }
-    IProject[] projs = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-    for (IProject proj : projs) {
-      IPluginModelBase base = PluginRegistry.findModel(proj);
+    final IProject[] projs = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+    for (final IProject proj : projs) {
+      final IPluginModelBase base = PluginRegistry.findModel(proj);
       if (base != null && appNameRoot.equals(base.getPluginBase().getId())) { return proj.getName(); }
     }
-    String msg = "Unable to determine project for pluginId '" + appNameRoot + "'";
-    Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+    final String msg = "Unable to determine project for pluginId '" + appNameRoot + "'";
+    final Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
     throw new CoreException(status);
   }
 
-  public IVMInstall getVMInstall(ILaunchConfiguration configuration) throws CoreException {
-    @SuppressWarnings("static-access")
-    String vm = configuration.getAttribute(IPDELauncherConstants.VMINSTALL, (String) null);
+  public IVMInstall getVMInstall(final ILaunchConfiguration configuration) throws CoreException {
+    final String vm = configuration.getAttribute(IPDELauncherConstants.VMINSTALL, (String) null);
 
-    IVMInstall launcher = getVMInstall(vm);
+    final IVMInstall launcher = getVMInstall(vm);
     if (launcher == null) {
-      String msg = "Cannot locate VMInstall for '" + vm + "'";
-      Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
+      final String msg = "Cannot locate VMInstall for '" + vm + "'";
+      final Status status = new Status(IStatus.ERROR, TcPlugin.getPluginId(), 1, msg, null);
       throw new CoreException(status);
     }
     return launcher;
   }
 
-  public static IVMInstall getVMInstall(String name) {
+  public static IVMInstall getVMInstall(final String name) {
     if (name != null) {
-      IVMInstall[] installs = getAllVMInstances();
-      for (IVMInstall install : installs) {
+      final IVMInstall[] installs = getAllVMInstances();
+      for (final IVMInstall install : installs) {
         if (install.getName().equals(name)) { return install; }
       }
     }
@@ -106,11 +104,11 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
   }
 
   public static IVMInstall[] getAllVMInstances() {
-    ArrayList res = new ArrayList();
-    IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
-    for (IVMInstallType type : types) {
-      IVMInstall[] installs = type.getVMInstalls();
-      for (IVMInstall install : installs) {
+    final ArrayList res = new ArrayList();
+    final IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
+    for (final IVMInstallType type : types) {
+      final IVMInstall[] installs = type.getVMInstalls();
+      for (final IVMInstall install : installs) {
         res.add(install);
       }
     }
