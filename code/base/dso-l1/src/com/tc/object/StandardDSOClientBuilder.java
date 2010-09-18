@@ -26,7 +26,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.MBeanSpec;
@@ -109,7 +108,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
     return new TunnelingEventHandler(ch, config);
   }
 
-  public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config, final TunnelingEventHandler teh) {
+  public TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
+                                                           final TunnelingEventHandler teh) {
     return new TunneledDomainManager(ch, config, teh);
   }
 
@@ -145,9 +145,7 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
 
   public ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                                      final DSOClientConfigHelper dsoConfig,
-                                                     final ObjectIDProvider idProvider,
-                                                     final ClockEvictionPolicy clockEvictionPolicy,
-                                                     final RuntimeLogger rtLogger,
+                                                     final ObjectIDProvider idProvider, final RuntimeLogger rtLogger,
                                                      final ClientIDProvider clientIDProvider,
                                                      final ClassProvider classProviderLocal,
                                                      final TCClassFactory classFactory,
@@ -155,9 +153,9 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                      final Portability portability,
                                                      final DSOClientMessageChannel dsoChannel,
                                                      final ToggleableReferenceManager toggleRefMgr) {
-    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, clockEvictionPolicy, rtLogger,
-                                       clientIDProvider, classProviderLocal, classFactory, objectFactory, portability,
-                                       dsoChannel, toggleRefMgr);
+    return new ClientObjectManagerImpl(remoteObjectManager, dsoConfig, idProvider, rtLogger, clientIDProvider,
+                                       classProviderLocal, classFactory, objectFactory, portability, dsoChannel,
+                                       toggleRefMgr);
   }
 
   public ClientLockManager createLockManager(final DSOClientMessageChannel dsoChannel,

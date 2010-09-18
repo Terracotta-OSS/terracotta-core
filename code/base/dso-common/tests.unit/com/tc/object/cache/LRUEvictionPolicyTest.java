@@ -1,32 +1,33 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.cache;
+
+import com.tc.object.ObjectID;
+import com.tc.test.TCTestCase;
 
 import gnu.trove.TLinkable;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-import com.tc.object.ObjectID;
-import com.tc.test.TCTestCase;
-
 /**
  * 
  */
 public class LRUEvictionPolicyTest extends TCTestCase {
 
-  public EvictionPolicy createNewCache(int size) {
+  public EvictionPolicy createNewCache(final int size) {
     return new LRUEvictionPolicy(size);
   }
 
   public void tests() throws Exception {
-    int cacheSize = 10;
-    EvictionPolicy slc = createNewCache(cacheSize);
-    Cacheable[] cacheables = new Cacheable[cacheSize];
+    final int cacheSize = 10;
+    final EvictionPolicy slc = createNewCache(cacheSize);
+    final Cacheable[] cacheables = new Cacheable[cacheSize];
     for (int i = 0; i < cacheSize; i++) {
       cacheables[i] = new TestCacheable(new ObjectID(i));
-      boolean evict = slc.add(cacheables[i]);
+      final boolean evict = slc.add(cacheables[i]);
       assertFalse(evict);
     }
     assertTrue(slc.add(new TestCacheable(new ObjectID(11))));
@@ -47,7 +48,6 @@ public class LRUEvictionPolicyTest extends TCTestCase {
     c = slc.getRemovalCandidates(-1);
     assertTrue(c.iterator().next() == cacheables[4]);
 
- 
     slc.add(new TestCacheable(new ObjectID(14)));
     c = slc.getRemovalCandidates(-1);
 
@@ -74,35 +74,35 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       slc.add(new TestCacheable(new ObjectID(200 + i)));
       c = slc.getRemovalCandidates(-1);
       assertEquals(1, c.size());
-      Cacheable evicted = (Cacheable) c.iterator().next();
+      final Cacheable evicted = (Cacheable) c.iterator().next();
       assertTrue(evicted == cacheables[i]);
       removeAll(slc, c);
     }
   }
 
-  protected void removeAll(EvictionPolicy slc, Collection c) {
-    for (Iterator iter = c.iterator(); iter.hasNext();) {
+  protected void removeAll(final EvictionPolicy slc, final Collection c) {
+    for (final Iterator iter = c.iterator(); iter.hasNext();) {
       slc.remove((Cacheable) iter.next());
     }
   }
 
   public static class TestCacheable implements Cacheable {
-    private ObjectID  id;
-    private TLinkable next;
-    private TLinkable previous;
-    private int       accessed = 0;
+    private final ObjectID id;
+    private TLinkable      next;
+    private TLinkable      previous;
+    private int            accessed = 0;
 
-    public TestCacheable(ObjectID id) {
+    public TestCacheable(final ObjectID id) {
       this.id = id;
     }
 
-    public TestCacheable(ObjectID id, int accessed) {
+    public TestCacheable(final ObjectID id, final int accessed) {
       this.id = id;
       this.accessed = accessed;
     }
 
     public ObjectID getObjectID() {
-      return id;
+      return this.id;
     }
 
     public void markAccessed() {
@@ -110,23 +110,24 @@ public class LRUEvictionPolicyTest extends TCTestCase {
     }
 
     public TLinkable getNext() {
-      return next;
+      return this.next;
     }
 
     public TLinkable getPrevious() {
-      return previous;
+      return this.previous;
     }
 
-    public void setNext(TLinkable next) {
+    public void setNext(final TLinkable next) {
       this.next = next;
     }
 
-    public void setPrevious(TLinkable previous) {
+    public void setPrevious(final TLinkable previous) {
       this.previous = previous;
     }
 
+    @Override
     public String toString() {
-      return "TestCacheable[" + id + "]";
+      return "TestCacheable[" + this.id + "]";
     }
 
     public void clearAccessed() {
@@ -142,19 +143,19 @@ public class LRUEvictionPolicyTest extends TCTestCase {
       return true;
     }
 
-    public int accessCount(int factor) {
-      accessed = accessed / factor;
-      return accessed;
+    public int accessCount(final int factor) {
+      this.accessed = this.accessed / factor;
+      return this.accessed;
     }
-    
+
     public int accessCount() {
-      return accessed;
+      return this.accessed;
     }
 
     @Override
-    public boolean equals(Object obj) {
-      if(obj instanceof TestCacheable) {
-        TestCacheable t2 = (TestCacheable)obj;
+    public boolean equals(final Object obj) {
+      if (obj instanceof TestCacheable) {
+        final TestCacheable t2 = (TestCacheable) obj;
         return getObjectID().equals(t2.getObjectID());
       }
       return false;
@@ -164,6 +165,9 @@ public class LRUEvictionPolicyTest extends TCTestCase {
     public int hashCode() {
       return getObjectID().hashCode();
     }
-    
+
+    public boolean isCacheManaged() {
+      return true;
+    }
   }
 }

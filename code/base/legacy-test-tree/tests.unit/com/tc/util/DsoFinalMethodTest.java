@@ -21,8 +21,6 @@ import com.tc.object.TestClassFactory;
 import com.tc.object.TestObjectFactory;
 import com.tc.object.TestRemoteObjectManager;
 import com.tc.object.bytecode.MockClassProvider;
-import com.tc.object.cache.EvictionPolicy;
-import com.tc.object.cache.NullCache;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.idprovider.api.ObjectIDProvider;
 import com.tc.object.idprovider.impl.ObjectIDProviderImpl;
@@ -54,7 +52,7 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
     objectFactory.tcObject = tcObject;
     this.objectManager = new MockClientObjectManagerImpl(new MockRemoteObjectManagerImpl(), configHelper(),
                                                          new ObjectIDProviderImpl(new SimpleSequence()),
-                                                         new NullCache(), new NullRuntimeLogger(),
+                                                         new NullRuntimeLogger(),
                                                          new ClientIDProviderImpl(new TestChannelIDProvider()),
                                                          new MockClassProvider(), new TestClassFactory(), objectFactory);
 
@@ -91,12 +89,11 @@ public class DsoFinalMethodTest extends BaseDSOTestCase {
   private static class MockClientObjectManagerImpl extends ClientObjectManagerImpl {
     public MockClientObjectManagerImpl(final RemoteObjectManager remoteObjectManager,
                                        final DSOClientConfigHelper clientConfiguration,
-                                       final ObjectIDProvider idProvider, final EvictionPolicy cache,
-                                       final RuntimeLogger runtimeLogger, final ClientIDProvider provider,
-                                       final ClassProvider classProvider, final TCClassFactory classFactory,
-                                       final TCObjectFactory objectFactory) {
-      super(remoteObjectManager, clientConfiguration, idProvider, cache, runtimeLogger, provider, classProvider,
-            classFactory, objectFactory, new TestPortability(), null, null);
+                                       final ObjectIDProvider idProvider, final RuntimeLogger runtimeLogger,
+                                       final ClientIDProvider provider, final ClassProvider classProvider,
+                                       final TCClassFactory classFactory, final TCObjectFactory objectFactory) {
+      super(remoteObjectManager, clientConfiguration, idProvider, runtimeLogger, provider, classProvider, classFactory,
+            objectFactory, new TestPortability(), null, null);
     }
 
     @Override

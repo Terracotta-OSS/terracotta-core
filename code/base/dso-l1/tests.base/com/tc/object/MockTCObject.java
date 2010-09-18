@@ -32,14 +32,14 @@ public class MockTCObject implements TCObject {
     this(id, obj, false, false);
   }
 
-  public MockTCObject(final ObjectID id, final Object obj, boolean isIndexed, boolean isLogical) {
+  public MockTCObject(final ObjectID id, final Object obj, final boolean isIndexed, final boolean isLogical) {
     this.peer = obj;
     this.id = id;
     this.tcClazz = new MockTCClass(isIndexed, isLogical);
   }
 
   public List getHistory() {
-    return history;
+    return this.history;
   }
 
   public ObjectID getObjectID() {
@@ -54,7 +54,8 @@ public class MockTCObject implements TCObject {
     return this.tcClazz;
   }
 
-  public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+  public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
+                                  final int index) {
     if ("java.lang.reflect.AccessibleObject.override".equals(fieldname)) {
       // do nothing since the support for AccessibleObject looks up the
       // TCObject instance in the currently active ClientObjectManager, which causes
@@ -65,55 +66,55 @@ public class MockTCObject implements TCObject {
     }
   }
 
-  public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+  public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+  public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+  public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+  public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+  public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+  public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+  public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
     throw new ImplementMe();
   }
 
-  public void setHydrateException(Exception hydrateException) {
+  public void setHydrateException(final Exception hydrateException) {
     this.hydrateException = hydrateException;
   }
 
-  public void hydrate(DNA from, boolean force) throws ClassNotFoundException {
-    if (hydrateException != null) {
-      if (hydrateException instanceof RuntimeException) throw (RuntimeException) hydrateException;
-      throw (ClassNotFoundException) hydrateException;
+  public void hydrate(final DNA from, final boolean force) throws ClassNotFoundException {
+    if (this.hydrateException != null) {
+      if (this.hydrateException instanceof RuntimeException) { throw (RuntimeException) this.hydrateException; }
+      throw (ClassNotFoundException) this.hydrateException;
     }
     // nothing
   }
 
-  public void resolveReference(String fieldName) {
+  public void resolveReference(final String fieldName) {
     throw new ImplementMe();
   }
 
-  public void resolveArrayReference(int index) {
+  public void resolveArrayReference(final int index) {
     return;
   }
 
-  public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+  public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     return;
   }
 
@@ -121,19 +122,19 @@ public class MockTCObject implements TCObject {
     public int      method;
     public Object[] parameters;
 
-    public MethodCall(int method, Object[] parameters) {
+    public MethodCall(final int method, final Object[] parameters) {
       this.method = method;
       this.parameters = parameters;
     }
 
     @Override
     public String toString() {
-      StringBuffer sb = new StringBuffer();
-      sb.append(method);
+      final StringBuffer sb = new StringBuffer();
+      sb.append(this.method);
       sb.append("(");
-      for (int i = 0; i < parameters.length; i++) {
-        sb.append(parameters[i].toString());
-        if (i + 1 < parameters.length) {
+      for (int i = 0; i < this.parameters.length; i++) {
+        sb.append(this.parameters[i].toString());
+        if (i + 1 < this.parameters.length) {
           sb.append(',');
         }
       }
@@ -142,39 +143,39 @@ public class MockTCObject implements TCObject {
     }
   }
 
-  public ObjectID setReference(String fieldName, ObjectID id) {
+  public ObjectID setReference(final String fieldName, final ObjectID id) {
     throw new ImplementMe();
   }
 
-  public void setArrayReference(int index, ObjectID id) {
+  public void setArrayReference(final int index, final ObjectID id) {
     throw new ImplementMe();
   }
 
-  public void setValue(String fieldName, Object obj) {
+  public void setValue(final String fieldName, final Object obj) {
     throw new ImplementMe();
   }
 
   public long getVersion() {
-    return version;
+    return this.version;
   }
 
-  public void setVersion(long version) {
+  public void setVersion(final long version) {
     this.version = version;
   }
 
-  public int clearReferences(int toClear) {
+  public int clearReferences(final int toClear) {
     return 0;
   }
 
   public Object getResolveLock() {
-    return resolveLock;
+    return this.resolveLock;
   }
 
-  public void setNext(TLinkable link) {
+  public void setNext(final TLinkable link) {
     throw new ImplementMe();
   }
 
-  public void setPrevious(TLinkable link) {
+  public void setPrevious(final TLinkable link) {
     throw new ImplementMe();
   }
 
@@ -198,11 +199,11 @@ public class MockTCObject implements TCObject {
     return this.accessed;
   }
 
-  public int accessCount(int factor) {
+  public int accessCount(final int factor) {
     throw new ImplementMe();
   }
 
-  public void clearReference(String fieldName) {
+  public void clearReference(final String fieldName) {
     throw new ImplementMe();
   }
 
@@ -211,10 +212,10 @@ public class MockTCObject implements TCObject {
   }
 
   public boolean isNew() {
-    return isNew;
+    return this.isNew;
   }
 
-  public void setNew(boolean isNew) {
+  public void setNew(final boolean isNew) {
     this.isNew = isNew;
   }
 
@@ -222,15 +223,16 @@ public class MockTCObject implements TCObject {
     return true;
   }
 
-  public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+  public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
+                                         final int index) {
     return;
   }
 
-  public void logicalInvoke(int method, String methodSignature, Object[] params) {
-    history.add(new MethodCall(method, params));
+  public void logicalInvoke(final int method, final String methodSignature, final Object[] params) {
+    this.history.add(new MethodCall(method, params));
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
+  public String getFieldNameByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
@@ -246,23 +248,23 @@ public class MockTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  public void objectArrayChanged(int startPos, Object[] array, int length) {
+  public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     throw new ImplementMe();
   }
 
-  public void primitiveArrayChanged(int startPos, Object array, int length) {
+  public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     throw new ImplementMe();
   }
 
-  public void literalValueChanged(Object newValue, Object oldValue) {
+  public void literalValueChanged(final Object newValue, final Object oldValue) {
     throw new ImplementMe();
   }
 
-  public void setLiteralValue(Object newValue) {
+  public void setLiteralValue(final Object newValue) {
     throw new ImplementMe();
   }
 
-  public boolean isFieldPortableByOffset(long fieldOffset) {
+  public boolean isFieldPortableByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
@@ -271,14 +273,18 @@ public class MockTCObject implements TCObject {
   }
 
   public void setNotNew() {
-    isNew = false;
+    this.isNew = false;
   }
 
-  public void dehydrate(DNAWriter writer) {
+  public void dehydrate(final DNAWriter writer) {
     //
   }
 
-  public void unresolveReference(String fieldName) {
+  public void unresolveReference(final String fieldName) {
     throw new ImplementMe();
+  }
+
+  public boolean isCacheManaged() {
+    return true;
   }
 }

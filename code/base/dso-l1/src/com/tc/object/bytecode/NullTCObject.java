@@ -29,11 +29,11 @@ public class NullTCObject implements TCObject {
     return INSTANCE;
   }
 
-  public void setNext(TLinkable link) {
+  public void setNext(final TLinkable link) {
     // do nothing
   }
 
-  public void setPrevious(TLinkable link) {
+  public void setPrevious(final TLinkable link) {
     // do nothing);
 
   }
@@ -62,7 +62,7 @@ public class NullTCObject implements TCObject {
     return null;
   }
 
-  public int clearReferences(int toClear) {
+  public int clearReferences(final int toClear) {
     return 0;
   }
 
@@ -70,65 +70,66 @@ public class NullTCObject implements TCObject {
     return this;
   }
 
-  public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+  public void objectFieldChanged(final String classname, final String fieldname, final Object newValue, final int index) {
     // do nothing
   }
 
-  public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+  public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
+                                  final int index) {
     // do nothing
   }
 
-  public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+  public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
     // do nothing
 
   }
 
-  public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+  public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
     // do nothing
   }
 
-  public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+  public void doubleFieldChanged(final String classname, final String fieldname, final double newValue, final int index) {
     // do nothing
   }
 
-  public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+  public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
     // do nothing
   }
 
-  public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+  public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
     // do nothing
   }
 
-  public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+  public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
     // do nothing
   }
 
-  public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+  public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
     // do nothing
   }
 
-  public void logicalInvoke(int method, String methodName, Object[] parameters) {
+  public void logicalInvoke(final int method, final String methodName, final Object[] parameters) {
     // do nothing
   }
 
-  public void hydrate(DNA from, boolean force) throws DNAException {
+  public void hydrate(final DNA from, final boolean force) throws DNAException {
     // do nothing
   }
 
-  public void resolveReference(String fieldName) {
+  public void resolveReference(final String fieldName) {
     // do nothing
   }
 
-  public void resolveArrayReference(int index) {
+  public void resolveArrayReference(final int index) {
     // do nothing
     return;
   }
 
-  public ObjectID setReference(String fieldName, ObjectID id) {
+  public ObjectID setReference(final String fieldName, final ObjectID id) {
     return null;
   }
 
-  public void setValue(String fieldName, Object obj) {
+  public void setValue(final String fieldName, final Object obj) {
     // do nothing
   }
 
@@ -137,7 +138,7 @@ public class NullTCObject implements TCObject {
     return 0;
   }
 
-  public void setVersion(long version) {
+  public void setVersion(final long version) {
     // do nothing
   }
 
@@ -153,7 +154,7 @@ public class NullTCObject implements TCObject {
     return false;
   }
 
-  public void clearReference(String fieldName) {
+  public void clearReference(final String fieldName) {
     //
   }
 
@@ -170,11 +171,12 @@ public class NullTCObject implements TCObject {
     return true;
   }
 
-  public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+  public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
+                                         final int index) {
     // do nothing
   }
 
-  public void logicalInvoke(Object object, String methodSignature, Object[] params) {
+  public void logicalInvoke(final Object object, final String methodSignature, final Object[] params) {
     throw new ImplementMe();
   }
 
@@ -186,7 +188,7 @@ public class NullTCObject implements TCObject {
     return false;
   }
 
-  public String getFieldNameByOffset(long fieldOffset) {
+  public String getFieldNameByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
@@ -194,31 +196,35 @@ public class NullTCObject implements TCObject {
     throw new ImplementMe();
   }
 
-  public void objectArrayChanged(int startPos, Object[] array, int length) {
-    // do nothing
-  }
-
-  public void primitiveArrayChanged(int startPos, Object array, int length) {
-    // do nothing
-  }
-
-  public int accessCount(int factor) {
+  public boolean isCacheManaged() {
     throw new ImplementMe();
   }
 
-  public void literalValueChanged(Object newValue, Object oldValue) {
+  public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
     // do nothing
   }
 
-  public void setLiteralValue(Object newValue) {
+  public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
     // do nothing
   }
 
-  public void setArrayReference(int index, ObjectID id) {
+  public int accessCount(final int factor) {
+    throw new ImplementMe();
+  }
+
+  public void literalValueChanged(final Object newValue, final Object oldValue) {
+    // do nothing
+  }
+
+  public void setLiteralValue(final Object newValue) {
+    // do nothing
+  }
+
+  public void setArrayReference(final int index, final ObjectID id) {
     //
   }
 
-  public boolean isFieldPortableByOffset(long fieldOffset) {
+  public boolean isFieldPortableByOffset(final long fieldOffset) {
     throw new ImplementMe();
   }
 
@@ -230,11 +236,11 @@ public class NullTCObject implements TCObject {
     throw new AssertionError();
   }
 
-  public void dehydrate(DNAWriter writer) {
+  public void dehydrate(final DNAWriter writer) {
     throw new AssertionError();
   }
 
-  public void unresolveReference(String fieldName) {
+  public void unresolveReference(final String fieldName) {
     //
   }
 }

@@ -19,7 +19,6 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
-import com.tc.object.cache.ClockEvictionPolicy;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.MBeanSpec;
@@ -71,7 +70,8 @@ public interface DSOClientBuilder {
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
 
-  TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config, final TunnelingEventHandler teh);
+  TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
+                                                    final TunnelingEventHandler teh);
 
   ClientGlobalTransactionManager createClientGlobalTransactionManager(
                                                                       final RemoteTransactionManager remoteTxnMgr,
@@ -93,7 +93,6 @@ public interface DSOClientBuilder {
 
   ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                               final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,
-                                              final ClockEvictionPolicy clockEvictionPolicy,
                                               final RuntimeLogger rtLogger, final ClientIDProvider clientIDProvider,
                                               final ClassProvider classProviderLocal,
                                               final TCClassFactory classFactory, final TCObjectFactory objectFactory,

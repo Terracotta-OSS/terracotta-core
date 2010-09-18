@@ -33,13 +33,13 @@ public class ArrayManagerTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     for (int i = 0; i < 100; i++) {
-      TCObject tco = new FakeTCObject();
-      Object array = new Object[] {};
-      registerdPairs.put(array, tco); // do this before register to always have strong ref
+      final TCObject tco = new FakeTCObject();
+      final Object array = new Object[] {};
+      this.registerdPairs.put(array, tco); // do this before register to always have strong ref
       ArrayManager.register(array, tco);
     }
 
-    arrays = registerdPairs.keySet().toArray();
+    this.arrays = this.registerdPairs.keySet().toArray();
   }
 
   @Override
@@ -54,7 +54,7 @@ public class ArrayManagerTest extends TestCase {
     }
   }
 
-  static void addError(Throwable t) {
+  static void addError(final Throwable t) {
     t.printStackTrace();
     synchronized (errors) {
       errors.add(t);
@@ -62,21 +62,21 @@ public class ArrayManagerTest extends TestCase {
   }
 
   public void testCache() {
-    Random r = new Random();
+    final Random r = new Random();
     for (int i = 0; i < 100000; i++) {
-      Object array = arrays[r.nextInt(arrays.length)];
-      TCObject expected = (TCObject) registerdPairs.get(array);
+      final Object array = this.arrays[r.nextInt(this.arrays.length)];
+      final TCObject expected = (TCObject) this.registerdPairs.get(array);
       assertEquals(expected, ArrayManager.getObject(array));
     }
   }
 
   public void testReplaceCachedNegative() {
-    List refs = new ArrayList();
+    final List refs = new ArrayList();
     for (int i = 0; i < 50000; i++) {
-      Object array = new Object[] {};
+      final Object array = new Object[] {};
       refs.add(array);
       assertNull(ArrayManager.getObject(array));
-      TCObject tco = new FakeTCObject();
+      final TCObject tco = new FakeTCObject();
       ArrayManager.register(array, tco);
       assertEquals(tco, ArrayManager.getObject(array));
       assertEquals(tco, ArrayManager.getObject(array)); // do it twice
@@ -91,15 +91,15 @@ public class ArrayManagerTest extends TestCase {
     testThreads(true);
   }
 
-  private void testThreads(boolean withGC) throws Exception {
-    AddNew addNew = new AddNew();
-    Thread adder = new Thread(addNew, "Adder");
+  private void testThreads(final boolean withGC) throws Exception {
+    final AddNew addNew = new AddNew();
+    final Thread adder = new Thread(addNew, "Adder");
 
-    Query[] query = new Query[2];
+    final Query[] query = new Query[2];
     for (int i = 0; i < query.length; i++) {
-      query[i] = new Query(arrays, registerdPairs, withGC);
+      query[i] = new Query(this.arrays, this.registerdPairs, withGC);
     }
-    Thread[] queries = new Thread[query.length];
+    final Thread[] queries = new Thread[query.length];
     for (int i = 0; i < queries.length; i++) {
       queries[i] = new Thread(query[i]);
       queries[i].setName("Query #" + i);
@@ -116,8 +116,8 @@ public class ArrayManagerTest extends TestCase {
     for (int i = 0; i < queries.length; i++) {
       query[i].stop();
     }
-    for (int i = 0; i < queries.length; i++) {
-      queries[i].join();
+    for (final Thread querie : queries) {
+      querie.join();
     }
 
   }
@@ -128,19 +128,19 @@ public class ArrayManagerTest extends TestCase {
 
     public void run() {
       try {
-        while (!stop) {
+        while (!this.stop) {
           work();
-          count++;
+          this.count++;
         }
-      } catch (Throwable t) {
+      } catch (final Throwable t) {
         addError(t);
       } finally {
-        System.err.println(Thread.currentThread().getName() + " made " + count + " loops");
+        System.err.println(Thread.currentThread().getName() + " made " + this.count + " loops");
       }
     }
 
     void stop() {
-      stop = true;
+      this.stop = true;
     }
 
     abstract void work() throws Throwable;
@@ -152,7 +152,7 @@ public class ArrayManagerTest extends TestCase {
     private final Object[] arrays;
     private final boolean  withGC;
 
-    Query(Object[] arrays, Map pairs, boolean withGC) {
+    Query(final Object[] arrays, final Map pairs, final boolean withGC) {
       this.arrays = arrays;
       this.pairs = pairs;
       this.withGC = withGC;
@@ -160,16 +160,16 @@ public class ArrayManagerTest extends TestCase {
 
     @Override
     void work() throws Throwable {
-      if (r.nextBoolean()) {
-        Object array = arrays[r.nextInt(arrays.length)];
-        TCObject expect = (TCObject) pairs.get(array);
+      if (this.r.nextBoolean()) {
+        final Object array = this.arrays[this.r.nextInt(this.arrays.length)];
+        final TCObject expect = (TCObject) this.pairs.get(array);
         if (expect != ArrayManager.getObject(array)) { throw new AssertionError("wrong mapping returned"); }
       } else {
         if (ArrayManager.getObject(new Object[] {}) != null) { throw new AssertionError(
                                                                                         "found object for brand new array"); }
       }
 
-      if (withGC && (System.currentTimeMillis() % 255) == 0) {
+      if (this.withGC && (System.currentTimeMillis() % 255) == 0) {
         System.out.println(Thread.currentThread().getName() + " doing DGC");
         System.gc();
       }
@@ -180,7 +180,7 @@ public class ArrayManagerTest extends TestCase {
   private class AddNew extends Base {
     @Override
     void work() {
-      Object newArray = new Object[] {};
+      final Object newArray = new Object[] {};
       ArrayManager.getObject(newArray);
       ArrayManager.register(newArray, new FakeTCObject());
 
@@ -200,23 +200,24 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void booleanFieldChanged(String classname, String fieldname, boolean newValue, int index) {
+    public void booleanFieldChanged(final String classname, final String fieldname, final boolean newValue,
+                                    final int index) {
       throw new ImplementMe();
     }
 
-    public void byteFieldChanged(String classname, String fieldname, byte newValue, int index) {
+    public void byteFieldChanged(final String classname, final String fieldname, final byte newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public void charFieldChanged(String classname, String fieldname, char newValue, int index) {
+    public void charFieldChanged(final String classname, final String fieldname, final char newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public void clearReference(String fieldName) {
+    public void clearReference(final String fieldName) {
       throw new ImplementMe();
     }
 
-    public int clearReferences(int toClear) {
+    public int clearReferences(final int toClear) {
       throw new ImplementMe();
     }
 
@@ -224,15 +225,16 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void doubleFieldChanged(String classname, String fieldname, double newValue, int index) {
+    public void doubleFieldChanged(final String classname, final String fieldname, final double newValue,
+                                   final int index) {
       throw new ImplementMe();
     }
 
-    public void floatFieldChanged(String classname, String fieldname, float newValue, int index) {
+    public void floatFieldChanged(final String classname, final String fieldname, final float newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public String getFieldNameByOffset(long fieldOffset) {
+    public String getFieldNameByOffset(final long fieldOffset) {
       throw new ImplementMe();
     }
 
@@ -264,11 +266,11 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void hydrate(DNA from, boolean force) throws DNAException {
+    public void hydrate(final DNA from, final boolean force) throws DNAException {
       throw new ImplementMe();
     }
 
-    public void intFieldChanged(String classname, String fieldname, int newValue, int index) {
+    public void intFieldChanged(final String classname, final String fieldname, final int newValue, final int index) {
       throw new ImplementMe();
     }
 
@@ -280,19 +282,21 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void logicalInvoke(int method, String methodSignature, Object[] params) {
+    public void logicalInvoke(final int method, final String methodSignature, final Object[] params) {
       throw new ImplementMe();
     }
 
-    public void longFieldChanged(String classname, String fieldname, long newValue, int index) {
+    public void longFieldChanged(final String classname, final String fieldname, final long newValue, final int index) {
       throw new ImplementMe();
     }
 
-    public void objectFieldChanged(String classname, String fieldname, Object newValue, int index) {
+    public void objectFieldChanged(final String classname, final String fieldname, final Object newValue,
+                                   final int index) {
       throw new ImplementMe();
     }
 
-    public void objectFieldChangedByOffset(String classname, long fieldOffset, Object newValue, int index) {
+    public void objectFieldChangedByOffset(final String classname, final long fieldOffset, final Object newValue,
+                                           final int index) {
       throw new ImplementMe();
     }
 
@@ -300,39 +304,39 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void resolveArrayReference(int index) {
+    public void resolveArrayReference(final int index) {
       throw new ImplementMe();
     }
 
-    public void resolveReference(String fieldName) {
+    public void resolveReference(final String fieldName) {
       throw new ImplementMe();
     }
 
-    public void setNext(TLinkable link) {
+    public void setNext(final TLinkable link) {
       throw new ImplementMe();
     }
 
-    public void setPrevious(TLinkable link) {
+    public void setPrevious(final TLinkable link) {
       throw new ImplementMe();
     }
 
-    public ObjectID setReference(String fieldName, ObjectID id) {
+    public ObjectID setReference(final String fieldName, final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public void setArrayReference(int index, ObjectID id) {
+    public void setArrayReference(final int index, final ObjectID id) {
       throw new ImplementMe();
     }
 
-    public void setValue(String fieldName, Object obj) {
+    public void setValue(final String fieldName, final Object obj) {
       throw new ImplementMe();
     }
 
-    public void setVersion(long version) {
+    public void setVersion(final long version) {
       throw new ImplementMe();
     }
 
-    public void shortFieldChanged(String classname, String fieldname, short newValue, int index) {
+    public void shortFieldChanged(final String classname, final String fieldname, final short newValue, final int index) {
       throw new ImplementMe();
     }
 
@@ -352,27 +356,27 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void objectArrayChanged(int startPos, Object[] array, int length) {
+    public void objectArrayChanged(final int startPos, final Object[] array, final int length) {
       throw new ImplementMe();
     }
 
-    public void primitiveArrayChanged(int startPos, Object array, int length) {
+    public void primitiveArrayChanged(final int startPos, final Object array, final int length) {
       throw new ImplementMe();
     }
 
-    public int accessCount(int factor) {
+    public int accessCount(final int factor) {
       throw new ImplementMe();
     }
 
-    public void literalValueChanged(Object newValue, Object oldValue) {
+    public void literalValueChanged(final Object newValue, final Object oldValue) {
       throw new ImplementMe();
     }
 
-    public void setLiteralValue(Object newValue) {
+    public void setLiteralValue(final Object newValue) {
       throw new ImplementMe();
     }
 
-    public boolean isFieldPortableByOffset(long fieldOffset) {
+    public boolean isFieldPortableByOffset(final long fieldOffset) {
       throw new ImplementMe();
     }
 
@@ -384,11 +388,15 @@ public class ArrayManagerTest extends TestCase {
       throw new ImplementMe();
     }
 
-    public void dehydrate(DNAWriter writer) {
+    public void dehydrate(final DNAWriter writer) {
       throw new ImplementMe();
     }
 
-    public void unresolveReference(String fieldName) {
+    public void unresolveReference(final String fieldName) {
+      throw new ImplementMe();
+    }
+
+    public boolean isCacheManaged() {
       throw new ImplementMe();
     }
   }

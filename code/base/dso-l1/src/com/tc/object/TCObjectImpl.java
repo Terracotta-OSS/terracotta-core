@@ -35,22 +35,22 @@ import java.lang.ref.WeakReference;
  * <p>
  */
 public abstract class TCObjectImpl implements TCObject {
-  private static final TCLogger logger                      = TCLogging.getLogger(TCObjectImpl.class);
+  private static final TCLogger logger                    = TCLogging.getLogger(TCObjectImpl.class);
 
-  private static final int      ACCESSED_OFFSET             = 1 << 0;
-  private static final int      IS_NEW_OFFSET               = 1 << 1;
-  private static final int      AUTOLOCKS_DISABLED_OFFSET   = 1 << 2;
+  private static final int      ACCESSED_OFFSET           = 1 << 0;
+  private static final int      IS_NEW_OFFSET             = 1 << 1;
+  private static final int      AUTOLOCKS_DISABLED_OFFSET = 1 << 2;
 
   // XXX::This initial negative version number is important since GID is assigned in the server from 0.
-  private long                  version                     = -1;
+  private long                  version                   = -1;
 
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
   private TLinkable             next;
   private TLinkable             previous;
-  private byte                  flags                       = 0;
-  private static final TCLogger consoleLogger               = CustomerLogging.getConsoleLogger();
+  private byte                  flags                     = 0;
+  private static final TCLogger consoleLogger             = CustomerLogging.getConsoleLogger();
 
   protected TCObjectImpl(final ObjectID id, final Object peer, final TCClass clazz, final boolean isNew) {
     this.objectID = id;
@@ -445,6 +445,10 @@ public abstract class TCObjectImpl implements TCObject {
 
   public final synchronized boolean canEvict() {
     return isEvictable() && !this.tcClazz.isNotClearable() && !isNew();
+  }
+
+  public boolean isCacheManaged() {
+    return !this.tcClazz.isNotClearable();
   }
 
   protected abstract boolean isEvictable();
