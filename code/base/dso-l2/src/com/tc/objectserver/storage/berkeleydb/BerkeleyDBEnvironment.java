@@ -19,7 +19,6 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.StatsConfig;
 import com.sleepycat.je.Transaction;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -55,8 +54,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import javax.management.NotCompliantMBeanException;
 
 public class BerkeleyDBEnvironment implements DBEnvironment {
 
@@ -298,11 +295,6 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public StatisticRetrievalAction getSRA() {
     return new SRAForBerkeleyDB(this);
-  }
-
-  public ServerDBBackupMBean getServerDBBackupMBean(final L2TVSConfigurationSetupManager configurationSetupManager)
-      throws NotCompliantMBeanException {
-    return new ServerDBBackup(configurationSetupManager);
   }
 
   public synchronized TCObjectDatabase getObjectDatabase() throws TCDatabaseException {

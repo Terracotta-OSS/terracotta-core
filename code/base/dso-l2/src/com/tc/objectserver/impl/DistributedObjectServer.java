@@ -219,8 +219,10 @@ import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvid
 import com.tc.objectserver.persistence.inmemory.NullTransactionPersistor;
 import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
 import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
+import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
@@ -308,6 +310,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 
@@ -495,6 +498,22 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1ReconnectConfig = new L1ReconnectConfigImpl();
     final boolean swapEnabled = true;
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
+
+    // XXX: one day DB selection will be from tc.props
+    final DBFactory dbFactory = new BerkeleyDBFactory(l2Properties.getPropertiesFor("berkeleydb")
+        .addAllPropertiesTo(new Properties()));
+
+    // start the JMX server
+    try {
+      startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(),
+                     new RemoteJMXProcessor(), dbFactory.getServerDBBackupMBean(this.configSetupManager));
+    } catch (final Exception e) {
+      final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
+      consoleLogger.error(msg);
+      logger.error(msg, e);
+      System.exit(-1);
+    }
+
     final TCFile location = new TCFileImpl(this.configSetupManager.commonl2Config().dataPath().getFile());
     this.startupLock = new StartupLock(location, this.l2Properties.getBoolean("startuplock.retries.enabled"));
 
@@ -546,26 +565,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
       this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-      dbenv = this.serverBuilder.createDBEnvironment(persistent, dbhome, l2Properties, l2DSOConfig, this, stageManager,
-                                                     l2FaultFromDisk, l2FaultFromOffheap, l2FlushFromOffheap);
+      dbenv = this.serverBuilder
+          .createDBEnvironment(persistent, dbhome, l2DSOConfig, this, stageManager, l2FaultFromDisk,
+                               l2FaultFromOffheap, l2FlushFromOffheap, dbFactory);
       final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
       this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), dbenv,
                                            serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                .dataPath().getFile(), this.objectStatsRecorder);
       sraForDb = dbenv.getSRA();
-
-      // final DBFactory dbFactory = new BerkeleyDBFactory(this.l2Properties.getPropertiesFor("berkeleydb")
-      // .addAllPropertiesTo(new Properties()));
-      // start the JMX server
-      try {
-        startJMXServer(jmxBind, this.configSetupManager.commonl2Config().jmxPort().getBindPort(),
-                       new RemoteJMXProcessor(), dbenv.getServerDBBackupMBean(this.configSetupManager));
-      } catch (final Exception e) {
-        final String msg = "Unable to start the JMX server. Do you have another Terracotta Server instance running?";
-        consoleLogger.error(msg);
-        logger.error(msg, e);
-        System.exit(-1);
-      }
 
       // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
@@ -703,7 +710,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SequenceValidator sequenceValidator = new SequenceValidator(0);
     // Server initiated request processing queues shouldn't have any max queue size.
 
-    final ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler(time2FaultFromDiskOrOffheap,
+    final ManagedObjectFaultHandler managedObjectFaultHandler = new ManagedObjectFaultHandler(
+                                                                                              time2FaultFromDiskOrOffheap,
                                                                                               time2Add2ObjMgr,
                                                                                               this.objectStatsRecorder);
     final Stage faultManagedObjectStage = stageManager
@@ -845,8 +853,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                               globalObjectFaultCounter,
                                                                               globalTxnCounter, objMgrStats,
                                                                               broadcastCounter, l2FaultFromDisk,
-                                                                              time2FaultFromDiskOrOffheap, time2Add2ObjMgr,
-                                                                              globalLockRecallCounter,
+                                                                              time2FaultFromDiskOrOffheap,
+                                                                              time2Add2ObjMgr, globalLockRecallCounter,
                                                                               changesPerBroadcast,
                                                                               transactionSizeCounter, globalLockCount);
     serverStats.serverMapGetSizeRequestsCounter(globalServerMapGetSizeRequestsCounter)

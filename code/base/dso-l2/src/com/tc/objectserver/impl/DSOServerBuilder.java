@@ -43,12 +43,12 @@ import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.DBEnvironment;
+import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
-import com.tc.properties.TCProperties;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -133,9 +133,9 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final TCProperties l2Properties,
-                                    final NewL2DSOConfig l2DSOCofig, DumpHandlerStore dumpHandlerStore,
-                                    final StageManager stageManager, SampledCounter l2FaultFromDisk,
-                                    SampledCounter l2FaultFromOffheap, SampledCounter l2FlushFromOffheap)
-      throws IOException, TCDatabaseException;
+  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final NewL2DSOConfig l2DSOCofig,
+                                    DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
+                                    SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
+                                    SampledCounter l2FlushFromOffheap, DBFactory factory) throws IOException,
+      TCDatabaseException;
 }
