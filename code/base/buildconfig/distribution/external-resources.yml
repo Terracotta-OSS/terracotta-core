@@ -132,7 +132,6 @@ artifacts:
     name: EHCACHE-TERRACOTTA-LICENSE.txt
     destination: ehcache/licenses
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt 
-    kit_edition: opensource
 
   - maven_artifact: false
     name: ehcache.xml
