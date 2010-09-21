@@ -40,16 +40,18 @@ public class ConcurrentClockEvictionPolicy implements EvictionPolicy {
     return -1;
   }
 
-  public Collection getRemovalCandidates(int maxCount) {
+  public Collection getRemovalCandidates(final int maxCount) {
     final ArrayList list = new ArrayList(maxCount);
     int count = this.map.size();
-    while (count-- > 0 && maxCount-- > 0) {
+    while (count-- > 0 && list.size() < maxCount) {
       final Entry<ObjectID, Cacheable> e = moveHand();
       if (e == null) {
         break;
       }
       final Cacheable c = e.getValue();
-      if (c.recentlyAccessed()) {
+      if (c == null) {
+        continue;
+      } else if (c.recentlyAccessed()) {
         c.clearAccessed();
       } else if (c.canEvict()) {
         list.add(c);
