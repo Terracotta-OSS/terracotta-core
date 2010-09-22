@@ -146,7 +146,7 @@ class ExternalProjectBuilder
     private
 
     def do_build
-      exec('mvn', '-f', @file, '-DskipTests=true', 'install')
+      exec('mvn', '-f', @file, '-DskipTests=true', '-Dtcbuild.external=true', 'install')
     end
   end
 end
