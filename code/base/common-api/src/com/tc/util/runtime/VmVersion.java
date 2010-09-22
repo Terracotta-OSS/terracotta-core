@@ -16,31 +16,28 @@ import java.util.regex.Pattern;
  */
 public final class VmVersion {
 
-  private static final Pattern JVM_VERSION_PATTERN = Pattern.compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
+  private static final Pattern JVM_VERSION_PATTERN         = Pattern
+                                                               .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
   private static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
-      .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*\\(.*(SR\\p{Digit}+).*\\)$");
+                                                               .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*.*$");
 
-  private final String vmVersion;
-  private final int mega;
-  private final int major;
-  private final int minor;
-  private final String patch;
-  private final boolean isIBM;
-  private final boolean isJRockit;
-  private final boolean isAzul;
-  private final boolean isHotSpot;
+  private final String         vmVersion;
+  private final int            mega;
+  private final int            major;
+  private final int            minor;
+  private final String         patch;
+  private final boolean        isIBM;
+  private final boolean        isJRockit;
+  private final boolean        isAzul;
+  private final boolean        isHotSpot;
 
   /**
-   * Construct with system properties, which will be parsed to determine
-   * version. Looks at properties like java.version, java.runtime.version,
-   * jrockit.version, java.vm.name, and java.vendor.
+   * Construct with system properties, which will be parsed to determine version. Looks at properties like java.version,
+   * java.runtime.version, jrockit.version, java.vm.name, and java.vendor.
    * 
-   * @param Properties
-   *          Typically System.getProperties()
-   * @throws UnknownJvmVersionException
-   *           If JVM version is unknown
-   * @throws UnknownRuntimeVersionException
-   *           If Java runtime version is unknown
+   * @param Properties Typically System.getProperties()
+   * @throws UnknownJvmVersionException If JVM version is unknown
+   * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
   public VmVersion(final Properties props) {
     this(javaVersion(props), runtimeVersion(props), isHotspot(props), isJRockit(props), isIBM(props), isAzul(props));
@@ -49,21 +46,15 @@ public final class VmVersion {
   /**
    * Construct with specific version information
    * 
-   * @param vendorVersion
-   *          Version pattern like 1.4.2_12
-   * @param runtimeVersion
-   *          Runtime version pattern like 1.4.2_12-269
-   * @param isJRockit
-   *          True if BEA JRockit JVM
-   * @param isIBM
-   *          True if IBM JVM
-   * @throws UnknownJvmVersionException
-   *           If JVM version is unknown
-   * @throws UnknownRuntimeVersionException
-   *           If Java runtime version is unknown
+   * @param vendorVersion Version pattern like 1.4.2_12
+   * @param runtimeVersion Runtime version pattern like 1.4.2_12-269
+   * @param isJRockit True if BEA JRockit JVM
+   * @param isIBM True if IBM JVM
+   * @throws UnknownJvmVersionException If JVM version is unknown
+   * @throws UnknownRuntimeVersionException If Java runtime version is unknown
    */
-  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isSun, final boolean isJRockit,
-      final boolean isIBM, final boolean isAzul) {
+  private VmVersion(final String vendorVersion, final String runtimeVersion, final boolean isSun,
+                    final boolean isJRockit, final boolean isIBM, final boolean isAzul) {
     this.isHotSpot = isSun;
     this.isIBM = isIBM;
     this.isJRockit = isJRockit;
@@ -77,7 +68,8 @@ public final class VmVersion {
       if (isIBM) {
         final Matcher serviceReleaseMatcher = IBM_SERVICE_RELEASE_PATTERN.matcher(runtimeVersion);
         if (serviceReleaseMatcher.matches()) {
-          String serviceRelease = serviceReleaseMatcher.groupCount() == 1 ? serviceReleaseMatcher.group(1).toLowerCase() : null;
+          String serviceRelease = serviceReleaseMatcher.groupCount() == 1 ? serviceReleaseMatcher.group(1)
+              .toLowerCase() : null;
           if (null == version_patch && null == serviceRelease) {
             patch = null;
           } else if (null == version_patch) {
@@ -102,8 +94,8 @@ public final class VmVersion {
   }
 
   /**
-   * Given the history of SunOS and Java version numbering by Sun, this will
-   * return '1' for a long time to come. Mega version = 1 in 1.2.3
+   * Given the history of SunOS and Java version numbering by Sun, this will return '1' for a long time to come. Mega
+   * version = 1 in 1.2.3
    * 
    * @return Mega version
    */
@@ -195,15 +187,12 @@ public final class VmVersion {
   }
 
   /**
-   * @param o
-   *          Other version
+   * @param o Other version
    * @return True if other version has identical version string
    */
   @Override
   public boolean equals(final Object o) {
-    if (!(o instanceof VmVersion)) {
-      return false;
-    }
+    if (!(o instanceof VmVersion)) { return false; }
 
     final VmVersion other = (VmVersion) o;
     return vmVersion.equals(other.vmVersion);
@@ -247,9 +236,7 @@ public final class VmVersion {
       if (is != null) {
         props.load(is);
         String version = props.getProperty("sdk.version");
-        if (version != null) {
-          return version;
-        }
+        if (version != null) { return version; }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -274,11 +261,11 @@ public final class VmVersion {
   }
 
   private static boolean isJRockit(Properties props) {
-    return props.getProperty("jrockit.version") != null || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
+    return props.getProperty("jrockit.version") != null
+           || props.getProperty("java.vm.name", "").toLowerCase().indexOf("jrockit") >= 0;
   }
 
   private static boolean isHotspot(Properties props) {
     return props.getProperty("java.vm.name", "").toLowerCase().contains("hotspot");
   }
 }
-
