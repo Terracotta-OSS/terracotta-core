@@ -59,5 +59,13 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
         .equals(this.resources.getObject("zap.accepted")));
     Assert
         .assertTrue(TerracottaOperatorEventResources.getDirtyDBMessage().equals(this.resources.getObject("dirty.db")));
+
+    /**
+     * Off heap message
+     */
+    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapMapMemoryUsageMessage()
+        .equals(this.resources.getObject("offheap.map.memory.usage")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapObjectMemoryUsageMessage()
+        .equals(this.resources.getObject("offheap.object.memory.usage")));
   }
 }

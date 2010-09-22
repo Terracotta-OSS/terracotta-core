@@ -7,7 +7,7 @@ import java.util.ResourceBundle;
 
 class TerracottaOperatorEventResources {
   private static final TerracottaOperatorEventResources instance = new TerracottaOperatorEventResources();
-  private final ResourceBundle resources;
+  private final ResourceBundle                          resources;
 
   private TerracottaOperatorEventResources() {
     this.resources = ResourceBundle.getBundle(getClass().getPackage().getName() + ".messages");
@@ -19,9 +19,17 @@ class TerracottaOperatorEventResources {
   static String getLongGCMessage() {
     return instance.resources.getString("long.gc");
   }
-  
+
   static String getHighMemoryUsageMessage() {
     return instance.resources.getString("high.memory.usage");
+  }
+
+  static String getOffHeapMapMemoryUsageMessage() {
+    return instance.resources.getString("offheap.map.memory.usage");
+  }
+
+  static String getOffHeapObjectMemoryUsageMessage() {
+    return instance.resources.getString("offheap.object.memory.usage");
   }
 
   /**
@@ -38,22 +46,22 @@ class TerracottaOperatorEventResources {
   static String getDGCCanceledMessage() {
     return instance.resources.getString("dgc.canceled");
   }
-  
+
   /**
    * HA Messages
    */
   static String getNodeAvailabiltyMessage() {
     return instance.resources.getString("node.availability");
   }
-  
+
   static String getOOODisconnectMessage() {
     return instance.resources.getString("ooo.disconnect");
   }
-  
+
   static String getOOOConnectMessage() {
     return instance.resources.getString("ooo.connect");
   }
-  
+
   static String getClusterNodeStateChangedMessage() {
     return instance.resources.getString("node.state");
   }
@@ -64,13 +72,12 @@ class TerracottaOperatorEventResources {
   static String getZapRequestReceivedMessage() {
     return instance.resources.getString("zap.received");
   }
-  
+
   static String getZapRequestAcceptedMessage() {
     return instance.resources.getString("zap.accepted");
   }
-  
+
   static String getDirtyDBMessage() {
     return instance.resources.getString("dirty.db");
   }
 }
-
