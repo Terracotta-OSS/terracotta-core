@@ -9,8 +9,6 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.util.ToggleableStrongReference;
 
-import gnu.trove.TLinkable;
-
 /**
  * Terracotta class attached to each shared instance Object. The TCObject may be a simple object value or may have
  * TCFields representing internal field values.
@@ -21,34 +19,6 @@ public interface TCObject extends Cacheable, TCObjectExternal {
 
   /** Indicates null field index */
   public static final int  NULL_INDEX     = -1;
-
-  /**
-   * For Cacheable interface, set next linked item
-   * 
-   * @param link Next link
-   */
-  public void setNext(TLinkable link);
-
-  /**
-   * For Cacheable interface, set previous linked item
-   * 
-   * @param link Previous link
-   */
-  public void setPrevious(TLinkable link);
-
-  /**
-   * For Cacheable interface, get next linked item
-   * 
-   * @return Next link
-   */
-  public TLinkable getNext();
-
-  /**
-   * For Cacheable interface, get previous linked item
-   * 
-   * @return Next link
-   */
-  public TLinkable getPrevious();
 
   /**
    * Get the object identifier

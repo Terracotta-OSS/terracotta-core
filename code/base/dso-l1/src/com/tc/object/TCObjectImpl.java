@@ -47,8 +47,6 @@ public abstract class TCObjectImpl implements TCObject {
   private final ObjectID        objectID;
   protected final TCClass       tcClazz;
   private WeakReference         peerObject;
-  private TLinkable             next;
-  private TLinkable             previous;
   private byte                  flags                     = 0;
   private static final TCLogger consoleLogger             = CustomerLogging.getConsoleLogger();
 
@@ -390,19 +388,19 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public void setNext(final TLinkable link) {
-    this.next = link;
+    throw new UnsupportedOperationException();
   }
 
   public void setPrevious(final TLinkable link) {
-    this.previous = link;
+    throw new UnsupportedOperationException();
   }
 
   public TLinkable getNext() {
-    return this.next;
+    throw new UnsupportedOperationException();
   }
 
   public TLinkable getPrevious() {
-    return this.previous;
+    throw new UnsupportedOperationException();
   }
 
   public void markAccessed() {
