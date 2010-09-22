@@ -159,19 +159,23 @@ maven_deploy:
     artifact: parent
     srcfile: pom.xml
     pom: pom.xml
+    dev_dist: true
   - groupId: org.terracotta
     artifact: terracotta-core-parent
     srcfile: poms/terracotta-core-parent-pom.xml
     pom: poms/terracotta-core-parent-pom.xml
+    dev_dist: true
   - groupId: org.terracotta
     artifact: terracotta-l1-parent
     srcfile: poms/terracotta-l1-parent-pom.xml
     pom: poms/terracotta-l1-parent-pom.xml       
+    dev_dist: true
   - groupId: org.terracotta
     artifact: terracotta
     classifier: sources
     srcfile: build/sources/terracotta-sources.jar
     pom: poms/terracotta-pom.xml
+    dev_dist: true
   - groupId: org.terracotta
     artifact: terracotta
     file: build/artifacts/tc.jar
@@ -186,7 +190,7 @@ maven_deploy:
     pom: poms/terracotta-l1-os-pom.xml
     inject: 
       - build/artifacts/resources/build-data.txt
-    dev_dist: true      
+    dev_dist: true
   - groupId: org.terracotta
     artifact: tcconfig
     file: common-api/lib/tcconfig-xmlbeans-generated.jar
