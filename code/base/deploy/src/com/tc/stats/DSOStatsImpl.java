@@ -59,12 +59,12 @@ public class DSOStatsImpl extends StatsSupport implements DSOStats {
     return objMgrStats.getCacheHitRatio();
   }
 
-  public long getCacheMissRate() {
-    return objMgrStats.getCacheMissRate().getCounterValue();
+  public long getOnHeapFaultRate() {
+    return objMgrStats.getOnHeapFaultRate().getCounterValue();
   }
 
-  public long getFlushedRate() {
-    return objMgrStats.getFlushedRate().getCounterValue();
+  public long getOnHeapFlushRate() {
+    return objMgrStats.getOnHeapFlushRate().getCounterValue();
   }
 
   public long getGlobalLockRecallRate() {

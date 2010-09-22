@@ -64,7 +64,7 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
     return this.objectsCreated.get();
   }
 
-  public TimeStampedCounterValue getCacheMissRate() {
+  public TimeStampedCounterValue getOnHeapFaultRate() {
     return this.faultRateCounter.getMostRecentSample();
   }
 
@@ -72,7 +72,7 @@ public class ObjectManagerStatsImpl implements ObjectManagerStatsListener, Objec
     this.flushRateCounter.increment(count);
   }
 
-  public TimeStampedCounterValue getFlushedRate() {
+  public TimeStampedCounterValue getOnHeapFlushRate() {
     return this.flushRateCounter.getMostRecentSample();
   }
 }

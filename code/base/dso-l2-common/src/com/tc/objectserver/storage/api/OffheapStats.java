@@ -16,11 +16,11 @@ public interface OffheapStats extends Serializable {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapFlushObjectCount() {
+                                                        public long getOffHeapFlushRate() {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapFaultObjectCount() {
+                                                        public long getOffHeapFaultRate() {
                                                           return 0;
                                                         }
 
@@ -43,9 +43,9 @@ public interface OffheapStats extends Serializable {
 
   long getOffheapObjectCachedCount();
 
-  long getOffheapFaultObjectCount();
+  long getOffHeapFaultRate();
 
-  long getOffheapFlushObjectCount();
+  long getOffHeapFlushRate();
 
   long getOffheapMaxDataSize();
 

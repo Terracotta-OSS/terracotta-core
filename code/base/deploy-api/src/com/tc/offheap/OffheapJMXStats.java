@@ -20,8 +20,8 @@ public class OffheapJMXStats implements OffheapStats {
     this.mapMaxDataSize = stats.getMapMaxDataSize();
     this.objectAllocatedSize = stats.getObjectAllocatedSize();
     this.objectMaxDataSize = stats.getObjectMaxDataSize();
-    this.offheapFaultObjectCount = stats.getOffheapFaultObjectCount();
-    this.offheapFlushObjectCount = stats.getOffheapFlushObjectCount();
+    this.offheapFaultObjectCount = stats.getOffHeapFaultRate();
+    this.offheapFlushObjectCount = stats.getOffHeapFlushRate();
     this.offheapMaxDataSize = stats.getOffheapMaxDataSize();
     this.offheapObjectCachedCount = stats.getOffheapObjectCachedCount();
   }
@@ -42,11 +42,11 @@ public class OffheapJMXStats implements OffheapStats {
     return objectMaxDataSize;
   }
 
-  public long getOffheapFaultObjectCount() {
+  public long getOffHeapFaultRate() {
     return offheapFaultObjectCount;
   }
 
-  public long getOffheapFlushObjectCount() {
+  public long getOffHeapFlushRate() {
     return offheapFlushObjectCount;
   }
 

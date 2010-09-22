@@ -9,9 +9,9 @@ public interface ObjectManagerStats {
 
   double getCacheHitRatio();
   
-  TimeStampedCounterValue getCacheMissRate();
+  TimeStampedCounterValue getOnHeapFaultRate();
  
-  TimeStampedCounterValue getFlushedRate();
+  TimeStampedCounterValue getOnHeapFlushRate();
   
   long getTotalRequests();
 

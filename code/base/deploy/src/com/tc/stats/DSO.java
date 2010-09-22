@@ -131,12 +131,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getCacheHitRatio();
   }
 
-  public long getCacheMissRate() {
-    return getStats().getCacheMissRate();
+  public long getOnHeapFaultRate() {
+    return getStats().getOnHeapFaultRate();
   }
 
-  public long getFlushedRate() {
-    return getStats().getFlushedRate();
+  public long getOnHeapFlushRate() {
+    return getStats().getOnHeapFlushRate();
   }
 
   public long getTransactionRate() {
@@ -723,12 +723,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return offheapStats.getObjectMaxDataSize();
   }
 
-  public long getOffheapFaultObjectCount() {
-    return offheapStats.getOffheapFaultObjectCount();
+  public long getOffHeapFaultRate() {
+    return offheapStats.getOffHeapFaultRate();
   }
 
-  public long getOffheapFlushObjectCount() {
-    return offheapStats.getOffheapFlushObjectCount();
+  public long getOffHeapFlushRate() {
+    return offheapStats.getOffHeapFlushRate();
   }
 
   public long getOffheapMaxDataSize() {
