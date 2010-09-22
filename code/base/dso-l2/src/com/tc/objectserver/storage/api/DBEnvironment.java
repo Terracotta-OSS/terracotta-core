@@ -119,7 +119,7 @@ public interface DBEnvironment {
   public abstract MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger logger, String sequenceID,
                                               int startValue);
 
-  public StatisticRetrievalAction getSRA();
+  public StatisticRetrievalAction[] getSRAs();
 
   public abstract OffheapStats getOffheapStats();
 }

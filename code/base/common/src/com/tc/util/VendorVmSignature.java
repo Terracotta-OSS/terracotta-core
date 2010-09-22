@@ -4,8 +4,6 @@
  */
 package com.tc.util;
 
-import com.tc.util.runtime.UnknownJvmVersionException;
-import com.tc.util.runtime.UnknownRuntimeVersionException;
 import com.tc.util.runtime.VmVersion;
 
 import java.util.Properties;
@@ -72,7 +70,7 @@ public class VendorVmSignature {
     throw new VendorVmSignatureException("Unknown or unsupported vendor string: " + vendor);
   }
 
-  private static String getVMVersion(final Properties source) throws VendorVmSignatureException {
+  private static String getVMVersion(final Properties source) {
     final VmVersion vmVersion = new VmVersion(source);
     return vmVersion.toString().replaceAll("\\.", "");
   }
@@ -118,6 +116,7 @@ public class VendorVmSignature {
     return signature;
   }
 
+  @Override
   public String toString() {
     return getSignature();
   }

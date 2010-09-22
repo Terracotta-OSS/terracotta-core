@@ -82,6 +82,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   private final boolean              paranoid;
   private final SampledCounter       l2FaultFromDisk;
+  private final SRAForBerkeleyDB     sraBerkeleyDB;
 
   public BerkeleyDBEnvironment(boolean paranoid, File envHome) throws IOException {
     this(paranoid, envHome, new Properties(), SampledCounter.NULL_SAMPLED_COUNTER);
@@ -135,6 +136,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     this.paranoid = paranoid;
     this.envHome = envHome;
     this.l2FaultFromDisk = l2FaultFrmDisk;
+    this.sraBerkeleyDB = new SRAForBerkeleyDB(this);
     FileUtils.forceMkdir(this.envHome);
   }
 
@@ -293,8 +295,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     }
   }
 
-  public StatisticRetrievalAction getSRA() {
-    return new SRAForBerkeleyDB(this);
+  public StatisticRetrievalAction[] getSRAs() {
+    return new StatisticRetrievalAction[] { sraBerkeleyDB };
   }
 
   public synchronized TCObjectDatabase getObjectDatabase() throws TCDatabaseException {

@@ -538,7 +538,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     logger.debug("server swap enabled: " + swapEnabled);
     final ManagedObjectChangeListenerProviderImpl managedObjectChangeListenerProvider = new ManagedObjectChangeListenerProviderImpl();
-    StatisticRetrievalAction sraForDb = null;
+    StatisticRetrievalAction[] sraForDbEnv = null;
 
     this.sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
@@ -572,7 +572,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), dbenv,
                                            serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                .dataPath().getFile(), this.objectStatsRecorder);
-      sraForDb = dbenv.getSRA();
+      sraForDbEnv = dbenv.getSRAs();
 
       // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
@@ -1117,7 +1117,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // populate the statistics retrieval register
     populateStatisticsRetrievalRegistry(serverStats, this.seda.getStageManager(), mm, this.transactionManager,
-                                        serverTransactionSequencerImpl, sraForDb);
+                                        serverTransactionSequencerImpl, sraForDbEnv);
 
     // XXX: yucky casts
     this.managementContext = new ServerManagementContext(this.transactionManager, this.objectRequestManager,
@@ -1313,7 +1313,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                    final MessageMonitor messageMonitor,
                                                    final ServerTransactionManagerImpl txnManager,
                                                    final ServerTransactionSequencerStats serverTransactionSequencerStats,
-                                                   final StatisticRetrievalAction sraBdb) {
+                                                   final StatisticRetrievalAction[] srasForDbEnv) {
     if (this.statisticsAgentSubSystem.isActive()) {
       final StatisticsRetrievalRegistry registry = this.statisticsAgentSubSystem.getStatisticsRetrievalRegistry();
       registry.registerActionInstance(new SRAL2ToL1FaultRate(serverStats));
@@ -1344,8 +1344,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsRate(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsCount(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsRate(serverStats));
-      if (sraBdb != null) {
-        registry.registerActionInstance(sraBdb);
+      for (StatisticRetrievalAction sraForDbEnv : srasForDbEnv) {
+        registry.registerActionInstance(sraForDbEnv);
       }
 
       this.serverBuilder.populateAdditionalStatisticsRetrivalRegistry(registry);
