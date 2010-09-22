@@ -61,13 +61,7 @@ public class VendorVmSignature {
 
     if (vendor.toLowerCase().startsWith("sun ")) {
       final VmVersion vmVersion;
-      try {
-        vmVersion = new VmVersion(source);
-      } catch (UnknownJvmVersionException ujve) {
-        throw new VendorVmSignatureException("Unable to extract the JVM version with properties: " + source, ujve);
-      } catch (UnknownRuntimeVersionException urve) {
-        throw new VendorVmSignatureException("Unable to extract the JVM version with properties: " + source, urve);
-      }
+      vmVersion = new VmVersion(source);
       if (vmVersion.isJRockit()) {
         // In at least one case, jrockit 1.4.2_05 on linux, you get "Sun Microsystems Inc." as the vendor...err
         return VM_VENDOR_BEA;
@@ -79,14 +73,8 @@ public class VendorVmSignature {
   }
 
   private static String getVMVersion(final Properties source) throws VendorVmSignatureException {
-    try {
-      final VmVersion vmVersion = new VmVersion(source);
-      return vmVersion.toString().replaceAll("\\.", "");
-    } catch (final UnknownJvmVersionException ujve) {
-      throw new VendorVmSignatureException("Cannot determine VM version", ujve);
-    } catch (final UnknownRuntimeVersionException urve) {
-      throw new VendorVmSignatureException("Cannot determine VM version", urve);
-    }
+    final VmVersion vmVersion = new VmVersion(source);
+    return vmVersion.toString().replaceAll("\\.", "");
   }
 
   private static String getOS(final Properties source) throws VendorVmSignatureException {

@@ -18,7 +18,7 @@ public final class VmVersion {
 
   private static final Pattern JVM_VERSION_PATTERN         = Pattern
                                                                .compile("^(\\p{Digit})\\.(\\p{Digit})\\.(\\p{Digit})(?:[-_](.+))?$");
-  private static final Pattern IBM_SERVICE_RELEASE_PATTERN = Pattern
+  static final Pattern         IBM_SERVICE_RELEASE_PATTERN = Pattern
                                                                .compile("^[^-]+-\\p{Digit}{8}[^\\p{Space}]*\\p{Space}*.*$");
 
   private final String         vmVersion;
