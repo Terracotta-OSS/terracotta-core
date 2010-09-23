@@ -32,7 +32,6 @@ import java.lang.ref.WeakReference;
 
 /**
  * Implementation of TCObject interface.
- * <p>
  */
 public abstract class TCObjectImpl implements TCObject {
   private static final TCLogger logger                    = TCLogging.getLogger(TCObjectImpl.class);
@@ -41,7 +40,7 @@ public abstract class TCObjectImpl implements TCObject {
   private static final int      IS_NEW_OFFSET             = 1 << 1;
   private static final int      AUTOLOCKS_DISABLED_OFFSET = 1 << 2;
 
-  // XXX::This initial negative version number is important since GID is assigned in the server from 0.
+  // This initial negative version number is important since GID is assigned in the server from 0.
   private long                  version                   = -1;
 
   private final ObjectID        objectID;
@@ -208,7 +207,6 @@ public abstract class TCObjectImpl implements TCObject {
 
   private void createPeerObjectIfNecessary(final DNA from) {
     if (isNull()) {
-      // TODO: set created and modified version id
       setPeerObject(getObjectManager().createNewPeer(this.tcClazz, from));
     }
   }
@@ -416,7 +414,6 @@ public abstract class TCObjectImpl implements TCObject {
   }
 
   public int accessCount(final int factor) {
-    // TODO:: Implement when needed
     throw new UnsupportedOperationException();
   }
 

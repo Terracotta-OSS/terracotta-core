@@ -25,7 +25,8 @@ import java.util.Map;
 
 public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTransparentApp {
 
-  public PartialCollectionEvictionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
+  public PartialCollectionEvictionTestApp(final String appId, final ApplicationConfig cfg,
+                                          final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
   }
 
@@ -33,47 +34,50 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
 
   @Override
   protected void runTest() throws Throwable {
-    Manager mgr = ManagerUtil.getManager();
-    Field objectManager = mgr.getClass().getDeclaredField("objectManager");
+    final Manager mgr = ManagerUtil.getManager();
+    final Field objectManager = mgr.getClass().getDeclaredField("objectManager");
     objectManager.setAccessible(true);
-    Evictable cache = (Evictable) objectManager.get(mgr);
-    
+    final Evictable cache = (Evictable) objectManager.get(mgr);
+
     final int SIZE = 100;
-    synchronized (map) {
+    synchronized (this.map) {
       for (int i = 0; i < SIZE; i++) {
-        map.put("old mapping " + i, new Object());
+        this.map.put("old mapping " + i, new Object());
       }
     }
 
-    DummyCacheStats cs = new DummyCacheStats(SIZE);    
-    cache.evictCache(cs);    
+    final DummyCacheStats cs = new DummyCacheStats(SIZE);
+    cache.evictCache(cs);
     Assert.assertEquals(0, cs.evicted);
-    
-    synchronized (map) {
+
+    synchronized (this.map) {
       for (int i = 0; i < SIZE; i++) {
-        map.put("new mapping " + i, new Object());
+        this.map.put("new mapping " + i, new Object());
       }
     }
-    
+
     cache.evictCache(cs);
     Assert.assertEquals(SIZE, cs.evicted);
-    
+
     int flushedOldMappingCount = 0;
-    final Collection<Map.Entry> entries = ((TCMap) map).__tc_getAllEntriesSnapshot();
-    for (Map.Entry entry : entries) {
+    final Collection<Map.Entry> entries = ((TCMap) this.map).__tc_getAllEntriesSnapshot();
+    int flushed = 0;
+    for (final Map.Entry entry : entries) {
       if (entry.getValue() instanceof ObjectID) {
         if (((String) entry.getKey()).startsWith("old mapping")) {
           flushedOldMappingCount++;
         }
+        flushed++;
       }
     }
-    
+    System.out.println("Flushed = " + flushed + " old mapping flushed : " + flushedOldMappingCount);
+
     Assert.assertTrue("No Old Mappings Flushed", flushedOldMappingCount > 0);
   }
 
-  public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
-    String testClass = PartialCollectionEvictionTestApp.class.getName();
-    TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
+  public static void visitL1DSOConfig(final ConfigVisitor visitor, final DSOClientConfigHelper config) {
+    final String testClass = PartialCollectionEvictionTestApp.class.getName();
+    final TransparencyClassSpec spec = config.getOrCreateSpec(testClass);
 
     spec.addRoot("map", "map");
     config.addWriteAutolock("* " + testClass + ".runTest()");
@@ -81,19 +85,20 @@ public class PartialCollectionEvictionTestApp extends AbstractErrorCatchingTrans
 
   static class DummyCacheStats implements CacheStats {
     public final int target;
-    public int evicted = 0;
+    public int       evicted = 0;
 
-    public DummyCacheStats(int target) {
+    public DummyCacheStats(final int target) {
       this.target = target;
     }
-    
-    public int getObjectCountToEvict(int currentCount) {
-      return Math.max(target - evicted, 0);
+
+    public int getObjectCountToEvict(final int currentCount) {
+      return Math.max(this.target - this.evicted, 0);
     }
 
-    public void objectEvicted(int evictedCount, int currentCount, List targetObjects4GC, boolean printNewObjects) {
+    public void objectEvicted(final int evictedCount, final int currentCount, final List targetObjects4GC,
+                              final boolean printNewObjects) {
       System.err.println("Evicted : " + evictedCount);
-      evicted += evictedCount;
+      this.evicted += evictedCount;
     }
   }
 }

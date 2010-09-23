@@ -33,6 +33,7 @@ public class ConcurrentClockEvictionPolicy implements EvictionPolicy {
 
   public boolean add(final Cacheable obj) {
     this.map.put(obj.getObjectID(), obj);
+    markReferenced(obj);
     return false;
   }
 
