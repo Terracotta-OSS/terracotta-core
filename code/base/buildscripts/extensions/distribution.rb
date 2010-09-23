@@ -338,8 +338,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         :snapshot => @config_source[MAVEN_SNAPSHOT_CONFIG_KEY])
 
       # rudimentary check to make sure we're not missing an artifact by mistake
-      artifact_count = args.shift
-      expected_count = artifact_count['artifact_count']
+      expected_count = args.shift['artifact_count']
       fail("Expecting to deploy #{expected_count} TC maven artifacts but found only #{args.size}") unless args.size == expected_count
 
       args.each do |arg|
