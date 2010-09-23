@@ -431,6 +431,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       FileNotCreatedException {
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
+    this.threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
+
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
 
     TerracottaOperatorEventLogging.setNodeNameProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
@@ -741,7 +743,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.gcStatsEventPublisher = new GCStatsEventPublisher();
     managedObjectChangeListenerProvider.setListener(this.objectManager);
     final CallbackDumpAdapter objMgrDumpAdapter = new CallbackDumpAdapter(this.objectManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(objMgrDumpAdapter);
     this.dumpHandler.registerForDump(objMgrDumpAdapter);
 
     final TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
@@ -804,7 +805,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener(this.lockManager);
 
     final CallbackDumpAdapter lockDumpAdapter = new CallbackDumpAdapter(this.lockManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(lockDumpAdapter);
     this.dumpHandler.registerForDump(lockDumpAdapter);
     final ObjectInstanceMonitorImpl instanceMonitor = new ObjectInstanceMonitorImpl();
 
@@ -875,7 +875,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                gtxm, txnStageCoordinator);
 
     final CallbackDumpAdapter txnObjMgrDumpAdapter = new CallbackDumpAdapter(this.txnObjectManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(txnObjMgrDumpAdapter);
     this.dumpHandler.registerForDump(txnObjMgrDumpAdapter);
     this.objectManager.setTransactionalObjectManager(this.txnObjectManager);
 
@@ -887,7 +886,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                    .getPropertiesFor("transactionmanager")),
                                                                this.objectStatsRecorder);
     final CallbackDumpAdapter txnMgrDumpAdapter = new CallbackDumpAdapter(this.transactionManager);
-    this.threadGroup.addCallbackOnExitDefaultHandler(txnMgrDumpAdapter);
     this.dumpHandler.registerForDump(txnMgrDumpAdapter);
 
     final ServerClusterMetaDataManager clusterMetaDataManager = new ServerClusterMetaDataManagerImpl(

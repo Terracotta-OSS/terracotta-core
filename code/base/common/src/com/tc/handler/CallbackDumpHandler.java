@@ -3,10 +3,13 @@
  */
 package com.tc.handler;
 
+import com.tc.logging.CallbackOnExitHandler;
+import com.tc.logging.CallbackOnExitState;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class CallbackDumpHandler {
+public class CallbackDumpHandler implements CallbackOnExitHandler {
   private final List<CallbackDumpAdapter> dumpObjectList = new CopyOnWriteArrayList<CallbackDumpAdapter>();
 
   public void registerForDump(CallbackDumpAdapter dumpObject) {
@@ -17,5 +20,9 @@ public class CallbackDumpHandler {
     for (CallbackDumpAdapter dumpObject : this.dumpObjectList) {
       dumpObject.callbackOnExit(null);
     }
+  }
+
+  public void callbackOnExit(CallbackOnExitState state) {
+    dump();
   }
 }
