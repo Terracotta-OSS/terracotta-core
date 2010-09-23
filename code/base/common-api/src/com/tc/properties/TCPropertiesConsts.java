@@ -841,7 +841,6 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
 
-  public static final String   L2_OFFHEAP_CACHE_STATS_ENABLED                                  = "l2.offHeapCache.stats.enabled";
   public static final String   L2_OFFHEAP_CACHE_MAP_PERCENTAGE                                 = "l2.offHeapCache.map.percentage";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE                        = "l2.offHeapCache.object.initialDataSize";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_TABLESIZE                               = "l2.offHeapCache.object.tableSize";
