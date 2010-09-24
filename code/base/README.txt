@@ -254,7 +254,10 @@ dist_maven with the --no-ivy and --no-compile options:
 dist_maven_ee
   Builds and installs EE artifacts. This only work if you have a EE branch checked out
   
+dist_maven_all
+  Builds and installs EE + OSS artifacts. This only work if you have a EE branch checked out
 
+  
 RUNNING SERVERS, CLASSES, ETC.
 
 run_class <class_name> [args...]
