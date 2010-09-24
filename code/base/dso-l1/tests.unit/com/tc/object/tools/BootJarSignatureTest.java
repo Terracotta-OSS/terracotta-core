@@ -13,35 +13,35 @@ public class BootJarSignatureTest extends TCTestCase {
     try {
       new BootJarSignature(new Properties());
       fail();
-    } catch (UnsupportedVMException uve) {
+    } catch (Exception uve) {
       // expected
     }
 
     try {
       new BootJarSignature(makeProps(null, "Sun", "1.5.0_04", null, "i686"));
       fail();
-    } catch (UnsupportedVMException uve) {
+    } catch (Exception uve) {
       // expected
     }
 
     try {
       new BootJarSignature(makeProps("Windows NT", null, "1.5.0_04", null, "i686"));
       fail();
-    } catch (UnsupportedVMException uve) {
+    } catch (Exception uve) {
       // expected
     }
 
     try {
       new BootJarSignature(makeProps("Windows NT", "1.4.2_04", null, null, "i686"));
       fail();
-    } catch (UnsupportedVMException uve) {
+    } catch (Exception uve) {
       // expected
     }
 
     try {
       new BootJarSignature(makeProps("Linux", "Sun", "1.5.0", "unknown", null));
       fail();
-    } catch (UnsupportedVMException uve) {
+    } catch (Exception uve) {
       // expected
     }
   }
@@ -92,12 +92,12 @@ public class BootJarSignatureTest extends TCTestCase {
 
     props = makeProps("Linux", "IBM Corporation", "1.5.0", "pxi32dev-20070201 (SR4)", null);
     sig = new BootJarSignature(props);
-    assertEquals("ibm_linux_150_sr4", sig.getSignature());
+    assertEquals("ibm_linux_150", sig.getSignature());
 
     // experimental version identifiers in case these should pop up one day
     props = makeProps("Linux", "IBM Corporation, Inc.", "1.5.0_11", "pxi32dev-20070201 (SR4)", null);
     sig = new BootJarSignature(props);
-    assertEquals("ibm_linux_150_11sr4", sig.getSignature());
+    assertEquals("ibm_linux_150_11", sig.getSignature());
 
     // test this exceptional case
     props = makeProps("Linux", "Sun Microsystems, Inc.", "1.4.2_05", null, null);
