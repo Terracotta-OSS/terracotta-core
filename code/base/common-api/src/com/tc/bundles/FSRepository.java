@@ -13,6 +13,7 @@ import com.tc.logging.TCLogger;
 import com.tc.util.version.VersionRange;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -23,8 +24,14 @@ import java.util.Set;
 
 public class FSRepository implements Repository {
 
-  private final File     repoFile;
-  private final TCLogger logger;
+  private final File           repoFile;
+  private final TCLogger       logger;
+  // filter out files started with dot in the name
+  private final FilenameFilter dotFilesFilter = new FilenameFilter() {
+                                                public boolean accept(File dir, String name) {
+                                                  return name.startsWith(".") ? false : true;
+                                                }
+                                              };
 
   public FSRepository(File repoFile, TCLogger logger) {
     this.repoFile = repoFile;
@@ -40,14 +47,15 @@ public class FSRepository implements Repository {
     VersionRange range = new VersionRange(version);
 
     for (File dir : getDirs(new File(OSGiToMaven.makeBundlePathnamePrefix(root, groupId, name)))) {
-      if (range.contains(dir.getName())) {
+      String dirName = dir.getName();
+      if (com.tc.util.version.Version.isValidVersionString(dirName) && range.contains(dirName)) {
         addIfValid(paths, OSGiToMaven.makeBundlePathname(root, groupId, name, dir.getName()));
       }
     }
 
     // Allow for flat path modules layout
     // NOTE: version range checking not done here (it should happen in the caller)
-    for (File file : new File(root).listFiles()) {
+    for (File file : new File(root).listFiles(dotFilesFilter)) {
       if (file.getName().startsWith(name)) {
         addIfValid(paths, file.getAbsolutePath());
       }
@@ -60,7 +68,7 @@ public class FSRepository implements Repository {
     if (!root.isDirectory()) { return Collections.emptySet(); }
 
     Set<File> rv = new HashSet<File>();
-    for (File dirEntry : root.listFiles()) {
+    for (File dirEntry : root.listFiles(dotFilesFilter)) {
       if (dirEntry.isDirectory()) {
         rv.add(dirEntry);
       }

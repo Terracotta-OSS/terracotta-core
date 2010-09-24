@@ -38,8 +38,8 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
   private void checkErrorMessageContainsText(Throwable t, String expectedText) {
     String message = t.getMessage();
     Assert.assertNotNull("Expected non-null error message", message);
-    Assert.assertTrue("Expected error message to contain '" + expectedText + "' but was '" + message + "'", message
-        .indexOf(expectedText) >= 0);
+    Assert.assertTrue("Expected error message to contain '" + expectedText + "' but was '" + message + "'",
+                      message.indexOf(expectedText) >= 0);
   }
 
   @Override
@@ -363,6 +363,49 @@ public class ModulesLoaderTest extends BaseDSOTestCase {
       ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
 
       // should find and load the module without error
+
+    } finally {
+      shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });
+    }
+  }
+
+  public void testDotFileInRepo() throws Exception {
+    String groupId = "org.terracotta.modules";
+    String artifactId = "somemodule";
+    String version = "1.0.0";
+    String symbolicName = groupId + "." + artifactId;
+
+    // Create bundle jar based on these attributes
+    File repo = new File(getTempDirectory(), "repowithdots");
+    repo.mkdir();
+
+    // create a couples of .svn dirs
+    File dotSvnDir = new File(repo, ".svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+    dotSvnDir = new File(repo, "org/.svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+    dotSvnDir = new File(repo, "org/teracotta/.svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+    dotSvnDir = new File(repo, "org/terracotta/modules/.svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+    dotSvnDir = new File(repo, "org/terracotta/modules/somemodule/.svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+    dotSvnDir = new File(repo, "org/terracotta/modules/somemodule/1.0.0/.svn");
+    Assert.assertTrue(dotSvnDir.mkdirs());
+
+    File generatedJar1 = createBundle(repo, groupId, artifactId, version, symbolicName, version, null, TC_OK_CONFIG);
+
+    EmbeddedOSGiRuntime osgiRuntime = null;
+    try {
+      DSOClientConfigHelper configHelper = configHelper();
+
+      configHelper.addRepository(repo.getAbsolutePath());
+      configHelper.addModule(artifactId, version);
+      ClassProvider classProvider = new MockClassProvider();
+
+      Modules modules = configHelper.getModulesForInitialization();
+      osgiRuntime = EmbeddedOSGiRuntime.Factory.createOSGiRuntime(modules);
+      ModulesLoader.initModules(osgiRuntime, configHelper, classProvider, null, modules.getModuleArray(), false);
 
     } finally {
       shutdownAndCleanUpJars(osgiRuntime, new File[] { generatedJar1 });

@@ -48,6 +48,11 @@ public class Version implements Comparable<Version> {
     }
   }
   
+  public static boolean isValidVersionString(String version) {
+    Matcher m = VERSION_PATTERN.matcher(version);
+    return m.matches();
+  }
+  
   private IllegalArgumentException invalidVersion(String input) {
     return new IllegalArgumentException("Invalid version, unable to parse: " + input);
   }

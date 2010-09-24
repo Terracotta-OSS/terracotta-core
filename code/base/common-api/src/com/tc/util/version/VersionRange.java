@@ -111,6 +111,10 @@ public class VersionRange {
   }
 
   public boolean contains(String otherVersionStr) {
+    if (!Version.isValidVersionString(otherVersionStr)) {
+      return false;
+    }
+    
     Version otherVersion = new Version(otherVersionStr);
 
     int compareMin = isMinUnbounded() ? 1 : otherVersion.compareTo(new Version(minVersion));
