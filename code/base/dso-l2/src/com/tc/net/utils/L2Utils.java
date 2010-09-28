@@ -6,17 +6,23 @@ package com.tc.net.utils;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
-public class L2CommUtils {
-  private static final int MAX_DEFAULT_COMM_THREADS = 16;
+public class L2Utils {
+  private static final int MAX_DEFAULT_COMM_THREADS  = 16;
+  private static final int MAX_DEFAULT_STAGE_THREADS = 16;
 
-  public static int getNumCommWorkerThreads() {
+  public static int getOptimalCommWorkerThreads() {
     int def = Math.min(Runtime.getRuntime().availableProcessors() * 2, MAX_DEFAULT_COMM_THREADS);
     return TCPropertiesImpl.getProperties().getInt("l2.tccom.workerthreads", def);
   }
 
+  public static int getOptimalStageWorkerThreads() {
+    int def = Math.min(Runtime.getRuntime().availableProcessors() * 2, MAX_DEFAULT_STAGE_THREADS);
+    return TCPropertiesImpl.getProperties().getInt("l2.seda.stage.workerthreads", def);
+  }
+
   public static long getMaxDirectMemmoryConsumable() {
     // L2<==L1, L2<==>L2
-    int totalCommsThreads = getNumCommWorkerThreads() * 2;
+    int totalCommsThreads = getOptimalCommWorkerThreads() * 2;
     int maxPossbileMessageBytesSend = (TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED) ? TCPropertiesImpl.getProperties()
         .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB) * 1024 : 1);

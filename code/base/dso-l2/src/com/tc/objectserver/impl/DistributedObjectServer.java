@@ -88,7 +88,7 @@ import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
-import com.tc.net.utils.L2CommUtils;
+import com.tc.net.utils.L2Utils;
 import com.tc.object.cache.CacheConfig;
 import com.tc.object.cache.CacheConfigImpl;
 import com.tc.object.cache.CacheManager;
@@ -649,15 +649,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     ManagedObjectStateFactory.createInstance(managedObjectChangeListenerProvider, this.persistor);
 
-    final int numCommWorkers = L2CommUtils.getNumCommWorkerThreads();
+    final int commWorkerThreadCount = L2Utils.getOptimalCommWorkerThreads();
+    final int stageWorkerThreadCount = L2Utils.getOptimalStageWorkerThreads();
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     final boolean useOOOLayer = this.l1ReconnectConfig.getReconnectEnabled();
     if (useOOOLayer) {
       final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.OOO_NET_SEND_STAGE,
-                                                          new OOOEventHandler(), numCommWorkers, maxStageSize);
-      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.OOO_NET_RECEIVE_STAGE,
-                                                             new OOOEventHandler(), numCommWorkers, maxStageSize);
+                                                          new OOOEventHandler(), commWorkerThreadCount, maxStageSize);
+      final Stage oooReceiveStage = stageManager
+          .createStage(ServerConfigurationContext.OOO_NET_RECEIVE_STAGE, new OOOEventHandler(), commWorkerThreadCount,
+                       maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
@@ -670,7 +672,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
                                                                networkStackHarnessFactory, this.connectionPolicy,
-                                                               numCommWorkers,
+                                                               commWorkerThreadCount,
                                                                new HealthCheckerConfigImpl(this.l2Properties
                                                                    .getPropertiesFor("healthcheck.l1"), "DSO Server"),
                                                                this.thisServerNodeID,
@@ -718,11 +720,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                               this.objectStatsRecorder);
     final Stage faultManagedObjectStage = stageManager
         .createStage(ServerConfigurationContext.MANAGED_OBJECT_FAULT_STAGE, managedObjectFaultHandler,
-                     this.l2Properties.getInt("seda.faultstage.threads"), -1);
+                     this.l2Properties.getInt("seda.faultstage.threads", stageWorkerThreadCount), -1);
     final ManagedObjectFlushHandler managedObjectFlushHandler = new ManagedObjectFlushHandler(this.objectStatsRecorder);
     final Stage flushManagedObjectStage = stageManager
         .createStage(ServerConfigurationContext.MANAGED_OBJECT_FLUSH_STAGE, managedObjectFlushHandler, (persistent ? 1
-            : this.l2Properties.getInt("seda.flushstage.threads")), -1);
+            : this.l2Properties.getInt("seda.flushstage.threads", stageWorkerThreadCount)), -1);
     final long enterpriseMarkStageInterval = objManagerProperties.getPropertiesFor("dgc")
         .getLong("enterpriseMarkStageInterval");
     final TCProperties youngDGCProperties = objManagerProperties.getPropertiesFor("dgc").getPropertiesFor("young");
@@ -799,8 +801,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     // Creating a stage here so that the sink can be passed
     final Stage respondToLockStage = stageManager.createStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE,
-                                                              new RespondToRequestLockHandler(), numCommWorkers, 1,
-                                                              maxStageSize);
+                                                              new RespondToRequestLockHandler(),
+                                                              stageWorkerThreadCount, 1, maxStageSize);
     this.lockManager = new LockManagerImpl(respondToLockStage.getSink(), channelManager);
     this.lockStatisticsMBean.addL2LockStatisticsEnableDisableListener(this.lockManager);
 
@@ -926,7 +928,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     stageManager.createStage(ServerConfigurationContext.BROADCAST_CHANGES_STAGE, broadcastChangeHandler, 1,
                              maxStageSize);
     final Stage requestLock = stageManager.createStage(ServerConfigurationContext.REQUEST_LOCK_STAGE,
-                                                       new RequestLockUnLockHandler(), numCommWorkers, 1, maxStageSize);
+                                                       new RequestLockUnLockHandler(), stageWorkerThreadCount, 1,
+                                                       maxStageSize);
     final ChannelLifeCycleHandler channelLifeCycleHandler = new ChannelLifeCycleHandler(this.communicationsManager,
                                                                                         transactionBatchManager,
                                                                                         channelManager, this.haConfig);
@@ -938,10 +941,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage objectRequestStage = stageManager
         .createStage(ServerConfigurationContext.MANAGED_OBJECT_REQUEST_STAGE,
                      new ManagedObjectRequestHandler(globalObjectFaultCounter, globalObjectFlushCounter),
-                     this.l2Properties.getInt("seda.managedobjectrequeststage.threads"), 1, maxStageSize);
+                     this.l2Properties.getInt("seda.managedobjectrequeststage.threads", stageWorkerThreadCount), 1,
+                     maxStageSize);
     final Stage respondToObjectRequestStage = stageManager
         .createStage(ServerConfigurationContext.RESPOND_TO_OBJECT_REQUEST_STAGE, new RespondToObjectRequestHandler(),
-                     this.l2Properties.getInt("seda.managedobjectresponsestage.threads"), maxStageSize);
+                     this.l2Properties.getInt("seda.managedobjectresponsestage.threads", stageWorkerThreadCount),
+                     maxStageSize);
 
     final Stage serverMapRequestStage = stageManager
         .createStage(ServerConfigurationContext.SERVER_MAP_REQUEST_STAGE,
@@ -988,7 +993,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clientHandshake = stageManager.createStage(ServerConfigurationContext.CLIENT_HANDSHAKE_STAGE,
                                                            new ClientHandshakeHandler(), 1, maxStageSize);
     this.hydrateStage = stageManager.createStage(ServerConfigurationContext.HYDRATE_MESSAGE_SINK, new HydrateHandler(),
-                                                 numCommWorkers, 1, maxStageSize);
+                                                 stageWorkerThreadCount, 1, maxStageSize);
     final Stage txnLwmStage = stageManager.createStage(ServerConfigurationContext.TRANSACTION_LOWWATERMARK_STAGE,
                                                        new TransactionLowWaterMarkHandler(gtxm), 1, maxStageSize);
 
