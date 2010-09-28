@@ -43,7 +43,7 @@ start=true
 while "$start"
 do
 "${JAVA_HOME}/bin/java" \
-   $SERVER_OPT -Xms512m -Xmx512m -XX:NewRatio=3 -XX:MaxTenuringThreshold=15 -XX:+HeapDumpOnOutOfMemoryError \
+   $SERVER_OPT -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    ${JAVA_OPTS} \
