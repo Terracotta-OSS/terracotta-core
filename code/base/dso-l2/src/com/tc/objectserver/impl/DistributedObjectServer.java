@@ -15,6 +15,7 @@ import com.tc.async.api.StageManager;
 import com.tc.async.impl.NullSink;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
+import com.tc.config.schema.OffHeapConfigObject;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.exception.CleanDirtyDatabaseException;
@@ -53,8 +54,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
+import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -501,9 +502,17 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final boolean swapEnabled = true;
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
-    // XXX: one day DB selection will be from tc.props
-    final DBFactory dbFactory = new BerkeleyDBFactory(l2Properties.getPropertiesFor("berkeleydb")
-        .addAllPropertiesTo(new Properties()));
+    final OffHeapConfigObject offHeapConfig = l2DSOConfig.offHeapConfig().getOffHeapConfigObject();
+    final Properties bdbProperties = l2Properties.getPropertiesFor("berkeleydb").addAllPropertiesTo(new Properties());
+
+    // for temp-swap under offheap mode, bdb memory requirement is less
+    if (!persistent && offHeapConfig.isEnabled()) {
+      Integer newBDBMemPercentage = Integer.parseInt(bdbProperties.getProperty("je.maxMemoryPercent")) / 3;
+      bdbProperties.setProperty("je.maxMemoryPercent", newBDBMemPercentage.toString());
+      logger.info("Since running OffHeap in temp-swap mode, setting je.maxMemoryPercent to "
+                  + newBDBMemPercentage.toString());
+    }
+    final DBFactory dbFactory = new BerkeleyDBFactory(bdbProperties);
 
     // start the JMX server
     try {
