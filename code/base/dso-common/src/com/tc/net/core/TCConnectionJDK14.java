@@ -102,13 +102,15 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private final ArrayList<TCNetworkMessage>  messagesToBatch             = new ArrayList<TCNetworkMessage>();
 
   // for creating unconnected client connections
-  TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor,
-                    TCConnectionManagerJDK14 managerJDK14, CoreNIOServices nioServiceThread, SocketParams socketParams) {
+  TCConnectionJDK14(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor,
+                    final TCConnectionManagerJDK14 managerJDK14, final CoreNIOServices nioServiceThread,
+                    final SocketParams socketParams) {
     this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams);
   }
 
-  TCConnectionJDK14(TCConnectionEventListener listener, TCProtocolAdaptor adaptor, SocketChannel ch,
-                    TCConnectionManagerJDK14 parent, CoreNIOServices nioServiceThread, SocketParams socketParams) {
+  TCConnectionJDK14(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
+                    final TCConnectionManagerJDK14 parent, final CoreNIOServices nioServiceThread,
+                    final SocketParams socketParams) {
 
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
@@ -116,7 +118,9 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     this.parent = parent;
     this.protocolAdaptor = adaptor;
 
-    if (listener != null) addListener(listener);
+    if (listener != null) {
+      addListener(listener);
+    }
 
     this.channel = ch;
 
@@ -128,47 +132,47 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     this.commWorker = nioServiceThread;
   }
 
-  public void setCommWorker(CoreNIOServices worker) {
+  public void setCommWorker(final CoreNIOServices worker) {
     this.commWorker = worker;
   }
 
-  private void closeImpl(Runnable callback) {
-    Assert.assertTrue(closed.isSet());
+  private void closeImpl(final Runnable callback) {
+    Assert.assertTrue(this.closed.isSet());
     this.transportEstablished.set(false);
     try {
-      if (channel != null) {
-        commWorker.cleanupChannel(channel, callback);
+      if (this.channel != null) {
+        this.commWorker.cleanupChannel(this.channel, callback);
       } else {
         callback.run();
       }
     } finally {
-      synchronized (writeMessages) {
-        writeMessages.clear();
+      synchronized (this.writeMessages) {
+        this.writeMessages.clear();
       }
     }
   }
 
   protected void finishConnect() throws IOException {
-    Assert.assertNotNull("channel", channel);
-    recordSocketAddress(channel.socket());
+    Assert.assertNotNull("channel", this.channel);
+    recordSocketAddress(this.channel.socket());
     setConnected(true);
-    eventCaller.fireConnectEvent(eventListeners, this);
+    this.eventCaller.fireConnectEvent(this.eventListeners, this);
   }
 
-  private void connectImpl(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
+  private void connectImpl(final TCSocketAddress addr, final int timeout) throws IOException, TCTimeoutException {
     SocketChannel newSocket = null;
-    InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
+    final InetSocketAddress inetAddr = new InetSocketAddress(addr.getAddress(), addr.getPort());
     for (int i = 1; i <= 3; i++) {
       try {
         newSocket = createChannel();
         newSocket.configureBlocking(true);
         newSocket.socket().connect(inetAddr, timeout);
         break;
-      } catch (SocketTimeoutException ste) {
-        Assert.eval(commWorker != null);
-        commWorker.cleanupChannel(newSocket, null);
+      } catch (final SocketTimeoutException ste) {
+        Assert.eval(this.commWorker != null);
+        this.commWorker.cleanupChannel(newSocket, null);
         throw new TCTimeoutException("Timeout of " + timeout + "ms occured connecting to " + addr, ste);
-      } catch (ClosedSelectorException cse) {
+      } catch (final ClosedSelectorException cse) {
         if (NIOWorkarounds.connectWorkaround(cse)) {
           logger.warn("Retrying connect to " + addr + ", attempt " + i);
           ThreadUtil.reallySleep(500);
@@ -178,108 +182,108 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       }
     }
 
-    channel = newSocket;
+    this.channel = newSocket;
     newSocket.configureBlocking(false);
-    Assert.eval(commWorker != null);
-    commWorker.requestReadInterest(this, newSocket);
+    Assert.eval(this.commWorker != null);
+    this.commWorker.requestReadInterest(this, newSocket);
   }
 
   private SocketChannel createChannel() throws IOException, SocketException {
-    SocketChannel rv = SocketChannel.open();
-    Socket s = rv.socket();
-    socketParams.applySocketParams(s);
+    final SocketChannel rv = SocketChannel.open();
+    final Socket s = rv.socket();
+    this.socketParams.applySocketParams(s);
     return rv;
   }
 
   private Socket detachImpl() throws IOException {
-    commWorker.detach(channel);
-    channel.configureBlocking(true);
-    return channel.socket();
+    this.commWorker.detach(this.channel);
+    this.channel.configureBlocking(true);
+    return this.channel.socket();
   }
 
-  private boolean asynchConnectImpl(TCSocketAddress address) throws IOException {
-    SocketChannel newSocket = createChannel();
+  private boolean asynchConnectImpl(final TCSocketAddress address) throws IOException {
+    final SocketChannel newSocket = createChannel();
     newSocket.configureBlocking(false);
 
-    InetSocketAddress inetAddr = new InetSocketAddress(address.getAddress(), address.getPort());
+    final InetSocketAddress inetAddr = new InetSocketAddress(address.getAddress(), address.getPort());
     final boolean rv = newSocket.connect(inetAddr);
     setConnected(rv);
 
-    channel = newSocket;
+    this.channel = newSocket;
 
     if (!rv) {
-      commWorker.requestConnectInterest(this, newSocket);
+      this.commWorker.requestConnectInterest(this, newSocket);
     }
 
     return rv;
   }
 
-  public int doRead(ScatteringByteChannel sbc) {
-    int read = doReadInternal(sbc);
-    totalRead.add(read);
+  public int doRead(final ScatteringByteChannel sbc) {
+    final int read = doReadInternal(sbc);
+    this.totalRead.add(read);
     return read;
   }
 
-  public int doWrite(GatheringByteChannel gbc) {
-    int written = doWriteInternal(gbc);
-    totalWrite.add(written);
+  public int doWrite(final GatheringByteChannel gbc) {
+    final int written = doWriteInternal(gbc);
+    this.totalWrite.add(written);
     return written;
   }
 
   private void buildWriteContextsFromMessages() {
     TCNetworkMessage messagesToWrite[];
-    synchronized (writeMessages) {
-      if (closed.isSet()) { return; }
-      messagesToWrite = writeMessages.toArray(new TCNetworkMessage[writeMessages.size()]);
-      writeMessages.clear();
+    synchronized (this.writeMessages) {
+      if (this.closed.isSet()) { return; }
+      messagesToWrite = this.writeMessages.toArray(new TCNetworkMessage[this.writeMessages.size()]);
+      this.writeMessages.clear();
     }
 
     int batchSize = 0;
     int batchMsgCount = 0;
     TCNetworkMessage msg = null;
-    for (int i = 0; i < messagesToWrite.length; i++) {
-      msg = messagesToWrite[i];
+    for (final TCNetworkMessage element : messagesToWrite) {
+      msg = element;
 
       // we don't want to group already constructed Transport Handshake WireProtocolMessages
       if (msg instanceof WireProtocolMessage) {
-        TCNetworkMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) msg, 1);
-        writeContexts.add(new WriteContext(ms));
+        final TCNetworkMessage ms = finalizeWireProtocolMessage((WireProtocolMessage) msg, 1);
+        this.writeContexts.add(new WriteContext(ms));
         continue;
       }
 
       // GenericNetwork messages are used for testing
       if (WireProtocolHeader.PROTOCOL_UNKNOWN == WireProtocolHeader.getProtocolForMessageClass(msg)) {
-        writeContexts.add(new WriteContext(msg));
+        this.writeContexts.add(new WriteContext(msg));
         continue;
       }
 
       if (MSG_GROUPING_ENABLED) {
         if (!canBatch(msg, batchSize, batchMsgCount)) {
           if (batchMsgCount > 0) {
-            writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(messagesToBatch)));
+            this.writeContexts.add(new WriteContext(buildWireProtocolMessageGroup(this.messagesToBatch)));
             batchSize = 0;
             batchMsgCount = 0;
-            messagesToBatch.clear();
+            this.messagesToBatch.clear();
           } else {
             // fall thru and add to the existing batch. next message will goto a new batch
           }
         }
         batchSize += getRealMessgeSize(msg.getTotalLength());
         batchMsgCount++;
-        messagesToBatch.add(msg);
+        this.messagesToBatch.add(msg);
       } else {
-        writeContexts.add(new WriteContext(buildWireProtocolMessage(msg)));
+        this.writeContexts.add(new WriteContext(buildWireProtocolMessage(msg)));
       }
       msg = null;
     }
 
     if (MSG_GROUPING_ENABLED && batchMsgCount > 0) {
-      TCNetworkMessage ms = buildWireProtocolMessageGroup(messagesToBatch);
-      writeContexts.add(new WriteContext(ms));
+      final TCNetworkMessage ms = buildWireProtocolMessageGroup(this.messagesToBatch);
+      this.writeContexts.add(new WriteContext(ms));
     }
 
     messagesToWrite = null;
-    messagesToBatch.clear();
+    this.messagesToBatch.clear();
   }
 
   private boolean canBatch(final TCNetworkMessage newMessage, final int currentBatchSize, final int currentBatchMsgCount) {
@@ -292,7 +296,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return TCByteBufferFactory.getTotalBufferSizeNeededForMessageSize(length);
   }
 
-  private int doReadInternal(ScatteringByteChannel sbc) {
+  private int doReadInternal(final ScatteringByteChannel sbc) {
     final boolean debug = logger.isDebugEnabled();
     final TCByteBuffer[] readBuffers = getReadBuffers();
 
@@ -301,8 +305,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     try {
       // Do the read in a loop, instead of calling read(ByteBuffer[]).
       // This seems to avoid memory leaks on sun's 1.4.2 JDK
-      for (TCByteBuffer readBuffer : readBuffers) {
-        ByteBuffer buf = extractNioBuffer(readBuffer);
+      for (final TCByteBuffer readBuffer : readBuffers) {
+        final ByteBuffer buf = extractNioBuffer(readBuffer);
 
         if (buf.hasRemaining()) {
           final int read = sbc.read(buf);
@@ -325,12 +329,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
           }
         }
       }
-    } catch (IOException ioe) {
+    } catch (final IOException ioe) {
       if (logger.isInfoEnabled()) {
-        logger.info("error reading from channel " + channel.toString() + ": " + ioe.getMessage());
+        logger.info("error reading from channel " + this.channel.toString() + ": " + ioe.getMessage());
       }
 
-      eventCaller.fireErrorEvent(eventListeners, this, ioe, null);
+      this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, null);
       return bytesRead;
     }
 
@@ -339,31 +343,37 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
         addNetworkData(readBuffers, bytesRead);
       }
 
-      if (debug) logger.debug("EOF read on connection " + channel.toString());
+      if (debug) {
+        logger.debug("EOF read on connection " + this.channel.toString());
+      }
 
-      eventCaller.fireEndOfFileEvent(eventListeners, this);
+      this.eventCaller.fireEndOfFileEvent(this.eventListeners, this);
       return bytesRead;
     }
 
     Assert.eval(bytesRead >= 0);
 
-    if (debug) logger.debug("Read " + bytesRead + " bytes on connection " + channel.toString());
+    if (debug) {
+      logger.debug("Read " + bytesRead + " bytes on connection " + this.channel.toString());
+    }
 
     addNetworkData(readBuffers, bytesRead);
 
     return bytesRead;
   }
 
-  public int doWriteInternal(GatheringByteChannel gbc) {
+  public int doWriteInternal(final GatheringByteChannel gbc) {
     final boolean debug = logger.isDebugEnabled();
     int totalBytesWritten = 0;
 
     // get a copy of the current write contexts. Since we call out to event/error handlers in the write
     // loop below, we don't want to be holding the lock on the writeContexts queue
-    if (writeContexts.size() <= 0) buildWriteContextsFromMessages();
+    if (this.writeContexts.size() <= 0) {
+      buildWriteContextsFromMessages();
+    }
     WriteContext context;
-    while (writeContexts.size() > 0) {
-      context = writeContexts.get(0);
+    while (this.writeContexts.size() > 0) {
+      context = this.writeContexts.get(0);
       final ByteBuffer[] buffers = context.clonedData;
 
       long bytesWritten = 0;
@@ -386,39 +396,45 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
             context.incrementIndexAndCleanOld();
           }
         }
-      } catch (IOException ioe) {
+      } catch (final IOException ioe) {
         if (NIOWorkarounds.windowsWritevWorkaround(ioe)) {
           break;
         }
 
-        eventCaller.fireErrorEvent(eventListeners, this, ioe, context.message);
+        this.eventCaller.fireErrorEvent(this.eventListeners, this, ioe, context.message);
       }
 
-      if (debug) logger.debug("Wrote " + bytesWritten + " bytes on connection " + channel.toString());
+      if (debug) {
+        logger.debug("Wrote " + bytesWritten + " bytes on connection " + this.channel.toString());
+      }
       totalBytesWritten += bytesWritten;
 
       if (context.done()) {
-        if (debug) logger.debug("Complete message sent on connection " + channel.toString());
+        if (debug) {
+          logger.debug("Complete message sent on connection " + this.channel.toString());
+        }
         context.writeComplete();
-        writeContexts.remove(context);
+        this.writeContexts.remove(context);
       } else {
-        if (debug) logger.debug("Message not yet completely sent on connection " + channel.toString());
+        if (debug) {
+          logger.debug("Message not yet completely sent on connection " + this.channel.toString());
+        }
         break;
       }
     }
 
-    synchronized (writeMessages) {
-      if (closed.isSet()) { return totalBytesWritten; }
+    synchronized (this.writeMessages) {
+      if (this.closed.isSet()) { return totalBytesWritten; }
 
-      if (writeMessages.isEmpty() && writeContexts.isEmpty()) {
-        commWorker.removeWriteInterest(this, channel);
+      if (this.writeMessages.isEmpty() && this.writeContexts.isEmpty()) {
+        this.commWorker.removeWriteInterest(this, this.channel);
       }
     }
     return totalBytesWritten;
   }
 
-  static private ByteBuffer[] extractNioBuffers(TCByteBuffer[] src) {
-    ByteBuffer[] rv = new ByteBuffer[src.length];
+  static private ByteBuffer[] extractNioBuffers(final TCByteBuffer[] src) {
+    final ByteBuffer[] rv = new ByteBuffer[src.length];
     for (int i = 0, n = src.length; i < n; i++) {
       rv[i] = src[i].getNioBuffer();
     }
@@ -426,33 +442,33 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return rv;
   }
 
-  static private ByteBuffer extractNioBuffer(TCByteBuffer buffer) {
+  static private ByteBuffer extractNioBuffer(final TCByteBuffer buffer) {
     return buffer.getNioBuffer();
   }
 
-  private void putMessageImpl(TCNetworkMessage message) {
+  private void putMessageImpl(final TCNetworkMessage message) {
     // ??? Does the message queue and the WriteContext belong in the base connection class?
     final boolean debug = logger.isDebugEnabled();
 
     long bytesToWrite = 0;
     bytesToWrite = message.getTotalLength();
     if (bytesToWrite >= TCConnectionJDK14.WARN_THRESHOLD) {
-      logger.warn("Warning: Attempting to send a messaage of size " + bytesToWrite + " bytes");
+      logger.warn("Warning: Attempting to send a message of size " + bytesToWrite + " bytes");
     }
 
     // TODO: outgoing queue should not be unbounded size!
     final boolean newData;
     final int msgCount;
 
-    synchronized (writeMessages) {
-      if (closed.isSet()) { return; }
-      writeMessages.addLast(message);
-      msgCount = writeMessages.size();
+    synchronized (this.writeMessages) {
+      if (this.closed.isSet()) { return; }
+      this.writeMessages.addLast(message);
+      msgCount = this.writeMessages.size();
       newData = (msgCount == 1);
     }
 
     if (debug) {
-      logger.debug("Connection (" + channel.toString() + ") has " + msgCount + " messages queued");
+      logger.debug("Connection (" + this.channel.toString() + ") has " + msgCount + " messages queued");
     }
 
     if (newData) {
@@ -471,12 +487,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       // for, as well as actually be selected for, write interest immediately
       // after finishConnect(). Only after this selection occurs it is always safe to try
       // to write.
-      commWorker.requestWriteInterest(this, channel);
+      this.commWorker.requestWriteInterest(this, this.channel);
     }
   }
 
   public final void asynchClose() {
-    if (closed.attemptSet()) {
+    if (this.closed.attemptSet()) {
       closeImpl(createCloseCallback(null));
     }
   }
@@ -484,12 +500,12 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   public final boolean close(final long timeout) {
     if (timeout <= 0) { throw new IllegalArgumentException("timeout cannot be less than or equal to zero"); }
 
-    if (closed.attemptSet()) {
+    if (this.closed.attemptSet()) {
       final Latch latch = new Latch();
       closeImpl(createCloseCallback(latch));
       try {
         return latch.attempt(timeout);
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         logger.warn("close interrupted");
         Thread.currentThread().interrupt();
         return isConnected();
@@ -505,45 +521,48 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return new Runnable() {
       public void run() {
         setConnected(false);
-        parent.connectionClosed(TCConnectionJDK14.this);
+        TCConnectionJDK14.this.parent.connectionClosed(TCConnectionJDK14.this);
 
         if (fireClose) {
-          eventCaller.fireCloseEvent(eventListeners, TCConnectionJDK14.this);
+          TCConnectionJDK14.this.eventCaller.fireCloseEvent(TCConnectionJDK14.this.eventListeners,
+                                                            TCConnectionJDK14.this);
         }
 
-        if (latch != null) latch.release();
+        if (latch != null) {
+          latch.release();
+        }
       }
     };
   }
 
   public final boolean isClosed() {
-    return closed.isSet();
+    return this.closed.isSet();
   }
 
   public final boolean isConnected() {
-    return connected.get();
+    return this.connected.get();
   }
 
   @Override
   public final String toString() {
-    StringBuffer buf = new StringBuffer();
+    final StringBuffer buf = new StringBuffer();
 
     buf.append(getClass().getName()).append('@').append(hashCode()).append(":");
 
     buf.append(" connected: ").append(isConnected());
     buf.append(", closed: ").append(isClosed());
 
-    if (isSocketEndpoint.get()) {
+    if (this.isSocketEndpoint.get()) {
       buf.append(" local=");
-      if (localSocketAddress.isSet()) {
-        buf.append(((TCSocketAddress) localSocketAddress.get()).getStringForm());
+      if (this.localSocketAddress.isSet()) {
+        buf.append(((TCSocketAddress) this.localSocketAddress.get()).getStringForm());
       } else {
         buf.append("[unknown]");
       }
 
       buf.append(" remote=");
-      if (remoteSocketAddress.isSet()) {
-        buf.append(((TCSocketAddress) remoteSocketAddress.get()).getStringForm());
+      if (this.remoteSocketAddress.isSet()) {
+        buf.append(((TCSocketAddress) this.remoteSocketAddress.get()).getStringForm());
       } else {
         buf.append("[unknown]");
       }
@@ -561,44 +580,48 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     buf.append(" idle=").append(getIdleTime()).append("ms");
 
-    buf.append(" [").append(totalRead.get()).append(" read, ").append(totalWrite.get()).append(" write]");
+    buf.append(" [").append(this.totalRead.get()).append(" read, ").append(this.totalWrite.get()).append(" write]");
 
     return buf.toString();
   }
 
-  public final void addListener(TCConnectionEventListener listener) {
+  public final void addListener(final TCConnectionEventListener listener) {
     if (listener == null) { return; }
-    eventListeners.add(listener); // don't need sync
+    this.eventListeners.add(listener); // don't need sync
   }
 
-  public final void removeListener(TCConnectionEventListener listener) {
+  public final void removeListener(final TCConnectionEventListener listener) {
     if (listener == null) { return; }
-    eventListeners.remove(listener); // don't need sync
+    this.eventListeners.remove(listener); // don't need sync
   }
 
   public final long getConnectTime() {
-    return connectTime.get();
+    return this.connectTime.get();
   }
 
   public final long getIdleTime() {
     return System.currentTimeMillis()
-           - (lastDataWriteTime.get() > lastDataReceiveTime.get() ? lastDataWriteTime.get() : lastDataReceiveTime.get());
+           - (this.lastDataWriteTime.get() > this.lastDataReceiveTime.get() ? this.lastDataWriteTime.get()
+               : this.lastDataReceiveTime.get());
   }
 
   public final long getIdleReceiveTime() {
-    return System.currentTimeMillis() - lastDataReceiveTime.get();
+    return System.currentTimeMillis() - this.lastDataReceiveTime.get();
   }
 
-  public final synchronized void connect(TCSocketAddress addr, int timeout) throws IOException, TCTimeoutException {
-    if (closed.isSet() || connected.get()) { throw new IllegalStateException("Connection closed or already connected"); }
+  public final synchronized void connect(final TCSocketAddress addr, final int timeout) throws IOException,
+      TCTimeoutException {
+    if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
+                                                                                       "Connection closed or already connected"); }
     connectImpl(addr, timeout);
     finishConnect();
   }
 
-  public final synchronized boolean asynchConnect(TCSocketAddress addr) throws IOException {
-    if (closed.isSet() || connected.get()) { throw new IllegalStateException("Connection closed or already connected"); }
+  public final synchronized boolean asynchConnect(final TCSocketAddress addr) throws IOException {
+    if (this.closed.isSet() || this.connected.get()) { throw new IllegalStateException(
+                                                                                       "Connection closed or already connected"); }
 
-    boolean rv = asynchConnectImpl(addr);
+    final boolean rv = asynchConnectImpl(addr);
 
     if (rv) {
       finishConnect();
@@ -607,8 +630,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return rv;
   }
 
-  public final void putMessage(TCNetworkMessage message) {
-    lastDataWriteTime.set(System.currentTimeMillis());
+  public final void putMessage(final TCNetworkMessage message) {
+    this.lastDataWriteTime.set(System.currentTimeMillis());
 
     // if (!isConnected() || isClosed()) {
     // logger.warn("Ignoring message sent to non-connected connection");
@@ -619,29 +642,29 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   public final TCSocketAddress getLocalAddress() {
-    return (TCSocketAddress) localSocketAddress.get();
+    return (TCSocketAddress) this.localSocketAddress.get();
   }
 
   public final TCSocketAddress getRemoteAddress() {
-    return (TCSocketAddress) remoteSocketAddress.get();
+    return (TCSocketAddress) this.remoteSocketAddress.get();
   }
 
-  private final void setConnected(boolean connected) {
+  private final void setConnected(final boolean connected) {
     if (connected) {
       this.connectTime.set(System.currentTimeMillis());
     }
     this.connected.set(connected);
   }
 
-  private final void recordSocketAddress(Socket socket) throws IOException {
+  private final void recordSocketAddress(final Socket socket) throws IOException {
     if (socket != null) {
-      InetAddress localAddress = socket.getLocalAddress();
-      InetAddress remoteAddress = socket.getInetAddress();
+      final InetAddress localAddress = socket.getLocalAddress();
+      final InetAddress remoteAddress = socket.getInetAddress();
 
       if (remoteAddress != null && localAddress != null) {
-        isSocketEndpoint.set(true);
-        localSocketAddress.set(new TCSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()));
-        remoteSocketAddress.set(new TCSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
+        this.isSocketEndpoint.set(true);
+        this.localSocketAddress.set(new TCSocketAddress(cloneInetAddress(localAddress), socket.getLocalPort()));
+        this.remoteSocketAddress.set(new TCSocketAddress(cloneInetAddress(remoteAddress), socket.getPort()));
       } else {
         // abort if socket is not connected
         throw new IOException("socket is not connected");
@@ -654,23 +677,23 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
    * InetAddress instances obtained directly from the connected socket has it's "family" field set to IPv6 even though
    * when it is an instance of Inet4Address. Trying to use that instance to connect to throws an exception
    */
-  private static InetAddress cloneInetAddress(InetAddress addr) {
+  private static InetAddress cloneInetAddress(final InetAddress addr) {
     try {
-      byte[] address = addr.getAddress();
+      final byte[] address = addr.getAddress();
       return InetAddress.getByAddress(address);
-    } catch (UnknownHostException e) {
+    } catch (final UnknownHostException e) {
       throw new AssertionError(e);
     }
   }
 
-  private final void addNetworkData(TCByteBuffer[] data, int length) {
-    lastDataReceiveTime.set(System.currentTimeMillis());
+  private final void addNetworkData(final TCByteBuffer[] data, final int length) {
+    this.lastDataReceiveTime.set(System.currentTimeMillis());
 
     try {
-      protocolAdaptor.addReadData(this, data, length);
-    } catch (Exception e) {
+      this.protocolAdaptor.addReadData(this, data, length);
+    } catch (final Exception e) {
       logger.error(this.toString() + " " + e.getMessage());
-      eventCaller.fireErrorEvent(eventListeners, this, e, null);
+      this.eventCaller.fireErrorEvent(this.eventListeners, this, e, null);
       return;
     }
   }
@@ -681,11 +704,11 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     // TODO: should also support a way to de-register read interest temporarily
 
-    return protocolAdaptor.getReadBuffers();
+    return this.protocolAdaptor.getReadBuffers();
   }
 
-  protected final void fireErrorEvent(Exception e, TCNetworkMessage context) {
-    eventCaller.fireErrorEvent(eventListeners, this, e, context);
+  protected final void fireErrorEvent(final Exception e, final TCNetworkMessage context) {
+    this.eventCaller.fireErrorEvent(this.eventListeners, this, e, context);
   }
 
   public final Socket detach() throws IOException {
@@ -693,7 +716,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return detachImpl();
   }
 
-  private TCNetworkMessage buildWireProtocolMessageGroup(ArrayList<TCNetworkMessage> messages) {
+  private TCNetworkMessage buildWireProtocolMessageGroup(final ArrayList<TCNetworkMessage> messages) {
     Assert.assertTrue("Messages count not ok to build WireProtocolMessageGroup : " + messages.size(),
                       (messages.size() > 0) && (messages.size() <= WireProtocolHeader.MAX_MESSAGE_COUNT));
     if (messages.size() == 1) { return buildWireProtocolMessage(messages.get(0)); }
@@ -709,8 +732,10 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     message.setSentCallback(new Runnable() {
       public void run() {
-        for (int i = 0; i < callbacks.length; i++) {
-          if (callbacks[i] != null) callbacks[i].run();
+        for (final Runnable callback : callbacks) {
+          if (callback != null) {
+            callback.run();
+          }
         }
       }
     });
@@ -736,7 +761,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   }
 
   private TCNetworkMessage finalizeWireProtocolMessage(final WireProtocolMessage message, final int messageCount) {
-    WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
+    final WireProtocolHeader hdr = (WireProtocolHeader) message.getHeader();
     hdr.setSourceAddress(getLocalAddress().getAddressBytes());
     hdr.setSourcePort(getLocalAddress().getPort());
     hdr.setDestinationAddress(getRemoteAddress().getAddressBytes());
@@ -751,7 +776,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     private final ByteBuffer[]     clonedData;
     private int                    index = 0;
 
-    WriteContext(TCNetworkMessage message) {
+    WriteContext(final TCNetworkMessage message) {
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
@@ -759,21 +784,21 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
       this.clonedData = new ByteBuffer[msgData.length];
 
       for (int i = 0; i < msgData.length; i++) {
-        clonedData[i] = msgData[i].duplicate().asReadOnlyBuffer();
+        this.clonedData[i] = msgData[i].duplicate().asReadOnlyBuffer();
       }
     }
 
     boolean done() {
-      for (int i = index, n = clonedData.length; i < n; i++) {
-        if (clonedData[i].hasRemaining()) { return false; }
+      for (int i = this.index, n = this.clonedData.length; i < n; i++) {
+        if (this.clonedData[i].hasRemaining()) { return false; }
       }
 
       return true;
     }
 
     void incrementIndexAndCleanOld() {
-      clonedData[index] = null;
-      index++;
+      this.clonedData[this.index] = null;
+      this.index++;
     }
 
     void writeComplete() {
@@ -781,8 +806,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     }
   }
 
-  public void addWeight(int addWeightBy) {
-    this.commWorker.addWeight(this, addWeightBy, channel);
+  public void addWeight(final int addWeightBy) {
+    this.commWorker.addWeight(this, addWeightBy, this.channel);
   }
 
   public void setTransportEstablished() {
