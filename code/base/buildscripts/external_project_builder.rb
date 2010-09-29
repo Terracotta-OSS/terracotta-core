@@ -12,7 +12,10 @@ class ExternalProjectBuilder
       begin
         build_file.build
       rescue => e
-        raise e if @failure_mode == :fail_fast
+        if @failure_mode == :fail_fast
+          $stderr.puts("Failed to build external: '#{build_file}'")
+          raise e
+        end
         failures << build_file
       end
     end
