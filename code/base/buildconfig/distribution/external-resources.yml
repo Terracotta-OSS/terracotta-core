@@ -38,12 +38,13 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core-ee-kit
     classifier: distribution
-    version: 2.3-BETA
+    version: 2.3.0-SNAPSHOT
     destination: ehcache
     type: tar.gz
     kit_edition: enterprise
     explode: true
     remove_root_folder: true
+    excludes: **/TERRACOTTA-TRIAL-LICENSE.txt,**/SUBSCRIPTION-AGREEMENT.pdf
     
   - maven_artifact: true
     groupId: net.sf.ehcache

@@ -64,6 +64,8 @@ class ExternalResourceResolver
     exploded_dir = File.join(tmp_dir, "exploded")
     FileUtils.mkdir_p(exploded_dir)
 
+    excludes = options['excludes'] || ''
+    
     case archive
     when /\.tar\.gz$/
       ant.untar(:src => archive, :dest => exploded_dir, :compression => "gzip")
@@ -85,11 +87,11 @@ class ExternalResourceResolver
         root_dir = File.expand_path(File.join(exploded_dir, e))
       end
       ant.move(:todir => dest_dir) do
-        ant.fileset(:dir => root_dir)
+        ant.fileset(:dir => root_dir, :excludes => excludes)
       end
     else
       ant.move(:todir => dest_dir) do
-        ant.fileset(:dir => exploded_dir)
+        ant.fileset(:dir => exploded_dir, :excludes => excludes)
       end
     end
     FileUtils.rm_rf(tmp_dir)
