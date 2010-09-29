@@ -190,7 +190,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final int requested = isInterestedInTTIOrTTL(tti, ttl) ? (int) (overshoot * 1.5) : overshoot;
     final Map samples = ev.getRandomSamples(requested, faultedInClients);
 
-    if ((samples.size() < overshoot * 0.3) || EVICTOR_LOGGING) {
+    if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " : Random Samples : "
                   + samples.size() + " overshoot : " + overshoot);
     }
