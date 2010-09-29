@@ -127,7 +127,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
   def dist_dev(product_code = 'DSO', flavor = nil)
     flavor ||= @build_environment.is_ee_branch? ? ENTERPRISE : OPENSOURCE
-    if flavor == ENTERPRISE then dist_maven_ee else dist_maven end
+    if flavor == ENTERPRISE then dist_maven_all else dist_maven end
     build_external
     dist(product_code, flavor)
   end
