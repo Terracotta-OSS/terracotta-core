@@ -1978,7 +1978,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     String errMsg = "Client and server configurations don't match.\n";
     if (connInfoFromL1.size() != connInfoFromL2.size()) {
-      errMsg = errMsg + "The number of servers specified in the client and server configs are different.";
+      StringBuilder builder = new StringBuilder();
+      builder.append("The number of servers specified in the client and server configs are different. ");
+      // dump connInfoFromL1 and connInfoFromL2 for debugging DEV-4769
+      dumpConnInfo(builder, "ConnInfo from L1", connInfoFromL1);
+      dumpConnInfo(builder, "ConnInfo from L2", connInfoFromL2);
+      errMsg += builder.toString();
       throw new ConfigurationSetupException(errMsg);
     }
 
@@ -2001,6 +2006,16 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (!connInfoFromL1.containsAll(connInfoFromL2)) {
       logConfigMismatchAndThrowException(connInfoFromL1, connInfoFromL2, errMsg);
     }
+  }
+
+  private void dumpConnInfo(StringBuilder builder, String mesg, HashSet<ConnectionInfo> connInfo) {
+    builder.append(mesg);
+    builder.append("[");
+    for (ConnectionInfo ci : connInfo) {
+      builder.append(ci.toString());
+      builder.append(" ");
+    }
+    builder.append("] ");
   }
 
   private void logConfigMismatchAndThrowException(final HashSet<ConnectionInfo> connInfoFromL1,
