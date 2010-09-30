@@ -21,8 +21,9 @@ import junit.framework.TestCase;
 public class ThreadPreferenceExecutorTest extends TestCase {
 
   public void testBasic() {
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS, TCLogging
-        .getLogger(ThreadPreferenceExecutorTest.class));
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
+                                                                 TCLogging
+                                                                     .getLogger(ThreadPreferenceExecutorTest.class));
     assertEquals(0, exec.getActiveThreadCount());
 
     final AtomicInteger run = new AtomicInteger();
@@ -63,7 +64,7 @@ public class ThreadPreferenceExecutorTest extends TestCase {
     TCLogger logger = TCLogging.getLogger(ThreadPreferenceExecutorTest.class);
     LogAppender logAppender = new LogAppender();
     TCLogging.addAppender(logger.getName(), logAppender);
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 50, 100, TimeUnit.MILLISECONDS, logger);
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 20, 100, TimeUnit.MILLISECONDS, logger);
     assertEquals(0, exec.getActiveThreadCount());
 
     final AtomicInteger run = new AtomicInteger();
@@ -81,33 +82,37 @@ public class ThreadPreferenceExecutorTest extends TestCase {
       }
     };
 
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 16; i++) {
       exec.execute(longClient);
       assertEquals(i + 1, exec.getActiveThreadCount());
     }
 
     for (int i = 0; i < 10; i++) {
       exec.execute(shortClient);
-      ThreadUtil.reallySleep(300);
-      assertEquals(9, exec.getActiveThreadCount());
     }
+
+    while (exec.getActiveThreadCount() != 16) {
+      ThreadUtil.reallySleep(100);
+    }
+
+    assertEquals(1, logAppender.getThreadCountLogging());
 
     ThreadUtil.reallySleep(10000);
 
     // make sure all tasks complete
-    assertEquals(19, run.get());
+    assertEquals(26, run.get());
 
     ThreadUtil.reallySleep(10000);
 
     // make sure all threads die
     assertEquals(0, exec.getActiveThreadCount());
-    assertEquals(3, logAppender.getThreadCountLogging());
   }
 
   private static class LogAppender implements TCAppender {
     private int threadCountLogging = 0;
 
     public synchronized void append(LogLevel level, Object message, Throwable throwable) {
+      System.out.println("XXX " + message);
       if (message.toString().contains("thread count")) {
         threadCountLogging++;
       }
@@ -120,8 +125,9 @@ public class ThreadPreferenceExecutorTest extends TestCase {
   }
 
   public void testThreadReuse() {
-    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS, TCLogging
-        .getLogger(ThreadPreferenceExecutorTest.class));
+    ThreadPreferenceExecutor exec = new ThreadPreferenceExecutor("test", 10, 5, TimeUnit.SECONDS,
+                                                                 TCLogging
+                                                                     .getLogger(ThreadPreferenceExecutorTest.class));
 
     final Set<Thread> threads = Collections.synchronizedSet(new HashSet<Thread>());
 
