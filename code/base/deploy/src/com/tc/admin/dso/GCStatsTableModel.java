@@ -9,6 +9,7 @@ import com.tc.admin.common.XObjectTableModel;
 import com.tc.objectserver.api.GCStats;
 
 import java.util.Arrays;
+import java.util.Date;
 
 public class GCStatsTableModel extends XObjectTableModel {
   private static final String[] FIELDS   = { "Iteration", "Type", "Status", "StartDate", "BeginObjectCount",
@@ -106,5 +107,25 @@ public class GCStatsTableModel extends XObjectTableModel {
   @Override
   public boolean isColumnSortable(int col) {
     return false;
+  }
+
+  public String exportAsText() {
+    StringBuilder strBuilder = new StringBuilder();
+    strBuilder.append("Iteration").append(" | ").append("Type").append(" | ").append("Status").append(" | ")
+        .append("Start Time").append(" | ").append("Begin Count").append(" | ").append("Pasused stage(ms)")
+        .append(" | ").append("Mark Stage(ms.)").append(" | ").append("Garbage Count").append(" | ")
+        .append("Delete stage(ms.)").append(" | ").append("Total Elapsed time(ms.)").append(" | ").append("End Count")
+        .append("\n");
+
+    for (int i = 0; i < getRowCount(); i++) {
+      GCStatsWrapper stat = (GCStatsWrapper) getObjectAt(i);
+      strBuilder.append(stat.getIteration()).append(" | ").append(stat.getType()).append(" | ")
+          .append(stat.getStatus()).append(" | ").append(new Date(stat.getStartTime())).append(" | ")
+          .append(stat.getBeginObjectCount()).append(" | ").append(stat.getPausedStageTime()).append(" | ")
+          .append(stat.getMarkStageTime()).append(" | ").append(stat.getActualGarbageCount()).append(" | ")
+          .append(stat.getDeleteStageTime()).append(" | ").append(stat.getElapsedTime()).append(" | ")
+          .append(stat.getEndObjectCount()).append("\n");
+    }
+    return strBuilder.toString();
   }
 }

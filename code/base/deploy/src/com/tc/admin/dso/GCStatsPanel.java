@@ -26,6 +26,7 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.ExceptionHelper;
+import com.tc.admin.common.FastFileChooser;
 import com.tc.admin.common.RolloverButton;
 import com.tc.admin.common.XAbstractAction;
 import com.tc.admin.common.XButton;
@@ -50,6 +51,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -59,6 +62,7 @@ import java.util.concurrent.Callable;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -82,6 +86,8 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   private boolean            fHandlingAxisChange;
   private boolean            fZoomed;
   private AbstractAction     fRestoreDefaultRangeAction;
+  private ExportAction       exportAction;
+  private File               lastExportDir;
 
   public GCStatsPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(new BorderLayout());
@@ -112,6 +118,12 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     runDGCButton.setAction(gcAction = new RunGCAction());
     gbc.anchor = GridBagConstraints.EAST;
     topPanel.add(runDGCButton, gbc);
+    gbc.gridx++;
+
+    XButton exportButton = new XButton();
+    exportButton.setAction(exportAction = new ExportAction());
+    topPanel.add(exportButton, gbc);
+    gbc.gridx++;
 
     XContainer gcStatsPanel = new XContainer(new BorderLayout());
     gcStatsPanel.add(topPanel, BorderLayout.NORTH);
@@ -252,6 +264,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
         overviewLabel.setText(appContext.getString("dso.gcstats.overview.not-ready"));
       }
       gcAction.setEnabled(clusterModel != null && clusterModel.isReady());
+      exportAction.setEnabled(clusterModel != null && clusterModel.isReady());
     }
   }
 
@@ -296,6 +309,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
         setRange();
       }
       gcAction.setEnabled(true);
+      exportAction.setEnabled(true);
     }
   }
 
@@ -350,6 +364,37 @@ public class GCStatsPanel extends XContainer implements DGCListener {
     }
   }
 
+  private class ExportAction extends XAbstractAction {
+    public ExportAction() {
+      super("Export");
+      setEnabled(clusterModel != null && clusterModel.isReady());
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      try {
+        exportAsText();
+      } catch (Exception e1) {
+        appContext.log(e1);
+      }
+    }
+  }
+
+  private void exportAsText() throws Exception {
+    FastFileChooser chooser = new FastFileChooser();
+    if (lastExportDir != null) chooser.setCurrentDirectory(lastExportDir);
+    chooser.setDialogTitle("Export DGC Cycles");
+    chooser.setMultiSelectionEnabled(false);
+    chooser.setSelectedFile(new File(chooser.getCurrentDirectory(), "dgc.txt"));
+    if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+    File file = chooser.getSelectedFile();
+    FileOutputStream fos = new FileOutputStream(file);
+    lastExportDir = file.getParentFile();
+    GCStatsTableModel tableModel = (GCStatsTableModel) this.table.getModel();
+    String eventsAsText = tableModel.exportAsText();
+    fos.write(eventsAsText.getBytes("UTF-8"));
+    fos.close();
+  }
+
   public void statusUpdate(GCStats gcStats) {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel == null) { return; }
@@ -369,6 +414,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       if (theClusterModel == null) { return; }
 
       gcAction.setEnabled(gcStats.getElapsedTime() != -1);
+      exportAction.setEnabled(true);
       GCStatsTableModel model = (GCStatsTableModel) table.getModel();
       model.addGCStats(gcStats);
       if (gcAction.isEnabled()) {
@@ -573,6 +619,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       endObjectCountSeries = null;
       endObjectCountPlot = null;
       currentDGCMarker = null;
+      exportAction = null;
     }
   }
 }

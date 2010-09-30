@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 
-public interface TerracottaOperatorEvent extends Serializable {
+public interface TerracottaOperatorEvent extends Serializable, Cloneable {
   
   public static enum EventType {
     INFO, WARN, DEBUG, ERROR, CRITICAL
@@ -50,4 +50,7 @@ public interface TerracottaOperatorEvent extends Serializable {
    */
   String extractAsText();
   
+
+  TerracottaOperatorEvent clone();
+
 }

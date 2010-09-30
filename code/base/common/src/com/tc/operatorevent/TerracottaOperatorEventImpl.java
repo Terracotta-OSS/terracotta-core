@@ -20,6 +20,15 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     this.eventMessage = message;
   }
 
+  private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String nodeName,
+                                      String message) {
+    this.eventType = eventType;
+    this.subSystem = subsystem;
+    this.time = time;
+    this.nodeName = nodeName;
+    this.eventMessage = message;
+  }
+
   public String getEventMessage() {
     return this.eventMessage;
   }
@@ -56,18 +65,17 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     return (int) (this.time - o.time);
   }
 
+  public boolean isRead() {
+    return this.isRead;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof TerracottaOperatorEventImpl)) return false;
     TerracottaOperatorEventImpl event = (TerracottaOperatorEventImpl) o;
     if (this.eventType != event.eventType) return false;
     if (this.subSystem != event.subSystem) return false;
-    if (!this.eventMessage.equals(event.eventMessage)) return false;
     return true;
-  }
-
-  public boolean isRead() {
-    return this.isRead;
   }
 
   public void markRead() {
@@ -83,5 +91,10 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   public String extractAsText() {
     return toString();
   }
-  
+
+  @Override
+  public TerracottaOperatorEvent clone() {
+    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.nodeName, this.eventMessage);
+  }
+
 }
