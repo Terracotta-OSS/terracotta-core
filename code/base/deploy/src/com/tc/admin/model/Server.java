@@ -131,10 +131,14 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
                                                                                                    POLLED_ATTR_TRANSACTION_RATE);
   private static final PolledAttribute    PA_CACHE_MISS_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
                                                                                                    POLLED_ATTR_CACHE_MISS_RATE);
-  private static final PolledAttribute    PA_FAULTED_RATE                    = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_FAULTED_RATE);
-  private static final PolledAttribute    PA_FLUSHED_RATE                    = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_FLUSHED_RATE);
+  private static final PolledAttribute    PA_ONHEAP_FAULT_RATE               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_ONHEAP_FAULT_RATE);
+  private static final PolledAttribute    PA_ONHEAP_FLUSH_RATE               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_ONHEAP_FLUSH_RATE);
+  private static final PolledAttribute    PA_OFFHEAP_FAULT_RATE              = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OFFHEAP_FAULT_RATE);
+  private static final PolledAttribute    PA_OFFHEAP_FLUSH_RATE              = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                   POLLED_ATTR_OFFHEAP_FLUSH_RATE);
   private static final PolledAttribute    PA_LIVE_OBJECT_COUNT               = new PolledAttribute(L2MBeanNames.DSO,
                                                                                                    POLLED_ATTR_LIVE_OBJECT_COUNT);
   private static final PolledAttribute    PA_LOCK_RECALL_RATE                = new PolledAttribute(L2MBeanNames.DSO,
@@ -254,8 +258,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_OBJECT_FAULT_RATE);
     registerPolledAttribute(PA_TRANSACTION_RATE);
     registerPolledAttribute(PA_CACHE_MISS_RATE);
-    registerPolledAttribute(PA_FAULTED_RATE);
-    registerPolledAttribute(PA_FLUSHED_RATE);
+    registerPolledAttribute(PA_ONHEAP_FAULT_RATE);
+    registerPolledAttribute(PA_ONHEAP_FLUSH_RATE);
+    registerPolledAttribute(PA_OFFHEAP_FAULT_RATE);
+    registerPolledAttribute(PA_OFFHEAP_FLUSH_RATE);
     registerPolledAttribute(PA_LIVE_OBJECT_COUNT);
     registerPolledAttribute(PA_LOCK_RECALL_RATE);
     registerPolledAttribute(PA_BROADCAST_RATE);

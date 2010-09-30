@@ -36,7 +36,10 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   static final String    POLLED_ATTR_CACHE_MISS_RATE             = "CacheMissRate";
   static final String    POLLED_ATTR_FAULTED_RATE                = "L2DiskFaultRate";
-  static final String    POLLED_ATTR_FLUSHED_RATE                = "FlushedRate";
+  static final String    POLLED_ATTR_ONHEAP_FLUSH_RATE           = "OnHeapFlushRate";
+  static final String    POLLED_ATTR_ONHEAP_FAULT_RATE           = "OnHeapFaultRate";
+  static final String    POLLED_ATTR_OFFHEAP_FLUSH_RATE          = "OffHeapFlushRate";
+  static final String    POLLED_ATTR_OFFHEAP_FAULT_RATE          = "OffHeapFaultRate";
   static final String    POLLED_ATTR_LOCK_RECALL_RATE            = "GlobalLockRecallRate";
   static final String    POLLED_ATTR_BROADCAST_RATE              = "BroadcastRate";
   static final String    POLLED_ATTR_TRANSACTION_SIZE_RATE       = "TransactionSizeRate";
