@@ -51,7 +51,7 @@ public interface ServerTransaction extends GlobalTransaction {
 
   public DmiDescriptor[] getDmiDescriptors();
 
-  public boolean needsBroadcast();
+  public boolean isActiveTxn();
 
   /**
    * Number of actual client/application transactions that this server transaction contains. Txn folding on the client

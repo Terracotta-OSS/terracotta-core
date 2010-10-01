@@ -97,8 +97,8 @@ public class PrunedServerTransaction implements ServerTransaction {
     return this.orgTxn.getGlobalTransactionID();
   }
 
-  public boolean needsBroadcast() {
-    return this.orgTxn.needsBroadcast();
+  public boolean isActiveTxn() {
+    return this.orgTxn.isActiveTxn();
   }
 
   public int getNumApplicationTxn() {

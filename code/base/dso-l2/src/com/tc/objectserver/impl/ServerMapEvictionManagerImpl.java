@@ -93,16 +93,18 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
   public void initializeContext(final ConfigurationContext context) {
     this.evictorSink = context.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_PROCESSOR_STAGE).getSink();
-    this.evictionBroadcastSink = context.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE).getSink();
+    this.evictionBroadcastSink = context.getStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE)
+        .getSink();
   }
 
   public void startEvictor() {
     if (PERIODIC_EVICTOR_ENABLED && !this.isStarted.getAndSet(true)) {
       logger.info("Server Map Eviction : Evictor will run every " + this.evictionSleepTime + " ms");
       this.evictor.schedule(new EvictorTask(this), this.evictionSleepTime, this.evictionSleepTime);
-    } 
+    }
     logger.info(TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED + " : " + EVICTOR_LOGGING);
-    logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED + " : " + PERIODIC_EVICTOR_ENABLED);
+    logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED + " : "
+                + PERIODIC_EVICTOR_ENABLED);
     logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED + " : "
                 + ELEMENT_BASED_TTI_TTL_ENABLED);
 
@@ -134,6 +136,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   public void doEvictionOn(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
+    if (!this.isStarted.get()) { throw new AssertionError("Evictor is not started yet"); }
     if (!markEvictionInProgress(oid)) {
       logger.info("Ignoring eviction request as its already in progress : " + oid);
       return;
@@ -229,9 +232,10 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
   }
 
-  private void broadcastEvictedEntries(ObjectID oid, HashMap candidates) {
+  private void broadcastEvictedEntries(final ObjectID oid, final HashMap candidates) {
     // maybe we can batch up the broadcasts
-    evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(oid, Collections.unmodifiableSet(candidates.keySet())));
+    this.evictionBroadcastSink.add(new ServerMapEvictionBroadcastContext(oid, Collections.unmodifiableSet(candidates
+        .keySet())));
   }
 
   private void evictFrom(final ObjectID oid, final HashMap candidates) {
@@ -295,7 +299,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     out.print(this.getClass().getName()).flush();
     out.indent().print("isStarted:" + this.isStarted).flush();
     out.indent().print("currentlyEvicting:" + this.currentlyEvicting).flush();

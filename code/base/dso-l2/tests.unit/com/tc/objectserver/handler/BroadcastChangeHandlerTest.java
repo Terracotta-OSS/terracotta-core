@@ -182,7 +182,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return TxnType.CONCURRENT;
     }
 
-    public boolean needsBroadcast() {
+    public boolean isActiveTxn() {
       return false;
     }
 

@@ -111,7 +111,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return GlobalTransactionID.NULL_ID;
   }
 
-  public boolean needsBroadcast() {
+  public boolean isActiveTxn() {
     return false;
   }
 

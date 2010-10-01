@@ -81,12 +81,12 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
                                                 allOrOne, notifiedWaiters);
     }
 
-    final Set initiateEviction = applyInfo.getObjectIDsToInitateEviction();
-    if (!initiateEviction.isEmpty()) {
-      this.evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
-    }
+    if (txn.isActiveTxn()) {
+      final Set initiateEviction = applyInfo.getObjectIDsToInitateEviction();
+      if (!initiateEviction.isEmpty()) {
+        this.evictionInitiateSink.add(new ServerMapEvictionInitiateContext(initiateEviction));
+      }
 
-    if (txn.needsBroadcast()) {
       if (this.count == 0) {
         this.lowWaterMark = this.gtxm.getLowGlobalTransactionIDWatermark();
       }

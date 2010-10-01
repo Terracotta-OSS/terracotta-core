@@ -108,7 +108,7 @@ public final class TestServerTransaction implements ServerTransaction {
     throw new AssertionError("Gid is not set !");
   }
 
-  public boolean needsBroadcast() {
+  public boolean isActiveTxn() {
     return true;
   }
 

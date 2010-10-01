@@ -174,7 +174,7 @@ public class ServerTransactionImpl implements ServerTransaction {
     return this.globalTxnID;
   }
 
-  public boolean needsBroadcast() {
+  public boolean isActiveTxn() {
     return true;
   }
 
