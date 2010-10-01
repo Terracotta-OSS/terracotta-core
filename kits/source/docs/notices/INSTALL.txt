@@ -76,7 +76,7 @@ for more information on how Terracotta configuration is propagated.
 
 Using a License Key
 -------------------
-If you received a file called product.key from Terracotta, save it to your 
+If you received a file called terracotta-license.key from Terracotta, save it to your 
 Terracotta installation's root directory and start or restart Terracotta. 
 (For express installations, see below). This file contains the license 
 key, or product key, that must be loaded to activate your non-OSS version of 
