@@ -15,12 +15,19 @@ import java.util.Set;
 
 public class ApplyTransactionInfo {
 
-  private final Map nodes;
-  private final Set parents;
-  private Set       ignoreBroadcasts = Collections.EMPTY_SET;
-  private Set       initiateEviction = Collections.EMPTY_SET;
+  private final Map     nodes;
+  private final Set     parents;
+  private final boolean activeTxn;
+  private Set           ignoreBroadcasts = Collections.EMPTY_SET;
+  private Set           initiateEviction = Collections.EMPTY_SET;
 
+  // For tests
   public ApplyTransactionInfo() {
+    this(true);
+  }
+
+  public ApplyTransactionInfo(final boolean activeTxn) {
+    this.activeTxn = activeTxn;
     this.parents = new HashSet();
     this.nodes = new HashMap();
   }
@@ -102,6 +109,10 @@ public class ApplyTransactionInfo {
       // Don't just print the contents of children. That might cause a recursive loop
       return "Node(" + this.id + ") : children = " + this.children.size();
     }
+  }
+
+  public boolean isActiveTxn() {
+    return this.activeTxn;
   }
 
   public void ignoreBroadcastFor(final ObjectID objectID) {

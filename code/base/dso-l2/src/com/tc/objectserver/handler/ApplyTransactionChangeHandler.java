@@ -63,7 +63,7 @@ public class ApplyTransactionChangeHandler extends AbstractEventHandler {
 
     NotifiedWaiters notifiedWaiters = new NotifiedWaiters();
     final ServerTransactionID stxnID = txn.getServerTransactionID();
-    final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo();
+    final ApplyTransactionInfo applyInfo = new ApplyTransactionInfo(txn.isActiveTxn());
 
     if (atc.needsApply()) {
       this.transactionManager.apply(txn, atc.getObjects(), applyInfo, this.instanceMonitor);
