@@ -62,6 +62,7 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
   }
 
   public String getJavaProjectName(final ILaunchConfiguration configuration) throws CoreException {
+    @SuppressWarnings("static-access")
     String appNameRoot = configuration.getAttribute(IPDELauncherConstants.APPLICATION, (String) null);
 
     if (appNameRoot != null) {
@@ -82,6 +83,7 @@ public class DSOEclipseApplicationLaunchConfiguration extends EclipseApplication
   }
 
   public IVMInstall getVMInstall(final ILaunchConfiguration configuration) throws CoreException {
+    @SuppressWarnings("static-access")
     final String vm = configuration.getAttribute(IPDELauncherConstants.VMINSTALL, (String) null);
 
     final IVMInstall launcher = getVMInstall(vm);
