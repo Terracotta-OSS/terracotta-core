@@ -30,7 +30,8 @@ public class PrunedServerTransaction implements ServerTransaction {
   private final ObjectIDSet       oids;
   private final ObjectIDSet       newOids;
 
-  public PrunedServerTransaction(List prunedChanges, ServerTransaction st, ObjectIDSet oids, ObjectIDSet newOids) {
+  public PrunedServerTransaction(final List prunedChanges, final ServerTransaction st, final ObjectIDSet oids,
+                                 final ObjectIDSet newOids) {
     this.prunedChanges = prunedChanges;
     this.orgTxn = st;
     this.oids = oids;
@@ -105,7 +106,7 @@ public class PrunedServerTransaction implements ServerTransaction {
     return this.orgTxn.getNumApplicationTxn();
   }
 
-  public void setGlobalTransactionID(GlobalTransactionID gid) {
+  public void setGlobalTransactionID(final GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
   }
 

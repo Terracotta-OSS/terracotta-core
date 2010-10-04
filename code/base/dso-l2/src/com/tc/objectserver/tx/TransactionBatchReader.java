@@ -30,6 +30,6 @@ public interface TransactionBatchReader {
   public TCByteBuffer[] getBackingBuffers(ServerTransactionID from, ServerTransactionID to);
 
   public ObjectStringSerializer getSerializer();
-  
+
   public boolean containsSyncWriteTransaction();
 }

@@ -96,7 +96,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   public synchronized String toString() {
     return super.toString() + "[" + this.batchID + ", isEmpty=" + isEmpty() + ", numTxnsBeforeFolding= "
            + this.numTxnsBeforeFolding + " numTxnAfterfoldingTxn= " + this.numTxnsAfterFolding + " size="
-           + this.bytesWritten + " foldingKeys=" + foldingKeys.size();
+           + this.bytesWritten + " foldingKeys=" + this.foldingKeys.size();
   }
 
   public TxnBatchID getTransactionBatchID() {
@@ -244,13 +244,12 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       logger.info("NOT folding, created new sequence " + sid);
     }
 
-    TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding, txn
-        .getTransactionID());
+    final TransactionBuffer txnBuffer = createTransactionBuffer(sid, newOutputStream(), this.serializer, this.encoding,
+                                                                txn.getTransactionID());
 
     if (this.foldingEnabled) {
 
-      FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn
-          .getChangeBuffers().keySet()));
+      final FoldingKey key = new FoldingKey(txnBuffer, txn.getLockType(), new HashSet(txn.getChangeBuffers().keySet()));
       ++this.numTxnsAfterFolding;
       registerKeyForOids(txn.getChangeBuffers().keySet(), key);
     }
@@ -261,9 +260,10 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   }
 
   // Overridden in active-active
-  protected TransactionBuffer createTransactionBuffer(SequenceID sid, TCByteBufferOutputStream newOutputStream,
-                                                      ObjectStringSerializer objectStringserializer,
-                                                      DNAEncoding dnaEncoding, TransactionID txnID) {
+  protected TransactionBuffer createTransactionBuffer(final SequenceID sid,
+                                                      final TCByteBufferOutputStream newOutputStream,
+                                                      final ObjectStringSerializer objectStringserializer,
+                                                      final DNAEncoding dnaEncoding, final TransactionID txnID) {
     return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding, txnID);
   }
 
@@ -318,8 +318,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     return false;
   }
 
-  public synchronized FoldedInfo addTransaction(ClientTransaction txn, SequenceGenerator sequenceGenerator,
-                                                TransactionIDGenerator tidGenerator) {
+  public synchronized FoldedInfo addTransaction(final ClientTransaction txn, final SequenceGenerator sequenceGenerator,
+                                                final TransactionIDGenerator tidGenerator) {
     this.numTxnsBeforeFolding++;
 
     if (txn.getLockType().equals(TxnType.SYNC_WRITE)) {
@@ -437,8 +437,8 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
 
-    TransactionBufferImpl(SequenceID sequenceID, TCByteBufferOutputStream output, ObjectStringSerializer serializer,
-                          DNAEncoding encoding, TransactionID txnID) {
+    TransactionBufferImpl(final SequenceID sequenceID, final TCByteBufferOutputStream output,
+                          final ObjectStringSerializer serializer, final DNAEncoding encoding, final TransactionID txnID) {
       this.sequenceID = sequenceID;
       this.output = output;
       this.serializer = serializer;
@@ -451,7 +451,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
       return this.txnID;
     }
 
-    public void writeTo(TCByteBufferOutputStream dest) {
+    public void writeTo(final TCByteBufferOutputStream dest) {
       // XXX: make a writeInt() and writeLong() methods on Mark. Maybe ones that take offsets too
 
       // This check is needed since this buffer might need to be resent upon server crash
@@ -652,7 +652,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final TransactionBuffer buffer;
     private boolean                 closed;
 
-    FoldingKey(TransactionBuffer txnBuffer, TxnType txnType, Set objectIDs) {
+    FoldingKey(final TransactionBuffer txnBuffer, final TxnType txnType, final Set objectIDs) {
       this.buffer = txnBuffer;
       this.txnType = txnType;
       this.objectIDs = objectIDs;
@@ -734,7 +734,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
     private final TransactionID txnID;
     private final boolean       folded;
 
-    public FoldedInfo(TransactionID txnID, boolean folded) {
+    public FoldedInfo(final TransactionID txnID, final boolean folded) {
       this.txnID = txnID;
       this.folded = folded;
     }

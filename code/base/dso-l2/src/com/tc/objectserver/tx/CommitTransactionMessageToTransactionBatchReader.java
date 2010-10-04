@@ -16,18 +16,18 @@ public final class CommitTransactionMessageToTransactionBatchReader implements T
   private final ServerTransactionFactory passiveTxnFactory = new PassiveServerTransactionFactory();
   private final DSOGlobalServerStats     globalSeverStats;
 
-  public CommitTransactionMessageToTransactionBatchReader(DSOGlobalServerStats globalSeverStats) {
+  public CommitTransactionMessageToTransactionBatchReader(final DSOGlobalServerStats globalSeverStats) {
     this.globalSeverStats = globalSeverStats;
   }
 
   // Used by active server
-  public TransactionBatchReader newTransactionBatchReader(CommitTransactionMessage ctm) throws IOException {
+  public TransactionBatchReader newTransactionBatchReader(final CommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getSourceNodeID(), ctm.getSerializer(),
                                           this.activeTxnFactory, this.globalSeverStats);
   }
 
   // Used by passive server
-  public TransactionBatchReader newTransactionBatchReader(RelayedCommitTransactionMessage ctm) throws IOException {
+  public TransactionBatchReader newTransactionBatchReader(final RelayedCommitTransactionMessage ctm) throws IOException {
     return new TransactionBatchReaderImpl(ctm.getBatchData(), ctm.getClientID(), ctm.getSerializer(),
                                           this.passiveTxnFactory, this.globalSeverStats);
   }

@@ -34,8 +34,8 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   private final Map                 rootsMap;
   private final NodeID              serverID;
 
-  public ObjectSyncServerTransaction(ServerTransactionID serverTransactionID, ObjectIDSet oids, int dnaCount,
-                                     List changes, Map rootsMap, NodeID serverID) {
+  public ObjectSyncServerTransaction(final ServerTransactionID serverTransactionID, final ObjectIDSet oids,
+                                     final int dnaCount, final List changes, final Map rootsMap, final NodeID serverID) {
     this.oids = oids;
     this.changes = changes;
     this.rootsMap = rootsMap;
@@ -119,7 +119,7 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     return 1;
   }
 
-  public void setGlobalTransactionID(GlobalTransactionID gid) {
+  public void setGlobalTransactionID(final GlobalTransactionID gid) {
     throw new UnsupportedOperationException();
   }
 

@@ -17,21 +17,26 @@ import java.util.Map;
 
 public class RelayedCommitTransactionMessageFactory {
 
-  public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(NodeID nodeID,
-                                                                                      TCByteBuffer[] data,
-                                                                                      Collection txns, long seqID,
-                                                                                      GlobalTransactionID lowWaterMark,
-                                                                                      ObjectStringSerializer serializer) {
-    RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(nodeID, data, serializer,
-                                                                              getGlobalTransactionIDMapping(txns),
-                                                                              seqID, lowWaterMark);
+  public static RelayedCommitTransactionMessage createRelayedCommitTransactionMessage(
+                                                                                      final NodeID nodeID,
+                                                                                      final TCByteBuffer[] data,
+                                                                                      final Collection txns,
+                                                                                      final long seqID,
+                                                                                      final GlobalTransactionID lowWaterMark,
+                                                                                      final ObjectStringSerializer serializer) {
+    final RelayedCommitTransactionMessage msg = new RelayedCommitTransactionMessage(
+                                                                                    nodeID,
+                                                                                    data,
+                                                                                    serializer,
+                                                                                    getGlobalTransactionIDMapping(txns),
+                                                                                    seqID, lowWaterMark);
     return msg;
   }
 
-  private static Map getGlobalTransactionIDMapping(Collection txns) {
-    Map sid2gid = new HashMap(txns.size());
-    for (Iterator i = txns.iterator(); i.hasNext();) {
-      ServerTransaction txn = (ServerTransaction) i.next();
+  private static Map getGlobalTransactionIDMapping(final Collection txns) {
+    final Map sid2gid = new HashMap(txns.size());
+    for (final Iterator i = txns.iterator(); i.hasNext();) {
+      final ServerTransaction txn = (ServerTransaction) i.next();
       sid2gid.put(txn.getServerTransactionID(), txn.getGlobalTransactionID());
     }
     return sid2gid;

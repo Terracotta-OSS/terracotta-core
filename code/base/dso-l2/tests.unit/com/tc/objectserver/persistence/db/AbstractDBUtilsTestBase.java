@@ -22,9 +22,6 @@ import com.tc.objectserver.managedobject.ManagedObjectImpl;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListener;
 import com.tc.objectserver.persistence.api.ManagedObjectPersistor;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
@@ -129,8 +126,8 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
       assertTrue(test.isEqual(loaded));
       assertNotSame(test, loaded);
       assertNotSame(mop.loadObjectByID(test.getID()), mop.loadObjectByID(test.getID()));
-      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(), this.imo,
-                   false);
+      loaded.apply(newPhysicalDNA(true), new TransactionID(++this.transactionSequence), new ApplyTransactionInfo(),
+                   this.imo, false);
     }
   }
 
@@ -269,11 +266,6 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
 
     public ObjectID getParentObjectID() throws DNAException {
       return this.parentObjectID;
-    }
-
-    public void setHeaderInformation(final ObjectID id, final ObjectID parentID, final String type, final int length,
-                                     final long version) throws DNAException {
-      return;
     }
 
     public void addPhysicalAction(final String field, final Object value) throws DNAException {

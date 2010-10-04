@@ -24,7 +24,6 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
-import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -35,6 +34,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Note: If the format of the Transaction Batch changes, then it has to be reflected in three place.<br>
+ * 1) This file - {@link com.tc.objectserver.tx.TransactionBatchReaderImpl} <br>
+ * 2) The client side writer - {@link com.tc.object.tx.TrasactionBatchWriter} and <br>
+ * 3) The server side writer - {@link com.tc.objectserver.tx.TransactionBatchWriterImpl}
+ */
 public class TransactionBatchReaderImpl implements TransactionBatchReader {
 
   private static final TCLogger                        logger      = TCLogging
@@ -65,10 +70,10 @@ public class TransactionBatchReaderImpl implements TransactionBatchReader {
     this.txnToRead = this.numTxns;
     this.serializer = serializer;
     this.containsSyncWriteTransaction = this.in.readBoolean();
-    Assert.assertNotNull(globalSeverStats);
-    Assert.assertNotNull(globalSeverStats.getTransactionSizeCounter());
-    // transactionSize = Sum of Size of transactions / number of transactions
-    globalSeverStats.getTransactionSizeCounter().increment(this.in.getTotalLength(), this.numTxns);
+    if (globalSeverStats != null) {
+      // transactionSize = Sum of Size of transactions / number of transactions
+      globalSeverStats.getTransactionSizeCounter().increment(this.in.getTotalLength(), this.numTxns);
+    }
   }
 
   public boolean containsSyncWriteTransaction() {

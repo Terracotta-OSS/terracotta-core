@@ -18,11 +18,13 @@ import java.util.Map;
 
 public final class PassiveServerTransactionFactory implements ServerTransactionFactory {
 
-  public ServerTransaction createServerTransaction(TxnBatchID batchID, TransactionID txnID, SequenceID sequenceID,
-                                                   LockID[] locks, NodeID source, List dnas,
-                                                   ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
-                                                   List notifies, DmiDescriptor[] dmis, int numApplicationTxn,
-                                                   long[] highWaterMarks) {
+  public ServerTransaction createServerTransaction(final TxnBatchID batchID, final TransactionID txnID,
+                                                   final SequenceID sequenceID, final LockID[] locks,
+                                                   final NodeID source, final List dnas,
+                                                   final ObjectStringSerializer serializer, final Map newRoots,
+                                                   final TxnType txnType, final List notifies,
+                                                   final DmiDescriptor[] dmis, final int numApplicationTxn,
+                                                   final long[] highWaterMarks) {
     return new PassiveServerTransactionImpl(batchID, txnID, sequenceID, locks, source, dnas, serializer, newRoots,
                                             txnType, notifies, dmis, numApplicationTxn, highWaterMarks);
   }
