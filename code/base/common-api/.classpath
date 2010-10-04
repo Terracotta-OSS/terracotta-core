@@ -27,5 +27,4 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/xmlbeans-jsr173-api-1.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/tim-api"/>
 	<classpathentry exported="true" kind="lib" path="lib/tcconfig-xmlbeans-generated.jar"/>
-	<classpathentry kind="output" path="bin"/>
 </classpath>
