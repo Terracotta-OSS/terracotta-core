@@ -842,6 +842,8 @@ public interface TCPropertiesConsts {
    ********************************************************************************************************************/
 
   public static final String   L2_OFFHEAP_CACHE_MAP_PERCENTAGE                                 = "l2.offHeapCache.map.percentage";
+  public static final String   L2_OFFHEAP_CACHE_MAX_CHUNK_SIZE                                 = "l2.offHeapCache.max.chunk.size";
+  public static final String   L2_OFFHEAP_CACHE_MIN_CHUNK_SIZE                                 = "l2.offHeapCache.min.chunk.size";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE                        = "l2.offHeapCache.object.initialDataSize";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_TABLESIZE                               = "l2.offHeapCache.object.tableSize";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY                             = "l2.offHeapCache.object.concurrency";
