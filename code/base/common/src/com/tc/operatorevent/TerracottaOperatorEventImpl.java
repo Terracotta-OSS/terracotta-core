@@ -12,21 +12,25 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   private final EventSubsystem subSystem;
   private String               nodeName = null;
   private boolean              isRead   = false;
+  private final String         collapseString;
 
-  public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message) {
+  public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
+                                     String collapseString) {
     this.eventType = eventType;
     this.subSystem = subSystem;
     this.time = System.currentTimeMillis();
     this.eventMessage = message;
+    this.collapseString = collapseString;
   }
 
   private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String nodeName,
-                                      String message) {
+                                      String message, String collapseString) {
     this.eventType = eventType;
     this.subSystem = subsystem;
     this.time = time;
     this.nodeName = nodeName;
     this.eventMessage = message;
+    this.collapseString = collapseString;
   }
 
   public String getEventMessage() {
@@ -61,6 +65,10 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     return this.subSystem.name();
   }
 
+  public String getCollapseString() {
+    return collapseString;
+  }
+
   public int compareTo(TerracottaOperatorEventImpl o) {
     return (int) (this.time - o.time);
   }
@@ -75,13 +83,18 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     TerracottaOperatorEventImpl event = (TerracottaOperatorEventImpl) o;
     if (this.eventType != event.eventType) return false;
     if (this.subSystem != event.subSystem) return false;
+    if (!this.collapseString.equals(event.collapseString)) return false;
     return true;
   }
 
   public void markRead() {
     this.isRead = true;
   }
-  
+
+  public void markUnread() {
+    this.isRead = false;
+  }
+
   @Override
   public String toString() {
     return getEventType() + " " + getEventTime() + " " + getNodeName() + " " + getEventSubsystemAsString() + " "
@@ -94,7 +107,8 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
 
   @Override
   public TerracottaOperatorEvent clone() {
-    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.nodeName, this.eventMessage);
+    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.nodeName, this.eventMessage,
+                                           this.collapseString);
   }
 
 }

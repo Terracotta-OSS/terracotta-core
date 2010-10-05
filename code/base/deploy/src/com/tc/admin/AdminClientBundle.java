@@ -160,7 +160,7 @@ public class AdminClientBundle extends ListResourceBundle {
         { "operator.events.subsystem.view", "View By Event System" },
         { "operator.events.subsystem.memoryManager", "MEMORY MANAGER" },
         { "operator.events.subsystem.dgc", "DGC" },
-        { "operator.events.subsystem.ha", "HA" },
+        { "operator.events.subsystem.cluster.topology", "CLUSTER_TOPLOLGY" },
         { "operator.events.subsystem.lockManager", "LOCK MANAGER" },
         { "map.entry", "MapEntry" },
         { "log.error", "ERROR" },

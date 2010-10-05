@@ -17,26 +17,26 @@ public class TerracottaOperatorEventFactory {
    */
   public static TerracottaOperatorEvent createLongGCOperatorEvent(Object[] arguments) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getLongGCMessage(), arguments));
+        .format(TerracottaOperatorEventResources.getLongGCMessage(), arguments), "");
   }
 
   public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), new Object[] { memoryUsage }));
+        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), new Object[] { memoryUsage }), "");
   }
 
   public static TerracottaOperatorEvent createOffHeapMapMemoryUsageEvent(String allocated, String maxSize,
                                                                          int percentageUsed) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
         .format(TerracottaOperatorEventResources.getOffHeapMapMemoryUsageMessage(), new Object[] { allocated, maxSize,
-            percentageUsed }));
+            percentageUsed }), "");
   }
 
   public static TerracottaOperatorEvent createOffHeapObjectMemoryUsageEvent(String allocated, String maxSize,
                                                                             int percentageUsed) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
         .format(TerracottaOperatorEventResources.getOffHeapObjectMemoryUsageMessage(), new Object[] { allocated,
-            maxSize, percentageUsed }));
+            maxSize, percentageUsed }), "");
   }
 
   /**
@@ -44,48 +44,50 @@ public class TerracottaOperatorEventFactory {
    */
   public static TerracottaOperatorEvent createDGCStartedEvent() {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DGC, TerracottaOperatorEventResources
-        .getDGCStartedMessage());
+        .getDGCStartedMessage(), "dgc started");
   }
 
   public static TerracottaOperatorEvent createDGCFinishedEvent(Object[] arguments) {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DGC, MessageFormat
-        .format(TerracottaOperatorEventResources.getDGCFinishedMessage(), arguments));
+        .format(TerracottaOperatorEventResources.getDGCFinishedMessage(), arguments), "dgc finished");
   }
 
   public static TerracottaOperatorEvent createDGCCanceledEvent() {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DGC, TerracottaOperatorEventResources
-        .getDGCCanceledMessage());
+        .getDGCCanceledMessage(), "dgc canceled");
   }
 
   /**
    * High availability events
    */
   public static TerracottaOperatorEvent createNodeConnectedEvent(String nodeName) {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "joined" }));
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "joined" }),
+                                           nodeName + "joined");
   }
 
   public static TerracottaOperatorEvent createNodeDisconnectedEvent(String nodeName) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "left" }));
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getNodeAvailabiltyMessage(), new Object[] { nodeName, "left" }),
+                                           nodeName + "left");
   }
 
   public static TerracottaOperatorEvent createClusterNodeStateChangedEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments));
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments), "");
   }
 
   /**
    * zap events
    */
   public static TerracottaOperatorEvent createZapRequestReceivedEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getZapRequestReceivedMessage(), arguments));
+    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getZapRequestReceivedMessage(), arguments), "");
   }
 
   public static TerracottaOperatorEvent createZapRequestAcceptedEvent(Object[] arguments) {
-    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getZapRequestAcceptedMessage(), arguments));
+    return new TerracottaOperatorEventImpl(EventType.CRITICAL, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getZapRequestAcceptedMessage(), arguments), "");
   }
 
   public static TerracottaOperatorEvent createDirtyDBEvent() {
@@ -95,7 +97,7 @@ public class TerracottaOperatorEventFactory {
     } else {
       restart = "disabled";
     }
-    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.HA, MessageFormat
-        .format(TerracottaOperatorEventResources.getDirtyDBMessage(), new Object[] { restart }));
+    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getDirtyDBMessage(), new Object[] { restart }), "");
   }
 }
