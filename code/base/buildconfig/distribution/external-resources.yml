@@ -124,12 +124,6 @@ artifacts:
     kit_edition: opensource
 
   - maven_artifact: false
-    name: THIRD-PARTY-LICENSES.txt
-    destination: ehcache/licenses
-    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/THIRD-PARTY-LICENSES.txt
-    kit_edition: opensource
-
-  - maven_artifact: false
     name: EHCACHE-TERRACOTTA-LICENSE.txt
     destination: ehcache/licenses
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/EHCACHE-TERRACOTTA-LICENSE.txt 
