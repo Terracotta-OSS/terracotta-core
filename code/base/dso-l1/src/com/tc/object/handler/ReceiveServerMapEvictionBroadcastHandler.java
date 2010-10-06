@@ -26,17 +26,10 @@ public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandl
     if (context instanceof ServerMapEvictionBroadcastMessage) {
       final ServerMapEvictionBroadcastMessage msg = (ServerMapEvictionBroadcastMessage) context;
       Object obj = null;
-      try {
-        obj = clientObjectManager.lookupObject(msg.getMapID());
-      } catch (ClassNotFoundException e) {
-        getLogger().warn(
-                         "Failed to lookup TCServerMap for objectId=" + msg.getMapID()
-                             + ". Ignoring received ServerMapEvictionBroadcastMessage. Evicted keys size: "
-                             + msg.getEvictedKeys().size() + " Exception: " + e, e);
-      }
+      obj = clientObjectManager.lookupIfLocal(msg.getMapID());
       if (obj == null || !(obj instanceof TCServerMap)) {
         getLogger().warn(
-                         "Ignoring Server Map Broadcast message received for non TCServerMap object: oid="
+                         "Ignoring Server Map Broadcast message received for non Local or non TCServerMap object: oid="
                              + msg.getMapID() + " evictedKeysSize=" + msg.getEvictedKeys().size() + " obj=" + obj
                              + (obj != null ? " (instance of " + obj.getClass().getName() + ")" : ""));
         return;

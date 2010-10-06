@@ -13,12 +13,14 @@ import com.tc.object.msg.ServerMapEvictionBroadcastMessage;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.context.ServerMapEvictionBroadcastContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.sampled.SampledCounter;
 
 public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler implements EventHandler {
 
   private DSOChannelManager    channelManager;
   private final SampledCounter broadcastCounter;
+  private ClientStateManager   clientStateManager;
 
   public ServerMapEvictionBroadcastHandler(SampledCounter broadcastCounter) {
     this.broadcastCounter = broadcastCounter;
@@ -38,11 +40,14 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
       if (channel.isClosed()) {
         continue;
       }
-      final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
-          .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
-      broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), broadcastContext.getEvictedKeys());
-      broadcastMessage.send();
-      broadcastCounter.increment();
+      if (clientStateManager.hasReference(channel.getLocalNodeID(), broadcastContext.getMapOid())) {
+        final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
+            .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
+        broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), broadcastContext
+            .getEvictedKeys());
+        broadcastMessage.send();
+        broadcastCounter.increment();
+      }
     }
   }
 
@@ -50,5 +55,6 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
   protected void initialize(final ConfigurationContext context) {
     final ServerConfigurationContext scc = (ServerConfigurationContext) context;
     this.channelManager = scc.getChannelManager();
+    clientStateManager = scc.getClientStateManager();
   }
 }
