@@ -17,69 +17,73 @@ public class PassiveTransactionAccount implements TransactionAccount {
   private final NodeID       nodeID;
   private final Set          txnIDs = Collections.synchronizedSet(new HashSet());
   private CallBackOnComplete callback;
-  private boolean            dead = false;
+  private boolean            dead   = false;
 
-  public PassiveTransactionAccount(NodeID source) {
+  public PassiveTransactionAccount(final NodeID source) {
     this.nodeID = source;
   }
 
-  public void addWaitee(NodeID waitee, TransactionID requestID) {
+  public void addWaitee(final NodeID waitee, final TransactionID requestID) {
     throw new AssertionError("Transactions should never be broadcasted in Passive Server : " + waitee + " , "
                              + requestID);
   }
 
-  public boolean applyCommitted(TransactionID requestID) {
-    synchronized (txnIDs) {
-      txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+  public boolean applyCommitted(final TransactionID requestID) {
+    synchronized (this.txnIDs) {
+      this.txnIDs.remove(new ServerTransactionID(this.nodeID, requestID));
       invokeCallBackOnCompleteIfNecessary();
     }
     return true;
   }
 
-  public boolean broadcastCompleted(TransactionID requestID) {
+  public boolean broadcastCompleted(final TransactionID requestID) {
     throw new AssertionError("Transactions should never be broadcasted in Passive Server");
   }
 
   public NodeID getNodeID() {
-    return nodeID;
+    return this.nodeID;
   }
 
-  public boolean hasWaitees(TransactionID requestID) {
+  public boolean hasWaitees(final TransactionID requestID) {
     return false;
   }
 
-  public boolean removeWaitee(NodeID waitee, TransactionID requestID) {
+  public boolean removeWaitee(final NodeID waitee, final TransactionID requestID) {
     throw new AssertionError("Transactions should never be ACKED to Passive Server");
   }
 
-  public Set requestersWaitingFor(NodeID waitee) {
+  public Set requestersWaitingFor(final NodeID waitee) {
     return Collections.EMPTY_SET;
   }
 
-  public boolean skipApplyAndCommit(TransactionID requestID) {
-    synchronized (txnIDs) {
-      txnIDs.remove(new ServerTransactionID(nodeID, requestID));
+  public boolean skipApplyAndCommit(final TransactionID requestID) {
+    synchronized (this.txnIDs) {
+      this.txnIDs.remove(new ServerTransactionID(this.nodeID, requestID));
       invokeCallBackOnCompleteIfNecessary();
     }
     return true;
   }
 
-  public boolean relayTransactionComplete(TransactionID requestID) {
+  public boolean relayTransactionComplete(final TransactionID requestID) {
     throw new AssertionError("Transactions should never be relayed from Passive Server");
   }
 
-  public void addAllPendingServerTransactionIDsTo(Set txnsInSystem) {
-    synchronized (txnIDs) {
-      txnsInSystem.addAll(txnIDs);
+  public void addObjectsSyncedTo(final NodeID to, final TransactionID txnID) {
+    throw new AssertionError("Objects can't be synced from Passive Server");
+  }
+
+  public void addAllPendingServerTransactionIDsTo(final Set txnsInSystem) {
+    synchronized (this.txnIDs) {
+      txnsInSystem.addAll(this.txnIDs);
     }
   }
 
-  public void incommingTransactions(Set serverTxnsIDs) {
-    txnIDs.addAll(serverTxnsIDs);
+  public void incommingTransactions(final Set serverTxnsIDs) {
+    this.txnIDs.addAll(serverTxnsIDs);
   }
 
-  public void nodeDead(CallBackOnComplete callBack) {
-    synchronized (txnIDs) {
+  public void nodeDead(final CallBackOnComplete callBack) {
+    synchronized (this.txnIDs) {
       this.callback = callBack;
       this.dead = true;
       invokeCallBackOnCompleteIfNecessary();
@@ -87,13 +91,13 @@ public class PassiveTransactionAccount implements TransactionAccount {
   }
 
   private void invokeCallBackOnCompleteIfNecessary() {
-    if (dead && txnIDs.isEmpty()) {
-      callback.onComplete(nodeID);
+    if (this.dead && this.txnIDs.isEmpty()) {
+      this.callback.onComplete(this.nodeID);
     }
   }
-  
+
   @Override
   public String toString() {
-    return "PassiveTransactionAccount [ " + nodeID + " ] = " + txnIDs;
+    return "PassiveTransactionAccount [ " + this.nodeID + " ] = " + this.txnIDs;
   }
 }

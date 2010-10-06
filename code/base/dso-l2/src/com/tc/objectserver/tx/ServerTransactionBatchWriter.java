@@ -34,14 +34,14 @@ import java.util.Map.Entry;
 /**
  * This transaction Batch writer is used at the server side to create transactions
  */
-public class TransactionBatchWriterImpl {
+public class ServerTransactionBatchWriter {
 
   private static final DNAEncoding     DNA_STORAGE_ENCODING = new StorageDNAEncodingImpl();
 
   private final ObjectStringSerializer serializer;
   private final TxnBatchID             batchId;
 
-  public TransactionBatchWriterImpl(final TxnBatchID batchId, final ObjectStringSerializer serializer) {
+  public ServerTransactionBatchWriter(final TxnBatchID batchId, final ObjectStringSerializer serializer) {
     this.batchId = batchId;
     this.serializer = serializer;
   }

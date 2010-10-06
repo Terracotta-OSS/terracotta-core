@@ -4,7 +4,7 @@
  */
 package com.tc.object.tx;
 
-import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.SequenceID;
 

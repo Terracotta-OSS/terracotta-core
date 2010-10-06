@@ -23,7 +23,7 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.net.MockChannel;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionID;
-import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.CounterConfig;
 import com.tc.stats.counter.CounterManager;

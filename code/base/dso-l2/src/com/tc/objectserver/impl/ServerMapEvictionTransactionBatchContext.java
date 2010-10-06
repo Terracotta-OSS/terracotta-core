@@ -12,7 +12,7 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.TransactionBatchContext;
 import com.tc.objectserver.tx.TransactionBatchReader;
-import com.tc.objectserver.tx.TransactionBatchWriterImpl;
+import com.tc.objectserver.tx.ServerTransactionBatchWriter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,7 +45,7 @@ public class ServerMapEvictionTransactionBatchContext implements TransactionBatc
   }
 
   private TCByteBuffer[] constructTransactionBatchBuffers() {
-    final TransactionBatchWriterImpl txnWriter = new TransactionBatchWriterImpl(this.batchID, this.serializer);
+    final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(this.batchID, this.serializer);
     try {
       return txnWriter.writeTransactionBatch(this.txns);
     } catch (final Exception e) {

@@ -51,29 +51,30 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
   private final SyncLogger               syncLogger                           = new SyncLogger();
 
-  private final ServerTransactionFactory serverTransactionFactory             = new ServerTransactionFactory();
+  private final ServerTransactionFactory serverTransactionFactory;
   private final L2ObjectStateManager     objectStateManager;
 
   private GroupManager                   groupManager;
   private Sink                           syncRequestSink;
   private ServerTransactionManager       serverTxnMgr;
 
-  public L2ObjectSyncSendHandler(L2ObjectStateManager objectStateManager) {
+  public L2ObjectSyncSendHandler(final L2ObjectStateManager objectStateManager, final ServerTransactionFactory factory) {
     this.objectStateManager = objectStateManager;
+    this.serverTransactionFactory = factory;
   }
 
   @Override
-  public void handleEvent(EventContext context) {
+  public void handleEvent(final EventContext context) {
     if (context instanceof ManagedObjectSyncContext) {
-      ManagedObjectSyncContext mosc = (ManagedObjectSyncContext) context;
+      final ManagedObjectSyncContext mosc = (ManagedObjectSyncContext) context;
       if (sendObjects(mosc)) {
         if (mosc.hasMore()) {
           throttleOnObjectSync();
-          syncRequestSink.add(new SyncObjectsRequest(mosc.getNodeID()));
+          this.syncRequestSink.add(new SyncObjectsRequest(mosc.getNodeID()));
         }
       }
     } else if (context instanceof ServerTxnAckMessage) {
-      ServerTxnAckMessage txnMsg = (ServerTxnAckMessage) context;
+      final ServerTxnAckMessage txnMsg = (ServerTxnAckMessage) context;
       sendAcks(txnMsg);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
@@ -84,30 +85,32 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     if (TIME_TO_THROTTLE_ON_OBJECT_SEND > 0) {
       try {
         this.wait(TIME_TO_THROTTLE_ON_OBJECT_SEND);
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         throw new AssertionError(e);
       }
     }
   }
 
-  private void sendAcks(ServerTxnAckMessage ackMsg) {
-    if (TXN_ACK_THROTTLING_ENABLED) throttleOnTxnAck();
+  private void sendAcks(final ServerTxnAckMessage ackMsg) {
+    if (TXN_ACK_THROTTLING_ENABLED) {
+      throttleOnTxnAck();
+    }
     try {
       this.groupManager.sendTo(ackMsg.getDestinationID(), ackMsg);
-    } catch (GroupException e) {
-      String error = "ERROR sending ACKS: Caught exception while sending message to ACTIVE";
+    } catch (final GroupException e) {
+      final String error = "ERROR sending ACKS: Caught exception while sending message to ACTIVE";
       logger.error(error, e);
       // try Zapping the active server so that a split brain war is initiated, at least we won't hold the whole cluster
       // down.
-      groupManager.zapNode(ackMsg.getDestinationID(), L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
-                           error + L2HAZapNodeRequestProcessor.getErrorString(e));
+      this.groupManager.zapNode(ackMsg.getDestinationID(), L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
+                                error + L2HAZapNodeRequestProcessor.getErrorString(e));
     }
   }
 
   // A Simple way to throttle Active from Passive when the number of pending txns reaches the threshold
   private synchronized void throttleOnTxnAck() {
-    int totalPendingTxns = serverTxnMgr.getTotalPendingTransactionsCount();
-    int factor = totalPendingTxns / TOTAL_PENDING_TRANSACTIONS_THRESHOLD;
+    int totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
+    final int factor = totalPendingTxns / TOTAL_PENDING_TRANSACTIONS_THRESHOLD;
     if (factor < 1) {
       // No Throttling
       return;
@@ -123,16 +126,16 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       while (maxSecsToSleep > 0 && totalPendingTxns > ((int) (TOTAL_PENDING_TRANSACTIONS_THRESHOLD * .66))) {
         try {
           wait(1000);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
           throw new AssertionError(e);
         }
-        totalPendingTxns = serverTxnMgr.getTotalPendingTransactionsCount();
+        totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
         maxSecsToSleep--;
       }
     }
   }
 
-  private void haltUntilLessThan(int maxLimit, int totalPendingTxns) {
+  private void haltUntilLessThan(final int maxLimit, int totalPendingTxns) {
 
     logger.info("Halting Transaction Acks as limit exceeded : limit = " + maxLimit + " total Pending txns = "
                 + totalPendingTxns);
@@ -144,53 +147,53 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
       }
       try {
         wait(1000);
-      } catch (InterruptedException e) {
+      } catch (final InterruptedException e) {
         throw new AssertionError(e);
       }
-      totalPendingTxns = serverTxnMgr.getTotalPendingTransactionsCount();
+      totalPendingTxns = this.serverTxnMgr.getTotalPendingTransactionsCount();
     } while (maxLimit < totalPendingTxns);
     logger.info("Starting Transaction Acks as limit reached : limit = " + maxLimit + " total Pending txns = "
                 + totalPendingTxns);
   }
 
-  private boolean sendObjects(ManagedObjectSyncContext mosc) {
+  private boolean sendObjects(final ManagedObjectSyncContext mosc) {
 
     ServerTransactionID sid = ServerTransactionID.NULL_ID;
     try {
-      sid = serverTransactionFactory.getNextServerTransactionID(groupManager.getLocalNodeID());
-      ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc, sid);
-      serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
+      sid = this.serverTransactionFactory.getNextServerTransactionID(this.groupManager.getLocalNodeID());
+      final ObjectSyncMessage msg = ObjectSyncMessageFactory.createObjectSyncMessageFrom(mosc, sid);
+      this.serverTxnMgr.objectsSynched(mosc.getNodeID(), sid);
       this.groupManager.sendTo(mosc.getNodeID(), msg);
-      syncLogger.logSynced(mosc);
-      objectStateManager.close(mosc);
+      this.syncLogger.logSynced(mosc);
+      this.objectStateManager.close(mosc);
       return true;
-    } catch (GroupException e) {
-      serverTxnMgr.acknowledgement(sid.getSourceID(), sid.getClientTransactionID(), mosc.getNodeID());
+    } catch (final GroupException e) {
+      this.serverTxnMgr.acknowledgement(sid.getSourceID(), sid.getClientTransactionID(), mosc.getNodeID());
       logger.error("Removing " + mosc.getNodeID() + " from group because of Exception :", e);
-      groupManager.zapNode(mosc.getNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
-                           "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));
+      this.groupManager.zapNode(mosc.getNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));
       return false;
     }
   }
 
   @Override
-  public void initialize(ConfigurationContext context) {
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    ServerConfigurationContext oscc = (ServerConfigurationContext) context;
+    final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.serverTxnMgr = oscc.getTransactionManager();
-    L2Coordinator l2Coordinator = oscc.getL2Coordinator();
+    final L2Coordinator l2Coordinator = oscc.getL2Coordinator();
     this.groupManager = l2Coordinator.getGroupManager();
     this.syncRequestSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE).getSink();
   }
 
   private static class SyncLogger {
 
-    public void logSynced(ManagedObjectSyncContext mosc) {
-      int current = mosc.getTotalObjectsSynced();
-      int last = current - mosc.getLookupIDs().size();
-      int totalObjectsToSync = mosc.getTotalObjectsToSync();
-      int lastPercent = (last * 100) / totalObjectsToSync;
-      int currentPercent = (current * 100) / totalObjectsToSync;
+    public void logSynced(final ManagedObjectSyncContext mosc) {
+      final int current = mosc.getTotalObjectsSynced();
+      final int last = current - mosc.getLookupIDs().size();
+      final int totalObjectsToSync = mosc.getTotalObjectsToSync();
+      final int lastPercent = (last * 100) / totalObjectsToSync;
+      final int currentPercent = (current * 100) / totalObjectsToSync;
 
       if (currentPercent > lastPercent) {
         logger.info("Sent " + current + " (" + currentPercent + "%) objects out of " + mosc.getTotalObjectsToSync()

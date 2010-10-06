@@ -36,6 +36,7 @@ import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedObjectManagerImpl;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManagerImpl;
+import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.operatorevent.OperatorEventsZapRequestListener;
 import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
@@ -88,12 +89,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private final L2TVSConfigurationSetupManager            configSetupManager;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
 
-  public L2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server, StageManager stageManager,
-                         GroupManager groupCommsManager, PersistentMapStore persistentStateStore,
-                         ObjectManager objectManager, ServerTransactionManager transactionManager,
-                         ServerGlobalTransactionManager gtxm, WeightGeneratorFactory weightGeneratorFactory,
-                         L2TVSConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
-                         GroupID thisGroupID, StripeIDStateManager stripeIDStateManager) {
+  public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
+                         final StageManager stageManager, final GroupManager groupCommsManager,
+                         final PersistentMapStore persistentStateStore, final ObjectManager objectManager,
+                         final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
+                         final WeightGeneratorFactory weightGeneratorFactory,
+                         final L2TVSConfigurationSetupManager configurationSetupManager,
+                         final MessageRecycler recycler, final GroupID thisGroupID,
+                         final StripeIDStateManager stripeIDStateManager,
+                         final ServerTransactionFactory serverTransactionFactory) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -101,23 +105,26 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.configSetupManager = configurationSetupManager;
 
     init(stageManager, persistentStateStore, objectManager, transactionManager, gtxm, weightGeneratorFactory, recycler,
-         stripeIDStateManager);
+         stripeIDStateManager, serverTransactionFactory);
   }
 
-  private void init(StageManager stageManager, PersistentMapStore persistentStateStore, ObjectManager objectManager,
-                    ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
-                    WeightGeneratorFactory weightGeneratorFactory, MessageRecycler recycler,
-                    StripeIDStateManager stripeIDStateManager) {
+  private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
+                    final ObjectManager objectManager, final ServerTransactionManager transactionManager,
+                    final ServerGlobalTransactionManager gtxm, final WeightGeneratorFactory weightGeneratorFactory,
+                    final MessageRecycler recycler, final StripeIDStateManager stripeIDStateManager,
+                    final ServerTransactionFactory serverTransactionFactory) {
 
-    boolean isCleanDB = isCleanDB(persistentStateStore);
+    final boolean isCleanDB = isCleanDB(persistentStateStore);
 
-    ClusterState clusterState = new ClusterState(persistentStateStore, server.getManagedObjectStore(), server
-        .getConnectionIdFactory(), gtxm.getGlobalTransactionIDSequenceProvider(), thisGroupID, stripeIDStateManager);
+    final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
+                                                       this.server.getConnectionIdFactory(), gtxm
+                                                           .getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
+                                                       stripeIDStateManager);
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
 
     new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
 
-    this.stateManager = new StateManagerImpl(consoleLogger, groupManager, stateChangeSink,
+    this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(this.configSetupManager.haConfig()),
                                              createWeightGeneratorFactoryForStateManager(gtxm));
     this.stateManager.registerForStateChangeEvents(this);
@@ -125,8 +132,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
     this.sequenceGenerator = new SequenceGenerator(this);
 
-    L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(consoleLogger, stateManager,
-                                                                               groupManager, weightGeneratorFactory);
+    final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
+                                                                                     this.stateManager,
+                                                                                     this.groupManager,
+                                                                                     weightGeneratorFactory);
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
@@ -134,11 +143,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
         .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
                      new L2ObjectSyncRequestHandler(this.l2ObjectStateManager), 1, Integer.MAX_VALUE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
-                                                          new L2ObjectSyncHandler(), 1, Integer.MAX_VALUE).getSink();
+                                                          new L2ObjectSyncHandler(serverTransactionFactory), 1,
+                                                          Integer.MAX_VALUE).getSink();
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE,
                              new L2ObjectSyncDehydrateHandler(this.sequenceGenerator), 1, Integer.MAX_VALUE);
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
-                             new L2ObjectSyncSendHandler(this.l2ObjectStateManager), 1, Integer.MAX_VALUE);
+                             new L2ObjectSyncSendHandler(this.l2ObjectStateManager, serverTransactionFactory), 1,
+                             Integer.MAX_VALUE);
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
                              new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
                              Integer.MAX_VALUE);
@@ -150,16 +161,24 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink gcResultSink = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
                                                        new GCResultHandler(), 1, Integer.MAX_VALUE).getSink();
 
-    this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(groupManager, stateManager, clusterState, server
-        .getConnectionIdFactory(), stageManager.getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE).getSink());
+    this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
+                                                                  this.groupManager,
+                                                                  this.stateManager,
+                                                                  clusterState,
+                                                                  this.server.getConnectionIdFactory(),
+                                                                  stageManager
+                                                                      .getStage(
+                                                                                ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE)
+                                                                      .getSink());
 
-    OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
-    this.rTxnManager = new ReplicatedTransactionManagerImpl(groupManager, orderedObjectsSyncSink, transactionManager,
-                                                            gtxm, recycler);
+    final OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
+    this.rTxnManager = new ReplicatedTransactionManagerImpl(this.groupManager, orderedObjectsSyncSink,
+                                                            transactionManager, gtxm, recycler);
 
-    this.rObjectManager = new ReplicatedObjectManagerImpl(groupManager, stateManager, l2ObjectStateManager,
-                                                          rTxnManager, objectManager, transactionManager,
-                                                          objectsSyncRequestSink, sequenceGenerator, isCleanDB);
+    this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
+                                                          this.l2ObjectStateManager, this.rTxnManager, objectManager,
+                                                          transactionManager, objectsSyncRequestSink,
+                                                          this.sequenceGenerator, isCleanDB);
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
@@ -171,12 +190,12 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
                                                           new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)
         .getSink();
-    GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
-    groupManager.registerForGroupEvents(dispatcher);
+    final GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
+    this.groupManager.registerForGroupEvents(dispatcher);
   }
 
-  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager(ServerGlobalTransactionManager gtxm) {
-    WeightGeneratorFactory wgf = new WeightGeneratorFactory();
+  private WeightGeneratorFactory createWeightGeneratorFactoryForStateManager(final ServerGlobalTransactionManager gtxm) {
+    final WeightGeneratorFactory wgf = new WeightGeneratorFactory();
     // TODO::FIXME :: this is probably not the right thing to do since a runnign active might have current gid < curreng
     // gid in a just turned active because of how things are wired.
     //
@@ -192,129 +211,128 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   }
 
   public void start() {
-    stateManager.startElection();
+    this.stateManager.startElection();
   }
 
   public StateManager getStateManager() {
-    return stateManager;
+    return this.stateManager;
   }
 
   public ReplicatedClusterStateManager getReplicatedClusterStateManager() {
-    return rClusterStateMgr;
+    return this.rClusterStateMgr;
   }
 
   public ReplicatedObjectManager getReplicatedObjectManager() {
-    return rObjectManager;
+    return this.rObjectManager;
   }
 
   public ReplicatedTransactionManager getReplicatedTransactionManager() {
-    return rTxnManager;
+    return this.rTxnManager;
   }
 
   public GroupManager getGroupManager() {
-    return groupManager;
+    return this.groupManager;
   }
 
-  public void l2StateChanged(StateChangedEvent sce) {
+  public void l2StateChanged(final StateChangedEvent sce) {
     // someone wants to be notified earlier
     fireStateChangedEvent(sce);
 
     this.rClusterStateMgr.setCurrentState(sce.getCurrentState());
-    rTxnManager.l2StateChanged(sce);
+    this.rTxnManager.l2StateChanged(sce);
     if (sce.movedToActive()) {
-      rClusterStateMgr.goActiveAndSyncState();
-      rObjectManager.sync();
-      server.startActiveMode();
+      this.rClusterStateMgr.goActiveAndSyncState();
+      this.rObjectManager.sync();
+      this.server.startActiveMode();
       startL1Listener();
     }
   }
 
-  private void fireStateChangedEvent(StateChangedEvent sce) {
-    for (StateChangeListener listener : listeners) {
+  private void fireStateChangedEvent(final StateChangedEvent sce) {
+    for (final StateChangeListener listener : this.listeners) {
       listener.l2StateChanged(sce);
     }
   }
 
-  public void registerForStateChangeEvents(StateChangeListener listener) {
-    listeners.add(listener);
+  public void registerForStateChangeEvents(final StateChangeListener listener) {
+    this.listeners.add(listener);
   }
 
   protected void startL1Listener() {
     try {
-      server.startL1Listener();
-    } catch (IOException e) {
+      this.server.startL1Listener();
+    } catch (final IOException e) {
       throw new AssertionError(e);
     }
   }
 
-  public void nodeJoined(NodeID nodeID) {
+  public void nodeJoined(final NodeID nodeID) {
     log(nodeID + " joined the cluster");
-    if (stateManager.isActiveCoordinator()) {
+    if (this.stateManager.isActiveCoordinator()) {
       try {
-        stateManager.publishActiveState(nodeID);
-        rClusterStateMgr.publishClusterState(nodeID);
-        rObjectManager.query(nodeID);
-      } catch (GroupException ge) {
-        String errMesg = "A Terracotta server tried to join the mirror group as a second ACTIVE: " + nodeID
-                         + " Zapping it to allow it to join as PASSIVE standby (backup): ";
+        this.stateManager.publishActiveState(nodeID);
+        this.rClusterStateMgr.publishClusterState(nodeID);
+        this.rObjectManager.query(nodeID);
+      } catch (final GroupException ge) {
+        final String errMesg = "A Terracotta server tried to join the mirror group as a second ACTIVE: " + nodeID
+                               + " Zapping it to allow it to join as PASSIVE standby (backup): ";
         logger.error(errMesg, ge);
-        groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR, errMesg
-                                                                                      + L2HAZapNodeRequestProcessor
-                                                                                          .getErrorString(ge));
+        this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                  errMesg + L2HAZapNodeRequestProcessor.getErrorString(ge));
       }
     }
   }
 
-  private void log(String message) {
+  private void log(final String message) {
     logger.info(message);
-    consoleLogger.info(message);
+    this.consoleLogger.info(message);
   }
 
-  private void warn(String message) {
+  private void warn(final String message) {
     logger.warn(message);
-    consoleLogger.warn(message);
+    this.consoleLogger.warn(message);
   }
 
-  public void nodeLeft(NodeID nodeID) {
+  public void nodeLeft(final NodeID nodeID) {
     warn(nodeID + " left the cluster");
-    if (stateManager.isActiveCoordinator()) {
-      rObjectManager.clear(nodeID);
-      rClusterStateMgr.fireNodeLeftEvent(nodeID);
+    if (this.stateManager.isActiveCoordinator()) {
+      this.rObjectManager.clear(nodeID);
+      this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
     } else {
-      stateManager.startElectionIfNecessary(nodeID);
+      this.stateManager.startElectionIfNecessary(nodeID);
     }
     this.sequenceGenerator.clearSequenceFor(nodeID);
   }
 
-  public void sequenceCreatedFor(Object key) throws SequenceGeneratorException {
-    NodeID nodeID = (NodeID) key;
+  public void sequenceCreatedFor(final Object key) throws SequenceGeneratorException {
+    final NodeID nodeID = (NodeID) key;
     try {
-      rTxnManager.publishResetRequest(nodeID);
-    } catch (GroupException ge) {
+      this.rTxnManager.publishResetRequest(nodeID);
+    } catch (final GroupException ge) {
       logger.error("Error publishing reset counter request node : " + nodeID + " Zapping it : ", ge);
-      groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
-                           "Error publishing reset counter for " + nodeID
-                               + L2HAZapNodeRequestProcessor.getErrorString(ge));
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error publishing reset counter for " + nodeID
+                                    + L2HAZapNodeRequestProcessor.getErrorString(ge));
       throw new SequenceGeneratorException(ge);
     }
   }
 
-  public void sequenceDestroyedFor(Object key) {
+  public void sequenceDestroyedFor(final Object key) {
     // NOP
   }
 
-  private boolean isCleanDB(PersistentMapStore clusterStateStore) {
+  private boolean isCleanDB(final PersistentMapStore clusterStateStore) {
     if (clusterStateStore.get(DATABASE_CREATION_TIMESTAMP_KEY) == null) {
-      Calendar cal = Calendar.getInstance();
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+      final Calendar cal = Calendar.getInstance();
+      final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
       clusterStateStore.put(DATABASE_CREATION_TIMESTAMP_KEY, sdf.format(cal.getTime()));
       return true;
     }
     return false;
   }
 
-  public PrettyPrinter prettyPrint(PrettyPrinter out) {
-    StringBuilder strBuilder = new StringBuilder();
+  public PrettyPrinter prettyPrint(final PrettyPrinter out) {
+    final StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
     strBuilder.append(this.thisGroupID).append(" ").append(this.l2ObjectStateManager);
     strBuilder.append(" ]");

@@ -49,14 +49,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-public class TransactionBatchWriter implements ClientTransactionBatch {
+public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private static final boolean                  DEBUG                  = TCPropertiesImpl
                                                                            .getProperties()
                                                                            .getBoolean(
                                                                                        TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
 
   private static final TCLogger                 logger                 = TCLogging
-                                                                           .getLogger(TransactionBatchWriter.class);
+                                                                           .getLogger(ClientTransactionBatchWriter.class);
 
   private final GroupID                         groupID;
   private final CommitTransactionMessageFactory commitTransactionMessageFactory;
@@ -77,7 +77,7 @@ public class TransactionBatchWriter implements ClientTransactionBatch {
   private int                                   numTxnsAfterFolding    = 0;
   private boolean                               containsSyncWriteTxn   = false;
 
-  public TransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
+  public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
                                 final ObjectStringSerializer serializer, final DNAEncoding encoding,
                                 final CommitTransactionMessageFactory commitTransactionMessageFactory,
                                 final FoldingConfig foldingConfig) {

@@ -9,6 +9,7 @@ import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
@@ -119,7 +120,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2TVSConfigurationSetupManager configurationSetupManager,
-                                      MessageRecycler recycler, StripeIDStateManager stripeStateManager);
+                                      MessageRecycler recycler, StripeIDStateManager stripeStateManager,
+                                      ServerTransactionFactory serverTransactionFactory);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

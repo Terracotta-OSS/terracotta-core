@@ -265,9 +265,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   // This method is called when objects are sent to sync, this is done to maintain correct booking since things like DGC
   // relies on this to decide when to send the results
   public void objectsSynched(final NodeID to, final ServerTransactionID stid) {
-    final TransactionAccount ci = getOrCreateObjectSyncTransactionAccount(stid.getSourceID()); // Local Node ID
+    final TransactionAccount ci = getOrCreateTransactionAccount(stid.getSourceID()); // Local Node ID
     this.totalPendingTransactions.incrementAndGet();
-    ci.addWaitee(to, stid.getClientTransactionID());
+    ci.addObjectsSyncedTo(to, stid.getClientTransactionID());
   }
 
   // For testing
@@ -313,6 +313,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     final NodeID sourceID = txn.getSourceID();
     final TransactionID txnID = txn.getTransactionID();
     final List changes = txn.getChanges();
+    final boolean isClient = sourceID.getNodeType() == NodeID.CLIENT_NODE_TYPE;
 
     final GlobalTransactionID gtxID = txn.getGlobalTransactionID();
 
@@ -335,9 +336,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         final DNAImpl dnaImpl = (DNAImpl) orgDNA;
         dnaImpl.setTypeClassName(mo.getManagedObjectState().getClassName());
       }
-      if (active && !change.isDelta()) {
+      if (active && !change.isDelta() && isClient) {
         // Only New objects reference are added here
-        this.stateManager.addReference(txn.getSourceID(), mo.getID());
+        this.stateManager.addReference(sourceID, mo.getID());
       }
     }
 
@@ -351,7 +352,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         this.objectManager.createRoot(rootName, newID);
       }
     }
-    if (active) {
+    if (active && isClient) {
       this.channelStats.notifyTransaction(sourceID, txn.getNumApplicationTxn());
     }
     this.transactionRateCounter.increment(txn.getNumApplicationTxn());
@@ -489,27 +490,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
     }
   }
 
-  private TransactionAccount getOrCreateObjectSyncTransactionAccount(final NodeID localID) {
-    synchronized (this.transactionAccounts) {
-      if (this.state != ACTIVE_MODE) { throw new AssertionError(
-                                                                "ServerTransactionManager is not in ACTIVE_MODE, the current state = "
-                                                                    + this.state); }
-      TransactionAccount ta = this.transactionAccounts.get(localID);
-      if (ta == null) {
-        this.transactionAccounts.put(localID, (ta = new ObjectSynchTransactionAccount(localID)));
-      }
-      return ta;
-    }
-  }
-
   private TransactionAccount getOrCreateTransactionAccount(final NodeID source) {
     synchronized (this.transactionAccounts) {
       TransactionAccount ta = this.transactionAccounts.get(source);
-      if (ta != null && ta instanceof ObjectSynchTransactionAccount) { throw new AssertionError(
-                                                                                                "Transaction Account is of type ObjectSyncTransactionAccount : "
-                                                                                                    + ta
-                                                                                                    + " source Id  : "
-                                                                                                    + source); }
       if (this.state == ACTIVE_MODE) {
         if ((ta == null) || (ta instanceof PassiveTransactionAccount)) {
           final Object old = this.transactionAccounts.put(source, (ta = new TransactionAccountImpl(source)));

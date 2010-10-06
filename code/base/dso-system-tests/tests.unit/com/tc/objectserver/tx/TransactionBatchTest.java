@@ -25,15 +25,15 @@ import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.ClientTransaction;
 import com.tc.object.tx.ClientTransactionImpl;
 import com.tc.object.tx.TestClientTransaction;
-import com.tc.object.tx.TransactionBatchWriter;
+import com.tc.object.tx.ClientTransactionBatchWriter;
 import com.tc.object.tx.TransactionContext;
 import com.tc.object.tx.TransactionContextImpl;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
-import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.properties.TCProperties;
@@ -62,7 +62,7 @@ public class TransactionBatchTest extends TestCase {
 
   private final DNAEncoding                   encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
 
-  private TransactionBatchWriter              writer;
+  private ClientTransactionBatchWriter              writer;
   private TestCommitTransactionMessageFactory messageFactory;
 
   @Override
@@ -71,15 +71,15 @@ public class TransactionBatchTest extends TestCase {
     this.writer = newWriter(new ObjectStringSerializer());
   }
 
-  private TransactionBatchWriter newWriter(final ObjectStringSerializer serializer) {
-    return new TransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
+  private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer) {
+    return new ClientTransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
                                       this.messageFactory, FoldingConfig.createFromProperties(TCPropertiesImpl
                                           .getProperties()));
   }
 
-  private TransactionBatchWriter newWriter(final ObjectStringSerializer serializer, final boolean foldEnabled,
+  private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer, final boolean foldEnabled,
                                            final int lockLimit, final int objectLimit) {
-    return new TransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
+    return new ClientTransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
                                       this.messageFactory, new FoldingConfig(foldEnabled, objectLimit, lockLimit));
   }
 
@@ -161,7 +161,7 @@ public class TransactionBatchTest extends TestCase {
     final ClientTransaction txn2 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 
-    this.writer = new TransactionBatchWriter(GroupID.NULL_ID, batchID, serializer, this.encoding, mf, FoldingConfig
+    this.writer = new ClientTransactionBatchWriter(GroupID.NULL_ID, batchID, serializer, this.encoding, mf, FoldingConfig
         .createFromProperties(TCPropertiesImpl.getProperties()));
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();

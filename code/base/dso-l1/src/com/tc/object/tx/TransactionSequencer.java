@@ -10,7 +10,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
-import com.tc.object.tx.TransactionBatchWriter.FoldedInfo;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.counter.Counter;

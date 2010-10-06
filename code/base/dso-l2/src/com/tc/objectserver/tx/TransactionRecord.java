@@ -14,49 +14,57 @@ public class TransactionRecord {
   private final Set<NodeID>      waitees;
 
   public TransactionRecord() {
-    this.state = new TransactionState();
+    this(false);
+  }
+
+  public TransactionRecord(final boolean objectSyncRecord) {
     this.waitees = new HashSet<NodeID>();
+    if (objectSyncRecord) {
+      this.state = TransactionState.COMPLETED_STATE;
+    } else {
+      this.state = new TransactionState();
+    }
   }
 
   public void relayTransactionComplete() {
-    state.relayTransactionComplete();
+    this.state.relayTransactionComplete();
   }
 
   public void applyAndCommitSkipped() {
-    state.applyAndCommitSkipped();
+    this.state.applyAndCommitSkipped();
   }
 
   public void applyCommitted() {
-    state.applyCommitted();
+    this.state.applyCommitted();
   }
 
   public void broadcastCompleted() {
-    state.broadcastCompleted();
+    this.state.broadcastCompleted();
   }
 
   public boolean isComplete() {
-    return state.isComplete() && waitees.isEmpty();
+    return this.state.isComplete() && this.waitees.isEmpty();
   }
 
   @Override
   public String toString() {
-    return "TransactionRecord@" + System.identityHashCode(this) + " = " + state + "  :: waitees = " + waitees;
+    return "TransactionRecord@" + System.identityHashCode(this) + " = " + this.state + "  :: waitees = " + this.waitees;
   }
 
-  public boolean addWaitee(NodeID waitee) {
-    return waitees.add(waitee);
+  public boolean addWaitee(final NodeID waitee) {
+    return this.waitees.add(waitee);
   }
 
-  public boolean remove(NodeID waitee) {
-    return waitees.remove(waitee);
+  public boolean remove(final NodeID waitee) {
+    return this.waitees.remove(waitee);
   }
 
   public boolean isEmpty() {
-    return waitees.isEmpty();
+    return this.waitees.isEmpty();
   }
 
-  public boolean contains(NodeID waitee) {
-    return waitees.contains(waitee);
+  public boolean contains(final NodeID waitee) {
+    return this.waitees.contains(waitee);
   }
 
 }

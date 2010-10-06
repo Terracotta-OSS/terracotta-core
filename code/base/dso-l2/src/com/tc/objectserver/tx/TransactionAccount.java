@@ -16,30 +16,31 @@ public interface TransactionAccount {
   /*
    * returns true if completed, false if not completed or if the client has sent a duplicate ACK.
    */
-  public boolean removeWaitee(NodeID waitee, TransactionID requestID);
+  public boolean removeWaitee(NodeID waitee, TransactionID txnID);
 
-  public void addWaitee(NodeID waitee, TransactionID requestID);
+  public void addWaitee(NodeID waitee, TransactionID txnID);
 
-  public boolean skipApplyAndCommit(TransactionID requestID);
+  public boolean skipApplyAndCommit(TransactionID txnID);
 
-  public boolean applyCommitted(TransactionID requestID);
+  public boolean applyCommitted(TransactionID txnID);
 
-  public boolean broadcastCompleted(TransactionID requestID);
+  public boolean broadcastCompleted(TransactionID txnID);
 
-  public boolean hasWaitees(TransactionID requestID);
+  public boolean hasWaitees(TransactionID txnID);
 
   public Set requestersWaitingFor(NodeID nodeID);
 
-  public boolean relayTransactionComplete(TransactionID requestID);
+  public boolean relayTransactionComplete(TransactionID txnID);
 
   public void incommingTransactions(Set serverTxnIDs);
 
   public void addAllPendingServerTransactionIDsTo(Set txnsInSystem);
+
+  public void addObjectsSyncedTo(NodeID to, TransactionID txnID);
 
   public void nodeDead(CallBackOnComplete callBack);
 
   public interface CallBackOnComplete {
     public void onComplete(NodeID dead);
   }
-
 }

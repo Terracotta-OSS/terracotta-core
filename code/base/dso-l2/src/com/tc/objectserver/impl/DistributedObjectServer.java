@@ -38,6 +38,7 @@ import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
+import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
@@ -54,8 +55,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -503,11 +504,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final boolean persistent = persistenceMode.equals(PersistenceMode.PERMANENT_STORE);
 
     final OffHeapConfigObject offHeapConfig = l2DSOConfig.offHeapConfig().getOffHeapConfigObject();
-    final Properties bdbProperties = l2Properties.getPropertiesFor("berkeleydb").addAllPropertiesTo(new Properties());
+    final Properties bdbProperties = this.l2Properties.getPropertiesFor("berkeleydb")
+        .addAllPropertiesTo(new Properties());
 
     // for temp-swap under offheap mode, bdb memory requirement is less
     if (!persistent && offHeapConfig.isEnabled()) {
-      Integer newBDBMemPercentage = Integer.parseInt(bdbProperties.getProperty("je.maxMemoryPercent")) / 3;
+      final Integer newBDBMemPercentage = Integer.parseInt(bdbProperties.getProperty("je.maxMemoryPercent")) / 3;
       bdbProperties.setProperty("je.maxMemoryPercent", newBDBMemPercentage.toString());
       logger.info("Since running OffHeap in temp-swap mode, setting je.maxMemoryPercent to "
                   + newBDBMemPercentage.toString());
@@ -555,9 +557,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter l2FaultFromOffheap = (SampledCounter) sampledCounterManager
+    final SampledCounter l2FaultFromOffheap = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
-    final SampledCounter l2FlushFromOffheap = (SampledCounter) sampledCounterManager
+    final SampledCounter l2FlushFromOffheap = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
 
     if (swapEnabled) {
@@ -576,18 +578,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       final CallbackOnExitHandler dirtydbHandler = new CallbackDatabaseDirtyAlertAdapter(logger, consoleLogger);
       this.threadGroup.addCallbackOnExitExceptionHandler(DatabaseDirtyException.class, dirtydbHandler);
 
-      dbenv = this.serverBuilder
-          .createDBEnvironment(persistent, dbhome, l2DSOConfig, this, stageManager, l2FaultFromDisk,
-                               l2FaultFromOffheap, l2FlushFromOffheap, dbFactory);
+      this.dbenv = this.serverBuilder.createDBEnvironment(persistent, dbhome, l2DSOConfig, this, stageManager,
+                                                          l2FaultFromDisk, l2FaultFromOffheap, l2FlushFromOffheap,
+                                                          dbFactory);
       final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
-      this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), dbenv,
+      this.persistor = new DBPersistorImpl(TCLogging.getLogger(DBPersistorImpl.class), this.dbenv,
                                            serializationAdapterFactory, this.configSetupManager.commonl2Config()
                                                .dataPath().getFile(), this.objectStatsRecorder);
-      sraForDbEnv = dbenv.getSRAs();
+      sraForDbEnv = this.dbenv.getSRAs();
 
       // Setting the DB environment for the bean which takes backup of the active server
       if (persistent) {
-        this.l2Management.initBackupMbean(dbenv);
+        this.l2Management.initBackupMbean(this.dbenv);
       }
 
       // register the terracotta operator event logger
@@ -971,12 +973,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                        objectRequestStage.getSink());
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapRequestManager));
 
-    this.serverMapEvictor = new ServerMapEvictionManagerImpl(this.objectManager, this.objectStore,
-                                                             this.clientStateManager, objectManagerConfig
-                                                                 .gcThreadSleepTime() > 0 ? ((objectManagerConfig
+    final ServerTransactionFactory serverTransactionFactory = new ServerTransactionFactory();
+    this.serverMapEvictor = new ServerMapEvictionManagerImpl(
+                                                             this.objectManager,
+                                                             this.objectStore,
+                                                             this.clientStateManager,
+                                                             serverTransactionFactory,
+                                                             objectManagerConfig.gcThreadSleepTime() > 0 ? ((objectManagerConfig
                                                                  .gcThreadSleepTime() + 1) / 2)
-                                                                 : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME,
-                                                             transactionStorePTP);
+                                                                 : ServerMapEvictionManagerImpl.DEFAULT_SLEEP_TIME);
     toInit.add(this.serverMapEvictor);
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.serverMapEvictor));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_EVICTION_BROADCAST_STAGE,
@@ -1046,6 +1051,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  sequenceValidator,
                                                                                                  this.clientStateManager,
                                                                                                  this.lockManager,
+                                                                                                 this.serverMapEvictor,
                                                                                                  stageManager
                                                                                                      .getStage(
                                                                                                                ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
@@ -1103,7 +1109,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                         .getPersistentStateStore(), this.objectManager,
                                                                     this.transactionManager, gtxm,
                                                                     weightGeneratorFactory, this.configSetupManager,
-                                                                    recycler, this.stripeIDStateManager);
+                                                                    recycler, this.stripeIDStateManager,
+                                                                    serverTransactionFactory);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -1356,7 +1363,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       registry.registerActionInstance(new SRAL2ServerMapGetSizeRequestsRate(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsCount(serverStats));
       registry.registerActionInstance(new SRAL2ServerMapGetValueRequestsRate(serverStats));
-      for (StatisticRetrievalAction sraForDbEnv : srasForDbEnv) {
+      for (final StatisticRetrievalAction sraForDbEnv : srasForDbEnv) {
         registry.registerActionInstance(sraForDbEnv);
       }
 
@@ -1370,7 +1377,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public void startActiveMode() {
     this.transactionManager.goToActiveMode();
-    this.serverMapEvictor.startEvictor();
   }
 
   public void startL1Listener() throws IOException {

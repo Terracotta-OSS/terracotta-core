@@ -38,7 +38,7 @@ import java.util.Map;
  * Note: If the format of the Transaction Batch changes, then it has to be reflected in three place.<br>
  * 1) This file - {@link com.tc.objectserver.tx.TransactionBatchReaderImpl} <br>
  * 2) The client side writer - {@link com.tc.object.tx.TrasactionBatchWriter} and <br>
- * 3) The server side writer - {@link com.tc.objectserver.tx.TransactionBatchWriterImpl}
+ * 3) The server side writer - {@link com.tc.objectserver.tx.ServerTransactionBatchWriter}
  */
 public class TransactionBatchReaderImpl implements TransactionBatchReader {
 

@@ -8,7 +8,7 @@ import com.tc.net.GroupID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.msg.CommitTransactionMessageFactory;
-import com.tc.object.tx.TransactionBatchWriter.FoldingConfig;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 
 public class TransactionBatchWriterFactory implements TransactionBatchFactory {
 
@@ -25,7 +25,7 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
   }
 
   public synchronized ClientTransactionBatch nextBatch(GroupID groupID) {
-    return new TransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence), new ObjectStringSerializer(), encoding,
+    return new ClientTransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence), new ObjectStringSerializer(), encoding,
                                       messageFactory, foldingConfig);
   }
 

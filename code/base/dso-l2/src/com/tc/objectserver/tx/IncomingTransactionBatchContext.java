@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.List;
@@ -44,6 +45,10 @@ public class IncomingTransactionBatchContext implements TransactionBatchContext 
 
   public TransactionBatchReader getTransactionBatchReader() {
     return this.reader;
+  }
+
+  public ObjectStringSerializer getSerializer() {
+    return this.reader.getSerializer();
   }
 
   public NodeID getSourceNodeID() {

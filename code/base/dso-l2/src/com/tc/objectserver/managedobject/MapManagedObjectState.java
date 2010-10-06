@@ -88,16 +88,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     includeIDs.addBackReference(key, map);
   }
 
-  protected void addBackReferenceForValue(final ApplyTransactionInfo includeIDs, final ObjectID value, final ObjectID map) {
+  protected void addBackReferenceForValue(final ApplyTransactionInfo includeIDs, final ObjectID value,
+                                          final ObjectID map) {
     includeIDs.addBackReference(value, map);
   }
 
-  private Object getKey(final Object[] params) {
+  protected Object getKey(final Object[] params) {
     // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
     return params.length == 3 ? params[1] : params[0];
   }
 
-  private Object getValue(final Object[] params) {
+  protected Object getValue(final Object[] params) {
     // Hack hack big hack for trove maps which replace the key on set as opposed to HashMaps which do not.
     return params.length == 3 ? params[2] : params[1];
   }
@@ -109,7 +110,7 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     }
   }
 
-  public void dehydrate(final ObjectID objectID, final DNAWriter writer, DNAType type) {
+  public void dehydrate(final ObjectID objectID, final DNAWriter writer, final DNAType type) {
     for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
       final Entry entry = (Entry) i.next();
       final Object key = entry.getKey();

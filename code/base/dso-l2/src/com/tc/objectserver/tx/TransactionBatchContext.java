@@ -8,6 +8,7 @@ import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.tx.ServerTransactionID;
 
 import java.util.List;
@@ -20,6 +21,8 @@ public interface TransactionBatchContext extends EventContext {
   public abstract Set<ObjectID> getNewObjectIDs();
 
   public abstract TransactionBatchReader getTransactionBatchReader();
+
+  public abstract ObjectStringSerializer getSerializer();
 
   public abstract NodeID getSourceNodeID();
 

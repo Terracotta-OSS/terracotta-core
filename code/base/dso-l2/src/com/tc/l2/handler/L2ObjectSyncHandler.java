@@ -32,71 +32,79 @@ import java.util.Set;
 
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
-  private static final TCLogger         logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
+  private static final TCLogger          logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
 
-  private TransactionBatchReaderFactory batchReaderFactory;
+  private TransactionBatchReaderFactory  batchReaderFactory;
 
-  private Sink                          sendSink;
-  private ReplicatedTransactionManager  rTxnManager;
-  private StateManager                  stateManager;
+  private Sink                           sendSink;
+  private ReplicatedTransactionManager   rTxnManager;
+  private StateManager                   stateManager;
 
-  public void handleEvent(EventContext context) {
+  private final ServerTransactionFactory serverTransactionFactory;
+
+  public L2ObjectSyncHandler(final ServerTransactionFactory factory) {
+    this.serverTransactionFactory = factory;
+  }
+
+  @Override
+  public void handleEvent(final EventContext context) {
     if (context instanceof ObjectSyncMessage) {
-      ObjectSyncMessage syncMsg = (ObjectSyncMessage) context;
+      final ObjectSyncMessage syncMsg = (ObjectSyncMessage) context;
       doSyncObjectsResponse(syncMsg);
     } else if (context instanceof RelayedCommitTransactionMessage) {
-      RelayedCommitTransactionMessage commitMessage = (RelayedCommitTransactionMessage) context;
-      Set serverTxnIDs = processCommitTransactionMessage(commitMessage);
+      final RelayedCommitTransactionMessage commitMessage = (RelayedCommitTransactionMessage) context;
+      final Set serverTxnIDs = processCommitTransactionMessage(commitMessage);
       processTransactionLowWaterMark(commitMessage.getLowGlobalTransactionIDWatermark());
       ackTransactions(commitMessage, serverTxnIDs);
     } else if (context instanceof ObjectSyncCompleteMessage) {
-      ObjectSyncCompleteMessage msg = (ObjectSyncCompleteMessage) context;
+      final ObjectSyncCompleteMessage msg = (ObjectSyncCompleteMessage) context;
       logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
       // Now this node can move to Passive StandBy
-      stateManager.moveToPassiveStandbyState();
+      this.stateManager.moveToPassiveStandbyState();
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
   }
 
-  private void processTransactionLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
+  private void processTransactionLowWaterMark(final GlobalTransactionID lowGlobalTransactionIDWatermark) {
     // TODO:: This processing could be handled by another stage thread.
-    rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
+    this.rTxnManager.clearTransactionsBelowLowWaterMark(lowGlobalTransactionIDWatermark);
   }
 
-  private void ackTransactions(AbstractGroupMessage messageFrom, Set serverTxnIDs) {
-    ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(messageFrom, serverTxnIDs);
-    sendSink.add(msg);
+  private void ackTransactions(final AbstractGroupMessage messageFrom, final Set serverTxnIDs) {
+    final ServerTxnAckMessage msg = ServerTxnAckMessageFactory.createServerTxnAckMessage(messageFrom, serverTxnIDs);
+    this.sendSink.add(msg);
   }
 
-  private Set processCommitTransactionMessage(RelayedCommitTransactionMessage commitMessage) {
+  private Set processCommitTransactionMessage(final RelayedCommitTransactionMessage commitMessage) {
     try {
-      final TransactionBatchReader reader = batchReaderFactory.newTransactionBatchReader(commitMessage);
+      final TransactionBatchReader reader = this.batchReaderFactory.newTransactionBatchReader(commitMessage);
       ServerTransaction txn;
       // XXX:: Order has to be maintained.
-      Map txns = new LinkedHashMap(reader.getNumberForTxns());
+      final Map txns = new LinkedHashMap(reader.getNumberForTxns());
       while ((txn = reader.getNextTransaction()) != null) {
         txn.setGlobalTransactionID(commitMessage.getGlobalTransactionIDFor(txn.getServerTransactionID()));
         txns.put(txn.getServerTransactionID(), txn);
       }
-      rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), commitMessage);
+      this.rTxnManager.addCommitedTransactions(reader.getNodeID(), txns.keySet(), txns.values(), commitMessage);
       return txns.keySet();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new AssertionError(e);
     }
   }
 
-  private void doSyncObjectsResponse(ObjectSyncMessage syncMsg) {
-    ServerTransaction txn = ServerTransactionFactory.createTxnFrom(syncMsg);
-    rTxnManager.addObjectSyncTransaction(txn);
-    HashSet serverTxnIDs = new HashSet(2);
+  private void doSyncObjectsResponse(final ObjectSyncMessage syncMsg) {
+    final ServerTransaction txn = this.serverTransactionFactory.createTxnFrom(syncMsg);
+    this.rTxnManager.addObjectSyncTransaction(txn);
+    final HashSet serverTxnIDs = new HashSet(2);
     serverTxnIDs.add(txn.getServerTransactionID());
     ackTransactions(syncMsg, serverTxnIDs);
   }
 
-  public void initialize(ConfigurationContext context) {
+  @Override
+  public void initialize(final ConfigurationContext context) {
     super.initialize(context);
-    ServerConfigurationContext oscc = (ServerConfigurationContext) context;
+    final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.rTxnManager = oscc.getL2Coordinator().getReplicatedTransactionManager();
     this.stateManager = oscc.getL2Coordinator().getStateManager();
