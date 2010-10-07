@@ -26,14 +26,21 @@ public class TCPropertiesConstsTest extends TCTestCase {
   @Override
   protected void setUp() {
     loadDefaults(DEFAULT_TC_PROPERTIES_FILE);
-    exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
-    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
     exemptedProperties.add(TCPropertiesConsts.LICENSE_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
+    exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
+
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_TABLESIZE);
+
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_FAULTSTAGE_THREADS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_FLUSHSTAGE_THREADS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS);
+    exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
+
+    exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
   }
 
   private void loadDefaults(String propFile) {
@@ -50,9 +57,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
   public void testAllConstsDeclared() {
     Set<String> tcPropertiesConsts = new HashSet<String>();
     Field[] fields = TCPropertiesConsts.class.getDeclaredFields();
-    for (int i = 0; i < fields.length; i++) {
+    for (Field field : fields) {
       try {
-        tcPropertiesConsts.add(fields[i].get(null).toString());
+        tcPropertiesConsts.add(field.get(null).toString());
       } catch (Exception e) {
         throw new AssertionError(e);
       }
@@ -66,8 +73,7 @@ public class TCPropertiesConstsTest extends TCTestCase {
                       tcPropertiesConsts.contains(tcProperty));
     }
 
-    for (Iterator<String> iter = tcPropertiesConsts.iterator(); iter.hasNext();) {
-      String tcProperty = iter.next();
+    for (String tcProperty : tcPropertiesConsts) {
       // TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT is added only for internal testing purposes
       if (!exemptedProperties.contains(tcProperty) && !tcProperties.contains(tcProperty)) {
         int index;
