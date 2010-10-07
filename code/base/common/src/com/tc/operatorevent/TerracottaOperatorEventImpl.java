@@ -92,9 +92,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     final int prime = 31;
     int result = 1;
     result = prime * result + ((collapseString == null) ? 0 : collapseString.hashCode());
-    result = prime * result + ((eventMessage == null) ? 0 : eventMessage.hashCode());
     result = prime * result + ((eventType == null) ? 0 : eventType.hashCode());
-    result = prime * result + ((nodeName == null) ? 0 : nodeName.hashCode());
     result = prime * result + ((subSystem == null) ? 0 : subSystem.hashCode());
     result = prime * result + (int) (time ^ (time >>> 32));
     return result;
