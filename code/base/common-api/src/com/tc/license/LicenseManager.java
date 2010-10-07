@@ -80,16 +80,18 @@ public class LicenseManager {
   public static void assertLicenseValid() {
     if (getLicense() == null) {
       //
-      throw new LicenseException(
-                                 "Terracotta license key is required for Enterprise capabilities. Please place "
-                                     + LICENSE_KEY_FILENAME
-                                     + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
-                                     + LICENSE_PATH_KEY + "=/path/to/key");
+      LOGGER
+          .error("Terracotta license key is required for Enterprise capabilities. Please place "
+                 + LICENSE_KEY_FILENAME
+                 + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
+                 + LICENSE_PATH_KEY + "=/path/to/key");
+      System.exit(1);
     }
     Date expirationDate = getLicense().expirationDate();
     if (expirationDate != null && expirationDate.before(new Date())) {
       //
-      throw new LicenseException("Your Terracotta license has expired on " + expirationDate);
+      LOGGER.error("Your Terracotta license has expired on " + expirationDate);
+      System.exit(1);
     }
   }
 
