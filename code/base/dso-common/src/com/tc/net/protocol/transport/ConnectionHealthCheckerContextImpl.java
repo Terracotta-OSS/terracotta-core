@@ -348,12 +348,12 @@ class ConnectionHealthCheckerContextImpl implements ConnectionHealthCheckerConte
         // Async connect goes thru
         socketConnectSuccessCount++;
         if (socketConnectSuccessCount < config.getSocketConnectMaxCount()) {
-          logger.warn(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+          logger.warn(remoteNodeDesc + " might be in Long GC. Ping-probe cycles completed since last reply : "
                       + socketConnectSuccessCount);
           initProbeCycle();
           changeState(ALIVE);
         } else {
-          logger.error(remoteNodeDesc + " might be in Long GC. GC count since last ping reply : "
+          logger.error(remoteNodeDesc + " might be in Long GC. Ping-probe cycles completed since last reply : "
                        + socketConnectSuccessCount + ". But its too long. No more retries");
           changeState(DEAD);
         }
