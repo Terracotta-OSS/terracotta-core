@@ -66,13 +66,12 @@ public class ServerMapEvictionStatsManager {
     periodicEvictionEndTime = now();
 
     fireOperatorEvent();
-    log("Time taken (msecs): " + (periodicEvictionEndTime - periodicEvictionStartTime));
-    log("Number of segments under threshold: " + segmentsUnderThresholdCount.get());
-    log("Number of segments over threshold: " + segmentsOverThresholdCount.get());
-    log("Total overshoot: " + totalOvershoot.get());
-    log("Total number of samples requested: " + totalSamplesRequested.get());
-    log("Number of segments where eviction happened: " + segmentsWithEvictionCount.get());
-    log("Total number of evicted entries: " + evictedEntriesCount.get());
+    log("Time taken (msecs): " + (periodicEvictionEndTime - periodicEvictionStartTime)
+        + ", Number of segments under threshold: " + segmentsUnderThresholdCount.get()
+        + ", Number of segments over threshold: " + segmentsOverThresholdCount.get() + ", Total overshoot: "
+        + totalOvershoot.get() + ", Total number of samples requested: " + totalSamplesRequested.get()
+        + ", Number of segments where eviction happened: " + segmentsWithEvictionCount.get()
+        + ", Total number of evicted entries: " + evictedEntriesCount.get());
 
     resetCounters();
   }
