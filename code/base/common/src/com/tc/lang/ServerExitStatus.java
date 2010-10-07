@@ -11,7 +11,12 @@ public interface ServerExitStatus {
   public static final short EXITCODE_RESTART_REQUEST = 11;
 
   /**
-   * Error codes for all other server problem
+   * Error codes during the Server start
    */
   public static final short EXITCODE_STARTUP_ERROR   = 2;
+
+  /**
+   * Error code on other fatal condition
+   */
+  public static final short EXITCODE_FATAL_ERROR     = 3;
 }
