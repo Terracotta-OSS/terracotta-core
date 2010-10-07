@@ -31,7 +31,7 @@ public class ServerMapCapacityEvictionHandler extends AbstractEventHandler imple
     final SortedSet<ObjectID> faultedInClients = new ObjectIDSet();
     this.clientStateManager.addAllReferencedIdsTo(faultedInClients);
     for (final ObjectID id : smec.getObjectIDs()) {
-      this.serverMapEvictor.doEvictionOn(id, faultedInClients);
+      this.serverMapEvictor.doEvictionOn(id, faultedInClients, false);
     }
   }
 

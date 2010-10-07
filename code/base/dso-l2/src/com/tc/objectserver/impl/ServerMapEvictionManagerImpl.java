@@ -52,39 +52,42 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
-  private static final boolean           EVICTOR_LOGGING               = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getBoolean(
-                                                                                       TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED);
-  private static final boolean           ELEMENT_BASED_TTI_TTL_ENABLED = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getBoolean(
-                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
+  private static final boolean                EVICTOR_LOGGING               = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getBoolean(
+                                                                                            TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED);
+  private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getBoolean(
+                                                                                            TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
 
-  private static final TCLogger          logger                        = TCLogging
-                                                                           .getLogger(ServerMapEvictionManagerImpl.class);
+  private static final TCLogger               logger                        = TCLogging
+                                                                                .getLogger(ServerMapEvictionManagerImpl.class);
 
-  private final static boolean           PERIODIC_EVICTOR_ENABLED      = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getBoolean(
-                                                                                       TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
+  private final static boolean                PERIODIC_EVICTOR_ENABLED      = TCPropertiesImpl
+                                                                                .getProperties()
+                                                                                .getBoolean(
+                                                                                            TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
 
   // 15 Minutes
-  public static final long               DEFAULT_SLEEP_TIME            = 15 * 60000;
+  public static final long                    DEFAULT_SLEEP_TIME            = 15 * 60000;
 
-  private final ObjectManager            objectManager;
-  private final ManagedObjectStore       objectStore;
-  private final ClientStateManager       clientStateManager;
-  private final ServerTransactionFactory serverTransactionFactory;
-  private final long                     evictionSleepTime;
-  private final Set<ObjectID>            currentlyEvicting             = Collections.synchronizedSet(new HashSet());
-  private final AtomicBoolean            isStarted                     = new AtomicBoolean(false);
-  private final Timer                    evictor                       = new Timer("Server Map Periodic Evictor", true);
+  private final ObjectManager                 objectManager;
+  private final ManagedObjectStore            objectStore;
+  private final ClientStateManager            clientStateManager;
+  private final ServerTransactionFactory      serverTransactionFactory;
+  private final long                          evictionSleepTime;
+  private final Set<ObjectID>                 currentlyEvicting             = Collections
+                                                                                .synchronizedSet(new HashSet());
+  private final AtomicBoolean                 isStarted                     = new AtomicBoolean(false);
+  private final Timer                         evictor                       = new Timer("Server Map Periodic Evictor",
+                                                                                        true);
 
-  private Sink                           evictorSink;
-  private Sink                           evictionBroadcastSink;
-  private GroupManager                   groupManager;
-  private TransactionBatchManager        transactionBatchManager;
+  private Sink                                evictorSink;
+  private Sink                                evictionBroadcastSink;
+  private GroupManager                        groupManager;
+  private TransactionBatchManager             transactionBatchManager;
+  private final ServerMapEvictionStatsManager evictionStats;
 
   public ServerMapEvictionManagerImpl(final ObjectManager objectManager, final ManagedObjectStore objectStore,
                                       final ClientStateManager clientStateManager,
@@ -95,6 +98,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     this.clientStateManager = clientStateManager;
     this.serverTransactionFactory = serverTransactionFactory;
     this.evictionSleepTime = evictionSleepTime;
+    this.evictionStats = new ServerMapEvictionStatsManager();
   }
 
   public void initializeContext(final ConfigurationContext context) {
@@ -122,6 +126,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Started ");
     }
+    evictionStats.periodicEvictionStarted();
 
     final ObjectIDSet evictableObjects = this.objectStore.getAllEvictableObjectIDs();
     if (EVICTOR_LOGGING) {
@@ -135,22 +140,23 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
 
     for (final ObjectID mapID : evictableObjects) {
-      doEvictionOn(mapID, faultedInClients);
+      doEvictionOn(mapID, faultedInClients, true);
     }
 
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Ended ");
     }
+    evictionStats.periodicEvictionFinished();
   }
 
-  public void doEvictionOn(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
+  public void doEvictionOn(final ObjectID oid, final SortedSet<ObjectID> faultedInClients, final boolean periodicEvictor) {
     if (!this.isStarted.get()) { throw new AssertionError("Evictor is not started yet"); }
     if (!markEvictionInProgress(oid)) {
       logger.info("Ignoring eviction request as its already in progress : " + oid);
       return;
     }
     try {
-      basicDoEviction(oid, faultedInClients);
+      basicDoEviction(oid, faultedInClients, periodicEvictor);
     } finally {
       // TODO:: We could possibly hold off on removing the OID for longer until all processing of samples are done, but
       // requires more careful surgery as we should make sure all exit paths are covered.
@@ -158,7 +164,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
   }
 
-  private void basicDoEviction(final ObjectID oid, final SortedSet<ObjectID> faultedInClients) {
+  private void basicDoEviction(final ObjectID oid, final SortedSet<ObjectID> faultedInClients,
+                               final boolean periodicEvictor) {
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
     if (mo == null) { return; }
     final ManagedObjectState state = mo.getManagedObjectState();
@@ -166,7 +173,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final String loaderDesc = state.getLoaderDescription();
     try {
       final EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-      doEviction(oid, ev, faultedInClients, className, loaderDesc);
+      doEviction(oid, ev, faultedInClients, className, loaderDesc, periodicEvictor);
     } finally {
       this.objectManager.releaseReadOnly(mo);
     }
@@ -189,10 +196,15 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   private void doEviction(final ObjectID oid, final EvictableMap ev, final SortedSet<ObjectID> faultedInClients,
-                          final String className, final String loaderDesc) {
+                          final String className, final String loaderDesc, final boolean periodicEvictor) {
     final int targetMaxTotalCount = ev.getMaxTotalCount();
     final int currentSize = ev.getSize();
-    if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) { return; }
+    if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) {
+      if (periodicEvictor) {
+        evictionStats.evictionNotRequired(oid, ev, targetMaxTotalCount, currentSize);
+      }
+      return;
+    }
     final int overshoot = currentSize - targetMaxTotalCount;
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Trying to evict : " + oid + " overshoot : " + overshoot
@@ -208,11 +220,13 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " : Random Samples : "
                   + samples.size() + " overshoot : " + overshoot);
     }
-
     if (!samples.isEmpty()) {
       final ServerMapEvictionContext context = new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl,
                                                                             samples, overshoot, className, loaderDesc);
       this.evictorSink.add(context);
+    }
+    if (periodicEvictor) {
+      evictionStats.evictionRequested(oid, ev, targetMaxTotalCount, overshoot, samples.size());
     }
   }
 
@@ -242,6 +256,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       // TODO:: Come back for broadcast evicted entries as this is done after apply
       broadcastEvictedEntries(oid, candidates);
     }
+    evictionStats.entriesEvicted(oid, overshoot, samples.size(), candidates.size());
   }
 
   private void broadcastEvictedEntries(final ObjectID oid, final HashMap candidates) {

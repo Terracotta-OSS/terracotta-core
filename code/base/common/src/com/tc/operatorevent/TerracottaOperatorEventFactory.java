@@ -100,4 +100,9 @@ public class TerracottaOperatorEventFactory {
     return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
         .format(TerracottaOperatorEventResources.getDirtyDBMessage(), new Object[] { restart }), "");
   }
+
+  public static TerracottaOperatorEvent createServerMapEvictionOperatorEvent(Object[] arguments) {
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DCV2, MessageFormat
+        .format(TerracottaOperatorEventResources.getServerMapEvictionMessage(), arguments), "");
+  }
 }

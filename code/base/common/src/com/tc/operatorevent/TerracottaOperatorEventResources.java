@@ -80,4 +80,11 @@ class TerracottaOperatorEventResources {
   static String getDirtyDBMessage() {
     return instance.resources.getString("dirty.db");
   }
+
+  /**
+   * Servermap Message
+   */
+  static String getServerMapEvictionMessage() {
+    return instance.resources.getString("servermap.eviction");
+  }
 }
