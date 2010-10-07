@@ -143,23 +143,28 @@ maven_deploy:
 
   - groupId: org.terracotta.modules
     artifact: clustered-surefire-2.3
-    file: build/modules/clustered-surefire-2.3-{maven.version}.jar
+    file: build/modules/org/terracotta/modules/clustered-surefire-2.3/{maven.version}/clustered-surefire-2.3-{maven.version}.jar
+    dev_dist: true
 
   - groupId: org.terracotta.modules
     artifact: excludes-config
-    file: build/modules/excludes-config-{maven.version}.jar
+    file: build/modules/org/terracotta/modules/excludes-config/{maven.version}/excludes-config-{maven.version}.jar
+    dev_dist: true
     
   - groupId: org.terracotta.modules
     artifact: guimodels-config
-    file: build/modules/guimodels-config-{maven.version}.jar
+    file: build/modules/org/terracotta/modules/guimodels-config/{maven.version}/guimodels-config-{maven.version}.jar
+    dev_dist: true
     
   - groupId: org.terracotta.modules
     artifact: jdk15-preinst-config
-    file: build/modules/jdk15-preinst-config-{maven.version}.jar
+    file: build/modules/org/terracotta/modules/jdk15-preinst-config/{maven.version}/jdk15-preinst-config-{maven.version}.jar
+    dev_dist: true
     
   - groupId: org.terracotta.modules
     artifact: standard-config
-    file: build/modules/standard-config-{maven.version}.jar
+    file: build/modules/org/terracotta/modules/standard-config/{maven.version}/standard-config-{maven.version}.jar
+    dev_dist: true
     
   - groupId: org.terracotta
     artifact: parent

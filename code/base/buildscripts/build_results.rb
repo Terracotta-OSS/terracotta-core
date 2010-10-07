@@ -167,7 +167,8 @@ class BuildResults
       manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
       module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT')
       artifact = build_module.name
-      output_dir = FilePath.new(self.modules_home).ensure_directory
+      output_dir = FilePath.new(self.modules_home, build_module.group_id.gsub(/\./, '/'),
+        artifact, module_version).ensure_directory
       jarfile  = "#{artifact}-#{module_version}.jar"
       ModuleInfo.new(artifact, module_version, FilePath.new(output_dir, jarfile), manifest)
     else
