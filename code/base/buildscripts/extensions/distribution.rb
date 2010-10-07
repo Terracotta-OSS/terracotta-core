@@ -170,6 +170,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     product_codes.each do |product_code|
       @product_code = product_code
       @flavor = flavor.downcase
+      @config_source['flavor'] = @flavor
       call_actions :__assemble, :__package, :__publish
     end
   end
