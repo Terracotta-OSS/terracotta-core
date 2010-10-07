@@ -4,41 +4,73 @@
 package com.tc.objectserver.tx;
 
 import com.tc.bytes.TCByteBuffer;
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
+import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.PhysicalAction;
+import com.tc.object.dna.impl.DNAImpl;
+import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
+import com.tc.object.locks.LockID;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
+import com.tc.object.tx.TxnType;
+import com.tc.util.SequenceID;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
 public class ServerTransactionBatchWriterTest extends TestCase {
 
+  private TxnBatchID batchID;
+  private int        startIndex;
+  private int        txnID;
+  private int        sqID;
+  private NodeID     sourceNodeID;
+  private int        dnaObjId;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    this.txnID = 100;
+    this.sqID = 100;
+    this.batchID = TxnBatchID.NULL_BATCH_ID;
+    this.startIndex = 1;
+    this.sourceNodeID = new ServerID("localhost", new byte[] { 5, 6, 4, 3 });
+    this.dnaObjId = 100;
   }
 
   public void testBasicServerEvictionTxn() throws Exception {
     final ObjectID oid = new ObjectID(55455);
-    final NodeID nodeID = new ServerID("localhost", new byte[] { 5, 6, 4, 3 });
     final String className = "com.tc.state.ConcurrentDistributedServerMap";
     final String loaderDesc = "System.loader";
     final Map candidates = getCandidatesToEvict();
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ObjectStringSerializer serializer = new ObjectStringSerializer();
-    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(nodeID, oid, className, loaderDesc,
-                                                                                candidates, serializer);
-    final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID, serializer);
+    final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid, className,
+                                                                                loaderDesc, candidates, serializer);
+    final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID,
+                                                                                    serializer);
     final TCByteBuffer[] buffer = txnWriter.writeTransactionBatch(Collections.singletonList(txn));
 
-    final TransactionBatchReader reader = new TransactionBatchReaderImpl(buffer, nodeID, serializer,
+    final TransactionBatchReader reader = new TransactionBatchReaderImpl(buffer, sourceNodeID, serializer,
                                                                          new ActiveServerTransactionFactory(), null);
     assertEquals(TxnBatchID.NULL_BATCH_ID, reader.getBatchID());
     assertEquals(1, reader.getNumberForTxns());
@@ -46,6 +78,57 @@ public class ServerTransactionBatchWriterTest extends TestCase {
 
     final ServerTransaction txn2 = reader.getNextTransaction();
     assertTransactionsEqual(txn, txn2);
+    final ServerTransaction txn3 = reader.getNextTransaction();
+    assertNull(txn3);
+  }
+
+  public void testServerEvictionAmongOtherTxn() throws Exception {
+    final ObjectID oid = new ObjectID(55455);
+    final NodeID nodeID = new ServerID("localhost", new byte[] { 5, 6, 4, 3 });
+    final String className = "com.tc.state.ConcurrentDistributedServerMap";
+    final String loaderDesc = "System.loader";
+    final Map candidates = getCandidatesToEvict();
+
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(batchID, serializer);
+
+    List<ServerTransaction> serverTransactions = new ArrayList<ServerTransaction>();
+
+    // general server transactions
+    List<ServerTransaction> txnList1 = createServerTransactions(5);
+    serverTransactions.addAll(txnList1);
+
+    // server map eviction txn
+    final ServerTransactionFactory factory = new ServerTransactionFactory();
+    final ServerTransaction serverMapEvictionTxn = factory
+        .createServerMapEvictionTransactionFor(nodeID, oid, className, loaderDesc, candidates, serializer);
+    serverTransactions.add(serverMapEvictionTxn);
+
+    // few more general server transactions
+    List<ServerTransaction> txnList2 = createServerTransactions(5);
+    serverTransactions.addAll(txnList2);
+
+    // writer
+    final TCByteBuffer[] buffer = txnWriter.writeTransactionBatch(serverTransactions);
+
+    // reader
+    final TransactionBatchReader reader = new TransactionBatchReaderImpl(buffer, nodeID, serializer,
+                                                                         new ActiveServerTransactionFactory(), null);
+    assertEquals(this.batchID, reader.getBatchID());
+    assertEquals(11, reader.getNumberForTxns());
+    assertEquals(false, reader.containsSyncWriteTransaction());
+
+    for (ServerTransaction serverTxn : txnList1) {
+      assertTransactionsEqual(serverTxn, reader.getNextTransaction());
+    }
+
+    final ServerTransaction txn2 = reader.getNextTransaction();
+    assertTransactionsEqual(serverMapEvictionTxn, txn2);
+
+    for (ServerTransaction serverTxn : txnList2) {
+      assertTransactionsEqual(serverTxn, reader.getNextTransaction());
+    }
+
     final ServerTransaction txn3 = reader.getNextTransaction();
     assertNull(txn3);
   }
@@ -73,5 +156,75 @@ public class ServerTransactionBatchWriterTest extends TestCase {
       c.put("key-" + i, new ObjectID(i * 20));
     }
     return c;
+  }
+
+  private List<ServerTransaction> createServerTransactions(int count) {
+    List<ServerTransaction> serverTransactions = new ArrayList<ServerTransaction>();
+    int actionCount = 3;
+    while (count-- > 0) {
+      int endIndex = this.startIndex + actionCount;
+      serverTransactions.add(new ServerTransactionImpl(this.batchID, new TransactionID(this.txnID++),
+                                                       new SequenceID(this.sqID++), createLocks(this.startIndex,
+                                                                                                endIndex),
+                                                       this.sourceNodeID, createDNAs(this.startIndex, endIndex),
+                                                       new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
+                                                       new long[0]));
+      this.startIndex = endIndex + 1;
+    }
+    return serverTransactions;
+  }
+
+  private LockID[] createLocks(int s, int e) {
+    LockID[] locks = new LockID[e - s + 1];
+    for (int j = s; j <= e; j++) {
+      locks[j - s] = new StringLockID("@" + j);
+    }
+    return locks;
+  }
+
+  private List createDNAs(int s, int e) {
+    List dnas = new ArrayList();
+
+    // delta dnas
+    for (int i = s; i <= e; i++) {
+      dnas.add(createDNA(new ObjectID(this.dnaObjId++), true));
+    }
+
+    // new dnas
+    for (int i = s; i <= e; i++) {
+      dnas.add(createDNA(new ObjectID(this.dnaObjId++), false));
+    }
+
+    return dnas;
+  }
+
+  private DNA createDNA(ObjectID objectID, boolean isDelta) {
+
+    final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
+    final DNAWriter dnaWriter = new DNAWriterImpl(out, objectID, this.getClass().getName(), objectStringSerializer,
+                                                  new SerializerDNAEncodingImpl(), "Robo Rajini Class Loader", isDelta);
+
+    final PhysicalAction action1 = new PhysicalAction("manoj.field1", new Integer(1), false);
+    final LogicalAction action2 = new LogicalAction(12, new Object[] { "K1", "V1" });
+    final PhysicalAction action3 = new PhysicalAction("manoj.field2", new ObjectID(99), true);
+
+    dnaWriter.setParentObjectID(new ObjectID(100));
+
+    dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
+    dnaWriter.addLogicalAction(action2.getMethod(), action2.getParameters());
+    dnaWriter.addPhysicalAction(action3.getFieldName(), action3.getObject());
+    dnaWriter.markSectionEnd();
+    dnaWriter.finalizeHeader();
+
+    DNAImpl rv = new DNAImpl(objectStringSerializer, true);
+    final TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    try {
+      rv.deserializeFrom(in);
+    } catch (IOException e) {
+      throw new AssertionError("DNA creation failed");
+    }
+    return rv;
   }
 }
