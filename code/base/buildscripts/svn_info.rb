@@ -7,8 +7,9 @@ class SvnInfo
     @svninfo["Last Changed Date"] = "unknown"
     @svninfo["URL"] = "unknown"  
     if dir
-      svn_info = `svn info "#{dir.to_shell_escaped_s}" 2>&1`
-      if $? == 0 && !svn_info.blank?        
+      dir = dir.gsub("\\", "/").to_shell_escaped_s
+      svn_info = `svn info "#{dir}" 2>&1`
+      if $? == 0 && !svn_info.blank?
         begin
           @svninfo.merge!(YAML::load(svn_info))
           @valid = true
