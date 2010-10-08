@@ -16,7 +16,15 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.stats.counter.sampled.SampledCounter;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler implements EventHandler {
+
+  private static final int     EVICTION_BROADCAST_MAX_KEYS = 10000;
 
   private DSOChannelManager    channelManager;
   private final SampledCounter broadcastCounter;
@@ -41,14 +49,33 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
         continue;
       }
       if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
-        final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
-            .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
-        broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), broadcastContext
-            .getEvictedKeys());
-        broadcastMessage.send();
-        broadcastCounter.increment();
+        for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
+          final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
+              .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
+          broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch);
+          broadcastMessage.send();
+          broadcastCounter.increment();
+        }
       }
     }
+  }
+
+  static List<Set> getEvictedKeysInBatches(Set evictedKeys, int maxBatchSize) {
+    int size = evictedKeys.size();
+    if (size <= maxBatchSize) { return Collections.singletonList(evictedKeys); }
+    List<Set> rv = new ArrayList();
+    Set currentBatch = new HashSet(maxBatchSize);
+    for (Object obj : evictedKeys) {
+      if (currentBatch.size() >= maxBatchSize) {
+        rv.add(currentBatch);
+        currentBatch = new HashSet(maxBatchSize);
+      }
+      currentBatch.add(obj);
+    }
+    if (!currentBatch.isEmpty()) {
+      rv.add(currentBatch);
+    }
+    return rv;
   }
 
   @Override

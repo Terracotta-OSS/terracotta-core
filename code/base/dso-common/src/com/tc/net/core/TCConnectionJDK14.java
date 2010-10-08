@@ -453,7 +453,8 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     long bytesToWrite = 0;
     bytesToWrite = message.getTotalLength();
     if (bytesToWrite >= TCConnectionJDK14.WARN_THRESHOLD) {
-      logger.warn("Warning: Attempting to send a message of size " + bytesToWrite + " bytes");
+      logger.warn("Warning: Attempting to send a message (" + message.getClass().getName() + ") of size "
+                  + bytesToWrite + " bytes");
     }
 
     // TODO: outgoing queue should not be unbounded size!
