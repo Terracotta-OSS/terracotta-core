@@ -307,10 +307,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       @internal_config_source['fresh_dist_jars'] = 'true'
     end
 
-    File.open(dist_jar_log, "w") do | f |
-      YAML.dump({'flavor' => @flavor}, f)
-    end
-
     compile_only = config_source['compile_only']
     unless compile_only.nil?
       loud_message("compile_only option found. Only specified modules will be compiled.")
@@ -323,6 +319,11 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       @module_set.each do |build_module|
         build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
       end
+    end
+
+    @build_results.build_dir.ensure_directory
+    File.open(dist_jar_log, "w") do | f |
+      YAML.dump({'flavor' => @flavor}, f)
     end
   end
 
