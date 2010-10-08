@@ -6,6 +6,7 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.object.ClientObjectManager;
+import com.tc.object.TCObject;
 import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessage;
 import com.tc.properties.TCPropertiesConsts;
@@ -25,15 +26,15 @@ public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandl
   public void handleEvent(final EventContext context) {
     if (context instanceof ServerMapEvictionBroadcastMessage) {
       final ServerMapEvictionBroadcastMessage msg = (ServerMapEvictionBroadcastMessage) context;
-      Object obj = null;
-      obj = clientObjectManager.lookupIfLocal(msg.getMapID());
-      if (obj == null || !(obj instanceof TCServerMap)) { return; }
+      TCObject tco = null;
+      tco = clientObjectManager.lookupIfLocal(msg.getMapID());
+      if (tco == null || !(tco.getPeerObject() instanceof TCServerMap)) { return; }
       if (EVICTOR_LOGGING) {
         getLogger().info(
                          "Processing Server Map Eviction Broadcast msg Map OID=" + msg.getMapID() + " keys="
                              + msg.getEvictedKeys().size());
       }
-      TCServerMap serverMap = (TCServerMap) obj;
+      TCServerMap serverMap = (TCServerMap) tco.getPeerObject();
       for (Object key : msg.getEvictedKeys()) {
         serverMap.evictedInServer(key);
       }
