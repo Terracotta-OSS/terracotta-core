@@ -21,7 +21,9 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.prefs.Preferences;
 
-public class AdminClientContext implements IAdminClientContext {
+public class AdminClientContext implements IAdminClientContext, Thread.UncaughtExceptionHandler {
+  private static Logger              logger;
+
   private final AdminClient          client;
   private AdminClientController      controller;
   private final ResourceBundleHelper bundleHelper;
@@ -29,8 +31,6 @@ public class AdminClientContext implements IAdminClientContext {
   private final AbstractNodeFactory  nodeFactory     = AbstractNodeFactory.getFactory();
   private final ExecutorService      executorService = Executors.newCachedThreadPool();
   private final Map<String, IOption> optionMap;
-
-  public static Logger               logger;
 
   static {
     try {
@@ -50,6 +50,7 @@ public class AdminClientContext implements IAdminClientContext {
     this.bundleHelper = new ResourceBundleHelper(client.getClass());
     this.prefs = client.loadPrefs();
     this.optionMap = new LinkedHashMap<String, IOption>();
+    Thread.setDefaultUncaughtExceptionHandler(this);
   }
 
   public void setAdminClientController(AdminClientController controller) {
@@ -166,5 +167,9 @@ public class AdminClientContext implements IAdminClientContext {
     if (this.controller != null) {
       this.controller.unblock();
     }
+  }
+
+  public void uncaughtException(Thread t, Throwable e) {
+    log(e);
   }
 }
