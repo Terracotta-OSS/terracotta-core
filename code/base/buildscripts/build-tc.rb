@@ -293,19 +293,35 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
     if @no_compile
       loud_message("--no-compile option found.  Skipping compilation.")
+      return
+    end
+    
+    dist_jar_log = File.join(@build_results.build_dir.to_s, "dist_jar.log")
+    prev_dist_jar_flavor = 'unknown'
+    if File.exists?(dist_jar_log)
+      prev_dist_jar_flavor = YAML.load_file(dist_jar_log)['flavor']
+    end
+
+    if @flavor != prev_dist_jar_flavor
+      @ant.delete(:dir => @build_results.artifacts_classes_directory.to_s)
+      @internal_config_source['fresh_dist_jars'] = 'true'
+    end
+
+    File.open(dist_jar_log, "w") do | f |
+      YAML.dump({'flavor' => @flavor}, f)
+    end
+
+    compile_only = config_source['compile_only']
+    unless compile_only.nil?
+      loud_message("compile_only option found. Only specified modules will be compiled.")
+      module_names = compile_only.split(/,/)
+      module_names.each do |name|
+        build_module = @module_set[name]
+        build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
+      end
     else
-      compile_only = config_source['compile_only']
-      unless compile_only.nil?
-        loud_message("compile_only option found. Only specified modules will be compiled.")
-        module_names = compile_only.split(/,/)
-        module_names.each do |name|
-          build_module = @module_set[name]
-          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
-        end
-      else
-        @module_set.each do |build_module|
-          build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
-        end
+      @module_set.each do |build_module|
+        build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
       end
     end
   end

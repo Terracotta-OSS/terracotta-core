@@ -180,6 +180,7 @@ class TerracottaBuilder
     Registry[:basedir] = @basedir
     puts("Building with base directory: '#@basedir'.")
     puts
+    @flavor = OPENSOURCE
     @default_target = default_target
     @ant = TerracottaAnt.new
     Registry[:ant] = @ant

@@ -35,7 +35,12 @@ module BundledComponents
   end
 
   def add_binaries(component, libdir=libpath(component), destdir=libpath(component), include_runtime=true)
-    runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, 'tc').ensure_directory
+    runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, 'tc')
+    if !runtime_classes_dir.exist?
+      @internal_config_source['fresh_dist_jars'] = 'true'
+      runtime_classes_dir.ensure_directory
+    end
+
     (component[:modules] || []).each do |module_name|
       name = module_name
       exclude_native_runtime_libraries = false
@@ -103,7 +108,11 @@ module BundledComponents
   def add_module_packages(component, destdir=libpath(component))
     (component[:module_packages] || []).each do |module_package|
       module_package.keys.each do |name|
-        runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, name).ensure_directory
+        runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, name)
+        if !runtime_classes_dir.exist?
+          @internal_config_source['fresh_dist_jars'] = 'true'
+          runtime_classes_dir.ensure_directory
+        end
         src      = module_package[name]['source'] || 'src'
         excludes = module_package[name]['filter'] || ''
         javadoc  = module_package[name]['javadoc']

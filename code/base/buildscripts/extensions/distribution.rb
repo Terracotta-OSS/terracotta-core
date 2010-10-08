@@ -212,18 +212,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     depends :init, :compile, :load_config
 
-    dist_jar_log = File.join(@build_results.build_dir.to_s, "dist_jar.log")
-    prev_dist_jar_flavor = 'unknown'
-    if File.exists?(dist_jar_log)
-      prev_dist_jar_flavor = YAML.load_file(dist_jar_log)['flavor']
-    end
-
-    if flavor != prev_dist_jar_flavor
-      @ant.delete(:dir => @build_results.artifacts_classes_directory.to_s)
-      @internal_config_source['fresh_dist_jars'] = 'true'
-    end
-
-
     component = get_spec(:bundled_components, []).find { |component| /^#{component_name}$/i =~ component[:name] }
     libdir    = FilePath.new(@build_results.build_dir, 'tmp').ensure_directory
     destdir   = @build_results.artifacts_directory
@@ -232,10 +220,6 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     add_module_packages(component, destdir)
     create_build_data(@config_source, File.join(destdir.to_s, 'resources'))
-
-    File.open(dist_jar_log, "w") do | f |
-      YAML.dump({'flavor' => flavor}, f)
-    end
   end
 
   def mvn_install(flavor=OPENSOURCE)
