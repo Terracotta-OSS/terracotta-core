@@ -13,7 +13,6 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERV
 import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
 import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
 import static org.terracotta.license.LicenseConstants.LICENSE_PATH_KEY;
-import static org.terracotta.license.LicenseConstants.TERRACOTTA_MAX_CLIENT_COUNT;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
 import org.terracotta.license.AbstractLicenseResolverFactory;
@@ -129,8 +128,7 @@ public class LicenseManager {
 
   public static int maxClientCount() {
     assertLicenseValid();
-    String maxClientCount = getLicense().getRequiredProperty(TERRACOTTA_MAX_CLIENT_COUNT);
-    return Integer.valueOf(maxClientCount);
+    return getLicense().maxClientCount();
   }
 
   public static String licensedCapabilities() {
