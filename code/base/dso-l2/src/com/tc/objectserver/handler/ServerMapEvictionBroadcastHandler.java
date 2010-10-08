@@ -64,11 +64,11 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
     int size = evictedKeys.size();
     if (size <= maxBatchSize) { return Collections.singletonList(evictedKeys); }
     List<Set> rv = new ArrayList();
-    Set currentBatch = new HashSet(maxBatchSize);
+    Set currentBatch = new HashSet((int) (maxBatchSize * 1.5));
     for (Object obj : evictedKeys) {
       if (currentBatch.size() >= maxBatchSize) {
         rv.add(currentBatch);
-        currentBatch = new HashSet(maxBatchSize);
+        currentBatch = new HashSet((int) (maxBatchSize * 1.5));
       }
       currentBatch.add(obj);
     }
