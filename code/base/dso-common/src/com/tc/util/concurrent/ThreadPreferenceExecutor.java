@@ -135,6 +135,7 @@ public class ThreadPreferenceExecutor implements Executor {
     public Thread newThread(Runnable r) {
       Thread t = new Thread(r, executorName + "-" + sequence.getAndIncrement());
       t.setDaemon(true);
+      t.setPriority(Thread.NORM_PRIORITY + 1);
       return t;
     }
   }

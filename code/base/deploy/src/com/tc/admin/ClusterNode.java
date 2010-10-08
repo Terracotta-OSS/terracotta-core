@@ -194,15 +194,8 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         nodeChanged();
         connectAction.setEnabled(false);
         disconnectAction.setEnabled(true);
-        adminClientContext.getAdminClientController().setStatus("Ready");
-      } else if (determineConnected()) {
-        adminClientContext.getAdminClientController().setStatus("Not ready");
       }
     }
-  }
-
-  private boolean determineConnected() {
-    return getClusterModel().determineConnected();
   }
 
   private boolean testCheckServerVersion() {

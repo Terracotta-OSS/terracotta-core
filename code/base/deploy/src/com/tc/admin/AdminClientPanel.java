@@ -195,6 +195,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
         clusterModel.addPropertyChangeListener(this);
       }
     }
+
+    setStatus("Log file location: " + new File(System.getProperty("user.home"), ".devconsole.log.[x]"));
   }
 
   private XContainer createLeftSide() {

@@ -8,17 +8,24 @@ import com.tc.admin.common.TextComponentHelper;
 import com.tc.admin.common.XTextPane;
 
 import java.awt.Font;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-public class LogPane extends XTextPane {
-  private boolean autoScroll = true;
+public class LogPane extends XTextPane implements HierarchyListener {
+  private boolean            autoScroll = true;
+  private final List<String> buffer     = new ArrayList<String>();
 
   public LogPane() {
     super();
     setEditable(false);
     setFont(Font.getFont("monospaced-plain-12"));
+    addHierarchyListener(this);
   }
 
   @Override
@@ -65,11 +72,39 @@ public class LogPane extends XTextPane {
     return autoScroll;
   }
 
+  private void testDrainBuffer() {
+    synchronized (buffer) {
+      if (!buffer.isEmpty()) {
+        Iterator<String> iter = buffer.iterator();
+        while (iter.hasNext()) {
+          append(iter.next());
+        }
+      }
+      buffer.clear();
+    }
+  }
+
   public void log(String s) {
-    boolean doAutoScroll = getAutoScroll();
-    append(s);
-    if (doAutoScroll) {
-      setCaretPosition(getDocument().getLength() - 1);
+    if (isShowing()) {
+      boolean doAutoScroll = getAutoScroll();
+      testDrainBuffer();
+      append(s);
+      if (doAutoScroll) {
+        setCaretPosition(getDocument().getLength() - 1);
+      }
+    } else {
+      synchronized (buffer) {
+        buffer.add(s);
+      }
+    }
+  }
+
+  public void hierarchyChanged(HierarchyEvent e) {
+    long flags = e.getChangeFlags();
+    if ((flags & HierarchyEvent.SHOWING_CHANGED) != 0) {
+      if (isShowing()) {
+        testDrainBuffer();
+      }
     }
   }
 }

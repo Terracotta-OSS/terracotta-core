@@ -79,6 +79,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isConnected()) {
+      elementChooser.setupTreeModel();
       addNodePanels();
     }
   }
@@ -138,6 +139,7 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
       if (theClusterModel == null) { return; }
 
       if (!inited && clusterModel.isConnected()) {
+        elementChooser.setupTreeModel();
         addNodePanels();
       }
     }

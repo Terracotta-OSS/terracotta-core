@@ -66,12 +66,12 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private TimeSeries               pendingTxnsSeries;
   private XLabel                   pendingTxnsLabel;
 
-  protected final String           flushRateLabelFormat   = "{0,number,integer} Flushes/sec.";
-  protected final String           faultRateLabelFormat   = "{0,number,integer} Faults/sec.";
-  protected final String           txnRateLabelFormat     = "{0,number,integer} Txns/sec.";
-  protected final String           pendingTxnsLabelFormat = "{0,number,integer} Pending Txns/sec.";
-  protected final String           memoryUsedLabelFormat  = "{0,number,integer} Used";
-  protected final String           memoryMaxLabelFormat   = "{0,number,integer} Max";
+  protected final String           flushRateLabelFormat   = "{0} Flushes/sec.";
+  protected final String           faultRateLabelFormat   = "{0} Faults/sec.";
+  protected final String           txnRateLabelFormat     = "{0} Txns/sec.";
+  protected final String           pendingTxnsLabelFormat = "{0} Pending Txns/sec.";
+  protected final String           memoryUsedLabelFormat  = "{0} Used";
+  protected final String           memoryMaxLabelFormat   = "{0} Max";
 
   private static final Set<String> POLLED_ATTRIBUTE_SET   = new HashSet(
                                                                         Arrays
@@ -204,19 +204,19 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private void updateAllDSOSeries(long flush, long fault, long txn, long pendingTxn) {
     if (flush != -1) {
       updateSeries(flushRateSeries, Long.valueOf(flush));
-      flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, flush));
+      flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, convert(flush)));
     }
     if (fault != -1) {
       updateSeries(faultRateSeries, Long.valueOf(fault));
-      faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, fault));
+      faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, convert(fault)));
     }
     if (txn != -1) {
       updateSeries(txnRateSeries, Long.valueOf(txn));
-      txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, txn));
+      txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txn)));
     }
     if (pendingTxn != -1) {
       updateSeries(pendingTxnsSeries, Long.valueOf(pendingTxn));
-      pendingTxnsLabel.setText(MessageFormat.format(pendingTxnsLabelFormat, pendingTxn));
+      pendingTxnsLabel.setText(MessageFormat.format(pendingTxnsLabelFormat, convert(pendingTxn)));
     }
   }
 
@@ -230,13 +230,13 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
           n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_MAX_MEMORY);
           updateSeries(memoryMaxSeries, n);
           if (n != null) {
-            memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, n));
+            memoryMaxLabel.setText(MessageFormat.format(memoryMaxLabelFormat, convert(n.longValue())));
           }
 
           n = (Number) result.getPolledAttribute(theClient, POLLED_ATTR_USED_MEMORY);
           updateSeries(memoryUsedSeries, n);
           if (n != null) {
-            memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, n));
+            memoryUsedLabel.setText(MessageFormat.format(memoryUsedLabelFormat, convert(n.longValue())));
           }
 
           if (cpuTimeSeries != null) {

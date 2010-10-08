@@ -23,19 +23,8 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public abstract class ClusterElementChooser extends TreeComboBox {
-  private IClusterModel   clusterModel;
-  private ClusterListener clusterListener;
-  private boolean         inited;
-
   public ClusterElementChooser(IClusterModel clusterModel, ActionListener listener) {
     super(listener);
-
-    this.clusterModel = clusterModel;
-
-    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
-      setupTreeModel();
-    }
   }
 
   @Override
@@ -59,34 +48,15 @@ public abstract class ClusterElementChooser extends TreeComboBox {
     return (o instanceof ClusterElementNode);
   }
 
-  private class ClusterListener extends AbstractClusterListener {
-    private ClusterListener(IClusterModel clusterModel) {
-      super(clusterModel);
-    }
-
-    @Override
-    protected void handleReady() {
-      IClusterModel theClusterModel = getClusterModel();
-      if (theClusterModel == null) { return; }
-
-      if (theClusterModel.isReady()) {
-        setupTreeModel();
-        reSetToLastSelectedPath();
-      } else if (inited && !theClusterModel.isReady()) {
-        reset();
-      }
-    }
-  }
-
   protected abstract XTreeNode[] createTopLevelNodes();
 
-  protected void setupTreeModel() {
+  public void setupTreeModel() {
     XRootNode root = (XRootNode) treeModel.getRoot();
     for (XTreeNode child : createTopLevelNodes()) {
       root.addChild(child);
     }
     root.nodeStructureChanged();
-    inited = true;
+    reSetToLastSelectedPath();
   }
 
   public TreePath getPath(IClusterModelElement clusterElement) {
@@ -104,16 +74,7 @@ public abstract class ClusterElementChooser extends TreeComboBox {
 
   @Override
   public void tearDown() {
-    clusterModel.removePropertyChangeListener(clusterListener);
-    clusterListener.tearDown();
-
     ((XTreeModel) treeModel).tearDown();
-
-    synchronized (this) {
-      clusterModel = null;
-      clusterListener = null;
-    }
-
     super.tearDown();
   }
 }

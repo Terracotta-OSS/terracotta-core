@@ -65,6 +65,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
+      elementChooser.setupTreeModel();
       addNodePanels();
       removeAll();
       add(mainPanel);
@@ -211,6 +212,7 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
       removeAll();
       if (clusterModel.isReady()) {
         if (!inited) {
+          elementChooser.setupTreeModel();
           addNodePanels();
         }
         add(mainPanel);

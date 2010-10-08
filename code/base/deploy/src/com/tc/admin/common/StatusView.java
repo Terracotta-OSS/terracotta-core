@@ -85,7 +85,7 @@ public class StatusView extends XContainer {
     gbc.weightx = 1.0;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.anchor = GridBagConstraints.WEST;
-    gbc.insets = new Insets(1, 5, 1, 1);
+    gbc.insets = new Insets(0, 5, 0, 1);
     StatusView sv;
 
     cp.add(sv = new StatusView(), gbc);

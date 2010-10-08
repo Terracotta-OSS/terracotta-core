@@ -96,6 +96,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
+      elementChooser.setupTreeModel();
       addNodePanels();
     }
   }
@@ -108,8 +109,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     @Override
     protected XTreeNode[] createTopLevelNodes() {
       XTreeNode aggregateViewsNode = new XTreeNode(adminClientContext.getString("aggregate.view"));
-      ComponentNode aggregateServerStatsNode = new ComponentNode(adminClientContext
-          .getString("runtime.stats.aggregate.server.stats"));
+      ComponentNode aggregateServerStatsNode = new ComponentNode(
+                                                                 adminClientContext
+                                                                     .getString("runtime.stats.aggregate.server.stats"));
       aggregateServerStatsNode.setName(AGGREGATE_SERVER_STATS_NODE_NAME);
       aggregateViewsNode.add(aggregateServerStatsNode);
       ClientsNode clientsNode = new ClientsNode(adminClientContext, clusterModel) {
@@ -156,6 +158,7 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     protected void handleReady() {
       if (tornDown.get()) { return; }
       if (!inited && clusterModel.isReady()) {
+        elementChooser.setupTreeModel();
         addNodePanels();
       }
     }

@@ -343,7 +343,7 @@ public class Conversion {
     return Conversion.bytes2String(bytes);
   }
 
-  enum MemorySizeUnits {
+  public static enum MemorySizeUnits {
     KILO("k"), MEGA("m"), GIGA("g");
 
     private final String unit;

@@ -77,11 +77,11 @@ public class ClusterLog extends XContainer implements ActionListener {
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
     add(topPanel, BorderLayout.NORTH);
 
-    setName(clusterModel.getName());
+    setName(clusterModel.toString());
 
     clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
     if (clusterModel.isReady()) {
-      addNodePanels();
+      elementChooser.setupTreeModel();
     }
   }
 
@@ -96,7 +96,7 @@ public class ClusterLog extends XContainer implements ActionListener {
     }
 
     @Override
-    protected void setupTreeModel() {
+    public void setupTreeModel() {
       super.setupTreeModel();
       if (!inited) {
         addNodePanels();
@@ -136,6 +136,7 @@ public class ClusterLog extends XContainer implements ActionListener {
       if (theClusterModel == null) { return; }
 
       if (!inited && theClusterModel.isReady()) {
+        elementChooser.setupTreeModel();
         addNodePanels();
       } else if (inited && !theClusterModel.isReady()) {
         reset();
@@ -149,6 +150,7 @@ public class ClusterLog extends XContainer implements ActionListener {
 
       if (newActive != null) {
         if (!inited) {
+          elementChooser.setupTreeModel();
           addNodePanels();
         }
         if (elementChooser != null) {

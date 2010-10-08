@@ -80,17 +80,17 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private TimeSeries               offHeapFlushRateSeries;
   private StatusView               offHeapFlushRateLabel;
 
-  private final String             flushRateLabelFormat        = "{0,number,integer} Flushes/sec.";
-  private final String             faultRateLabelFormat        = "{0,number,integer} Faults/sec.";
-  private final String             txnRateLabelFormat          = "{0,number,integer} Txns/sec.";
-  private final String             onHeapFaultRateLabelFormat  = "{0,number,integer} OnHeap Faults/sec.";
-  private final String             onHeapFlushRateLabelFormat  = "{0,number,integer} OnHeap Flushes/sec.";
-  private final String             offHeapFaultRateLabelFormat = "{0,number,integer} OffHeap Faults/sec.";
-  private final String             offHeapFlushRateLabelFormat = "{0,number,integer} OffHeap Flushes/sec.";
-  private final String             onHeapUsedLabelFormat       = "{0,number,integer} OnHeap Used";
-  private final String             onHeapMaxLabelFormat        = "{0,number,integer} OnHeap Max";
-  private final String             offHeapUsedLabelFormat      = "{0,number,integer} OffHeap Used";
-  private final String             offHeapMaxLabelFormat       = "{0,number,integer} OffHeap Max";
+  private final String             flushRateLabelFormat        = "{0} Flushes/sec.";
+  private final String             faultRateLabelFormat        = "{0} Faults/sec.";
+  private final String             txnRateLabelFormat          = "{0} Txns/sec.";
+  private final String             onHeapFaultRateLabelFormat  = "{0} OnHeap Faults/sec.";
+  private final String             onHeapFlushRateLabelFormat  = "{0} OnHeap Flushes/sec.";
+  private final String             offHeapFaultRateLabelFormat = "{0} OffHeap Faults/sec.";
+  private final String             offHeapFlushRateLabelFormat = "{0} OffHeap Flushes/sec.";
+  private final String             onHeapUsedLabelFormat       = "{0} OnHeap Used";
+  private final String             onHeapMaxLabelFormat        = "{0} OnHeap Max";
+  private final String             offHeapUsedLabelFormat      = "{0} OffHeap Used";
+  private final String             offHeapMaxLabelFormat       = "{0} OffHeap Max";
 
   private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
                                                                              Arrays
@@ -182,43 +182,43 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
       updateSeries(flushRateSeries, n);
       if (n != null) {
-        flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, n));
+        flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
       updateSeries(faultRateSeries, n);
       if (n != null) {
-        faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, n));
+        faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE);
       updateSeries(txnRateSeries, n);
       if (n != null) {
-        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, n));
+        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
       updateSeries(onHeapFaultRateSeries, n);
       if (n != null) {
-        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, n));
+        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
       updateSeries(onHeapFlushRateSeries, n);
       if (n != null) {
-        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, n));
+        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
       updateSeries(offHeapFaultRateSeries, n);
       if (n != null) {
-        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, n));
+        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
       updateSeries(offHeapFlushRateSeries, n);
       if (n != null) {
-        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, n));
+        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(n.longValue())));
       }
     }
   }
@@ -231,25 +231,25 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY);
       updateSeries(onHeapMaxSeries, n);
       if (n != null) {
-        onHeapMaxLabel.setText(MessageFormat.format(onHeapMaxLabelFormat, n));
+        onHeapMaxLabel.setText(MessageFormat.format(onHeapMaxLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY);
       updateSeries(onHeapUsedSeries, n);
       if (n != null) {
-        onHeapUsedLabel.setText(MessageFormat.format(onHeapUsedLabelFormat, n));
+        onHeapUsedLabel.setText(MessageFormat.format(onHeapUsedLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAX_MEMORY);
       updateSeries(offHeapMaxSeries, n);
       if (n != null) {
-        offHeapMaxLabel.setText(MessageFormat.format(offHeapMaxLabelFormat, n));
+        offHeapMaxLabel.setText(MessageFormat.format(offHeapMaxLabelFormat, convert(n.longValue())));
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_USED_MEMORY);
       updateSeries(offHeapUsedSeries, n);
       if (n != null) {
-        offHeapUsedLabel.setText(MessageFormat.format(offHeapUsedLabelFormat, n));
+        offHeapUsedLabel.setText(MessageFormat.format(offHeapUsedLabelFormat, convert(n.longValue())));
       }
 
       if (cpuTimeSeries != null) {

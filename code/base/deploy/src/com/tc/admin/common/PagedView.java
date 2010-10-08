@@ -30,6 +30,7 @@ public class PagedView extends XContainer implements ComponentListener {
       ((CardLayout) getLayout()).show(this, page);
       firePropertyChange(PROP_CURRENT_PAGE, oldPage, page);
     }
+    revalidate();
     repaint();
   }
 

@@ -33,6 +33,8 @@ import com.tc.admin.options.RuntimeStatsOption;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.retrieval.actions.SRAMemoryUsage;
+import com.tc.util.Conversion;
+import com.tc.util.Conversion.MemorySizeUnits;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -94,8 +96,8 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   private static final ImageIcon        fStopIcon;
   private static final ImageIcon        fClearIcon;
 
-  protected static final Font           labelFont                               = new Font("DialogInput", Font.ITALIC,
-                                                                                           20);
+  protected static final Font           labelFont                               = new Font("DialogInput", Font.PLAIN,
+                                                                                           12);
 
   static {
     fStartIcon = new ImageIcon(BaseRuntimeStatsPanel.class.getResource("/com/tc/admin/icons/resume_co.gif"));
@@ -516,6 +518,18 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
   protected void updateSeries(TimeSeries series, Number value) {
     series.addOrUpdate(new Second(tmpDate), getValueOrMissing(series, value));
+  }
+
+  public static String convert(long value) {
+    try {
+      if (value < MemorySizeUnits.KILO.getInBytes()) {
+        return Long.toString(value);
+      } else {
+        return Conversion.memoryBytesAsSize(value);
+      }
+    } catch (Exception e) {
+      return Long.toString(value);
+    }
   }
 
   private static final boolean SHOW_LAST_ON_MISSING = true;

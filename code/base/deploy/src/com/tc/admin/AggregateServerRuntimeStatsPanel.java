@@ -24,6 +24,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYAreaRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.ui.Layer;
 
@@ -86,15 +87,15 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private TimeSeries               broadcastRateSeries;
   private StatusView               broadcastRateLabel;
 
-  protected final String           clientFlushRateLabelFormat  = "{0,number,integer} Flushes/sec.";
-  protected final String           clientFaultRateLabelFormat  = "{0,number,integer} Faults/sec.";
-  protected final String           txnRateLabelFormat          = "{0,number,integer} Txns/sec.";
-  protected final String           onHeapFaultRateLabelFormat  = "{0,number,integer} OnHeap Faults/sec.";
-  protected final String           onHeapFlushRateLabelFormat  = "{0,number,integer} OnHeap Flushes/sec.";
-  protected final String           offHeapFaultRateLabelFormat = "{0,number,integer} OffHeap Faults/sec.";
-  protected final String           offHeapFlushRateLabelFormat = "{0,number,integer} OffHeap Flushes/sec.";
-  protected final String           lockRecallRateLabelFormat   = "{0,number,integer} Recalls/sec.";
-  protected final String           broadcastRateLabelFormat    = "{0,number,integer} Broadcasts/sec.";
+  protected final String           clientFlushRateLabelFormat  = "{0} Flushes/sec.";
+  protected final String           clientFaultRateLabelFormat  = "{0} Faults/sec.";
+  protected final String           txnRateLabelFormat          = "{0} Txns/sec.";
+  protected final String           onHeapFaultRateLabelFormat  = "{0} OnHeap Faults/sec.";
+  protected final String           onHeapFlushRateLabelFormat  = "{0} OnHeap Flushes/sec.";
+  protected final String           offHeapFaultRateLabelFormat = "{0} OffHeap Faults/sec.";
+  protected final String           offHeapFlushRateLabelFormat = "{0} OffHeap Flushes/sec.";
+  protected final String           lockRecallRateLabelFormat   = "{0} Recalls/sec.";
+  protected final String           broadcastRateLabelFormat    = "{0} Broadcasts/sec.";
 
   private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
                                                                              Arrays
@@ -328,36 +329,38 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
       if (flush != -1) {
         updateSeries(clientFlushRateSeries, Long.valueOf(flush));
-        clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, flush));
+        clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(flush)));
       }
       if (fault != -1) {
         updateSeries(clientFaultRateSeries, Long.valueOf(fault));
-        clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, fault));
+        clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(fault)));
       }
       if (txn != -1) {
         updateSeries(txnRateSeries, Long.valueOf(txn));
-        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, txn));
+        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txn)));
       }
       if (onHeapFaultRate != -1) {
         updateSeries(onHeapFaultRateSeries, Long.valueOf(onHeapFaultRate));
-        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, onHeapFaultRate));
+        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(onHeapFaultRate)));
       }
       if (onHeapFlushRate != -1) {
         updateSeries(onHeapFlushRateSeries, Long.valueOf(onHeapFlushRate));
-        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, onHeapFlushRate));
+        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(onHeapFlushRate)));
       }
       if (offHeapFaultRate != -1) {
         updateSeries(offHeapFaultRateSeries, Long.valueOf(offHeapFaultRate));
-        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, offHeapFaultRate));
+        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(offHeapFaultRate)));
       }
       if (offHeapFlushRate != -1) {
         updateSeries(offHeapFlushRateSeries, Long.valueOf(offHeapFlushRate));
-        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, offHeapFlushRate));
+        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(offHeapFlushRate)));
       }
       if (liveObjectCount != -1) {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
-        objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cachedObjectCount,
-                                                         offHeapObjectCount, liveObjectCount));
+        String cached = convert(cachedObjectCount);
+        String offHeap = offHeapObjectCount != -1 ? convert(offHeapObjectCount) : "n/a";
+        String live = convert(liveObjectCount);
+        objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
       }
       if (cachedObjectCount != -1) {
         updateSeries(cachedObjectCountSeries, Long.valueOf(cachedObjectCount));
@@ -367,18 +370,18 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       }
       if (lockRecallRate != -1) {
         updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
-        lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, lockRecallRate));
+        lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(lockRecallRate)));
       }
       if (broadcastRate != -1) {
         updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
-        broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, broadcastRate));
+        broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(broadcastRate)));
       }
     }
   }
 
   @Override
   protected synchronized void setup(XContainer chartsPanel) {
-    
+
     chartsPanel.setLayout(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = gbc.gridy = 0;
@@ -416,14 +419,14 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     objectManagerTitlePattern = liveObjectCountLabel + " (caching: {0}, offheap: {1}, total: {2})";
     objectManagerTitle = BorderFactory.createTitledBorder(liveObjectCountLabel);
     chartPanel.setBorder(objectManagerTitle);
-    chartPanel.setToolTipText("Total/Cached/OffHeap instance counts");
+    chartPanel.setToolTipText("Cached/OffHeap/Total instance counts");
     liveObjectCountPlot = (XYPlot) chart.getPlot();
     XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA,
                                                       StandardXYToolTipGenerator.getTimeSeriesInstance(), null);
     liveObjectCountPlot.setRenderer(areaRenderer2);
-    areaRenderer2.setSeriesPaint(0, Color.blue);
-    areaRenderer2.setSeriesPaint(1, Color.green);
-    areaRenderer2.setSeriesPaint(2, Color.red);
+    areaRenderer2.setSeriesPaint(0, (Color) appContext.getObject("chart.color.2"));
+    areaRenderer2.setSeriesPaint(1, (Color) appContext.getObject("chart.color.3"));
+    areaRenderer2.setSeriesPaint(2, (Color) appContext.getObject("chart.color.1"));
   }
 
   private void setupLockRecallRatePanel(XContainer parent, GridBagConstraints gbc) {
@@ -439,62 +442,94 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
     chartPanel.setBorder(new TitledBorder("Lock Recalls/Change Broadcasts"));
     chartPanel.setToolTipText("Global Lock Recalls");
     chartPanel.setLayout(new GridBagLayout());
+
+    Color color1 = (Color) appContext.getObject("chart.color.1");
+    Color color2 = (Color) appContext.getObject("chart.color.2");
+
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, color1);
+    renderer.setSeriesPaint(1, color2);
+
     GridBagConstraints waterMarkConstraint = new GridBagConstraints();
     XContainer labelHolder = new XContainer(new GridLayout(0, 1));
-    labelHolder.add(lockRecallRateLabel = createStatusLabel(Color.red));
-    labelHolder.add(broadcastRateLabel = createStatusLabel(Color.blue));
+    labelHolder.add(lockRecallRateLabel = createStatusLabel(color1));
+    labelHolder.add(broadcastRateLabel = createStatusLabel(color2));
     labelHolder.setOpaque(false);
     chartPanel.add(labelHolder, waterMarkConstraint);
   }
 
   private void setupFlushRatePanel(XContainer parent, GridBagConstraints gbc) {
     clientFlushRateSeries = createTimeSeries("");
-    ChartPanel chartPanel = createChartPanel(createChart(clientFlushRateSeries, false));
+    JFreeChart chart = createChart(clientFlushRateSeries, false);
+    ChartPanel chartPanel = createChartPanel(chart);
     parent.add(chartPanel, gbc);
     chartPanel.setPreferredSize(fDefaultGraphSize);
     chartPanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.flush.rate")));
     chartPanel.setToolTipText(appContext.getString("aggregate.server.stats.flush.rate.tip"));
     chartPanel.setLayout(new BorderLayout());
     chartPanel.add(clientFlushRateLabel = createOverlayLabel());
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, (Color) appContext.getObject("chart.color.1"));
   }
 
   private void setupFaultRatePanel(XContainer parent, GridBagConstraints gbc) {
     clientFaultRateSeries = createTimeSeries("");
-    ChartPanel chartPanel = createChartPanel(createChart(clientFaultRateSeries, false));
+    JFreeChart chart = createChart(clientFaultRateSeries, false);
+    ChartPanel chartPanel = createChartPanel(chart);
     parent.add(chartPanel, gbc);
     chartPanel.setPreferredSize(fDefaultGraphSize);
     chartPanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.fault.rate")));
     chartPanel.setToolTipText(appContext.getString("aggregate.server.stats.fault.rate.tip"));
     chartPanel.setLayout(new BorderLayout());
     chartPanel.add(clientFaultRateLabel = createOverlayLabel());
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, (Color) appContext.getObject("chart.color.1"));
   }
 
   private void setupTxnRatePanel(XContainer parent, GridBagConstraints gbc) {
     txnRateSeries = createTimeSeries("");
-    ChartPanel chartPanel = createChartPanel(createChart(txnRateSeries, false));
+    JFreeChart chart = createChart(txnRateSeries, false);
+    ChartPanel chartPanel = createChartPanel(chart);
     parent.add(chartPanel, gbc);
     chartPanel.setPreferredSize(fDefaultGraphSize);
     chartPanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.transaction.rate")));
     chartPanel.setToolTipText(appContext.getString("aggregate.server.stats.transaction.rate.tip"));
     chartPanel.setLayout(new BorderLayout());
     chartPanel.add(txnRateLabel = createOverlayLabel());
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, (Color) appContext.getObject("chart.color.1"));
   }
 
   private void setupOnHeapFaultFlushPanel(XContainer parent, GridBagConstraints gbc) {
     onHeapFaultRateSeries = createTimeSeries(appContext.getString("dso.onheap.fault.rate"));
     onHeapFlushRateSeries = createTimeSeries(appContext.getString("dso.onheap.flush.rate"));
-    ChartPanel chartPanel = createChartPanel(createChart(new TimeSeries[] { onHeapFaultRateSeries,
-        onHeapFlushRateSeries }, false));
+    JFreeChart chart = createChart(new TimeSeries[] { onHeapFaultRateSeries, onHeapFlushRateSeries }, false);
+    ChartPanel chartPanel = createChartPanel(chart);
     parent.add(chartPanel, gbc);
     chartPanel.setPreferredSize(fDefaultGraphSize);
     chartPanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.onheap.flushfault")));
     chartPanel.setToolTipText(appContext.getString("aggregate.server.stats.onheap.flushfault.tip"));
     chartPanel.setLayout(new GridBagLayout());
+
+    Color color1 = (Color) appContext.getObject("chart.color.1");
+    Color color2 = (Color) appContext.getObject("chart.color.2");
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, color1);
+    renderer.setSeriesPaint(1, color2);
+
     GridBagConstraints waterMarkConstraint = new GridBagConstraints();
     waterMarkConstraint.anchor = GridBagConstraints.WEST;
     XContainer labelHolder = new XContainer(new GridLayout(0, 1));
-    labelHolder.add(onHeapFaultRateLabel = createStatusLabel(Color.red));
-    labelHolder.add(onHeapFlushRateLabel = createStatusLabel(Color.blue));
+    labelHolder.add(onHeapFaultRateLabel = createStatusLabel(color1));
+    labelHolder.add(onHeapFlushRateLabel = createStatusLabel(color2));
     labelHolder.setOpaque(false);
     chartPanel.add(labelHolder, waterMarkConstraint);
   }
@@ -502,18 +537,27 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   private void setupOffHeapFaultFlushPanel(XContainer parent, GridBagConstraints gbc) {
     offHeapFaultRateSeries = createTimeSeries(appContext.getString("dso.offheap.fault.rate"));
     offHeapFlushRateSeries = createTimeSeries(appContext.getString("dso.offheap.flush.rate"));
-    ChartPanel chartPanel = createChartPanel(createChart(new TimeSeries[] { offHeapFaultRateSeries,
-        offHeapFlushRateSeries }, false));
+    JFreeChart chart = createChart(new TimeSeries[] { offHeapFaultRateSeries, offHeapFlushRateSeries }, false);
+    ChartPanel chartPanel = createChartPanel(chart);
     parent.add(chartPanel, gbc);
     chartPanel.setPreferredSize(fDefaultGraphSize);
     chartPanel.setBorder(new TitledBorder(appContext.getString("aggregate.server.stats.offheap.flushfault")));
     chartPanel.setToolTipText(appContext.getString("aggregate.server.stats.offheap.flushfault.tip"));
     chartPanel.setLayout(new GridBagLayout());
+
+    Color color1 = (Color) appContext.getObject("chart.color.1");
+    Color color2 = (Color) appContext.getObject("chart.color.2");
+
+    XYPlot plot = (XYPlot) chart.getPlot();
+    XYItemRenderer renderer = plot.getRenderer();
+    renderer.setSeriesPaint(0, color1);
+    renderer.setSeriesPaint(1, color2);
+
     GridBagConstraints waterMarkConstraint = new GridBagConstraints();
     waterMarkConstraint.anchor = GridBagConstraints.WEST;
     XContainer labelHolder = new XContainer(new GridLayout(0, 1));
-    labelHolder.add(offHeapFaultRateLabel = createStatusLabel(Color.red));
-    labelHolder.add(offHeapFlushRateLabel = createStatusLabel(Color.blue));
+    labelHolder.add(offHeapFaultRateLabel = createStatusLabel(color1));
+    labelHolder.add(offHeapFlushRateLabel = createStatusLabel(color2));
     labelHolder.setOpaque(false);
     chartPanel.add(labelHolder, waterMarkConstraint);
   }

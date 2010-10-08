@@ -4,6 +4,7 @@
  */
 package com.tc.admin.common;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.text.DecimalFormat;
 import java.util.ListResourceBundle;
@@ -40,6 +41,7 @@ public class CommonBundle extends ListResourceBundle {
         { "dial.tick.label.font", new Font("Dialog", Font.PLAIN, 12) },
         { "connect-dialog.connecting.format", "Connecting to {0} ..." }, { "connect-dialog.username", "Username:" },
         { "connect-dialog.password", "Password:" }, { "connect-dialog.credentials", "Credentials" },
-        { "connect-dialog.timed-out", "Timed-out" } };
+        { "connect-dialog.timed-out", "Timed-out" }, { "chart.color.1", Color.red }, { "chart.color.2", Color.blue },
+        { "chart.color.3", Color.green } };
   }
 }

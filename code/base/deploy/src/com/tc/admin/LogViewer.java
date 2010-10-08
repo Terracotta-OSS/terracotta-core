@@ -34,6 +34,7 @@ public class LogViewer extends XContainer {
   public void add(IClusterModel clusterModel) {
     ClusterLog clusterLog = new ClusterLog(adminClientContext, clusterModel);
     logMap.put(clusterModel, clusterLog);
+    // clusterLog.setName(clusterModel.toString());
     pagedView.addPage(clusterLog);
     select(clusterModel);
   }
@@ -47,7 +48,7 @@ public class LogViewer extends XContainer {
   }
 
   public void select(IClusterModel clusterModel) {
-    String pageName = clusterModel.getName();
+    String pageName = clusterModel.toString();
     if (!pagedView.hasPage(pageName)) {
       pageName = EMPTY_PAGE;
     }
