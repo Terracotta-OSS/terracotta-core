@@ -189,6 +189,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   public synchronized void preFetchObject(final ObjectID id) {
+    waitUntilRunning();
     if (this.dnaCache.containsKey(id) || this.objectLookupStates.containsKey(id)) { return; }
     final ObjectLookupState ols = new ObjectLookupState(getNextRequestID(), id, this.defaultDepth, ObjectID.NULL_ID);
     ols.makePrefetchRequest();
@@ -363,6 +364,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   public synchronized ObjectID retrieveRootID(final String name) {
 
+    waitUntilRunning();
     if (!this.rootRequests.containsKey(name)) {
       final RequestRootMessage rrm = createRootMessage(name);
       this.rootRequests.put(name, ObjectID.NULL_ID);
@@ -470,6 +472,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   public synchronized void removed(final ObjectID id) {
+    waitUntilRunning();
     this.dnaCache.remove(id);
     this.removeObjects.add(id);
     if (this.removeObjects.size() >= REMOVE_OBJECTS_THRESHOLD) {
@@ -482,6 +485,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   }
 
   public synchronized void sendRemovedObjects() {
+    waitUntilRunning();
     this.removeTaskScheduled = false;
     if (!this.removeObjects.isEmpty()) {
       sendRequestNow(getNextRequestID(), TCCollections.EMPTY_OBJECT_ID_SET, -1);
