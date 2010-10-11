@@ -110,7 +110,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   }
 
   public void startEvictor() {
-    if (PERIODIC_EVICTOR_ENABLED && !this.isStarted.getAndSet(true)) {
+    if (!this.isStarted.getAndSet(true) && PERIODIC_EVICTOR_ENABLED) {
       logger.info("Server Map Eviction : Evictor will run every " + this.evictionSleepTime + " ms");
       this.evictor.schedule(new EvictorTask(this), this.evictionSleepTime, this.evictionSleepTime);
     }
