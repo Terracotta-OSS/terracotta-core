@@ -487,7 +487,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       int retrys = 0;
       do {
         result = basicInternalLookupObjectsFor(nodeID, context, maxReachableObjects);
-        if (retrys++ % 10 == 9) {
+        if (result == LookupState.RETRY && retrys++ % 10 == 9) {
           logger.warn("Very high contention : retried lookup for " + nodeID + "," + context + " for " + retrys
                       + "times");
         }
@@ -539,7 +539,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     } else {
       context.makeOldRequest();
       unmarkReferenced(objects.values());
-      // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be 
+      // It is OK to not unblock these unmarked references as any request that is blocked by these objects will be
       // processed after this request is (unblocked) and processed
       return addBlocked(nodeID, context, maxReachableObjects, blockedObjectID);
     }

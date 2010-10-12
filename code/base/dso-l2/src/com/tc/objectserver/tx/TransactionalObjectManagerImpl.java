@@ -229,7 +229,7 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
   }
 
   private void dumpToLogger() {
-    CallbackDumpHandler dumpHandler =new CallbackDumpHandler();
+    CallbackDumpHandler dumpHandler = new CallbackDumpHandler();
     dumpHandler.registerForDump(new CallbackDumpAdapter(this));
     dumpHandler.dump();
   }
@@ -461,8 +461,8 @@ public class TransactionalObjectManagerImpl implements TransactionalObjectManage
     public String toString() {
       return "LookupContext [ txnID = " + this.txn.getServerTransactionID() + ", oids = " + this.oids + ", seqID = "
              + this.txn.getClientSequenceID() + ", clientTxnID = " + this.txn.getTransactionID() + ", numTxn = "
-             + this.txn.getNumApplicationTxn() + "] = { pending = " + this.pending + ", lookedupObjects = "
-             + (this.lookedUpObjects == null ? "null" : this.lookedUpObjects.keySet().toString()) + "}";
+             + this.txn.getNumApplicationTxn() + "] = { pending = " + this.pending + ", lookedupObjects.size() = "
+             + (this.lookedUpObjects == null ? "0" : Integer.toString(this.lookedUpObjects.size())) + "}";
     }
 
     public ObjectIDSet getLookupIDs() {
