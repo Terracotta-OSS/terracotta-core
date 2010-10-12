@@ -28,6 +28,7 @@ public class LockShareUnlockTest extends TransparentTestBase {
   private int              port;
   private File             configFile;
   private int              jmxPort;
+  private int              groupPort;
 
   @Override
   protected Class getApplicationClass() {
@@ -50,7 +51,7 @@ public class LockShareUnlockTest extends TransparentTestBase {
     PortChooser pc = new PortChooser();
     port = pc.chooseRandomPort();
     jmxPort = pc.chooseRandomPort();
-    int groupPort = pc.chooseRandomPort();
+    groupPort = pc.chooseRandomPort();
     configFile = getTempFile("tc-config.xml");
     writeConfigFile();
 
@@ -60,7 +61,7 @@ public class LockShareUnlockTest extends TransparentTestBase {
 
   private synchronized void writeConfigFile() {
     try {
-      TerracottaConfigBuilder builder = createConfig(port, jmxPort);
+      TerracottaConfigBuilder builder = createConfig();
       FileOutputStream out = new FileOutputStream(configFile);
       IOUtils.copy(new StringInputStream(builder.toString()), out);
       out.close();
@@ -69,11 +70,12 @@ public class LockShareUnlockTest extends TransparentTestBase {
     }
   }
 
-  private TerracottaConfigBuilder createConfig(int dsoPort, int adminPort) {
+  private TerracottaConfigBuilder createConfig() {
     TerracottaConfigBuilder tcConfigBuilder = new TerracottaConfigBuilder();
 
     tcConfigBuilder.getServers().getL2s()[0].setDSOPort(port);
-    tcConfigBuilder.getServers().getL2s()[0].setJMXPort(adminPort);
+    tcConfigBuilder.getServers().getL2s()[0].setJMXPort(jmxPort);
+    tcConfigBuilder.getServers().getL2s()[0].setL2GroupPort(groupPort);
 
     tcConfigBuilder.getClient().setFaultCount(1);
 
