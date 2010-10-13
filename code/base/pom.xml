@@ -7,7 +7,7 @@
 
   <groupId>org.terracotta</groupId>
   <artifactId>parent</artifactId>
-  <version>3.4.0-SNAPSHOT</version>
+  <version>3.5.0-SNAPSHOT</version>
   <name>terracotta base</name>
   <packaging>pom</packaging>
 
@@ -35,7 +35,7 @@
   </licenses>
 
   <properties>
-    <tcVersion>3.4.0-SNAPSHOT</tcVersion>
+    <tcVersion>3.5.0-SNAPSHOT</tcVersion>
     <tim-api.version>1.3.0</tim-api.version>
     <sigar.version>1.6.4</sigar.version>
     <jetty.version>6.1.8</jetty.version>
