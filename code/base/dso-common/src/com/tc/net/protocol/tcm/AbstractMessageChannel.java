@@ -264,8 +264,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return NAME_CHANNEL_LAYER;
   }
 
+  @Override
   public String toString() {
-    return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID]") + ":" + getLocalAddress() + " <--> " + getRemoteAddress());
+    return ((isOpen() ? getChannelID() : "ChannelID[NULL_ID, " + getStatus() + "]") + ":" + getLocalAddress()
+            + " <--> " + getRemoteAddress());
   }
 
   class ChannelStatus {
@@ -299,6 +301,11 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       return ChannelState.CLOSED.equals(state);
     }
 
+    @Override
+    public String toString() {
+      return "Status:" + this.state.toString();
+    }
+
   }
 
   private static class ChannelState {
@@ -316,6 +323,7 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
       this.state = state;
     }
 
+    @Override
     public String toString() {
       switch (state) {
         case STATE_INIT:
