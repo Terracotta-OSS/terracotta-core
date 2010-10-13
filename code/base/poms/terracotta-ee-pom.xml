@@ -19,7 +19,7 @@
     <!-- got most of its dependencies from terracotta-core-parent -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>native-cache</artifactId>
+      <artifactId>offheap-store</artifactId>
     </dependency>    
   </dependencies>
 
