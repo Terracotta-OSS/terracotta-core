@@ -10,7 +10,7 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 
 public class MemoryOperatorEventListener implements MemoryEventsListener {
-  private static final int                    TIME_INTERVAL_BETWEEN_TWO_EVENTS = 30000;
+  private static final int                    TIME_INTERVAL_BETWEEN_TWO_EVENTS = 1800 * 1000;
 
   private final int                           critcalThreshold;
   private boolean                             canFireOpEvent                   = true;
