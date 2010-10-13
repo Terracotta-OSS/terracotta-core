@@ -10,26 +10,29 @@ import com.tc.runtime.MemoryEventsListener;
 import com.tc.runtime.MemoryUsage;
 
 public class MemoryOperatorEventListener implements MemoryEventsListener {
+  private static final int                    TIME_INTERVAL_BETWEEN_TWO_EVENTS = 30000;
 
   private final int                           critcalThreshold;
-  private MemoryUsage                         lastMemoryUsage;
-  private final TerracottaOperatorEventLogger operatorEventLogger = TerracottaOperatorEventLogging.getEventLogger();
+  private boolean                             canFireOpEvent                   = true;
+  private long                                lastEventFireTime                = 0;
+  private final TerracottaOperatorEventLogger operatorEventLogger              = TerracottaOperatorEventLogging
+                                                                                   .getEventLogger();
 
   public MemoryOperatorEventListener(int criticalThreshold) {
     this.critcalThreshold = criticalThreshold;
   }
 
   public void memoryUsed(MemoryUsage currentUsage) {
-    if (lastMemoryUsage == null) {
-      lastMemoryUsage = currentUsage;
-      return;
+    if (!canFireOpEvent && currentUsage.getUsedPercentage() < this.critcalThreshold) {
+      this.canFireOpEvent = true;
     }
-    long countDiff = currentUsage.getCollectionCount() - lastMemoryUsage.getCollectionCount();
-    if (countDiff > 0 && currentUsage.getUsedPercentage() >= this.critcalThreshold) {
-      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createHighMemoryUsageEvent(currentUsage
-          .getUsedPercentage()));
-    }
-    this.lastMemoryUsage = currentUsage;
-  }
 
+    if (canFireOpEvent && (System.currentTimeMillis() - this.lastEventFireTime >= TIME_INTERVAL_BETWEEN_TWO_EVENTS)
+        && currentUsage.getUsedPercentage() >= this.critcalThreshold) {
+      operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createHighMemoryUsageEvent(currentUsage
+          .getUsedPercentage(), this.critcalThreshold));
+      this.lastEventFireTime = System.currentTimeMillis();
+      this.canFireOpEvent = false;
+    }
+  }
 }

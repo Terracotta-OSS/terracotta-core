@@ -20,9 +20,10 @@ public class TerracottaOperatorEventFactory {
         .format(TerracottaOperatorEventResources.getLongGCMessage(), arguments), "");
   }
 
-  public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage) {
+  public static TerracottaOperatorEvent createHighMemoryUsageEvent(int memoryUsage, int critcalThreshold) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), new Object[] { memoryUsage }), "");
+        .format(TerracottaOperatorEventResources.getHighMemoryUsageMessage(), new Object[] { memoryUsage,
+            critcalThreshold }), "");
   }
 
   public static TerracottaOperatorEvent createOffHeapMapMemoryUsageEvent(String allocated, String maxSize,
