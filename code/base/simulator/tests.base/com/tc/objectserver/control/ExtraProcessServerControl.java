@@ -138,7 +138,6 @@ public class ExtraProcessServerControl extends ServerControlBase {
     jvmArgs.add("-Dcom.tc.l1.modules.repositories=" + System.getProperty("com.tc.l1.modules.repositories"));
     jvmArgs.add("-Dtc.base-dir=" + System.getProperty("tc.base-dir"));
     jvmArgs.add("-D" + Directories.TC_INSTALL_ROOT_IGNORE_CHECKS_PROPERTY_NAME + "=true");
-    jvmArgs.add("-Djava.net.preferIPv4Stack=true");
     debugParams.addDebugParamsTo(jvmArgs);
     jvmArgs.add("-D" + TCPropertiesImpl.SYSTEM_PROP_PREFIX + TCPropertiesConsts.TC_MANAGEMENT_TEST_MBEANS_ENABLED
                 + "=true");
@@ -225,7 +224,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
   protected List<String> getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
       return Arrays.asList(StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-          StandardTVSConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
+                           StandardTVSConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
     } else {
       return Arrays.asList(StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc);
     }
