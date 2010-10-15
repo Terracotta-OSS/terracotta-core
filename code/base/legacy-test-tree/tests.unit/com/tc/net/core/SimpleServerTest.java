@@ -24,7 +24,7 @@ public class SimpleServerTest extends TCTestCase {
   private final SynchronizedRef error     = new SynchronizedRef(null);
 
   protected void setUp(int serverThreadCount) throws Exception {
-    connMgr = new TCConnectionManagerJDK14();
+    connMgr = new TCConnectionManagerImpl();
     server = new SimpleServer(new EchoSink(true, new EchoSink.ErrorListener() {
       public void error(Throwable t) {
         setError(t);

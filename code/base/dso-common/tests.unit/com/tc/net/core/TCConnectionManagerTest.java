@@ -28,8 +28,8 @@ public class TCConnectionManagerTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    this.clientConnMgr = new TCConnectionManagerJDK14();
-    this.serverConnMgr = new TCConnectionManagerJDK14();
+    this.clientConnMgr = new TCConnectionManagerImpl();
+    this.serverConnMgr = new TCConnectionManagerImpl();
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();
@@ -175,7 +175,7 @@ public class TCConnectionManagerTest extends TestCase {
 
   public void testInActiveClientConnections() throws Exception {
     HealthCheckerConfig hcConfig = new HealthCheckerConfigImpl(1000, 1000, 5, "testInActiveClientConnections", false);
-    this.serverConnMgr = new TCConnectionManagerJDK14("TestConnMgr", 0, hcConfig);
+    this.serverConnMgr = new TCConnectionManagerImpl("TestConnMgr", 0, hcConfig);
     this.lsnr = this.serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {
         return new NullProtocolAdaptor();

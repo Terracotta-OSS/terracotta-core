@@ -8,7 +8,7 @@ import com.tc.net.TCSocketAddress;
 import com.tc.net.core.MockTCConnection;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.core.TCConnectionManagerJDK14;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCNetworkMessage;
@@ -41,7 +41,7 @@ public class WireProtocolGroupMessageImplTest extends TestCase {
   private final AtomicBoolean fullySent     = new AtomicBoolean(false);
 
   protected void setUp() throws Exception {
-    connMgr = new TCConnectionManagerJDK14();
+    connMgr = new TCConnectionManagerImpl();
 
     ProtocolAdaptorFactory factory = new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {

@@ -29,16 +29,17 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * JDK 1.4 implementation of TCConnectionManager interface
+ * The {@link TCConnectionManager} implementation.
  * 
  * @author teck
+ * @author mgovinda
  */
-public class TCConnectionManagerJDK14 implements TCConnectionManager {
+public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final TCConnection[] EMPTY_CONNECTION_ARRAY = new TCConnection[] {};
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
   protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
 
-  private final TCCommJDK14             comm;
+  private final TCCommImpl              comm;
   private final HealthCheckerConfig     healthCheckerConfig;
   private final Set                     connections            = new HashSet();
   private final Set                     listeners              = new HashSet();
@@ -47,21 +48,21 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
 
-  public TCConnectionManagerJDK14() {
+  public TCConnectionManagerImpl() {
     this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
   }
 
-  public TCConnectionManagerJDK14(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
+  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig) {
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
     this.socketParams = new SocketParams();
     this.healthCheckerConfig = healthCheckerConfig;
-    this.comm = new TCCommJDK14(name, workerCommCount, socketParams);
+    this.comm = new TCCommImpl(name, workerCommCount, socketParams);
     this.comm.start();
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionJDK14(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams);
+    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams);
   }
 
   protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
@@ -85,7 +86,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
 
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
 
-    TCListenerJDK14 rv = new TCListenerJDK14(ssc, factory, getConnectionListener(), this, commThread);
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread);
 
     commThread.registerListener(rv, ssc);
 
@@ -169,9 +170,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
       conns = (TCConnection[]) connections.toArray(EMPTY_CONNECTION_ARRAY);
     }
 
-    for (int i = 0; i < conns.length; i++) {
-      TCConnection conn = conns[i];
-
+    for (TCConnection conn : conns) {
       try {
         if (async) {
           conn.asynchClose();
@@ -191,9 +190,7 @@ public class TCConnectionManagerJDK14 implements TCConnectionManager {
       list = (TCListener[]) listeners.toArray(EMPTY_LISTENER_ARRAY);
     }
 
-    for (int i = 0; i < list.length; i++) {
-      TCListener lsnr = list[i];
-
+    for (TCListener lsnr : list) {
       try {
         lsnr.stop();
       } catch (Exception e) {

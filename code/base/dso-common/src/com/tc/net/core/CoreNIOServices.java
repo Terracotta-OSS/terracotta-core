@@ -37,6 +37,13 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * The communication thread. Creates {@link Selector selector}, registers {@link SocketChannel} to the selector and does
+ * other NIO operations.
+ * 
+ * @author mgovinda
+ */
+
 class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListener {
   private static final TCLogger                logger        = TCLogging.getLogger(CoreNIOServices.class);
   private final TCWorkerCommManager            workerCommMgr;
@@ -91,7 +98,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     listenerRemoved(event.getSource());
   }
 
-  public void registerListener(TCListenerJDK14 lsnr, ServerSocketChannel ssc) {
+  public void registerListener(TCListenerImpl lsnr, ServerSocketChannel ssc) {
     requestAcceptInterest(lsnr, ssc);
     listenerAdded(lsnr);
     lsnr.addEventListener(this);
@@ -171,7 +178,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
    * @param addWeightBy : upgrade weight of connection
    * @param channel : SocketChannel for the passed in connection
    */
-  public void addWeight(final TCConnectionJDK14 connection, final int addWeightBy, final SocketChannel channel) {
+  public void addWeight(final TCConnectionImpl connection, final int addWeightBy, final SocketChannel channel) {
 
     synchronized (managedConnectionsMap) {
       // this connection is already handled by a WorkerComm
@@ -194,7 +201,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     }
   }
 
-  private void addConnection(TCConnectionJDK14 connection, int initialWeight) {
+  private void addConnection(TCConnectionImpl connection, int initialWeight) {
     synchronized (managedConnectionsMap) {
       Assert.eval(!managedConnectionsMap.containsKey(connection));
       managedConnectionsMap.put(connection, initialWeight);
@@ -230,31 +237,31 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     return "[" + this.commThreadName + ", FD, wt:" + getWeight() + "]";
   }
 
-  void requestConnectInterest(TCConnectionJDK14 conn, SocketChannel sc) {
+  void requestConnectInterest(TCConnectionImpl conn, SocketChannel sc) {
     readerComm.requestConnectInterest(conn, sc);
   }
 
-  private void requestAcceptInterest(TCListenerJDK14 lsnr, ServerSocketChannel ssc) {
+  private void requestAcceptInterest(TCListenerImpl lsnr, ServerSocketChannel ssc) {
     readerComm.requestAcceptInterest(lsnr, ssc);
   }
 
-  void requestReadInterest(TCJDK14ChannelReader reader, ScatteringByteChannel channel) {
+  void requestReadInterest(TCChannelReader reader, ScatteringByteChannel channel) {
     readerComm.requestReadInterest(reader, channel);
   }
 
-  void removeReadInterest(TCConnectionJDK14 conn, SelectableChannel channel) {
+  void removeReadInterest(TCConnectionImpl conn, SelectableChannel channel) {
     readerComm.removeReadInterest(conn, channel);
   }
 
-  void requestWriteInterest(TCJDK14ChannelWriter writer, GatheringByteChannel channel) {
+  void requestWriteInterest(TCChannelWriter writer, GatheringByteChannel channel) {
     writerComm.requestWriteInterest(writer, channel);
   }
 
-  void removeWriteInterest(TCConnectionJDK14 conn, SelectableChannel channel) {
+  void removeWriteInterest(TCConnectionImpl conn, SelectableChannel channel) {
     writerComm.removeWriteInterest(conn, channel);
   }
 
-  private void requestReadWriteInterest(TCConnectionJDK14 conn, SocketChannel sc) {
+  private void requestReadWriteInterest(TCConnectionImpl conn, SocketChannel sc) {
     readerComm.requestReadInterest(conn, sc);
     writerComm.requestWriteInterest(conn, sc);
   }
@@ -265,7 +272,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     private final String           name;
     private final SynchronizedLong bytesRead    = new SynchronizedLong(0);
     private final SynchronizedLong bytesWritten = new SynchronizedLong(0);
-    private COMM_THREAD_MODE       mode;
+    private final COMM_THREAD_MODE mode;
 
     public CommThread(final COMM_THREAD_MODE mode) {
       name = commThreadName + (mode == COMM_THREAD_MODE.NIO_READER ? "_R" : "_W");
@@ -281,6 +288,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return (this.mode == COMM_THREAD_MODE.NIO_READER);
     }
 
+    @Override
     public void run() {
       try {
         selectLoop();
@@ -319,7 +327,8 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             throw new RuntimeException(ioe);
           } catch (NullPointerException npe) {
             if (i < tries && NIOWorkarounds.selectorOpenRace(npe)) {
-              System.err.println("Attempting to work around sun bug 6427854 (attempt " + (i + 1) + " of " + tries + ")");
+              System.err
+                  .println("Attempting to work around sun bug 6427854 (attempt " + (i + 1) + " of " + tries + ")");
               try {
                 Thread.sleep(new Random().nextInt(20) + 5);
               } catch (InterruptedException ie) {
@@ -503,9 +512,9 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
       if (localSelector != null) {
 
-        for (Iterator keys = localSelector.keys().iterator(); keys.hasNext();) {
+        for (Object element : localSelector.keys()) {
           try {
-            SelectionKey key = (SelectionKey) keys.next();
+            SelectionKey key = (SelectionKey) element;
             cleanupChannel(key.channel(), null);
           }
 
@@ -610,7 +619,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
             if (isReader() && key.isValid() && key.isReadable()) {
               int read;
-              TCJDK14ChannelReader reader = (TCJDK14ChannelReader) key.attachment();
+              TCChannelReader reader = (TCChannelReader) key.attachment();
               ScatteringByteChannel channel = (ScatteringByteChannel) key.channel();
               do {
                 read = reader.doRead(channel);
@@ -619,7 +628,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
             }
 
             if (key.isValid() && !isReader() && key.isWritable()) {
-              int written = ((TCJDK14ChannelWriter) key.attachment()).doWrite((GatheringByteChannel) key.channel());
+              int written = ((TCChannelWriter) key.attachment()).doWrite((GatheringByteChannel) key.channel());
               this.bytesWritten.add(written);
             }
 
@@ -633,13 +642,13 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
     private void doAccept(final SelectionKey key) {
       SocketChannel sc = null;
 
-      final TCListenerJDK14 lsnr = (TCListenerJDK14) key.attachment();
+      final TCListenerImpl lsnr = (TCListenerImpl) key.attachment();
 
       try {
         final ServerSocketChannel ssc = (ServerSocketChannel) key.channel();
         sc = ssc.accept();
         sc.configureBlocking(false);
-        final TCConnectionJDK14 conn = lsnr.createConnection(sc, CoreNIOServices.this, socketParams);
+        final TCConnectionImpl conn = lsnr.createConnection(sc, CoreNIOServices.this, socketParams);
         requestReadInterest(conn, sc);
       } catch (IOException ioe) {
         if (logger.isInfoEnabled()) {
@@ -652,7 +661,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
 
     private void doConnect(SelectionKey key) {
       SocketChannel sc = (SocketChannel) key.channel();
-      TCConnectionJDK14 conn = (TCConnectionJDK14) key.attachment();
+      TCConnectionImpl conn = (TCConnectionImpl) key.attachment();
 
       try {
         if (sc.finishConnect()) {
@@ -746,33 +755,33 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       }
     }
 
-    void requestConnectInterest(TCConnectionJDK14 conn, SocketChannel sc) {
+    void requestConnectInterest(TCConnectionImpl conn, SocketChannel sc) {
       handleRequest(InterestRequest.createSetInterestRequest(sc, conn, SelectionKey.OP_CONNECT, this));
     }
 
-    void requestReadInterest(TCJDK14ChannelReader reader, ScatteringByteChannel channel) {
+    void requestReadInterest(TCChannelReader reader, ScatteringByteChannel channel) {
       Assert.eval(isReader());
       handleRequest(InterestRequest.createAddInterestRequest((SelectableChannel) channel, reader, SelectionKey.OP_READ,
                                                              this));
     }
 
-    void requestWriteInterest(TCJDK14ChannelWriter writer, GatheringByteChannel channel) {
+    void requestWriteInterest(TCChannelWriter writer, GatheringByteChannel channel) {
       Assert.eval(!isReader());
       handleRequest(InterestRequest.createAddInterestRequest((SelectableChannel) channel, writer,
                                                              SelectionKey.OP_WRITE, this));
     }
 
-    private void requestAcceptInterest(TCListenerJDK14 lsnr, ServerSocketChannel ssc) {
+    private void requestAcceptInterest(TCListenerImpl lsnr, ServerSocketChannel ssc) {
       Assert.eval(isReader());
       handleRequest(InterestRequest.createSetInterestRequest(ssc, lsnr, SelectionKey.OP_ACCEPT, this));
     }
 
-    void removeWriteInterest(TCConnectionJDK14 conn, SelectableChannel channel) {
+    void removeWriteInterest(TCConnectionImpl conn, SelectableChannel channel) {
       Assert.eval(!isReader());
       handleRequest(InterestRequest.createRemoveInterestRequest(channel, conn, SelectionKey.OP_WRITE, this));
     }
 
-    void removeReadInterest(TCConnectionJDK14 conn, SelectableChannel channel) {
+    void removeReadInterest(TCConnectionImpl conn, SelectableChannel channel) {
       Assert.eval(isReader());
       handleRequest(InterestRequest.createRemoveInterestRequest(channel, conn, SelectionKey.OP_READ, this));
     }
@@ -820,6 +829,7 @@ class CoreNIOServices implements TCListenerEventListener, TCConnectionEventListe
       return commNIOServiceThread;
     }
 
+    @Override
     public String toString() {
       StringBuffer buf = new StringBuffer();
 

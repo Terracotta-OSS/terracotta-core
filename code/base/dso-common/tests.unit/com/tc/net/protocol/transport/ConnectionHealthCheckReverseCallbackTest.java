@@ -15,7 +15,7 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.TCComm;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.TCConnectionManager;
-import com.tc.net.core.TCConnectionManagerJDK14;
+import com.tc.net.core.TCConnectionManagerImpl;
 import com.tc.net.core.TCListener;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
@@ -147,11 +147,11 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
   }
 
   private static class MyConnectionManager implements TCConnectionManager {
-    private final TCConnectionManagerJDK14 delegate;
+    private final TCConnectionManagerImpl delegate;
     private final WaitableInt              connects;
 
     MyConnectionManager(WaitableInt serverSocketConnects) {
-      this.delegate = new TCConnectionManagerJDK14();
+      this.delegate = new TCConnectionManagerImpl();
       this.connects = serverSocketConnects;
     }
 

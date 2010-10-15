@@ -28,15 +28,15 @@ import java.util.Iterator;
 
 /**
  * TCListener implementation
- *
+ * 
  * @author teck
  */
-final class TCListenerJDK14 implements TCListener {
+final class TCListenerImpl implements TCListener {
   protected final static TCLogger         logger          = TCLogging.getLogger(TCListener.class);
 
   private final ServerSocketChannel       ssc;
   private final TCConnectionEventListener listener;
-  private final TCConnectionManagerJDK14  parent;
+  private final TCConnectionManagerImpl   parent;
   private final InetAddress               addr;
   private final int                       port;
   private final TCSocketAddress           sockAddr;
@@ -48,8 +48,8 @@ final class TCListenerJDK14 implements TCListener {
   private final ProtocolAdaptorFactory    factory;
   private final CoreNIOServices           commNIOServiceThread;
 
-  TCListenerJDK14(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
-                  TCConnectionManagerJDK14 managerJDK14, CoreNIOServices commNIOServiceThread) {
+  TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
+                 TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread) {
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
     this.sockAddr = new TCSocketAddress(this.addr, this.port);
@@ -65,9 +65,10 @@ final class TCListenerJDK14 implements TCListener {
     commNIOServiceThread.stopListener(ssc, callback);
   }
 
-  TCConnectionJDK14 createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams) throws IOException {
+  TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
+      throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionJDK14 rv = new TCConnectionJDK14(listener, adaptor, ch, parent, nioServiceThread, socketParams);
+    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams);
     rv.finishConnect();
     parent.newConnection(rv);
     return rv;
@@ -149,6 +150,7 @@ final class TCListenerJDK14 implements TCListener {
     return stopped.isSet();
   }
 
+  @Override
   public final String toString() {
     return getClass().getName() + " " + addr.getHostAddress() + ":" + port;
   }

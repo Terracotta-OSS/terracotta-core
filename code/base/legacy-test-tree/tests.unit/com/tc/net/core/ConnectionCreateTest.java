@@ -28,8 +28,8 @@ public class ConnectionCreateTest extends TestCase {
     final TCConnectionManager clientConnMgr;
     final TCConnectionManager serverConnMgr;
     final TCSocketAddress addr;
-    clientConnMgr = new TCConnectionManagerJDK14();
-    serverConnMgr = new TCConnectionManagerJDK14();
+    clientConnMgr = new TCConnectionManagerImpl();
+    serverConnMgr = new TCConnectionManagerImpl();
 
     TCListener lsnr = serverConnMgr.createListener(new TCSocketAddress(0), new ProtocolAdaptorFactory() {
       public TCProtocolAdaptor getInstance() {

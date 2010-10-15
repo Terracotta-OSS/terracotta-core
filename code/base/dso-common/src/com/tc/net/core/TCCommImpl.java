@@ -8,29 +8,28 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
 /**
- * JDK 1.4 (NIO) version of TCComm. Uses a single internal thread and a selector to manage channels associated with
- * <code>TCConnection</code>'s
+ * Implementation for TCComm. Manages communication threads for new connection and listeners at a high level.
  * 
  * @author teck
+ * @author mgovinda
  */
-class TCCommJDK14 implements TCComm {
-
-  protected static final TCLogger   logger         = TCLogging.getLogger(TCComm.class);
+class TCCommImpl implements TCComm {
 
   private final TCWorkerCommManager workerCommMgr;
   private final CoreNIOServices     commThread;
   private final String              commThreadName = "TCComm Main Selector Thread";
+  private static final TCLogger     logger         = TCLogging.getLogger(TCCommImpl.class);
 
   private volatile boolean          started        = false;
 
-  TCCommJDK14(String name, int workerCommCount, SocketParams socketParams) {
+  TCCommImpl(String name, int workerCommCount, SocketParams socketParams) {
     if (workerCommCount > 0) {
       workerCommMgr = new TCWorkerCommManager(name, workerCommCount, socketParams);
     } else {
       logger.info("Comm Worker Threads NOT requested");
       workerCommMgr = null;
     }
-    
+
     this.commThread = new CoreNIOServices(name + ":" + commThreadName, workerCommMgr, socketParams);
   }
 
@@ -100,5 +99,5 @@ class TCCommJDK14 implements TCComm {
   public CoreNIOServices nioServiceThreadForNewListener() {
     return commThread;
   }
-  
+
 }

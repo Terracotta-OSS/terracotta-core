@@ -50,11 +50,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * JDK14 (nio) implementation of TCConnection
+ * The {@link TCConnection} implementation. SocketChannel read/write happens here.
  * 
  * @author teck
+ * @author mgovinda
  */
-final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJDK14ChannelWriter {
+final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannelWriter {
 
   private static final long                  NO_CONNECT_TIME             = -1L;
   private static final TCLogger              logger                      = TCLogging.getLogger(TCConnection.class);
@@ -65,12 +66,14 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   private final AtomicBoolean                transportEstablished        = new AtomicBoolean(false);
   private final LinkedList<TCNetworkMessage> writeMessages               = new LinkedList<TCNetworkMessage>();
-  private final TCConnectionManagerJDK14     parent;
+  private final TCConnectionManagerImpl      parent;
   private final TCConnectionEventCaller      eventCaller                 = new TCConnectionEventCaller(logger);
-  private final SynchronizedLong             lastDataWriteTime           = new SynchronizedLong(System
-                                                                             .currentTimeMillis());
-  private final SynchronizedLong             lastDataReceiveTime         = new SynchronizedLong(System
-                                                                             .currentTimeMillis());
+  private final SynchronizedLong             lastDataWriteTime           = new SynchronizedLong(
+                                                                                                System
+                                                                                                    .currentTimeMillis());
+  private final SynchronizedLong             lastDataReceiveTime         = new SynchronizedLong(
+                                                                                                System
+                                                                                                    .currentTimeMillis());
   private final SynchronizedLong             connectTime                 = new SynchronizedLong(NO_CONNECT_TIME);
   private final List                         eventListeners              = new CopyOnWriteArrayList();
   private final TCProtocolAdaptor            protocolAdaptor;
@@ -86,12 +89,10 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
   private static final boolean               MSG_GROUPING_ENABLED        = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getBoolean(
-                                                                                         TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED);
+                                                                             .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED);
   private static final int                   MSG_GROUPING_MAX_SIZE_BYTES = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getInt(
-                                                                                     TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
+                                                                             .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
                                                                                      128) * 1024;
 
   static {
@@ -102,15 +103,15 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
   private final ArrayList<TCNetworkMessage>  messagesToBatch             = new ArrayList<TCNetworkMessage>();
 
   // for creating unconnected client connections
-  TCConnectionJDK14(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor,
-                    final TCConnectionManagerJDK14 managerJDK14, final CoreNIOServices nioServiceThread,
-                    final SocketParams socketParams) {
+  TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor,
+                   final TCConnectionManagerImpl managerJDK14, final CoreNIOServices nioServiceThread,
+                   final SocketParams socketParams) {
     this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams);
   }
 
-  TCConnectionJDK14(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
-                    final TCConnectionManagerJDK14 parent, final CoreNIOServices nioServiceThread,
-                    final SocketParams socketParams) {
+  TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
+                   final TCConnectionManagerImpl parent, final CoreNIOServices nioServiceThread,
+                   final SocketParams socketParams) {
 
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
@@ -452,7 +453,7 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
 
     long bytesToWrite = 0;
     bytesToWrite = message.getTotalLength();
-    if (bytesToWrite >= TCConnectionJDK14.WARN_THRESHOLD) {
+    if (bytesToWrite >= TCConnectionImpl.WARN_THRESHOLD) {
       logger.warn("Warning: Attempting to send a message (" + message.getClass().getName() + ") of size "
                   + bytesToWrite + " bytes");
     }
@@ -522,11 +523,10 @@ final class TCConnectionJDK14 implements TCConnection, TCJDK14ChannelReader, TCJ
     return new Runnable() {
       public void run() {
         setConnected(false);
-        TCConnectionJDK14.this.parent.connectionClosed(TCConnectionJDK14.this);
+        TCConnectionImpl.this.parent.connectionClosed(TCConnectionImpl.this);
 
         if (fireClose) {
-          TCConnectionJDK14.this.eventCaller.fireCloseEvent(TCConnectionJDK14.this.eventListeners,
-                                                            TCConnectionJDK14.this);
+          TCConnectionImpl.this.eventCaller.fireCloseEvent(TCConnectionImpl.this.eventListeners, TCConnectionImpl.this);
         }
 
         if (latch != null) {

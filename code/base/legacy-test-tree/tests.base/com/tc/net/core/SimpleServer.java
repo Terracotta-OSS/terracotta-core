@@ -36,7 +36,7 @@ public class SimpleServer {
   public SimpleServer(GenericNetworkMessageSink sink, int port, int serverThreadCount) {
     this.sink = sink;
     this.port = port;
-    this.connMgr = new TCConnectionManagerJDK14("TestConnMgr", serverThreadCount,
+    this.connMgr = new TCConnectionManagerImpl("TestConnMgr", serverThreadCount,
                                                 new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"));
   }
 

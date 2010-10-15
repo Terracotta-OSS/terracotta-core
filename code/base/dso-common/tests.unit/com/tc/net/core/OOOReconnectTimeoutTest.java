@@ -122,26 +122,26 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     assertTrue(client2.isConnected());
     assertTrue(client3.isConnected());
 
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
     // case 1 : network problems .. both ends getting events. Server opens up reconnect window
     proxy.stop();
 
     ThreadUtil.reallySleep(5000);
-    Assert.assertEquals(0, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(0, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(0, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+    Assert.assertEquals(0, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+    Assert.assertEquals(0, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+    Assert.assertEquals(0, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
     proxy.start();
 
     ThreadUtil.reallySleep(5000);
     assertTrue(client1.isConnected());
     assertTrue(client2.isConnected());
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(1, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+    Assert.assertEquals(1, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
     // case 2: problem with the client side connections .. but server still thinks clients are connected
     proxy.closeClientConnections(true, false);
@@ -149,9 +149,9 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ThreadUtil.reallySleep(5000);
 
     System.out.println("XXX waiting for clients to reconnect");
-    while ((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
-           && (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
+    while ((((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0) != 1)
+           && (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1) != 1)
+           && (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2) != 1)) {
       System.out.print("~");
       ThreadUtil.reallySleep(5000);
     }
@@ -170,9 +170,9 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     assertTrue(client5.isConnected());
     assertTrue(client6.isConnected());
 
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
-    Assert.assertEquals(2, ((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
+    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0));
+    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1));
+    Assert.assertEquals(2, ((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(2));
 
     ensureThreadCount(OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl.RESTORE_TIMERTHREAD_NAME, 1);
 
@@ -182,8 +182,8 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
     ThreadUtil.reallySleep(L1_RECONNECT_TIMEOUT);
 
     System.out.println("XXX waiting for client count 3");
-    while (((((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
-            + (((TCCommJDK14) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1)) + (((TCCommJDK14) commsMgr
+    while (((((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(0))
+            + (((TCCommImpl) commsMgr.getConnectionManager().getTcComm()).getWeightForWorkerComm(1)) + (((TCCommImpl) commsMgr
         .getConnectionManager().getTcComm()).getWeightForWorkerComm(2))) != 3) {
       System.out.print("~");
       ThreadUtil.reallySleep(5000);
