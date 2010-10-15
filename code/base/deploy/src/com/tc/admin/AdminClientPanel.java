@@ -87,13 +87,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.JPopupMenu.Separator;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -429,7 +429,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
 
     public void actionPerformed(ActionEvent ae) {
       block();
-      BrowserLauncher.openURL(adminClientContext.format("console.guide.url", getKitID()));
+      BrowserLauncher.openURL(adminClientContext.format("console.guide.url", getKitID(), "ConsoleGuide"));
       unblock();
     }
   }
@@ -871,9 +871,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       textArea.setLineWrap(true);
       textArea.setWrapStyleWord(true);
       XScrollPane scrollPane = new XScrollPane(textArea);
-      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane,
-                                    adminClientContext.getMessage("update-checker.action.title"),
-                                    JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(AdminClientPanel.this, scrollPane, adminClientContext
+          .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     public Properties getResponseBody(URL url, HttpClient client) throws ConnectException, IOException {
@@ -983,9 +982,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
       if (msg != null) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            JOptionPane.showMessageDialog(AdminClientPanel.this, msg,
-                                          adminClientContext.getMessage("update-checker.action.title"),
-                                          JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(AdminClientPanel.this, msg, adminClientContext
+                .getMessage("update-checker.action.title"), JOptionPane.INFORMATION_MESSAGE);
           }
         });
       }

@@ -221,7 +221,7 @@ public class GCStatsPanel extends XContainer implements DGCListener {
   }
 
   protected String getHelpButtonTarget() {
-    return appContext.format("console.guide.url", getKitID())
+    return appContext.format("console.guide.url", getKitID(), "ConsoleGuide")
            + "#TerracottaDeveloperConsole-DistributedGarbageCollection";
   }
 
