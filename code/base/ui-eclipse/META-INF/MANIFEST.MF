@@ -81,7 +81,6 @@ Bundle-ClassPath: ../dependencies/lib/bsh-2.0b4.jar,
  ../dso-l2-common/build.eclipse/src.classes,
  ../thirdparty/build.eclipse/src.classes,
  ../management/build.eclipse/src.classes,
- ../management-api/build.eclipse/src.classes,
- ../license-common/build.eclipse/src.classes
+ ../management-api/build.eclipse/src.classes
 Bundle-Activator: org.terracotta.dso.TcPlugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
