@@ -70,6 +70,7 @@ import javax.management.QueryExp;
 import javax.management.remote.JMXConnector;
 import javax.naming.CommunicationException;
 import javax.naming.ServiceUnavailableException;
+import javax.swing.JOptionPane;
 import javax.swing.event.EventListenerList;
 
 public class Server extends BaseClusterNode implements IServer, NotificationListener, ManagedObjectFacadeProvider,
@@ -1014,6 +1015,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private void initServerInfoBean() {
+    checkCompatibility();
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       try {
@@ -1021,6 +1023,28 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       } catch (Exception e) {
         /**/
       }
+    }
+  }
+
+  protected void checkCompatibility() {
+    TCServerInfoMBean serverInfo = getServerInfoBean();
+    if (serverInfo.isEnterprise()) {
+      Thread th = new Thread(new CompatibiltyThread(), "compatibility thread");
+      th.start();
+    }
+  }
+
+  private class CompatibiltyThread implements Runnable {
+
+    public void run() {
+      JOptionPane
+          .showMessageDialog(
+                             null,
+                             "Opensource edition of dev console can not connect to Enterprise edition of terracotta server",
+                             "Can not connect", JOptionPane.INFORMATION_MESSAGE);
+      connectManager.disconnect();
+      connectManager.setAutoConnect(false);
+      clusterModel.setAutoConnect(false);
     }
   }
 
@@ -1234,8 +1258,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
-                                                        acn.getNewValue());
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
+          .getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }
@@ -1835,8 +1859,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
     if (theClusterStatsBean != null) {
       theClusterStatsBean.createSession(sessionId);
-      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
-                                          Long.valueOf(samplePeriodMillis));
+      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, Long
+          .valueOf(samplePeriodMillis));
       theClusterStatsBean.enableStatistics(statsToRecord);
       theClusterStatsBean.startCapturing();
     }

@@ -261,8 +261,8 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     List list = new ArrayList();
     StatisticData[] statsData = cpuSRA.retrieveStatisticData();
     if (statsData != null) {
-      for (int i = 0; i < statsData.length; i++) {
-        list.add(statsData[i].getElement());
+      for (StatisticData element : statsData) {
+        list.add(element.getElement());
       }
     }
     return cpuNames = (String[]) list.toArray(EMPTY_CPU_NAMES);
@@ -441,5 +441,9 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     boolean oldValue = isVerboseGC();
     ManagementFactory.getMemoryMXBean().setVerbose(verboseGC);
     _sendNotification("VerboseGC changed", "VerboseGC", "java.lang.Boolean", oldValue, verboseGC);
+  }
+
+  public boolean isEnterprise() {
+    return ProductInfo.getInstance().isEnterprise();
   }
 }

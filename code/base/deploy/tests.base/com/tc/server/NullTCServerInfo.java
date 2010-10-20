@@ -232,4 +232,8 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public TopologyReloadStatus reloadConfiguration() {
     return null;
   }
+
+  public boolean isEnterprise() {
+    return false;
+  }
 }
