@@ -87,17 +87,19 @@ public class ThreadPreferenceExecutorTest extends TestCase {
       assertEquals(i + 1, exec.getActiveThreadCount());
     }
 
+    while (exec.getActiveThreadCount() != 0) {
+      ThreadUtil.reallySleep(1000);
+    }
+
     for (int i = 0; i < 10; i++) {
       exec.execute(shortClient);
     }
 
-    while (exec.getActiveThreadCount() != 16) {
-      ThreadUtil.reallySleep(100);
+    while (exec.getActiveThreadCount() != 0) {
+      ThreadUtil.reallySleep(1000);
     }
 
     assertEquals(1, logAppender.getThreadCountLogging());
-
-    ThreadUtil.reallySleep(10000);
 
     // make sure all tasks complete
     assertEquals(26, run.get());
