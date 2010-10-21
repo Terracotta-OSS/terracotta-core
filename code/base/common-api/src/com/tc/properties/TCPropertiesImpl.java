@@ -153,6 +153,10 @@ public class TCPropertiesImpl implements TCProperties {
     for (Entry<String, String> prop : overwriteProps.entrySet()) {
       String propertyName = prop.getKey();
       String propertyValue = prop.getValue();
+      if (!this.props.containsKey(propertyName)) {
+        logger.warn("The property \"" + propertyName
+                    + "\" is not present in set of defined tc properties. Probably this is misspelled");
+      }
       if (!this.localTcProperties.containsKey(propertyName)) {
         logger.info("The property \"" + propertyName + "\" was overridden to " + propertyValue + " from "
                     + props.getProperty(propertyName) + " by the tc-config file");

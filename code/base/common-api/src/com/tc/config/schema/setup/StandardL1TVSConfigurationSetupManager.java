@@ -104,7 +104,7 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
 
     Map<String, String> propMap = new HashMap<String, String>();
     for (TcProperty tcp : this.configTCProperties.getTcPropertiesArray()) {
-      propMap.put(tcp.getPropertyName(), tcp.getPropertyValue());
+      propMap.put(tcp.getPropertyName().trim(), tcp.getPropertyValue().trim());
     }
 
     tcProps.overwriteTcPropertiesFromConfig(propMap);
