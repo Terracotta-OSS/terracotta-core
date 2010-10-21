@@ -6,6 +6,8 @@ package com.tc.test;
 
 import org.apache.commons.io.FileUtils;
 
+import com.tc.util.concurrent.ThreadUtil;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +34,7 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
     this.cleanDir = cleanDir;
   }
 
+  @Override
   protected File fetchDirectory() throws IOException {
     File root = getRoot();
     if (!root.exists()) {
@@ -40,19 +43,34 @@ public class TempDirectoryHelper extends BaseDirectoryHelper {
     String shortClassName = getTargetClass().getName();
     String[] tokens = shortClassName.split("\\.");
     if (tokens.length > 1) {
-      shortClassName = tokens[tokens.length-1];
+      shortClassName = tokens[tokens.length - 1];
     }
-    File out = new File(root, shortClassName);
-    if ((!out.exists()) && (!out.mkdirs())) {
-      FileNotFoundException fnfe = new FileNotFoundException("Directory '" + out.getAbsolutePath()
-          + "' can't be created.");
+    File directory = new File(root, shortClassName);
+    if ((!directory.exists()) && (!directory.mkdirs())) {
+      FileNotFoundException fnfe = new FileNotFoundException("Directory '" + directory.getAbsolutePath()
+                                                             + "' can't be created.");
       throw fnfe;
     }
 
     if (cleanDir) {
-      FileUtils.cleanDirectory(out);
-    }
-    return out;
-  }
+      int count = 0;
+      while (true) {
+        count++;
+        try {
+          FileUtils.cleanDirectory(directory);
+          break;
+        } catch (Exception e) {
+          System.err.println("Unable to clean up the directory - " + directory + "; Exception: " + e);
+        }
 
+        if (count > 10) {
+          System.err.println("Skipping clean up for directory - " + directory);
+          break;
+        }
+
+        ThreadUtil.reallySleep(2000);
+      }
+    }
+    return directory;
+  }
 }
