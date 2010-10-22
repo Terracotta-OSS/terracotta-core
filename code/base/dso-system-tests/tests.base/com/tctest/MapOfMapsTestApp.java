@@ -36,18 +36,26 @@ import java.util.Map.Entry;
 
 public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
 
-  private static int       LOOP_COUNT   = 20;
-  private static final int DEPTH_COUNT  = 5;
-  private static final int BREATH_COUNT = 3;
+  private static int         LOOP_COUNT   = 20;
+  private static int         DEPTH_COUNT  = 5;
+  private static int         BREATH_COUNT = 3;
 
-  final Map                root         = new HashMap();
-  final SynchronizedInt    uid          = new SynchronizedInt(0);
-  CyclicBarrier            barrier;
+  public static final String OFFHEAP      = "offheap";
+
+  final Map                  root         = new HashMap();
+  final SynchronizedInt      uid          = new SynchronizedInt(0);
+  CyclicBarrier              barrier;
 
   public MapOfMapsTestApp(final String appId, final ApplicationConfig cfg, final ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
     if (Os.isSolaris()) {
       LOOP_COUNT = 10;
+    }
+
+    if ("true".equals(cfg.getAttribute(OFFHEAP))) {
+      LOOP_COUNT = 10;
+      DEPTH_COUNT = 2;
+      BREATH_COUNT = 1;
     }
   }
 
@@ -194,7 +202,7 @@ public class MapOfMapsTestApp extends AbstractErrorCatchingTransparentApp {
   private Map getPopulatedMap(final Map m) {
     for (int i = 0; i < 10; i++) {
       m.put(StringUtil.reduce("Hello - " + i), StringUtil
-            .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
+          .reduce("Hehehehehehehehehehehehehehehehehheheheheheheheheheheheheheheheheh-" + i));
     }
     return m;
   }
