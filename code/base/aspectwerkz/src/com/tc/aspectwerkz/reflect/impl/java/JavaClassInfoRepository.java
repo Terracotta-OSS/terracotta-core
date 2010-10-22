@@ -1,31 +1,34 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.aspectwerkz.reflect.impl.java;
 
+import com.tc.aspectwerkz.reflect.ClassInfo;
+
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import com.tc.aspectwerkz.reflect.ClassInfo;
-
 /**
- * A repository for the class info hierarchy. Is class loader aware. <p/>TODO refactor some with
- * ASMClassInfoRepository but keep em separate for system runtime sake in AOPC (WLS)
- *
+ * A repository for the class info hierarchy. Is class loader aware.
+ * <p/>
+ * TODO refactor some with ASMClassInfoRepository but keep em separate for system runtime sake in AOPC (WLS)
+ * 
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  */
 public class JavaClassInfoRepository {
   /**
    * Map with all the class info repositories mapped to their class loader.
    */
-  private static final HashMap s_repositories = new HashMap();
+  private static final HashMap          s_repositories = new HashMap();
 
   /**
    * Map with all the class info mapped to their class names.
    */
-  private final Map m_repository = new WeakHashMap();
+  private final Map                     m_repository   = Collections.synchronizedMap(new WeakHashMap());
 
   /**
    * Class loader for the class repository.
@@ -34,7 +37,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Creates a new repository.
-   *
+   * 
    * @param loader
    */
   private JavaClassInfoRepository(final ClassLoader loader) {
@@ -43,7 +46,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Returns the class info repository for the specific class loader
-   *
+   * 
    * @param loader
    * @return
    */
@@ -62,31 +65,29 @@ public class JavaClassInfoRepository {
 
   /**
    * Remove a class from the repository.
-   *
+   * 
    * @param className the name of the class
    */
   public static void removeClassInfoFromAllClassLoaders(final String className) {
-    //TODO - fix algorithm
+    // TODO - fix algorithm
     throw new UnsupportedOperationException("fix algorithm");
   }
 
   /**
    * Returns the class info.
-   *
+   * 
    * @param className
    * @return
    */
   public ClassInfo getClassInfo(final String className) {
     ClassInfo info = (ClassInfo) m_repository.get(className);
-    if (info == null) {
-      return checkParentClassRepository(className, (ClassLoader) m_loaderRef.get());
-    }
+    if (info == null) { return checkParentClassRepository(className, (ClassLoader) m_loaderRef.get()); }
     return (ClassInfo) m_repository.get(className);
   }
 
   /**
    * Adds a new class info.
-   *
+   * 
    * @param classInfo
    */
   public void addClassInfo(final ClassInfo classInfo) {
@@ -100,7 +101,7 @@ public class JavaClassInfoRepository {
 
   /**
    * Checks if the class info for a specific class exists.
-   *
+   * 
    * @param name
    * @return
    */
@@ -110,17 +111,15 @@ public class JavaClassInfoRepository {
 
   /**
    * Searches for a class info up in the class loader hierarchy.
-   *
+   * 
    * @param className
    * @param loader
    * @return the class info
    * @TODO might clash for specific class loader lookup algorithms, user need to override this class and implement
-   * this method
+   *       this method
    */
   public ClassInfo checkParentClassRepository(final String className, final ClassLoader loader) {
-    if (loader == null) {
-      return null;
-    }
+    if (loader == null) { return null; }
     ClassInfo info;
     ClassLoader parent = loader.getParent();
     if (parent == null) {
