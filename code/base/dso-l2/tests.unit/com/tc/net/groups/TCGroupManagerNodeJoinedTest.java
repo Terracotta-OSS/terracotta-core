@@ -17,6 +17,7 @@ import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
+import com.tc.net.ServerID;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.ClientMessageTransport;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -101,6 +102,25 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     testDEV3101WithL2Reconnect.join();
   }
 
+  // Test for DEV-4870
+  public void testNodeJoinAfterCloseMember() throws Exception {
+    Thread testAfterCloseMemberWithL2Reconnect = new Thread(threadGroup, new Runnable() {
+      public void run() {
+        try {
+          TCPropertiesImpl.getProperties().setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "true");
+          nodesSetupAndJoinedAfterCloseMember(2);
+          TCPropertiesImpl.getProperties()
+              .setProperty(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED, "false");
+        } catch (Exception e) {
+          throw new RuntimeException("DEV-3101 without L2 Reconnect failed: " + e);
+        }
+      }
+    });
+
+    testAfterCloseMemberWithL2Reconnect.start();
+    testAfterCloseMemberWithL2Reconnect.join();
+  }
+
   public void testNodejoinedThreeServers() throws Exception {
     Thread throwableThread = new Thread(threadGroup, new Runnable() {
       public void run() {
@@ -145,8 +165,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(), allNodes[i]
-          .getPort(), allNodes[i].getGroupPort(), stageManager);
+      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
@@ -179,6 +199,88 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     shutdown();
   }
 
+  public void nodesSetupAndJoinedAfterCloseMember(int nodes) throws Exception {
+    System.out.println("XXX Testing DEV-4870 : There is a world after doing closeMember()");
+    Assert.assertEquals(2, nodes);
+
+    int count = getThreadCountByName(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
+    System.out.println("XXX Thread count : " + ClientConnectionEstablisher.RECONNECT_THREAD_NAME + " - " + count);
+
+    listeners = new MyListener[nodes];
+    groupManagers = new TCGroupManagerImpl[nodes];
+    Node[] allNodes = new Node[nodes];
+    Node[] proxiedAllNodes = new Node[nodes];
+    TCPProxy[] proxy = new TCPProxy[nodes];
+    PortChooser pc = new PortChooser();
+    for (int i = 0; i < nodes; ++i) {
+      int port = pc.chooseRandom2Port();
+      allNodes[i] = new Node(LOCALHOST, port, port + 1);
+
+      int proxyPort = pc.chooseRandomPort();
+      proxy[i] = new TCPProxy(proxyPort, InetAddress.getByName(LOCALHOST), port + 1, 0, false, null);
+      proxy[i].start();
+      proxiedAllNodes[i] = new Node(LOCALHOST, port, proxyPort);
+    }
+
+    proxy[1].stop();
+
+    for (int i = 0; i < nodes; ++i) {
+      StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
+      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
+      ConfigurationContext context = new ConfigurationContextImpl(stageManager);
+      stageManager.startAll(context, Collections.EMPTY_LIST);
+      gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));
+
+      groupManagers[i] = gm;
+      gm.setZapNodeRequestProcessor(new TCGroupManagerImplTest.MockZapNodeRequestProcessor());
+      MyGroupEventListener gel = new MyGroupEventListener(gm);
+      listeners[i] = new MyListener();
+      gm.registerForMessages(TestMessage.class, listeners[i]);
+      gm.registerForGroupEvents(gel);
+
+    }
+
+    Set<Node> nodeSet = new HashSet<Node>();
+    Collections.addAll(nodeSet, proxiedAllNodes);
+    NodesStore nodeStore = new NodesStoreImpl(nodeSet);
+
+    // joining
+    System.err.println("XXX Start Joining...");
+    for (int i = 0; i < nodes; ++i) {
+      groupManagers[i].join(allNodes[i], nodeStore);
+    }
+
+    ThreadUtil.reallySleep(5000 + 1000 * nodes);
+
+    // verification
+    for (int i = 0; i < nodes; ++i) {
+      // every node shall receive hello message from reset of nodes
+      assertEquals(nodes - 1, listeners[i].size());
+    }
+
+    ThreadUtil.reallySleep(5000);
+
+    System.err.println("XXX 1st verification done.");
+    System.err.println("XXX Node 0: " + allNodes[0]);
+    System.err.println("XXX Node 1: " + allNodes[1]);
+
+    groupManagers[0].closeMember((ServerID) groupManagers[1].getLocalNodeID());
+    System.out.println("XXX member close done");
+
+    proxy[0].stop();
+    proxy[1].start();
+
+    ThreadUtil.reallySleep(5000 + 1000 * nodes);
+
+    // verification
+    for (int i = 0; i < nodes; ++i) {
+      // every node should have received one more hello message from reset of nodes
+      assertEquals(nodes, listeners[i].size());
+    }
+    shutdown();
+  }
+
   public void nodesSetupAndJoined_DEV3101(int nodes) throws Exception {
     System.out.println("*** Testing DEV3101 1");
     Assert.assertEquals(2, nodes);
@@ -204,8 +306,8 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
 
     for (int i = 0; i < nodes; ++i) {
       StageManager stageManager = new StageManagerImpl(threadGroup, new QueueFactory());
-      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(), allNodes[i]
-          .getPort(), allNodes[i].getGroupPort(), stageManager);
+      TCGroupManagerImpl gm = new TCGroupManagerImpl(new NullConnectionPolicy(), allNodes[i].getHost(),
+                                                     allNodes[i].getPort(), allNodes[i].getGroupPort(), stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
       gm.setDiscover(new TCGroupMemberDiscoveryStatic(gm));

@@ -75,13 +75,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -205,8 +204,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                           new OOOEventHandler(), L2Utils.getOptimalCommWorkerThreads(),
                                                           maxStageSize);
       final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_RECEIVE_STAGE,
-                                                             new OOOEventHandler(), L2Utils
-                                                                 .getOptimalCommWorkerThreads(), maxStageSize);
+                                                             new OOOEventHandler(),
+                                                             L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
                                                                      oooSendStage.getSink(), oooReceiveStage.getSink(),
@@ -232,8 +231,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     groupListener.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
                                    hydrateStage.getSink());
     groupListener.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
-    groupListener.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(), hydrateStage
-        .getSink());
+    groupListener.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
+                                   hydrateStage.getSink());
 
     registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
   }
@@ -333,7 +332,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private boolean tryAddMember(TCGroupMember member) {
     if (isStopped.get()) {
-      closeMember(member, false);
+      closeMember(member);
       return false;
     }
 
@@ -372,10 +371,24 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     }
   }
 
-  public void memberDisappeared(TCGroupMember member) {
+  /**
+   * Force close down the problematic peer Server member. Just a wrapper over the closeMember(TCGroupMember).
+   */
+  public void closeMember(ServerID serverID) {
+    TCGroupMember member = getMember(serverID);
+    if (member != null) {
+      logger.info("Closing down member for " + serverID + " - " + member);
+      closeMember(member);
+    } else {
+      logger.warn("Closing down member for " + serverID + " - member doesn't exist.");
+    }
+
+  }
+
+  public void closeMember(TCGroupMember member) {
     Assert.assertNotNull(member);
     if (isStopped.get()) {
-      closeMember(member, false);
+      shutdownMember(member);
       return;
     }
     member.setTCGroupManager(null);
@@ -386,14 +399,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       member.setJoinedEventFired(false);
       notifyAnyPendingRequests(member);
     }
-    closeMember(member, false);
+    shutdownMember(member);
     logger.debug(getNodeID() + " removed " + member);
   }
 
-  private void closeMember(TCGroupMember member, boolean isAdded) {
+  private void shutdownMember(TCGroupMember member) {
     member.setReady(false);
     removeChannelFromNodeIDMap(member.getChannel());
-    if (isAdded) membersRemove(member);
     member.close();
   }
 
@@ -487,11 +499,11 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                                              addrProvider);
 
     channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
-    channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(), hydrateStage
-        .getSink());
+    channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
+                             hydrateStage.getSink());
     channel.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
-    channel.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(), hydrateStage
-        .getSink());
+    channel.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
+                             hydrateStage.getSink());
 
     channel.addListener(listener);
     channel.open();
@@ -693,17 +705,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     StringBuilder strBuffer = new StringBuilder();
     strBuffer.append(TCGroupManagerImpl.class.getSimpleName()).append(" [ ");
     strBuffer.append("Channel to NodeId Map: {");
-    for (Iterator<Entry<MessageChannel, ServerID>> channelToNodeIdIterator = this.channelToNodeID.entrySet().iterator(); channelToNodeIdIterator
-        .hasNext();) {
-      Entry<MessageChannel, ServerID> entry = channelToNodeIdIterator.next();
+    for (Entry<MessageChannel, ServerID> entry : this.channelToNodeID.entrySet()) {
       strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
     }
     strBuffer.append("}\n\t");
 
     strBuffer.append("members: {");
-    for (Iterator<Entry<ServerID, TCGroupMember>> membersIterator = this.members.entrySet().iterator(); membersIterator
-        .hasNext();) {
-      Entry<ServerID, TCGroupMember> entry = membersIterator.next();
+    for (Entry<ServerID, TCGroupMember> entry : this.members.entrySet()) {
       strBuffer.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("  ");
     }
     strBuffer.append("}\n\t");
@@ -1170,7 +1178,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         cancelTimerTask();
         if (member != null) {
           member.abortMemberAdding();
-          manager.memberDisappeared(member);
+          manager.closeMember(member);
         } else {
           manager.removeChannelFromNodeIDMap(channel);
           channel.close();
@@ -1191,13 +1199,4 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     return this.discover.isServerConnected(nodeName);
   }
 
-  public void closeMember(ServerID serverID) {
-    TCGroupMember member = getMember(serverID);
-    if (member != null) {
-      logger.info("Close member " + member);
-      closeMember(member, true);
-    } else {
-      logger.info("Non-exist member " + serverID);
-    }
-  }
 }
