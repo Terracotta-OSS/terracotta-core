@@ -283,8 +283,12 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     }
 
     synchronized boolean getAndSetIsClosed() {
-      // must not in INIT state
-      Assert.assertFalse("Wrong to be in init state to switch to close state", ChannelState.INIT.equals(state));
+      if (ChannelState.INIT.equals(state)) {
+        logger.warn("Ignoring state switch to " + ChannelState.CLOSED + "; Current State : " + state + "; "
+                    + AbstractMessageChannel.this);
+        return false;
+      }
+
       if (ChannelState.CLOSED.equals(state)) {
         return true;
       } else {
