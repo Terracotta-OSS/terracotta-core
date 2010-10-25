@@ -187,12 +187,12 @@ public class ServerClientHandshakeManager {
     this.lockManager.start();
     final Set cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     this.transactionManager.start(cids);
+    this.serverMapEvictor.startEvictor();
     // It is important to start all the managers before sending the ack to the clients
     for (final Iterator i = cids.iterator(); i.hasNext();) {
       final ClientID clientID = (ClientID) i.next();
       sendAckMessageFor(clientID);
     }
-    this.serverMapEvictor.startEvictor();
     this.state = STARTED;
   }
 
