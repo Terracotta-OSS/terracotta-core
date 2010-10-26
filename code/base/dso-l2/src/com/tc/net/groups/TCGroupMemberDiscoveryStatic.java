@@ -45,7 +45,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   private final TCGroupManagerImpl                 manager;
   private Node                                     local;
   private Integer                                  joinedNodes             = 0;
-  private HashSet<String>                          nodeThreadConnectingSet = new HashSet<String>();
+  private final HashSet<String>                    nodeThreadConnectingSet = new HashSet<String>();
 
   public TCGroupMemberDiscoveryStatic(TCGroupManagerImpl manager) {
     this.manager = manager;
@@ -102,7 +102,11 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
     if (stateMachine.isMemberInGroup() || stopAttempt.get()) { return; }
 
-    addNodeToConnectingSet(serverNodeName);
+    if (!addNodeToConnectingSet(serverNodeName)) {
+      logger.warn("Discovery for " + node + " is in progress. skipping it.");
+      return;
+    }
+
     try {
       if (logger.isDebugEnabled()) logger.debug(getLocalNodeID().toString() + " opens channel to " + node);
       manager.openChannel(node.getHost(), node.getGroupPort(), stateMachine);
@@ -182,10 +186,16 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
     }
   }
 
-  private void addNodeToConnectingSet(String nodeName) {
+  /**
+   * Adds a node to the discovery in progress set.
+   * 
+   * @param nodeName : peer node for which discovery is happening
+   * @return boolean : true - discovery can be performed for the added node ; false - discovery is already in progress
+   *         for this node;
+   */
+  private boolean addNodeToConnectingSet(String nodeName) {
     synchronized (local) {
-      Assert.eval(!nodeThreadConnectingSet.contains(nodeName));
-      nodeThreadConnectingSet.add(nodeName);
+      return nodeThreadConnectingSet.add(nodeName);
     }
   }
 
@@ -230,7 +240,6 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
   public synchronized void nodeLeft(NodeID nodeID) {
     joinedNodes--;
     String nodeName = ((ServerID) nodeID).getName();
-    removeNodeFromConnectingSet(nodeName);
     nodeStateMap.get(nodeName).nodeLeft();
     notifyAll();
   }
@@ -392,6 +401,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         return true;
       }
 
+      @Override
       public String toString() {
         return name;
       }
@@ -405,10 +415,12 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super("Init");
       }
 
+      @Override
       public void enter() {
         // do nothing
       }
 
+      @Override
       public boolean isTimeToConnect() {
         return true;
       }
@@ -422,10 +434,12 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super("Connecting");
       }
 
+      @Override
       public void enter() {
         // do nothing
       }
 
+      @Override
       public boolean isTimeToConnect() {
         return false;
       }
@@ -439,6 +453,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super("Connected");
       }
 
+      @Override
       public boolean isTimeToConnect() {
         return false;
       }
@@ -452,6 +467,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super(name);
       }
 
+      @Override
       public void enter() {
         if ((previousBadState == null) || (previousBadState != current)) {
           badCount = 0;
@@ -462,6 +478,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         }
       }
 
+      @Override
       public boolean isTimeToConnect() {
         // check 60 times then every min
         if (badCount < 60) { return true; }
@@ -482,6 +499,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super(name);
       }
 
+      @Override
       public boolean isTimeToConnect() {
         return false;
       }
@@ -540,6 +558,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super("Unknown-Host");
       }
 
+      @Override
       public void enter() {
         if ((previousBadState == null) || (previousBadState != current)) {
           super.enter();
@@ -547,6 +566,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         }
       }
 
+      @Override
       public boolean isTimeToConnect() {
         // check every 5 min
         if (System.currentTimeMillis() > (timestamp + 1000 * 60 * 5)) {
@@ -566,6 +586,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
         super("Member-In-Group");
       }
 
+      @Override
       public boolean isTimeToConnect() {
         return false;
       }
