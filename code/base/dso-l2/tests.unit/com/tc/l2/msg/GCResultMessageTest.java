@@ -18,7 +18,7 @@ import junit.framework.TestCase;
 
 public class GCResultMessageTest extends TestCase {
 
-  private void validate(GCResultMessage gcmsg, GCResultMessage gcmsg1) {
+  private void validate(DGCResultMessage gcmsg, DGCResultMessage gcmsg1) {
     assertEquals(gcmsg.getType(), gcmsg1.getType());
     assertEquals(gcmsg.getMessageID(), gcmsg1.getMessageID());
     assertEquals(gcmsg.inResponseTo(), gcmsg1.inResponseTo());
@@ -37,12 +37,12 @@ public class GCResultMessageTest extends TestCase {
     assertFalse(it1.hasNext());
   }
 
-  private GCResultMessage writeAndRead(GCResultMessage gcmsg) throws Exception {
+  private DGCResultMessage writeAndRead(DGCResultMessage gcmsg) throws Exception {
     TCByteBufferOutputStream bo = new TCByteBufferOutputStream();
     gcmsg.serializeTo(bo);
     System.err.println("Written : " + gcmsg);
     TCByteBufferInputStream bi = new TCByteBufferInputStream(bo.toArray());
-    GCResultMessage gcmsg1 = new GCResultMessage();
+    DGCResultMessage gcmsg1 = new DGCResultMessage();
     gcmsg1.deserializeFrom(bi);
     System.err.println("Read : " + gcmsg1);
     return gcmsg1;
@@ -81,17 +81,17 @@ public class GCResultMessageTest extends TestCase {
 
   public void testBasicSerialization() throws Exception {
     ObjectIDSet deleted = makeObjectIDSet();
-    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(new GarbageCollectionInfo(), deleted);
+    DGCResultMessage gcmsg = DGCMessageFactory.createDGCResultMessage(new GarbageCollectionInfo(), deleted);
     
-    GCResultMessage gcmsg1 = writeAndRead(gcmsg);
+    DGCResultMessage gcmsg1 = writeAndRead(gcmsg);
     validate(gcmsg, gcmsg1);
   }
   
   public void testUnmodifiableObjectIDSet() throws Exception {
     ObjectIDSet deleted = ObjectIDSet.unmodifiableObjectIDSet(makeObjectIDSet());
-    GCResultMessage gcmsg = GCResultMessageFactory.createGCResultMessage(new GarbageCollectionInfo(), deleted);
+    DGCResultMessage gcmsg = DGCMessageFactory.createDGCResultMessage(new GarbageCollectionInfo(), deleted);
     
-    GCResultMessage gcmsg1 = writeAndRead(gcmsg);
+    DGCResultMessage gcmsg1 = writeAndRead(gcmsg);
     validate(gcmsg, gcmsg1);
     
   }

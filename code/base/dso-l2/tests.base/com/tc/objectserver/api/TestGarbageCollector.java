@@ -13,6 +13,7 @@ import com.tc.objectserver.core.api.Filter;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
+import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
@@ -310,5 +311,9 @@ public class TestGarbageCollector implements GarbageCollector {
       return true;
     }
     return false;
+  }
+
+  public DGCEventStatsProvider getStatsProvider() {
+    return null;
   }
 }

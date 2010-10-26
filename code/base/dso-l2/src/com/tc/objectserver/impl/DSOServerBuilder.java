@@ -35,7 +35,7 @@ import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
-import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
+import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
@@ -88,7 +88,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                           ObjectManager objectMgr, ClientStateManager stateManager,
                                           StageManager stageManager, int maxStageSize,
                                           GarbageCollectionInfoPublisher gcPublisher, ObjectManager objectManager,
-                                          ClientStateManager clientStateManger, GCStatsEventPublisher gcEventListener,
+                                          ClientStateManager clientStateManger, DGCEventStatsProvider gcEventStatsProvider,
                                           StatisticsAgentSubSystem statsSubSystem);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
@@ -112,7 +112,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   GroupManager getClusterGroupCommManager();
 
-  GCStatsEventPublisher getLocalDGCStatsEventPublisher();
+  DGCEventStatsProvider getLocalDGCStatsEventPublisher();
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, GroupManager groupCommsManager,

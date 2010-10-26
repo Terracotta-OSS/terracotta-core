@@ -7,7 +7,8 @@ package com.tc.net.groups;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ClusterStateMessage;
-import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.DGCResultMessage;
+import com.tc.l2.msg.DGCMessageFactory;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
@@ -65,18 +66,19 @@ import junit.framework.TestCase;
  */
 public class TCGroupMessageWrapperTest extends TestCase {
 
-  private final static String               LOCALHOST      = "localhost";
-  MessageMonitor                            monitor        = new NullMessageMonitor();
-  final NullSessionManager                  sessionManager = new NullSessionManager();
-  final TCMessageFactory                    msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
-  final TCMessageRouter                     msgRouter      = new TCMessageRouterImpl();
-  private CommunicationsManager             clientComms;
-  private CommunicationsManager             serverComms;
-  private ChannelManager                    channelManager;
-  private LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
-  private long                              timeout        = 1000;
-  private TimeUnit                          unit           = TimeUnit.MILLISECONDS;
+  private final static String                     LOCALHOST      = "localhost";
+  MessageMonitor                                  monitor        = new NullMessageMonitor();
+  final NullSessionManager                        sessionManager = new NullSessionManager();
+  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
+  final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
+  private CommunicationsManager                   clientComms;
+  private CommunicationsManager                   serverComms;
+  private ChannelManager                          channelManager;
+  private final LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
+  private final long                              timeout        = 1000;
+  private final TimeUnit                          unit           = TimeUnit.MILLISECONDS;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new PlainNetworkStackHarnessFactory(),
@@ -89,6 +91,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
                                                 new TransportHandshakeErrorNullHandler());
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     try {
@@ -180,7 +183,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    GroupMessage sendMesg = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
+    GroupMessage sendMesg = new DGCResultMessage(DGCMessageFactory.DGC_RESULT, new GarbageCollectionInfo(), oidSet);
     sendGroupMessage(sendMesg);
   }
 

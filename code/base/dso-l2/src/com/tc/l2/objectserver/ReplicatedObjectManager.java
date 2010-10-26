@@ -4,9 +4,10 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.DGCResultMessage;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 
 public interface ReplicatedObjectManager {
 
@@ -19,9 +20,13 @@ public interface ReplicatedObjectManager {
   public boolean relayTransactions();
 
   public void query(NodeID nodeID) throws GroupException;
-  
+
   public void clear(NodeID nodeID);
 
-  public void handleGCResult(GCResultMessage message);
+  public void handleGCResult(DGCResultMessage message);
+
+  public void handleGCStartEvent(GarbageCollectionInfo gcInfo);
+
+  public void handleGCCancelEvent(GarbageCollectionInfo gcInfo);
 
 }

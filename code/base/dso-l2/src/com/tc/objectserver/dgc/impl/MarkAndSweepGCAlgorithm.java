@@ -28,7 +28,7 @@ final class MarkAndSweepGCAlgorithm {
   private final GarbageCollector               collector;
   private final GarbageCollectionInfoPublisher gcPublisher;
   private final LifeCycleState                 gcState;
-  private final String                         uuid                  = UUID.getUUID().toString();
+  private final String                         uuid = UUID.getUUID().toString();
 
   public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook, GarbageCollectionInfoPublisher gcPublisher,
                                  LifeCycleState gcState, int gcIteration) {

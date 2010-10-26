@@ -43,7 +43,7 @@ import com.tc.objectserver.core.impl.ServerConfigurationContextImpl;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.DGCOperatorEventPublisher;
-import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
+import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
@@ -94,11 +94,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  final GarbageCollectionInfoPublisher gcPublisher,
                                                  final ObjectManager objectManager,
                                                  final ClientStateManager clientStateManger,
-                                                 final GCStatsEventPublisher gcEventListener,
+                                                 final DGCEventStatsProvider gcEventStatsProvider,
                                                  final StatisticsAgentSubSystem statsAgentSubSystem) {
     final MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr,
-                                                                             stateManager, gcPublisher);
-    gc.addListener(gcEventListener);
+                                                                             stateManager, gcPublisher,
+                                                                             gcEventStatsProvider);
+    gc.addListener(gcEventStatsProvider);
     gc.addListener(new DGCOperatorEventPublisher());
     return gc;
   }
@@ -182,7 +183,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     throw new AssertionError("Not supported");
   }
 
-  public GCStatsEventPublisher getLocalDGCStatsEventPublisher() {
+  public DGCEventStatsProvider getLocalDGCStatsEventPublisher() {
     throw new AssertionError("Not supported");
   }
 

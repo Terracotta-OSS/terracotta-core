@@ -7,8 +7,9 @@ package com.tc.l2.objectserver;
 import com.tc.async.api.Sink;
 import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
-import com.tc.l2.msg.GCResultMessage;
-import com.tc.l2.msg.GCResultMessageFactory;
+import com.tc.l2.msg.DGCMessageFactory;
+import com.tc.l2.msg.DGCResultMessage;
+import com.tc.l2.msg.DGCStatusMessage;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectListSyncMessageFactory;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
@@ -132,20 +133,30 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     }
   }
 
-  public void handleGCResult(final GCResultMessage gcMsg) {
-    final SortedSet gcedOids = gcMsg.getGCedObjectIDs();
+  public void handleGCStartEvent(GarbageCollectionInfo gcInfo) {
+    this.objectManager.getGarbageCollector().getStatsProvider().updatDGCStartForPassive(gcInfo);
+  }
+
+  public void handleGCCancelEvent(GarbageCollectionInfo gcInfo) {
+    this.objectManager.getGarbageCollector().getStatsProvider().updatDGCCancelForPassive(gcInfo);
+  }
+
+  public void handleGCResult(final DGCResultMessage gcMsg) {
     if (this.stateManager.isActiveCoordinator()) {
       logger.warn("Received DGC Result from " + gcMsg.messageFrom() + " While this node is ACTIVE. Ignoring result : "
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(
-                                                                                   new GCResultContext(gcedOids, gcMsg
-                                                                                       .getGCInfo()));
-    if (deleted) {
-      logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
-    } else {
-      logger.info("Skipped removing garbage since DGC is either running or disabled. garbage : " + gcMsg);
+    this.objectManager.getGarbageCollector().getStatsProvider().updatDGCCompletedForPassive(gcMsg.getGCInfo());
+    final SortedSet gcedOids = gcMsg.getGCedObjectIDs();
+    if (!gcedOids.isEmpty()) {
+      final boolean deleted = this.objectManager.getGarbageCollector()
+          .deleteGarbage(new GCResultContext(gcedOids, gcMsg.getGCInfo()));
+      if (deleted) {
+        logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
+      } else {
+        logger.info("Skipped removing garbage since DGC is either running or disabled. garbage : " + gcMsg);
+      }
     }
   }
 
@@ -273,6 +284,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     Map     syncingPassives = new HashMap();
 
     @Override
+    public void garbageCollectorStart(GarbageCollectionInfo info) {
+      notifyGCStartedToPassive(info);
+    }
+
+    @Override
     public void garbageCollectorCycleCompleted(final GarbageCollectionInfo info, final ObjectIDSet toDeleted) {
       Map toAdd = null;
       notifyGCResultToPassives(info, toDeleted);
@@ -295,9 +311,23 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       add2L2StateManager(toAdd);
     }
 
+    @Override
+    public void garbageCollectorCanceled(GarbageCollectionInfo gcInfo) {
+      notifyGCCancledToPassive(gcInfo);
+    }
+
+    private void notifyGCCancledToPassive(GarbageCollectionInfo gcInfo) {
+      final DGCStatusMessage dgcCancelMessage = DGCMessageFactory.createDGCCancelMessage(gcInfo);
+      ReplicatedObjectManagerImpl.this.groupManager.sendAll(dgcCancelMessage);
+    }
+
+    private void notifyGCStartedToPassive(GarbageCollectionInfo gcInfo) {
+      final DGCStatusMessage dgcStartMessage = DGCMessageFactory.createDGCStartMessage(gcInfo);
+      ReplicatedObjectManagerImpl.this.groupManager.sendAll(dgcStartMessage);
+    }
+
     private void notifyGCResultToPassives(final GarbageCollectionInfo gcInfo, final ObjectIDSet deleted) {
-      if (deleted.isEmpty()) { return; }
-      final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(gcInfo, deleted);
+      final DGCResultMessage msg = DGCMessageFactory.createDGCResultMessage(gcInfo, deleted);
       final long id = ReplicatedObjectManagerImpl.this.gcIdGenerator.incrementAndGet();
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {

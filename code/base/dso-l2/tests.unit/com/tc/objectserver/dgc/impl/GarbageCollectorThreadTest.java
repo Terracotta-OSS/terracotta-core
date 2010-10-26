@@ -27,7 +27,8 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   public void testYoungGCOnNoFullGC() {
 
-    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, false, true, true, true, YOUNG_GC_FREQUENCY, 1000);
+    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, false, true, true, true,
+                                                         YOUNG_GC_FREQUENCY, 1000);
     TestGarbageCollector collector = new TestGarbageCollector();
 
     ThreadGroup gp = new ThreadGroup("test group");
@@ -49,7 +50,8 @@ public class GarbageCollectorThreadTest extends TestCase {
 
   public void testYoungGCOn() {
 
-    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, true, true, true, true, YOUNG_GC_FREQUENCY, 1000);
+    ObjectManagerConfig config = new ObjectManagerConfig(FULL_GC_FREQUENCY, true, true, true, true, YOUNG_GC_FREQUENCY,
+                                                         1000);
     TestGarbageCollector collector = new TestGarbageCollector();
 
     ThreadGroup gp = new ThreadGroup("test group");
@@ -185,6 +187,10 @@ public class GarbageCollectorThreadTest extends TestCase {
       if (GCType.YOUNG_GEN_GC.equals(type)) {
         this.youngGCCount++;
       }
+    }
+
+    public DGCEventStatsProvider getStatsProvider() {
+      return null;
     }
 
   }

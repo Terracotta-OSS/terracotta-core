@@ -4,8 +4,9 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.DGCResultMessage;
 import com.tc.net.NodeID;
+import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 
 public class NonReplicatedObjectManager implements ReplicatedObjectManager {
 
@@ -25,7 +26,15 @@ public class NonReplicatedObjectManager implements ReplicatedObjectManager {
     // Nop
   }
 
-  public void handleGCResult(GCResultMessage message) {
+  public void handleGCResult(DGCResultMessage message) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void handleGCStartEvent(GarbageCollectionInfo gcInfo) {
+    throw new UnsupportedOperationException();
+  }
+
+  public void handleGCCancelEvent(GarbageCollectionInfo gcInfo) {
     throw new UnsupportedOperationException();
   }
 
