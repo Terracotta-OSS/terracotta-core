@@ -14,7 +14,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache
     artifactId: colorcache
     classifier: distribution
-    version: 3.3.1-SNAPSHOT
+    version: 3.5.0-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/colorcache
     explode: true
@@ -25,7 +25,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache.hibernate
     artifactId: events
     classifier: distribution
-    version: 3.3.1-SNAPSHOT
+    version: 3.5.0-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/hibernate
     explode: true
@@ -38,7 +38,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core-ee-kit
     classifier: distribution
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache
     type: tar.gz
     kit_edition: enterprise
@@ -49,21 +49,21 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache/lib
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache/lib
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta-ee
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache/lib
     kit_edition: enterprise
     
@@ -85,7 +85,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache/javadoc
     explode: true
     kit_edition: opensource
@@ -94,7 +94,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 2.3.0-SNAPSHOT
+    version: 2.3.1-SNAPSHOT
     destination: ehcache/src
     explode: true
     kit_edition: opensource
@@ -145,14 +145,14 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.1-runtime-ee
-    version: 2.0.0-SNAPSHOT
+    version: 3.0.0-SNAPSHOT
     destination: common
     kit_edition: enterprise
 
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.1-runtime-ee
-    version: 2.0.0-SNAPSHOT
+    version: 3.0.0-SNAPSHOT
     classifier: javadoc
     destination: common/docs/javadoc
     explode: true
@@ -161,14 +161,14 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.1-runtime
-    version: 2.0.0-SNAPSHOT
+    version: 3.0.0-SNAPSHOT
     destination: common
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: org.terracotta
     artifactId: terracotta-toolkit-1.1-runtime
-    version: 2.0.0-SNAPSHOT
+    version: 3.0.0-SNAPSHOT
     classifier: javadoc
     destination: common/docs/javadoc
     explode: true
@@ -188,13 +188,13 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta.quartz
     artifactId: quartz-terracotta
-    version: 1.2.1-SNAPSHOT
+    version: 1.2.2-SNAPSHOT
     destination: quartz
 
   - maven_artifact: true
     groupId: org.terracotta.session
     artifactId: terracotta-session
-    version: 1.1.1-SNAPSHOT
+    version: 1.1.2-SNAPSHOT
     destination: sessions
 #end
 
