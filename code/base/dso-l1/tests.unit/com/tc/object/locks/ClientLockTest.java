@@ -309,6 +309,7 @@ public class ClientLockTest extends TestCase {
               try {
                 final Thread t = Thread.currentThread();
                 new Thread() {
+                  @Override
                   public void run() {
                     try {
                       Thread.sleep(2000);
@@ -393,6 +394,7 @@ public class ClientLockTest extends TestCase {
               try {
                 final Thread t = Thread.currentThread();
                 new Thread() {
+                  @Override
                   public void run() {
                     try {
                       Thread.sleep(2000);
@@ -577,6 +579,7 @@ public class ClientLockTest extends TestCase {
       lock.lock(new AssertingRemoteLockManager(lock, RemoteOperation.LOCK), new ThreadID(1), LockLevel.WRITE);
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       new Thread() {
+        @Override
         public void run() {
           try {
             Thread.sleep(2000);
@@ -615,6 +618,7 @@ public class ClientLockTest extends TestCase {
       checkLockQueryMethods(lock, 0, 0, hold(new ThreadID(1), LockLevel.WRITE));
       final Thread t = Thread.currentThread();
       new Thread() {
+        @Override
         public void run() {
           try {
             Thread.sleep(2000);
@@ -840,7 +844,7 @@ public class ClientLockTest extends TestCase {
           .recall(
                   new AssertingGreedyRemoteLockManager(lock, RemoteOperation.TXN_FLUSHED, RemoteOperation.RECALL_COMMIT),
                   ServerLockLevel.READ, 0, true);
-      
+
       ThreadUtil.reallySleep(10);
       checkLockQueryMethods(lock, 0, 0);
     } catch (GarbageLockException e) {
@@ -1011,6 +1015,10 @@ public class ClientLockTest extends TestCase {
     }
 
     public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
+      //
+    }
+
+    public void shutdown() {
       //
     }
   }

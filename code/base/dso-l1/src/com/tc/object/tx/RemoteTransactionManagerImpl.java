@@ -4,6 +4,7 @@
  */
 package com.tc.object.tx;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
@@ -111,6 +112,9 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
   public void shutdown() {
     this.isShutdown = true;
     this.timer.cancel();
+    synchronized (lock) {
+      this.lock.notifyAll();
+    }
   }
 
   public void pause(final NodeID remote, final int disconnected) {
@@ -506,14 +510,18 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    while (this.status != RUNNING) {
-      try {
-        this.lock.wait();
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
+    try {
+      while (this.status != RUNNING) {
+        if (isShutdown) { throw new TCNotRunningException(); }
+        try {
+          this.lock.wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   /*

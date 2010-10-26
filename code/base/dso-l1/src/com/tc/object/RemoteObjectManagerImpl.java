@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
@@ -116,6 +117,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   public synchronized void shutdown() {
     this.state = State.STOPPED;
     this.objectRequestTimer.cancel();
+    this.notifyAll();
   }
 
   private boolean isStopped() {
@@ -156,14 +158,18 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    while (this.state != State.RUNNING) {
-      try {
-        wait();
-      } catch (final InterruptedException e) {
-        isInterrupted = true;
+    try {
+      while (this.state != State.RUNNING) {
+        if (isStopped()) { throw new TCNotRunningException(); }
+        try {
+          wait();
+        } catch (final InterruptedException e) {
+          isInterrupted = true;
+        }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private void assertPaused(final String message) {

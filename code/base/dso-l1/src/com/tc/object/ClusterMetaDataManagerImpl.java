@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -38,13 +39,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
-  private static final TCLogger                             LOGGER                                   = TCLogging.getLogger(ClusterMetaDataManagerImpl.class);
+  private static final TCLogger                             LOGGER                                   = TCLogging
+                                                                                                         .getLogger(ClusterMetaDataManagerImpl.class);
 
   private static final long                                 RETRIEVE_WAIT_INTERVAL                   = 15000;
 
-  private static final State                                PAUSED                                   = new State("PAUSED");
-  private static final State                                RUNNING                                  = new State("RUNNING");
-  private static final State                                STARTING                                 = new State("STARTING");
+  private static final State                                PAUSED                                   = new State(
+                                                                                                                 "PAUSED");
+  private static final State                                RUNNING                                  = new State(
+                                                                                                                 "RUNNING");
+  private static final State                                STARTING                                 = new State(
+                                                                                                                 "STARTING");
 
   private State                                             state                                    = RUNNING;
 
@@ -90,7 +95,8 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
     // no response arrived in time, returning an empty set
     if (null == response) {
-      LOGGER.warn("No response arrived in time for getNodesWithObject for object '" + objectID + "', returning empty set");
+      LOGGER.warn("No response arrived in time for getNodesWithObject for object '" + objectID
+                  + "', returning empty set");
       return Collections.emptySet();
     }
 
@@ -128,7 +134,8 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
     // no response arrived in time, returning an empty set
     if (null == response) {
-      LOGGER.warn("No response arrived in time for getKeysForOrphanedValues for map with object ID '" + mapObjectID + "', returning empty set");
+      LOGGER.warn("No response arrived in time for getKeysForOrphanedValues for map with object ID '" + mapObjectID
+                  + "', returning empty set");
       return Collections.emptySet();
     }
 
@@ -259,6 +266,9 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   public void shutdown() {
     isShutdown = true;
+    synchronized (this) {
+      this.notifyAll();
+    }
   }
 
   public void pause(final NodeID remote, final int disconnected) {
@@ -291,16 +301,20 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
 
   private void waitUntilRunning() {
     boolean isInterrupted = false;
-    synchronized (this) {
-      while (this.state != RUNNING) {
-        try {
-          this.wait();
-        } catch (InterruptedException e) {
-          isInterrupted = true;
+    try {
+      synchronized (this) {
+        while (this.state != RUNNING) {
+          if (isShutdown) { throw new TCNotRunningException(); }
+          try {
+            this.wait();
+          } catch (InterruptedException e) {
+            isInterrupted = true;
+          }
         }
       }
+    } finally {
+      Util.selfInterruptIfNeeded(isInterrupted);
     }
-    Util.selfInterruptIfNeeded(isInterrupted);
   }
 
   private void assertPaused(final Object message) {
@@ -310,7 +324,7 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private void assertNotPaused(final Object message) {
     if (this.state == PAUSED) { throw new AssertionError(message + ": " + this.state); }
   }
-  
+
   private void assertNotRunning(final Object message) {
     if (this.state == RUNNING) { throw new AssertionError(message + ": " + this.state); }
   }

@@ -29,4 +29,6 @@ public interface RemoteLockManager {
   public void query(LockID lock, ThreadID thread);
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock);
+
+  public void shutdown();
 }

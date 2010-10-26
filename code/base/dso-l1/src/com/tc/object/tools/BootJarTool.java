@@ -41,6 +41,7 @@ import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCError;
 import com.tc.exception.TCNonPortableObjectError;
+import com.tc.exception.TCNotRunningException;
 import com.tc.exception.TCNotSupportedMethodException;
 import com.tc.exception.TCObjectNotFoundException;
 import com.tc.exception.TCObjectNotSharableException;
@@ -473,6 +474,7 @@ public class BootJarTool {
       loadTerracottaClass(TCObjectNotFoundException.class.getName());
       loadTerracottaClass(TCNonPortableObjectError.class.getName());
       loadTerracottaClass(TCError.class.getName());
+      loadTerracottaClass(TCNotRunningException.class.getName());
 
       loadTerracottaClass(THashMapCollectionWrapper.class.getName());
       loadTerracottaClass(THashMapCollectionWrapper.class.getName() + "$IteratorWrapper");

@@ -13,10 +13,11 @@ import com.tc.cluster.DsoCluster;
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
+import com.tc.exception.TCNotRunningException;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
@@ -884,6 +885,8 @@ public class ManagerImpl implements ManagerInternal {
   public void monitorExit(final LockID lock, final LockLevel level) {
     try {
       unlock(lock, level);
+    } catch (final TCNotRunningException e) {
+      logger.info("Ignoring " + e.getClass().getName() + " in unlock(lockID=" + lock + ", level=" + level + ")");
     } catch (final IllegalMonitorStateException e) {
       final ConsoleParagraphFormatter formatter = new ConsoleParagraphFormatter(60, new StringFormatter());
       final ExceptionWrapper wrapper = new ExceptionWrapperImpl();

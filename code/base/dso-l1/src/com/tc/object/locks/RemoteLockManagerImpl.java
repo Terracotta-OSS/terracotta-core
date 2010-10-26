@@ -3,6 +3,8 @@
  */
 package com.tc.object.locks;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -19,6 +21,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class RemoteLockManagerImpl implements RemoteLockManager {
+  private static final TCLogger                logger                      = TCLogging
+                                                                               .getLogger(RemoteLockManagerImpl.class);
+
   private final static int                     MAX_BATCHED_RECALL_COMMITS  = 10000;
   private final static long                    MAX_TIME_IN_QUEUE           = 1;
 
@@ -30,6 +35,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   private final Queue<RecallBatchContext>      queue                       = new LinkedList<RecallBatchContext>();
   private BatchRecallCommitsTimerTask          batchRecallCommitsTimerTask = null;
   private final Timer                          timer                       = new Timer("Batch Recall Timer", true);
+  private boolean                              shutdown                    = false;
 
   @Deprecated
   private final ClientLockStatManager          statManager;
@@ -140,10 +146,17 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
         return;
       }
       // start a timer to send the request, if not already started
-      if (batchRecallCommitsTimerTask == null) {
+      if (batchRecallCommitsTimerTask == null && !shutdown) {
         batchRecallCommitsTimerTask = new BatchRecallCommitsTimerTask();
         timer.schedule(batchRecallCommitsTimerTask, MAX_TIME_IN_QUEUE);
       }
+    }
+  }
+
+  public void shutdown() {
+    synchronized (queue) {
+      shutdown = true;
+      timer.cancel();
     }
   }
 
@@ -194,9 +207,14 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
   }
 
   private class BatchRecallCommitsTimerTask extends TimerTask {
+
     @Override
     public void run() {
       synchronized (queue) {
+        if (shutdown) {
+          logger.info("Ignoring Batched Recall Requests Timer task as timer is already shut down.");
+          return;
+        }
         sendBatchedRequestsImmediately();
         batchRecallCommitsTimerTask = null;
       }

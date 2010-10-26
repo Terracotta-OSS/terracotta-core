@@ -7,8 +7,6 @@ package com.tc.object.locks;
 import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.object.locks.ClientLockManager;
-import com.tc.object.locks.LockID;
 import com.tc.object.session.SessionProvider;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
@@ -33,7 +31,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
                                                                 }
                                                               };
   private volatile ClientLockManager  lockManager;
-  private Map                         locks                   = new HashMap();
+  private final Map                   locks                   = new HashMap();
   private int                         lockRequests            = 0;
   private int                         unlockRequests          = 0;
   private int                         flushCount              = 0;
@@ -170,6 +168,7 @@ public class TestRemoteLockManager implements RemoteLockManager {
   private class LoopbackLockResponder implements LockResponder {
     public void respondToLockRequest(final LockID lock, final ThreadID thread, final ServerLockLevel level) {
       new Thread() {
+        @Override
         public void run() {
           lockManager.award(gid, sessionProvider.getSessionID(gid), lock, thread, level);
         }
@@ -214,5 +213,9 @@ public class TestRemoteLockManager implements RemoteLockManager {
 
   public void waitForServerToReceiveTxnsForThisLock(LockID lock) {
     flush(lock, ServerLockLevel.WRITE);
+  }
+
+  public void shutdown() {
+    //
   }
 }

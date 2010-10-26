@@ -3,6 +3,7 @@
  */
 package com.tc.object.locks;
 
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.management.ClientLockStatManager;
 import com.tc.net.ClientID;
@@ -365,7 +366,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public LockID generateLockIdentifier(final String str) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
-  
+
   public LockID generateLockIdentifier(final long l) {
     throw new AssertionError(getClass().getSimpleName() + " does not generate lock identifiers");
   }
@@ -448,12 +449,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
   public void recall(final LockID lock, final ServerLockLevel level, final int lease) {
     recall(lock, level, lease, false);
   }
-  
+
   public void recall(final LockID lock, final ServerLockLevel level, final int lease, final boolean batch) {
     this.stateGuard.readLock().lock();
     try {
-      if (paused()) {
-        this.logger.warn("Ignoring recall request from dead server : " + lock + ", interestedLevel : " + level);
+      if (paused() || isShutdown()) {
+        this.logger.warn("Ignoring recall request from dead server : " + lock + ", interestedLevel : " + level
+                         + " state: " + state);
         return;
       }
 
@@ -567,6 +569,8 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       this.state = this.state.shutdown();
       this.gcTimer.cancel();
       this.lockLeaseTimer.cancel();
+      this.remoteManager.shutdown();
+      this.runningCondition.signalAll();
     } finally {
       this.stateGuard.writeLock().unlock();
     }
@@ -602,6 +606,7 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
     try {
       while (this.state != State.RUNNING) {
         try {
+          if (isShutdown()) { throw new TCNotRunningException(); }
           this.runningCondition.await();
         } catch (final InterruptedException e) {
           interrupted = true;
@@ -609,9 +614,16 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
       }
     } finally {
       this.stateGuard.writeLock().unlock();
+      Util.selfInterruptIfNeeded(interrupted);
     }
 
-    Util.selfInterruptIfNeeded(interrupted);
+  }
+
+  /**
+   * Should be called under read lock
+   */
+  private boolean isShutdown() {
+    return this.state == State.SHUTDOWN;
   }
 
   private boolean paused() {
