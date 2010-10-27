@@ -759,7 +759,12 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
           return;
         }
 
+        if (Thread.interrupted()) {
+          break;
+        }
+
         node.park();
+
         if (Thread.interrupted()) {
           break;
         }
