@@ -125,10 +125,11 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     mvn_install(ENTERPRISE)
   end
 
-  def dist_dev(product_code = 'DSO', flavor = nil)
-    flavor ||= @build_environment.is_ee_branch? ? ENTERPRISE : OPENSOURCE
+  def dist_dev(product_code = 'DSO', flavor = OPENSOURCE)
     if flavor == ENTERPRISE then dist_maven_all else dist_maven end
     build_external
+    
+    @internal_config_source['flavor'] = flavor
     dist(product_code, flavor)
   end
   

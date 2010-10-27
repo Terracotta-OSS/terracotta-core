@@ -38,24 +38,22 @@ module BuildData
       output_file = FilePath.new(destdir, PATCH_DATA_FILE_NAME)
     end
 
-    build_environment = Registry[:build_environment]
-
     File.open(output_file.to_s, "w") do |file|
       file.puts("#{keyspace}.level=#{level}") if type == :patch_data
 
       file.puts("#{keyspace}.productname=terracotta")
       file.puts("#{keyspace}.edition=#{edition}")
-      file.puts("#{keyspace}.version=#{build_environment.maven_version}")
-      file.puts("#{keyspace}.maven.artifacts.version=#{build_environment.maven_version}")
-      file.puts("#{keyspace}.host=#{build_environment.build_hostname}")
-      file.puts("#{keyspace}.user=#{build_environment.build_username}")
-      file.puts("#{keyspace}.timestamp=#{build_environment.build_timestamp_string}")
-      file.puts("#{keyspace}.revision=#{build_environment.os_revision}")
-      file.puts("#{keyspace}.branch=#{build_environment.current_branch}")
+      file.puts("#{keyspace}.version=#{@build_environment.maven_version}")
+      file.puts("#{keyspace}.maven.artifacts.version=#{@build_environment.maven_version}")
+      file.puts("#{keyspace}.host=#{@build_environment.build_hostname}")
+      file.puts("#{keyspace}.user=#{@build_environment.build_username}")
+      file.puts("#{keyspace}.timestamp=#{@build_environment.build_timestamp_string}")
+      file.puts("#{keyspace}.revision=#{@build_environment.os_revision}")
+      file.puts("#{keyspace}.branch=#{@build_environment.current_branch}")
 
       # extra info if built under EE branch
-      if build_environment.is_ee_branch?
-        file.puts("#{keyspace}.ee.revision=#{build_environment.ee_revision}")
+      if @build_environment.is_ee_branch?
+        file.puts("#{keyspace}.ee.revision=#{@build_environment.ee_revision}")
       end
     end
 
