@@ -387,7 +387,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
             throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
                                                   + " there are " + l2Array.length
                                                   + " servers defined in the Terracotta configuration file. "
-                                                  + " Pass the desired server name to the startup script using "
+                                                  + " Pass the desired server name to the script using "
                                                   + "the -n flag.");
 
           } else {
@@ -437,7 +437,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                     + "The startup script can not automatically choose between "
                                                     + "the following server names: " + myL2.getName() + ", "
                                                     + server.getName()
-                                                    + ". Pass the desired server name to the startup script using "
+                                                    + ". Pass the desired server name to the script using "
                                                     + "the -n flag.");
 
             }
