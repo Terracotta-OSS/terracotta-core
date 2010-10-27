@@ -70,7 +70,7 @@ public class ServerLog extends LogPane {
         }
         server.addServerLogListener(logListener);
       } else {
-        server.removeServerLogListener(logListener);
+        // server.removeServerLogListener(logListener);
       }
     }
   }

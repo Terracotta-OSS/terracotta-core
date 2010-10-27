@@ -144,11 +144,8 @@ public class BasicObjectNode extends XTreeNode implements DSOObjectTreeNode {
   @Override
   public TreeNode getChildAt(int index) {
     if (children != null && children.elementAt(index) == null) {
-      adminClientContext.block();
       fillInChildren();
-      adminClientContext.unblock();
     }
-
     return super.getChildAt(index);
   }
 

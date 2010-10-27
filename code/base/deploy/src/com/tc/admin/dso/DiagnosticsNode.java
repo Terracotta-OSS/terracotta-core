@@ -39,7 +39,7 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
     try {
       add(createLocksNode(clusterNode));
     } catch (Throwable t) {
-      t.printStackTrace();
+      adminClientContext.log(t);
       // Need a more specific exception but this means we're trying to connect to an
       // older version of the server, that doesn't have the LockMonitorMBean we expect.
     }
@@ -71,7 +71,7 @@ public class DiagnosticsNode extends ComponentNode implements HyperlinkListener 
       try {
         textPane.setPage(getClass().getResource("DiagnosticsIntro.html"));
       } catch (Exception e) {
-        e.printStackTrace();
+        adminClientContext.log(e);
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);

@@ -79,19 +79,19 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
   private XLabel                   messageLabel;
 
   private static final int         HISTORY_ITERATION_MAX = Integer
-                                                             .getInteger(
-                                                                         "com.tc.admin.dashboard.dial-history-iterations",
+                                                             .getInteger("com.tc.admin.dashboard.dial-history-iterations",
                                                                          3);
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET  = new HashSet(Arrays
-                                                             .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                     POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT,
-                                                                     POLLED_ATTR_LOCK_RECALL_RATE,
-                                                                     POLLED_ATTR_TRANSACTION_RATE,
-                                                                     POLLED_ATTR_TRANSACTION_SIZE_RATE,
-                                                                     POLLED_ATTR_BROADCAST_RATE,
-                                                                     POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
+  private static final Set<String> POLLED_ATTRIBUTE_SET  = new HashSet(
+                                                                       Arrays
+                                                                           .asList(POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                   POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                   POLLED_ATTR_LIVE_OBJECT_COUNT,
+                                                                                   POLLED_ATTR_LOCK_RECALL_RATE,
+                                                                                   POLLED_ATTR_TRANSACTION_RATE,
+                                                                                   POLLED_ATTR_TRANSACTION_SIZE_RATE,
+                                                                                   POLLED_ATTR_BROADCAST_RATE,
+                                                                                   POLLED_ATTR_PENDING_TRANSACTIONS_COUNT));
 
   public DashboardPanel(ApplicationContext appContext, IClusterModel clusterModel) {
     super(appContext);
@@ -184,6 +184,15 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
       }
       revalidate();
       repaint();
+    }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
     }
   }
 

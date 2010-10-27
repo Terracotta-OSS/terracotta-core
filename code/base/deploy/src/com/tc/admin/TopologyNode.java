@@ -57,7 +57,7 @@ public class TopologyNode extends ComponentNode implements HyperlinkListener {
       try {
         textPane.setPage(getClass().getResource("TopologyIntro.html"));
       } catch (Exception e) {
-        e.printStackTrace();
+        adminClientContext.log(e);
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);

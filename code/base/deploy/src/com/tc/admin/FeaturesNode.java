@@ -84,6 +84,15 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         init();
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (adminClientContext != null) {
+        adminClientContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private void addMBeanServerDelegateListener() {
@@ -295,7 +304,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
       try {
         textPane.setPage(getClass().getResource("MyApplication.html"));
       } catch (Exception e) {
-        e.printStackTrace();
+        adminClientContext.log(e);
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);

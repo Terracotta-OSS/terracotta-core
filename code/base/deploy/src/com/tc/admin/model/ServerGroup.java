@@ -98,13 +98,16 @@ public class ServerGroup implements IServerGroup {
   }
 
   private void setActiveServer(IServer theActiveServer) {
-    IServer oldActiveServer = _setActiveServer(theActiveServer);
+    IServer oldActiveServer = getActiveServer();
     if (oldActiveServer != null) {
-      oldActiveServer.removePropertyChangeListener(activeServerListener);
       if (oldActiveServer.isActive()) {
         oldActiveServer.splitbrain();
+        theActiveServer.splitbrain();
+        return;
       }
+      oldActiveServer.removePropertyChangeListener(activeServerListener);
     }
+    _setActiveServer(theActiveServer);
     firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, theActiveServer);
     if (theActiveServer != null) {
       theActiveServer.addPropertyChangeListener(activeServerListener);
@@ -186,7 +189,11 @@ public class ServerGroup implements IServerGroup {
           setActiveServer(server);
         }
       } else if (IClusterModelElement.PROP_READY.equals(prop)) {
-        setReady(determineReady());
+        if (server.isConnected() && server.isActive()) {
+          setActiveServer(server);
+        } else {
+          setReady(determineReady());
+        }
       }
     }
   }
@@ -288,8 +295,16 @@ public class ServerGroup implements IServerGroup {
   }
 
   private boolean determineReady() {
-    IServer theActiveServer = getActiveServer();
-    return theActiveServer != null && theActiveServer.isReady();
+    // IServer theActiveServer = getActiveServer();
+    // return theActiveServer != null && theActiveServer.isReady();
+
+    int activeCount = 0;
+    for (IServer server : getMembers()) {
+      if (server.isActive()) {
+        activeCount++;
+      }
+    }
+    return activeCount == 1;
   }
 
   private boolean determineConnected() {

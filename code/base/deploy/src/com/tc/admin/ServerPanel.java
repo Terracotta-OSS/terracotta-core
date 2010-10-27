@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
@@ -145,7 +146,7 @@ public class ServerPanel extends XContainer {
       IServer theServer = getServer();
       if (theServer != null) {
         Exception e = theServer.getConnectError();
-        String msg = theServer.getConnectErrorMessage(e);
+        String msg = e != null ? theServer.getConnectErrorMessage(e) : "unknown error";
         if (msg != null) {
           setConnectExceptionMessage(msg);
         }
@@ -251,7 +252,7 @@ public class ServerPanel extends XContainer {
 
           return new ServerState(startDate, activateDate, environment, config);
         }
-      });
+      }, 5, TimeUnit.SECONDS);
     }
 
     @Override

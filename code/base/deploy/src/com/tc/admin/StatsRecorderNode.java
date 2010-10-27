@@ -90,6 +90,15 @@ public class StatsRecorderNode extends ComponentNode implements IClusterStatsLis
         newActive.addClusterStatsListener(StatsRecorderNode.this);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   String[] getConnectionCredentials() {

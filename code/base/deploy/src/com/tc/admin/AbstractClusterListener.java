@@ -15,9 +15,15 @@ import javax.swing.SwingUtilities;
 
 public class AbstractClusterListener implements PropertyChangeListener {
   protected IClusterModel clusterModel;
+  protected boolean       eventDispatchThreadOnly;
 
   public AbstractClusterListener(IClusterModel clusterModel) {
+    this(clusterModel, true);
+  }
+
+  public AbstractClusterListener(IClusterModel clusterModel, boolean eventDispatchThreadOnly) {
     this.clusterModel = clusterModel;
+    this.eventDispatchThreadOnly = eventDispatchThreadOnly;
   }
 
   public synchronized IClusterModel getClusterModel() {
@@ -72,7 +78,7 @@ public class AbstractClusterListener implements PropertyChangeListener {
     PropertyChangeEvent clonedEvent = new PropertyChangeEvent(evt.getSource(), evt.getPropertyName(),
                                                               evt.getOldValue(), evt.getNewValue());
     Runnable r = createPropertyChangeRunnable(clonedEvent);
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (!eventDispatchThreadOnly || SwingUtilities.isEventDispatchThread()) {
       r.run();
     } else {
       SwingUtilities.invokeLater(r);

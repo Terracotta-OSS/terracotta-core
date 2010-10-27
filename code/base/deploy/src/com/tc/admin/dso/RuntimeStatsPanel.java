@@ -36,6 +36,7 @@ import java.beans.PropertyChangeListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.BorderFactory;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -47,7 +48,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
   private XLabel              currentViewLabel;
   private ElementChooser      elementChooser;
   private PagedView           pagedView;
-  private boolean             inited;
+  private XContainer          mainPanel;
+  private XContainer          messagePanel;
+  private XLabel              messageLabel;
 
   private static final String AGGREGATE_SERVER_STATS_NODE_NAME = "AggregateServerStatsNode";
 
@@ -57,7 +60,19 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     this.adminClientContext = adminClientContext;
     this.clusterModel = clusterModel;
 
-    add(pagedView = new PagedView(), BorderLayout.CENTER);
+    mainPanel = createMainPanel();
+    messagePanel = createMessagePanel();
+
+    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
+    if (clusterModel.isReady()) {
+      init();
+    }
+  }
+
+  private XContainer createMainPanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+
+    panel.add(pagedView = new PagedView(), BorderLayout.CENTER);
 
     XContainer topPanel = new XContainer(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
@@ -92,13 +107,18 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     elementChooser.setSelectedPath(AGGREGATE_SERVER_STATS_NODE_NAME);
 
     topPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.black));
-    add(topPanel, BorderLayout.NORTH);
+    panel.add(topPanel, BorderLayout.NORTH);
 
-    clusterModel.addPropertyChangeListener(clusterListener = new ClusterListener(clusterModel));
-    if (clusterModel.isReady()) {
-      elementChooser.setupTreeModel();
-      addNodePanels();
-    }
+    return panel;
+  }
+
+  private XContainer createMessagePanel() {
+    XContainer panel = new XContainer(new BorderLayout());
+    panel.add(messageLabel = new XLabel());
+    messageLabel.setText(adminClientContext.getString("cluster.not.ready.msg"));
+    messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    messageLabel.setFont((Font) adminClientContext.getObject("message.label.font"));
+    return panel;
   }
 
   private class ElementChooser extends ClusterElementChooser {
@@ -157,9 +177,10 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     @Override
     protected void handleReady() {
       if (tornDown.get()) { return; }
-      if (!inited && clusterModel.isReady()) {
-        elementChooser.setupTreeModel();
-        addNodePanels();
+      if (clusterModel.isReady()) {
+        init();
+      } else {
+        suspend();
       }
     }
 
@@ -173,6 +194,27 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
         newActive.addClientConnectionListener(RuntimeStatsPanel.this);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (adminClientContext != null) {
+        adminClientContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
+  }
+
+  private void init() {
+    removeAll();
+    elementChooser.setupTreeModel();
+    addNodePanels();
+    add(mainPanel);
+  }
+
+  private void suspend() {
+    removeAll();
+    add(messagePanel);
   }
 
   public void clientConnected(final IClient client) {
@@ -235,24 +277,26 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
     }
     elementChooser.setSelectedPath(AGGREGATE_SERVER_STATS_NODE_NAME);
     pagedView.addPropertyChangeListener(this);
-    inited = true;
   }
 
   private AggregateServerRuntimeStatsPanel createAggregateServerStatsPanel() {
     AggregateServerRuntimeStatsPanel panel = new AggregateServerRuntimeStatsPanel(adminClientContext, clusterModel);
     panel.setName(AGGREGATE_SERVER_STATS_NODE_NAME);
+    panel.startMonitoringRuntimeStats();
     return panel;
   }
 
   private ServerRuntimeStatsPanel createServerViewPanel(IServer server) {
     ServerRuntimeStatsPanel panel = new ServerRuntimeStatsPanel(adminClientContext, server);
     panel.setName(server.toString());
+    panel.startMonitoringRuntimeStats();
     return panel;
   }
 
   private ClientRuntimeStatsPanel createClientViewPanel(IClient client) {
     ClientRuntimeStatsPanel panel = new ClientRuntimeStatsPanel(adminClientContext, client);
     panel.setName(client.toString());
+    panel.startMonitoringRuntimeStats();
     return panel;
   }
 
@@ -281,6 +325,9 @@ public class RuntimeStatsPanel extends XContainer implements ActionListener, Cli
       elementChooser = null;
       pagedView = null;
       currentViewLabel = null;
+      mainPanel = null;
+      messagePanel = null;
+      messageLabel = null;
     }
 
     super.tearDown();

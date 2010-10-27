@@ -25,13 +25,13 @@ import javax.swing.event.EventListenerList;
 
 public abstract class BaseClusterNode implements IClusterNode {
 
-  private static final int                          ZIP_BUFFER_SIZE      = 2048;
-  protected static final String                     MESSAGE_ON_EXCEPTION = "Problem occured while taking the dump, Please check the logs.";
+  private static final int                                ZIP_BUFFER_SIZE      = 2048;
+  protected static final String                           MESSAGE_ON_EXCEPTION = "Problem occured while taking the dump, Please check the logs.";
 
-  protected PropertyChangeSupport                   propertyChangeSupport;
-  protected Map<PolledAttribute, EventListenerList> polledAttributeListenerMap;
-  protected Map<ObjectName, Set<String>>            polledAttributeSourceMap;
-  protected Map<String, PolledAttribute>            polledAttributeMap;
+  protected final PropertyChangeSupport                   propertyChangeSupport;
+  protected final Map<PolledAttribute, EventListenerList> polledAttributeListenerMap;
+  protected final Map<ObjectName, Set<String>>            polledAttributeSourceMap;
+  protected final Map<String, PolledAttribute>            polledAttributeMap;
 
   protected BaseClusterNode() {
     propertyChangeSupport = new PropertyChangeSupport(this);
@@ -40,7 +40,7 @@ public abstract class BaseClusterNode implements IClusterNode {
     polledAttributeMap = new HashMap<String, PolledAttribute>();
   }
 
-  public synchronized void addPolledAttributeListener(String name, PolledAttributeListener listener) {
+  public void addPolledAttributeListener(String name, PolledAttributeListener listener) {
     PolledAttribute polledAttribute = getPolledAttribute(name);
     if (polledAttribute != null) {
       addPolledAttributeListener(polledAttribute, listener);
@@ -50,20 +50,20 @@ public abstract class BaseClusterNode implements IClusterNode {
     }
   }
 
-  public synchronized void addPolledAttributeListener(Set<String> names, PolledAttributeListener listener) {
+  public void addPolledAttributeListener(Set<String> names, PolledAttributeListener listener) {
     Iterator<String> iter = names.iterator();
     while (iter.hasNext()) {
       addPolledAttributeListener(iter.next(), listener);
     }
   }
 
-  public synchronized void addPolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener) {
+  public void addPolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener) {
     addPolledAttributeListener(polledAttribute.getObjectName(), Collections.singleton(polledAttribute.getAttribute()),
                                listener);
   }
 
-  public synchronized void addPolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
-                                                      PolledAttributeListener listener) {
+  public void addPolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
+                                         PolledAttributeListener listener) {
     Assert.assertNotNull(attributeSet);
 
     Iterator<String> attributeIter = attributeSet.iterator();
@@ -84,7 +84,7 @@ public abstract class BaseClusterNode implements IClusterNode {
     sourceAttrSet.addAll(attributeSet);
   }
 
-  public synchronized void removePolledAttributeListener(String name, PolledAttributeListener listener) {
+  public void removePolledAttributeListener(String name, PolledAttributeListener listener) {
     PolledAttribute polledAttribute = getPolledAttribute(name);
     if (polledAttribute != null) {
       removePolledAttributeListener(polledAttribute, listener);
@@ -94,21 +94,20 @@ public abstract class BaseClusterNode implements IClusterNode {
     }
   }
 
-  public synchronized void removePolledAttributeListener(Set<String> names, PolledAttributeListener listener) {
+  public void removePolledAttributeListener(Set<String> names, PolledAttributeListener listener) {
     Iterator<String> iter = names.iterator();
     while (iter.hasNext()) {
       removePolledAttributeListener(iter.next(), listener);
     }
   }
 
-  public synchronized void removePolledAttributeListener(PolledAttribute polledAttribute,
-                                                         PolledAttributeListener listener) {
-    removePolledAttributeListener(polledAttribute.getObjectName(), Collections
-        .singleton(polledAttribute.getAttribute()), listener);
+  public void removePolledAttributeListener(PolledAttribute polledAttribute, PolledAttributeListener listener) {
+    removePolledAttributeListener(polledAttribute.getObjectName(),
+                                  Collections.singleton(polledAttribute.getAttribute()), listener);
   }
 
-  public synchronized void removePolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
-                                                         PolledAttributeListener listener) {
+  public void removePolledAttributeListener(ObjectName objectName, Set<String> attributeSet,
+                                            PolledAttributeListener listener) {
     if (attributeSet != null && listener != null) {
       Iterator<String> attributeIter = attributeSet.iterator();
       while (attributeIter.hasNext()) {
@@ -152,14 +151,14 @@ public abstract class BaseClusterNode implements IClusterNode {
     return polledAttributeMap.get(name);
   }
 
-  public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
     if (listener != null && propertyChangeSupport != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
       propertyChangeSupport.addPropertyChangeListener(listener);
     }
   }
 
-  public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
     if (listener != null && propertyChangeSupport != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
     }
@@ -177,13 +176,8 @@ public abstract class BaseClusterNode implements IClusterNode {
 
   public synchronized void tearDown() {
     polledAttributeListenerMap.clear();
-    polledAttributeListenerMap = null;
-
     polledAttributeSourceMap.clear();
-    polledAttributeSourceMap = null;
-
     polledAttributeMap.clear();
-    polledAttributeMap = null;
 
     if (propertyChangeSupport != null) {
       PropertyChangeListener[] listeners = propertyChangeSupport.getPropertyChangeListeners();
@@ -192,7 +186,6 @@ public abstract class BaseClusterNode implements IClusterNode {
           propertyChangeSupport.removePropertyChangeListener(listener);
         }
       }
-      propertyChangeSupport = null;
     }
   }
 

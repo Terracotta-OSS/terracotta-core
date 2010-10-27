@@ -29,6 +29,7 @@ import java.awt.event.FocusListener;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -149,7 +150,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     try {
       introPane.setPage(getClass().getResource("Intro.html"));
     } catch (Exception e) {
-      e.printStackTrace();
+      adminClientContext.log(e);
     }
     introPane.addHyperlinkListener(this);
     introPane.setEditable(false);
@@ -334,7 +335,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
         public Date call() throws Exception {
           return new Date(clusterNode.getActivateTime());
         }
-      });
+      }, 5, TimeUnit.SECONDS);
     }
 
     @Override
@@ -375,7 +376,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
         public Date call() throws Exception {
           return new Date(clusterNode.getStartTime());
         }
-      });
+      }, 5, TimeUnit.SECONDS);
     }
 
     @Override
@@ -442,7 +443,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
         public IProductVersion call() throws Exception {
           return clusterNode.getProductInfo();
         }
-      });
+      }, 5, TimeUnit.SECONDS);
     }
 
     @Override

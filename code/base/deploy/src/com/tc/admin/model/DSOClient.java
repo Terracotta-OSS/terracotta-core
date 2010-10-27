@@ -13,6 +13,7 @@ import com.tc.management.beans.logging.InstrumentationLoggingMBean;
 import com.tc.management.beans.logging.RuntimeLoggingMBean;
 import com.tc.management.beans.logging.RuntimeOutputOptionsMBean;
 import com.tc.net.ClientID;
+import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.ObjectID;
 import com.tc.statistics.StatisticData;
 import com.tc.stats.DSOClientMBean;
@@ -36,15 +37,20 @@ import javax.management.ObjectName;
 public class DSOClient extends BaseClusterNode implements IClient, NotificationListener {
   protected final ConnectionContext   cc;
   private final ObjectName            beanName;
-  private final ClientID              clientId;
+  private ClientID                    clientId;
   private final IClusterModel         clusterModel;
   protected final DSOClientMBean      delegate;
-  private final long                  channelId;
-  private final String                remoteAddress;
+  private long                        channelId;
+  private String                      remoteAddress;
   private String                      host;
   private Integer                     port;
   protected ProductVersion            productInfo;
-
+  protected ObjectName                l1InfoBeanName;
+  protected ObjectName                instrumentationLoggingBeanName;
+  protected ObjectName                runtimeLoggingObjectName;
+  protected ObjectName                runtimeOutputOptionsBeanName;
+  protected ObjectName                l1DumperBeanName;
+  protected ObjectName                l1OperatorEventsBeanName;
   private boolean                     ready;
   private boolean                     isListeningForTunneledBeans;
   private L1InfoMBean                 l1InfoBean;
@@ -58,9 +64,25 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     this.beanName = beanName;
     this.clusterModel = clusterModel;
     this.delegate = MBeanServerInvocationProxy.newMBeanProxy(cc.mbsc, beanName, DSOClientMBean.class, true);
-    channelId = delegate.getChannelID().toLong();
-    clientId = delegate.getClientID();
-    remoteAddress = delegate.getRemoteAddress();
+
+    String[] attributes = { "ChannelID", "ClientID", "RemoteAddress", "L1InfoBeanName",
+        "InstrumentationLoggingBeanName", "RuntimeLoggingBeanName", "RuntimeOutputOptionsBeanName", "L1DumperBeanName",
+        "L1OperatorEventsBeanName" };
+    AttributeList attrList;
+    try {
+      attrList = cc.mbsc.getAttributes(beanName, attributes);
+      channelId = ((ChannelID) ((Attribute) attrList.get(0)).getValue()).toLong();
+      clientId = (ClientID) ((Attribute) attrList.get(1)).getValue();
+      remoteAddress = (String) ((Attribute) attrList.get(2)).getValue();
+      l1InfoBeanName = (ObjectName) ((Attribute) attrList.get(3)).getValue();
+      instrumentationLoggingBeanName = (ObjectName) ((Attribute) attrList.get(4)).getValue();
+      runtimeLoggingObjectName = (ObjectName) ((Attribute) attrList.get(5)).getValue();
+      runtimeOutputOptionsBeanName = (ObjectName) ((Attribute) attrList.get(6)).getValue();
+      l1DumperBeanName = (ObjectName) ((Attribute) attrList.get(7)).getValue();
+      l1OperatorEventsBeanName = (ObjectName) ((Attribute) attrList.get(8)).getValue();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
     initPolledAttributes();
   }
@@ -85,26 +107,28 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   protected void setupTunneledBeans() {
-    l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate.getL1InfoBeanName(),
+    l1InfoBean = (L1InfoMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1InfoBeanName,
                                                                              L1InfoMBean.class, true);
-    addMBeanNotificationListener(delegate.getL1InfoBeanName(), this, "L1InfoMBean");
+    addMBeanNotificationListener(l1InfoBeanName, this, "L1InfoMBean");
 
     instrumentationLoggingBean = (InstrumentationLoggingMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, delegate.getInstrumentationLoggingBeanName(), InstrumentationLoggingMBean.class,
-                          true);
-    addMBeanNotificationListener(delegate.getInstrumentationLoggingBeanName(), this, "InstrumentationLoggingMBean");
+        .newProxyInstance(cc.mbsc, instrumentationLoggingBeanName, InstrumentationLoggingMBean.class, true);
+    addMBeanNotificationListener(instrumentationLoggingBeanName, this, "InstrumentationLoggingMBean");
 
-    runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, delegate
-        .getRuntimeLoggingBeanName(), RuntimeLoggingMBean.class, true);
-    addMBeanNotificationListener(delegate.getRuntimeLoggingBeanName(), this, "RuntimeLoggingMBean");
+    runtimeLoggingBean = (RuntimeLoggingMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc,
+                                                                                             runtimeLoggingObjectName,
+                                                                                             RuntimeLoggingMBean.class,
+                                                                                             true);
+    addMBeanNotificationListener(runtimeLoggingObjectName, this, "RuntimeLoggingMBean");
 
     runtimeOutputOptionsBean = (RuntimeOutputOptionsMBean) MBeanServerInvocationHandler
-        .newProxyInstance(cc.mbsc, delegate.getRuntimeOutputOptionsBeanName(), RuntimeOutputOptionsMBean.class, true);
-    addMBeanNotificationListener(delegate.getRuntimeOutputOptionsBeanName(), this, "RuntimeOutputOptionsMBean");
+        .newProxyInstance(cc.mbsc, runtimeOutputOptionsBeanName, RuntimeOutputOptionsMBean.class, true);
+    addMBeanNotificationListener(runtimeOutputOptionsBeanName, this, "RuntimeOutputOptionsMBean");
 
-    l1DumperBean = (L1DumperMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc,
-                                                                                 delegate.getL1DumperBeanName(),
-                                                                                 L1DumperMBean.class, true);
+    if (l1DumperBeanName != null) {
+      l1DumperBean = (L1DumperMBean) MBeanServerInvocationHandler.newProxyInstance(cc.mbsc, l1DumperBeanName,
+                                                                                   L1DumperMBean.class, true);
+    }
 
     fireTunneledBeansRegistered();
   }
@@ -136,7 +160,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     try {
       cc.addNotificationListener(objectName, listener);
     } catch (Exception e) {
-      throw new RuntimeException("Adding listener to " + beanType, e);
+      // throw new RuntimeException("Adding listener to " + beanType, e);
     }
   }
 
@@ -146,7 +170,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     try {
       cc.removeNotificationListener(beanName, this);
     } catch (Exception e) {
-      throw new RuntimeException("Removing listener from DSOClientMBean", e);
+      // throw new RuntimeException("Removing listener from DSOClientMBean", e);
     }
   }
 
@@ -217,7 +241,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public ObjectName getL1InfoBeanName() {
-    return delegate.getL1InfoBeanName();
+    return l1InfoBeanName;
   }
 
   public boolean isTunneledBeansRegistered() {
@@ -284,7 +308,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public ObjectName getL1InfoObjectName() {
-    return delegate.getL1InfoBeanName();
+    return l1InfoBeanName;
   }
 
   public L1InfoMBean getL1InfoBean() {
@@ -304,7 +328,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public ObjectName getInstrumentationLoggingObjectName() {
-    return delegate.getInstrumentationLoggingBeanName();
+    return instrumentationLoggingBeanName;
   }
 
   public InstrumentationLoggingMBean getInstrumentationLoggingBean() {
@@ -312,7 +336,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public ObjectName getRuntimeLoggingObjectName() {
-    return delegate.getRuntimeLoggingBeanName();
+    return runtimeLoggingObjectName;
   }
 
   public RuntimeLoggingMBean getRuntimeLoggingBean() {
@@ -320,7 +344,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   }
 
   public ObjectName getRuntimeOutputOptionsObjectName() {
-    return delegate.getRuntimeOutputOptionsBeanName();
+    return runtimeOutputOptionsBeanName;
   }
 
   public RuntimeOutputOptionsMBean getRuntimeOutputOptionsBean() {
@@ -369,7 +393,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
       String capabilities = ProductInfo.UNKNOWN_VALUE;
       String copyright = ProductInfo.UNKNOWN_VALUE;
       try {
-        AttributeList attrList = cc.mbsc.getAttributes(delegate.getL1InfoBeanName(), attributes);
+        AttributeList attrList = cc.mbsc.getAttributes(l1InfoBeanName, attributes);
         if (attrList.get(0) != null) {
           version = (String) ((Attribute) attrList.get(0)).getValue();
         }

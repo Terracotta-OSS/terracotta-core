@@ -584,10 +584,8 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
   public void log(Throwable t) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
-
     t.printStackTrace(pw);
     pw.close();
-
     log(sw.toString());
   }
 

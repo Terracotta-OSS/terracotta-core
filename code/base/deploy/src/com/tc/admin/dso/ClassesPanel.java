@@ -134,6 +134,15 @@ public class ClassesPanel extends XContainer {
         add(messagePanel);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private void init() {

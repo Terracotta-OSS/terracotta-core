@@ -196,6 +196,15 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         disconnectAction.setEnabled(true);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (adminClientContext != null) {
+        adminClientContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private boolean testCheckServerVersion() {

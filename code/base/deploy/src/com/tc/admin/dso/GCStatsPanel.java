@@ -266,6 +266,15 @@ public class GCStatsPanel extends XContainer implements DGCListener {
       gcAction.setEnabled(clusterModel != null && clusterModel.isReady());
       exportAction.setEnabled(clusterModel != null && clusterModel.isReady());
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private void init() {

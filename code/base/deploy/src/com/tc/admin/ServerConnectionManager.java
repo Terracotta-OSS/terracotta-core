@@ -19,6 +19,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,12 +51,21 @@ public class ServerConnectionManager implements NotificationListener {
   private ConnectThread                      connectThread;
   private ConnectionMonitorAction            connectMonitorAction;
   private Timer                              connectMonitorTimer;
+  private static final ExecutorService       executer                        = Executors.newCachedThreadPool();
 
-  private static final Map<String, String[]> credentialsMap         = new HashMap<String, String[]>();
+  private static final Map<String, String[]> credentialsMap                  = new HashMap<String, String[]>();
 
-  private static final int                   CONNECT_MONITOR_PERIOD = 1000;
+  private static final int                   DEFAULT_CONNECT_MONITOR_PERIOD  = 1000;
+  private static final int                   CONNECT_MONITOR_PERIOD          = Integer
+                                                                                 .getInteger("ServerConnectionManager.connectMonitorPeriodMillis",
+                                                                                             DEFAULT_CONNECT_MONITOR_PERIOD);
 
-  private static final Object                connectTestLock        = new Object();
+  private static final int                   DEFAULT_CONNECT_TIMEOUT_SECONDS = 3;
+  private static final int                   CONNECT_TIMEOUT_SECONDS         = Integer
+                                                                                 .getInteger("ServerConnectionManager.connectTimeoutSeconds",
+                                                                                             DEFAULT_CONNECT_TIMEOUT_SECONDS);
+
+  private static final Object                connectTestLock                 = new Object();
 
   static {
     if (!Boolean.getBoolean("javax.management.remote.debug")) {
@@ -181,7 +196,7 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public void setJMXConnector(JMXConnector jmxc) throws IOException {
-    connectException = null;
+    setConnectionException(null);
     connectCntx.jmxc = jmxc;
     connectCntx.mbsc = jmxc.getMBeanServerConnection();
     setConnected(true);
@@ -237,6 +252,7 @@ public class ServerConnectionManager implements NotificationListener {
     if (connectEnv == null) {
       connectEnv = new HashMap<String, Object>();
       connectEnv.put("jmx.remote.x.client.connection.check.period", Integer.valueOf(0));
+      connectEnv.put("jmx.remote.x.client.request.waiting.timeout", Integer.valueOf(5000));
       connectEnv.put("jmx.remote.default.class.loader", getClass().getClassLoader());
     }
     return connectEnv;
@@ -265,10 +281,7 @@ public class ServerConnectionManager implements NotificationListener {
       connectThread = new ConnectThread();
       connectThread.start();
     } catch (Exception e) {
-      connectException = e;
-      if (connectListener != null) {
-        connectListener.handleException();
-      }
+      setConnectionException(e);
     }
   }
 
@@ -303,12 +316,22 @@ public class ServerConnectionManager implements NotificationListener {
         initConnector();
       }
 
-      jmxConnector.connect(getConnectionEnvironment());
-      connectCntx.mbsc = jmxConnector.getMBeanServerConnection();
-      connectCntx.jmxc = jmxConnector;
-      connectException = null;
-
-      return true;
+      Future<Boolean> future = executer.submit(new Callable<Boolean>() {
+        public Boolean call() {
+          try {
+            jmxConnector.connect(getConnectionEnvironment());
+            connectCntx.mbsc = jmxConnector.getMBeanServerConnection();
+            connectCntx.jmxc = jmxConnector;
+            setConnectionException(null);
+            return Boolean.TRUE;
+          } catch (Exception e) {
+            setConnectionException(e);
+            return Boolean.FALSE;
+          }
+        }
+      });
+      Boolean result = future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      return result != null ? result.booleanValue() : false;
     }
   }
 
@@ -317,7 +340,7 @@ public class ServerConnectionManager implements NotificationListener {
 
     ConnectThread() {
       super();
-      setPriority(MIN_PRIORITY);
+      setPriority(NORM_PRIORITY - 1);
     }
 
     @Override
@@ -329,14 +352,13 @@ public class ServerConnectionManager implements NotificationListener {
             setConnected(isConnected);
           }
           return;
+        } catch (TimeoutException te) {
+          if (cancel) { return; }
         } catch (Exception e) {
           if (cancel) {
             return;
           } else {
-            connectException = e;
-            if (connectListener != null) {
-              connectListener.handleException();
-            }
+            setConnectionException(e);
           }
         }
 
@@ -395,6 +417,15 @@ public class ServerConnectionManager implements NotificationListener {
 
   public synchronized Exception getConnectionException() {
     return connectException;
+  }
+
+  private void setConnectionException(Exception e) {
+    synchronized (this) {
+      connectException = e;
+    }
+    if (e != null && connectListener != null) {
+      connectListener.handleException();
+    }
   }
 
   public synchronized boolean testIsActive() {
@@ -464,9 +495,25 @@ public class ServerConnectionManager implements NotificationListener {
     public void run() {
       if (connectCntx != null && connectCntx.isConnected()) {
         try {
-          connectCntx.testConnection();
+          Future<Boolean> future = executer.submit(new Callable<Boolean>() {
+            public Boolean call() {
+              try {
+                connectCntx.testConnection();
+                return Boolean.TRUE;
+              } catch (Exception e) {
+                return Boolean.FALSE;
+              }
+            }
+          });
+          Boolean result = future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+          if (!result.booleanValue()) {
+            cancelConnectionMonitor();
+            setConnectionException(new IOException("Connection timeout"));
+            setConnected(false);
+          }
         } catch (Exception e) {
           cancelConnectionMonitor();
+          setConnectionException(new IOException("Connection timeout"));
           setConnected(false);
         }
       }
@@ -583,6 +630,17 @@ public class ServerConnectionManager implements NotificationListener {
       removeActivationListener();
     }
     if (connectCntx != null) {
+      if (connectCntx.jmxc != null) {
+        // JMXConnector.close can take a while if the network stack is in place but the other end can't really respond.
+        executer.submit(new Runnable() {
+          public void run() {
+            try {
+              connectCntx.jmxc.close();
+            } catch (Exception e) {/**/
+            }
+          }
+        });
+      }
       connectCntx.reset();
     }
   }

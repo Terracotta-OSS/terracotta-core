@@ -67,6 +67,8 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (tornDown.get()) { return; }
       if (clusterModel.isReady()) {
         init();
+      } else {
+        suspend();
       }
     }
 
@@ -76,6 +78,18 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       if (oldActive != null) {
         oldActive.removeClientConnectionListener(ClientsNode.this);
       }
+      if (newActive != null) {
+        newActive.addClientConnectionListener(ClientsNode.this);
+      }
+    }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
     }
   }
 
@@ -83,13 +97,21 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
     IServer activeCoord = getActiveCoordinator();
     if (activeCoord != null) {
       activeCoord.removeClientConnectionListener(this);
-      setLabel(appContext.getMessage("connected-clients"));
-      clients = NULL_CLIENTS;
-      tearDownChildren();
-      if (clientsPanel != null) {
-        clientsPanel.setClients(clients);
-      }
+      removeAllClients();
       appContext.execute(new InitWorker());
+    }
+  }
+
+  private void suspend() {
+    removeAllClients();
+  }
+
+  private void removeAllClients() {
+    setLabel(appContext.getMessage("connected-clients"));
+    clients = NULL_CLIENTS;
+    tearDownChildren();
+    if (clientsPanel != null) {
+      clientsPanel.setClients(clients);
     }
   }
 
@@ -120,8 +142,8 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       } else {
         tearDownChildren();
         clients = getResult();
-        for (int i = 0; i < clients.length; i++) {
-          addClientNode(createClientNode(clients[i]));
+        for (IClient client : clients) {
+          addClientNode(createClientNode(client));
         }
         updateLabel();
       }
@@ -170,15 +192,24 @@ public class ClientsNode extends ComponentNode implements ClientConnectionListen
       this.client = client;
     }
 
+    private boolean haveClient(IClient newClient) {
+      for (IClient c : clients) {
+        if (c.getRemoteAddress().equals(newClient.getRemoteAddress())) { return true; }
+      }
+      return false;
+    }
+
     public void run() {
       if (tornDown.get()) { return; }
-      appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
-      List<IClient> list = new ArrayList(Arrays.asList(clients));
-      list.add(client);
-      clients = list.toArray(new IClient[list.size()]);
-      addClientNode(createClientNode(client));
-      updateLabel();
-      appContext.setStatus(appContext.getMessage("dso.client.new") + client);
+      if (!haveClient(client)) {
+        appContext.setStatus(appContext.getMessage("dso.client.retrieving"));
+        List<IClient> list = new ArrayList(Arrays.asList(clients));
+        list.add(client);
+        clients = list.toArray(new IClient[list.size()]);
+        addClientNode(createClientNode(client));
+        updateLabel();
+        appContext.setStatus(appContext.getMessage("dso.client.new") + client);
+      }
     }
   }
 

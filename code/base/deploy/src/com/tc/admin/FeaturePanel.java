@@ -95,7 +95,7 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
         System.err.println("Failed to load PresentationFactory for feature '" + feature + "'");
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      adminClientContext.log(e);
     }
   }
 
@@ -131,6 +131,8 @@ public class FeaturePanel extends XContainer implements PropertyChangeListener {
   }
 
   private void showError(Throwable error) {
+    adminClientContext.log(error);
+
     removeAll();
     setLayout(new BorderLayout());
     XLabel label = new XLabel("There was a problem loading feature '" + feature + "'");

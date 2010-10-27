@@ -444,6 +444,6 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   public boolean isEnterprise() {
-    return ProductInfo.getInstance().isEnterprise();
+    return server.getClass().getSimpleName().equals("EnterpriseServerImpl");
   }
 }

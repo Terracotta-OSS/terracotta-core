@@ -56,7 +56,7 @@ public class MonitoringNode extends ComponentNode implements HyperlinkListener {
       try {
         textPane.setPage(MonitoringNode.class.getResource("MonitoringIntro.html"));
       } catch (Exception e) {
-        e.printStackTrace();
+        adminClientContext.log(e);
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);

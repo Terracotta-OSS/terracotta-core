@@ -332,6 +332,15 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         newActive.addClientConnectionListener(StatsRecorderPanel.this);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private class ServerListener implements ServerStateListener {
@@ -412,7 +421,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
   }
 
   private void showError(Throwable t) {
-    t.printStackTrace();
+    appContext.log(t);
 
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
@@ -504,8 +513,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
         boolean sessionInProgress = connectedState.isCapturing();
 
         currentStatsSessionId = connectedState.getActiveStatsSessionId();
-        for (int i = 0; i < allSessions.length; i++) {
-          String sessionId = allSessions[i];
+        for (String sessionId : allSessions) {
           if (sessionInProgress && sessionId.equals(currentStatsSessionId)) {
             continue;
           }

@@ -143,6 +143,15 @@ public class ThreadDumpsPanel extends XContainer implements ActionListener, Prop
         addNodePanels();
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (adminClientContext != null) {
+        adminClientContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   public void propertyChange(PropertyChangeEvent evt) {

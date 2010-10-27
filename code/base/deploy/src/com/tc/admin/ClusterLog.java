@@ -158,6 +158,15 @@ public class ClusterLog extends XContainer implements ActionListener {
         }
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   private void reset() {

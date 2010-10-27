@@ -141,8 +141,10 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
   @Override
   public Component getComponent() {
     if (objectBrowserPanel == null) {
+      adminClientContext.block();
       objectBrowserPanel = createObjectBrowserPanel();
       objectBrowserPanel.setNode(this);
+      adminClientContext.unblock();
     }
     return objectBrowserPanel;
   }
@@ -180,8 +182,9 @@ public class RootsNode extends ComponentNode implements RootCreationListener, Pr
         public Void call() throws Exception {
           tearDownChildren();
           roots = clusterModel.getRoots();
-          for (int i = 0; i < roots.length; i++) {
-            roots[i].refresh();
+          for (IBasicObject root : roots) {
+            adminClientContext.setStatus(adminClientContext.format("refreshing.field.pattern", root.getName()));
+            root.refresh();
           }
           return null;
         }

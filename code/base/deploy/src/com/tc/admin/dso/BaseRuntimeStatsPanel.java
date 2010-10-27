@@ -401,7 +401,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
 
     rangeAxisSpace = new AxisSpace();
     rangeAxisSpace.setLeft(fixedRangeAxisSpace);
-    rangeAxisSpace.setRight(fixedRangeAxisSpace);
+    // rangeAxisSpace.setRight(fixedRangeAxisSpace);
 
     if (plotList.size() > 0) {
       Iterator<XYPlot> plotIter = plotList.iterator();
@@ -463,9 +463,10 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   }
 
   private void clearAllRuntimeStatsSamples() {
-    Iterator<TimeSeries> iter = allSeries.iterator();
-    while (iter.hasNext()) {
-      iter.next().clear();
+    if (allSeries != null) {
+      for (TimeSeries ts : allSeries.toArray(new TimeSeries[0])) {
+        ts.clear();
+      }
     }
   }
 

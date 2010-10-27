@@ -442,8 +442,8 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
 
     public Object getPolledAttribute(IClusterNode clusterNode, PolledAttribute polledAttr) {
-      if (polledAttr != null) { return getPolledAttribute(clusterNode, polledAttr.getObjectName(), polledAttr
-          .getAttribute()); }
+      if (polledAttr != null) { return getPolledAttribute(clusterNode, polledAttr.getObjectName(),
+                                                          polledAttr.getAttribute()); }
       return null;
     }
   }
@@ -469,7 +469,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         try {
           final Map<IClusterNode, Map<ObjectName, Map<String, Object>>> resultObj = new HashMap<IClusterNode, Map<ObjectName, Map<String, Object>>>();
           Set<PolledAttributeListener> listenerSet = getAllScopedPollListeners();
-          List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks);
+          List<Future<Collection<NodePollResult>>> results = executor.invokeAll(tasks, 5, TimeUnit.SECONDS);
           Iterator<Future<Collection<NodePollResult>>> resultIter = results.iterator();
           while (resultIter.hasNext()) {
             Future<Collection<NodePollResult>> future = resultIter.next();

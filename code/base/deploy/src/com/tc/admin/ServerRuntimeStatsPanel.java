@@ -45,6 +45,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -122,6 +124,9 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
     @Override
     protected void handleReady() {
+      if (server.isReady() && cpuTimeSeries == null) {
+        appContext.execute(new CpuPanelWorker());
+      }
       if (!server.isReady() && isMonitoringRuntimeStats()) {
         stopMonitoringRuntimeStats();
       } else if (server.isReady() && isShowing() && getAutoStart()) {
@@ -150,6 +155,9 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   @Override
   public void startMonitoringRuntimeStats() {
+    if (server.isReady() && cpuTimeSeries == null) {
+      appContext.execute(new CpuPanelWorker());
+    }
     addPolledAttributeListener();
     super.startMonitoringRuntimeStats();
   }
@@ -162,12 +170,15 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   @Override
   public void attributesPolled(final PolledAttributesResult result) {
+    if (tornDown.get()) { return; }
     IServer theServer = getServer();
     if (theServer != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          handleDSOStats(result);
-          handleSysStats(result);
+          if (!tornDown.get()) {
+            handleDSOStats(result);
+            handleSysStats(result);
+          }
         }
       });
     }
@@ -401,15 +412,17 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     private CpuPanelWorker() {
       super(new Callable<TimeSeries[]>() {
         public TimeSeries[] call() throws Exception {
+          if (tornDown.get()) { return null; }
           IServer theServer = getServer();
           if (theServer != null) { return createCpusSeries(theServer); }
           return null;
         }
-      });
+      }, 5, TimeUnit.SECONDS);
     }
 
     @Override
     protected void finished() {
+      if (tornDown.get()) { return; }
       Exception e = getException();
       if (e != null) {
         setupInstructions();
@@ -434,7 +447,6 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cpuPanel.setPreferredSize(fDefaultGraphSize);
     cpuPanel.setBorder(new TitledBorder(appContext.getString("server.stats.cpu.usage")));
     cpuPanel.setToolTipText(appContext.getString("server.stats.cpu.usage.tip"));
-    appContext.execute(new CpuPanelWorker());
   }
 
   private void clearAllTimeSeries() {
@@ -486,8 +498,12 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
-  public void tearDown() {
+  public synchronized void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     server.removePropertyChangeListener(serverListener);
     serverListener.tearDown();
 

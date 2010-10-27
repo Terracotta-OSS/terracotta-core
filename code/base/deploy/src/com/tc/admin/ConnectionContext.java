@@ -61,26 +61,26 @@ public class ConnectionContext {
     this.port = l2Info.jmxPort();
   }
 
-  public void reset() {
-    if (jmxc != null) {
-      try {
-        jmxc.close();
-      } catch (Exception e) {/**/
-      }
-    }
-
+  public synchronized void reset() {
     jmxc = null;
     mbsc = null;
   }
 
-  public boolean isConnected() {
+  public synchronized boolean isConnected() {
     return mbsc != null;
   }
 
-  public void testConnection() throws IOException {
-    if (jmxc != null) {
-      jmxc.getConnectionId();
+  private static final ObjectName MBEAN_SERVER_DELEGATE;
+  static {
+    try {
+      MBEAN_SERVER_DELEGATE = new ObjectName("JMImplementation:type=MBeanServerDelegate");
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  public void testConnection() throws Exception {
+    isRegistered(MBEAN_SERVER_DELEGATE);
   }
 
   public ObjectInstance queryMBean(String query) throws MalformedObjectNameException, IOException {

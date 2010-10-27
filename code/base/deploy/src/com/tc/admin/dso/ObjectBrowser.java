@@ -233,6 +233,15 @@ public class ObjectBrowser extends XContainer implements ActionListener, ClientC
         newActive.removeClientConnectionListener(ObjectBrowser.this);
       }
     }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (adminClientContext != null) {
+        adminClientContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
+      }
+    }
   }
 
   public void clientConnected(final IClient client) {

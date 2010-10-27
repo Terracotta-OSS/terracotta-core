@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.ObjectName;
 import javax.swing.SwingUtilities;
@@ -125,6 +126,7 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   @Override
   public void attributesPolled(PolledAttributesResult result) {
+    if (tornDown.get()) { return; }
     IClient theClient = getClient();
     if (theClient != null) {
       handleDSOStats(result);
@@ -156,32 +158,24 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
                   if (txn >= 0) {
                     txn += n.longValue();
                   }
-                } else {
-                  txn = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FLUSH_RATE);
                 if (n != null) {
                   if (flush >= 0) {
                     flush += n.longValue();
                   }
-                } else {
-                  flush = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FAULT_RATE);
                 if (n != null) {
                   if (fault >= 0) {
                     fault += n.longValue();
                   }
-                } else {
-                  fault = -1;
                 }
                 n = (Number) map.get(POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
                 if (n != null) {
                   if (pendingTxn >= 0) {
                     pendingTxn += n.longValue();
                   }
-                } else {
-                  pendingTxn = -1;
                 }
               }
             }
@@ -194,7 +188,9 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
         final long thePendingTxnRate = pendingTxn;
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            updateAllDSOSeries(theFlushRate, theFaultRate, theTxnRate, thePendingTxnRate);
+            if (!tornDown.get()) {
+              updateAllDSOSeries(theFlushRate, theFaultRate, theTxnRate, thePendingTxnRate);
+            }
           }
         });
       }
@@ -202,19 +198,21 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   private void updateAllDSOSeries(long flush, long fault, long txn, long pendingTxn) {
-    if (flush != -1) {
+    if (tornDown.get()) { return; }
+
+    {
       updateSeries(flushRateSeries, Long.valueOf(flush));
       flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, convert(flush)));
     }
-    if (fault != -1) {
+    {
       updateSeries(faultRateSeries, Long.valueOf(fault));
       faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, convert(fault)));
     }
-    if (txn != -1) {
+    {
       updateSeries(txnRateSeries, Long.valueOf(txn));
       txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txn)));
     }
-    if (pendingTxn != -1) {
+    {
       updateSeries(pendingTxnsSeries, Long.valueOf(pendingTxn));
       pendingTxnsLabel.setText(MessageFormat.format(pendingTxnsLabelFormat, convert(pendingTxn)));
     }
@@ -353,8 +351,10 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
     @Override
     protected void finished() {
+      if (tornDown.get()) { return; }
       Exception e = getException();
       if (e != null) {
+        appContext.log(e);
         setupInstructions();
       } else {
         TimeSeries[] cpu = getResult();
@@ -417,8 +417,12 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     }
   }
 
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
+
   @Override
   public synchronized void tearDown() {
+    if (!tornDown.compareAndSet(false, true)) { return; }
+
     stopMonitoringRuntimeStats();
     client = null;
 

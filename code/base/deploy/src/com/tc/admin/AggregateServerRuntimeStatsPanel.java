@@ -122,6 +122,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
       IServer activeCoord = clusterModel.getActiveCoordinator();
       if (activeCoord != null) {
         activeCoord.addDGCListener(this);
+        startMonitoringRuntimeStats();
       }
     }
   }
@@ -150,6 +151,15 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
         startMonitoringRuntimeStats();
       } else {
         stopMonitoringRuntimeStats();
+      }
+    }
+
+    @Override
+    protected void handleUncaughtError(Exception e) {
+      if (appContext != null) {
+        appContext.log(e);
+      } else {
+        super.handleUncaughtError(e);
       }
     }
   }
@@ -199,11 +209,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   }
 
   private Object getPolledAttribute(PolledAttributesResult par, IServer server, String attr) {
-    Object result = par.getPolledAttribute(server, attr);
-    if (result == null) {
-      appContext.log("No poll result for " + server + ": " + attr);
-    }
-    return result;
+    return par.getPolledAttribute(server, attr);
   }
 
   private synchronized void handleDSOStats(PolledAttributesResult result) {
@@ -227,152 +233,128 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
 
       for (IServerGroup group : theClusterModel.getServerGroups()) {
         IServer theServer = group.getActiveServer();
-        if (theServer.isReady()) {
+        if (theServer != null && theServer.isReady()) {
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
           if (n != null) {
             if (flush >= 0) {
               flush += n.longValue();
             }
-          } else {
-            flush = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
           if (n != null) {
             if (fault >= 0) {
               fault += n.longValue();
             }
-          } else {
-            fault = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_TRANSACTION_RATE);
           if (n != null) {
             if (txn >= 0) {
               txn += n.longValue();
             }
-          } else {
-            txn = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
           if (n != null) {
             if (onHeapFaultRate >= 0) {
               onHeapFaultRate += n.longValue();
             }
-          } else {
-            onHeapFaultRate = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
           if (n != null) {
             if (onHeapFlushRate >= 0) {
               onHeapFlushRate += n.longValue();
             }
-          } else {
-            onHeapFlushRate = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
           if (n != null) {
             if (offHeapFaultRate >= 0) {
               offHeapFaultRate += n.longValue();
             }
-          } else {
-            offHeapFaultRate = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
           if (n != null) {
             if (offHeapFlushRate >= 0) {
               offHeapFlushRate += n.longValue();
             }
-          } else {
-            offHeapFlushRate = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
           if (n != null) {
             if (liveObjectCount >= 0) {
               liveObjectCount += n.longValue();
             }
-          } else {
-            liveObjectCount = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHED_OBJECT_COUNT);
           if (n != null) {
             if (cachedObjectCount >= 0) {
               cachedObjectCount += n.longValue();
             }
-          } else {
-            cachedObjectCount = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
           if (n != null) {
             if (offHeapObjectCount >= 0) {
               offHeapObjectCount += n.longValue();
             }
-          } else {
-            offHeapObjectCount = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
           if (n != null) {
             if (lockRecallRate >= 0) {
               lockRecallRate += n.longValue();
             }
-          } else {
-            lockRecallRate = -1;
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_BROADCAST_RATE);
           if (n != null) {
             if (broadcastRate >= 0) {
               broadcastRate += n.longValue();
             }
-          } else {
-            broadcastRate = -1;
           }
         }
       }
 
-      if (flush != -1) {
+      {
         updateSeries(clientFlushRateSeries, Long.valueOf(flush));
         clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(flush)));
       }
-      if (fault != -1) {
+      {
         updateSeries(clientFaultRateSeries, Long.valueOf(fault));
         clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(fault)));
       }
-      if (txn != -1) {
+      {
         updateSeries(txnRateSeries, Long.valueOf(txn));
         txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txn)));
       }
-      if (onHeapFaultRate != -1) {
+      {
         updateSeries(onHeapFaultRateSeries, Long.valueOf(onHeapFaultRate));
         onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(onHeapFaultRate)));
       }
-      if (onHeapFlushRate != -1) {
+      {
         updateSeries(onHeapFlushRateSeries, Long.valueOf(onHeapFlushRate));
         onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(onHeapFlushRate)));
       }
-      if (offHeapFaultRate != -1) {
+      {
         updateSeries(offHeapFaultRateSeries, Long.valueOf(offHeapFaultRate));
         offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(offHeapFaultRate)));
       }
-      if (offHeapFlushRate != -1) {
+      {
         updateSeries(offHeapFlushRateSeries, Long.valueOf(offHeapFlushRate));
         offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(offHeapFlushRate)));
       }
-      if (liveObjectCount != -1) {
+      {
         updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
         String cached = convert(cachedObjectCount);
         String offHeap = offHeapObjectCount != -1 ? convert(offHeapObjectCount) : "n/a";
         String live = convert(liveObjectCount);
         objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
       }
-      if (cachedObjectCount != -1) {
+      {
         updateSeries(cachedObjectCountSeries, Long.valueOf(cachedObjectCount));
       }
-      if (offHeapObjectCount != -1) {
+      {
         updateSeries(offHeapObjectCountSeries, Long.valueOf(offHeapObjectCount));
       }
-      if (lockRecallRate != -1) {
+      {
         updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
         lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(lockRecallRate)));
       }
-      if (broadcastRate != -1) {
+      {
         updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
         broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(broadcastRate)));
       }

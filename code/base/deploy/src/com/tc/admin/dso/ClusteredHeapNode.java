@@ -55,7 +55,7 @@ public class ClusteredHeapNode extends ComponentNode implements HyperlinkListene
       try {
         textPane.setPage(getClass().getResource("ClusteredHeapIntro.html"));
       } catch (Exception e) {
-        e.printStackTrace();
+        adminClientContext.log(e);
       }
       textPane.setEditable(false);
       textPane.addHyperlinkListener(this);
