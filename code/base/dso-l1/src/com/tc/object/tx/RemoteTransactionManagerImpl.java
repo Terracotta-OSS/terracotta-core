@@ -550,6 +550,8 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
             .newCompletedTransactionLowWaterMarkMessage(RemoteTransactionManagerImpl.this.groupID);
         ctm.initialize(lwm);
         ctm.send();
+      } catch (final TCNotRunningException e) {
+        RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
       } catch (final Exception e) {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);
