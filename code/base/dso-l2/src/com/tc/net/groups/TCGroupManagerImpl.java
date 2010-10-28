@@ -287,12 +287,15 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
   private void removeIfMemberReconnecting(ServerID newNodeID) {
     TCGroupMember oldMember = nodenameToMembers.get(newNodeID.getName());
+
     if ((oldMember != null) && (oldMember.getPeerNodeID() != newNodeID)) {
+
       MessageChannel channel = oldMember.getChannel();
-      if (!channel.isConnected()) { // channel may be reconnecting
-        channel.close();
-        logger.warn("Remove not connected member " + oldMember);
+      if (!channel.isConnected()) {
+        closeMember(oldMember);
+        logger.warn("Removed old member " + oldMember + " for " + newNodeID);
       }
+
     }
   }
 
@@ -1031,10 +1034,13 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
           return;
         }
 
-        // remove the old member which is doing reconnecting from same node.
+        /**
+         * Restore Connection might have happened from the same peer member. Closing down the old and duplicate channel
+         * for the same peer member.
+         */
         manager.removeIfMemberReconnecting(peerNodeID);
-        switchToState(STATE_TRY_ADD_MEMBER);
 
+        switchToState(STATE_TRY_ADD_MEMBER);
       }
 
       void setPeerNodeID(TCGroupHandshakeMessage msg) {
