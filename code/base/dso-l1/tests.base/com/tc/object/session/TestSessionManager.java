@@ -32,4 +32,8 @@ public class TestSessionManager implements SessionManager, SessionProvider {
     return;
   }
 
+  public void resetSessionProvider() {
+    throw new ImplementMe();
+  }
+
 }

@@ -11,4 +11,6 @@ public interface SessionProvider {
   public SessionID getSessionID(NodeID nid);
   
   public SessionID nextSessionID(NodeID nid);
+
+  public void resetSessionProvider();
 }

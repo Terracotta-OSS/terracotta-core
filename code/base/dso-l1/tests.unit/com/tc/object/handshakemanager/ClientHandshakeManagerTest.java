@@ -7,6 +7,7 @@ package com.tc.object.handshakemanager;
 import com.tc.async.api.Sink;
 import com.tc.async.impl.NullSink;
 import com.tc.cluster.DsoClusterImpl;
+import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -341,6 +342,10 @@ public class ClientHandshakeManagerTest extends TCTestCase {
 
     public void initProvider(NodeID nid) {
       return;
+    }
+
+    public void resetSessionProvider() {
+      throw new ImplementMe();
     }
 
   }

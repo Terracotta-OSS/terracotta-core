@@ -46,6 +46,12 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
     }
   }
 
+  public void resetSessionProvider() {
+    synchronized (providersMap) {
+      providersMap.clear();
+    }
+  }
+
   private Provider getProvider(NodeID nid) {
     synchronized (providersMap) {
       Provider provider = providersMap.get(nid);
@@ -95,6 +101,7 @@ public class SessionManagerImpl implements SessionManager, SessionProvider {
       return sessionID.equals(compare);
     }
 
+    @Override
     public synchronized String toString() {
       return getClass().getName() + "[current session=" + sessionID + "]";
     }
