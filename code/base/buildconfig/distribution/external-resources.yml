@@ -111,11 +111,11 @@ artifacts:
     url: http://svn.terracotta.org/svn/forge/projects/terracotta-ehcache/trunk/ehcache-express-kit/src/assemble/QUICK-START.html
     kit_edition: opensource
     
-  - maven_artifact: false
-    name: CHANGELOG.txt
-    destination: ehcache
-    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/CHANGELOG.txt
-    kit_edition: opensource
+#  - maven_artifact: false
+#    name: CHANGELOG.txt
+#    destination: ehcache
+#    url: http://svn.terracotta.org/svn/ehcache/trunk/core/src/assemble/CHANGELOG.txt
+#    kit_edition: opensource
     
   - maven_artifact: false
     name: EHCACHE-CORE-LICENSE.txt
