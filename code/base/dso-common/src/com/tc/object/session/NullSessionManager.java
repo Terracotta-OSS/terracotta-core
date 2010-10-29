@@ -4,7 +4,6 @@
  */
 package com.tc.object.session;
 
-import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 
 public class NullSessionManager implements SessionManager, SessionProvider {
@@ -30,7 +29,7 @@ public class NullSessionManager implements SessionManager, SessionProvider {
   }
 
   public void resetSessionProvider() {
-    throw new ImplementMe();
+    return;
   }
 
 }
