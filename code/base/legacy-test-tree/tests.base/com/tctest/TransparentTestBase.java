@@ -253,8 +253,8 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY, String.valueOf(configFactory()
         .createL2TVSConfigurationSetupManager(null).commonl2Config().jmxPort().getBindPort()));
 
-    customerizeRestartTestHelper(helper);
     if (isCrashy() && canRunCrash()) {
+      customerizeRestartTestHelper(helper);
       crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, getRestartInterval(helper),
                                   helper.getServerCrasherConfig().isCrashy(), crashTestState, proxyMgr);
