@@ -253,6 +253,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     this.transparentAppConfig.setAttribute(ApplicationConfig.JMXPORT_KEY, String.valueOf(configFactory()
         .createL2TVSConfigurationSetupManager(null).commonl2Config().jmxPort().getBindPort()));
 
+    customerizeRestartTestHelper(helper);
     if (isCrashy() && canRunCrash()) {
       crashTestState = new TestState(false);
       crasher = new ServerCrasher(serverControl, getRestartInterval(helper),
@@ -260,6 +261,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       if (canRunL1ProxyConnect()) crasher.setProxyConnectMode(true);
       crasher.startAutocrash();
     }
+  }
+
+  // provide a way to change crash interval
+  protected void customerizeRestartTestHelper(RestartTestHelper helper) {
+    // to be override by specific test
+    // helper.getServerCrasherConfig().setRestartInterval(milliseconds);
   }
 
   protected long getRestartInterval(RestartTestHelper helper) {
