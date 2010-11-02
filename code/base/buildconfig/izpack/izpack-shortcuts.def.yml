@@ -82,7 +82,7 @@ shortcuts:
     encoding: UTF-8
     iconFile: $INSTALL_PATH/lib/resources/icons/logo_small.png
 - name: Terracotta Enterprise
-  target: "http://www.terracotta.org/kit/reflector?kitID=default&pageID=EnterpriseSuiteInfo"
+  target: "http://www.terracotta.org/kit/reflector?kitID=default&amp;pageID=EnterpriseSuiteInfo"
   description: Terracotta Enterprise
   programGroup: "yes"
   desktop: "no"
@@ -95,7 +95,7 @@ shortcuts:
     iconIndex: "0"
   unix:
     type: Link
-    url: "http://www.terracotta.org/kit/reflector?kitID=default&pageID=EnterpriseSuiteInfo"
+    url: "http://www.terracotta.org/kit/reflector?kitID=default&amp;pageID=EnterpriseSuiteInfo"
     initialState: normal
     type: Application
     categories: "Terracotta;Development;"
