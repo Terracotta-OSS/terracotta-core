@@ -4,13 +4,12 @@
  */
 package com.tc.aspectwerkz.reflect.impl.java;
 
+import com.google.common.collect.MapMaker;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A repository for the class info hierarchy. Is class loader aware.
@@ -23,17 +22,21 @@ public class JavaClassInfoRepository {
   /**
    * Map with all the class info repositories mapped to their class loader.
    */
-  private static final HashMap          s_repositories = new HashMap();
+  private static final Map<ClassLoader, JavaClassInfoRepository> s_repositories         = new MapMaker().weakKeys()
+                                                                                            .weakValues().makeMap();
+
+  private static final JavaClassInfoRepository                   NULL_LOADER_REPOSITORY = new JavaClassInfoRepository(
+                                                                                                                      null);
 
   /**
    * Map with all the class info mapped to their class names.
    */
-  private final Map                     m_repository   = Collections.synchronizedMap(new WeakHashMap());
+  private final Map<String, ClassInfo>                           m_repository           = new ConcurrentHashMap<String, ClassInfo>();
 
   /**
    * Class loader for the class repository.
    */
-  private transient final WeakReference m_loaderRef;
+  private transient final WeakReference                          m_loaderRef;
 
   /**
    * Creates a new repository.
@@ -50,15 +53,15 @@ public class JavaClassInfoRepository {
    * @param loader
    * @return
    */
-  public static synchronized JavaClassInfoRepository getRepository(final ClassLoader loader) {
-    Integer hash = new Integer(loader == null ? 0 : loader.hashCode());
-    WeakReference repositoryRef = (WeakReference) s_repositories.get(hash);
-    JavaClassInfoRepository repository = repositoryRef == null ? null : (JavaClassInfoRepository) repositoryRef.get();
+  public static synchronized JavaClassInfoRepository getRepository(ClassLoader loader) {
+    if (loader == null) { return NULL_LOADER_REPOSITORY; }
+
+    JavaClassInfoRepository repository = s_repositories.get(loader);
     if (repository != null) {
       return repository;
     } else {
       JavaClassInfoRepository repo = new JavaClassInfoRepository(loader);
-      s_repositories.put(hash, new WeakReference(repo));
+      s_repositories.put(loader, repo);
       return repo;
     }
   }
@@ -80,9 +83,9 @@ public class JavaClassInfoRepository {
    * @return
    */
   public ClassInfo getClassInfo(final String className) {
-    ClassInfo info = (ClassInfo) m_repository.get(className);
+    ClassInfo info = m_repository.get(className);
     if (info == null) { return checkParentClassRepository(className, (ClassLoader) m_loaderRef.get()); }
-    return (ClassInfo) m_repository.get(className);
+    return info;
   }
 
   /**
@@ -93,7 +96,7 @@ public class JavaClassInfoRepository {
   public void addClassInfo(final ClassInfo classInfo) {
     // is the class loaded by a class loader higher up in the hierarchy?
     if (checkParentClassRepository(classInfo.getName(), (ClassLoader) m_loaderRef.get()) == null) {
-      m_repository.put(new String(classInfo.getName()), classInfo);
+      m_repository.put(classInfo.getName(), classInfo);
     } else {
       // TODO: remove class in child class repository and add it for the current (parent) CL
     }
