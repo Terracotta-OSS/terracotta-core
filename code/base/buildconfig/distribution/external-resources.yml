@@ -38,7 +38,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core-ee-kit
     classifier: distribution
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache
     type: tar.gz
     kit_edition: enterprise
@@ -49,21 +49,21 @@ artifacts:
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-core
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache/lib
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache/lib
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: net.sf.ehcache
     artifactId: ehcache-terracotta-ee
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache/lib
     kit_edition: enterprise
     
@@ -85,7 +85,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: javadoc
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache/javadoc
     explode: true
     kit_edition: opensource
@@ -94,7 +94,7 @@ artifacts:
     groupId: net.sf.ehcache
     artifactId: ehcache-core
     classifier: sources
-    version: 2.3.1-SNAPSHOT
+    version: 2.4.0-SNAPSHOT
     destination: ehcache/src
     explode: true
     kit_edition: opensource
