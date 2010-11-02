@@ -10,10 +10,10 @@ Manual Installation
 
 Instructions for obtaining the current version of the plugin can be
 from the openTerracotta Eclipse update site can be found at
-http://www.terracotta.org/eclipse/.
+http://www.terracotta.org/kit/reflector?kitID=3.4&pageID=EclipsePluginQuickStart
 
 Nightly builds of the plugin are available at
-http://www.terracotta.org/confluence/display/orgsite/Download.
+http://www.terracotta.org/kit/reflector?kitID=default&pageID=DownloadTerracotta
 
 After extracting the contents of the nightly build archive,
 extract the org.terracotta.dso plugin archive from the
