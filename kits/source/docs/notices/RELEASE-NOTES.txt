@@ -1,8 +1,8 @@
 Terracotta 3.4.0 - Simple Scale for Enterprise Java
 ===================================================
 
-Release Notes: http://www.terracotta.org/kit/reflector?kitID=3.4.0&pageID=BetaReleaseNotes
-Documentation: http://www.terracotta.org/kit/reflector?kitID=3.4.0&pageID=Documentation
+Release Notes: http://www.terracotta.org/kit/reflector?kitID=3.5.0&pageID=BetaReleaseNotes
+Documentation: http://www.terracotta.org/kit/reflector?kitID=3.5.0&pageID=Documentation
 Forums:        http://forums.terracotta.org/forums/forums/list.page
 Mailing Lists: http://lists.terracotta.org
 Support:       http://www.terracotta.org/kit/reflector?kitID=default&pageID=SupportServices
