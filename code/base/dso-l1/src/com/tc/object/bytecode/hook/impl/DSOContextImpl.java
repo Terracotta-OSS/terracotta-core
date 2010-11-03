@@ -8,6 +8,7 @@ import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
 
 import org.apache.commons.io.CopyUtils;
 
+import com.google.common.collect.MapMaker;
 import com.tc.aspectwerkz.transform.InstrumentationContext;
 import com.tc.aspectwerkz.transform.WeavingStrategy;
 import com.tc.bundles.EmbeddedOSGiRuntime;
@@ -130,7 +131,7 @@ public class DSOContextImpl implements DSOContext {
       String licenseLocation = "/" + LICENSE_KEY_FILENAME;
       LicenseManager.loadLicenseFromStream(loader.getClass().getResourceAsStream(licenseLocation), licenseLocation);
     }
-    
+
     try {
       BootJar.verifyTCVersion(bootJarURL);
     } catch (Exception e) {
@@ -173,9 +174,7 @@ public class DSOContextImpl implements DSOContext {
       }
     }
     manager.init();
-    
 
-    
     return context;
   }
 
@@ -195,6 +194,8 @@ public class DSOContextImpl implements DSOContext {
   private DSOContextImpl(DSOClientConfigHelper configHelper, ClassProvider classProvider, Manager manager,
                          Collection<Repository> repos) {
     Assert.assertNotNull(configHelper);
+
+    resolveClasses();
 
     this.configHelper = configHelper;
     this.manager = manager;
@@ -227,6 +228,11 @@ public class DSOContextImpl implements DSOContext {
       }
     }
     getClassResource("non.existent.Class", getClass().getClassLoader(), true);
+  }
+
+  private void resolveClasses() {
+    // This fixes a class circularity error in JavaClassInfoRepository
+    new MapMaker().weakKeys().weakValues().makeMap().put("foo", "bar");
   }
 
   /**
@@ -349,7 +355,7 @@ public class DSOContextImpl implements DSOContext {
       while (System.currentTimeMillis() < (startTime + MAX_HTTP_FETCH_TIME)) {
         try {
           long untilNextTrial = HTTP_FETCH_RETRY_INTERVAL - (System.currentTimeMillis() - lastTrial);
-  
+
           if (untilNextTrial > 0) {
             try {
               Thread.sleep(untilNextTrial);
@@ -357,16 +363,16 @@ public class DSOContextImpl implements DSOContext {
               interrupted = true;
             }
           }
-  
+
           logger.debug("Opening connection to: " + theURL + " to fetch server configuration.");
-  
+
           lastTrial = System.currentTimeMillis();
           InputStream in = theURL.openStream();
           logger.debug("Got input stream to: " + theURL);
           ByteArrayOutputStream baos = new ByteArrayOutputStream();
-  
+
           CopyUtils.copy(in, baos);
-  
+
           return baos.toString();
         } catch (ConnectException ce) {
           logger.warn("Unable to fetch configuration mode from L2 at '" + theURL + "'; trying again. "
@@ -393,8 +399,8 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public void addModules(URL[] modules) throws Exception {
-    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(), manager
-        .getTunneledDomainUpdater(), false, modules);
+    ModulesLoader.installAndStartBundles(osgiRuntime, configHelper, manager.getClassProvider(),
+                                         manager.getTunneledDomainUpdater(), false, modules);
   }
 
   public void shutdown() {
