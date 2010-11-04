@@ -233,7 +233,7 @@ public class Module extends AttributesModule implements Installable {
     if (!dependency.groupId().equals(ToolkitConstants.GROUP_ID)) { return null; }
 
     final String startArtifactId = dependency.artifactId;
-    Pattern verPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX);
+    Pattern verPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?");
     Matcher matcher = verPattern.matcher(dependency.artifactId());
     if (!matcher.matches()) {
       //
