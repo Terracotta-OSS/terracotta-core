@@ -16,6 +16,7 @@ import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.IntConfigItem;
 import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.dynamic.XPathBasedConfigItem;
+import com.tc.license.LicenseManager;
 import com.tc.util.Assert;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.PersistenceMode;
@@ -78,6 +79,9 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     defaultL2GroupPort.setBind(this.bind.getString());
     this.l2GroupPort = this.context.bindPortItem("l2-group-port", defaultL2GroupPort);
     this.offHeapConfig = new OffHeapConfigItem(this.context, "dso/persistence/offheap");
+    if (offHeapConfig.getOffHeapConfigObject().isEnabled()) {
+      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getOffHeapConfigObject().getMaxDataSize());
+    }
   }
 
   public OffHeapConfigItem offHeapConfig() {
