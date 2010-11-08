@@ -15,16 +15,17 @@ import com.tc.util.ObjectIDSet;
 import java.io.IOException;
 import java.util.SortedSet;
 
-public class DGCResultMessage extends AbstractGroupMessage implements EventContext {
+public class GCResultMessage extends AbstractGroupMessage implements EventContext {
+  public static final int       GC_RESULT = 0;
   private ObjectIDSet           gcedOids;
   private GarbageCollectionInfo gcInfo;
 
   // To make serialization happy
-  public DGCResultMessage() {
+  public GCResultMessage() {
     super(-1);
   }
 
-  public DGCResultMessage(int type, GarbageCollectionInfo gcInfo, ObjectIDSet deleted) {
+  public GCResultMessage(int type, GarbageCollectionInfo gcInfo, ObjectIDSet deleted) {
     super(type);
     this.gcInfo = gcInfo;
     this.gcedOids = deleted;
@@ -36,7 +37,7 @@ public class DGCResultMessage extends AbstractGroupMessage implements EventConte
 
   @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
-    Assert.assertEquals(DGCMessageFactory.DGC_RESULT, getType());
+    Assert.assertEquals(GC_RESULT, getType());
     this.gcInfo = new GarbageCollectionInfo();
     this.gcInfo.deserializeFrom(in);
     this.gcedOids = new ObjectIDSet();
@@ -45,7 +46,7 @@ public class DGCResultMessage extends AbstractGroupMessage implements EventConte
 
   @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
-    Assert.assertEquals(DGCMessageFactory.DGC_RESULT, getType());
+    Assert.assertEquals(GC_RESULT, getType());
     this.gcInfo.serializeTo(out);
     this.gcedOids.serializeTo(out);
   }

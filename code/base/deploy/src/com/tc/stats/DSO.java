@@ -22,7 +22,7 @@ import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
+import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.locks.LockManagerMBean;
@@ -69,7 +69,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
                                                                                 + ",";
 
   private final DSOStatsImpl                           dsoStats;
-  private final DGCEventStatsProvider                  gcStatsProvider;
+  private final GCStatsEventPublisher                  gcStatsPublisher;
   private final ObjectManagerMBean                     objMgr;
   private final MBeanServer                            mbeanServer;
   private final ArrayList                              rootObjectNames        = new ArrayList();
@@ -85,7 +85,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final OffheapStats                           offheapStats;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
-             final MBeanServer mbeanServer, final DGCEventStatsProvider gcStatsProvider,
+             final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher,
              TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider, OffheapStats offheapStats)
       throws NotCompliantMBeanException {
     super(DSOMBean.class);
@@ -94,7 +94,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     } catch (Exception e) {/**/
     }
     this.mbeanServer = mbeanServer;
-    this.gcStatsProvider = gcStatsProvider;
+    this.gcStatsPublisher = gcStatsPublisher;
     this.dsoStats = new DSOStatsImpl(managementContext);
     this.lockMgr = managementContext.getLockManager();
     this.objMgr = managementContext.getObjectManager();
@@ -108,7 +108,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
     // add various listeners (do this before the setupXXX() methods below so we don't ever miss anything)
     txnMgr.addRootListener(new TransactionManagerListener());
-    this.gcStatsProvider.addListener(new DSOGCStatsEventListener());
+    this.gcStatsPublisher.addListener(new DSOGCStatsEventListener());
     channelMgr.addEventListener(new ChannelManagerListener());
 
     setupRoots();
@@ -164,7 +164,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   public GCStats[] getGarbageCollectorStats() {
-    return gcStatsProvider.getGarbageCollectorStats();
+    return gcStatsPublisher.getGarbageCollectorStats();
   }
 
   public List<TerracottaOperatorEvent> getOperatorEvents() {
@@ -439,12 +439,12 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   }
 
   public long getLastCollectionGarbageCount() {
-    GCStats gcStats = gcStatsProvider.getLastGarbageCollectorStats();
+    GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getActualGarbageCount() : -1;
   }
 
   public long getLastCollectionElapsedTime() {
-    GCStats gcStats = gcStatsProvider.getLastGarbageCollectorStats();
+    GCStats gcStats = gcStatsPublisher.getLastGarbageCollectorStats();
     return gcStats != null ? gcStats.getElapsedTime() : -1;
   }
 

@@ -13,8 +13,7 @@ import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.l2.msg.DGCResultMessage;
-import com.tc.l2.msg.DGCMessageFactory;
+import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.L2StateMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -206,7 +205,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setZapNodeRequestProcessor(proc1);
     groups[1].setZapNodeRequestProcessor(proc2);
-
+    
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -249,11 +248,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-
+    
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-
+    
     groups[0].join(nodes[0], nodeStore);
     groups[1].join(nodes[1], nodeStore);
 
@@ -285,7 +284,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-
+    
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -369,16 +368,16 @@ public class TCGroupManagerImplTest extends TCTestCase {
     tearGroups();
   }
 
-  private DGCResultMessage createGCResultMessage() {
+  private GCResultMessage createGCResultMessage() {
     ObjectIDSet oidSet = new ObjectIDSet();
     for (long i = 1; i <= 100; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    DGCResultMessage message = new DGCResultMessage(DGCMessageFactory.DGC_RESULT, new GarbageCollectionInfo(), oidSet);
+    GCResultMessage message = new GCResultMessage(GCResultMessage.GC_RESULT, new GarbageCollectionInfo(), oidSet);
     return (message);
   }
 
-  private boolean cmpGCResultMessage(DGCResultMessage o1, DGCResultMessage o2) {
+  private boolean cmpGCResultMessage(GCResultMessage o1, GCResultMessage o2) {
     return (o1.getType() == o2.getType() && o1.getMessageID().equals(o2.getMessageID())
             && o1.getGCedObjectIDs().equals(o2.getGCedObjectIDs()) && o1.getGCInfo().getGarbageCollectionID().toLong() == o2
         .getGCInfo().getGarbageCollectionID().toLong());
@@ -390,7 +389,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     HashMap<NodeID, TestGroupMessageListener> listenerMap = new HashMap<NodeID, TestGroupMessageListener>();
 
     for (int i = 0; i < nGrp; ++i) {
-      groups[i].registerForMessages(DGCResultMessage.class, listeners[i]);
+      groups[i].registerForMessages(GCResultMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
     Set<Node> nodeSet = new HashSet<Node>();
@@ -410,14 +409,14 @@ public class TCGroupManagerImplTest extends TCTestCase {
     groups[0].sendTo(member.getPeerNodeID(), sMesg);
     TestGroupMessageListener listener = listenerMap.get(member.getPeerNodeID());
     GroupMessage rMesg = listener.getNextMessageFrom(groups[0].getLocalNodeID());
-    assertTrue(cmpGCResultMessage((DGCResultMessage) sMesg, (DGCResultMessage) rMesg));
+    assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
 
     sMesg = createGCResultMessage();
     member = getMember(groups[1], 0);
     groups[1].sendTo(member.getPeerNodeID(), sMesg);
     listener = listenerMap.get(member.getPeerNodeID());
     rMesg = listener.getNextMessageFrom(groups[1].getLocalNodeID());
-    assertTrue(cmpGCResultMessage((DGCResultMessage) sMesg, (DGCResultMessage) rMesg));
+    assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
 
     // test with broadcast
     sMesg = createGCResultMessage();
@@ -426,7 +425,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       TCGroupMember m = getMember(groups[0], i);
       TestGroupMessageListener l = listenerMap.get(m.getPeerNodeID());
       rMesg = l.getNextMessageFrom(groups[0].getLocalNodeID());
-      assertTrue(cmpGCResultMessage((DGCResultMessage) sMesg, (DGCResultMessage) rMesg));
+      assertTrue(cmpGCResultMessage((GCResultMessage) sMesg, (GCResultMessage) rMesg));
     }
 
     ThreadUtil.reallySleep(200);
@@ -455,7 +454,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(L2StateMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
-
+    
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -541,7 +540,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(TestMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
-
+    
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -804,7 +803,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
-    private final int             weight   = 0;
+    private final int                   weight   = 0;
 
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);

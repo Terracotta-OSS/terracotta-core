@@ -157,7 +157,7 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfoPublisher;
 import com.tc.objectserver.dgc.api.GarbageCollector;
 import com.tc.objectserver.dgc.impl.GCComptrollerImpl;
 import com.tc.objectserver.dgc.impl.GCStatisticsAgentSubSystemEventListener;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
+import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.GarbageCollectorThread;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
@@ -339,7 +339,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
-  protected DGCEventStatsProvider                gcEventStatsProvider;
+  protected GCStatsEventPublisher                gcStatsEventPublisher;
   private TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private CommunicationsManager                  communicationsManager;
   private ServerConfigurationContext             context;
@@ -753,7 +753,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                this.objectStatsRecorder);
 
     this.objectManager.setStatsListener(objMgrStats);
-    this.gcEventStatsProvider = new DGCEventStatsProvider();
+    this.gcStatsEventPublisher = new GCStatsEventPublisher();
     managedObjectChangeListenerProvider.setListener(this.objectManager);
     final CallbackDumpAdapter objMgrDumpAdapter = new CallbackDumpAdapter(this.objectManager);
     this.dumpHandler.registerForDump(objMgrDumpAdapter);
@@ -1569,8 +1569,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.statisticsGateway;
   }
 
-  public DGCEventStatsProvider getGcStatsEventPublisher() {
-    return this.gcEventStatsProvider;
+  public GCStatsEventPublisher getGcStatsEventPublisher() {
+    return this.gcStatsEventPublisher;
   }
 
   public TerracottaOperatorEventHistoryProvider getOperatorEventsHistoryProvider() {

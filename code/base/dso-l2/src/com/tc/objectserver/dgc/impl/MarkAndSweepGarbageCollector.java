@@ -24,6 +24,7 @@ import com.tc.util.concurrent.StoppableThread;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  */
@@ -34,11 +35,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   private static final LifeCycleState          NULL_LIFECYCLE_STATE       = new NullLifeCycleState();
 
+  private final AtomicInteger                  gcIterationCounter         = new AtomicInteger(0);
   private final GarbageCollectionInfoPublisher gcPublisher;
   private final ObjectManagerConfig            objectManagerConfig;
   private final ClientStateManager             stateManager;
   private final ObjectManager                  objectManager;
-  private final DGCEventStatsProvider          gcEventStatsProvider;
 
   private volatile State                       state                      = GC_SLEEP;
   private volatile ChangeCollector             referenceCollector         = ChangeCollector.NULL_CHANGE_COLLECTOR;
@@ -48,13 +49,11 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   public MarkAndSweepGarbageCollector(final ObjectManagerConfig objectManagerConfig, final ObjectManager objectMgr,
                                       final ClientStateManager stateManager,
-                                      final GarbageCollectionInfoPublisher gcPublisher,
-                                      DGCEventStatsProvider gcEventStatsProvider) {
+                                      final GarbageCollectionInfoPublisher gcPublisher) {
     this.objectManagerConfig = objectManagerConfig;
     this.objectManager = objectMgr;
     this.stateManager = stateManager;
     this.gcPublisher = gcPublisher;
-    this.gcEventStatsProvider = gcEventStatsProvider;
     addListener(new GCLoggerEventPublisher(new GCLogger(logger, objectManagerConfig.verboseGC())));
   }
 
@@ -69,7 +68,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
         break;
     }
     final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
-                                                                       this.gcEventStatsProvider.getNextDGCIteration());
+                                                                       this.gcIterationCounter.incrementAndGet());
     gcAlgo.doGC();
   }
 
@@ -127,7 +126,7 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
   ObjectIDSet collect(final GCHook hook, final Filter traverser, final Collection roots,
                       final ObjectIDSet managedObjectIds, final LifeCycleState lstate) {
     final MarkAndSweepGCAlgorithm gcAlgo = new MarkAndSweepGCAlgorithm(this, hook, this.gcPublisher, this.gcState,
-                                                                       this.gcEventStatsProvider.getNextDGCIteration());
+                                                                       this.gcIterationCounter.incrementAndGet());
     return gcAlgo.collect(traverser, roots, managedObjectIds, lstate);
   }
 
@@ -227,9 +226,5 @@ public class MarkAndSweepGarbageCollector implements GarbageCollector {
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {
     return out.print(getClass().getName()).print("[").print(this.state).print("]");
-  }
-
-  public DGCEventStatsProvider getStatsProvider() {
-    return this.gcEventStatsProvider;
   }
 }

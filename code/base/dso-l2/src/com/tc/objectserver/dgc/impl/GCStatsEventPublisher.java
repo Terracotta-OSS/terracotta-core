@@ -15,15 +15,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class DGCEventStatsProvider extends GarbageCollectorEventListenerAdapter {
+public class GCStatsEventPublisher extends GarbageCollectorEventListenerAdapter {
 
   private final List               gcStatsEventListeners = new CopyOnWriteArrayList();
 
   private final LossyLinkedHashMap gcHistory             = new LossyLinkedHashMap(1500);
-
-  private final AtomicInteger      gcIteration           = new AtomicInteger(0);
 
   public void addListener(GCStatsEventListener listener) {
     gcStatsEventListeners.add(listener);
@@ -117,27 +114,6 @@ public class DGCEventStatsProvider extends GarbageCollectorEventListenerAdapter 
       GCStatsEventListener listener = (GCStatsEventListener) iter.next();
       listener.update(gcStats);
     }
-  }
-
-  public void updatDGCStartForPassive(GarbageCollectionInfo gcInfo) {
-    this.gcIteration.set(gcInfo.getIteration());
-    push(gcInfo.getGarbageCollectionID(), getGCStats(gcInfo));
-  }
-
-  public void updatDGCCompletedForPassive(GarbageCollectionInfo gcInfo) {
-    GCStatsImpl gcStats = getGCStats(gcInfo);
-    gcStats.setCompleteState();
-    push(gcInfo.getGarbageCollectionID(), gcStats);
-  }
-
-  public void updatDGCCancelForPassive(GarbageCollectionInfo gcInfo) {
-    GCStatsImpl gcStats = getGCStats(gcInfo);
-    gcStats.setCanceledState();
-    push(gcInfo.getGarbageCollectionID(), gcStats);
-  }
-
-  public int getNextDGCIteration() {
-    return this.gcIteration.incrementAndGet();
   }
 
   private static class LossyLinkedHashMap extends LinkedHashMap<GarbageCollectionID, GCStatsImpl> {

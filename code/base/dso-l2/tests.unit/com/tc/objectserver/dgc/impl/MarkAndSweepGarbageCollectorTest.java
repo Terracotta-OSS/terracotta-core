@@ -58,10 +58,9 @@ public class MarkAndSweepGarbageCollectorTest extends TestCase {
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     this.stateManager = new TestClientStateManager();
-    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000,
-                                                                              1000), this.objectManager,
-                                                      this.stateManager, new GarbageCollectionInfoPublisherImpl(),
-                                                      new DGCEventStatsProvider());
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000, 1000),
+                                                      this.objectManager, this.stateManager,
+                                                      new GarbageCollectionInfoPublisherImpl());
     this.objectManager.setGarbageCollector(this.collector);
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
     this.objectManager.setPublisher(gcPublisher);

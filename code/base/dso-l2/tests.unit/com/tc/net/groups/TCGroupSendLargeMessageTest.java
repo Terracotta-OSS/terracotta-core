@@ -11,8 +11,8 @@ import com.tc.async.impl.ConfigurationContextImpl;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
-import com.tc.l2.msg.DGCResultMessage;
-import com.tc.l2.msg.DGCMessageFactory;
+import com.tc.l2.msg.GCResultMessage;
+import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.net.NodeID;
@@ -53,7 +53,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     stageManager1.startAll(context1, Collections.EMPTY_LIST);
     gm1.setDiscover(new TCGroupMemberDiscoveryStatic(gm1));
     MyListener l1 = new MyListener();
-    gm1.registerForMessages(DGCResultMessage.class, l1);
+    gm1.registerForMessages(GCResultMessage.class, l1);
 
     StageManager stageManager2 = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(null)), new QueueFactory());
     TCGroupManagerImpl gm2 = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, p2, p2 + 1, stageManager2);
@@ -61,7 +61,7 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     stageManager2.startAll(context2, Collections.EMPTY_LIST);
     gm2.setDiscover(new TCGroupMemberDiscoveryStatic(gm2));
     MyListener l2 = new MyListener();
-    gm2.registerForMessages(DGCResultMessage.class, l2);
+    gm2.registerForMessages(GCResultMessage.class, l2);
 
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, allNodes);
@@ -106,10 +106,10 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     for (long i = 1; i <= oidsCount; ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final DGCResultMessage msg1 = DGCMessageFactory.createDGCResultMessage(createGarbageCollectionInfo(1), oidSet);
+    final GCResultMessage msg1 = GCResultMessageFactory.createGCResultMessage(createGarbageCollectionInfo(1), oidSet);
     gm1.sendAll(msg1);
 
-    DGCResultMessage msg2 = (DGCResultMessage) l2.take();
+    GCResultMessage msg2 = (GCResultMessage) l2.take();
 
     assertEquals(msg1.getGCedObjectIDs(), msg2.getGCedObjectIDs());
     assertEquals(msg1.getGCIterationCount(), msg2.getGCIterationCount());
@@ -118,10 +118,10 @@ public class TCGroupSendLargeMessageTest extends TCTestCase {
     for (long i = (oidsCount + 1); i <= (oidsCount * 2); ++i) {
       oidSet.add(new ObjectID(i));
     }
-    final DGCResultMessage msg3 = DGCMessageFactory.createDGCResultMessage(createGarbageCollectionInfo(2), oidSet);
+    final GCResultMessage msg3 = GCResultMessageFactory.createGCResultMessage(createGarbageCollectionInfo(2), oidSet);
     gm2.sendAll(msg3);
 
-    DGCResultMessage msg4 = (DGCResultMessage) l1.take();
+    GCResultMessage msg4 = (GCResultMessage) l1.take();
 
     assertEquals(msg3.getGCedObjectIDs(), msg4.getGCedObjectIDs());
     assertEquals(msg3.getGCIterationCount(), msg4.getGCIterationCount());

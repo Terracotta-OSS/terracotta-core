@@ -8,7 +8,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.impl.GCTestObjectManager;
 import com.tc.objectserver.core.impl.TestManagedObject;
 import com.tc.objectserver.dgc.api.GarbageCollector.GCType;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
 import com.tc.objectserver.dgc.impl.GarbageCollectionInfoPublisherImpl;
 import com.tc.objectserver.dgc.impl.MarkAndSweepGarbageCollector;
 import com.tc.objectserver.impl.ObjectManagerConfig;
@@ -48,10 +47,8 @@ public class GCStatsEventPublisherTest extends TestCase {
     this.released = new HashSet<ObjectID>();
     this.objectManager = new GCTestObjectManager(this.lookedUp, this.released, this.transactionProvider);
     GarbageCollectionInfoPublisher gcPublisher = new GarbageCollectionInfoPublisherImpl();
-    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000,
-                                                                              1000), this.objectManager,
-                                                      new TestClientStateManager(), gcPublisher,
-                                                      new DGCEventStatsProvider());
+    this.collector = new MarkAndSweepGarbageCollector(new ObjectManagerConfig(300000, true, true, true, true, 60000, 1000),
+                                                      this.objectManager, new TestClientStateManager(), gcPublisher);
     this.objectManager.setPublisher(gcPublisher);
     this.objectManager.setGarbageCollector(this.collector);
     this.objectManager.start();

@@ -5,15 +5,15 @@ package com.tc.stats;
 
 import com.tc.management.TerracottaMBean;
 import com.tc.objectserver.api.GCStats;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
+import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 
 import javax.management.NotCompliantMBeanException;
 
 public class LocalDGCStats extends AbstractNotifyingMBean implements DGCMBean, TerracottaMBean {
 
-  private final DGCEventStatsProvider gcStatsPublisher;
+  private final GCStatsEventPublisher gcStatsPublisher;
 
-  public LocalDGCStats(DGCEventStatsProvider gcStatsPublisher) throws NotCompliantMBeanException {
+  public LocalDGCStats(GCStatsEventPublisher gcStatsPublisher) throws NotCompliantMBeanException {
     super(DGCMBean.class);
     this.gcStatsPublisher = gcStatsPublisher;
   }

@@ -6,7 +6,6 @@ package com.tc.objectserver.dgc.api;
 
 import com.tc.object.ObjectID;
 import com.tc.objectserver.context.GCResultContext;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.State;
 import com.tc.util.concurrent.StoppableThread;
@@ -91,7 +90,5 @@ public interface GarbageCollector extends PrettyPrintable {
    * interested in doing YoungGen collection could ignore this call.
    */
   public void notifyObjectsEvicted(Collection evicted);
-
-  public DGCEventStatsProvider getStatsProvider();
 
 }

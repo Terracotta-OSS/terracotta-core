@@ -52,7 +52,7 @@ import com.tc.net.protocol.transport.ConnectionPolicyImpl;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
-import com.tc.objectserver.dgc.impl.DGCEventStatsProvider;
+import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
@@ -615,7 +615,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected void registerDSOMBeans(ServerManagementContext mgmtContext, ServerConfigurationContext configContext,
                                    MBeanServer mBeanServer) throws NotCompliantMBeanException,
       InstanceAlreadyExistsException, MBeanRegistrationException {
-    DGCEventStatsProvider gcStatsPublisher = this.dsoServer.getGcStatsEventPublisher();
+    GCStatsEventPublisher gcStatsPublisher = this.dsoServer.getGcStatsEventPublisher();
     TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer
         .getOperatorEventsHistoryProvider();
     DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,

@@ -24,8 +24,7 @@ import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
-import com.tc.l2.msg.DGCStatusMessage;
-import com.tc.l2.msg.DGCResultMessage;
+import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -186,8 +185,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingSink);
     this.groupManager.routeMessages(L2StateMessage.class, stateMessageSink);
-    this.groupManager.routeMessages(DGCResultMessage.class, gcResultSink);
-    this.groupManager.routeMessages(DGCStatusMessage.class, gcResultSink);
+    this.groupManager.routeMessages(GCResultMessage.class, gcResultSink);
 
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
                                                           new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)
