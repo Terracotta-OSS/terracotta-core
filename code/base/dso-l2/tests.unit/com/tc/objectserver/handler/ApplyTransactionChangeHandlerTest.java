@@ -9,6 +9,7 @@ import com.tc.async.impl.MockStage;
 import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.net.ClientID;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
@@ -91,7 +92,7 @@ public class ApplyTransactionChangeHandlerTest extends TestCase {
     }
     SequenceID sequenceID = new SequenceID(1);
     ServerTransaction tx = new ServerTransactionImpl(batchID, txID, sequenceID, lockIDs, cid, dnas, serializer,
-                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, 1,
+                                                     newRoots, txnType, notifies, DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
                                                      new long[0]);
     // call handleEvent with the global transaction reporting that it doesn't need an apply...
     assertTrue(this.lockManager.notifyCalls.isEmpty());

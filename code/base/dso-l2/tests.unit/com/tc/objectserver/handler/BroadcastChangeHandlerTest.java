@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.LockID;
@@ -41,9 +42,9 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
+import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
-import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -53,8 +54,11 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
+import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.search.IndexManager;
+import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionListener;
@@ -62,7 +66,7 @@ import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
 import com.tc.objectserver.tx.TransactionalObjectManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.stats.Stats;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
 import com.tc.stats.counter.sampled.SampledCounterImpl;
@@ -132,6 +136,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     public DmiDescriptor[] getDmiDescriptors() {
       return new DmiDescriptor[0];
+    }
+    
+    public MetaDataReader[] getMetaDataReaders() {
+      return new MetaDataReader[0];
     }
 
     public long[] getHighWaterMarks() {
@@ -280,6 +288,18 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public ServerMapRequestManager getServerMapRequestManager() {
+      throw new ImplementMe();
+    }
+
+    public IndexManager getIndexManager() {
+      throw new ImplementMe();
+    }
+
+    public MetaDataManager getMetaDataManager() {
+      throw new ImplementMe();
+    }
+
+    public SearchRequestManager getSearchRequestManager() {
       throw new ImplementMe();
     }
 
@@ -549,6 +569,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public List getDmiDescriptors() {
       throw new ImplementMe();
     }
+   
 
     public GlobalTransactionID getGlobalTransactionID() {
       throw new ImplementMe();
@@ -672,11 +693,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       //
     }
 
-    public void callBackOnResentTxnsInSystemCompletion(final TxnsInSystemCompletionLister l) {
+    public void callBackOnResentTxnsInSystemCompletion(final TxnsInSystemCompletionListener l) {
       throw new ImplementMe();
     }
 
-    public void callBackOnTxnsInSystemCompletion(final TxnsInSystemCompletionLister l) {
+    public void callBackOnTxnsInSystemCompletion(final TxnsInSystemCompletionListener l) {
       throw new ImplementMe();
     }
 
@@ -735,6 +756,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
 
     public long getTotalNumOfActiveTransactions() {
       throw new ImplementMe();
+    }
+
+    public void processingMetaDataCompleted(NodeID sourceID, TransactionID txnID) {
+      //
     }
   }
 }

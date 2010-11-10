@@ -152,10 +152,17 @@ import com.tc.object.loaders.StandardClassLoaderAdapter;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.logging.InstrumentationLoggerImpl;
 import com.tc.object.logging.NullInstrumentationLogger;
+import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.metadata.NVPair;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
 import com.tc.plugins.ModulesLoader;
 import com.tc.properties.TCProperties;
+import com.tc.search.AggregatorOperations;
+import com.tc.search.IndexQueryResult;
+import com.tc.search.SearchQueryResults;
+import com.tc.search.SortOperations;
+import com.tc.search.StackOperations;
 import com.tc.statistics.LazilyInitializedSRA;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticDataCSVParser;
@@ -498,6 +505,8 @@ public class BootJarTool {
       loadTerracottaClass(Clearable.class.getName());
       loadTerracottaClass(NotClearable.class.getName());
       loadTerracottaClass(TCServerMap.class.getName());
+      loadTerracottaClass(IndexQueryResult.class.getName());
+      loadTerracottaClass(SearchQueryResults.class.getName());
       loadTerracottaClass(ExpirableEntry.class.getName());
       loadTerracottaClass(OverridesHashCode.class.getName());
       loadTerracottaClass(Manager.class.getName());
@@ -527,6 +536,10 @@ public class BootJarTool {
       loadTerracottaClass(LogLevel.class.getName());
       loadTerracottaClass(Banner.class.getName());
       loadTerracottaClass(Namespace.class.getName());
+      loadTerracottaClass(NVPair.class.getName());
+      loadTerracottaClass(StackOperations.class.getName());
+      loadTerracottaClass(AggregatorOperations.class.getName());
+      loadTerracottaClass(SortOperations.class.getName());
       loadTerracottaClass(ClassProcessorHelper.class.getName());
       loadTerracottaClass(ClassProcessorHelperJDK15.class.getName());
       loadTerracottaClass(ClassProcessorHelper.State.class.getName());
@@ -551,6 +564,7 @@ public class BootJarTool {
       loadTerracottaClass(StringCompressionUtil.class.getName());
       loadTerracottaClass(CompressedData.class.getName());
       loadTerracottaClass(TCByteArrayOutputStream.class.getName());
+      loadTerracottaClass(MetaDataDescriptor.class.getName());
 
       loadTerracottaClass("com.tc.object.bytecode.hook.impl.ArrayManager");
       loadTerracottaClass(ProxyInstance.class.getName());

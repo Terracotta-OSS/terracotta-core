@@ -160,7 +160,7 @@ public class DSOContextImpl implements DSOContext {
     // XXX: what should the appGroup and loaderDesc be? In theory we might want "regular" clients to access this shared
     // state too
     ClassProvider classProvider = new SingleLoaderClassProvider(null, "standalone", loader);
-    Manager manager = new ManagerImpl(true, null, null, null, configHelper, l2Connection, true, runtimeLogger,
+    Manager manager = new ManagerImpl(true, null, null, null, null, configHelper, l2Connection, true, runtimeLogger,
                                       classProvider, true);
 
     Collection<Repository> repos = new ArrayList<Repository>();

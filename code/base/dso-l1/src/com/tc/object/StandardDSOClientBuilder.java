@@ -270,5 +270,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                              final Sink ttiTTLEvitionSink) {
     return new NullRemoteServerMapManager();
   }
+  
+  public RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+                                                                      final SessionManager sessionManager) {
+    return new NullRemoteSearchRequestManager();
+  }
 
 }

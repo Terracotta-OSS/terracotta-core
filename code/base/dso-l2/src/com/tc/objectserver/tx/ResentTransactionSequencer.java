@@ -89,7 +89,7 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
     }
   }
 
-  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionLister l) {
+  public void callBackOnResentTxnsInSystemCompletion(TxnsInSystemCompletionListener l) {
     boolean addCallBack = false;
     synchronized (this) {
       if (this.state == PASS_THRU_ACTIVE) {
@@ -255,13 +255,13 @@ public class ResentTransactionSequencer extends AbstractServerTransactionListene
   }
 
   private void addAndClearPendingCallBacks() {
-    TxnsInSystemCompletionLister[] pendingCallBacksCopy;
+    TxnsInSystemCompletionListener[] pendingCallBacksCopy;
     synchronized (this.pendingCallBacks) {
-      pendingCallBacksCopy = (TxnsInSystemCompletionLister[]) this.pendingCallBacks
-          .toArray(new TxnsInSystemCompletionLister[this.pendingCallBacks.size()]);
+      pendingCallBacksCopy = (TxnsInSystemCompletionListener[]) this.pendingCallBacks
+          .toArray(new TxnsInSystemCompletionListener[this.pendingCallBacks.size()]);
       this.pendingCallBacks.clear();
     }
-    for (TxnsInSystemCompletionLister element : pendingCallBacksCopy) {
+    for (TxnsInSystemCompletionListener element : pendingCallBacksCopy) {
       logger.info("Adding Pending resent CallBacks to  TxnMgr : " + element);
       this.transactionManager.callBackOnTxnsInSystemCompletion(element);
     }

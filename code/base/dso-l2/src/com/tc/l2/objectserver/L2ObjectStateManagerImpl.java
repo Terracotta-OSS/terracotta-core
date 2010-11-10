@@ -14,7 +14,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.State;
@@ -83,7 +83,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       this.nodes.put(nodeID, l2State);
     }
     final L2ObjectStateImpl _l2State = l2State;
-    this.transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+    this.transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
       public void onCompletion() {
         _l2State.moveToReadyToSyncState();
       }
@@ -153,7 +153,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       if (this.missingOids.isEmpty()) {
         this.state = IN_SYNC_PENDING_NOTIFY;
         L2ObjectStateManagerImpl.this.transactionManager
-            .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+            .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
               public void onCompletion() {
                 moveToInSyncState();
               }

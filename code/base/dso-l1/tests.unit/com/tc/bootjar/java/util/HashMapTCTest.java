@@ -10,6 +10,7 @@ import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.exception.ImplementMe;
+import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.MockTCObject;
 import com.tc.object.ObjectID;
 import com.tc.object.PortabilityImpl;
@@ -93,8 +94,9 @@ public class HashMapTCTest extends TCTestCase {
     TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
     MockTransactionManager testTransactionManager = new MockTransactionManager();
     MockClientLockManager testClientLockManager = new MockClientLockManager();
+    MockRemoteSearchRequestManager testSearchRequestManager = new MockRemoteSearchRequestManager();
     IsolationClassLoader classLoader = new IsolationClassLoader((DSOClientConfigHelper) proxy, testClientObjectManager,
-                                                                testTransactionManager, testClientLockManager);
+                                                                testTransactionManager, testClientLockManager, testSearchRequestManager);
     classLoader.init();
 
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();

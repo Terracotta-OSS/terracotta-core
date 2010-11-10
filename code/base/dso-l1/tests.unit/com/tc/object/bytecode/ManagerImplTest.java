@@ -39,7 +39,7 @@ public class ManagerImplTest extends BaseDSOTestCase {
     final ClientObjectManager objMgr = new ObjMgr();
     final ClientLockManager lockMgr = new LockMgr();
 
-    final Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, configHelper(), null);
+    final Manager manager = new ManagerImpl(false, objMgr, null, lockMgr, null, configHelper(), null);
 
     final LockID classLock = manager.generateLockIdentifier(getClass());
     manager.lock(classLock, LockLevel.WRITE);

@@ -81,6 +81,7 @@ import com.tc.object.handler.LockStatisticsEnableDisableHandler;
 import com.tc.object.handler.LockStatisticsResponseHandler;
 import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
+import com.tc.object.handler.ReceiveSearchQueryResponseHandler;
 import com.tc.object.handler.ReceiveServerMapEvictionBroadcastHandler;
 import com.tc.object.handler.ReceiveServerMapResponseHandler;
 import com.tc.object.handler.ReceiveSyncWriteTransactionAckHandler;
@@ -128,6 +129,8 @@ import com.tc.object.msg.RequestManagedObjectMessageImpl;
 import com.tc.object.msg.RequestManagedObjectResponseMessageImpl;
 import com.tc.object.msg.RequestRootMessageImpl;
 import com.tc.object.msg.RequestRootResponseMessage;
+import com.tc.object.msg.SearchQueryRequestMessageImpl;
+import com.tc.object.msg.SearchQueryResponseMessageImpl;
 import com.tc.object.msg.ServerMapEvictionBroadcastMessageImpl;
 import com.tc.object.msg.SyncWriteTransactionReceivedMessage;
 import com.tc.object.net.DSOClientMessageChannel;
@@ -229,6 +232,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
   private DSOClientMessageChannel                    channel;
   private ClientLockManager                          lockManager;
   private ClientObjectManagerImpl                    objectManager;
+  private RemoteSearchRequestManager                 searchRequestManager;
   private ClientTransactionManagerImpl               txManager;
   private CommunicationsManager                      communicationsManager;
   private RemoteTransactionManager                   rtxManager;
@@ -510,6 +514,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                  new CapacityEvictionHandler(), 8, maxSize);
     final Stage ttiTTLEvictionStage = stageManager.createStage(ClientConfigurationContext.TTI_TTL_EVICTION_STAGE,
                                                                new TimeBasedEvictionHandler(), 8, maxSize);
+    
+    searchRequestManager = this.dsoClientBuilder.createRemoteSearchRequestManager(
+                                                    new ClientIDLogger(this.channel.getClientIDProvider(),
+                                            TCLogging.getLogger(RemoteObjectManager.class)), this.channel, sessionManager);
 
     final RemoteServerMapManager remoteServerMapManager = this.dsoClientBuilder
         .createRemoteServerMapManager(new ClientIDLogger(this.channel.getClientIDProvider(), TCLogging
@@ -631,6 +639,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final Stage receiveServerMapStage = stageManager
         .createStage(ClientConfigurationContext.RECEIVE_SERVER_MAP_RESPONSE_STAGE,
                      new ReceiveServerMapResponseHandler(remoteServerMapManager), 1, maxSize);
+    final Stage receiveSearchQueryStage = stageManager
+    .createStage(ClientConfigurationContext.RECEIVE_SEARCH_QUERY_RESPONSE_STAGE,
+                 new ReceiveSearchQueryResponseHandler(searchRequestManager), 1, maxSize);
+
     final Stage receiveServerMapEvictionBroadcastStage = stageManager
         .createStage(ClientConfigurationContext.RECEIVE_SERVER_MAP_EVICTION_BROADCAST_STAGE,
                      new ReceiveServerMapEvictionBroadcastHandler(this.objectManager), 1, maxSize);
@@ -670,6 +682,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     clientHandshakeCallbacks.add(this.objectManager);
     clientHandshakeCallbacks.add(remoteObjectManager);
     clientHandshakeCallbacks.add(remoteServerMapManager);
+    clientHandshakeCallbacks.add(searchRequestManager);
     clientHandshakeCallbacks.add(this.rtxManager);
     clientHandshakeCallbacks.add(this.dsoClientBuilder.getObjectIDClientHandshakeRequester(batchSequenceReceiver));
     clientHandshakeCallbacks.add(this.clusterMetaDataManager);
@@ -733,6 +746,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  GetSizeServerMapRequestMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
                                  GetSizeServerMapResponseMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE,
+                                 SearchQueryRequestMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE,
+                                 SearchQueryResponseMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
                                  GetValueServerMapRequestMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
@@ -847,6 +864,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .getSink(), hydrateSink);
     this.channel.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
                                   receiveServerMapEvictionBroadcastStage.getSink(), hydrateSink);
+    this.channel.routeMessageType(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE,
+                                  receiveSearchQueryStage.getSink(), hydrateSink);
 
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
@@ -928,6 +947,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public ClientObjectManager getObjectManager() {
     return this.objectManager;
+  }
+  
+  public RemoteSearchRequestManager getSearchRequestManager() {
+    return this.searchRequestManager;
   }
 
   public RemoteTransactionManager getRemoteTransactionManager() {

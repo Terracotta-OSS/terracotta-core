@@ -14,7 +14,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 
 public class GCResultHandler extends AbstractEventHandler {
 
@@ -43,7 +43,7 @@ public class GCResultHandler extends AbstractEventHandler {
     this.gcResultSink = oscc.getStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE).getSink();
   }
 
-  private static final class GCResultCallback implements TxnsInSystemCompletionLister, EventContext {
+  private static final class GCResultCallback implements TxnsInSystemCompletionListener, EventContext {
 
     private final Sink            sink;
     private final GCResultMessage msg;

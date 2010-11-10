@@ -269,9 +269,9 @@
         Identifies a set of web applications and/or named classloaders which can be substituted
         at runtime for the purpose of loading shared data into different applications. For example,
         two web applications running on different Terracotta nodes can share the same root, by
-        declaring both web applications to be in the same app-group; or a web application and a 
+        declaring both web applications to be in the same app-group; or a web application and a
         command-line application can share a root by declaring the web application and the standard
-        system classloader to be in the same app-group. It is an error to declare the same 
+        system classloader to be in the same app-group. It is an error to declare the same
         application in more than one app-group. Each Terracotta client node can only run at most
         one application per app-group; for example, if web-applications A and B are in the same
         app-group, it is an error to deploy both A and B to the same app server instance.
@@ -283,7 +283,7 @@
     </xs:sequence>
     <xs:attribute name="name" type="xs:string" use="required" />
   </xs:complexType>
-  
+
   <xs:complexType name="instrumentation-logging">
     <xs:all>
       <xs:element name="class" type="xs:boolean" minOccurs="0" default="false" />
@@ -469,7 +469,7 @@
     <xs:choice>
       <xs:element name="login-config-name" type="xs:string" minOccurs="0" />
       <xs:element name="password-file" type="path" minOccurs="0"
-        	default="%(java.home)/lib/management/jmxremote.password" />
+          default="%(java.home)/lib/management/jmxremote.password" />
     </xs:choice>
   </xs:complexType>
 
@@ -595,6 +595,26 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+
+      <xs:element name="index" type="path" minOccurs="0" maxOccurs="1" >
+        <xs:annotation>
+          <xs:documentation>
+            Where should the server store its search index
+            data?
+
+            If this is a relative path, then it is
+            interpreted relative to the current working
+            directory of the server (that is, the directory
+            you were in when you started the server). It is
+            thus recommended that you specify an absolute
+            path here.
+
+            Default: "index" relative to the server's data path
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+
+
       <xs:element name="logs" type="path" minOccurs="0"
         default="logs">
         <xs:annotation>
@@ -875,10 +895,10 @@
   </xs:complexType>
 
   <xs:complexType name="bind-port">
-  	<xs:simpleContent>
+    <xs:simpleContent>
       <xs:extension base="port">
         <xs:attribute name="bind" type="non-blank-token" use="optional">
-      	  <xs:annotation>
+          <xs:annotation>
             <xs:documentation>
               The address this server should bind its network listeners to. By default network listeners
               will be available on all local addresses (ie. 0.0.0.0)
@@ -888,7 +908,7 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  
+
   <xs:complexType name="mirror-groups">
     <xs:annotation>
         <xs:documentation>

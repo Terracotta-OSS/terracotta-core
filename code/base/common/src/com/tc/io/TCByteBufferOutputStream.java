@@ -452,15 +452,45 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
      * @throws IOException
      */
     public void copyTo(TCByteBufferOutput dest, int length) {
+      copyTo(dest, 0, length);
+    }
+
+    /**
+     * Copy (by invoking write() on the destination stream) the given length of bytes starting from an offset to this
+     * mark
+     * 
+     * @throws IOException
+     */
+    public void copyTo(TCByteBufferOutput dest, int offset, int length) {
       if (length < 0) { throw new IllegalArgumentException(); }
-      if (this.absolutePosition + length > getBytesWritten()) {
+
+      if (this.absolutePosition + offset + length > getBytesWritten()) {
         //
         throw new IllegalArgumentException("not enough data for copy of " + length + " bytes starting at position "
-                                           + this.absolutePosition + " of stream of size " + getBytesWritten());
+                                           + (this.absolutePosition + offset) + " of stream of size "
+                                           + getBytesWritten());
       }
 
       int index = this.bufferIndex;
       int pos = this.bufferPosition;
+
+      while (offset > 0) {
+        byte[] array = getBuffer(index).array();
+        int num = Math.min(array.length - pos, offset);
+        offset -= num;
+        if (offset == 0) {
+          if (index > this.bufferIndex) {
+            pos = num;
+          } else {
+            pos += num;
+          }
+          break;
+        }
+
+        pos = 0;
+        index++;
+      }
+
       while (length > 0) {
         byte[] array = getBuffer(index++).array();
         int num = Math.min(array.length - pos, length);

@@ -623,16 +623,16 @@ public interface TCPropertiesConsts {
    * </code>
    ********************************************************************************************************************/
   public static final String   EHCACHE_CLUSTER_ALL_CACHE_MANAGERS                              = "ehcache.clusterAllCacheManagers";
-  public static final String   EHCAHCE_LOGGING_ENABLED                                         = "ehcache.logging.enabled";
-  public static final String   EHCAHCE_EVICTOR_LOGGING_ENABLED                                 = "ehcache.evictor.logging.enabled";
-  public static final String   EHCAHCE_EVICTOR_POOL_SIZE                                       = "ehcache.evictor.pool.size";
-  public static final String   EHCAHCE_CONCURRENCY                                             = "ehcache.concurrency";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_ENABLE                                  = "ehcache.global.eviction.enable";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_FREQUENCY                               = "ehcache.global.eviction.frequency";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_SEGMENTS                                = "ehcache.global.eviction.segments";
-  public static final String   EHCAHCE_GLOBAL_EVICTION_REST_TIMEMILLS                          = "ehcache.global.eviction.rest.timeMillis";
-  public static final String   EHCAHCE_LOCK_READLEVEL                                          = "ehcache.lock.readLevel";
-  public static final String   EHCAHCE_LOCK_WRITELEVEL                                         = "ehcache.lock.writeLevel";
+  public static final String   EHCACHE_LOGGING_ENABLED                                         = "ehcache.logging.enabled";
+  public static final String   EHCACHE_EVICTOR_LOGGING_ENABLED                                 = "ehcache.evictor.logging.enabled";
+  public static final String   EHCACHE_EVICTOR_POOL_SIZE                                       = "ehcache.evictor.pool.size";
+  public static final String   EHCACHE_CONCURRENCY                                             = "ehcache.concurrency";
+  public static final String   EHCACHE_GLOBAL_EVICTION_ENABLE                                  = "ehcache.global.eviction.enable";
+  public static final String   EHCACHE_GLOBAL_EVICTION_FREQUENCY                               = "ehcache.global.eviction.frequency";
+  public static final String   EHCACHE_GLOBAL_EVICTION_SEGMENTS                                = "ehcache.global.eviction.segments";
+  public static final String   EHCACHE_GLOBAL_EVICTION_REST_TIMEMILLS                          = "ehcache.global.eviction.rest.timeMillis";
+  public static final String   EHCACHE_LOCK_READLEVEL                                          = "ehcache.lock.readLevel";
+  public static final String   EHCACHE_LOCK_WRITELEVEL                                         = "ehcache.lock.writeLevel";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_ENABLED                 = "ehcache.storageStrategy.dcv2.localcache.enabled";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT = "ehcache.storageStrategy.dcv2.localcache.incoherentReadTimeout";
   public static final String   EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED         = "ehcache.storageStrategy.dcv2.perElementTTITTL.enabled";

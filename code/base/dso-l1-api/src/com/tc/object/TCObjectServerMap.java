@@ -4,7 +4,9 @@
 package com.tc.object;
 
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.metadata.MetaDataDescriptor;
 
+import java.util.List;
 import java.util.Set;
 
 public interface TCObjectServerMap<L> extends TCObject {
@@ -26,8 +28,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalRemove(final TCServerMap map, final Object key);
-  
+  public void doLogicalRemove(final TCServerMap map, final Object key, final List<MetaDataDescriptor> metaDatas);
+
   /**
    * Does a logic remove and mark as removed in the local cache if present. The cached item is incoherent
    * 
@@ -45,7 +47,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value);
+  public void doLogicalPut(final TCServerMap map, final L lockID, final Object key, final Object value,
+                           final List<MetaDataDescriptor> metaDatas);
 
   /**
    * Does a logical put but doesn't add it to the local cache, old cache entries could be cleared
@@ -55,8 +58,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPutButDontCache(final TCServerMap map, final Object key, final Object value);
-  
+  public void doLogicalPutButDontCache(final TCServerMap map, final Object key, final Object value,
+                                       final List<MetaDataDescriptor> metaDatas);
+
   /**
    * Does a logical put and updates the local cache. The cached item is incoherent
    * 
@@ -77,10 +81,11 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @return value Object in the mapping, null if no mapping present.
    */
   public Object getValueButDontCache(final TCServerMap map, final Object key);
-  
+
   /**
    * Returns the value for a particular key in a TCServerMap. If already present in local cache, returns the value
-   * otherwise fetches it from server and returns it, after caching it in local cache (if present). The cached item is incoherent.
+   * otherwise fetches it from server and returns it, after caching it in local cache (if present). The cached item is
+   * incoherent.
    * 
    * @param map ServerTCMap
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
@@ -89,7 +94,6 @@ public interface TCObjectServerMap<L> extends TCObject {
    */
   public Object getValueIncoherent(final TCServerMap map, final Object key);
 
-  
   /**
    * Returns a snapshot of keys for the giver ServerTCMap
    * 
@@ -97,8 +101,7 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @return set Set return snapshot of keys
    */
   public Set keySet(final TCServerMap map);
-  
-  
+
   /**
    * Returns the value for a particular Key in a ServerTCMap.
    * 
@@ -136,17 +139,17 @@ public interface TCObjectServerMap<L> extends TCObject {
    * Runs Target capacity eviction to evict Cached Entries from local cache
    */
   public void doCapacityEviction();
-  
+
   /**
    * Clears local cache for the corresponding key
    */
   public void removeFromLocalCache(Object key);
-  
+
   /**
    * Get set of keys present in the local cache.
    */
   public Set getLocalKeySet();
-  
+
   /**
    * Get from local cache.
    */

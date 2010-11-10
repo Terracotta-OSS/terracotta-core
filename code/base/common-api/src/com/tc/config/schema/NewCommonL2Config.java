@@ -23,8 +23,10 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
 
   FileConfigItem serverDbBackupPath();
 
+  FileConfigItem indexPath();
+
   BindPortConfigItem jmxPort();
-  
+
   StringConfigItem host();
 
   boolean authentication();

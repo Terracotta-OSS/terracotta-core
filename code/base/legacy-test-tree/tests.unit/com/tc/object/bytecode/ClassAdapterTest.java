@@ -8,6 +8,7 @@ import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.MethodVisitor;
 import com.tc.asm.Opcodes;
+import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.config.ConfigLockLevel;
 import com.tc.object.config.DSOClientConfigHelper;
@@ -50,6 +51,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
   private IsolationClassLoader    classLoader;
   private TestClientObjectManager testClientObjectManager;
   private MockTransactionManager  testTransactionManager;
+  private MockRemoteSearchRequestManager testRemoteSearchRequestManager;
   private MockClientLockManager   testLockManager;
   private String                  targetClassName  = ClassAdapterTestTarget.class.getName();        // "com.tctest.ClassAdapterTestTarget";
   private ClassLoader             origThreadContextClassLoader;
@@ -60,6 +62,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     this.testClientObjectManager = new TestClientObjectManager();
     this.testTransactionManager = new MockTransactionManager();
     this.testLockManager = new MockClientLockManager();
+    this.testRemoteSearchRequestManager = new MockRemoteSearchRequestManager();
     
     initClassLoader();
     this.origThreadContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -81,7 +84,7 @@ public class ClassAdapterTest extends ClassAdapterTestBase {
     testClientObjectManager.setIsManaged(false);
 
     try {
-      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager, testLockManager);
+      this.classLoader = new IsolationClassLoader(config, testClientObjectManager, testTransactionManager, testLockManager, testRemoteSearchRequestManager);
       this.classLoader.init();
     } finally {
       testClientObjectManager.setIsManaged(isManaged);

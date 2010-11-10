@@ -15,7 +15,7 @@ import com.tc.properties.TCPropertiesImpl;
 public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandler {
 
   private static final boolean      EVICTOR_LOGGING = TCPropertiesImpl.getProperties()
-                                                        .getBoolean(TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED);
+                                                        .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
   private final ClientObjectManager clientObjectManager;
 
   public ReceiveServerMapEvictionBroadcastHandler(final ClientObjectManager clientObjectManager) {
@@ -30,8 +30,7 @@ public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandl
       tco = clientObjectManager.lookupIfLocal(msg.getMapID());
       if (tco == null || !(tco.getPeerObject() instanceof TCServerMap)) { return; }
       if (EVICTOR_LOGGING) {
-        getLogger().info(
-                         "Processing Server Map Eviction Broadcast msg Map OID=" + msg.getMapID() + " keys="
+        getLogger().info("Processing Server Map Eviction Broadcast msg Map OID=" + msg.getMapID() + " keys="
                              + msg.getEvictedKeys().size());
       }
       TCServerMap serverMap = (TCServerMap) tco.getPeerObject();

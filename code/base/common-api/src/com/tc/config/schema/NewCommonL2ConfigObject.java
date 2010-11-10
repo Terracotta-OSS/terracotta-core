@@ -6,6 +6,8 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BindPortConfigItem;
+import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.dynamic.DerivedFileConfigItem;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
@@ -37,6 +39,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   private final String             accessFile;
   private final boolean            httpAuthentication;
   private final String             userRealmFile;
+  private final FileConfigItem     indexPath;
 
   public NewCommonL2ConfigObject(ConfigContext context) {
     super(context);
@@ -60,6 +63,21 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
       this.authentication = server.isSetAuthentication();
     } else {
       this.authentication = false;
+    }
+
+    if (server != null && !server.isSetIndex()) {
+      indexPath = new DerivedFileConfigItem(new ConfigItem[] { dataPath }) {
+        public File getFile() {
+          return (File) getObject();
+        }
+
+        @Override
+        protected Object createValueFrom(ConfigItem[] fromWhich) {
+          return new File(((FileConfigItem) fromWhich[0]).getFile(), "index");
+        }
+      };
+    } else {
+      indexPath = context.configRelativeSubstitutedFileItem("index");
     }
 
     if (authentication) {
@@ -160,4 +178,9 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   public String httpAuthenticationUserRealmFile() {
     return userRealmFile;
   }
+
+  public FileConfigItem indexPath() {
+    return this.indexPath;
+  }
+
 }

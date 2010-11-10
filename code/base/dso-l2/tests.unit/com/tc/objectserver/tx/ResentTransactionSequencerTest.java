@@ -27,14 +27,14 @@ public class ResentTransactionSequencerTest extends TestCase {
   private ServerGlobalTransactionManager gtxm;
   private TransactionalObjectManager     txnObjectManager;
   private ResentTransactionSequencer     sequencer;
-  private TxnsInSystemCompletionLister   callBack;
+  private TxnsInSystemCompletionListener   callBack;
 
   @Override
   protected void setUp() throws Exception {
     this.transactionManager = mock(ServerTransactionManager.class);
     this.gtxm = mock(ServerGlobalTransactionManager.class);
     this.txnObjectManager = mock(TransactionalObjectManager.class);
-    this.callBack = mock(TxnsInSystemCompletionLister.class);
+    this.callBack = mock(TxnsInSystemCompletionListener.class);
     this.sequencer = new ResentTransactionSequencer(this.transactionManager, this.gtxm, this.txnObjectManager);
   }
 

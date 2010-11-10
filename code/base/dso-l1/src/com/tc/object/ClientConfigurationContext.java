@@ -33,6 +33,7 @@ public class ClientConfigurationContext extends ConfigurationContextImpl {
   public static final String             RECEIVED_SYNC_WRITE_TRANSACTION_ACK_STAGE = "received_sync_write_transaction_ack_stage";
   public static final String             CLUSTER_MEMBERSHIP_EVENT_STAGE            = "cluster_membership_event_stage";
   public static final String             RECEIVE_SERVER_MAP_RESPONSE_STAGE         = "receive_server_map_response_stage";
+  public static final String             RECEIVE_SEARCH_QUERY_RESPONSE_STAGE       = "receive_search_query_response_stage";
   public static final String             CAPACITY_EVICTION_STAGE                   = "capacity_eviction_stage";
   public static final String             TTI_TTL_EVICTION_STAGE                    = "tti_ttl_eviction_stage";
   public static final String             RECEIVE_SERVER_MAP_EVICTION_BROADCAST_STAGE = "receive_server_map_eviction_broadcast_stage";

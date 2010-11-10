@@ -27,6 +27,7 @@ import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.logging.RuntimeLogger;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 import com.tc.object.util.ReadOnlyException;
 import com.tc.stats.counter.sampled.SampledCounter;
@@ -674,6 +675,10 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
 
   public void addDmiDescriptor(final DmiDescriptor dd) {
     getTransaction().addDmiDescriptor(dd);
+  }
+
+  public void addMetaDataDescriptor(final TCObject tco, final MetaDataDescriptorInternal md) {
+    getTransaction().addMetaDataDescriptor(tco, md);
   }
 
   public synchronized PrettyPrinter prettyPrint(final PrettyPrinter out) {

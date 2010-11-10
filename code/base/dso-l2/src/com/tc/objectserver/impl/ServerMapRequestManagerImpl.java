@@ -238,7 +238,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     try {
       return this.channelManager.getActiveChannel(clientID);
     } catch (final NoSuchChannelException e) {
-      this.logger.warn("Client " + clientID + " disconnect before sending Response for ServeMap Request ");
+      this.logger.warn("Client " + clientID + " disconnect before sending Response for ServerMap Request ");
       return null;
     }
   }
