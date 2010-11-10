@@ -3,16 +3,21 @@
  */
 package com.tc.operatorevent;
 
+import com.tc.util.Assert;
+
 import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Comparable<TerracottaOperatorEventImpl> {
-  private final long           time;
-  private final String         eventMessage;
-  private final EventType      eventType;
-  private final EventSubsystem subSystem;
-  private String               nodeName = null;
-  private boolean              isRead   = false;
-  private final String         collapseString;
+  private final long                 time;
+  private final String               eventMessage;
+  private final EventType            eventType;
+  private final EventSubsystem       subSystem;
+  private final Map<String, Integer> nodes;
+  private boolean                    isRead = false;
+  private final String               collapseString;
 
   public TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subSystem, String message,
                                      String collapseString) {
@@ -21,16 +26,17 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
     this.time = System.currentTimeMillis();
     this.eventMessage = message;
     this.collapseString = collapseString;
+    this.nodes = new ConcurrentHashMap<String, Integer>();
   }
 
-  private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String nodeName,
-                                      String message, String collapseString) {
+  private TerracottaOperatorEventImpl(EventType eventType, EventSubsystem subsystem, long time, String message,
+                                      String collapseString, Map<String, Integer> nodes) {
     this.eventType = eventType;
     this.subSystem = subsystem;
     this.time = time;
-    this.nodeName = nodeName;
     this.eventMessage = message;
     this.collapseString = collapseString;
+    this.nodes = nodes;
   }
 
   public String getEventMessage() {
@@ -50,11 +56,25 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   }
 
   public String getNodeName() {
-    return this.nodeName;
+    String val = "";
+    for (Entry<String, Integer> node : this.nodes.entrySet()) {
+      Assert.assertTrue(node.getValue().intValue() >= 1);
+      val += node.getKey();
+      if (node.getValue().intValue() > 1) {
+        val += "(" + node.getValue().intValue() + ")";
+      }
+      val += " ";
+    }
+    return val;
   }
 
-  public void setNodeName(String nodeId) {
-    this.nodeName = nodeId;
+  public void addNodeName(String nodeId) {
+    Integer numOfSuchEvents = this.nodes.get(nodeId);
+    if (numOfSuchEvents == null) {
+      this.nodes.put(nodeId, 1);
+    } else {
+      this.nodes.put(nodeId, numOfSuchEvents.intValue() + 1);
+    }
   }
 
   public EventSubsystem getEventSubsystem() {
@@ -118,8 +138,14 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
 
   @Override
   public TerracottaOperatorEvent clone() {
-    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.nodeName, this.eventMessage,
-                                           this.collapseString);
+    Map<String, Integer> nodesCopy = new ConcurrentHashMap<String, Integer>();
+    nodesCopy.putAll(this.nodes);
+    return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
+                                           this.collapseString, nodesCopy);
   }
 
+  // STRICTLY FOR TESTS
+  public Map<String, Integer> getNodes() {
+    return this.nodes;
+  }
 }

@@ -25,7 +25,7 @@ public class TerracottaOperatorEventLogger {
   }
 
   public void fireOperatorEvent(TerracottaOperatorEvent event) {
-    event.setNodeName(this.nodeNameProvider.getNodeName());
+    event.addNodeName(this.nodeNameProvider.getNodeName());
     for (TerracottaOperatorEventHistoryProvider historyProvider : this.historyProviders) {
       historyProvider.push(event);
     }
