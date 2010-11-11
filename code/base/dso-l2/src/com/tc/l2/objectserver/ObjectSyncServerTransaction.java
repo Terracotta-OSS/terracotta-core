@@ -71,12 +71,12 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
   public DmiDescriptor[] getDmiDescriptors() {
     throw new UnsupportedOperationException();
   }
-  
+
   /**
    * TODO SEARCH: COME BACK TO THIS
    */
   public MetaDataReader[] getMetaDataReaders() {
-    throw new UnsupportedOperationException();
+    return new MetaDataReader[] {};
   }
 
   public LockID[] getLockIDs() {
