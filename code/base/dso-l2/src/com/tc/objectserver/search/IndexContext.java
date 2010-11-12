@@ -12,11 +12,11 @@ import java.util.Map;
 
 public class IndexContext {
 
-  public static IndexContext     NULL_CONTEXT         = new IndexContext();
+  public static IndexContext        NULL_CONTEXT         = new IndexContext();
 
-  private List<IndexQueryResult> queryResults         = Collections.EMPTY_LIST;
-  private Map<String, NVPair>    aggregatorAttributes = Collections.EMPTY_MAP;
-  private List<NVPair>           aggregatorResults    = Collections.EMPTY_LIST;
+  private List<IndexQueryResult>    queryResults         = Collections.EMPTY_LIST;
+  private Map<String, List<NVPair>> aggregatorAttributes = Collections.EMPTY_MAP;
+  private List<NVPair>              aggregatorResults    = Collections.EMPTY_LIST;
 
   public List<IndexQueryResult> getQueryResults() {
     return queryResults;
@@ -26,12 +26,16 @@ public class IndexContext {
     this.queryResults = queryResults;
   }
 
-  public NVPair getAggregatorAttributesPair(String attributeName) {
-    return aggregatorAttributes.get(attributeName);
+  public NVPair getAggregatorAttributesPair(String key, String attributeName) {
+    List<NVPair> attributes = aggregatorAttributes.get(key);
+    for (NVPair pair : attributes) {
+      if (attributeName.equals(pair.getName())) { return pair; }
+    }
+    return null;
   }
 
-  public void setAggregatorAttributes(Map<String, NVPair> aggregatorAttributes) {
-    this.aggregatorAttributes = aggregatorAttributes;
+  public void setAggregatorAttributes(Map<String, List<NVPair>> aggregatorAttributesMap) {
+    this.aggregatorAttributes = aggregatorAttributesMap;
   }
 
   public List<NVPair> getAggregatorResults() {
