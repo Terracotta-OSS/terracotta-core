@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class IndexContext {
 
-  public static IndexContext        NULL_CONTEXT         = new IndexContext();
+  public static final IndexContext  NULL_CONTEXT         = new IndexContext();
 
   private List<IndexQueryResult>    queryResults         = Collections.EMPTY_LIST;
   private Map<String, List<NVPair>> aggregatorAttributes = Collections.EMPTY_MAP;
