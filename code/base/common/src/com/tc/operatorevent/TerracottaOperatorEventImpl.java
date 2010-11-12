@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Comparable<TerracottaOperatorEventImpl> {
   private final long                 time;
@@ -139,7 +138,7 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
 
   @Override
   public synchronized TerracottaOperatorEvent clone() {
-    Map<String, Integer> nodesCopy = new ConcurrentHashMap<String, Integer>();
+    Map<String, Integer> nodesCopy = new HashMap<String, Integer>();
     nodesCopy.putAll(this.nodes);
     return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
                                            this.collapseString, nodesCopy);
