@@ -6,8 +6,8 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.DerivedFileConfigItem;
+import com.tc.config.schema.dynamic.CompoundConfigItemListener;
+import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
@@ -66,14 +66,23 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     }
 
     if (server != null && !server.isSetIndex()) {
-      indexPath = new DerivedFileConfigItem(new ConfigItem[] { dataPath }) {
-        public File getFile() {
-          return (File) getObject();
+      indexPath = new FileConfigItem() {
+        private final CompoundConfigItemListener listener = new CompoundConfigItemListener();
+
+        public void removeListener(ConfigItemListener changeListener) {
+          listener.removeListener(changeListener);
         }
 
-        @Override
-        protected Object createValueFrom(ConfigItem[] fromWhich) {
-          return new File(((FileConfigItem) fromWhich[0]).getFile(), "index");
+        public Object getObject() {
+          return getFile();
+        }
+
+        public void addListener(ConfigItemListener changeListener) {
+          listener.addListener(changeListener);
+        }
+
+        public File getFile() {
+          return new File(dataPath.getFile(), "index");
         }
       };
     } else {
