@@ -28,6 +28,7 @@ public class IndexContext {
 
   public NVPair getAggregatorAttributesPair(String key, String attributeName) {
     List<NVPair> attributes = aggregatorAttributes.get(key);
+    if (attributes == null) { throw new AssertionError("key: " + key + " should not have null attributes."); }
     for (NVPair pair : attributes) {
       if (attributeName.equals(pair.getName())) { return pair; }
     }
@@ -36,6 +37,10 @@ public class IndexContext {
 
   public void setAggregatorAttributes(Map<String, List<NVPair>> aggregatorAttributesMap) {
     this.aggregatorAttributes = aggregatorAttributesMap;
+  }
+
+  public Map<String, List<NVPair>> getAggregatorAttributes() {
+    return this.aggregatorAttributes;
   }
 
   public List<NVPair> getAggregatorResults() {
