@@ -12,10 +12,18 @@ import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.UnclusteredLockID;
 import com.tc.object.logging.InstrumentationLogger;
+import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.metadata.NVPair;
 import com.tc.properties.TCProperties;
+import com.tc.search.SearchQueryResults;
+import com.tc.search.SortOperations;
 import com.tc.statistics.StatisticRetrievalAction;
 
 import java.lang.reflect.Field;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.management.MBeanServer;
 
@@ -292,5 +300,19 @@ public class NullManagerInternal implements ManagerInternal {
 
   public LockID generateLockIdentifier(long lockId) {
     return UnclusteredLockID.UNCLUSTERED_LOCK_ID;
+  }
+
+  public MetaDataDescriptor createMetaDataDescriptor(String category) {
+    throw new UnsupportedOperationException();
+  }
+
+  public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
+                                         Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
+                                         List<NVPair> aggregators) {
+    throw new UnsupportedOperationException();
+  }
+
+  public NVPair createNVPair(String name, Object value) {
+    throw new UnsupportedOperationException();
   }
 }

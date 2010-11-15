@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -15,19 +16,19 @@ import java.util.Set;
 public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public Object getMappingForKey(ObjectID mapID, Object portableKey);
-  
+
   public Set getAllKeys(ObjectID mapID);
 
-  public int getSize(ObjectID mapID);
+  public long getAllSize(ObjectID[] mapIDs);
 
   public void addResponseForKeyValueMapping(SessionID localSessionID, ObjectID mapID,
                                             Collection<ServerMapGetValueResponse> responses, NodeID nodeID);
-  
-  public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
-                                            Set keys, NodeID nodeID);
 
-  public void addResponseForGetSize(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
-                                    Integer size, NodeID sourceNodeID);
+  public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
+                                       Set keys, NodeID nodeID);
+
+  public void addResponseForGetAllSize(SessionID localSessionID, GroupID groupID, ServerMapRequestID requestID,
+                                       Long size, NodeID sourceNodeID);
 
   public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID);
 

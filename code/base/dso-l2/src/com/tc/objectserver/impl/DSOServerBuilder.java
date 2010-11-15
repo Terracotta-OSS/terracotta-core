@@ -40,9 +40,12 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
+import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
+import com.tc.objectserver.search.IndexManager;
+import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.tx.ServerTransactionManager;
@@ -67,6 +70,10 @@ import javax.management.MBeanServer;
 public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
+  
+  MetaDataManager createMetaDataManager(Sink sink);
+  
+  IndexManager createIndexManager(L2TVSConfigurationSetupManager configSetupManager) throws IOException;
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
@@ -77,6 +84,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                   Sink respondObjectRequestSink, ObjectStatsRecorder statsRecorder,
                                                   List<PostInit> toInit, StageManager stageManager, int maxStageSize,
                                                   DumpHandlerStore dumpHandlerStore);
+  
+  SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink searchEventSink);
 
   void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
 
@@ -108,7 +117,10 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                               DSOGlobalServerStats serverStats,
                                                               ConnectionIDFactory connectionIdFactory,
                                                               int maxStageSize, ChannelManager genericChannelManager,
-                                                              DumpHandlerStore dumpHandlerStore);
+                                                              DumpHandlerStore dumpHandlerStore,
+                                                              MetaDataManager metaDataManager,
+                                                              IndexManager indexManager,
+                                                              SearchRequestManager searchRequestManager);
 
   GroupManager getClusterGroupCommManager();
 

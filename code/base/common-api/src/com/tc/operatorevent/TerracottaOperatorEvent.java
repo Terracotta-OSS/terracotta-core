@@ -16,7 +16,7 @@ public interface TerracottaOperatorEvent extends Serializable, Cloneable {
     MEMORY_MANAGER, DGC, CLUSTER_TOPOLOGY, LOCK_MANAGER, DCV2
   }
 
-  void setNodeName(String nodeId);
+  void addNodeName(String nodeId);
 
   EventType getEventType();
 

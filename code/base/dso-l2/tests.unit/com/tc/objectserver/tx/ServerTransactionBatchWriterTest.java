@@ -14,6 +14,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
@@ -168,8 +169,8 @@ public class ServerTransactionBatchWriterTest extends TestCase {
                                                                                                 endIndex),
                                                        this.sourceNodeID, createDNAs(this.startIndex, endIndex),
                                                        new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, 1,
-                                                       new long[0]));
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       new MetaDataReader[0], 1, new long[0]));
       this.startIndex = endIndex + 1;
     }
     return serverTransactions;

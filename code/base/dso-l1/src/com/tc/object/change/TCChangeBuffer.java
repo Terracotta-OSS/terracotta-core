@@ -6,14 +6,12 @@ package com.tc.object.change;
 
 import com.tc.object.TCObject;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 
 /**
  * @author orion
  */
 public interface TCChangeBuffer {
-  public final static int PHYSICAL = 1;
-  public final static int LOGICAL  = 3;
-  public final static int ARRAY    = 7;
 
   public boolean isEmpty();
 
@@ -29,8 +27,6 @@ public interface TCChangeBuffer {
 
   public TCObject getTCObject();
 
-  public int getTotalEventCount();
-
-  public int getType();
+  public void addMetaDataDescriptor(MetaDataDescriptorInternal md);
 
 }

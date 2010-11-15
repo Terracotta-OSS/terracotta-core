@@ -27,7 +27,7 @@ import com.tc.objectserver.context.GCResultContext;
 import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.objectserver.dgc.impl.GarbageCollectorEventListenerAdapter;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.concurrent.ThreadUtil;
@@ -197,7 +197,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       // transactions.
       // If we do that there is a race where passive can apply already applied transactions twice. XXX:: 3 passives -
       // partial sync.
-      this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+      this.transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
         public void onCompletion() {
           ReplicatedObjectManagerImpl.this.gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID, oids);
         }
@@ -300,7 +300,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(gcInfo, deleted);
       final long id = ReplicatedObjectManagerImpl.this.gcIdGenerator.incrementAndGet();
       ReplicatedObjectManagerImpl.this.transactionManager
-          .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+          .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
             public void onCompletion() {
               ReplicatedObjectManagerImpl.this.groupManager.sendAll(msg);
             }

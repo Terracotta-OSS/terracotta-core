@@ -188,7 +188,7 @@ artifacts:
   - maven_artifact: true
     groupId: org.terracotta.quartz
     artifactId: quartz-terracotta
-    version: 1.2.2-SNAPSHOT
+    version: 2.0.0-SNAPSHOT
     destination: quartz
 
   - maven_artifact: true

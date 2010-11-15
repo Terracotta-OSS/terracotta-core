@@ -9,6 +9,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.tx.ServerTransactionID;
@@ -26,11 +27,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerTransactionFactory {
 
-  private static final LockID[]        NULL_LOCK_ID          = new LockID[0];
-  private static final long[]          EMPTY_HIGH_WATER_MARK = new long[0];
-  private static final DmiDescriptor[] NULL_DMI_DESCRIPTOR   = new DmiDescriptor[0];
+  private static final LockID[]         NULL_LOCK_ID           = new LockID[0];
+  private static final long[]           EMPTY_HIGH_WATER_MARK  = new long[0];
+  private static final DmiDescriptor[]  NULL_DMI_DESCRIPTOR    = new DmiDescriptor[0];
+  private static final MetaDataReader[] NULL_META_DATA_READERS = new MetaDataReader[0];
 
-  private final AtomicLong             tid                   = new AtomicLong();
+  private final AtomicLong              tid                    = new AtomicLong();
 
   public ServerTransaction createTxnFrom(final ObjectSyncMessage syncMsg) {
     final ObjectSyncServerTransaction txn = new ObjectSyncServerTransaction(syncMsg.getServerTransactionID(), syncMsg
@@ -59,7 +61,7 @@ public class ServerTransactionFactory {
                                          .singletonList(createServerMapEvictionDNAFor(oid, className, loaderDesc,
                                                                                       candidates)), serializer,
                                      Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
-                                     NULL_DMI_DESCRIPTOR, 1, EMPTY_HIGH_WATER_MARK);
+                                     NULL_DMI_DESCRIPTOR, NULL_META_DATA_READERS, 1, EMPTY_HIGH_WATER_MARK);
   }
 
   private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final String loaderDesc,

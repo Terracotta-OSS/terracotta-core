@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.locks.LockID;
@@ -34,14 +35,14 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public int getSize(final ObjectID mapID) {
+  public long getAllSize(final ObjectID[] mapIDs) {
     return -1;
   }
 
   public Object getMappingForKey(final ObjectID oid, final Object portableKey) {
     return null;
   }
-  
+
   public Set getAllKeys(ObjectID oid) {
     //
     return null;
@@ -51,13 +52,13 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void addResponseForKeyValueMapping(final SessionID localSessionID, final ObjectID mapID,
-                                            final Collection<ServerMapGetValueResponse> responses, final NodeID nodeID) {
+  public void addResponseForGetAllSize(final SessionID localSessionID, final GroupID groupID,
+                                       final ServerMapRequestID requestID, final Long size, final NodeID sourceNodeID) {
     //
   }
 
-  public void addResponseForGetSize(final SessionID localSessionID, final ObjectID mapID,
-                                    final ServerMapRequestID requestID, final Integer size, final NodeID sourceNodeID) {
+  public void addResponseForKeyValueMapping(final SessionID localSessionID, final ObjectID mapID,
+                                            final Collection<ServerMapGetValueResponse> responses, final NodeID nodeID) {
     //
   }
 
@@ -83,8 +84,8 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
   }
 
   public void addResponseForGetAllKeys(SessionID localSessionID, ObjectID mapID, ServerMapRequestID requestID,
-                                        Set keys, NodeID nodeID) {
-   //
+                                       Set keys, NodeID nodeID) {
+    //
   }
 
 }

@@ -12,6 +12,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
 import com.tc.object.locks.Notify;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.session.SessionID;
 
 import java.util.Collection;
@@ -183,6 +184,13 @@ public interface ClientTransactionManager {
    * @param d Descriptor
    */
   public void addDmiDescriptor(DmiDescriptor d);
+
+  /**
+   * Add meta data descriptor to current transaction
+   * 
+   * @param md Descriptor
+   */
+  public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md);
 
   /**
    * Check if lockID is on top of the transaction stack

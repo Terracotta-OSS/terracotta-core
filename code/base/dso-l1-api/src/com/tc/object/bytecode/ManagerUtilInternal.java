@@ -6,6 +6,15 @@ package com.tc.object.bytecode;
 
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockLevel;
+import com.tc.object.metadata.MetaDataDescriptor;
+import com.tc.object.metadata.NVPair;
+import com.tc.search.SearchQueryResults;
+import com.tc.search.SortOperations;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ManagerUtilInternal {
 
@@ -19,6 +28,21 @@ public class ManagerUtilInternal {
     Manager manager = ManagerUtil.getManager();
     if (manager instanceof NullManager) { return NULL_MANAGER_INTERNAL; }
     return (ManagerInternal) manager;
+  }
+
+  public static MetaDataDescriptor createMetaDataDescriptor(String category) {
+    return getInternalManager().createMetaDataDescriptor(category);
+  }
+
+  public static SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
+                                                Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
+                                                List<NVPair> aggregators) {
+    return getInternalManager().executeQuery(cachename, queryStack, includeKeys, attributeSet, sortAttributeMap,
+                                             aggregators);
+  }
+
+  public static NVPair createNVPair(String name, Object value) {
+    return getInternalManager().createNVPair(name, value);
   }
 
   /**

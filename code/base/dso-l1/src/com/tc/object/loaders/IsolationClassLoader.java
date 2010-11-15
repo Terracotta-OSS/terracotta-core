@@ -10,6 +10,7 @@ import com.tc.asm.ClassReader;
 import com.tc.asm.ClassVisitor;
 import com.tc.asm.ClassWriter;
 import com.tc.object.ClientObjectManager;
+import com.tc.object.RemoteSearchRequestManager;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerImpl;
 import com.tc.object.bytecode.hook.DSOContext;
@@ -41,20 +42,22 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
   private final Map                   adapters      = new HashMap();
 
   public IsolationClassLoader(DSOClientConfigHelper config, PreparedComponentsFromL2Connection connectionComponents) {
-    this(config, true, null, null, null, connectionComponents);
+    this(config, true, null, null, null, null, connectionComponents);
   }
 
   public IsolationClassLoader(DSOClientConfigHelper config, ClientObjectManager objectManager,
-                              ClientTransactionManager txManager, ClientLockManager lockManager) {
-    this(config, false, objectManager, txManager, lockManager, null);
+                              ClientTransactionManager txManager, ClientLockManager lockManager,
+                              RemoteSearchRequestManager searchRequestManager) {
+    this(config, false, objectManager, txManager, lockManager, searchRequestManager, null);
   }
 
   private IsolationClassLoader(DSOClientConfigHelper config, boolean startClient, ClientObjectManager objectManager,
                                ClientTransactionManager txManager, ClientLockManager lockManager,
+                               RemoteSearchRequestManager searchRequestManager,
                                PreparedComponentsFromL2Connection connectionComponents) {
     super(getSystemURLS(), null);
     this.config = config;
-    this.manager = createManager(startClient, objectManager, txManager, lockManager, config, connectionComponents);
+    this.manager = createManager(startClient, objectManager, txManager, lockManager, searchRequestManager, config, connectionComponents);
     this.onLoadErrors = new HashMap();
   }
 
@@ -70,8 +73,9 @@ public class IsolationClassLoader extends URLClassLoader implements NamedClassLo
 
   private Manager createManager(boolean startClient, ClientObjectManager objectManager,
                                 ClientTransactionManager txManager, ClientLockManager lockManager,
+                                RemoteSearchRequestManager searchRequestManager,
                                 DSOClientConfigHelper theConfig, PreparedComponentsFromL2Connection connectionComponents) {
-    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, theConfig, connectionComponents,
+    Manager rv = new ManagerImpl(startClient, objectManager, txManager, lockManager, searchRequestManager, theConfig, connectionComponents,
                                  false, null, null, false);
     rv.registerNamedLoader(this, null);
     return rv;

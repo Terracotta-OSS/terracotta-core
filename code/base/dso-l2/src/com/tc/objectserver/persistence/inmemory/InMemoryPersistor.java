@@ -52,11 +52,11 @@ public class InMemoryPersistor implements Persistor {
   }
 
   public TransactionPersistor getTransactionPersistor() {
-    throw new ImplementMe();
+    return new NullTransactionPersistor();
   }
 
   public MutableSequence getGlobalTransactionIDSequence() {
-    throw new ImplementMe();
+    return new InMemorySequenceProvider();
   }
 
   public StringIndex getStringIndex() {

@@ -30,6 +30,7 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
 import com.tc.object.msg.RequestRootMessageFactory;
+import com.tc.object.msg.SearchRequestMessageFactory;
 import com.tc.object.msg.ServerMapMessageFactory;
 import com.tc.object.msg.ServerMapRequestMessage;
 import com.tc.object.session.SessionID;
@@ -151,6 +152,10 @@ public class MockChannel implements DSOClientMessageChannel {
   }
 
   public void reloadConfiguration() {
+    throw new ImplementMe();
+  }
+
+  public SearchRequestMessageFactory getSearchRequestMessageFactory() {
     throw new ImplementMe();
   }
 }

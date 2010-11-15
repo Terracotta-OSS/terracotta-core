@@ -10,6 +10,7 @@ import com.tc.object.TCObject;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.SequenceID;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class TestClientTransaction implements ClientTransaction {
   private SequenceID   sequenceID;
   public Map           newRoots             = new HashMap();
   public Map           changeBuffers        = new HashMap();
-  private List         notifies             = new ArrayList();
+  private final List   notifies             = new ArrayList();
 
   public TestClientTransaction() {
     super();
@@ -136,7 +137,11 @@ public class TestClientTransaction implements ClientTransaction {
     return Collections.EMPTY_LIST;
   }
 
-  public boolean hasDmiDescriptors() {
+  public List getMetaDataDescriptors() {
+    return Collections.EMPTY_LIST;
+  }
+
+  public void addMetaDataDescriptor(TCObject tco, MetaDataDescriptorInternal md) {
     throw new ImplementMe();
   }
 
@@ -152,7 +157,4 @@ public class TestClientTransaction implements ClientTransaction {
     return txnType;
   }
 
-  public boolean isEffectivelyReadOnly() {
-    throw new ImplementMe();
-  }
 }

@@ -6,12 +6,12 @@ package com.tc.object.msg;
 import com.tc.object.ObjectID;
 import com.tc.object.ServerMapRequestID;
 
-public interface GetSizeServerMapRequestMessage extends ServerMapRequestMessage {
+public interface GetAllSizeServerMapRequestMessage extends ServerMapRequestMessage {
 
-  public void initializeGetSizeRequest(ServerMapRequestID requestID, ObjectID mapID);
+  public void initializeGetAllSizeRequest(ServerMapRequestID requestID, ObjectID[] maps);
 
   public ServerMapRequestID getRequestID();
 
-  public ObjectID getMapID();
+  public ObjectID[] getMaps();
 
 }

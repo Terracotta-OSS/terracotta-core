@@ -9,7 +9,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
-import com.tc.objectserver.tx.TxnsInSystemCompletionLister;
+import com.tc.objectserver.tx.TxnsInSystemCompletionListener;
 
 public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactionManager {
 
@@ -35,7 +35,7 @@ public class GlobalTransactionIDLowWaterMarkProvider implements GlobalTransactio
   }
 
   public void goToActiveMode() {
-    transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionLister() {
+    transactionManager.callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
       public void onCompletion() {
         switchLWMProvider();
       }

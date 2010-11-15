@@ -3,12 +3,12 @@
  */
 package com.tc.object.msg;
 
-import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.protocol.tcm.MessageChannel;
+import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.ServerMapRequestType;
 
-public interface ServerMapRequestMessage extends EventContext {
+public interface ServerMapRequestMessage extends TCMessage {
 
   public void send();
 

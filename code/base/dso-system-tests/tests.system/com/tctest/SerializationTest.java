@@ -9,6 +9,7 @@ import org.apache.commons.io.IOUtils;
 import com.tc.exception.TCRuntimeException;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.object.BaseDSOTestCase;
+import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.TestClientObjectManager;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TransparentAccess;
@@ -125,8 +126,9 @@ public class SerializationTest extends BaseDSOTestCase {
       TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
       MockTransactionManager testTransactionManager = new MockTransactionManager();
       MockClientLockManager testClientLockManager = new MockClientLockManager();
+      MockRemoteSearchRequestManager testSearchRequestManager = new MockRemoteSearchRequestManager();
       IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager,
-                                                                  testTransactionManager, testClientLockManager);
+                                                                  testTransactionManager, testClientLockManager, testSearchRequestManager);
       classLoader.init();
       Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -152,8 +154,10 @@ public class SerializationTest extends BaseDSOTestCase {
       TestClientObjectManager testClientObjectManager = new TestClientObjectManager();
       MockTransactionManager testTransactionManager = new MockTransactionManager();
       MockClientLockManager testClientLockManager = new MockClientLockManager();
+      MockRemoteSearchRequestManager testSearchRequestManager = new MockRemoteSearchRequestManager();
       IsolationClassLoader classLoader = new IsolationClassLoader(config, testClientObjectManager,
-                                                                  testTransactionManager, testClientLockManager);
+                                                                  testTransactionManager, testClientLockManager,
+                                                                  testSearchRequestManager);
       classLoader.init();
       Thread.currentThread().setContextClassLoader(classLoader);
 

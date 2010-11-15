@@ -13,9 +13,12 @@ import com.tc.object.change.event.LiteralChangeEvent;
 import com.tc.object.change.event.LogicalChangeEvent;
 import com.tc.object.change.event.PhysicalChangeEvent;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNAWriterInternal;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,16 +31,16 @@ import java.util.Map;
  * @author orion
  */
 public class TCChangeBufferImpl implements TCChangeBuffer {
-  private static final TCLogger logger     = TCLogging.getLogger(TCChangeBuffer.class);
+  private static final TCLogger                  logger     = TCLogging.getLogger(TCChangeBuffer.class);
 
-  private final SetOnceFlag     dnaCreated = new SetOnceFlag();
-  private final TCObject        tcObject;
+  private final SetOnceFlag                      dnaCreated = new SetOnceFlag();
+  private final TCObject                         tcObject;
 
-  private final int             type;
-  private final Map             physicalEvents;
-  private final List            logicalEvents;
-  private final Map             arrayEvents;
-  private final List            literalValueChangedEvents;
+  private final Map                              physicalEvents;
+  private final List                             logicalEvents;
+  private final Map                              arrayEvents;
+  private final List                             literalValueChangedEvents;
+  private final List<MetaDataDescriptorInternal> metaData;
 
   public TCChangeBufferImpl(TCObject object) {
     this.tcObject = object;
@@ -46,24 +49,23 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     // physical updates to logical classes should be ignore or not
     TCClass clazz = tcObject.getTCClass();
     if (clazz.isIndexed()) {
-      type = ARRAY;
       physicalEvents = null;
       literalValueChangedEvents = null;
       logicalEvents = null;
       arrayEvents = new LinkedHashMap();
     } else if (clazz.isLogical()) {
-      type = LOGICAL;
       physicalEvents = null;
       literalValueChangedEvents = null;
       logicalEvents = new LinkedList();
       arrayEvents = null;
     } else {
-      type = PHYSICAL;
       physicalEvents = new HashMap();
       literalValueChangedEvents = new LinkedList();
       logicalEvents = null;
       arrayEvents = null;
     }
+
+    metaData = new ArrayList<MetaDataDescriptorInternal>();
   }
 
   public boolean isEmpty() {
@@ -71,6 +73,7 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     if ((literalValueChangedEvents != null) && (!literalValueChangedEvents.isEmpty())) { return false; }
     if ((logicalEvents != null) && (!logicalEvents.isEmpty())) { return false; }
     if ((arrayEvents != null) && (!arrayEvents.isEmpty())) { return false; }
+    if (!metaData.isEmpty()) return false;
 
     return true;
   }
@@ -88,6 +91,10 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
       }
       if (literalValueChangedEvents != null) {
         writeEventsToDNA(literalValueChangedEvents, writer);
+      }
+
+      for (MetaDataDescriptorInternal md : metaData) {
+        ((DNAWriterInternal) writer).addMetaData(md);
       }
 
       return;
@@ -168,26 +175,8 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     return tcObject;
   }
 
-  public int getTotalEventCount() {
-    int eventCount = 0;
-    if (physicalEvents != null) {
-      eventCount += physicalEvents.size();
-    }
-    if (literalValueChangedEvents != null) {
-      eventCount += literalValueChangedEvents.size();
-    }
-    if (logicalEvents != null) {
-      eventCount += logicalEvents.size();
-    }
-    if (arrayEvents != null) {
-      eventCount += arrayEvents.size();
-    }
-    return eventCount;
+  public void addMetaDataDescriptor(MetaDataDescriptorInternal md) {
+    metaData.add(md);
   }
-
-  public int getType() {
-    return type;
-  }
-
 
 }

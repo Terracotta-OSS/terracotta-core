@@ -4,6 +4,7 @@
  */
 package com.tc.object.bytecode;
 
+import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.MockTCObject;
 import com.tc.object.SerializationUtil;
 import com.tc.object.TestClientObjectManager;
@@ -49,6 +50,7 @@ public class LogicalClassAdapterTest extends ClassAdapterTestBase {
     DSOContext context = DSOContextImpl.createContext(config, new ManagerImpl(false, objManager,
                                                                               new MockTransactionManager(),
                                                                               new MockClientLockManager(),
+                                                                              new MockRemoteSearchRequestManager(),
                                                                               config, null));
 
     ClassProcessorHelper.setContext(Thread.currentThread().getContextClassLoader(), context);

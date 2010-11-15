@@ -26,6 +26,7 @@ import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
@@ -903,8 +904,8 @@ public class ObjectManagerTest extends TCTestCase {
 
     ManagedObject lookedUpViaLookup = this.objectManager.getObjectByID(id);
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
-    assertEquals(lookedUpViaLookup.getObjectReferences(), lookedUpViaLookupObjectsForCreateIfNecessary
-        .getObjectReferences());
+    assertEquals(lookedUpViaLookup.getObjectReferences(),
+                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
 
     tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookup);
@@ -931,8 +932,8 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(1, lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().size());
     assertTrue(lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences().contains(newReferenceID));
 
-    assertEquals(lookedUpViaLookup.getObjectReferences(), lookedUpViaLookupObjectsForCreateIfNecessary
-        .getObjectReferences());
+    assertEquals(lookedUpViaLookup.getObjectReferences(),
+                 lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
 
     close(persistor, store);
   }
@@ -1001,8 +1002,10 @@ public class ObjectManagerTest extends TCTestCase {
     final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
     final Persistor persistor = newPersistor(dbEnv, saf);
     final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor(), new MockSink());
+    final PersistentManagedObjectStore persistantMOStore = new PersistentManagedObjectStore(
+                                                                                            persistor
+                                                                                                .getManagedObjectPersistor(),
+                                                                                            new MockSink());
     this.objectStore = persistantMOStore;
     this.config.paranoid = paranoid;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1038,8 +1041,9 @@ public class ObjectManagerTest extends TCTestCase {
     final String[] fieldNames = facade.getFields();
     assertEquals(6, fieldNames.length);
     // NOTE: the order of the object fields should be alphabetic
-    assertTrue(Arrays.asList(fieldNames).toString(), Arrays.equals(fieldNames, new String[] { "access$0", "this$0",
-        "intField", "objField", "stringField", "zzzField" }));
+    assertTrue(Arrays.asList(fieldNames).toString(),
+               Arrays.equals(fieldNames, new String[] { "access$0", "this$0", "intField", "objField", "stringField",
+                   "zzzField" }));
     assertEquals("TestPhysicalDNA.class.name", facade.getClassName());
     assertEquals("Integer", facade.getFieldType("intField"));
     assertEquals("ObjectID", facade.getFieldType("objField"));
@@ -1099,8 +1103,7 @@ public class ObjectManagerTest extends TCTestCase {
 
     TestObjectManagerResultsContext context;
     assertTrue(this.objectManager
-        .lookupObjectsAndSubObjectsFor(
-                                       null,
+        .lookupObjectsAndSubObjectsFor(null,
                                        context = new TestObjectManagerResultsContext(
                                                                                      new HashMap<ObjectID, ManagedObject>(),
                                                                                      objectIDs), -1));
@@ -1116,8 +1119,7 @@ public class ObjectManagerTest extends TCTestCase {
     objectIDs.add(id1);
 
     final boolean notPending = this.objectManager
-        .lookupObjectsAndSubObjectsFor(
-                                       null,
+        .lookupObjectsAndSubObjectsFor(null,
                                        context = new TestObjectManagerResultsContext(
                                                                                      new HashMap<ObjectID, ManagedObject>(),
                                                                                      objectIDs), -1);
@@ -1323,8 +1325,10 @@ public class ObjectManagerTest extends TCTestCase {
     final SerializationAdapterFactory saf = newCustomSerializationAdapterFactory();
     final Persistor persistor = newPersistor(dbEnv, saf);
     final PersistenceTransactionProvider ptp = persistor.getPersistenceTransactionProvider();
-    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(persistor
-        .getManagedObjectPersistor(), new MockSink());
+    final PersistentManagedObjectStore persistentMOStore = new PersistentManagedObjectStore(
+                                                                                            persistor
+                                                                                                .getManagedObjectPersistor(),
+                                                                                            new MockSink());
     this.objectStore = persistentMOStore;
     this.config.paranoid = true;
     initObjectManager(new TCThreadGroup(new ThrowableHandler(TCLogging.getTestingLogger(getClass()))), new NullCache(),
@@ -1349,7 +1353,8 @@ public class ObjectManagerTest extends TCTestCase {
                                                               new ArrayList<DNA>(changes.values()),
                                                               new ObjectStringSerializer(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0],1, new long[0]);
+
     final List<ServerTransaction> txns = new ArrayList<ServerTransaction>();
     txns.add(stxn1);
 
@@ -1398,7 +1403,7 @@ public class ObjectManagerTest extends TCTestCase {
                                                               new ArrayList<DNA>(changes.values()),
                                                               new ObjectStringSerializer(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0],1, new long[0]);
 
     txns.clear();
     txns.add(stxn2);
@@ -1431,7 +1436,7 @@ public class ObjectManagerTest extends TCTestCase {
                                                               new ArrayList<DNA>(changes.values()),
                                                               new ObjectStringSerializer(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
-                                                              DmiDescriptor.EMPTY_ARRAY, 1, new long[0]);
+                                                              DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
 
     txns.clear();
     txns.add(stxn3);

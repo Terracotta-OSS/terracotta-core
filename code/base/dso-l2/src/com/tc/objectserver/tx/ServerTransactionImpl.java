@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.gtx.GlobalTransactionIDAlreadySetException;
@@ -40,6 +41,7 @@ public class ServerTransactionImpl implements ServerTransaction {
   private final ObjectStringSerializer serializer;
   private final Collection             notifies;
   private final DmiDescriptor[]        dmis;
+  private final MetaDataReader[]       metaDataReaders;
   private final ObjectIDSet            objectIDs;
   private final ObjectIDSet            newObjectIDs;
   private final TxnBatchID             batchID;
@@ -48,11 +50,10 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   private GlobalTransactionID          globalTxnID;
 
-  public ServerTransactionImpl(final TxnBatchID batchID, final TransactionID txID, final SequenceID sequenceID,
-                               final LockID[] lockIDs, final NodeID source, final List dnas,
-                               final ObjectStringSerializer serializer, final Map newRoots,
-                               final TxnType transactionType, final Collection notifies, final DmiDescriptor[] dmis,
-                               final int numApplicationTxn, final long[] highWaterMarks) {
+  public ServerTransactionImpl(TxnBatchID batchID, TransactionID txID, SequenceID sequenceID, LockID[] lockIDs,
+                               NodeID source, List dnas, ObjectStringSerializer serializer, Map newRoots,
+                               TxnType transactionType, Collection notifies, DmiDescriptor[] dmis,
+                               MetaDataReader[] metaDataReaders, int numApplicationTxn, long[] highWaterMarks) {
     this.batchID = batchID;
     this.txID = txID;
     this.seqID = sequenceID;
@@ -65,6 +66,7 @@ public class ServerTransactionImpl implements ServerTransaction {
     this.transactionType = transactionType;
     this.notifies = notifies;
     this.dmis = dmis;
+    this.metaDataReaders = metaDataReaders;
     this.changes = dnas;
     this.serializer = serializer;
     final ObjectIDSet ids = new ObjectIDSet();
@@ -142,6 +144,10 @@ public class ServerTransactionImpl implements ServerTransaction {
 
   public DmiDescriptor[] getDmiDescriptors() {
     return this.dmis;
+  }
+
+  public MetaDataReader[] getMetaDataReaders() {
+    return this.metaDataReaders;
   }
 
   @Override

@@ -48,42 +48,68 @@ public class DBPersistorImpl implements Persistor {
   private final TCCollectionsPersistor         sleepycatCollectionsPersistor;
 
   // only for tests
-  public DBPersistorImpl(final TCLogger logger, final DBEnvironment env, final SerializationAdapterFactory serializationAdapterFactory)
-  throws TCDatabaseException {
+  public DBPersistorImpl(final TCLogger logger, final DBEnvironment env,
+                         final SerializationAdapterFactory serializationAdapterFactory) throws TCDatabaseException {
     this(logger, env, serializationAdapterFactory, null, new ObjectStatsRecorder());
   }
 
-  public DBPersistorImpl(final TCLogger logger, final DBEnvironment env, final SerializationAdapterFactory serializationAdapterFactory,
-                         final File l2DataPath, final ObjectStatsRecorder objectStatsRecorder) throws TCDatabaseException {
+  public DBPersistorImpl(final TCLogger logger, final DBEnvironment env,
+                         final SerializationAdapterFactory serializationAdapterFactory, final File l2DataPath,
+                         final ObjectStatsRecorder objectStatsRecorder) throws TCDatabaseException {
 
     open(env, logger);
     this.env = env;
 
     sanityCheckAndClean(env, l2DataPath, logger);
 
-    this.persistenceTransactionProvider = env.getPersistenceTransactionProvider();
-    this.stringIndexPersistor = new StringIndexPersistorImpl(this.persistenceTransactionProvider, env
-                                                             .getStringIndexDatabase());
+    this.persistenceTransactionProvider = createPersistenceTransactionProvider(env);
+    this.stringIndexPersistor = createStringIndexPersistor();
+    this.classPersistor = createClassPersistor(logger);
+    this.persistentStateStore = createPersistentMapStore(logger);
+    this.clientStatePersistor = createClientStatePersistor(logger);
+    this.transactionPerisistor = createTransactionPersistor();
+    this.globalTransactionIDSequence = createGlobalTransactionIDSequence(logger);
+
     this.stringIndex = new StringIndexImpl(this.stringIndexPersistor, DEFAULT_CAPACITY);
     final TCCollectionsSerializer serializer = new TCCollectionsSerializerImpl();
-    this.sleepycatCollectionFactory = new PersistableCollectionFactory(env.getMapsDatabase().getBackingMapFactory(serializer),
-                                                                       env.isParanoidMode());
+    this.sleepycatCollectionFactory = new PersistableCollectionFactory(env.getMapsDatabase()
+        .getBackingMapFactory(serializer), env.isParanoidMode());
     this.sleepycatCollectionsPersistor = new TCCollectionsPersistor(logger, env.getMapsDatabase(),
                                                                     this.sleepycatCollectionFactory, serializer);
     this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, serializationAdapterFactory, env, env
-                                                                 .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.OBJECTID_SEQUENCE_NAME, 1000), env
-                                                                 .getRootDatabase(), this.persistenceTransactionProvider, this.sleepycatCollectionsPersistor, env
-                                                                 .isParanoidMode(), objectStatsRecorder);
-    this.clientStatePersistor = new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider, env
-                                                             .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.CLIENTID_SEQUENCE_NAME, 0), env
-                                                             .getClientStateDatabase());
-    this.transactionPerisistor = new TransactionPersistorImpl(env.getTransactionDatabase(),
-                                                              this.persistenceTransactionProvider);
-    this.globalTransactionIDSequence = env.getSequence(this.persistenceTransactionProvider, logger,
-                                                       DBSequenceKeys.TRANSACTION_SEQUENCE_DB_NAME, 1);
-    this.classPersistor = new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
-    this.persistentStateStore = new TCMapStore(this.persistenceTransactionProvider, logger, env
-                                               .getClusterStateStoreDatabase());
+        .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.OBJECTID_SEQUENCE_NAME, 1000), env
+        .getRootDatabase(), this.persistenceTransactionProvider, this.sleepycatCollectionsPersistor, env
+        .isParanoidMode(), objectStatsRecorder);
+  }
+
+  protected PersistenceTransactionProvider createPersistenceTransactionProvider(final DBEnvironment dbenv) {
+    return dbenv.getPersistenceTransactionProvider();
+  }
+
+  protected StringIndexPersistor createStringIndexPersistor() throws TCDatabaseException {
+    return new StringIndexPersistorImpl(this.persistenceTransactionProvider, env.getStringIndexDatabase());
+  }
+
+  protected ClassPersistor createClassPersistor(final TCLogger logger) throws TCDatabaseException {
+    return new ClassPersistorImpl(this.persistenceTransactionProvider, logger, env.getClassDatabase());
+  }
+
+  protected PersistentMapStore createPersistentMapStore(final TCLogger logger) throws TCDatabaseException {
+    return new TCMapStore(this.persistenceTransactionProvider, logger, env.getClusterStateStoreDatabase());
+  }
+
+  protected ClientStatePersistor createClientStatePersistor(final TCLogger logger) throws TCDatabaseException {
+    return new ClientStatePersistorImpl(logger, this.persistenceTransactionProvider, env
+        .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.CLIENTID_SEQUENCE_NAME, 0), env
+        .getClientStateDatabase());
+  }
+
+  protected TransactionPersistor createTransactionPersistor() throws TCDatabaseException {
+    return new TransactionPersistorImpl(env.getTransactionDatabase(), this.persistenceTransactionProvider);
+  }
+
+  protected MutableSequence createGlobalTransactionIDSequence(final TCLogger logger) {
+    return env.getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.TRANSACTION_SEQUENCE_DB_NAME, 1);
   }
 
   private void open(final DBEnvironment dbenv, final TCLogger logger) throws TCDatabaseException {
@@ -91,17 +117,18 @@ public class DBPersistorImpl implements Persistor {
     final boolean result = dbenv.open();
     if (!result) { throw new DatabaseDirtyException(
                                                     "Attempt to open a dirty database.  "
-                                                    + "This may be because a previous instance of the server didn't exit cleanly."
-                                                    + "  Since the integrity of the data cannot be assured, "
-                                                    + "the server is refusing to start."
-                                                    + "  Please remove the database files in the following directory and restart "
-                                                    + "the server: " + dbenv.getEnvironmentHome()); }
+                                                        + "This may be because a previous instance of the server didn't exit cleanly."
+                                                        + "  Since the integrity of the data cannot be assured, "
+                                                        + "the server is refusing to start."
+                                                        + "  Please remove the database files in the following directory and restart "
+                                                        + "the server: " + dbenv.getEnvironmentHome()); }
   }
 
-  private void sanityCheckAndClean(final DBEnvironment dbenv, final File l2DataPath, final TCLogger logger) throws TCDatabaseException {
+  private void sanityCheckAndClean(final DBEnvironment dbenv, final File l2DataPath, final TCLogger logger)
+      throws TCDatabaseException {
     final PersistenceTransactionProvider persistentTxProvider = dbenv.getPersistenceTransactionProvider();
     final PersistentMapStore persistentMapStore = new TCMapStore(persistentTxProvider, logger, dbenv
-                                                                 .getClusterStateStoreDatabase());
+        .getClusterStateStoreDatabase());
 
     // check for DBversion mismatch
     final DBVersionChecker dbVersionChecker = new DBVersionChecker(persistentMapStore);
@@ -111,16 +138,16 @@ public class DBPersistorImpl implements Persistor {
     final DirtyObjectDbCleaner dirtyObjectDbCleaner = new DirtyObjectDbCleaner(persistentMapStore, l2DataPath, logger);
     if (dirtyObjectDbCleaner.isObjectDbDirty()) {
       final boolean dirtyDbAutoDelete = TCPropertiesImpl.getProperties()
-      .getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_AUTODELETE);
+          .getBoolean(TCPropertiesConsts.L2_NHA_DIRTYDB_AUTODELETE);
 
       if (!dirtyDbAutoDelete) {
         final String errorMessage = Banner
-        .makeBanner("Detected Dirty Objectdb. Auto-delete(l2.nha.dirtydb.autoDelete) not enabled. "
-                    + "Please clean up the data directory and make sure that the "
-                    + StateManager.ACTIVE_COORDINATOR.getName()
-                    + " is up and running before starting this server. It is important that the "
-                    + StateManager.ACTIVE_COORDINATOR.getName()
-                    + " is up and running before starting this server else you might end up losing data", "ERROR");
+            .makeBanner("Detected Dirty Objectdb. Auto-delete(l2.nha.dirtydb.autoDelete) not enabled. "
+                        + "Please clean up the data directory and make sure that the "
+                        + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server. It is important that the "
+                        + StateManager.ACTIVE_COORDINATOR.getName()
+                        + " is up and running before starting this server else you might end up losing data", "ERROR");
         throw new TCDatabaseException(errorMessage);
       } else {
         logger.info("Dirty Objectdb Auto-delete requested.");

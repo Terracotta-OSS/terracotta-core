@@ -7,6 +7,7 @@ package com.tc.objectserver.tx;
 import com.tc.exception.ImplementMe;
 import com.tc.net.NodeID;
 import com.tc.object.dmi.DmiDescriptor;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.LockID;
@@ -93,6 +94,10 @@ public final class TestServerTransaction implements ServerTransaction {
 
   public DmiDescriptor[] getDmiDescriptors() {
     throw new ImplementMe();
+  }
+  
+  public MetaDataReader[] getMetaDataReaders() {
+    return new MetaDataReader[0];
   }
 
   public boolean isPassive() {

@@ -83,6 +83,9 @@ public interface DSOClientBuilder {
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager, Sink lockRecallSink,
                                                       Sink capacityEvictionSink, Sink ttiTTLEvitionSink);
+  
+  RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+                                                              final SessionManager sessionManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
                                                       final DNAEncoding encoding,

@@ -6,6 +6,8 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.BindPortConfigItem;
+import com.tc.config.schema.dynamic.CompoundConfigItemListener;
+import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.dynamic.StringConfigItem;
@@ -37,6 +39,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   private final String             accessFile;
   private final boolean            httpAuthentication;
   private final String             userRealmFile;
+  private final FileConfigItem     indexPath;
 
   public NewCommonL2ConfigObject(ConfigContext context) {
     super(context);
@@ -60,6 +63,30 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
       this.authentication = server.isSetAuthentication();
     } else {
       this.authentication = false;
+    }
+
+    if (server != null && !server.isSetIndex()) {
+      indexPath = new FileConfigItem() {
+        private final CompoundConfigItemListener listener = new CompoundConfigItemListener();
+
+        public void removeListener(ConfigItemListener changeListener) {
+          listener.removeListener(changeListener);
+        }
+
+        public Object getObject() {
+          return getFile();
+        }
+
+        public void addListener(ConfigItemListener changeListener) {
+          listener.addListener(changeListener);
+        }
+
+        public File getFile() {
+          return new File(dataPath.getFile(), "index");
+        }
+      };
+    } else {
+      indexPath = context.configRelativeSubstitutedFileItem("index");
     }
 
     if (authentication) {
@@ -160,4 +187,9 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   public String httpAuthenticationUserRealmFile() {
     return userRealmFile;
   }
+
+  public FileConfigItem indexPath() {
+    return this.indexPath;
+  }
+
 }

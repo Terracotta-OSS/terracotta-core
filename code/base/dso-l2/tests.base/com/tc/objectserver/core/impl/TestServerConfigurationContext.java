@@ -20,7 +20,10 @@ import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockManager;
+import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.search.IndexManager;
+import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
 import com.tc.objectserver.tx.TransactionBatchReaderFactory;
@@ -124,6 +127,18 @@ public class TestServerConfigurationContext implements ServerConfigurationContex
   }
 
   public ServerMapRequestManager getServerMapRequestManager() {
+    throw new ImplementMe();
+  }
+
+  public IndexManager getIndexManager() {
+    throw new ImplementMe();
+  }
+
+  public MetaDataManager getMetaDataManager() {
+    throw new ImplementMe();
+  }
+
+  public SearchRequestManager getSearchRequestManager() {
     throw new ImplementMe();
   }
 

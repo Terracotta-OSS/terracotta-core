@@ -37,11 +37,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -54,20 +54,17 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
   private static final boolean                EVICTOR_LOGGING               = TCPropertiesImpl
                                                                                 .getProperties()
-                                                                                .getBoolean(
-                                                                                            TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED);
+                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
   private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED = TCPropertiesImpl
                                                                                 .getProperties()
-                                                                                .getBoolean(
-                                                                                            TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
+                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
 
   private static final TCLogger               logger                        = TCLogging
                                                                                 .getLogger(ServerMapEvictionManagerImpl.class);
 
   private final static boolean                PERIODIC_EVICTOR_ENABLED      = TCPropertiesImpl
                                                                                 .getProperties()
-                                                                                .getBoolean(
-                                                                                            TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
+                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
 
   // 15 Minutes
   public static final long                    DEFAULT_SLEEP_TIME            = 15 * 60000;
@@ -114,7 +111,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       logger.info("Server Map Eviction : Evictor will run every " + this.evictionSleepTime + " ms");
       this.evictor.schedule(new EvictorTask(this), this.evictionSleepTime, this.evictionSleepTime);
     }
-    logger.info(TCPropertiesConsts.EHCAHCE_EVICTOR_LOGGING_ENABLED + " : " + EVICTOR_LOGGING);
+    logger.info(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED + " : " + EVICTOR_LOGGING);
     logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED + " : "
                 + PERIODIC_EVICTOR_ENABLED);
     logger.info(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED + " : "

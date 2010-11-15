@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.tx;
 
-public interface TxnsInSystemCompletionLister {
+public interface TxnsInSystemCompletionListener {
 
   public void onCompletion();
 
