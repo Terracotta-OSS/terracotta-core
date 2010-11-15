@@ -114,12 +114,16 @@ public interface TCObjectServerMap<L> extends TCObject {
   public Object getValue(final TCServerMap map, final L lockID, final Object key);
 
   /**
-   * Returns the size of a ServerTCMap
+   * Returns total size of an array of ServerTCMap.
+   * <p>
+   * The list of TCServerMaps passed in need not contain this TCServerMap, this is only a pass thru method that calls
+   * getAllSize on the RemoteServerMapManager and is provided as a convenient way of batching the size calls at the
+   * higher level
    * 
-   * @param map ServerTCMap
-   * @return int for size of map.
+   * @param maps ServerTCMap[]
+   * @return long for size of map.
    */
-  public int getSize(final TCServerMap map);
+  public long getAllSize(final TCServerMap[] maps);
 
   /**
    * Returns the size of the local cache

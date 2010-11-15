@@ -15,8 +15,8 @@ import com.tc.object.ServerMapGetValueRequest;
 import com.tc.object.ServerMapGetValueResponse;
 import com.tc.object.ServerMapRequestID;
 import com.tc.object.ServerMapRequestType;
-import com.tc.object.msg.GetSizeServerMapResponseMessage;
 import com.tc.object.msg.GetAllKeysServerMapResponseMessage;
+import com.tc.object.msg.GetAllSizeServerMapResponseMessage;
 import com.tc.object.msg.GetValueServerMapResponseMessage;
 import com.tc.object.msg.ObjectNotFoundServerMapResponseMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -24,7 +24,11 @@ import com.tc.object.net.NoSuchChannelException;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
 import com.tc.objectserver.context.ObjectRequestServerContextImpl;
+import com.tc.objectserver.context.ServerMapGetAllSizeHelper;
+import com.tc.objectserver.context.ServerMapRequestAllKeysContext;
 import com.tc.objectserver.context.ServerMapRequestContext;
+import com.tc.objectserver.context.ServerMapRequestSizeContext;
+import com.tc.objectserver.context.ServerMapRequestValueContext;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
@@ -59,23 +63,27 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
   public void requestValues(final ClientID clientID, final ObjectID mapID,
                             final Collection<ServerMapGetValueRequest> requests) {
 
-    final ServerMapRequestContext requestContext = new ServerMapRequestContext(clientID, mapID, requests,
-                                                                               this.respondToServerTCMapSink);
+    final ServerMapRequestValueContext requestContext = new ServerMapRequestValueContext(clientID, mapID, requests,
+                                                                                         this.respondToServerTCMapSink);
     processRequest(clientID, requestContext);
   }
 
-  public void requestSize(final ServerMapRequestID requestID, final ClientID clientID, final ObjectID mapID) {
-    final ServerMapRequestContext requestContext = new ServerMapRequestContext(ServerMapRequestType.GET_SIZE, requestID, clientID, mapID,
-                                                                               this.respondToServerTCMapSink);
+  public void requestSize(final ServerMapRequestID requestID, final ClientID clientID, final ObjectID mapID,
+                          ServerMapGetAllSizeHelper helper) {
+    final ServerMapRequestSizeContext requestContext = new ServerMapRequestSizeContext(requestID, clientID, mapID,
+                                                                                       this.respondToServerTCMapSink,
+                                                                                       helper);
     processRequest(clientID, requestContext);
   }
-  
 
   public void requestAllKeys(ServerMapRequestID requestID, ClientID clientID, ObjectID mapID) {
-    final ServerMapRequestContext requestContext = new ServerMapRequestContext(ServerMapRequestType.GET_ALL_KEYS, requestID, clientID, mapID,
-                                                                              this.respondToServerTCMapSink);
+    final ServerMapRequestAllKeysContext requestContext = new ServerMapRequestAllKeysContext(
+                                                                                             requestID,
+                                                                                             clientID,
+                                                                                             mapID,
+                                                                                             this.respondToServerTCMapSink);
     processRequest(clientID, requestContext);
-    
+
   }
 
   private void processRequest(final ClientID clientID, final ServerMapRequestContext requestContext) {
@@ -108,13 +116,13 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
         final ServerMapRequestType requestType = request.getRequestType();
         switch (requestType) {
           case GET_SIZE:
-            sendResponseForGetSize(mapID, request, cdsmState);
+            sendResponseForGetAllSize(mapID, (ServerMapRequestSizeContext) request, cdsmState);
             break;
           case GET_ALL_KEYS:
-            sendResponseForGetAllKeys(mapID, request, cdsmState);
+            sendResponseForGetAllKeys(mapID, (ServerMapRequestAllKeysContext) request, cdsmState);
             break;
           case GET_VALUE_FOR_KEY:
-            gatherResponseForGetValue(mapID, request, cdsmState, results, prefetches);
+            gatherResponseForGetValue(mapID, (ServerMapRequestValueContext) request, cdsmState, results, prefetches);
             break;
           default:
             throw new AssertionError("Unknown request type : " + requestType);
@@ -154,7 +162,7 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
     }
   }
 
-  private void gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestContext request,
+  private void gatherResponseForGetValue(final ObjectID mapID, final ServerMapRequestValueContext request,
                                          final ConcurrentDistributedServerMapManagedObjectState cdsmState,
                                          final Map<ClientID, Collection<ServerMapGetValueResponse>> results,
                                          final Map<ClientID, ObjectIDSet> prefetches) {
@@ -204,32 +212,39 @@ public class ServerMapRequestManagerImpl implements ServerMapRequestManager {
 
   }
 
-  private void sendResponseForGetSize(final ObjectID mapID, final ServerMapRequestContext request,
-                                      final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
+  private void sendResponseForGetAllSize(final ObjectID mapID, final ServerMapRequestSizeContext request,
+                                         final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
     final ServerMapRequestID requestID = request.getRequestID();
     final ClientID clientID = request.getClientID();
     final Integer size = cdsmState.getSize();
 
-    final MessageChannel channel = getActiveChannel(clientID);
-    if (channel == null) { return; }
+    ServerMapGetAllSizeHelper helper = request.getServerMapGetAllSizeHelper();
+    synchronized (helper) {
+      helper.addSize(mapID, size);
+      if (helper.isDone()) {
 
-    final GetSizeServerMapResponseMessage responseMessage = (GetSizeServerMapResponseMessage) channel
-        .createMessage(TCMessageType.GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE);
-    responseMessage.initializeGetSizeResponse(mapID, requestID, size);
-    responseMessage.send();
+        final MessageChannel channel = getActiveChannel(clientID);
+        if (channel == null) { return; }
+
+        final GetAllSizeServerMapResponseMessage responseMessage = (GetAllSizeServerMapResponseMessage) channel
+            .createMessage(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE);
+        responseMessage.initializeGetAllSizeResponse(helper.getGroupID(), requestID, helper.getTotalSize());
+        responseMessage.send();
+      }
+    }
   }
-  
-  private void sendResponseForGetAllKeys(final ObjectID mapID, final ServerMapRequestContext request,
-                                      final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
+
+  private void sendResponseForGetAllKeys(final ObjectID mapID, final ServerMapRequestAllKeysContext request,
+                                         final ConcurrentDistributedServerMapManagedObjectState cdsmState) {
     final ServerMapRequestID requestID = request.getRequestID();
     final ClientID clientID = request.getClientID();
 
     final MessageChannel channel = getActiveChannel(clientID);
     if (channel == null) { return; }
-    
+
     final GetAllKeysServerMapResponseMessage responseMessage = (GetAllKeysServerMapResponseMessage) channel
         .createMessage(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE);
-  
+
     responseMessage.initializeGetAllKeysResponse(mapID, requestID, cdsmState.getAllKeys());
     responseMessage.send();
   }

@@ -70,8 +70,8 @@ public final class TCMessageType {
   public static final int           TYPE_SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE      = 55;
   public static final int           TYPE_GET_VALUE_SERVER_MAP_REQUEST_MESSAGE         = 56;
   public static final int           TYPE_GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE        = 57;
-  public static final int           TYPE_GET_SIZE_SERVER_MAP_REQUEST_MESSAGE          = 58;
-  public static final int           TYPE_GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE         = 59;
+  public static final int           TYPE_GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE      = 58;
+  public static final int           TYPE_GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE     = 59;
   public static final int           TYPE_TUNNELED_DOMAINS_CHANGED_MESSAGE             = 60;
   public static final int           TYPE_OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE = 61;
   public static final int           TYPE_EVICTION_SERVER_MAP_BROADCAST_MESSAGE        = 62;
@@ -123,8 +123,6 @@ public final class TCMessageType {
   public static final TCMessageType SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_VALUE_SERVER_MAP_REQUEST_MESSAGE              = new TCMessageType();
   public static final TCMessageType GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE             = new TCMessageType();
-  public static final TCMessageType GET_SIZE_SERVER_MAP_REQUEST_MESSAGE               = new TCMessageType();
-  public static final TCMessageType GET_SIZE_SERVER_MAP_RESPONSE_MESSAGE              = new TCMessageType();
   public static final TCMessageType TUNNELED_DOMAINS_CHANGED_MESSAGE                  = new TCMessageType();
   public static final TCMessageType OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE      = new TCMessageType();
   public static final TCMessageType EVICTION_SERVER_MAP_BROADCAST_MESSAGE             = new TCMessageType();
@@ -132,6 +130,8 @@ public final class TCMessageType {
   public static final TCMessageType GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
   public static final TCMessageType SEARCH_QUERY_REQUEST_MESSAGE                      = new TCMessageType();
   public static final TCMessageType SEARCH_QUERY_RESPONSE_MESSAGE                     = new TCMessageType();
+  public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
+  public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);
