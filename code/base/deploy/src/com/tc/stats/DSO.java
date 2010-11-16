@@ -747,4 +747,8 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getL2DiskFaultRate();
   }
 
+  public long getExactOffheapObjectCachedCount() {
+    return offheapStats.getExactOffheapObjectCachedCount();
+  }
+
 }

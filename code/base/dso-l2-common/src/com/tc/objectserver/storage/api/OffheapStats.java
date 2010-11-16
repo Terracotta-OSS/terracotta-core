@@ -39,9 +39,18 @@ public interface OffheapStats extends Serializable {
                                                         public long getMapAllocatedSize() {
                                                           return 0;
                                                         }
+
+                                                        public long getExactOffheapObjectCachedCount() {
+                                                          return 0;
+                                                        }
                                                       };
 
   long getOffheapObjectCachedCount();
+
+  /**
+   * This will be locked
+   */
+  long getExactOffheapObjectCachedCount();
 
   long getOffHeapFaultRate();
 
