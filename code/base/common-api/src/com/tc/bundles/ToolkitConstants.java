@@ -16,6 +16,6 @@ public class ToolkitConstants {
   public static final String  TOOLKIT_SYMBOLIC_NAME_PREFIX  = GROUP_ID + "." + ARTIFACT_ID_PREFIX;
 
   public static final Pattern TOOLKIT_SYMBOLIC_NAME_PATTERN = Pattern.compile("^" + TOOLKIT_SYMBOLIC_NAME_PREFIX
-                                                                              + API_VERSION_REGEX + "$");
+                                                                              + API_VERSION_REGEX + "(-ee)?$");
 
 }
