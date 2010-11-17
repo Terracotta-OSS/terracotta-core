@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class hold the Metadata information associated with a shared object.
+ * This class holds a collection od metadata
  * 
- * @author Nabib
+ * @author teck
  */
 public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescriptorInternal {
 
@@ -28,18 +28,18 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
   public static final MetaDataDescriptor[]    EMPTY_ARRAY = new MetaDataDescriptor[] {};
 
   private final String                        category;
-  private final List<AbstractNVPair>                  metaDatas;
+  private final List<NVPair>                  metaDatas;
 
   public MetaDataDescriptorImpl(String category) {
-    this(category, new ArrayList<AbstractNVPair>());
+    this(category, new ArrayList<NVPair>());
   }
 
-  private MetaDataDescriptorImpl(String category, List<AbstractNVPair> metaDatas) {
+  private MetaDataDescriptorImpl(String category, List<NVPair> metaDatas) {
     this.category = category;
     this.metaDatas = metaDatas;
   }
 
-  public List<AbstractNVPair> getMetaDatas() {
+  public List<NVPair> getMetaDatas() {
     return metaDatas;
   }
 
@@ -50,7 +50,7 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     final String cat = in.readString();
     final int size = in.readInt();
-    List<AbstractNVPair> data = new ArrayList<AbstractNVPair>(size);
+    List<NVPair> data = new ArrayList<NVPair>(size);
 
     for (int i = 0; i < size; i++) {
       data.add(AbstractNVPair.deserializeInstance(in));
@@ -62,7 +62,7 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
   public void serializeTo(TCByteBufferOutput out) {
     out.writeString(category);
     out.writeInt(metaDatas.size());
-    for (AbstractNVPair nvpair : metaDatas) {
+    for (NVPair nvpair : metaDatas) {
       nvpair.serializeTo(out);
     }
   }

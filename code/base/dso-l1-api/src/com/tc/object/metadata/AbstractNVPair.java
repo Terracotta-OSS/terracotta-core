@@ -14,13 +14,10 @@ import java.util.List;
 
 public abstract class AbstractNVPair implements NVPair {
 
-  private static final AbstractNVPair TEMPLATE    = new Template();
-  private static final ValueType[]    ALL_TYPES   = ValueType.values();
+  private static final AbstractNVPair TEMPLATE  = new Template();
+  private static final ValueType[]    ALL_TYPES = ValueType.values();
 
-  // TODO: Just a hack for now, figure out a long-term solution to this.
-  final static String                 ATTR_PREFIX = "ATTR@";
-
-  private String                      name;
+  private final String                name;
 
   AbstractNVPair(String name) {
     this.name = name;
@@ -30,14 +27,12 @@ public abstract class AbstractNVPair implements NVPair {
     return name;
   }
 
-  public void setName(String aName) {
-    this.name = aName;
-  }
-
   @Override
-  public String toString() {
+  public final String toString() {
     return getType() + "(" + getName() + "," + valueAsString() + ")";
   }
+
+  public abstract NVPair cloneWithNewName(String newName);
 
   @Override
   public final boolean equals(Object obj) {
@@ -55,6 +50,7 @@ public abstract class AbstractNVPair implements NVPair {
     return getType().hashCode() ^ name.hashCode() ^ valueAsString().hashCode();
   }
 
+  // XXX: make this non-public when possible
   public abstract String valueAsString();
 
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
@@ -104,6 +100,11 @@ public abstract class AbstractNVPair implements NVPair {
       throw new AssertionError();
     }
 
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      throw new UnsupportedOperationException();
+    }
+
   }
 
   public static class ByteNVPair extends AbstractNVPair {
@@ -136,6 +137,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof ByteNVPair) { return value == ((ByteNVPair) obj).value; }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new ByteNVPair(newName, value);
     }
   }
 
@@ -170,6 +176,11 @@ public abstract class AbstractNVPair implements NVPair {
       if (obj instanceof BooleanNVPair) { return value == ((BooleanNVPair) obj).value; }
       return false;
     }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new BooleanNVPair(newName, value);
+    }
   }
 
   public static class CharNVPair extends AbstractNVPair {
@@ -202,6 +213,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof CharNVPair) { return value == ((CharNVPair) obj).value; }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new CharNVPair(newName, value);
     }
   }
 
@@ -236,6 +252,11 @@ public abstract class AbstractNVPair implements NVPair {
       if (obj instanceof DoubleNVPair) { return value == ((DoubleNVPair) obj).value; }
       return false;
     }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new DoubleNVPair(newName, value);
+    }
   }
 
   public static class FloatNVPair extends AbstractNVPair {
@@ -268,6 +289,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof FloatNVPair) { return value == ((FloatNVPair) obj).value; }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new FloatNVPair(newName, value);
     }
   }
 
@@ -302,6 +328,11 @@ public abstract class AbstractNVPair implements NVPair {
       if (obj instanceof IntNVPair) { return value == ((IntNVPair) obj).value; }
       return false;
     }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new IntNVPair(newName, value);
+    }
   }
 
   public static class ShortNVPair extends AbstractNVPair {
@@ -334,6 +365,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof ShortNVPair) { return value == ((ShortNVPair) obj).value; }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new ShortNVPair(newName, value);
     }
   }
 
@@ -368,6 +404,11 @@ public abstract class AbstractNVPair implements NVPair {
       if (obj instanceof LongNVPair) { return value == ((LongNVPair) obj).value; }
       return false;
     }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new LongNVPair(newName, value);
+    }
   }
 
   public static class StringNVPair extends AbstractNVPair {
@@ -400,6 +441,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof StringNVPair) { return value.equals(((StringNVPair) obj).value); }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new StringNVPair(newName, value);
     }
   }
 
@@ -438,6 +484,11 @@ public abstract class AbstractNVPair implements NVPair {
       if (obj instanceof ByteArrayNVPair) { return Arrays.equals(value, ((ByteArrayNVPair) obj).value); }
       return false;
     }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new ByteArrayNVPair(newName, value);
+    }
   }
 
   public static class DateNVPair extends AbstractNVPair {
@@ -470,6 +521,11 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof DateNVPair) { return value.equals(((DateNVPair) obj).value); }
       return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new DateNVPair(newName, value);
     }
   }
 
@@ -518,6 +574,11 @@ public abstract class AbstractNVPair implements NVPair {
 
     public String getEnumName() {
       return enumName;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new EnumNVPair(newName, enumClass, enumName);
     }
   }
 

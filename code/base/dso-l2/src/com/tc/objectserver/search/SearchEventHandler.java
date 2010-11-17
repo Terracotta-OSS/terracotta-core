@@ -7,10 +7,15 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.object.metadata.NVPair;
+import com.tc.object.metadata.ValueType;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.metadata.AbstractMetaDataHandler;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * All search request are processed through this handler. Every context should implement
@@ -29,27 +34,27 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
    * @throws IOException
    */
   @Override
-  public void handleMetaDataEvent(EventContext context) throws EventHandlerException, IOException {
+  public void handleMetaDataEvent(EventContext context) throws EventHandlerException {
     if (context instanceof SearchUpsertContext) {
-      SearchUpsertContext sicc = (SearchUpsertContext) context;
+      SearchUpsertContext suc = (SearchUpsertContext) context;
 
       try {
-        Index index = this.indexManager.getIndex(sicc.getName());
+        Index index = this.indexManager.getIndex(suc.getName());
         if (index == null) {
-          this.indexManager.createIndex(sicc.getName(), sicc.getSchema());
-          index = this.indexManager.getIndex(sicc.getName());
+          this.indexManager.createIndex(suc.getName(), extractSchema(suc.getAttributes()));
+          index = this.indexManager.getIndex(suc.getName());
         }
-        index.upsert(sicc.getCacheKey(), sicc.getAttributes());
+        index.upsert(suc.getCacheKey(), suc.getAttributes());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
     } else if (context instanceof SearchDeleteContext) {
-      SearchDeleteContext sidc = (SearchDeleteContext) context;
+      SearchDeleteContext sdc = (SearchDeleteContext) context;
       try {
-        Index index = this.indexManager.getIndex(sidc.getName());
+        Index index = this.indexManager.getIndex(sdc.getName());
         if (index != null) {
-          index.remove(sidc.getCacheKey());
+          index.remove(sdc.getCacheKey());
         } else {
           // TODO: at least log something here
         }
@@ -60,12 +65,33 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
     } else if (context instanceof SearchQueryContext) {
       SearchQueryContext sqc = (SearchQueryContext) context;
 
-      IndexContext indexContext = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc
-          .includeKeys(), sqc.getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators());
+      IndexContext indexContext;
+      try {
+        indexContext = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
+                                                     sqc.getAttributeSet(), sqc.getSortAttributes(),
+                                                     sqc.getAggregators());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
       this.searchRequestManager.queryResponse(sqc, indexContext.getQueryResults(), indexContext.getAggregatorResults());
     } else {
       throw new AssertionError("Unknown context: " + context);
     }
+  }
+
+  private static Map<String, ValueType> extractSchema(List<NVPair> attributes) throws IndexException {
+    Map<String, ValueType> schema = new HashMap<String, ValueType>();
+
+    for (NVPair attr : attributes) {
+      ValueType prev = schema.put(attr.getName(), attr.getType());
+      if (prev != null && attr.getType() != prev) {
+        //
+        throw new IndexException("Differing types for repeated attribute: " + attr.getName());
+      }
+    }
+
+    return schema;
   }
 
   @Override

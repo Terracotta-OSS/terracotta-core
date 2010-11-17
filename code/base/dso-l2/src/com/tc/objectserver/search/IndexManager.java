@@ -7,7 +7,6 @@ import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
 import com.tc.search.SortOperations;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,7 @@ public interface IndexManager {
 
   public IndexContext searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
                                   Map<String, SortOperations> sortAttributes, List<NVPair> aggregators)
-      throws IOException;
+      throws IndexException;
 
   void shutdown();
 }

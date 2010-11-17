@@ -3,7 +3,6 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.SortOperations;
 
@@ -17,7 +16,7 @@ public interface Index {
 
   void remove(Object key) throws IndexException;
 
-  void upsert(Object key, List<AbstractNVPair> attributes) throws IndexException;
+  void upsert(Object key, List<NVPair> attributes) throws IndexException;
 
   IndexContext search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
                       Map<String, SortOperations> sortAttributes, List<NVPair> aggregators) throws IOException;

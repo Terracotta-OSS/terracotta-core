@@ -7,14 +7,14 @@ import com.tc.io.TCSerializable;
 
 public interface NVPair extends TCSerializable {
 
-  public abstract String getName();
+  String getName();
 
-  public abstract void setName(String aName);
+  ValueType getType();
 
-  public abstract String valueAsString();
+  Object getObjectValue();
 
-  public abstract ValueType getType();
+  NVPair cloneWithNewName(String newName);
 
-  public abstract Object getObjectValue();
-
+  // XXX: remove this from the interface?
+  String valueAsString();
 }
