@@ -13,9 +13,9 @@
     <dependency name="knopflerfish-tc" rev="2.0.1-20100819" org="knopflerfish-tc"/>
     <dependency name="je" rev="4.1.6" org="berkeleydb"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
-    <dependency name="log4j" rev="1.2.9" org="log4j"/>
+    <dependency name="log4j" rev="1.2.16" org="log4j"/>
     <dependency name="servlet-api-2.5" rev="6.1.8" org="org.mortbay.jetty"/>
-    <dependency name="slf4j-nop" rev="1.5.11" org="org.slf4j"/>
+    <dependency name="slf4j-log4j12" rev="1.5.11" org="org.slf4j"/>
     <dependency name="slf4j-api" rev="1.5.11" org="org.slf4j"/>
     <dependency name="trove" rev="1.1-beta-5" org="trove"/>
   </dependencies>
