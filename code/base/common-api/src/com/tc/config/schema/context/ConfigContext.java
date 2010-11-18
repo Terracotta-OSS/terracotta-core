@@ -9,15 +9,8 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.StringArrayConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.config.schema.repository.BeanRepository;
-import com.terracottatech.config.BindPort;
 
 /**
  * Binds together a {@link BeanRepository} and a {@link DefaultValueProvider}, and provides convenience methods for
@@ -40,25 +33,5 @@ public interface ConfigContext {
   Object syncLockForBean();
 
   void itemCreated(ConfigItem item);
-
-  IntConfigItem intItem(String xpath);
-
-  IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage);
-
-  StringConfigItem stringItem(String xpath);
-
-  StringArrayConfigItem stringArrayItem(String xpath);
-
-  FileConfigItem fileItem(String xpath);
-
-  FileConfigItem substitutedFileItem(String xpath);
-
-  FileConfigItem configRelativeSubstitutedFileItem(String xpath);
-
-  BooleanConfigItem booleanItem(String xpath);
-
-  BooleanConfigItem booleanItem(String xpath, boolean defaultValue);
-
-  BindPortConfigItem bindPortItem(String xpath, BindPort defaultValue);
 
 }

@@ -38,6 +38,7 @@ import java.util.Set;
  * A base class for all TVS configuration setup managers.
  */
 public class BaseTVSConfigurationSetupManager {
+  private final ConfigurationCreator              configurationCreator;
   private final MutableBeanRepository             clientBeanRepository;
   private final MutableBeanRepository             serversBeanRepository;
   private final MutableBeanRepository             systemBeanRepository;
@@ -51,13 +52,16 @@ public class BaseTVSConfigurationSetupManager {
   private final Map                               dsoApplicationConfigs;
   private final Map                               springApplicationConfigs;
 
-  public BaseTVSConfigurationSetupManager(DefaultValueProvider defaultValueProvider,
+  public BaseTVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
+                                          DefaultValueProvider defaultValueProvider,
                                           XmlObjectComparator xmlObjectComparator,
                                           IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+    Assert.assertNotNull(configurationCreator);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
     Assert.assertNotNull(illegalConfigurationChangeHandler);
 
+    this.configurationCreator = configurationCreator;
     this.systemBeanRepository = new StandardBeanRepository(System.class);
     this.clientBeanRepository = new StandardBeanRepository(Client.class);
     this.serversBeanRepository = new StandardBeanRepository(Servers.class);
@@ -96,11 +100,14 @@ public class BaseTVSConfigurationSetupManager {
     return this.xmlObjectComparator;
   }
 
-  protected final void runConfigurationCreator(ConfigurationCreator configurationCreator)
-      throws ConfigurationSetupException {
-    configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
-                                                             systemBeanRepository, tcPropertiesRepository,
-                                                             applicationsRepository);
+  protected final ConfigurationCreator configurationCreator() {
+    return this.configurationCreator;
+  }
+
+  protected final void runConfigurationCreator() throws ConfigurationSetupException {
+    this.configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
+                                                                  systemBeanRepository, tcPropertiesRepository,
+                                                                  applicationsRepository);
   }
 
   public String[] applicationNames() {
@@ -114,8 +121,7 @@ public class BaseTVSConfigurationSetupManager {
 
   public final ConfigContext createContext(BeanRepository beanRepository, File configFilePath) {
     Assert.assertNotNull(beanRepository);
-    return new StandardConfigContext(beanRepository, this.defaultValueProvider, this.illegalConfigurationChangeHandler,
-                                     configFilePath);
+    return new StandardConfigContext(beanRepository, this.defaultValueProvider, this.illegalConfigurationChangeHandler);
   }
 
   public synchronized NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
@@ -139,4 +145,5 @@ public class BaseTVSConfigurationSetupManager {
       }
     }), null));
   }
+
 }

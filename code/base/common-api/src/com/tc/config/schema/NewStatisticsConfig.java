@@ -3,8 +3,8 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.dynamic.FileConfigItem;
+import java.io.File;
 
 public interface NewStatisticsConfig {
-  FileConfigItem statisticsPath();
+  File statisticsPath();
 }

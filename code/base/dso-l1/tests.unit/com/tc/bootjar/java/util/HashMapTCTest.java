@@ -6,9 +6,7 @@ package com.tc.bootjar.java.util;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.ConfigItemListener;
 import com.tc.exception.ImplementMe;
 import com.tc.object.MockRemoteSearchRequestManager;
 import com.tc.object.MockTCObject;
@@ -706,54 +704,34 @@ public class HashMapTCTest extends TCTestCase {
     }
   }
 
-  private static class BooleanItem implements BooleanConfigItem {
+  private static class MockRuntimeOptions implements DSORuntimeLoggingOptions {
 
-    public boolean getBoolean() {
+    public boolean logDistributedMethodDebug() {
       return false;
     }
 
-    public void addListener(ConfigItemListener changeListener) {
-      //
+    public boolean logFieldChangeDebug() {
+      return false;
     }
 
-    public Object getObject() {
-      return null;
+    public boolean logLockDebug() {
+      return false;
     }
 
-    public void removeListener(ConfigItemListener changeListener) {
-      //
+    public boolean logNamedLoaderDebug() {
+      return false;
     }
 
-  }
-
-  private static class MockRuntimeOptions implements DSORuntimeLoggingOptions {
-
-    public BooleanConfigItem logDistributedMethodDebug() {
-      return new BooleanItem();
+    public boolean logNewObjectDebug() {
+      return false;
     }
 
-    public BooleanConfigItem logFieldChangeDebug() {
-      return new BooleanItem();
+    public boolean logNonPortableDump() {
+      return false;
     }
 
-    public BooleanConfigItem logLockDebug() {
-      return new BooleanItem();
-    }
-
-    public BooleanConfigItem logNamedLoaderDebug() {
-      return new BooleanItem();
-    }
-
-    public BooleanConfigItem logNewObjectDebug() {
-      return new BooleanItem();
-    }
-
-    public BooleanConfigItem logNonPortableDump() {
-      return new BooleanItem();
-    }
-
-    public BooleanConfigItem logWaitNotifyDebug() {
-      return new BooleanItem();
+    public boolean logWaitNotifyDebug() {
+      return false;
     }
 
     public void changesInItemForbidden(ConfigItem item) {
@@ -772,16 +750,16 @@ public class HashMapTCTest extends TCTestCase {
 
   private static class MockOutputOptions implements DSORuntimeOutputOptions {
 
-    public BooleanConfigItem doAutoLockDetails() {
-      return new BooleanItem();
+    public boolean doAutoLockDetails() {
+      return false;
     }
 
-    public BooleanConfigItem doCaller() {
-      return new BooleanItem();
+    public boolean doCaller() {
+      return false;
     }
 
-    public BooleanConfigItem doFullStack() {
-      return new BooleanItem();
+    public boolean doFullStack() {
+      return false;
     }
 
     public void changesInItemForbidden(ConfigItem item) {

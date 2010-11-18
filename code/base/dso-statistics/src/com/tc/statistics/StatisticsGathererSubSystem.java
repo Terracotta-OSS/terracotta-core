@@ -31,7 +31,7 @@ public class StatisticsGathererSubSystem {
 
   public synchronized boolean setup(final NewStatisticsConfig config) {
     // create the statistics store
-    File stat_path = config.statisticsPath().getFile();
+    File stat_path = config.statisticsPath();
     if (!TCFileUtils.ensureWritableDir(stat_path, 
                                        new TCFileUtils.EnsureWritableDirReporter() {
 

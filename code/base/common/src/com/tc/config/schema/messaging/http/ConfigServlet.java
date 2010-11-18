@@ -5,7 +5,7 @@ package com.tc.config.schema.messaging.http;
 
 import org.apache.commons.io.IOUtils;
 
-import com.tc.config.schema.dynamic.ConfigItem;
+import com.tc.config.schema.ConfigurationModel;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 
 import java.io.IOException;
@@ -38,9 +38,8 @@ public class ConfigServlet extends HttpServlet {
 
       if ("mode".equals(query)) {
         OutputStream out = response.getOutputStream();
-        ConfigItem configModel = configSetupManager.systemConfig().configurationModel();
-        Object configObject = configModel.getObject();
-        IOUtils.copy(IOUtils.toInputStream(configObject.toString()), out);
+        ConfigurationModel configModel = configSetupManager.systemConfig().configurationModel();
+        IOUtils.copy(IOUtils.toInputStream(configModel.toString()), out);
       } else {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         PrintWriter writer = response.getWriter();

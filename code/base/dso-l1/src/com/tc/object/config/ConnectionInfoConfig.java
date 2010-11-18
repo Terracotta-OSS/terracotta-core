@@ -7,25 +7,23 @@ package com.tc.object.config;
 import org.apache.commons.lang.StringUtils;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.DerivedConfigItem;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.net.core.ConnectionInfo;
-import com.tc.util.Assert;
 import com.tc.util.stringification.OurStringBuilder;
 
 /**
  * Returns a {@link ConnectionInfo} array from the L2 data.
  */
-public class ConnectionInfoConfigItem extends DerivedConfigItem {
+public class ConnectionInfoConfig {
   static TCLogger consoleLogger = CustomerLogging.getConsoleLogger();
+  private final ConnectionInfo[] connectionInfos;
 
-  public ConnectionInfoConfigItem(ConfigItem l2DataConfigItem) {
-    super(new ConfigItem[] { l2DataConfigItem });
+  public ConnectionInfoConfig(L2Data[] l2sData) {
+    this.connectionInfos = createValueFrom(l2sData);
   }
 
-  protected Object createValueFrom(ConfigItem[] fromWhich) {
+  private ConnectionInfo[] createValueFrom(L2Data[] l2sData) {
     ConnectionInfo[] out;
 
     String serversProperty = System.getProperty("tc.server");
@@ -53,20 +51,25 @@ public class ConnectionInfoConfigItem extends DerivedConfigItem {
         out[i] = new ConnectionInfo(host, dsoPort);
       }
     } else {
-      Assert.eval(fromWhich.length == 1);
-
-      L2Data[] l2Data = (L2Data[]) fromWhich[0].getObject();
-      out = new ConnectionInfo[l2Data.length];
+      out = new ConnectionInfo[l2sData.length];
 
       for (int i = 0; i < out.length; ++i) {
-        out[i] = new ConnectionInfo(l2Data[i].host(), l2Data[i].dsoPort(), l2Data[i].getGroupId(), l2Data[i].getGroupName());
+        out[i] = new ConnectionInfo(l2sData[i].host(), l2sData[i].dsoPort(), l2sData[i].getGroupId(), l2sData[i].getGroupName());
       }
     }
 
     return out;
   }
+  
+  public ConnectionInfo[] getConnectionInfos(){
+    return this.connectionInfos;
+  }
 
   public String toString() {
-    return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).appendSuper(super.toString()).toString();
+    StringBuilder l2sDataString = new StringBuilder();
+    for(int i = 0; i < this.connectionInfos.length; i++){
+      l2sDataString.append(this.connectionInfos[i].toString());
+    }
+    return new OurStringBuilder(this, OurStringBuilder.COMPACT_STYLE).appendSuper(l2sDataString.toString()).toString();
   }
 }

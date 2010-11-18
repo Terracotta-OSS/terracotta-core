@@ -4,39 +4,68 @@
  */
 package com.tc.config.schema;
 
-import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlString;
 
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.XPathBasedConfigItem;
+import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.util.Assert;
 import com.terracottatech.config.ConfigurationModel;
 import com.terracottatech.config.System;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 /**
  * The standard implementation of {@link NewSystemConfig}.
  */
 public class NewSystemConfigObject extends BaseNewConfigObject implements NewSystemConfig {
 
-  private final ConfigItem configurationModel;
+  private final com.tc.config.schema.ConfigurationModel configModel;
 
   public NewSystemConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(System.class);
-
-    this.configurationModel = new XPathBasedConfigItem(this.context, "configuration-model") {
-      protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-        if (xmlObject == null) return null;
-        if (((ConfigurationModel) xmlObject).enumValue().equals(ConfigurationModel.DEVELOPMENT)) return com.tc.config.schema.ConfigurationModel.DEVELOPMENT;
-        if (((ConfigurationModel) xmlObject).enumValue().equals(ConfigurationModel.PRODUCTION)) return com.tc.config.schema.ConfigurationModel.PRODUCTION;
-        throw Assert.failure("Unexpected configuration model: " + xmlObject);
-      }
-    };
+    System system = (System) this.context.bean();
+    com.terracottatech.config.ConfigurationModel.Enum model = system.getConfigurationModel();
+    Assert.assertTrue("Unexpected configuration model: " + model, model.equals(ConfigurationModel.DEVELOPMENT)
+                                                                  || model.equals(ConfigurationModel.PRODUCTION));
+    if (model.equals(ConfigurationModel.PRODUCTION)) {
+      this.configModel = com.tc.config.schema.ConfigurationModel.PRODUCTION;
+    } else {
+      this.configModel = com.tc.config.schema.ConfigurationModel.DEVELOPMENT;
+    }
   }
 
-  public ConfigItem configurationModel() {
-    return this.configurationModel;
+  public com.tc.config.schema.ConfigurationModel configurationModel() {
+    return this.configModel;
+  }
+
+  public static void initializeSystem(TcConfig config, DefaultValueProvider defaultValueProvider) throws XmlException {
+    System system;
+    if (!config.isSetSystem()) {
+      system = config.addNewSystem();
+    } else {
+      system = config.getSystem();
+    }
+    initializeConfigurationModel(system, defaultValueProvider);
+  }
+
+  private static void initializeConfigurationModel(System system, DefaultValueProvider defaultValueProvider) throws XmlException {
+    Assert.assertNotNull(system);
+    if (!system.isSetConfigurationModel()) {
+      system.setConfigurationModel(getDefaultSystemConfigurationModel(system, defaultValueProvider));
+    }
+  }
+  
+  private static ConfigurationModel.Enum getDefaultSystemConfigurationModel(System system, DefaultValueProvider defaultValueProvider) throws XmlException {
+    XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(system.schemaType(),
+                                                                              "configuration-model");
+    Assert.assertNotNull(defaultValue);
+    Assert.assertTrue(defaultValue.getStringValue().equals(ConfigurationModel.DEVELOPMENT.toString())
+                      || defaultValue.getStringValue().equals(ConfigurationModel.PRODUCTION.toString()));
+
+    if (defaultValue.getStringValue().equals(ConfigurationModel.PRODUCTION.toString())) return ConfigurationModel.PRODUCTION;
+    return ConfigurationModel.DEVELOPMENT;
   }
 
 }

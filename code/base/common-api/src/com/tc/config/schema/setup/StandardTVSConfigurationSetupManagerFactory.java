@@ -176,7 +176,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return setupManager;
   }
 
-  public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
+  public L1TVSConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec,
                                                                                         this.beanFactory);
 

@@ -5,25 +5,24 @@
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 
 /**
  * Represents the runtime-logging options for DSO.
  */
 public interface DSORuntimeLoggingOptions extends NewConfig {
 
-  BooleanConfigItem logLockDebug();
+  boolean logLockDebug();
 
-  BooleanConfigItem logFieldChangeDebug();
+  boolean logFieldChangeDebug();
 
-  BooleanConfigItem logWaitNotifyDebug();
+  boolean logWaitNotifyDebug();
 
-  BooleanConfigItem logDistributedMethodDebug();
+  boolean logDistributedMethodDebug();
 
-  BooleanConfigItem logNewObjectDebug();
+  boolean logNewObjectDebug();
 
-  BooleanConfigItem logNonPortableDump();
+  boolean logNonPortableDump();
 
-  BooleanConfigItem logNamedLoaderDebug();
+  boolean logNamedLoaderDebug();
 
 }

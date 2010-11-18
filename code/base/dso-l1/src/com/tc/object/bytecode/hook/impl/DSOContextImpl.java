@@ -105,7 +105,7 @@ public class DSOContextImpl implements DSOContext {
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
-    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+    L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
     PreparedComponentsFromL2Connection l2Connection;
     try {
@@ -144,7 +144,7 @@ public class DSOContextImpl implements DSOContext {
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
-    L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+    L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
     PreparedComponentsFromL2Connection l2Connection;
     try {
@@ -306,7 +306,7 @@ public class DSOContextImpl implements DSOContext {
                                                                                                             new FatalIllegalConfigurationChangeHandler());
 
       logger.debug("Created StandardTVSConfigurationSetupManagerFactory.");
-      L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager();
+      L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
       config.setupLogging();
       logger.debug("Created L1TVSConfigurationSetupManager.");
 
@@ -323,7 +323,7 @@ public class DSOContextImpl implements DSOContext {
 
   private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1TVSConfigurationSetupManager config)
       throws UnknownHostException, IOException, TCTimeoutException {
-    L2Data[] l2Data = (L2Data[]) config.l2Config().l2Data().getObjects();
+    L2Data[] l2Data = config.l2Config().l2Data();
     Assert.assertNotNull(l2Data);
 
     String serverHost = l2Data[0].host();

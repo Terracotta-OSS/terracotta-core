@@ -26,6 +26,7 @@ import com.tc.test.proxyconnect.ProxyConnectManagerImpl;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tctest.TestState;
+import com.terracottatech.config.Servers;
 
 import java.io.File;
 import java.io.IOException;
@@ -802,14 +803,17 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return isProxyL2groupPorts ? proxyL2GroupPorts : l2GroupPorts;
   }
 
-  public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory) {
+  public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory, Servers serversForL1) {
+    Servers serversCopy = (Servers) serversForL1.copy();
     for (int i = 0; i < serverCount; i++) {
 
       debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=["
                    + (isProxyDsoPorts ? proxyDsoPorts[i] : dsoPorts[i]) + "] jmxPort=[" + jmxPorts[i] + "]");
+      if(isProxyDsoPorts){
+        serversCopy.getServerArray(i).getDsoPort().setIntValue(proxyDsoPorts[i]);
+      }
     }
-    configFactory.addServersAndGroupToL1Config(ACTIVEPASSIVE_GROUP, serverNames, isProxyDsoPorts ? proxyDsoPorts
-        : dsoPorts, jmxPorts);
+    configFactory.addServersAndGroupToL1Config(serversCopy);
   }
 
   public void crashServer() throws Exception {

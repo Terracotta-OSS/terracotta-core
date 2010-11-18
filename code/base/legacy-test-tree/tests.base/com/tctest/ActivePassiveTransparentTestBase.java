@@ -4,29 +4,39 @@
  */
 package com.tctest;
 
+import org.apache.xmlbeans.XmlException;
+
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
+import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.util.PortChooser;
+import com.terracottatech.config.TcConfigDocument;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ActivePassiveTransparentTestBase extends MultipleServersTransparentTestBase {
 
+  @Override
   protected void runMultipleServersTest() throws Exception {
     customizeActivePassiveTest((ActivePassiveServerManager) multipleServerManager);
   }
 
   protected abstract void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager);
 
+  @Override
   protected void setUpMultipleServersTest(PortChooser portChooser, ArrayList jvmArgs) throws Exception {
     setUpActivePassiveServers(portChooser, jvmArgs);
   }
-  
+
   // to be override for L1 application config
   protected DSOApplicationConfigBuilder createDsoApplicationConfig() {
     return (new DSOApplicationConfigBuilderImpl());
@@ -46,17 +56,27 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
                                                                                 canRunL1ProxyConnect(),
                                                                                 createDsoApplicationConfig());
 
-    apServerManager.addServersAndGroupToL1Config(configFactory());
+    setupServersAndGroupsForL1s(apServerManager);
     if (canRunL2ProxyConnect()) setupL2ProxyConnectTest(apServerManager.getL2ProxyManagers());
     if (canRunL1ProxyConnect()) setupL1ProxyConnectTest(apServerManager.getL1ProxyManagers());
 
     multipleServerManager = apServerManager;
   }
 
+  private void setupServersAndGroupsForL1s(ActivePassiveServerManager apServerManager) throws XmlException,
+      IOException, ConfigurationSetupException {
+    File configFile = new File(apServerManager.getConfigFileLocation());
+    TcConfigDocument configDoc = TcConfigDocument.Factory.parse(configFile);
+    NewL2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
+        .getParentFile());
+    apServerManager.addServersAndGroupToL1Config(configFactory(), configDoc.getTcConfig().getServers());
+  }
+
   protected void customizeActivePassiveTest(ActivePassiveServerManager manager) throws Exception {
     manager.startActivePassiveServers();
   }
 
+  @Override
   public boolean isMultipleServerTest() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE.equals(mode());
   }

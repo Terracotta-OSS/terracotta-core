@@ -5,12 +5,7 @@
 package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.CompoundConfigItemListener;
-import com.tc.config.schema.dynamic.ConfigItemListener;
-import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.config.schema.dynamic.StringConfigItem;
 import com.tc.license.LicenseManager;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.AuthenticationMode;
@@ -27,67 +22,28 @@ import javax.xml.namespace.QName;
  */
 public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewCommonL2Config {
 
-  private final FileConfigItem     dataPath;
-  private final FileConfigItem     logsPath;
-  private final FileConfigItem     serverDbBackupPath;
-  private final FileConfigItem     statisticsPath;
-  private final BindPortConfigItem jmxPort;
-  private final StringConfigItem   host;
-  private final boolean            authentication;
-  private final String             passwordFile;
-  private final String             loginConfigName;
-  private final String             accessFile;
-  private final boolean            httpAuthentication;
-  private final String             userRealmFile;
-  private final FileConfigItem     indexPath;
+  private final BindPort jmxPort;
+  private final String   host;
+  private final boolean  authentication;
+  private final String   passwordFile;
+  private final String   loginConfigName;
+  private final String   accessFile;
+  private final boolean  httpAuthentication;
+  private final String   userRealmFile;
 
   public NewCommonL2ConfigObject(ConfigContext context) {
     super(context);
+    context.ensureRepositoryProvides(Server.class);
 
-    this.context.ensureRepositoryProvides(Server.class);
+    Server server = (Server) context.bean();
 
-    this.dataPath = context.configRelativeSubstitutedFileItem("data");
-    this.logsPath = context.configRelativeSubstitutedFileItem("logs");
-
-    this.serverDbBackupPath = context.configRelativeSubstitutedFileItem("data-backup");
-
-    this.statisticsPath = context.configRelativeSubstitutedFileItem("statistics");
-    this.host = context.stringItem("@host");
+    this.host = server.getHost();
 
     // JMX authentication
     String pwd = null;
     String loginConfig = null;
     String access = null;
-    Server server = (Server) context.bean();
-    if (server != null) {
-      this.authentication = server.isSetAuthentication();
-    } else {
-      this.authentication = false;
-    }
-
-    if (server != null && !server.isSetIndex()) {
-      indexPath = new FileConfigItem() {
-        private final CompoundConfigItemListener listener = new CompoundConfigItemListener();
-
-        public void removeListener(ConfigItemListener changeListener) {
-          listener.removeListener(changeListener);
-        }
-
-        public Object getObject() {
-          return getFile();
-        }
-
-        public void addListener(ConfigItemListener changeListener) {
-          listener.addListener(changeListener);
-        }
-
-        public File getFile() {
-          return new File(dataPath.getFile(), "index");
-        }
-      };
-    } else {
-      indexPath = context.configRelativeSubstitutedFileItem("index");
-    }
+    this.authentication = server.isSetAuthentication();
 
     if (authentication) {
       LicenseManager.verifyAuthenticationCapability();
@@ -115,11 +71,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
     // HTTP authentication
     String userRealm = null;
-    if (server != null) {
-      this.httpAuthentication = server.isSetHttpAuthentication();
-    } else {
-      this.httpAuthentication = false;
-    }
+    this.httpAuthentication = server.isSetHttpAuthentication();
 
     if (httpAuthentication) {
       userRealm = server.getHttpAuthentication().getUserRealmFile();
@@ -130,37 +82,39 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     }
     this.userRealmFile = userRealm;
 
-    int tempJmxPort = context.intItem("dso-port").getInt() + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-    int defaultJmxPort = ((tempJmxPort <= NewCommonL2Config.MAX_PORTNUMBER) ? tempJmxPort
-        : (tempJmxPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-
-    BindPort defJmxPort = BindPort.Factory.newInstance();
-    defJmxPort.setIntValue(defaultJmxPort);
-    defJmxPort.setBind(this.context.stringItem("@bind").getString());
-    this.jmxPort = context.bindPortItem("jmx-port", defJmxPort);
+    this.jmxPort = server.getJmxPort();
   }
 
-  public FileConfigItem dataPath() {
-    return this.dataPath;
+  public File dataPath() {
+    Server server = (Server) getBean();
+    return new File(server.getData());
   }
 
-  public FileConfigItem logsPath() {
-    return this.logsPath;
+  public File logsPath() {
+    Server server = (Server) getBean();
+    return new File(server.getLogs());
   }
 
-  public FileConfigItem statisticsPath() {
-    return this.statisticsPath;
+  public File serverDbBackupPath() {
+    Server server = (Server) getBean();
+    return new File(server.getDataBackup());
   }
 
-  public FileConfigItem serverDbBackupPath() {
-    return this.serverDbBackupPath;
+  public File statisticsPath() {
+    Server server = (Server) getBean();
+    return new File(server.getStatistics());
   }
 
-  public BindPortConfigItem jmxPort() {
+  public File indexPath() {
+    Server server = (Server) getBean();
+    return new File(server.getIndex());
+  }
+
+  public BindPort jmxPort() {
     return this.jmxPort;
   }
 
-  public StringConfigItem host() {
+  public String host() {
     return this.host;
   }
 
@@ -186,10 +140,6 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
 
   public String httpAuthenticationUserRealmFile() {
     return userRealmFile;
-  }
-
-  public FileConfigItem indexPath() {
-    return this.indexPath;
   }
 
 }

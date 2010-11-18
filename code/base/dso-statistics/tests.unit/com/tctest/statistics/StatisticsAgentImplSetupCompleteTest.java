@@ -5,15 +5,15 @@
 package com.tctest.statistics;
 
 import com.tc.config.schema.NewStatisticsConfig;
-import com.tc.config.schema.dynamic.ConfigItemListener;
-import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.StatisticsSystemType;
+
 import java.io.File;
+
 import junit.framework.TestCase;
 
 public class StatisticsAgentImplSetupCompleteTest extends TestCase {
@@ -68,25 +68,8 @@ public class StatisticsAgentImplSetupCompleteTest extends TestCase {
       this.tmpDirChild = tmpDirChild;
     }
 
-    public FileConfigItem statisticsPath() {
-      return new FileConfigItem() {
-
-        public void addListener(ConfigItemListener changeListener) {
-          throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        public Object getObject() {
-          throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        public void removeListener(ConfigItemListener changeListener) {
-          throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        public File getFile() {
-          return new File(System.getProperty("java.io.tmpdir"), tmpDirChild);
-        }
-      };
+    public File statisticsPath() {
+      return new File(System.getProperty("java.io.tmpdir"), tmpDirChild);
     }
   }
 

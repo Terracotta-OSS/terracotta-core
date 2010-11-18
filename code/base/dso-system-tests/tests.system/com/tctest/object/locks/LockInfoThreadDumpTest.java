@@ -61,7 +61,7 @@ public class LockInfoThreadDumpTest extends TransparentTestBase {
                                                                                                   null,
                                                                                                   new FatalIllegalConfigurationChangeHandler());
 
-    L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
+    L1TVSConfigurationSetupManager manager = factory.getL1TVSConfigurationSetupManager();
     setUpControlledServer(factory, new StandardDSOClientConfigHelperImpl(manager), port, adminPort, groupPort,
                           configFile.getAbsolutePath());
     doSetUp(this);

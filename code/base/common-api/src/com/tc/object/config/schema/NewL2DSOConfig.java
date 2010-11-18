@@ -5,12 +5,10 @@
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
-import com.tc.config.schema.OffHeapConfigItem;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
+import com.terracottatech.config.BindPort;
+import com.terracottatech.config.GarbageCollection;
+import com.terracottatech.config.Offheap;
+import com.terracottatech.config.Persistence;
 
 /**
  * Represents all configuration read by the DSO L2 and which is independent of application.
@@ -22,26 +20,22 @@ public interface NewL2DSOConfig extends NewConfig {
   public static final String DIRTY_OBJECTDB_BACKUP_PREFIX          = "dirty-objectdb-";
   public static final short  DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT = 20;
 
-  ConfigItem persistenceMode();
+  Persistence getPersistence();
+  
+  GarbageCollection garbageCollection();
 
-  BooleanConfigItem garbageCollectionEnabled();
+  BindPort dsoPort();
 
-  BooleanConfigItem garbageCollectionVerbose();
+  BindPort l2GroupPort();
 
-  IntConfigItem garbageCollectionInterval();
+  String host();
 
-  BindPortConfigItem dsoPort();
+  String serverName();
 
-  BindPortConfigItem l2GroupPort();
+  int clientReconnectWindow();
 
-  StringConfigItem host();
+  String bind();
 
-  StringConfigItem serverName();
-
-  IntConfigItem clientReconnectWindow();
-
-  StringConfigItem bind();
-
-  OffHeapConfigItem offHeapConfig();
+  Offheap offHeapConfig();
 
 }

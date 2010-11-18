@@ -4,19 +4,11 @@
  */
 package com.tc.config.schema;
 
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlInteger;
-import org.apache.xmlbeans.XmlObject;
-
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
-import com.tc.config.schema.dynamic.ObjectArrayXPathBasedConfigItem;
 import com.tc.net.TCSocketAddress;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
-import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
-import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -34,16 +26,13 @@ import java.util.Set;
  */
 public class L2ConfigForL1Object implements L2ConfigForL1 {
 
-  private static final String         DEFAULT_HOST = "localhost";
+  private final ConfigContext l2sContext;
+  private final ConfigContext systemContext;
 
-  private final ConfigContext         l2sContext;
-  private final ConfigContext         systemContext;
-
-  private final ObjectArrayConfigItem l2Data;
-  private final L2Data                defaultL2Data;
-  private final Map                   l2DataByName;
-  private final Map                   l2DataByGroupId;
-  private ObjectArrayConfigItem[]     l2DataByGroup;
+  private final L2Data[]      l2sData;
+  private final Map           l2DataByName;
+  private final Map           l2DataByGroupId;
+  private L2Data[][]          l2DataByGroup;
 
   public L2ConfigForL1Object(final ConfigContext l2sContext, final ConfigContext systemContext) {
     this(l2sContext, systemContext, null);
@@ -62,110 +51,56 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     this.l2DataByName = new HashMap();
     this.l2DataByGroupId = new LinkedHashMap();
 
-    this.defaultL2Data = new L2Data(DEFAULT_HOST, getL2IntDefault("server/dso-port"));
-
-    this.l2Data = new ObjectArrayXPathBasedConfigItem(this.l2sContext, ".", new L2Data[] { this.defaultL2Data }) {
-      @Override
-      protected Object fetchDataFromXmlObject(final XmlObject xmlObject) {
-        Server[] l2Array = ((Servers) xmlObject).getServerArray();
-        L2Data[] data;
-
-        if (l2Array == null || l2Array.length == 0) {
-          data = new L2Data[] { L2ConfigForL1Object.this.defaultL2Data };
-        } else {
-          data = new L2Data[l2Array.length];
-
-          for (int i = 0; i < data.length; ++i) {
-            Server l2 = l2Array[i];
-            String host = null;
-            if (l2.isSetDsoPort() && l2.getDsoPort().isSetBind()) {
-              host = l2.getDsoPort().getBind();
-            }
-            if (host == null || TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
-              host = l2.getHost();
-            }
-            String name = l2.getName();
-
-            // if (host == null) host = l2.getName();
-            if (host == null) {
-              host = L2ConfigForL1Object.this.defaultL2Data.host();
-            }
-
-            int dsoPort = (l2.getDsoPort() != null && l2.getDsoPort().getIntValue() > 0) ? l2.getDsoPort()
-                .getIntValue() : L2ConfigForL1Object.this.defaultL2Data.dsoPort();
-
-            if (name == null) {
-              name = host + ":" + dsoPort;
-            }
-
-            data[i] = new L2Data(host, dsoPort);
-            L2ConfigForL1Object.this.l2DataByName.put(name, data[i]);
-          }
-        }
-
-        organizeByGroup(xmlObject);
-
-        return data;
+    Servers servers = (Servers) this.l2sContext.bean();
+    Server[] l2Array = servers.getServerArray();
+    this.l2sData = new L2Data[l2Array.length];
+    for (int i = 0; i < l2Array.length; i++) {
+      Server l2 = l2Array[i];
+      String host = l2.getDsoPort().getBind();
+      if (TCSocketAddress.WILDCARD_IP.equals(host)) {
+        host = l2.getHost();
       }
-
-      private void organizeByGroup(final XmlObject xmlObject) {
-        MirrorGroups asgs = ((Servers) xmlObject).getMirrorGroups();
-        if (asgs == null) {
-          asgs = ((Servers) xmlObject).addNewMirrorGroups();
-        }
-        MirrorGroup[] asgArray = asgs.getMirrorGroupArray();
-        if (asgArray == null || asgArray.length == 0) {
-          MirrorGroups mgs = MirrorGroups.Factory.newInstance();
-          MirrorGroup group = mgs.addNewMirrorGroup();
-          Members members = group.addNewMembers();
-          for (Iterator iter = L2ConfigForL1Object.this.l2DataByName.keySet().iterator(); iter.hasNext();) {
-            String host = (String) iter.next();
-            members.addMember(host);
-          }
-          asgArray = mgs.getMirrorGroupArray();
-        }
-        Assert.assertNotNull(asgArray);
-        Assert.assertTrue(asgArray.length >= 1);
-
-        asgArray = ActiveCoordinatorHelper.generateGroupNames(asgArray);
-
-        for (int i = 0; i < asgArray.length; i++) {
-          String[] members = asgArray[i].getMembers().getMemberArray();
-          List groupList = (List) L2ConfigForL1Object.this.l2DataByGroupId.get(new Integer(i));
-          if (groupList == null) {
-            groupList = new ArrayList();
-            L2ConfigForL1Object.this.l2DataByGroupId.put(new Integer(i), groupList);
-          }
-          for (String member : members) {
-            L2Data data = (L2Data) L2ConfigForL1Object.this.l2DataByName.get(member);
-            if (data == null) { throw new RuntimeException(
-                                                           "The member \""
-                                                               + member
-                                                               + "\" is not persent in the server section. Please verify the configuration."); }
-            Assert.assertNotNull(data);
-            data.setGroupId(i);
-            String groupName = asgArray[i].getGroupName();
-            data.setGroupName(groupName);
-            groupList.add(data);
-          }
-        }
-      }
-    };
+      String name = l2.getName();
+      this.l2sData[i] = new L2Data(host, l2.getDsoPort().getIntValue());
+      this.l2DataByName.put(name, this.l2sData[i]);
+    }
+    organizeByGroup(servers);
   }
 
-  private int getL2IntDefault(final String xpath) {
-    try {
-      return ((XmlInteger) this.l2sContext.defaultFor(xpath)).getBigIntegerValue().intValue();
-    } catch (XmlException xmle) {
-      throw Assert.failure("Can't fetch default for " + xpath + "?", xmle);
+  private void organizeByGroup(Servers servers) {
+    MirrorGroup[] asgArray = servers.getMirrorGroups().getMirrorGroupArray();
+    Assert.assertNotNull(asgArray);
+    Assert.assertTrue(asgArray.length >= 1);
+
+    asgArray = ActiveCoordinatorHelper.generateGroupNames(asgArray);
+
+    for (int i = 0; i < asgArray.length; i++) {
+      String[] members = asgArray[i].getMembers().getMemberArray();
+      List groupList = (List) this.l2DataByGroupId.get(new Integer(i));
+      if (groupList == null) {
+        groupList = new ArrayList();
+        this.l2DataByGroupId.put(new Integer(i), groupList);
+      }
+      for (String member : members) {
+        L2Data data = (L2Data) this.l2DataByName.get(member);
+        if (data == null) { throw new RuntimeException(
+                                                       "The member \""
+                                                           + member
+                                                           + "\" is not persent in the server section. Please verify the configuration."); }
+        Assert.assertNotNull(data);
+        data.setGroupId(i);
+        String groupName = asgArray[i].getGroupName();
+        data.setGroupName(groupName);
+        groupList.add(data);
+      }
     }
   }
 
-  public ObjectArrayConfigItem l2Data() {
-    return this.l2Data;
+  public L2Data[] l2Data() {
+    return this.l2sData;
   }
 
-  public synchronized ObjectArrayConfigItem[] getL2DataByGroup() {
+  public synchronized L2Data[][] getL2DataByGroup() {
     if (this.l2DataByGroup == null) {
       createL2DataByGroup();
     }
@@ -178,7 +113,7 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
     Set keys = this.l2DataByGroupId.keySet();
     Assert.assertTrue(keys.size() > 0);
 
-    this.l2DataByGroup = new ObjectArrayConfigItem[keys.size()];
+    this.l2DataByGroup = new L2Data[keys.size()][];
 
     int l2DataByGroupPosition = 0;
     for (Iterator iter = keys.iterator(); iter.hasNext();) {
@@ -190,18 +125,8 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
         L2Data data = (L2Data) iterator.next();
         l2DataArray[position++] = data;
       }
-      setL2DataInGrp(l2DataByGroupPosition, l2DataArray);
+      this.l2DataByGroup[l2DataByGroupPosition] = l2DataArray;
       l2DataByGroupPosition++;
     }
-  }
-
-  private void setL2DataInGrp(final int l2DataByGroupPosition, final L2Data[] l2DataArray) {
-    this.l2DataByGroup[l2DataByGroupPosition] = new ObjectArrayXPathBasedConfigItem(this.l2sContext, ".",
-        new L2Data[] { this.defaultL2Data }) {
-      @Override
-      protected Object fetchDataFromXmlObject(final XmlObject xmlObject) {
-        return l2DataArray;
-      }
-    };
   }
 }

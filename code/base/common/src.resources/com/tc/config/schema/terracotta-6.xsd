@@ -363,8 +363,8 @@
 
   <xs:complexType name="dso-client-data">
     <xs:all>
-      <xs:element name="fault-count" type="non-negative-int" default="500" minOccurs="0" />
-      <xs:element name="debugging" type="dso-client-debugging" minOccurs="0" />
+      <xs:element name="fault-count" type="non-negative-int" default="500" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="debugging" type="dso-client-debugging" minOccurs="0" maxOccurs="1"/>
     </xs:all>
   </xs:complexType>
 
@@ -392,16 +392,16 @@
 
   <xs:complexType name="persistence">
     <xs:all>
-      <xs:element name="mode" type="persistence-mode" minOccurs="0" default="temporary-swap-only" />
+      <xs:element name="mode" type="persistence-mode" minOccurs="0" maxOccurs="1" default="temporary-swap-only" />
       <xs:element name="offheap" type="offheap" minOccurs="0" maxOccurs="1" />
     </xs:all>
   </xs:complexType>
 
   <xs:complexType name="dso-server-data">
     <xs:all>
-      <xs:element name="client-reconnect-window" type="positive-int" minOccurs="0" default="120" />
-      <xs:element name="persistence" type="persistence" minOccurs="0" />
-      <xs:element name="garbage-collection" type="garbage-collection" minOccurs="0" />
+      <xs:element name="client-reconnect-window" type="positive-int" minOccurs="0" maxOccurs="1" default="120" />
+      <xs:element name="persistence" type="persistence" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="garbage-collection" type="garbage-collection" minOccurs="0" maxOccurs="1" />
     </xs:all>
   </xs:complexType>
 
@@ -421,8 +421,8 @@
 
   <xs:complexType name="modules">
     <xs:sequence maxOccurs="unbounded">
-      <xs:element name="repository" type="xs:string" minOccurs="0" />
-      <xs:element name="module" type="module" minOccurs="0" />
+      <xs:element name="repository" type="xs:string" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="module" type="module" minOccurs="0" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -564,7 +564,7 @@
         </xs:annotation>
       </xs:element>
 
-      <xs:element name="data" type="path" minOccurs="0"
+      <xs:element name="data" type="path" minOccurs="0" maxOccurs="1"
         default="data">
         <xs:annotation>
           <xs:documentation>
@@ -596,7 +596,8 @@
         </xs:annotation>
       </xs:element>
 
-      <xs:element name="index" type="path" minOccurs="0" maxOccurs="1" >
+      <xs:element name="index" type="path" minOccurs="0" maxOccurs="1" 
+      default="index">
         <xs:annotation>
           <xs:documentation>
             Where should the server store its search index
@@ -641,14 +642,14 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="data-backup" type="path" minOccurs="0" default="data-backup">
+      <xs:element name="data-backup" type="path" minOccurs="0" maxOccurs="1" default="data-backup">
         <xs:annotation>
           <xs:documentation>
             Where the data should be stored in case a backup call is initiated.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="statistics" type="path" minOccurs="0"
+      <xs:element name="statistics" type="path" minOccurs="0" maxOccurs="1"
         default="statistics">
         <xs:annotation>
           <xs:documentation>
@@ -783,7 +784,7 @@
     </xs:annotation>
     <xs:all>
       <xs:element name="modules" type="modules"
-        minOccurs="0">
+        minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>
             This section contains the list of modules to use in
@@ -791,7 +792,7 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="logs" type="path" minOccurs="0"
+      <xs:element name="logs" type="path" minOccurs="0" maxOccurs="1"
         default="logs-%i">
         <xs:annotation>
           <xs:documentation>
@@ -823,7 +824,7 @@
         </xs:annotation>
       </xs:element>
       <xs:element name="dso" type="dso-client-data"
-        minOccurs="0">
+        minOccurs="0" maxOccurs="1">
         <xs:annotation>
           <xs:documentation>
             This section contains data for Terracotta DSO
@@ -926,7 +927,7 @@
     </xs:annotation>
     <xs:all>
       <xs:element name="members" type="members" minOccurs="0" />
-      <xs:element name="ha" type="ha" minOccurs="0" />
+      <xs:element name="ha" type="ha" minOccurs="0" maxOccurs="1"/>
     </xs:all>
     <xs:attribute name="group-name" type="xs:string"/>
   </xs:complexType>
@@ -1087,7 +1088,7 @@
         running your application
 
         %o refers to the name of the operating system
-        running running your application
+        running your application
 
         %a refers to the processor architecture of the
         machine running running your application %v refers

@@ -4,93 +4,54 @@
  */
 package com.tc.config.schema.setup;
 
-import org.apache.xmlbeans.XmlException;
-
+import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.repository.ApplicationsRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
-import com.tc.util.Assert;
-
-import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import com.tc.config.schema.setup.sources.ConfigurationSource;
+import com.tc.logging.TCLogging;
 
 /**
  * A {@link ConfigurationCreator} that creates config appropriate for tests only.
  */
-public class TestConfigurationCreator implements ConfigurationCreator {
+public class TestConfigurationCreator extends StandardXMLFileConfigurationCreator {
 
-  private final TestConfigBeanSet beanSet;
-  private boolean                 loadedFromTrustedSource;
-  private final Set               allRepositoriesStoredInto;
+  private final boolean trustedSource;
 
-  public TestConfigurationCreator(TestConfigBeanSet beanSet, boolean trustedSource) {
-    Assert.assertNotNull(beanSet);
-    this.beanSet = beanSet;
-    this.loadedFromTrustedSource = trustedSource;
-    this.allRepositoriesStoredInto = new HashSet();
+  public TestConfigurationCreator(final ConfigurationSpec configurationSpec, final ConfigBeanFactory beanFactory,
+                                  boolean trustedSource) {
+    super(TCLogging.getLogger(TestConfigurationCreator.class), configurationSpec, beanFactory);
+    this.trustedSource = trustedSource;
   }
 
-  public synchronized MutableBeanRepository[] allRepositoriesStoredInto() {
-    return (MutableBeanRepository[]) this.allRepositoriesStoredInto
-        .toArray(new MutableBeanRepository[this.allRepositoriesStoredInto.size()]);
+  @Override
+  protected ConfigurationSource[] getConfigurationSources(String configrationSpec) {
+    ConfigurationSource[] out = new ConfigurationSource[1];
+    out[0] = new TestConfigurationSource();
+    return out;
   }
 
-  public boolean loadedFromTrustedSource() {
-    return this.loadedFromTrustedSource;
-  }
-
-  public String describeSources() {
-    return "Dynamically-generated configuration for tests";
-  }
-
+  @Override
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
                                                   MutableBeanRepository tcPropertiesRepository,
                                                   ApplicationsRepository applicationsRepository)
       throws ConfigurationSetupException {
-    try {
-
-      l1BeanRepository.setBean(this.beanSet.clientBean(), "from test config");
-      addRepository(l1BeanRepository);
-      l1BeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-
-      l2sBeanRepository.setBean(this.beanSet.serversBean(), "from test config");
-      addRepository(l2sBeanRepository);
-      l2sBeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-
-      systemBeanRepository.setBean(this.beanSet.systemBean(), "from test config");
-      addRepository(systemBeanRepository);
-      systemBeanRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-
-      tcPropertiesRepository.setBean(this.beanSet.tcPropertiesBean(), "from test config");
-      addRepository(tcPropertiesRepository);
-      tcPropertiesRepository.saveCopyOfBeanInAnticipationOfFutureMutation();
-
-      String[] allNames = this.beanSet.applicationNames();
-      for (int i = 0; i < allNames.length; ++i) {
-        MutableBeanRepository repository = applicationsRepository.repositoryFor(allNames[i]);
-        addRepository(repository);
-        repository.setBean(this.beanSet.applicationBeanFor(allNames[i]), "from test config");
-        repository.saveCopyOfBeanInAnticipationOfFutureMutation();
-      }
-    } catch (XmlException xmle) {
-      throw new ConfigurationSetupException("Unable to set bean", xmle);
-    }
+    loadConfigAndSetIntoRepositories(l1BeanRepository, l2sBeanRepository, systemBeanRepository, tcPropertiesRepository,
+                                     applicationsRepository);
   }
 
-  public String rawConfigText() {
-    return null;
+  @Override
+  public String describeSources() {
+    return "Dynamically-generated configuration for tests";
   }
 
-  public File directoryConfigurationLoadedFrom() {
-    return null;
+  @Override
+  public boolean loadedFromTrustedSource() {
+    return this.trustedSource;
   }
 
-  private synchronized void addRepository(MutableBeanRepository theRepository) {
-    this.allRepositoriesStoredInto.add(theRepository);
-  }
-
+  @Override
   public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean b, boolean reportToConsole) {
     throw new UnsupportedOperationException();
   }

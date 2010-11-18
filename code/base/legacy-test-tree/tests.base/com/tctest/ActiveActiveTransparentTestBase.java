@@ -4,19 +4,28 @@
  */
 package com.tctest;
 
+import org.apache.xmlbeans.XmlException;
+
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
+import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activeactive.ActiveActiveServerManager;
 import com.tc.test.activeactive.ActiveActiveTestSetupManager;
 import com.tc.util.PortChooser;
+import com.terracottatech.config.TcConfigDocument;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ActiveActiveTransparentTestBase extends MultipleServersTransparentTestBase {
 
+  @Override
   protected void runMultipleServersTest() throws Exception {
     customizeActiveActiveTest((ActiveActiveServerManager) multipleServerManager);
   }
@@ -25,6 +34,7 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
     manager.startActiveActiveServers();
   }
 
+  @Override
   protected void setUpMultipleServersTest(PortChooser portChooser, ArrayList jvmArgs) throws Exception {
     setUpActiveActiveServers(portChooser, jvmArgs);
   }
@@ -46,17 +56,26 @@ public abstract class ActiveActiveTransparentTestBase extends MultipleServersTra
                                                                               canRunL2ProxyConnect(),
                                                                               canRunL1ProxyConnect(),
                                                                               createDsoApplicationConfig());
-    aaServerManager.addGroupsToL1Config(configFactory());
+    setupServersAndGroupsForL1s(aaServerManager);
     if (canRunL2ProxyConnect()) setupL2ProxyConnectTest(aaServerManager.getL2ProxyManagers());
     if (canRunL1ProxyConnect()) setupL1ProxyConnectTest(aaServerManager.getL1ProxyManagers());
 
     multipleServerManager = aaServerManager;
   }
 
+  private void setupServersAndGroupsForL1s(ActiveActiveServerManager aaServerManager) throws XmlException, IOException,
+      ConfigurationSetupException {
+    File configFile = new File(aaServerManager.getConfigFileLocation());
+    TcConfigDocument configDoc = TcConfigDocument.Factory.parse(configFile);
+    NewL2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
+        .getParentFile());
+    aaServerManager.addGroupsToL1Config(configFactory(), configDoc.getTcConfig().getServers());
+  }
+
+  @Override
   public boolean isMultipleServerTest() {
     return TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_ACTIVE.equals(mode());
   }
-
 
   protected abstract void setupActiveActiveTest(ActiveActiveTestSetupManager setupManager);
 

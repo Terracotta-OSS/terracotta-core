@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tctest.statistics;
 
@@ -15,7 +16,8 @@ public class L1SRACorrectnessTest extends AbstractAgentSRACorrectnessTestCase {
     final PortChooser pc = new PortChooser();
     final int dsoPort = pc.chooseRandomPort();
     final int jmxPort = pc.chooseRandomPort();
-    final TCServerImpl server = (TCServerImpl)startupServer(dsoPort, jmxPort);
+    final int l2GroupPort = pc.chooseRandomPort();
+    final TCServerImpl server = (TCServerImpl) startupServer(dsoPort, jmxPort, l2GroupPort);
 
     try {
       final DistributedObjectClient client = startupClient(dsoPort, jmxPort);

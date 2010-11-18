@@ -26,11 +26,11 @@ public class InstrumentationLoggerImpl implements InstrumentationLogger {
     this.logger = CustomerLogging.getDSOInstrumentationLogger();
 
     if (opts != null) {
-      this.classInclusion = opts.logClass().getBoolean();
-      this.lockInsertion = opts.logLocks().getBoolean();
-      this.transientRootWarning = opts.logTransientRoot().getBoolean();
-      this.rootInsertion = opts.logRoots().getBoolean();
-      this.distMethodCallInsertion = opts.logDistributedMethods().getBoolean();
+      this.classInclusion = opts.logClass();
+      this.lockInsertion = opts.logLocks();
+      this.transientRootWarning = opts.logTransientRoot();
+      this.rootInsertion = opts.logRoots();
+      this.distMethodCallInsertion = opts.logDistributedMethods();
     }
   }
 

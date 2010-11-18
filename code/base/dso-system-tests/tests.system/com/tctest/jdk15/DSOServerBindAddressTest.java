@@ -4,7 +4,6 @@
  */
 package com.tctest.jdk15;
 
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -22,7 +21,7 @@ import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.server.NullTCServerInfo;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.terracottatech.config.BindPort;
+import com.terracottatech.config.HaMode;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -35,7 +34,7 @@ import java.net.UnknownHostException;
  * @author Manoj
  */
 public class DSOServerBindAddressTest extends BaseDSOTestCase {
-  private TCThreadGroup           group     = new TCThreadGroup(new ThrowableHandler(TCLogging
+  private final TCThreadGroup     group     = new TCThreadGroup(new ThrowableHandler(TCLogging
                                                 .getLogger(DistributedObjectServer.class)));
   private static final String[]   bindAddrs = { "0.0.0.0", "127.0.0.1", localAddr() };
   private DistributedObjectServer server;
@@ -104,17 +103,17 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       testSocketConnect(localAddr(), ports, false);
     } else {
       // positive case
-      for (int i = 0; i < ports.length; i++) {
-        testSocket(host, ports[i], false);
+      for (int port : ports) {
+        testSocket(host, port, false);
       }
 
       if (testNegative) {
         // negative case
-        for (int i = 0; i < ports.length; i++) {
+        for (int port : ports) {
           if (addr.isLoopbackAddress()) {
-            testSocket(localAddr(), ports[i], true);
+            testSocket(localAddr(), port, true);
           } else if (InetAddress.getByName(localAddr()).equals(addr)) {
-            testSocket("127.0.0.1", ports[i], true);
+            testSocket("127.0.0.1", port, true);
           } else {
             throw new AssertionError(addr);
           }
@@ -157,17 +156,13 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
       throws ConfigurationSetupException {
     TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
     L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
-    ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue(bindAddress);
-    
-    BindPort dsoBindPort = BindPort.Factory.newInstance();
-    dsoBindPort.setIntValue(dsoPort);
-    dsoBindPort.setBind(bindAddress);
-    ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-    
-    BindPort jmxBindPort = BindPort.Factory.newInstance();
-    jmxBindPort.setIntValue(jmxPort);
-    jmxBindPort.setBind(bindAddress);
-    ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+    manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
+    manager.dsoL2Config().dsoPort().setBind(bindAddress);
+
+    manager.commonl2Config().jmxPort().setIntValue(jmxPort);
+    manager.commonl2Config().jmxPort().setBind(bindAddress);
+
+    manager.haConfig().getHa().setMode(HaMode.DISK_BASED_ACTIVE_PASSIVE);
     return manager;
   }
 }

@@ -13,7 +13,7 @@ public interface TVSConfigurationSetupManagerFactory {
   public static final String CONFIG_FILE_PROPERTY_NAME        = "tc.config";
   public static final String SERVER_CONFIG_FILE_PROPERTY_NAME = "tc.server.topology";
 
-  L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager() throws ConfigurationSetupException;
+  L1TVSConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException;
 
   /**
    * @param l2Name The name of the L2 we should create configuration for. Normally you should pass <code>null</code>,

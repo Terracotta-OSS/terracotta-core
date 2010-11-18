@@ -7,7 +7,7 @@ import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.defaults.FromSchemaDefaultValueProvider;
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.utils.StandardXmlObjectComparator;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.util.Assert;
@@ -29,7 +29,7 @@ public abstract class BaseTVSConfigurationSetupManagerFactory implements TVSConf
     this.illegalChangeHandler = illegalConfigurationChangeHandler;
     
     this.beanFactory = new TerracottaDomainConfigurationDocumentBeanFactory();
-    this.defaultValueProvider = new FromSchemaDefaultValueProvider();
+    this.defaultValueProvider = new SchemaDefaultValueProvider();
     this.xmlObjectComparator = new StandardXmlObjectComparator();
   }
 

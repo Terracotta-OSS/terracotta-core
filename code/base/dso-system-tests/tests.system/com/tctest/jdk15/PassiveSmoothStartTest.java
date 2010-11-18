@@ -5,6 +5,7 @@
 package com.tctest.jdk15;
 
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
@@ -19,11 +20,16 @@ import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.MembersConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
+import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
+import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.TcConfigDocument;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,14 +43,16 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   private final int[]      l2GroupPorts    = new int[SERVERS];
   private final int[]      proxyPorts      = new int[SERVERS];
   private final String[]   serverNames     = new String[SERVERS];
-  private String           persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
+  private final String     persistenceMode = L2ConfigBuilder.PERSISTENCE_MODE_PERMANENT_STORE;
   private File[]           configFiles;
   String[]                 serverDataPath  = new String[SERVERS];
 
+  @Override
   protected Class getApplicationClass() {
     return PassiveSmoothStartTestApp.class;
   }
 
+  @Override
   public void setUp() throws Exception {
     assertEquals(SERVERS, 2);
     setPorts();
@@ -61,7 +69,7 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
                                                                                                   new FatalIllegalConfigurationChangeHandler());
     // to be used by in-process clients
     setConfigFactory(factory);
-    L1TVSConfigurationSetupManager manager = factory.createL1TVSConfigurationSetupManager();
+    L1TVSConfigurationSetupManager manager = factory.getL1TVSConfigurationSetupManager();
     setUpForMultipleExternalProcesses(factory, new StandardDSOClientConfigHelperImpl(manager), dsoPorts, jmxPorts,
                                       l2GroupPorts, null, serverNames, configFiles);
     doSetUp(this);
@@ -77,7 +85,22 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   }
 
   private void setConfigFactory(TestTVSConfigurationSetupManagerFactory factory) {
-    factory.addServersAndGroupToL1Config("passive-smooth-start", serverNames, dsoPorts, jmxPorts);
+    TcConfig tcConfig = TcConfigDocument.Factory.newInstance().addNewTcConfig();
+    Servers servers = tcConfig.addNewServers();
+    for (int i = 0; i < SERVERS; i++) {
+      Server server = servers.addNewServer();
+      server.setName(serverNames[i]);
+      server.setHost("localhost");
+      server.addNewDsoPort().setIntValue(dsoPorts[i]);
+      server.addNewJmxPort().setIntValue(jmxPorts[i]);
+    }
+    try {
+      NewL2DSOConfigObject.initializeServers(tcConfig, new SchemaDefaultValueProvider(), getTempDirectory());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    servers.getMirrorGroups().getMirrorGroupArray(0).setGroupName("passive-smooth-start");
+    factory.addServersAndGroupToL1Config(servers);
   }
 
   private void writeConfigFile(File configFile, int index) {
@@ -169,17 +192,17 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
   }
 
   private boolean isUnusedPort(int port) {
-    for (int i = 0; i < dsoPorts.length; i++) {
-      if (dsoPorts[i] == port) { return false; }
+    for (int dsoPort2 : dsoPorts) {
+      if (dsoPort2 == port) { return false; }
     }
-    for (int i = 0; i < jmxPorts.length; i++) {
-      if (jmxPorts[i] == port) { return false; }
+    for (int jmxPort : jmxPorts) {
+      if (jmxPort == port) { return false; }
     }
-    for (int i = 0; i < l2GroupPorts.length; i++) {
-      if (l2GroupPorts[i] == port) { return false; }
+    for (int l2GroupPort : l2GroupPorts) {
+      if (l2GroupPort == port) { return false; }
     }
-    for (int i = 0; i < proxyPorts.length; i++) {
-      if (proxyPorts[i] == port) { return false; }
+    for (int proxyPort : proxyPorts) {
+      if (proxyPort == port) { return false; }
     }
     return true;
   }

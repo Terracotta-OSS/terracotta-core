@@ -55,11 +55,11 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
     isBackupRunning = new SynchronizedBoolean(false);
 
-    String destDir = safeFilePath(configSetupManager.commonl2Config().serverDbBackupPath().getFile());
+    String destDir = safeFilePath(configSetupManager.commonl2Config().serverDbBackupPath());
     throttleTime = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L2_DATA_BACKUP_THROTTLE_TIME, 0);
 
     if (destDir == null) {
-      destDir = safeFilePath(configSetupManager.commonl2Config().dataPath().getFile());
+      destDir = safeFilePath(configSetupManager.commonl2Config().dataPath());
       destDir = destDir + File.separator + "backup";
     }
 

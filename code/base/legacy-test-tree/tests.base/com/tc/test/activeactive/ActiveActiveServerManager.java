@@ -18,6 +18,7 @@ import com.tc.test.activepassive.ActivePassiveServerManager;
 import com.tc.test.activepassive.ActivePassiveTestSetupManager;
 import com.tc.test.proxyconnect.ProxyConnectManager;
 import com.tc.util.PortChooser;
+import com.terracottatech.config.Servers;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,8 +82,8 @@ public class ActiveActiveServerManager extends MultipleServerManager {
                                                            tempDir, configFactory, dsoApplicationBuilder);
     serverConfigCreator.writeL2Config();
 
-    for (int i = 0; i < activePassiveServerManagers.length; i++) {
-      activePassiveServerManagers[i].setConfigCreator(serverConfigCreator);
+    for (ActivePassiveServerManager activePassiveServerManager : activePassiveServerManagers) {
+      activePassiveServerManager.setConfigCreator(serverConfigCreator);
     }
 
     if (isProxyDsoPorts) {
@@ -154,10 +155,10 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   private void setL2ProxyManagers() {
     proxyL2Managers = new ProxyConnectManager[setupManger.getServerCount()];
     int count = 0;
-    for (int i = 0; i < activePassiveServerManagers.length; i++) {
-      ProxyConnectManager[] managers = activePassiveServerManagers[i].getL2ProxyManagers();
-      for (int j = 0; j < managers.length; j++) {
-        proxyL2Managers[count] = managers[j];
+    for (ActivePassiveServerManager activePassiveServerManager : activePassiveServerManagers) {
+      ProxyConnectManager[] managers = activePassiveServerManager.getL2ProxyManagers();
+      for (ProxyConnectManager manager : managers) {
+        proxyL2Managers[count] = manager;
         count++;
       }
     }
@@ -166,10 +167,10 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   private void setL1ProxyManagers() {
     proxyL1Managers = new ProxyConnectManager[setupManger.getServerCount()];
     int count = 0;
-    for (int i = 0; i < activePassiveServerManagers.length; i++) {
-      ProxyConnectManager[] managers = activePassiveServerManagers[i].getL1ProxyManagers();
-      for (int j = 0; j < managers.length; j++) {
-        proxyL1Managers[count] = managers[j];
+    for (ActivePassiveServerManager activePassiveServerManager : activePassiveServerManagers) {
+      ProxyConnectManager[] managers = activePassiveServerManager.getL1ProxyManagers();
+      for (ProxyConnectManager manager : managers) {
+        proxyL1Managers[count] = manager;
         count++;
       }
     }
@@ -192,6 +193,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     return testSetupManager;
   }
 
+  @Override
   public ProxyConnectManager[] getL2ProxyManagers() {
     return proxyL2Managers;
   }
@@ -222,6 +224,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
       threads[i].join();
   }
 
+  @Override
   public List getErrors() {
     List l = new ArrayList();
     int grpCount = setupManger.getActiveServerGroupCount();
@@ -232,6 +235,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     return l;
   }
 
+  @Override
   public void stopAllServers() throws Exception {
     int grpCount = setupManger.getActiveServerGroupCount();
 
@@ -240,6 +244,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     }
   }
 
+  @Override
   public void dumpAllServers(int currentPid, int dumpCount, long dumpInterval) throws Exception {
     int grpCount = setupManger.getActiveServerGroupCount();
 
@@ -248,10 +253,12 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     }
   }
 
-  public void addGroupsToL1Config(TestTVSConfigurationSetupManagerFactory configFactory) {
-    configFactory.addServersAndGroupsToL1Config(groupsData);
+  public void addGroupsToL1Config(TestTVSConfigurationSetupManagerFactory configFactory, Servers servers) {
+    Servers serversCopy = (Servers) servers.copy();
+    configFactory.addServersAndGroupToL1Config(serversCopy);
   }
 
+  @Override
   public void crashActiveServers() throws Exception {
     int grpCount = setupManger.getActiveServerGroupCount();
 
@@ -295,10 +302,10 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   public ServerControl[] getServerControls() {
     ServerControl[] controls = new ServerControl[setupManger.getServerCount()];
     int count = 0;
-    for (int i = 0; i < activePassiveServerManagers.length; i++) {
-      ServerControl[] managers = activePassiveServerManagers[i].getServerControls();
-      for (int j = 0; j < managers.length; j++) {
-        controls[count] = managers[j];
+    for (ActivePassiveServerManager activePassiveServerManager : activePassiveServerManagers) {
+      ServerControl[] managers = activePassiveServerManager.getServerControls();
+      for (ServerControl manager : managers) {
+        controls[count] = manager;
         count++;
       }
     }
@@ -306,18 +313,22 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     return controls;
   }
 
+  @Override
   public String getConfigFileLocation() {
     return configFileLocation;
   }
 
+  @Override
   public int getDsoPort() {
     return activePassiveServerManagers[0].getDsoPort();
   }
 
+  @Override
   public int getJMXPort() {
     return activePassiveServerManagers[0].getJMXPort();
   }
 
+  @Override
   public int getL2GroupPort() {
     return activePassiveServerManagers[0].getL2GroupPort();
   }

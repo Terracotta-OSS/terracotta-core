@@ -6,12 +6,10 @@ package com.tctest;
 
 import org.apache.commons.io.CopyUtils;
 
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tctest.runner.TransparentAppConfig;
-import com.terracottatech.config.BindPort;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,13 +56,9 @@ public abstract class ServerCrashingTestBase extends TransparentTestBase {
     configFile = getTempFile("config-file.xml");
     writeConfigFile();
 
-    BindPort dsoBindPort = BindPort.Factory.newInstance();
-    dsoBindPort.setIntValue(port);
-    ((SettableConfigItem) configFactory().l2DSOConfig().dsoPort()).setValue(dsoBindPort);
+    configFactory().l2DSOConfig().dsoPort().setIntValue(port);
 
-    BindPort jmxBindPort = BindPort.Factory.newInstance();
-    jmxBindPort.setIntValue(adminPort);
-    ((SettableConfigItem) configFactory().l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+    configFactory().l2CommonConfig().jmxPort().setIntValue(adminPort);
     setupConfigLogDataStatisticsPaths(configFactory());
 
     setUpControlledServer(configFactory(), configHelper(), port, adminPort, groupPort, configFile.getAbsolutePath(),

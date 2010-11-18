@@ -7,14 +7,7 @@ package com.tc.config.schema.context;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.StringArrayConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
-import com.terracottatech.config.BindPort;
 
 public class MockConfigContext implements ConfigContext {
 
@@ -130,38 +123,6 @@ public class MockConfigContext implements ConfigContext {
     this.lastItemCreated = item;
   }
 
-  public IntConfigItem intItem(String xpath) {
-    return null;
-  }
-
-  public IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage) {
-    return null;
-  }
-
-  public StringConfigItem stringItem(String xpath) {
-    return null;
-  }
-
-  public StringArrayConfigItem stringArrayItem(String xpath) {
-    return null;
-  }
-
-  public FileConfigItem fileItem(String xpath) {
-    return null;
-  }
-
-  public BooleanConfigItem booleanItem(String xpath) {
-    return null;
-  }
-
-  public BooleanConfigItem booleanItem(String xpath, boolean defaultValue) {
-    return null;
-  }
-
-  public FileConfigItem substitutedFileItem(String xpath) {
-    return null;
-  }
-
   public ConfigItem getLastItemCreated() {
     return lastItemCreated;
   }
@@ -217,14 +178,6 @@ public class MockConfigContext implements ConfigContext {
   public void setReturnedIllegalConfigurationChangeHandler(
                                                            IllegalConfigurationChangeHandler returnedIllegalConfigurationChangeHandler) {
     this.returnedIllegalConfigurationChangeHandler = returnedIllegalConfigurationChangeHandler;
-  }
-
-  public FileConfigItem configRelativeSubstitutedFileItem(String xpath) {
-    return null;
-  }
-
-  public BindPortConfigItem bindPortItem(String xpath, BindPort bindPort) {
-    return null;
   }
 
 }

@@ -124,10 +124,10 @@ public class TCStop {
 
       NewCommonL2Config serverConfig = manager.commonL2ConfigFor(name);
 
-      host = serverConfig.host().getString();
+      host = serverConfig.host();
       if (host == null) host = name;
       if (host == null) host = DEFAULT_HOST;
-      port = serverConfig.jmxPort().getBindPort();
+      port = serverConfig.jmxPort().getIntValue();
       consoleLogger.info("Host: " + host + ", port: " + port);
     } else {
       if (arguments.length == 0) {

@@ -4,33 +4,31 @@
  */
 package com.tc.config.schema;
 
-import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
-import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
 import com.tc.util.ActiveCoordinatorHelper;
+import com.tc.util.Assert;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
-
-import java.util.Comparator;
+import com.terracottatech.config.Servers;
 
 public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
   private final ActiveServerGroupConfig[] groupConfigArray;
   private final int                       activeServerGroupCount;
 
   public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager)
-      throws XmlException, ConfigurationSetupException {
+      throws ConfigurationSetupException {
     super(context);
     context.ensureRepositoryProvides(MirrorGroups.class);
-    final MirrorGroups groups = (MirrorGroups) context.bean();
 
+    MirrorGroups groups = (MirrorGroups) context.bean();
     if (groups == null) { throw new AssertionError(
                                                    "ActiveServerGroups is null!  This should never happen since we make sure default is used."); }
 
@@ -43,15 +41,10 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
 
     ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
 
-    for (int i = 0; i < groupArray.length; i++) {
-      // if no Ha element defined for this group then set it to common ha
-      if (!groupArray[i].isSetHa()) {
-        groupArray[i].setHa(setupManager.getCommomOrDefaultHa().getHa());
-      }
+    for (int i = 0; i < tempGroupConfigArray.length; i++) {
       tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
                                                                   setupManager);
     }
-
     this.groupConfigArray = ActiveCoordinatorHelper.generateGroupInfo(tempGroupConfigArray);
   }
 
@@ -61,6 +54,13 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
 
   public ActiveServerGroupConfig[] getActiveServerGroupArray() {
     return groupConfigArray;
+  }
+
+  public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
+    for (int groupCount = 0; groupCount < activeServerGroupCount; groupCount++) {
+      if (groupConfigArray[groupCount].isMember(name)) { return groupConfigArray[groupCount]; }
+    }
+    return null;
   }
 
   private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager, final MirrorGroup group) {
@@ -73,27 +73,32 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     return setupManager.createContext(beanRepository, setupManager.getConfigFilePath());
   }
 
-  public static MirrorGroups getDefaultActiveServerGroups(DefaultValueProvider defaultValueProvider,
-                                                          MutableBeanRepository serversBeanRepository, Ha commonHa)
+  public static void createDefaultServerMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
       throws ConfigurationSetupException {
-    MirrorGroups asgs = MirrorGroups.Factory.newInstance();
-    MirrorGroup[] groupArray = new MirrorGroup[1];
-    groupArray[0] = ActiveServerGroupConfigObject.getDefaultActiveServerGroup(defaultValueProvider,
-                                                                              serversBeanRepository, commonHa);
-    asgs.setMirrorGroupArray(groupArray);
-    return asgs;
+    Ha ha = servers.getHa();
+    Assert.assertNotNull(ha);
+    servers.addNewMirrorGroups();
+    ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers, ha);
   }
 
-  public ActiveServerGroupConfig getActiveServerGroupForL2(String name) {
-    for (int groupCount = 0; groupCount < activeServerGroupCount; groupCount++) {
-      if (groupConfigArray[groupCount].isMember(name)) { return groupConfigArray[groupCount]; }
-    }
-    return null;
-  }
+  public static void initializeMirrorGroups(Servers servers, DefaultValueProvider defaultValueProvider)
+      throws ConfigurationSetupException {
+    Assert.assertTrue(servers.isSetHa());
+    if (!servers.isSetMirrorGroups()) {
+      createDefaultServerMirrorGroups(servers, defaultValueProvider);
+    } else {
+      MirrorGroup[] mirrorGroups = servers.getMirrorGroups().getMirrorGroupArray();
+      if (mirrorGroups.length == 0) {
+        ActiveServerGroupConfigObject.createDefaultMirrorGroup(servers, servers.getHa());
+      }
 
-  public static class ActiveGroupNameComparator implements Comparator<ActiveServerGroupConfig> {
-    public int compare(ActiveServerGroupConfig obj1, ActiveServerGroupConfig obj2) {
-      return obj1.getGroupName().compareTo(obj2.getGroupName());
+      for (MirrorGroup mirrorGroup : mirrorGroups) {
+        if (!mirrorGroup.isSetHa()) {
+          mirrorGroup.setHa(servers.getHa());
+        } else {
+          NewHaConfigObject.checkAndInitializeHa(mirrorGroup.getHa(), servers.getHa());
+        }
+      }
     }
   }
 }

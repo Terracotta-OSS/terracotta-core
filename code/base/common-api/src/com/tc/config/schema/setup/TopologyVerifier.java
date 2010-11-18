@@ -3,8 +3,6 @@
  */
 package com.tc.config.schema.setup;
 
-import org.apache.xmlbeans.XmlException;
-
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.repository.MutableBeanRepository;
@@ -24,22 +22,19 @@ import java.util.Map;
 import java.util.Set;
 
 public class TopologyVerifier {
-  private final Servers                                oldServersBean;
-  private final Servers                                newServersBean;
-  private final ActiveServerGroupsConfig               oldGroupsInfo;
-  private final ServerConnectionValidator              serverConnectionValidator;
-  private final StandardL2TVSConfigurationSetupManager setupManager;
+  private final Servers                   oldServersBean;
+  private final Servers                   newServersBean;
+  private final ActiveServerGroupsConfig  oldGroupsInfo;
+  private final ServerConnectionValidator serverConnectionValidator;
 
-  private static final TCLogger                        logger = TCLogging.getLogger(TopologyVerifier.class);
+  private static final TCLogger           logger = TCLogging.getLogger(TopologyVerifier.class);
 
   TopologyVerifier(MutableBeanRepository oldServers, MutableBeanRepository newServers,
-                   ActiveServerGroupsConfig oldGroupsInfo, ServerConnectionValidator serverConnectionValidator,
-                   StandardL2TVSConfigurationSetupManager setupManager) {
+                   ActiveServerGroupsConfig oldGroupsInfo, ServerConnectionValidator serverConnectionValidator) {
     this.oldServersBean = (Servers) oldServers.bean();
     this.newServersBean = (Servers) newServers.bean();
     this.oldGroupsInfo = oldGroupsInfo;
     this.serverConnectionValidator = serverConnectionValidator;
-    this.setupManager = setupManager;
   }
 
   /**
@@ -166,14 +161,6 @@ public class TopologyVerifier {
   }
 
   private boolean isHaModeSame(Ha oldHa, Ha newHa) {
-    if (newHa == null) {
-      try {
-        newHa = this.setupManager.getCommomOrDefaultHa().getHa();
-      } catch (XmlException e) {
-        return false;
-      }
-    }
-
     if (oldHa.getMode().equals(newHa.getMode())) { return true; }
     return false;
   }

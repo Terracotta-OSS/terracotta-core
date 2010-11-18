@@ -5,8 +5,8 @@ package com.tc.object.config.schema;
 
 import com.tc.config.schema.BaseNewConfigObject;
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.terracottatech.config.DsoClientData;
+import com.terracottatech.config.InstrumentationLogging;
 
 /**
  * The standard implementation of {@link DSOInstrumentationLoggingOptions}.
@@ -14,42 +14,45 @@ import com.terracottatech.config.DsoClientData;
 public class StandardDSOInstrumentationLoggingOptions extends BaseNewConfigObject implements
     DSOInstrumentationLoggingOptions {
 
-  private final BooleanConfigItem logClass;
-  private final BooleanConfigItem logLocks;
-  private final BooleanConfigItem logTransientRoot;
-  private final BooleanConfigItem logRoots;
-  private final BooleanConfigItem logDistributedMethods;
-
   public StandardDSOInstrumentationLoggingOptions(ConfigContext context) {
     super(context);
-
     this.context.ensureRepositoryProvides(DsoClientData.class);
-
-    this.logClass = this.context.booleanItem("debugging/instrumentation-logging/class");
-    this.logLocks = this.context.booleanItem("debugging/instrumentation-logging/locks");
-    this.logTransientRoot = this.context.booleanItem("debugging/instrumentation-logging/transient-root");
-    this.logRoots = this.context.booleanItem("debugging/instrumentation-logging/roots");
-    this.logDistributedMethods = this.context.booleanItem("debugging/instrumentation-logging/distributed-methods");
   }
 
-  public BooleanConfigItem logClass() {
-    return this.logClass;
+  public boolean logClass() {
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    return logging.getClass1();
   }
 
-  public BooleanConfigItem logLocks() {
-    return this.logLocks;
+  public boolean logLocks() {
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    return logging.getLocks();
   }
 
-  public BooleanConfigItem logTransientRoot() {
-    return this.logTransientRoot;
+  public boolean logTransientRoot() {
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    return logging.getTransientRoot();
   }
 
-  public BooleanConfigItem logRoots() {
-    return this.logRoots;
+  public boolean logRoots() {
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    return logging.getRoots();
   }
 
-  public BooleanConfigItem logDistributedMethods() {
-    return this.logDistributedMethods;
+  public boolean logDistributedMethods() {
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    return logging.getDistributedMethods();
   }
 
+  //used STRICTLY for test
+  public void setLogDistributedMethods(boolean val){
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    InstrumentationLogging logging = dsoClientData.getDebugging().getInstrumentationLogging();
+    logging.setDistributedMethods(val);
+  }
 }

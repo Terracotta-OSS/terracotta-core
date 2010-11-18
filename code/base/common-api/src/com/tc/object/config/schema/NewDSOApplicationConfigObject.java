@@ -4,93 +4,142 @@
  */
 package com.tc.object.config.schema;
 
-import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlBoolean;
+import org.apache.xmlbeans.XmlException;
 
 import com.tc.config.schema.BaseNewConfigObject;
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.StringArrayConfigItem;
-import com.tc.config.schema.dynamic.XPathBasedConfigItem;
+import com.tc.config.schema.defaults.DefaultValueProvider;
+import com.tc.util.Assert;
+import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
+import com.terracottatech.config.TransientFields;
+import com.terracottatech.config.WebApplications;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class NewDSOApplicationConfigObject extends BaseNewConfigObject implements NewDSOApplicationConfig {
-  private final ConfigItem            instrumentedClasses;
-  private final StringArrayConfigItem transientFields;
-  private final ConfigItem            locks;
-  private final ConfigItem            roots;
-  private final StringArrayConfigItem additionalBootJarClasses;
-  private final BooleanConfigItem     supportSharingThroughReflection;
-  private final StringArrayConfigItem webApplications;
+  private final InstrumentedClass[]                instrumentedClasses;
+  private final TransientFields                    transientFields;
+  private final com.tc.object.config.schema.Root[] roots;
+  private final AdditionalBootJarClasses           additionalBootJarClasses;
+  private final boolean                            supportSharingThroughReflection;
+  private final WebApplications                    webApplications;
 
   public NewDSOApplicationConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(DsoApplication.class);
+    DsoApplication dsoApplication = (DsoApplication) this.context.bean();
 
-    this.instrumentedClasses = new XPathBasedConfigItem(this.context, "instrumented-classes") {
-      protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-        return ConfigTranslationHelper.translateIncludes(xmlObject);
-      }
-    };
+    if (!dsoApplication.isSetInstrumentedClasses()) {
+      dsoApplication.addNewInstrumentedClasses();
+    }
+    this.instrumentedClasses = ConfigTranslationHelper.translateIncludes(dsoApplication.getInstrumentedClasses());
 
-    this.locks = new XPathBasedConfigItem(this.context, "locks") {
-      protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-        return ConfigTranslationHelper.translateLocks(xmlObject);
-      }
-    };
+    if (!dsoApplication.isSetLocks()) {
+      dsoApplication.addNewLocks();
+    }
 
-    this.roots = new XPathBasedConfigItem(this.context, "roots") {
-      protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-        return translateRoots(xmlObject);
-      }
-    };
+    if (!dsoApplication.isSetRoots()) {
+      dsoApplication.addNewRoots();
+    }
+    this.roots = translateRoots(dsoApplication.getRoots());
 
-    this.transientFields = this.context.stringArrayItem("transient-fields");
-    this.additionalBootJarClasses = this.context.stringArrayItem("additional-boot-jar-classes");
-    this.webApplications = this.context.stringArrayItem("web-applications");
-    this.supportSharingThroughReflection = this.context.booleanItem("dso-reflection-enabled");
+    if (!dsoApplication.isSetTransientFields()) {
+      dsoApplication.addNewTransientFields();
+    }
+    this.transientFields = dsoApplication.getTransientFields();
+
+    if (!dsoApplication.isSetAdditionalBootJarClasses()) {
+      dsoApplication.addNewAdditionalBootJarClasses();
+    }
+    this.additionalBootJarClasses = dsoApplication.getAdditionalBootJarClasses();
+
+    if (!dsoApplication.isSetWebApplications()) {
+      dsoApplication.addNewWebApplications();
+    }
+    this.webApplications = dsoApplication.getWebApplications();
+
+    this.supportSharingThroughReflection = dsoApplication.getDsoReflectionEnabled();
   }
 
-  public StringArrayConfigItem webApplications() {
+  public WebApplications webApplications() {
     return this.webApplications;
   }
 
-  public ConfigItem instrumentedClasses() {
+  public InstrumentedClass[] instrumentedClasses() {
     return this.instrumentedClasses;
   }
 
-  public StringArrayConfigItem transientFields() {
+  public TransientFields transientFields() {
     return this.transientFields;
   }
 
-  public ConfigItem locks() {
-    return this.locks;
+  public Lock[] locks() {
+    DsoApplication dsoApplication = (DsoApplication) this.context.bean();
+    return ConfigTranslationHelper.translateLocks(dsoApplication.getLocks());
   }
 
-  public ConfigItem roots() {
+  public com.tc.object.config.schema.Root[] roots() {
     return this.roots;
   }
 
-  public StringArrayConfigItem additionalBootJarClasses() {
+  public AdditionalBootJarClasses additionalBootJarClasses() {
     return this.additionalBootJarClasses;
   }
 
-  public BooleanConfigItem supportSharingThroughReflection() {
-    return supportSharingThroughReflection;
+  public boolean supportSharingThroughReflection() {
+    return this.supportSharingThroughReflection;
   }
 
-  private static Object translateRoots(XmlObject xmlObject) {
-    if (xmlObject == null) return null;
+  private static com.tc.object.config.schema.Root[] translateRoots(Roots roots) {
 
     com.tc.object.config.schema.Root[] out;
-    Root[] theRoots = ((Roots) xmlObject).getRootArray();
+    Root[] theRoots = roots.getRootArray();
     out = new com.tc.object.config.schema.Root[theRoots == null ? 0 : theRoots.length];
     for (int i = 0; i < out.length; ++i) {
       out[i] = new com.tc.object.config.schema.Root(theRoots[i].getRootName(), theRoots[i].getFieldName());
     }
     return out;
   }
+
+  public static void initializeApplication(TcConfig config, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    Application application;
+    if (!config.isSetApplication()) {
+      application = config.addNewApplication();
+    } else {
+      application = config.getApplication();
+    }
+    initializeApplicationDso(application, defaultValueProvider);
+  }
+
+  private static void initializeApplicationDso(Application application, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    if (!application.isSetDso()) {
+      application.addNewDso();
+    }
+
+    initializeDsoReflectionEnabled(application, defaultValueProvider);
+  }
+
+  private static void initializeDsoReflectionEnabled(Application application, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    Assert.assertTrue(application.isSetDso());
+
+    DsoApplication dsoApplication = application.getDso();
+    if (!dsoApplication.isSetDsoReflectionEnabled()) {
+      dsoApplication.setDsoReflectionEnabled(getDefaultDsoReflectionEnabled(application, defaultValueProvider));
+    }
+  }
+
+  private static boolean getDefaultDsoReflectionEnabled(Application application,
+                                                        DefaultValueProvider defaultValueProvider) throws XmlException {
+    return ((XmlBoolean) defaultValueProvider.defaultFor(application.schemaType(), "dso/dso-reflection-enabled"))
+        .getBooleanValue();
+  }
+
 }

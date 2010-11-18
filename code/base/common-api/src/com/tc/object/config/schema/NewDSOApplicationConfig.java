@@ -1,30 +1,31 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.StringArrayConfigItem;
+import com.terracottatech.config.AdditionalBootJarClasses;
+import com.terracottatech.config.TransientFields;
+import com.terracottatech.config.WebApplications;
 
 /**
  * Represents the per-application config for DSO.
  */
 public interface NewDSOApplicationConfig extends NewConfig {
 
-  ConfigItem instrumentedClasses();
+  InstrumentedClass[] instrumentedClasses();
 
-  StringArrayConfigItem transientFields();
+  TransientFields transientFields();
 
-  ConfigItem locks();
+  Lock[] locks();
 
-  ConfigItem roots();
+  Root[] roots();
 
-  StringArrayConfigItem additionalBootJarClasses();
+  AdditionalBootJarClasses additionalBootJarClasses();
 
-  BooleanConfigItem supportSharingThroughReflection();
+  boolean supportSharingThroughReflection();
 
-  StringArrayConfigItem webApplications();
+  WebApplications webApplications();
 
 }

@@ -5,7 +5,6 @@
 package com.tc.net.protocol.tcm;
 
 import com.tc.cluster.DsoClusterImpl;
-import com.tc.config.schema.SettableConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
@@ -36,7 +35,6 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
-import com.terracottatech.config.BindPort;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -69,7 +67,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
     final TCServerImpl server = (TCServerImpl) startupServer(dsoPort, jmxPort);
     server.getDSOServer().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
 
-    configFactory().addServerToL1Config(null, dsoPort, jmxPort);
+    configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
     L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
     preparedComponentsFromL2Connection = new PreparedComponentsFromL2Connection(manager);
 
@@ -219,15 +217,12 @@ public class ClientShutdownTest extends BaseDSOTestCase {
       ManagedObjectStateFactory.disableSingleton(true);
       TestTVSConfigurationSetupManagerFactory factory = configFactory();
       L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
-      ((SettableConfigItem) factory.l2DSOConfig().bind()).setValue("127.0.0.1");
-      
-      BindPort dsoBindPort = BindPort.Factory.newInstance();
-      dsoBindPort.setIntValue(dsoPort);
-      ((SettableConfigItem) factory.l2DSOConfig().dsoPort()).setValue(dsoBindPort);
-      
-      BindPort jmxBindPort = BindPort.Factory.newInstance();
-      jmxBindPort.setIntValue(jmxPort);
-      ((SettableConfigItem) factory.l2CommonConfig().jmxPort()).setValue(jmxBindPort);
+
+      manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
+      manager.dsoL2Config().dsoPort().setBind("127.0.0.1");
+
+      manager.commonl2Config().jmxPort().setIntValue(jmxPort);
+      manager.commonl2Config().jmxPort().setBind("127.0.0.1");
       server = new TCServerImpl(manager);
       server.start();
     }

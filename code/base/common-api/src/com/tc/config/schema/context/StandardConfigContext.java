@@ -9,26 +9,10 @@ import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.BindPortXPathBasedConfigObject;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.BooleanXPathBasedConfigItem;
 import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.FileXPathBasedConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.IntXPathBasedConfigItem;
-import com.tc.config.schema.dynamic.StringArrayConfigItem;
-import com.tc.config.schema.dynamic.StringArrayXPathBasedConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
-import com.tc.config.schema.dynamic.StringXPathBasedConfigItem;
-import com.tc.config.schema.dynamic.SubstitutedFileXPathBasedConfigItem;
 import com.tc.config.schema.listen.ConfigurationChangeListener;
 import com.tc.config.schema.repository.BeanRepository;
 import com.tc.util.Assert;
-import com.terracottatech.config.BindPort;
-
-import java.io.File;
 
 /**
  * Binds together a {@link BeanRepository} and a {@link DefaultValueProvider}.
@@ -38,10 +22,9 @@ public class StandardConfigContext implements ConfigContext {
   private final BeanRepository                    beanRepository;
   private final DefaultValueProvider              defaultValueProvider;
   private final IllegalConfigurationChangeHandler illegalConfigurationChangeHandler;
-  private final File                              configDirectory;
 
   public StandardConfigContext(BeanRepository beanRepository, DefaultValueProvider defaultValueProvider,
-                               IllegalConfigurationChangeHandler illegalConfigurationChangeHandler, File configDirectory) {
+                               IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
     Assert.assertNotNull(beanRepository);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(illegalConfigurationChangeHandler);
@@ -49,7 +32,6 @@ public class StandardConfigContext implements ConfigContext {
     this.beanRepository = beanRepository;
     this.defaultValueProvider = defaultValueProvider;
     this.illegalConfigurationChangeHandler = illegalConfigurationChangeHandler;
-    this.configDirectory = configDirectory;
   }
 
   public IllegalConfigurationChangeHandler illegalConfigurationChangeHandler() {
@@ -86,48 +68,8 @@ public class StandardConfigContext implements ConfigContext {
         .addListener((ConfigurationChangeListener) item);
   }
 
-  public IntConfigItem intItem(String xpath) {
-    return new IntXPathBasedConfigItem(this, xpath);
-  }
-
-  public IntConfigItem intItem(String xpath, int defaultValue, boolean logDefaultValueUsage) {
-    return new IntXPathBasedConfigItem(this, xpath, defaultValue, logDefaultValueUsage);
-  }
-
-  public StringConfigItem stringItem(String xpath) {
-    return new StringXPathBasedConfigItem(this, xpath);
-  }
-
-  public StringArrayConfigItem stringArrayItem(String xpath) {
-    return new StringArrayXPathBasedConfigItem(this, xpath);
-  }
-
-  public FileConfigItem fileItem(String xpath) {
-    return new FileXPathBasedConfigItem(this, xpath);
-  }
-
-  public FileConfigItem substitutedFileItem(String xpath) {
-    return new SubstitutedFileXPathBasedConfigItem(this, xpath);
-  }
-
-  public BooleanConfigItem booleanItem(String xpath) {
-    return new BooleanXPathBasedConfigItem(this, xpath);
-  }
-
-  public BooleanConfigItem booleanItem(String xpath, boolean defaultValue) {
-    return new BooleanXPathBasedConfigItem(this, xpath, defaultValue);
-  }
-
-  public FileConfigItem configRelativeSubstitutedFileItem(String xpath) {
-    return new SubstitutedFileXPathBasedConfigItem(this, xpath, configDirectory);
-  }
-
   public String toString() {
     return "<ConfigContext around repository: " + this.beanRepository + ">";
-  }
-
-  public BindPortConfigItem bindPortItem(String xpath, BindPort defaultValue) {
-    return new BindPortXPathBasedConfigObject(this, xpath, defaultValue);
   }
 
 }

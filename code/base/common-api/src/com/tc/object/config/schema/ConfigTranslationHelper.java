@@ -10,6 +10,7 @@ import com.tc.util.Assert;
 import com.terracottatech.config.Autolock;
 import com.terracottatech.config.ClassExpression;
 import com.terracottatech.config.Include;
+import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.LockLevel;
 import com.terracottatech.config.Locks;
 import com.terracottatech.config.NamedLock;
@@ -21,10 +22,8 @@ import com.terracottatech.config.OnLoad;
  */
 public class ConfigTranslationHelper {
 
-  static Object translateIncludes(XmlObject xmlObject) {
-    if (xmlObject == null) return null;
-
-    XmlObject[] objects = xmlObject.selectPath("*");
+  static InstrumentedClass[] translateIncludes(InstrumentedClasses instrumentedClasses) {
+    XmlObject[] objects = instrumentedClasses.selectPath("*");
     InstrumentedClass[] classes = new InstrumentedClass[objects.length];
 
     Assert.eval(classes.length == objects.length);
@@ -36,26 +35,24 @@ public class ConfigTranslationHelper {
         boolean honorVolatile = false;
 
         classes[i] = new IncludedInstrumentedClass(theInclude.getClassExpression(), theInclude.getHonorTransient(),
-            honorVolatile, ConfigTranslationHelper.createOnLoadObj(theInclude.getOnLoad()));
+                                                   honorVolatile, ConfigTranslationHelper.createOnLoadObj(theInclude
+                                                       .getOnLoad()));
       } else if (objects[i] instanceof ClassExpression) {
         ClassExpression theExpression = (ClassExpression) objects[i];
         classes[i] = new ExcludedInstrumentedClass(theExpression.getStringValue());
       } else {
-        throw Assert
-            .failure("Child #" + i + " of the <instrumented-classes> element appears to be "
-                + "neither an <include> nor an <exclude> element. This is a programming error in "
-                + "Terracotta software.");
+        throw Assert.failure("Child #" + i + " of the <instrumented-classes> element appears to be "
+                             + "neither an <include> nor an <exclude> element. This is a programming error in "
+                             + "Terracotta software.");
       }
     }
 
     return classes;
   }
 
-  static Object translateLocks(XmlObject xmlObject) {
-    if (xmlObject == null) return null;
-
-    NamedLock[] namedLocks = ((Locks) xmlObject).getNamedLockArray();
-    Autolock[] autoLocks = ((Locks) xmlObject).getAutolockArray();
+  static Lock[] translateLocks(Locks locks) {
+    NamedLock[] namedLocks = locks.getNamedLockArray();
+    Autolock[] autoLocks = locks.getAutolockArray();
 
     int namedLength = namedLocks == null ? 0 : namedLocks.length;
     int autoLength = autoLocks == null ? 0 : autoLocks.length;
@@ -68,6 +65,7 @@ public class ConfigTranslationHelper {
         if (namedLocks[i].getLockLevel().equals(LockLevel.CONCURRENT)) level = com.tc.object.config.schema.LockLevel.CONCURRENT;
         else if (namedLocks[i].getLockLevel().equals(LockLevel.READ)) level = com.tc.object.config.schema.LockLevel.READ;
         else if (namedLocks[i].getLockLevel().equals(LockLevel.WRITE)) level = com.tc.object.config.schema.LockLevel.WRITE;
+        else if (namedLocks[i].getLockLevel().equals(LockLevel.SYNCHRONOUS_WRITE)) level = com.tc.object.config.schema.LockLevel.SYNCHRONOUS_WRITE;
         else throw Assert.failure("Unknown lock level " + namedLocks[i].getLockLevel());
       } else {
         level = com.tc.object.config.schema.LockLevel.WRITE;

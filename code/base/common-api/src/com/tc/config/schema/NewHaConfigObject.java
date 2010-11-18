@@ -10,53 +10,37 @@ import org.apache.xmlbeans.XmlString;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.repository.MutableBeanRepository;
+import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.util.Assert;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.HaMode;
 import com.terracottatech.config.NetworkedActivePassive;
-import com.terracottatech.config.HaMode.Enum;
+import com.terracottatech.config.Servers;
 
 public class NewHaConfigObject extends BaseNewConfigObject implements NewHaConfig {
-  private final String haMode;
-  private final int    electionTime;
-  private final Ha     ha;
+  private final Ha ha;
 
   public NewHaConfigObject(ConfigContext context) {
     super(context);
     context.ensureRepositoryProvides(Ha.class);
     ha = (Ha) context.bean();
-    haMode = ha.getMode().toString();
-    checkHaModeSet(haMode);
-    electionTime = context.intItem("networked-active-passive/election-time").getInt();
-  }
-
-  private void checkHaModeSet(String mode) {
-    if (mode == null) { throw new AssertionError("no default set for ha mode"); }
-  }
-
-  public String haMode() {
-    return haMode;
-  }
-
-  public int electionTime() {
-    return electionTime;
   }
 
   public boolean isNetworkedActivePassive() {
-    return haMode.equals(HaMode.NETWORKED_ACTIVE_PASSIVE.toString());
+    return this.ha.getMode().equals(HaMode.NETWORKED_ACTIVE_PASSIVE);
   }
 
   public Ha getHa() {
     return ha;
   }
 
-  public static Ha getDefaultCommonHa(DefaultValueProvider defaultValueProvider,
-                                      MutableBeanRepository serversBeanRepository) throws XmlException {
-    final int defaultElectionTime = ((XmlInteger) defaultValueProvider.defaultFor(serversBeanRepository
-        .rootBeanSchemaType(), "ha/networked-active-passive/election-time")).getBigIntegerValue().intValue();
-    final String defaultHaModeString = ((XmlString) defaultValueProvider.defaultFor(serversBeanRepository
-        .rootBeanSchemaType(), "ha/mode")).getStringValue();
-    final Enum defaultHaMode;
+  public static Ha getDefaultCommonHa(Servers servers, DefaultValueProvider defaultValueProvider) throws XmlException {
+    final int defaultElectionTime = ((XmlInteger) defaultValueProvider
+        .defaultFor(servers.schemaType(), "ha/networked-active-passive/election-time")).getBigIntegerValue().intValue();
+    Assert.assertTrue(defaultElectionTime > 0);
+    final String defaultHaModeString = ((XmlString) defaultValueProvider.defaultFor(servers.schemaType(), "ha/mode"))
+        .getStringValue();
+    final HaMode.Enum defaultHaMode;
     if (HaMode.DISK_BASED_ACTIVE_PASSIVE.toString().equals(defaultHaModeString)) {
       defaultHaMode = HaMode.DISK_BASED_ACTIVE_PASSIVE;
     } else {
@@ -69,5 +53,32 @@ public class NewHaConfigObject extends BaseNewConfigObject implements NewHaConfi
     nap.setElectionTime(defaultElectionTime);
     ha.setNetworkedActivePassive(nap);
     return ha;
+  }
+
+  public static void initializeHa(Servers servers, DefaultValueProvider defaultValueProvider)
+      throws ConfigurationSetupException, XmlException {
+    Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(servers, defaultValueProvider);
+    if (servers.isSetHa()) {
+      checkAndInitializeHa(servers.getHa(), defaultHa);
+    } else {
+      servers.setHa(defaultHa);
+    }
+  }
+
+  public static void checkAndInitializeHa(Ha definedHa, Ha defaultHa) throws ConfigurationSetupException {
+    if (!definedHa.isSetMode()) {
+      definedHa.setMode(defaultHa.getMode());
+    }
+
+    if (definedHa.getMode().equals(HaMode.DISK_BASED_ACTIVE_PASSIVE) && definedHa.isSetNetworkedActivePassive()) {
+      throw new ConfigurationSetupException(HaMode.NETWORKED_ACTIVE_PASSIVE
+                                            + " can not be provided if ha mode is set to "
+                                            + HaMode.DISK_BASED_ACTIVE_PASSIVE);
+    } else if (!definedHa.isSetNetworkedActivePassive()) {
+      definedHa.addNewNetworkedActivePassive().setElectionTime(defaultHa.getNetworkedActivePassive().getElectionTime());
+    } else if (!definedHa.getNetworkedActivePassive().isSetElectionTime()) {
+      definedHa.getNetworkedActivePassive().setElectionTime(defaultHa.getNetworkedActivePassive().getElectionTime());
+    }
+
   }
 }

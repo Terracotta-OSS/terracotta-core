@@ -7,13 +7,12 @@ package com.tc.config.schema;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
-import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
 import com.tc.net.GroupID;
+import com.tc.util.Assert;
 import com.terracottatech.config.Ha;
 import com.terracottatech.config.Members;
 import com.terracottatech.config.MirrorGroup;
@@ -92,13 +91,23 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     }
   }
 
-  public static MirrorGroup getDefaultActiveServerGroup(DefaultValueProvider defaultValueProvider,
-                                                        MutableBeanRepository serversBeanRepository, Ha commonHa)
-      throws ConfigurationSetupException {
-    MirrorGroup asg = MirrorGroup.Factory.newInstance();
-    asg.setHa(commonHa);
-    Members members = asg.addNewMembers();
-    Server[] serverArray = ((Servers) serversBeanRepository.bean()).getServerArray();
+  public boolean isMember(String l2Name) {
+    String[] members = getMembers().getMemberArray();
+    for (int i = 0; i < members.length; i++) {
+      if (members[i].equals(l2Name)) { return true; }
+    }
+    return false;
+  }
+
+  public static void createDefaultMirrorGroup(Servers servers, Ha ha) throws ConfigurationSetupException {
+    Assert.assertTrue(servers.isSetMirrorGroups());
+    Assert.assertEquals(0, servers.getMirrorGroups().getMirrorGroupArray().length);
+    
+    MirrorGroup mirrorGroup = servers.getMirrorGroups().addNewMirrorGroup();
+    mirrorGroup.setHa(ha);
+    Members members = mirrorGroup.addNewMembers();
+    
+    Server[] serverArray = servers.getServerArray();
 
     for (int i = 0; i < serverArray.length; i++) {
       // name for each server should exist
@@ -110,15 +119,6 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
                                                                                        + "]"); }
       members.insertMember(i, serverArray[i].getName());
     }
-
-    return asg;
   }
-
-  public boolean isMember(String l2Name) {
-    String[] members = getMembers().getMemberArray();
-    for (int i = 0; i < members.length; i++) {
-      if (members[i].equals(l2Name)) { return true; }
-    }
-    return false;
-  }
+  
 }

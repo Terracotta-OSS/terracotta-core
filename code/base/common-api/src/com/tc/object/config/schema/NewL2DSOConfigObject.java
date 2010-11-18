@@ -4,128 +4,401 @@
  */
 package com.tc.object.config.schema;
 
+import org.apache.xmlbeans.XmlBoolean;
+import org.apache.xmlbeans.XmlException;
+import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlObject;
+import org.apache.xmlbeans.XmlString;
 
+import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.BaseNewConfigObject;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.OffHeapConfigItem;
+import com.tc.config.schema.NewHaConfigObject;
+import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
-import com.tc.config.schema.dynamic.XPathBasedConfigItem;
+import com.tc.config.schema.defaults.DefaultValueProvider;
+import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.license.LicenseManager;
 import com.tc.util.Assert;
 import com.terracottatech.config.BindPort;
+import com.terracottatech.config.DsoServerData;
+import com.terracottatech.config.GarbageCollection;
+import com.terracottatech.config.Offheap;
+import com.terracottatech.config.Persistence;
 import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
+import com.terracottatech.config.Servers;
+import com.terracottatech.config.PersistenceMode.Enum;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
+
+import java.io.File;
 
 /**
  * The standard implementation of {@link NewL2DSOConfig}.
  */
 public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DSOConfig {
+  private static final String     WILDCARD_IP                           = "0.0.0.0";
+  public static final short       DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT   = 10;
+  public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT = 20;
+  public static final int         MIN_PORTNUMBER                        = 0x0FFF;
+  public static final int         MAX_PORTNUMBER                        = 0xFFFF;
 
-  private final ConfigItem         persistenceMode;
-  private final OffHeapConfigItem  offHeapConfig;
-  private final BooleanConfigItem  garbageCollectionEnabled;
-  private final BooleanConfigItem  garbageCollectionVerbose;
-  private final IntConfigItem      garbageCollectionInterval;
-  private final BindPortConfigItem dsoPort;
-  private final BindPortConfigItem l2GroupPort;
-  private final IntConfigItem      clientReconnectWindow;
-  private final StringConfigItem   host;
-  private final StringConfigItem   serverName;
-  private final StringConfigItem   bind;
+  private final Persistence       persistence;
+  private final Offheap           offHeapConfig;
+  private final GarbageCollection garbageCollection;
+  private final BindPort          dsoPort;
+  private final BindPort          l2GroupPort;
+  private final int               clientReconnectWindow;
+  private final String            host;
+  private final String            serverName;
+  private final String            bind;
 
   public NewL2DSOConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(Server.class);
+    Server server = (Server) this.context.bean();
+    this.persistence = server.getDso().getPersistence();
 
-    this.persistenceMode = new XPathBasedConfigItem(this.context, "dso/persistence/mode") {
-      @Override
-      protected Object fetchDataFromXmlObject(XmlObject xmlObject) {
-        if (xmlObject == null) return null;
-        if (((PersistenceMode) xmlObject).enumValue() == PersistenceMode.TEMPORARY_SWAP_ONLY) return com.tc.object.config.schema.PersistenceMode.TEMPORARY_SWAP_ONLY;
-        if (((PersistenceMode) xmlObject).enumValue() == PersistenceMode.PERMANENT_STORE) return com.tc.object.config.schema.PersistenceMode.PERMANENT_STORE;
-        throw Assert.failure("Persistence mode " + xmlObject + " is not anything in the enum?");
-      }
-    };
+    Assert.assertTrue((this.persistence.getMode() == PersistenceMode.PERMANENT_STORE)
+                      || (this.persistence.getMode() == PersistenceMode.TEMPORARY_SWAP_ONLY));
 
-    this.garbageCollectionEnabled = this.context.booleanItem("dso/garbage-collection/enabled");
-    this.garbageCollectionVerbose = this.context.booleanItem("dso/garbage-collection/verbose");
-    this.garbageCollectionInterval = this.context.intItem("dso/garbage-collection/interval");
-    this.clientReconnectWindow = this.context.intItem("dso/client-reconnect-window");
+    this.garbageCollection = server.getDso().getGarbageCollection();
+    this.clientReconnectWindow = server.getDso().getClientReconnectWindow();
 
-    this.bind = this.context.stringItem("@bind");
-    this.host = this.context.stringItem("@host");
-    this.serverName = this.context.stringItem("@name");
+    this.bind = server.getBind();
+    this.host = server.getHost();
+    this.serverName = server.getName();
 
-    int listenPort = this.context.intItem("dso-port").getInt();
-    int tempGroupPort = this.context.intItem("dso-port").getInt()
-                        + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-    int defaultGroupPort = ((tempGroupPort <= NewCommonL2Config.MAX_PORTNUMBER) ? (tempGroupPort)
-        : (tempGroupPort % NewCommonL2Config.MAX_PORTNUMBER) + NewCommonL2Config.MIN_PORTNUMBER);
-
-    BindPort defaultDsoPort = BindPort.Factory.newInstance();
-    defaultDsoPort.setIntValue(listenPort);
-    defaultDsoPort.setBind(this.bind.getString());
-    this.dsoPort = this.context.bindPortItem("dso-port", defaultDsoPort);
-
-    BindPort defaultL2GroupPort = BindPort.Factory.newInstance();
-    defaultL2GroupPort.setIntValue(defaultGroupPort);
-    defaultL2GroupPort.setBind(this.bind.getString());
-    this.l2GroupPort = this.context.bindPortItem("l2-group-port", defaultL2GroupPort);
-    this.offHeapConfig = new OffHeapConfigItem(this.context, "dso/persistence/offheap");
-    if (offHeapConfig.getOffHeapConfigObject().isEnabled()) {
-      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getOffHeapConfigObject().getMaxDataSize());
+    this.dsoPort = server.getDsoPort();
+    this.l2GroupPort = server.getL2GroupPort();
+    if (server.getDso().getPersistence().isSetOffheap()) {
+      this.offHeapConfig = server.getDso().getPersistence().getOffheap();
+      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
+    } else {
+      this.offHeapConfig = Offheap.Factory.newInstance();
     }
   }
 
-  public OffHeapConfigItem offHeapConfig() {
+  public Offheap offHeapConfig() {
     return this.offHeapConfig;
   }
 
-  public BindPortConfigItem dsoPort() {
+  public BindPort dsoPort() {
     return this.dsoPort;
   }
 
-  public BindPortConfigItem l2GroupPort() {
+  public BindPort l2GroupPort() {
     return this.l2GroupPort;
   }
 
-  public StringConfigItem host() {
+  public String host() {
     return host;
   }
 
-  public StringConfigItem serverName() {
+  public String serverName() {
     return this.serverName;
   }
 
-  public ConfigItem persistenceMode() {
-    return this.persistenceMode;
+  public Persistence getPersistence() {
+    return this.persistence;
   }
 
-  public BooleanConfigItem garbageCollectionEnabled() {
-    return this.garbageCollectionEnabled;
+  public GarbageCollection garbageCollection() {
+    return this.garbageCollection;
   }
 
-  public BooleanConfigItem garbageCollectionVerbose() {
-    return this.garbageCollectionVerbose;
-  }
-
-  public IntConfigItem garbageCollectionInterval() {
-    return this.garbageCollectionInterval;
-  }
-
-  public IntConfigItem clientReconnectWindow() {
+  public int clientReconnectWindow() {
     return this.clientReconnectWindow;
   }
 
-  public StringConfigItem bind() {
+  public String bind() {
     return this.bind;
+  }
+
+  public static void initializeServers(TcConfig config, DefaultValueProvider defaultValueProvider,
+                                       File directoryLoadedFrom) throws XmlException, ConfigurationSetupException {
+    if (!config.isSetServers()) {
+      config.addNewServers();
+    }
+    Servers servers = config.getServers();
+    if (servers.getServerArray().length == 0) {
+      servers.addNewServer();
+    }
+
+    for (int i = 0; i < servers.sizeOfServerArray(); i++) {
+      Server server = servers.getServerArray(i);
+      initializeServerBind(server, defaultValueProvider);
+      initializeDsoPort(server, defaultValueProvider);
+      initializeJmxPort(server, defaultValueProvider);
+      initializeL2GroupPort(server, defaultValueProvider);
+      // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
+      // and name is supposed to default to 'host:dso-port'
+      initializeNameAndHost(server, defaultValueProvider);
+      initializeDataDirectory(server, defaultValueProvider, directoryLoadedFrom);
+      initializeLogsDirectory(server, defaultValueProvider, directoryLoadedFrom);
+      initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
+      initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
+      initializeStatisticsDirectory(server, defaultValueProvider, directoryLoadedFrom);
+      initializeDso(server, defaultValueProvider);
+    }
+
+    NewHaConfigObject.initializeHa(servers, defaultValueProvider);
+    ActiveServerGroupsConfigObject.initializeMirrorGroups(servers, defaultValueProvider);
+    UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
+  }
+
+  private static void initializeServerBind(Server server, DefaultValueProvider defaultValueProvider) {
+    if (!server.isSetBind() || server.getBind().trim().length() == 0) {
+      server.setBind(WILDCARD_IP);
+    }
+    server.setBind(ParameterSubstituter.substitute(server.getBind()));
+  }
+
+  private static void initializeDsoPort(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
+    XmlObject[] dsoPorts = server.selectPath("dso-port");
+    Assert.assertTrue(dsoPorts.length <= 1);
+    if (!server.isSetDsoPort()) {
+      final XmlInteger defaultValue = (XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso-port");
+      int defaultDsoPort = defaultValue.getBigIntegerValue().intValue();
+      BindPort dsoPort = server.addNewDsoPort();
+      dsoPort.setIntValue(defaultDsoPort);
+      dsoPort.setBind(server.getBind());
+    } else if (!server.getDsoPort().isSetBind()) {
+      server.getDsoPort().setBind(server.getBind());
+    }
+  }
+
+  private static void initializeJmxPort(Server server, DefaultValueProvider defaultValueProvider) {
+    XmlObject[] jmxPorts = server.selectPath("jmx-port");
+    Assert.assertTrue(jmxPorts.length <= 1);
+    if (!server.isSetJmxPort()) {
+      BindPort jmxPort = server.addNewJmxPort();
+      int tempJmxPort = server.getDsoPort().getIntValue() + DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+      int defaultJmxPort = ((tempJmxPort <= MAX_PORTNUMBER) ? tempJmxPort : (tempJmxPort % MAX_PORTNUMBER)
+                                                                            + MIN_PORTNUMBER);
+
+      jmxPort.setIntValue(defaultJmxPort);
+      jmxPort.setBind(server.getBind());
+    } else if (!server.getJmxPort().isSetBind()) {
+      server.getJmxPort().setBind(server.getBind());
+    }
+  }
+
+  private static void initializeL2GroupPort(Server server, DefaultValueProvider defaultValueProvider) {
+    XmlObject[] l2GroupPorts = server.selectPath("l2-group-port");
+    Assert.assertTrue(l2GroupPorts.length <= 1);
+    if (!server.isSetL2GroupPort()) {
+      BindPort l2GrpPort = server.addNewL2GroupPort();
+      int tempGroupPort = server.getDsoPort().getIntValue() + DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+      int defaultGroupPort = ((tempGroupPort <= MAX_PORTNUMBER) ? (tempGroupPort) : (tempGroupPort % MAX_PORTNUMBER)
+                                                                                    + MIN_PORTNUMBER);
+      l2GrpPort.setIntValue(defaultGroupPort);
+      l2GrpPort.setBind(server.getBind());
+    } else if (!server.getL2GroupPort().isSetBind()) {
+      server.getL2GroupPort().setBind(server.getBind());
+    }
+  }
+
+  private static void initializeNameAndHost(Server server, DefaultValueProvider defaultValueProvider) {
+    if (!server.isSetHost() || server.getHost().trim().length() == 0) {
+      if (!server.isSetName()) {
+        server.setHost("%i");
+      } else {
+        server.setHost(server.getName());
+      }
+    }
+
+    if (!server.isSetName() || server.getName().trim().length() == 0) {
+      int dsoPort = server.getDsoPort().getIntValue();
+      server.setName(server.getHost() + (dsoPort > 0 ? ":" + dsoPort : ""));
+    }
+
+    // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
+    server.setHost(ParameterSubstituter.substitute(server.getHost()));
+    server.setName(ParameterSubstituter.substitute(server.getName()));
+  }
+
+  private static void initializeDataDirectory(Server server, DefaultValueProvider defaultValueProvider,
+                                              File directoryLoadedFrom) throws XmlException {
+    if (!server.isSetData()) {
+      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "data");
+      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
+
+      server.setData(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+    } else {
+      server.setData(ParameterSubstituter.substitute(server.getData()));
+    }
+  }
+
+  private static void initializeIndexDiretory(Server server, DefaultValueProvider defaultValueProvider,
+                                              File directoryLoadedFrom) throws XmlException {
+    if (!server.isSetIndex()) {
+      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "index");
+      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
+
+      server.setIndex(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+    } else {
+      server.setIndex(ParameterSubstituter.substitute(server.getIndex()));
+    }
+  }
+
+  private static void initializeLogsDirectory(Server server, DefaultValueProvider defaultValueProvider,
+                                              File directoryLoadedFrom) throws XmlException {
+    if (!server.isSetLogs()) {
+      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "logs");
+      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
+      server.setLogs(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+    } else {
+      server.setLogs(ParameterSubstituter.substitute(server.getLogs()));
+    }
+  }
+
+  private static void initializeDataBackupDirectory(Server server, DefaultValueProvider defaultValueProvider,
+                                                    File directoryLoadedFrom) throws XmlException {
+    if (!server.isSetDataBackup()) {
+      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "data-backup");
+      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
+      server.setDataBackup(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+    } else {
+      server.setDataBackup(ParameterSubstituter.substitute(server.getDataBackup()));
+    }
+  }
+
+  private static void initializeStatisticsDirectory(Server server, DefaultValueProvider defaultValueProvider,
+                                                    File directoryLoadedFrom) throws XmlException {
+    if (!server.isSetStatistics()) {
+      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "statistics");
+      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
+      server.setStatistics(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+    } else {
+      server.setStatistics(ParameterSubstituter.substitute(server.getStatistics()));
+    }
+  }
+
+  private static void initializeDso(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
+    if (!server.isSetDso()) {
+      server.addNewDso();
+    }
+
+    initializeClientReconnectWindow(server, defaultValueProvider);
+    initializePersisitence(server, defaultValueProvider);
+    initializeGarbageCollection(server, defaultValueProvider);
+  }
+
+  private static void initializeClientReconnectWindow(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    DsoServerData dso = server.getDso();
+    Assert.assertNotNull(dso);
+
+    if (!dso.isSetClientReconnectWindow()) {
+      dso.setClientReconnectWindow(getDefaultReconnectWindow(server, defaultValueProvider));
+    }
+  }
+
+  private static void initializePersisitence(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    DsoServerData dso = server.getDso();
+    Assert.assertNotNull(dso);
+
+    initializePersistenceMode(server, defaultValueProvider);
+    initializeOffHeap(server, defaultValueProvider);
+  }
+
+  private static void initializePersistenceMode(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    DsoServerData dso = server.getDso();
+    Assert.assertNotNull(dso);
+
+    if (!dso.isSetPersistence()) {
+      dso.addNewPersistence();
+    }
+
+    Persistence persistence = dso.getPersistence();
+    Assert.assertNotNull(persistence);
+
+    if (!persistence.isSetMode()) {
+      persistence.setMode(getDefaultPersistence(server, defaultValueProvider));
+    }
+  }
+
+  private static void initializeOffHeap(Server server, DefaultValueProvider defaultValueProvider) throws XmlException {
+    Persistence persistence = server.getDso().getPersistence();
+    Assert.assertNotNull(persistence);
+
+    if (!persistence.isSetOffheap()) return;
+
+    Offheap offHeap = persistence.getOffheap();
+    Assert.assertNotNull(offHeap);
+
+    if (!offHeap.isSetEnabled()) {
+      offHeap.setEnabled(getDefaultOffHeapEnabled(server, defaultValueProvider));
+    }
+
+  }
+
+  private static void initializeGarbageCollection(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    DsoServerData dso = server.getDso();
+    Assert.assertNotNull(dso);
+
+    if (!dso.isSetGarbageCollection()) {
+      dso.addNewGarbageCollection();
+    }
+
+    GarbageCollection gc = dso.getGarbageCollection();
+    Assert.assertNotNull(gc);
+    if (!gc.isSetEnabled()) {
+      gc.setEnabled(getDefaultGarbageCollectionEnabled(server, defaultValueProvider));
+    }
+
+    if (!gc.isSetVerbose()) {
+      gc.setVerbose(getDefaultGarbageCollectionVerbose(server, defaultValueProvider));
+    }
+
+    if (!gc.isSetInterval()) {
+      gc.setInterval(getDefaultGarbageCollectionInterval(server, defaultValueProvider));
+    }
+  }
+
+  private static Enum getDefaultPersistence(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    XmlString xmlObject = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "dso/persistence/mode");
+    Assert.assertNotNull(xmlObject);
+    Assert.assertTrue(xmlObject.getStringValue().equals(PersistenceMode.PERMANENT_STORE.toString())
+                      || xmlObject.getStringValue().equals(PersistenceMode.TEMPORARY_SWAP_ONLY.toString()));
+    if (xmlObject.getStringValue().equals(PersistenceMode.PERMANENT_STORE.toString())) return PersistenceMode.PERMANENT_STORE;
+    return PersistenceMode.TEMPORARY_SWAP_ONLY;
+  }
+
+  private static boolean getDefaultOffHeapEnabled(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/persistence/offheap/enabled"))
+        .getBooleanValue();
+  }
+
+  private static int getDefaultReconnectWindow(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso/client-reconnect-window"))
+        .getBigIntegerValue().intValue();
+  }
+
+  private static boolean getDefaultGarbageCollectionEnabled(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/enabled"))
+        .getBooleanValue();
+  }
+
+  private static boolean getDefaultGarbageCollectionVerbose(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlBoolean) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/verbose"))
+        .getBooleanValue();
+  }
+
+  private static int getDefaultGarbageCollectionInterval(Server server, DefaultValueProvider defaultValueProvider)
+      throws XmlException {
+    return ((XmlInteger) defaultValueProvider.defaultFor(server.schemaType(), "dso/garbage-collection/interval"))
+        .getBigIntegerValue().intValue();
   }
 
 }
