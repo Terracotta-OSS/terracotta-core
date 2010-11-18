@@ -332,4 +332,8 @@ public class ActiveActiveServerManager extends MultipleServerManager {
   public int getL2GroupPort() {
     return activePassiveServerManagers[0].getL2GroupPort();
   }
+
+  public ActivePassiveServerManager[] getGroupManagers() {
+    return this.activePassiveServerManagers;
+  }
 }
