@@ -15,9 +15,9 @@ import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCNotRunningException;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TunneledDomainUpdater;
@@ -230,9 +230,8 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   private void startClient(final boolean forTests) {
-    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(
-                                                                       TCLogging
-                                                                           .getLogger(DistributedObjectClient.class)));
+    final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
+        .getLogger(DistributedObjectClient.class)));
 
     final StartupAction action = new StartupHelper.StartupAction() {
       public void execute() throws Throwable {
@@ -309,12 +308,12 @@ public class ManagerImpl implements ManagerInternal {
             logicalAddAllInvoke(this.serializer.methodToID(methodSignature), methodSignature, (Collection) params[0],
                                 tco);
           } else if (SerializationUtil.ADD_ALL_AT_SIGNATURE.equals(methodSignature)) {
-            logicalAddAllAtInvoke(this.serializer.methodToID(methodSignature), methodSignature,
-                                  ((Integer) params[0]).intValue(), (Collection) params[1], tco);
+            logicalAddAllAtInvoke(this.serializer.methodToID(methodSignature), methodSignature, ((Integer) params[0])
+                .intValue(), (Collection) params[1], tco);
           } else {
             adjustForJava1ParametersIfNecessary(methodSignature, params);
-            tco.logicalInvoke(this.serializer.methodToID(methodSignature),
-                              this.methodDisplay.getDisplayForSignature(methodSignature), params);
+            tco.logicalInvoke(this.serializer.methodToID(methodSignature), this.methodDisplay
+                .getDisplayForSignature(methodSignature), params);
           }
         }
       } catch (final Throwable t) {
@@ -936,9 +935,10 @@ public class ManagerImpl implements ManagerInternal {
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
                                          Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                         List<NVPair> aggregators) {
+                                         List<NVPair> aggregators, int maxResults) {
     waitForAllCurrentTransactionsToComplete();
-    return searchRequestManager.query(cachename, queryStack, includeKeys, attributeSet, sortAttributeMap, aggregators);
+    return searchRequestManager.query(cachename, queryStack, includeKeys, attributeSet, sortAttributeMap, aggregators,
+                                      maxResults);
   }
 
   public NVPair createNVPair(String name, Object value) {

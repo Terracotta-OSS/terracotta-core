@@ -30,7 +30,7 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
 
   public SearchQueryResults query(String cachename, LinkedList queryStack, boolean includeKeys,
                                   Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                  List<NVPair> aggregators) {
+                                  List<NVPair> aggregators, int maxResults) {
     return null;
   }
 

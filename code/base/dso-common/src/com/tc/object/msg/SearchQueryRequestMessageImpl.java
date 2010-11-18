@@ -39,6 +39,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private final static byte           AGGREGATORS            = 6;
   private final static byte           STACK_OPERATION_MARKER = 7;
   private final static byte           STACK_NVPAIR_MARKER    = 8;
+  private final static byte           MAX_RESULTS            = 9;
 
   private SearchRequestID             requestID;
   private String                      cachename;
@@ -47,6 +48,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private Set<String>                 attributes;
   private Map<String, SortOperations> sortAttributes;
   private List<NVPair>                aggregators;
+  private int                         maxResults;
 
   public SearchQueryRequestMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                        MessageChannel channel, TCMessageType type) {
@@ -61,7 +63,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final String cacheName,
                                           final LinkedList stack, boolean keys, Set<String> attributeSet,
                                           Map<String, SortOperations> sortAttributesMap,
-                                          List<NVPair> attributeAggregators) {
+                                          List<NVPair> attributeAggregators, int max) {
     this.requestID = searchRequestID;
     this.cachename = cacheName;
     this.queryStack = stack;
@@ -69,6 +71,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.attributes = attributeSet;
     this.sortAttributes = sortAttributesMap;
     this.aggregators = attributeAggregators;
+    this.maxResults = max;
   }
 
   @Override
@@ -78,6 +81,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
     putNVPair(CACHENAME, this.cachename);
     putNVPair(INCLUDE_KEYS, this.includeKeys);
+    putNVPair(MAX_RESULTS, this.maxResults);
     putNVPair(ATTRIBUTES, this.attributes.size());
     for (final String attribute : this.attributes) {
       outStream.writeString(attribute);
@@ -94,22 +98,16 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
       attributeAggregator.serializeTo(outStream);
     }
 
-    System.out.println("[queryStack size ] = " + queryStack.size());
     while (queryStack.size() > 0) {
       Object obj = queryStack.removeLast();
-      System.out.println("[queryStack obj ] = " + obj);
       if (obj instanceof StackOperations) {
         StackOperations operation = (StackOperations) obj;
-        System.out.println("[queryStack stackoperation ] = " + operation);
-        System.out.println("[queryStack operation name] = " + operation.name());
         putNVPair(STACK_OPERATION_MARKER, operation.name());
       } else if (obj instanceof NVPair) {
         AbstractNVPair pair = (AbstractNVPair) obj;
-        System.out.println("[queryStack pair ] = " + pair);
         putNVPair(STACK_NVPAIR_MARKER, pair);
       }
     }
-
   }
 
   @Override
@@ -129,6 +127,10 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
       case INCLUDE_KEYS:
         this.includeKeys = getBooleanValue();
+        return true;
+
+      case MAX_RESULTS:
+        this.maxResults = getIntValue();
         return true;
 
       case ATTRIBUTES:
@@ -240,6 +242,13 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    */
   public boolean includeKeys() {
     return this.includeKeys;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getMaxResults() {
+    return this.maxResults;
   }
 
 }

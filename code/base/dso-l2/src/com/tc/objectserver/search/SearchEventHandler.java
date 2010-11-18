@@ -67,9 +67,8 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
 
       IndexContext indexContext;
       try {
-        indexContext = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
-                                                     sqc.getAttributeSet(), sqc.getSortAttributes(),
-                                                     sqc.getAggregators());
+        indexContext = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(), sqc
+            .getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators(), sqc.getMaxResults());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

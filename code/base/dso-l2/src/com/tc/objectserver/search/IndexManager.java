@@ -21,7 +21,7 @@ public interface IndexManager {
   boolean deleteIndex(String name) throws IndexException;
 
   public IndexContext searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                                  Map<String, SortOperations> sortAttributes, List<NVPair> aggregators)
+                                  Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults)
       throws IndexException;
 
   void shutdown();

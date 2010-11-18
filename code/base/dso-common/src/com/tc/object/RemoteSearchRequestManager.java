@@ -24,7 +24,7 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public SearchQueryResults query(String cachename, LinkedList queryStack, boolean includeKeys,
                                   Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                  List<NVPair> aggregators);
+                                  List<NVPair> aggregators, int maxResults);
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
                                   final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,

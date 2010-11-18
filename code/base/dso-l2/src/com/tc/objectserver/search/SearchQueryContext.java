@@ -29,10 +29,11 @@ public class SearchQueryContext implements MultiThreadedEventContext {
   private final Set<String>                 attributeSet;
   private final Map<String, SortOperations> sortAttributes;
   private final List<NVPair>                aggregators;
+  private final int                         maxResults;
 
   public SearchQueryContext(ClientID clientID, SearchRequestID requestID, String cacheName, LinkedList queryStack,
                             boolean includeKeys, Set<String> attributeSet, Map<String, SortOperations> sortAttributes,
-                            List<NVPair> aggregators) {
+                            List<NVPair> aggregators, int maxResults) {
     this.clientID = clientID;
     this.requestID = requestID;
     this.cacheName = cacheName;
@@ -41,6 +42,7 @@ public class SearchQueryContext implements MultiThreadedEventContext {
     this.attributeSet = attributeSet;
     this.sortAttributes = sortAttributes;
     this.aggregators = aggregators;
+    this.maxResults = maxResults;
   }
 
   /**
@@ -113,6 +115,15 @@ public class SearchQueryContext implements MultiThreadedEventContext {
    */
   public List<NVPair> getAggregators() {
     return aggregators;
+  }
+
+  /**
+   * Return maximum size of results.
+   * 
+   * @return integer
+   */
+  public int getMaxResults() {
+    return this.maxResults;
   }
 
   /**
