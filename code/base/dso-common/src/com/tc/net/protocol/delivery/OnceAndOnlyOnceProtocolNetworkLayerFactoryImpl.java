@@ -4,7 +4,6 @@
  */
 package com.tc.net.protocol.delivery;
 
-import com.tc.async.api.Sink;
 import com.tc.properties.ReconnectConfig;
 
 import java.util.Timer;
@@ -18,16 +17,13 @@ public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOn
   public static final String RESTORE_TIMERTHREAD_NAME = "OOO Connection Restore Timer";
   private Timer              restoreConnectTimer      = null;
 
-  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
-                                                                                  ReconnectConfig reconnectConfig) {
+  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(ReconnectConfig reconnectConfig) {
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, sendSink, receiveSink,
-                                                       reconnectConfig, true);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, reconnectConfig, true);
   }
 
-  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
-                                                                                  ReconnectConfig reconnectConfig) {
+  public synchronized OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(ReconnectConfig reconnectConfig) {
     // ooo connection restore timers are needed only for servers
     if (restoreConnectTimer == null) {
       restoreConnectTimer = new Timer(RESTORE_TIMERTHREAD_NAME, true);
@@ -35,7 +31,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl implements OnceAndOn
 
     OOOProtocolMessageFactory messageFactory = new OOOProtocolMessageFactory();
     OOOProtocolMessageParser messageParser = new OOOProtocolMessageParser(messageFactory);
-    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, sendSink, receiveSink,
-                                                       reconnectConfig, false, restoreConnectTimer);
+    return new OnceAndOnlyOnceProtocolNetworkLayerImpl(messageFactory, messageParser, reconnectConfig, false,
+                                                       restoreConnectTimer);
   }
 }

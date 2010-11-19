@@ -26,7 +26,6 @@ import com.tc.net.core.ConnectionInfo;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.L2ReconnectConfigImpl;
-import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ChannelEvent;
@@ -139,11 +138,9 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
 
-    configSetupManager.commonl2Config().changesInItemIgnored(configSetupManager.commonl2Config().dataPath());
     NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
-    l2DSOConfig.changesInItemIgnored(l2DSOConfig.l2GroupPort());
-    this.groupPort = l2DSOConfig.l2GroupPort().getBindPort();
+    this.groupPort = l2DSOConfig.l2GroupPort().getIntValue();
 
     TCSocketAddress socketAddress;
     try {
@@ -154,7 +151,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
       groupConnectPort = TCPropertiesImpl.getProperties()
           .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT, groupPort);
 
-      socketAddress = new TCSocketAddress(l2DSOConfig.l2GroupPort().getBindAddress(), groupConnectPort);
+      socketAddress = new TCSocketAddress(l2DSOConfig.l2GroupPort().getBind(), groupConnectPort);
     } catch (UnknownHostException e) {
       throw new TCRuntimeException(e);
     }
@@ -200,15 +197,8 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
 
     final NetworkStackHarnessFactory networkStackHarnessFactory;
     if (isUseOOOLayer) {
-      final Stage oooSendStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_SEND_STAGE,
-                                                          new OOOEventHandler(), L2Utils.getOptimalCommWorkerThreads(),
-                                                          maxStageSize);
-      final Stage oooReceiveStage = stageManager.createStage(ServerConfigurationContext.L2_OOO_NET_RECEIVE_STAGE,
-                                                             new OOOEventHandler(),
-                                                             L2Utils.getOptimalCommWorkerThreads(), maxStageSize);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
                                                                      l2ReconnectConfig);
     } else {
       networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();

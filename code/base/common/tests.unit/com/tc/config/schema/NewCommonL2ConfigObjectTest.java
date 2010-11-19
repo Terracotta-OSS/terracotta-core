@@ -1,10 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema;
 
 import org.apache.xmlbeans.XmlObject;
 
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
+import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -17,11 +20,16 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
 
   private NewCommonL2ConfigObject object;
 
+  @Override
   public void setUp() throws Exception {
+    TcConfig config = TcConfig.Factory.newInstance();
     super.setUp(Server.class);
+    NewL2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory());
+    setBean(config.getServers().getServerArray(0));
     this.object = new NewCommonL2ConfigObject(context());
   }
 
+  @Override
   protected XmlObject getBeanFromTcConfig(TcConfig domainConfig) throws Exception {
     return domainConfig.getServers().getServerArray(0);
   }
@@ -36,41 +44,36 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
   }
 
   public void testDataPath() throws Exception {
-    addListeners(object.dataPath());
 
-    assertEquals(new File("data"), object.dataPath().getFile());
+    assertEquals(new File(getTempDirectory(), "data"), object.dataPath());
     checkNoListener();
 
-    builder().getServers().getL2s()[0].setData("foobar");
-    setConfig();
+    Server server = (Server) context().bean();
+    server.setData("foobar");
 
-    assertEquals(new File("foobar"), object.dataPath().getFile());
-    checkListener(new File("data"), new File("foobar"));
+    assertEquals(new File("foobar"), object.dataPath());
   }
 
   public void testLogsPath() throws Exception {
-    addListeners(object.logsPath());
 
-    assertEquals(new File("logs"), object.logsPath().getFile());
+    assertEquals(new File(getTempDirectory(), "logs"), object.logsPath());
     checkNoListener();
 
-    builder().getServers().getL2s()[0].setLogs("foobar");
-    setConfig();
+    Server server = (Server) context().bean();
+    server.setLogs("foobar");
 
-    assertEquals(new File("foobar"), object.logsPath().getFile());
-    checkListener(new File("logs"), new File("foobar"));
+    assertEquals(new File("foobar"), object.logsPath());
   }
 
   public void testJmxPort() throws Exception {
-    addListeners(object.jmxPort());
 
-    assertEquals(9520, object.jmxPort().getBindPort());
+    assertEquals(9520, object.jmxPort().getIntValue());
     checkNoListener();
 
-    builder().getServers().getL2s()[0].setJMXPort(3285);
-    setConfig();
+    Server server = (Server) context().bean();
+    server.getJmxPort().setIntValue(3285);
 
-    assertEquals(3285, object.jmxPort().getBindPort());
+    assertEquals(3285, object.jmxPort().getIntValue());
   }
 
 }

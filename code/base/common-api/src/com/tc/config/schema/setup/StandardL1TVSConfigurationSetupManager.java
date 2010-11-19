@@ -15,7 +15,6 @@ import com.tc.config.schema.L2ConfigForL1Object;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.NewCommonL1ConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
@@ -29,6 +28,7 @@ import com.terracottatech.config.Client;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.TcProperties;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,29 +37,24 @@ import java.util.Map;
  */
 public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
     L1TVSConfigurationSetupManager {
-  private final ConfigurationCreator configurationCreator;
-  private final NewCommonL1Config    commonL1Config;
-  private final NewL1DSOConfig       dsoL1Config;
-  private final ConfigTCProperties   configTCProperties;
-  private final boolean              loadedFromTrustedSource;
-  private volatile L2ConfigForL1     l2ConfigForL1;
+  private final NewCommonL1Config  commonL1Config;
+  private final NewL1DSOConfig     dsoL1Config;
+  private final ConfigTCProperties configTCProperties;
+  private final boolean            loadedFromTrustedSource;
 
   public StandardL1TVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
-    super(defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
+    super(configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
     Assert.assertNotNull(configurationCreator);
 
-    this.configurationCreator = configurationCreator;
-    runConfigurationCreator(this.configurationCreator);
-    loadedFromTrustedSource = this.configurationCreator.loadedFromTrustedSource();
+    runConfigurationCreator();
+    loadedFromTrustedSource = configurationCreator().loadedFromTrustedSource();
 
     commonL1Config = new NewCommonL1ConfigObject(createContext(clientBeanRepository(), null));
-    l2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
-                                            createContext(systemBeanRepository(), null));
     configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     dsoL1Config = new NewL1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
                                                                                  DsoClientData.class,
@@ -74,13 +69,12 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public void setupLogging() {
-    FileConfigItem logsPath = commonL1Config().logsPath();
-    TCLogging.setLogDirectory(logsPath.getFile(), TCLogging.PROCESS_TYPE_L1);
-    logsPath.addListener(new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L1));
+    File logsPath = commonL1Config().logsPath();
+    TCLogging.setLogDirectory(logsPath, TCLogging.PROCESS_TYPE_L1);
   }
 
   public String rawConfigText() {
-    return configurationCreator.rawConfigText();
+    return configurationCreator().rawConfigText();
   }
 
   public boolean loadedFromTrustedSource() {
@@ -88,7 +82,8 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public L2ConfigForL1 l2Config() {
-    return this.l2ConfigForL1;
+    return new L2ConfigForL1Object(createContext(serversBeanRepository(), null), createContext(systemBeanRepository(),
+                                                                                               null));
   }
 
   public NewCommonL1Config commonL1Config() {
@@ -111,10 +106,6 @@ public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public void reloadServersConfiguration() throws ConfigurationSetupException {
-    configurationCreator.reloadServersConfiguration(serversBeanRepository(), true, false);
-    // reload L2 config here as well
-    L2ConfigForL1 tempL2ConfigForL1 = new L2ConfigForL1Object(createContext(serversBeanRepository(), null),
-                                                              createContext(systemBeanRepository(), null));
-    this.l2ConfigForL1 = tempL2ConfigForL1;
+    configurationCreator().reloadServersConfiguration(serversBeanRepository(), true, false);
   }
 }

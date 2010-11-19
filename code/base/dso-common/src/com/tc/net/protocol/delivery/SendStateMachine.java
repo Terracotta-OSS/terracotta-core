@@ -5,7 +5,6 @@
 package com.tc.net.protocol.delivery;
 
 import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -18,30 +17,30 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
- * 
+ * State Machine handling message send for OOO
  */
 public class SendStateMachine extends AbstractStateMachine {
   private final int                        sendQueueCap;
-  private final State                      ACK_WAIT_STATE       = new AckWaitState();
-  private final State                      HANDSHAKE_WAIT_STATE = new HandshakeWaitState();
-  private final State                      MESSAGE_WAIT_STATE   = new MessageWaitState();
-  private long                             sent                 = -1;
-  private long                             acked                = -1;
+  final State                              HANDSHAKE_WAIT_STATE  = new HandshakeWaitState();
+  final State                              MESSAGE_WAIT_STATE    = new MessageWaitState();
+  final State                              ACK_PROCESSING_STATE  = new AckProcessingState();
+  final State                              SENDWINDOW_FULL_STATE = new SendWindowFullState();
+
   private final OOOProtocolMessageDelivery delivery;
-  private BoundedLinkedQueue               sendQueue;
-  private final LinkedList                 outstandingMsgs      = new LinkedList();
-  private final SynchronizedInt            outstandingCnt       = new SynchronizedInt(0);
+  private final LinkedList                 outstandingMsgs       = new LinkedList();
   private final int                        sendWindow;
   private final boolean                    isClient;
   private final String                     debugId;
-  private static final boolean             debug                = false;
-  private static final TCLogger            logger               = TCLogging.getLogger(SendStateMachine.class);
 
-  // changed by tc.properties
+  private static final boolean             debug                 = false;
+  private static final TCLogger            logger                = TCLogging.getLogger(SendStateMachine.class);
+
+  private long                             sent                  = -1;
+  private long                             acked                 = -1;
+  private int                              outstandingCnt        = 0;
+  private BoundedLinkedQueue               sendQueue;
 
   public SendStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
-    super();
-
     this.delivery = delivery;
     // set sendWindow from tc.properties if exist. 0 to disable window send.
     sendWindow = reconnectConfig.getSendWindow();
@@ -52,69 +51,56 @@ public class SendStateMachine extends AbstractStateMachine {
     this.debugId = (this.isClient) ? "CLIENT" : "SERVER";
   }
 
+  @Override
   protected void basicResume() {
-    switchToState(HANDSHAKE_WAIT_STATE);
+    switchToState(initialState());
   }
 
+  @Override
   protected State initialState() {
-    Assert.eval(MESSAGE_WAIT_STATE != null);
-    return MESSAGE_WAIT_STATE;
+    return HANDSHAKE_WAIT_STATE;
   }
 
+  @Override
   public synchronized void execute(OOOProtocolMessage msg) {
     Assert.eval(isStarted());
     getCurrentState().execute(msg);
   }
 
+  @Override
+  public String toString() {
+    return "CurrentState: " + getCurrentState() + "; OutStandingMsgsCount: " + outstandingCnt + "; Sent: " + sent
+           + "; Acked: " + acked;
+  }
+
+  @Override
   protected synchronized void switchToState(State state) {
-    debugLog("switching to " + state);
+    if (debug) debugLog("switching state: " + getCurrentState() + " ==> " + state);
     super.switchToState(state);
   }
 
-  private class MessageWaitState extends AbstractState {
-
-    public MessageWaitState() {
-      super("MESSAGE_WAIT_STATE");
-    }
-
-    public void enter() {
-      execute(null);
-    }
-
-    public void execute(OOOProtocolMessage protocolMessage) {
-      if (!sendQueue.isEmpty()) {
-        if ((sendWindow == 0) || (outstandingCnt.get() < sendWindow)) {
-          delivery.sendMessage(createProtocolMessage(++sent));
-        }
-        switchToState(ACK_WAIT_STATE);
-      }
-    }
-  }
-
+  /**
+   * Need to handhshake with the other end before proceeding any sending/receiving messages.
+   */
   private class HandshakeWaitState extends AbstractState {
 
     public HandshakeWaitState() {
       super("HANDSHAKE_WAIT_STATE");
     }
 
+    @Override
     public void execute(OOOProtocolMessage msg) {
-      if (msg == null) return;
-      // drop all msgs until handshake reply.
-      // Happens when short network disruptions and both L1 & L2 still keep states.
-      if (!msg.isHandshakeReplyOk() && !msg.isHandshakeReplyFail()) {
-        logger.warn("Due to handshake drops stale message:" + msg);
-        return;
-      }
+      // don't process sentQueue messages until handshake done
+      if (msg == null) { return; }
 
-      if (msg.isHandshakeReplyFail()) {
-        switchToState(MESSAGE_WAIT_STATE);
+      if (!msg.isHandshakeReplyOk()) {
+        logger.warn("Expecting only Handhake Reply messages. Dropping :" + msg + ";\n" + this);
         return;
       }
 
       long ackedSeq = msg.getAckSequence();
-
       if (ackedSeq == -1) {
-        debugLog("The other side restarted [switching to MSG_WAIT_STATE]");
+        if (debug) debugLog("The other side new/restarted.");
         switchToState(MESSAGE_WAIT_STATE);
         return;
       }
@@ -129,11 +115,15 @@ public class SendStateMachine extends AbstractStateMachine {
           ++acked;
           removeMessage();
         }
-        // resend outstanding which is not acked
-        if (outstandingCnt.get() > 0) {
+
+        if (outstandingCnt > 0) {
           // resend those not acked
           resendOutstandings();
-          switchToState(ACK_WAIT_STATE);
+          if (outstandingCnt >= sendWindow) {
+            switchToState(SENDWINDOW_FULL_STATE);
+          } else {
+            switchToState(MESSAGE_WAIT_STATE);
+          }
         } else {
           // all acked, we're good here
           switchToState(MESSAGE_WAIT_STATE);
@@ -142,50 +132,112 @@ public class SendStateMachine extends AbstractStateMachine {
     }
   }
 
-  private class AckWaitState extends AbstractState {
+  /**
+   * Ready to send more messages.
+   */
+  private class MessageWaitState extends AbstractState {
 
-    public AckWaitState() {
-      super("ACK_WAIT_STATE");
+    public MessageWaitState() {
+      super("MESSAGE_WAIT_STATE");
     }
 
+    @Override
     public void enter() {
-      sendMoreIfAvailable();
+      // trigger sending messages which are queued up
+      execute(null);
     }
 
+    @Override
     public void execute(OOOProtocolMessage protocolMessage) {
-      if (protocolMessage == null || protocolMessage.isSend()) return;
+      if ((protocolMessage != null) && protocolMessage.isAck()) {
+        switchToState(ACK_PROCESSING_STATE);
+        getCurrentState().execute(protocolMessage);
+      } else {
+        sendMoreIfAvailable();
+        if ((sendWindow > 0) && (outstandingCnt >= sendWindow)) {
+          switchToState(SENDWINDOW_FULL_STATE);
+        }
+      }
+    }
+  }
+
+  /**
+   * This is a temporary state and we are not suppose to stay back in this state. Hence, this state's won't be getting
+   * send messages from by Guaranteed Delivery Protocol.
+   */
+  private class AckProcessingState extends AbstractState {
+    public AckProcessingState() {
+      super("ACK_PROCESSING_STATE");
+    }
+
+    @Override
+    public void execute(OOOProtocolMessage protocolMessage) {
+
+      if (protocolMessage == null || protocolMessage.isSend()) {
+        // we can't send data present in the queue until we get an ACK
+        return;
+      }
+
+      Assert.eval(protocolMessage.isAck());
 
       long ackedSeq = protocolMessage.getAckSequence();
-      Assert.eval("SENDER-" + debugId + "-" + delivery.getConnectionId() + ": AckSeq " + ackedSeq
-                  + " should be greater than " + acked, ackedSeq >= acked);
+      if (ackedSeq < acked) {
+        Assert.eval("SENDER-" + debugId + "-" + delivery.getConnectionId() + ": AckSeq " + ackedSeq
+                    + " should be greater than " + acked, ackedSeq >= acked);
+      }
 
       while (ackedSeq > acked) {
         ++acked;
         removeMessage();
       }
 
-      // try pump more
-      sendMoreIfAvailable();
-
-      if (outstandingCnt.get() == 0) {
+      if (outstandingCnt < sendWindow) {
         switchToState(MESSAGE_WAIT_STATE);
+      } else {
+        switchToState(SENDWINDOW_FULL_STATE);
       }
 
-      // ???: is this check properly synchronized?
-      Assert.eval(acked <= sent);
+    }
+  }
+
+  /**
+   * We need an ACK message from other end, to move forward. When in this state, Guaranteed Delivery Protocol's send
+   * messages are sent to the queue and not processed.
+   */
+  private class SendWindowFullState extends AbstractState {
+
+    public SendWindowFullState() {
+      super("SEND_WINDOW_FULL_STATE");
     }
 
-    public void sendMoreIfAvailable() {
-      while ((outstandingCnt.get() < sendWindow) && !sendQueue.isEmpty()) {
-        delivery.sendMessage(createProtocolMessage(++sent));
+    @Override
+    public void execute(OOOProtocolMessage protocolMessage) {
+      if (protocolMessage == null || protocolMessage.isSend()) {
+        // waiting for ACK message only
+        return;
       }
+
+      if (protocolMessage.isAck()) {
+        switchToState(ACK_PROCESSING_STATE);
+        getCurrentState().execute(protocolMessage);
+      } else {
+        Assert.failure("SEND_WINDOW_FULL_STATE doesn't expect this message: " + protocolMessage + ";\n" + this);
+      }
+
+    }
+  }
+
+  // send all or till the window
+  private void sendMoreIfAvailable() {
+    while (((sendWindow <= 0) || (outstandingCnt < sendWindow)) && !sendQueue.isEmpty()) {
+      delivery.sendMessage(createProtocolMessage(++sent));
     }
   }
 
   private OOOProtocolMessage createProtocolMessage(long count) {
     final OOOProtocolMessage opm = delivery.createProtocolMessage(count, dequeue(sendQueue));
     Assert.eval(opm != null);
-    outstandingCnt.increment();
+    outstandingCnt++;
     outstandingMsgs.add(opm);
     return (opm);
   }
@@ -201,17 +253,18 @@ public class SendStateMachine extends AbstractStateMachine {
   private void removeMessage() {
     OOOProtocolMessage msg = (OOOProtocolMessage) outstandingMsgs.removeFirst();
     msg.reallyDoRecycleOnWrite();
-    outstandingCnt.decrement();
-    Assert.eval(outstandingCnt.get() >= 0);
+    outstandingCnt--;
+    Assert.eval(outstandingCnt >= 0);
   }
 
+  @Override
   public synchronized void reset() {
 
     sent = -1;
     acked = -1;
 
     // purge out outstanding sends
-    outstandingCnt.set(0);
+    outstandingCnt = 0;
     outstandingMsgs.clear();
 
     BoundedLinkedQueue tmpQ = sendQueue;
@@ -234,9 +287,7 @@ public class SendStateMachine extends AbstractStateMachine {
   }
 
   private void debugLog(String msg) {
-    if (debug) {
-      DebugUtil.trace("SENDER-" + debugId + "-" + delivery.getConnectionId() + " -> " + msg);
-    }
+    if (debug) DebugUtil.trace("SENDER-" + debugId + "-" + delivery.getConnectionId() + " -> " + msg);
   }
 
   // for testing purpose only

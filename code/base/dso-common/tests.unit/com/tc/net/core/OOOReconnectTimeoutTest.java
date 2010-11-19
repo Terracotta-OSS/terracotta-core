@@ -3,19 +3,12 @@
  */
 package com.tc.net.core;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
-
-import com.tc.async.api.Stage;
-import com.tc.async.impl.StageManagerImpl;
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -34,7 +27,6 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
-import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
@@ -72,13 +64,8 @@ public class OOOReconnectTimeoutTest extends TCTestCase {
   private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean enableReconnect) {
     NetworkStackHarnessFactory networkStackHarnessFactory;
     if (enableReconnect) {
-      StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
-      final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
-      final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
                                                                      new L1ReconnectConfigImpl(true,
                                                                                                L1_RECONNECT_TIMEOUT,
                                                                                                5000, 16, 32));

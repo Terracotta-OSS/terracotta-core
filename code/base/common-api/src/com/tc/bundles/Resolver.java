@@ -521,7 +521,7 @@ public class Resolver {
     if (toolkitMatcher.matches()) {
       if (topLevelReference && toolkitVersionFrozen.get()) { return false; }
 
-      ToolkitVersion ver = new ToolkitVersion(toolkitMatcher.group(1), toolkitMatcher.group(2));
+      ToolkitVersion ver = new ToolkitVersion(toolkitMatcher.group(1), toolkitMatcher.group(2), toolkitMatcher.group(3));
 
       if (this.maxToolkitVersion == null) {
         logger.info("First toolkit reference found: " + ver);
@@ -536,6 +536,12 @@ public class Resolver {
                                                maxToolkitVersion.toString(), ver.toString());
         }
 
+        // prefer the EE artifact if found
+        if (!maxToolkitVersion.isEE() && ver.isEE()) {
+          logger.info("EE tookit reference found: " + ver);
+          maxToolkitVersion = new ToolkitVersion(maxToolkitVersion.getMajor(), maxToolkitVersion.getMinor(), true);
+        }
+
         if (maxToolkitVersion.getMinor() < ver.getMinor()) {
           if (toolkitVersionFrozen.get()) {
             // once the version is frozen we can't be asked to load another (higher) version
@@ -544,7 +550,7 @@ public class Resolver {
           }
 
           logger.info("Higher toolkit version reference found: " + ver);
-          maxToolkitVersion = ver;
+          maxToolkitVersion = new ToolkitVersion(ver.getMajor(), ver.getMinor(), maxToolkitVersion.isEE() || ver.isEE());
         }
       }
 

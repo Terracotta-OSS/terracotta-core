@@ -89,7 +89,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
           statisticsBuffer = createClientStatisticsBuffer(type, statistics_config);
           break;
         case SERVER:
-          statisticsBuffer = createServerStatisticsBuffer(type, statistics_config, config.statisticsPath().getFile());
+          statisticsBuffer = createServerStatisticsBuffer(type, statistics_config, config.statisticsPath());
           break;
         default:
           throw new TCRuntimeException("Unsupported statistics system type : " + type);

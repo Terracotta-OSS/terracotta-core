@@ -12,14 +12,14 @@ import com.tc.test.TCTestCase;
 import com.terracottatech.configTest.TestRootDocument.TestRoot;
 
 /**
- * Unit test for {@link FromSchemaDefaultValueProvider}.
+ * Unit test for {@link SchemaDefaultValueProvider}.
  */
 public class FromSchemaDefaultValueProviderTest extends TCTestCase {
 
-  private FromSchemaDefaultValueProvider provider;
+  private SchemaDefaultValueProvider provider;
 
   public void setUp() throws Exception {
-    this.provider = new FromSchemaDefaultValueProvider();
+    this.provider = new SchemaDefaultValueProvider();
   }
 
   private void checkHasDefault(String xpath) throws Exception {

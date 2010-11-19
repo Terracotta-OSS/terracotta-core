@@ -4,15 +4,16 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.dynamic.FileConfigItem;
 import com.terracottatech.config.Modules;
+
+import java.io.File;
 
 /**
  * Contains methods for L1 DSO.
  */
 public interface NewCommonL1Config extends NewConfig {
 
-  FileConfigItem logsPath();
+  File logsPath();
 
   Modules modules();
 

@@ -43,6 +43,7 @@ public class HaConfigBuilder extends BaseConfigBuilder {
     return this.electionTime;
   }
 
+  @Override
   public String toString() {
     String out = "";
 
@@ -50,10 +51,12 @@ public class HaConfigBuilder extends BaseConfigBuilder {
 
     out += element(MODE);
 
-    String networkedActivePassiveString = openElement("networked-active-passive", NETWORKED_ACTIVE_PASSIVE);
-    if (!networkedActivePassiveString.equals("")) {
-      out += networkedActivePassiveString + element(NETWORKED_ACTIVE_PASSIVE_ELECTION_TIME)
-          + closeElement("networked-active-passive");
+    if (this.haMode.equals(HA_MODE_NETWORKED_ACTIVE_PASSIVE)) {
+      String networkedActivePassiveString = openElement("networked-active-passive", NETWORKED_ACTIVE_PASSIVE);
+      if (!networkedActivePassiveString.equals("")) {
+        out += networkedActivePassiveString + element(NETWORKED_ACTIVE_PASSIVE_ELECTION_TIME)
+               + closeElement("networked-active-passive");
+      }
     }
 
     out += closeElement("ha");

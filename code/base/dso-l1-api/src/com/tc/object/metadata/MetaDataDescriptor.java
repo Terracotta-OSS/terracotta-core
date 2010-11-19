@@ -6,7 +6,7 @@ package com.tc.object.metadata;
 import java.util.Date;
 
 /**
- * This class hold the Metadata information associated with a shared object.
+ * This class holds a collection of metadata
  * 
  * @author Nabib
  */

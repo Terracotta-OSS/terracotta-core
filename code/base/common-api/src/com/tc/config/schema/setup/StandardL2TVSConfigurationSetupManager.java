@@ -20,7 +20,6 @@ import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewCommonL2ConfigObject;
 import com.tc.config.schema.NewHaConfig;
-import com.tc.config.schema.NewHaConfigObject;
 import com.tc.config.schema.NewSystemConfig;
 import com.tc.config.schema.NewSystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
@@ -36,15 +35,14 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfigObject;
-import com.tc.object.config.schema.PersistenceMode;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
-import com.terracottatech.config.Ha;
 import com.terracottatech.config.MirrorGroups;
+import com.terracottatech.config.PersistenceMode;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.System;
@@ -74,10 +72,8 @@ import java.util.Set;
 public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
     L2TVSConfigurationSetupManager {
 
-  private static final TCLogger             logger                 = TCLogging
-                                                                       .getLogger(StandardL2TVSConfigurationSetupManager.class);
+  private static final TCLogger             logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
 
-  private final ConfigurationCreator        configurationCreator;
   private final Map                         l2ConfigData;
   private final NewHaConfig                 haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
@@ -88,20 +84,16 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   private NewSystemConfig                   systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
-  private volatile boolean                  isMirrorGroupSpecified = true;
 
   public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
-    super(defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
+    super(configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
-    Assert.assertNotNull(configurationCreator);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
-
-    this.configurationCreator = configurationCreator;
 
     this.systemConfig = null;
     this.l2ConfigData = new HashMap();
@@ -109,7 +101,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     this.localInetAddresses = getAllLocalInetAddresses();
 
     // this sets the beans in each repository
-    runConfigurationCreator(this.configurationCreator);
+    runConfigurationCreator();
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
 
@@ -120,11 +112,19 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       throw new ConfigurationSetupException(e2);
     }
 
-    try {
-      this.activeServerGroupsConfig = createActiveServerGroupsConfig();
-    } catch (Exception e) {
-      throw new ConfigurationSetupException(e);
-    }
+    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
+                                                                         new ChildBeanFetcher() {
+                                                                           public XmlObject getChild(XmlObject parent) {
+                                                                             return ((Servers) serversBeanRepository()
+                                                                                 .bean()).getMirrorGroups();
+                                                                           }
+                                                                         });
+    this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
+                                                                       createContext(
+                                                                                     mirrorGroupsRepository,
+                                                                                     configurationCreator()
+                                                                                         .directoryConfigurationLoadedFrom()),
+                                                                       this);
 
     Servers serversBean = (Servers) serversBeanRepository().bean();
     Server[] servers = serversBean != null ? serversBean.getServerArray() : null;
@@ -151,22 +151,30 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       throws ConfigurationSetupException {
     MutableBeanRepository changedL2sBeanRepository = new StandardBeanRepository(Servers.class);
 
-    this.configurationCreator.reloadServersConfiguration(changedL2sBeanRepository, false, false);
+    configurationCreator().reloadServersConfiguration(changedL2sBeanRepository, false, false);
 
     TopologyVerifier topologyVerifier = new TopologyVerifier(serversBeanRepository(), changedL2sBeanRepository,
-                                                             this.activeServerGroupsConfig, serverConnectionValidator,
-                                                             this);
+                                                             this.activeServerGroupsConfig, serverConnectionValidator);
     TopologyReloadStatus status = topologyVerifier.checkAndValidateConfig();
     if (TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE != status) { return status; }
 
-    this.configurationCreator.reloadServersConfiguration(serversBeanRepository(), true, true);
+    configurationCreator().reloadServersConfiguration(serversBeanRepository(), true, true);
     this.l2ConfigData.clear();
 
-    try {
-      this.activeServerGroupsConfig = createActiveServerGroupsConfig();
-    } catch (XmlException e) {
-      throw new ConfigurationSetupException(e);
-    }
+    ChildBeanRepository mirrorGroupsRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
+                                                                         new ChildBeanFetcher() {
+                                                                           public XmlObject getChild(XmlObject parent) {
+                                                                             return ((Servers) serversBeanRepository()
+                                                                                 .bean()).getMirrorGroups();
+                                                                           }
+                                                                         });
+
+    this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
+                                                                       createContext(
+                                                                                     mirrorGroupsRepository,
+                                                                                     configurationCreator()
+                                                                                         .directoryConfigurationLoadedFrom()),
+                                                                       this);
 
     return TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
   }
@@ -235,6 +243,21 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       }
       if (!found) { throw new ConfigurationSetupException("Server{" + serverName + "} is not part of any mirror-group."); }
     }
+
+    Set<String> allServers = new HashSet<String>();
+    for (Server server : serverArray) {
+      allServers.add(server.getName());
+    }
+
+    for (ActiveServerGroupConfig element : groupArray) {
+      for (String member : element.getMembers().getMemberArray()) {
+        if (!allServers.contains(member)) { throw new ConfigurationSetupException(
+                                                                                  "Server{"
+                                                                                      + member
+                                                                                      + "} is not defined but has been added as a memeber in the group "
+                                                                                      + element.getGroupName()); }
+      }
+    }
   }
 
   private void validateGroupNames(ActiveServerGroupConfig[] groupArray) throws ConfigurationSetupException {
@@ -249,31 +272,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
         list.add(grpName);
       }
     }
-  }
-
-  // make sure there is at most one of these
-  private ActiveServerGroupsConfig createActiveServerGroupsConfig() throws ConfigurationSetupException, XmlException {
-
-    final MirrorGroups defaultActiveServerGroups = ActiveServerGroupsConfigObject
-        .getDefaultActiveServerGroups(defaultValueProvider, serversBeanRepository(), getCommomOrDefaultHa().getHa());
-
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), MirrorGroups.class,
-                                                                 new ChildBeanFetcher() {
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     MirrorGroups activeServerGroups = ((Servers) parent)
-                                                                         .getMirrorGroups();
-                                                                     if (activeServerGroups == null
-                                                                         || !isMirrorGroupSpecified) {
-                                                                       isMirrorGroupSpecified = false;
-                                                                       activeServerGroups = defaultActiveServerGroups;
-                                                                       ((Servers) parent)
-                                                                           .setMirrorGroups(activeServerGroups);
-                                                                     }
-                                                                     return activeServerGroups;
-                                                                   }
-                                                                 });
-    return new ActiveServerGroupsConfigObject(createContext(beanRepository, configurationCreator
-        .directoryConfigurationLoadedFrom()), this);
   }
 
   // make sure there is at most one of these
@@ -305,7 +303,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                    }
                                                                  });
 
-    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator
+    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator()
         .directoryConfigurationLoadedFrom()));
   }
 
@@ -322,27 +320,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
 
   // called by configObjects that need to create their own context
   public File getConfigFilePath() {
-    return configurationCreator.directoryConfigurationLoadedFrom();
-  }
-
-  public NewHaConfig getCommomOrDefaultHa() throws XmlException {
-    NewHaConfig newHaConfig = null;
-    final Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(defaultValueProvider, serversBeanRepository());
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), Ha.class,
-                                                                 new ChildBeanFetcher() {
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     Ha ha = ((Servers) parent).getHa();
-                                                                     if (ha == null) {
-                                                                       ha = defaultHa;
-                                                                     }
-                                                                     return ha;
-                                                                   }
-                                                                 });
-
-    newHaConfig = new NewHaConfigObject(createContext(beanRepository, configurationCreator
-        .directoryConfigurationLoadedFrom()));
-    Assert.assertNotNull(newHaConfig);
-    return newHaConfig;
+    return configurationCreator().directoryConfigurationLoadedFrom();
   }
 
   private class L2ConfigData {
@@ -356,9 +334,9 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       this.name = name;
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
-      this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository, configurationCreator
+      this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()));
-      this.dsoL2Config = new NewL2DSOConfigObject(createContext(this.beanRepository, configurationCreator
+      this.dsoL2Config = new NewL2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()));
     }
 
@@ -468,7 +446,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public String describeSources() {
-    return this.configurationCreator.describeSources();
+    return this.configurationCreator().describeSources();
   }
 
   private synchronized L2ConfigData configDataFor(String name) throws ConfigurationSetupException {
@@ -516,16 +494,16 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
-    this.systemConfig = new NewSystemConfigObject(createContext(systemBeanRepository(), configurationCreator
+    this.systemConfig = new NewSystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
         .directoryConfigurationLoadedFrom()));
     L2ConfigData serverConfigData = configDataFor(this.thisL2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
-    serverConfigData.commonL2Config().logsPath().addListener(listener);
-    listener.valueChanged(null, serverConfigData.commonL2Config().logsPath().getObject());
+    listener.valueChanged(null, serverConfigData.commonL2Config().logsPath());
     return serverConfigData;
   }
 
   private void validateDSOClusterPersistenceMode() throws ConfigurationSetupException {
+    validatePersistenceModeInGroups();
     ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
 
     Map<String, Boolean> serversToMode = new HashMap<String, Boolean>();
@@ -544,13 +522,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
       if (servers != null && servers.length > 1) {
         // We have clustered DSO; they must all be in permanent-store
         // mode
-        for (int i = 0; i < servers.length; ++i) {
-          String name = servers[i].getName();
+        for (Server server : servers) {
+          String name = server.getName();
           L2ConfigData data = configDataFor(name);
 
           Assert.assertNotNull(data);
           boolean isNwAP = serversToMode.get(name);
-          if (!isNwAP && !(data.dsoL2Config().persistenceMode().getObject().equals(PersistenceMode.PERMANENT_STORE))) {
+          if (!isNwAP && (data.dsoL2Config().getPersistence().getMode() != PersistenceMode.PERMANENT_STORE)) {
             badServers.add(name);
           }
         }
@@ -573,6 +551,32 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                   + "See the Terracotta documentation for more details.");
       }
     }
+  }
+
+  private void validatePersistenceModeInGroups() throws ConfigurationSetupException {
+    ActiveServerGroupConfig[] groupArray = this.activeServerGroupsConfig.getActiveServerGroupArray();
+
+    for (ActiveServerGroupConfig group : groupArray) {
+      String[] members = group.getMembers().getMemberArray();
+      if (members.length > 1) {
+        PersistenceMode.Enum baseMode = configDataFor(members[0]).dsoL2Config.getPersistence().getMode();
+        for (int i = 1; i < members.length; i++) {
+          L2ConfigData memberData = configDataFor(members[i]);
+          if (memberData.dsoL2Config.getPersistence().getMode() != baseMode) {
+            StringBuilder msg = new StringBuilder();
+            msg.append("The persistence mode of the servers in the group ").append(group.getGroupName())
+                .append(" with servers {");
+            for (String member : members) {
+              msg.append(member).append(" ");
+            }
+            msg
+                .append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
+            throw new ConfigurationSetupException(msg.toString());
+          }
+        }
+      }
+    }
+
   }
 
   public void validateLicenseCapabilities() {
@@ -645,7 +649,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   }
 
   public InputStream rawConfigFile() {
-    String text = configurationCreator.rawConfigText();
+    String text = configurationCreator().rawConfigText();
     try {
       return new ByteArrayInputStream(text.getBytes("UTF-8"));
     } catch (UnsupportedEncodingException uee) {

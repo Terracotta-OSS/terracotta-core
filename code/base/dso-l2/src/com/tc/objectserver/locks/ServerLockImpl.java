@@ -42,6 +42,7 @@ public final class ServerLockImpl extends AbstractServerLock {
     }
   }
 
+  @Override
   protected void queue(ClientID cid, ThreadID tid, ServerLockLevel level, Type type, long timeout, LockHelper helper) {
     if (!canAwardRequest(level) && hasGreedyHolders()) {
       recall(level, helper);
@@ -49,6 +50,7 @@ public final class ServerLockImpl extends AbstractServerLock {
     super.queue(cid, tid, level, type, timeout, helper);
   }
 
+  @Override
   public boolean clearStateForNode(ClientID cid, LockHelper helper) {
     clearContextsForClient(cid, helper);
 
@@ -178,11 +180,13 @@ public final class ServerLockImpl extends AbstractServerLock {
    * already present. The reason being that a greedy read lock is even when waiters are present, hence a duplicate wait
    * context can be present on the server.
    */
+  @Override
   public void recallCommit(ClientID cid, Collection<ClientServerExchangeLockContext> serverLockContexts,
                            LockHelper helper) {
     ServerLockContext greedyHolder = remove(cid, ThreadID.VM_ID, SET_OF_GREEDY_HOLDERS);
 
-    if (greedyHolder == null) { throw new AssertionError("No Greedy Holder Exists For " + cid + " on " + lockID); }
+    if (greedyHolder == null) { throw new AssertionError("No Greedy Holder Exists For " + cid + " on " + lockID
+                                                         + " Lock State: " + this.toString()); }
 
     recordLockReleaseStat(cid, ThreadID.VM_ID, helper);
 

@@ -4,40 +4,45 @@
 package com.tc.simulator.container;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.object.TestClientConfigHelperFactory;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConfigVisitor;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.loaders.IsolationClassLoader;
+import com.tc.simulator.app.ApplicationConfig;
 
 import java.util.Iterator;
 import java.util.Map;
 
-import com.tc.simulator.app.ApplicationConfig;
-
 public class IsolationClassLoaderFactory {
 
-  private final TestClientConfigHelperFactory factory;
-  private final Class                   applicationClass;
-  private final Map                     optionalAttributes;
-  private final ConfigVisitor           configVisitor;
-  private final PreparedComponentsFromL2Connection components;
-  private final Map                                adapterMap;
+  private final TestClientConfigHelperFactory  factory;
+  private final Class                          applicationClass;
+  private final Map                            optionalAttributes;
+  private final ConfigVisitor                  configVisitor;
+  private final L1TVSConfigurationSetupManager l1ConfigManager;
+  private final Map                            adapterMap;
 
-
-  public IsolationClassLoaderFactory(TestClientConfigHelperFactory factory, Class applicationClass, Map optionalAttributes, PreparedComponentsFromL2Connection components, Map adapterMap) {
+  public IsolationClassLoaderFactory(TestClientConfigHelperFactory factory, Class applicationClass,
+                                     Map optionalAttributes, L1TVSConfigurationSetupManager l1ConfigManager,
+                                     Map adapterMap) {
     this.factory = factory;
     this.applicationClass = applicationClass;
     this.optionalAttributes = optionalAttributes;
     this.configVisitor = new ConfigVisitor();
-    this.components = components;
+    this.l1ConfigManager = l1ConfigManager;
     this.adapterMap = adapterMap;
   }
-  
-  public IsolationClassLoader createIsolationClassLoader(String applicationId, ApplicationConfig applicationConfig) throws ConfigurationSetupException {
+
+  public IsolationClassLoader createIsolationClassLoader(String applicationId, ApplicationConfig applicationConfig)
+      throws ConfigurationSetupException {
     boolean usesAdapters = false;
 
-    IsolationClassLoader classloader = new IsolationClassLoader(createClientConfigHelper(), this.components);
+    IsolationClassLoader classloader = new IsolationClassLoader(
+                                                                createClientConfigHelper(),
+                                                                new PreparedComponentsFromL2Connection(
+                                                                                                       this.l1ConfigManager));
     if (adapterMap != null) {
       if (adapterMap.size() > 0) {
         usesAdapters = true;

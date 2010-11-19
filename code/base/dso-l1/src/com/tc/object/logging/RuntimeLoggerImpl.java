@@ -48,18 +48,18 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     this.logger = CustomerLogging.getDSORuntimeLogger();
 
     // runtime logging items
-    this.lockDebug = configHelper.runtimeLoggingOptions().logLockDebug().getBoolean();
-    this.fieldChangeDebug = configHelper.runtimeLoggingOptions().logFieldChangeDebug().getBoolean();
+    this.lockDebug = configHelper.runtimeLoggingOptions().logLockDebug();
+    this.fieldChangeDebug = configHelper.runtimeLoggingOptions().logFieldChangeDebug();
     this.arrayChangeDebug = fieldChangeDebug;
-    this.newManagedObjectDebug = configHelper.runtimeLoggingOptions().logNewObjectDebug().getBoolean();
-    this.distributedMethodDebug = configHelper.runtimeLoggingOptions().logDistributedMethodDebug().getBoolean();
-    this.nonPortableDump = configHelper.runtimeLoggingOptions().logNonPortableDump().getBoolean();
-    this.waitNotifyDebug = configHelper.runtimeLoggingOptions().logWaitNotifyDebug().getBoolean();
-    this.namedLoaderDebug = configHelper.runtimeLoggingOptions().logNamedLoaderDebug().getBoolean();
+    this.newManagedObjectDebug = configHelper.runtimeLoggingOptions().logNewObjectDebug();
+    this.distributedMethodDebug = configHelper.runtimeLoggingOptions().logDistributedMethodDebug();
+    this.nonPortableDump = configHelper.runtimeLoggingOptions().logNonPortableDump();
+    this.waitNotifyDebug = configHelper.runtimeLoggingOptions().logWaitNotifyDebug();
+    this.namedLoaderDebug = configHelper.runtimeLoggingOptions().logNamedLoaderDebug();
 
     // runtime logging options
-    this.fullStack = configHelper.runtimeOutputOptions().doFullStack().getBoolean();
-    this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails().getBoolean();
+    this.fullStack = configHelper.runtimeOutputOptions().doFullStack();
+    this.autoLockDetails = configHelper.runtimeOutputOptions().doAutoLockDetails();
 
     setFlushDebug(TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L1_OBJECTMANAGER_FLUSH_LOGGING_ENABLED));

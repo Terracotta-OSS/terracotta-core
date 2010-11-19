@@ -10,16 +10,18 @@ import com.terracottatech.config.Module;
 
 public class ToolkitVersion {
 
-  private final int major;
-  private final int minor;
+  private final int     major;
+  private final int     minor;
+  private final boolean isEE;
 
-  public ToolkitVersion(int major, int minor) {
+  public ToolkitVersion(int major, int minor, boolean ee) {
     this.major = major;
     this.minor = minor;
+    this.isEE = ee;
   }
 
-  public ToolkitVersion(String major, String minor) {
-    this(parse(major), parse(minor));
+  public ToolkitVersion(String major, String minor, String ee) {
+    this(parse(major), parse(minor), ee != null && ee.equals("-ee"));
   }
 
   private static int parse(String num) {
@@ -27,11 +29,16 @@ public class ToolkitVersion {
     return Integer.parseInt(num);
   }
 
+  public boolean isEE() {
+    return isEE;
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof ToolkitVersion) {
       ToolkitVersion other = (ToolkitVersion) obj;
-      return new EqualsBuilder().append(minor, other.minor).append(major, this.major).isEquals();
+      return new EqualsBuilder().append(minor, other.minor).append(major, this.major).append(isEE, other.isEE)
+          .isEquals();
     }
 
     return false;
@@ -39,12 +46,12 @@ public class ToolkitVersion {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder().append(major).append(minor).toHashCode();
+    return new HashCodeBuilder().append(major).append(minor).append(isEE).toHashCode();
   }
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + major + "." + minor + ")";
+    return getClass().getSimpleName() + "(" + major + "." + minor + (isEE() ? "-ee" : "");
   }
 
   public int getMajor() {
@@ -58,13 +65,13 @@ public class ToolkitVersion {
   public Module asModule() {
     Module module = Module.Factory.newInstance();
     module.setGroupId(ToolkitConstants.GROUP_ID);
-    module.setName(ToolkitConstants.ARTIFACT_ID_PREFIX + major + "." + minor);
+    module.setName(ToolkitConstants.ARTIFACT_ID_PREFIX + major + "." + minor + (isEE() ? "-ee" : ""));
     module.setVersion(null);
     return module;
   }
 
   public ToolkitVersion nextMinorVersion() {
-    return new ToolkitVersion(major, minor + 1);
+    return new ToolkitVersion(major, minor + 1, isEE);
   }
 
 }

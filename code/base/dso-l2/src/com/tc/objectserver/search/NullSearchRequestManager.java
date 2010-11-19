@@ -18,7 +18,7 @@ public class NullSearchRequestManager implements SearchRequestManager {
 
   public void queryRequest(ClientID clientID, SearchRequestID requestID, String cachename, LinkedList queryStack,
                            boolean includeKeys, Set<String> attributeSet, Map<String, SortOperations> sortAttributes,
-                           List<NVPair> aggregators) {
+                           List<NVPair> aggregators, int maxResults) {
     // Do nothing
   }
 

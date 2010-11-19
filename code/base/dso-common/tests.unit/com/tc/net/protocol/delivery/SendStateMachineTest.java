@@ -11,18 +11,18 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.test.TCTestCase;
 import com.tc.util.UUID;
 
-import junit.framework.TestCase;
-
 /**
- *
+ * Testing the basic functionality of OOO Send State Machine. More functional test at GuaranteedDeliveryProtocolTest
  */
-public class SendStateMachineTest extends TestCase {
+public class SendStateMachineTest extends TCTestCase {
+
   public void tests() throws Exception {
     TestProtocolMessageDelivery delivery = new TestProtocolMessageDelivery(new LinkedQueue());
     final UUID sessionId = UUID.getUUID();
-    final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl();
+    final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl(true, 5000, 100, 16, 32);
     SendStateMachine ssm = new SendStateMachine(delivery, reconnectConfig, true);
     ssm.start();
     ssm.resume();
@@ -30,13 +30,9 @@ public class SendStateMachineTest extends TestCase {
     // hand shake state
     // compelete hand shake, receive ack=-1 from receiver
     TestProtocolMessage msg = new TestProtocolMessage(null, 0, -1);
-    msg.isAck = true;
+    msg.isHandshakeReplyOk = true;
     msg.setSessionId(sessionId);
     ssm.execute(msg);
-
-    TestProtocolMessage tpm = new TestProtocolMessage(null, -1, -1);
-    tpm.setSessionId(sessionId);
-    tpm.isSend = true;
 
     // SEND
     MessageMonitor monitor = new NullMessageMonitor();
@@ -44,7 +40,11 @@ public class SendStateMachineTest extends TestCase {
     ssm.execute(null); // msg 0
     assertTrue(delivery.created);
     assertTrue(delivery.msg.getSent() == 0);
-    delivery.clear();
+    delivery.clearAll();
+
+    TestProtocolMessage tpm = new TestProtocolMessage(null, -1, -1);
+    tpm.setSessionId(sessionId);
+    tpm.isSend = true;
 
     // Call send an extra time with nothing on the send queue
     ssm.execute(tpm); // drop
@@ -64,17 +64,22 @@ public class SendStateMachineTest extends TestCase {
     assertTrue(ssm.isPaused());
 
     // HAND SHAKE for RESEND
-    delivery.clear();
+    delivery.clearAll();
     ssm.resume();
     assertFalse(ssm.isPaused());
+
+    msg = new TestProtocolMessage(null, 0, -1);
+    msg.isHandshakeReplyOk = true;
+    msg.setSessionId(sessionId);
+    ssm.execute(msg);
 
     tpm.ack = 0;
     ssm.execute(tpm); // dup ack=0
 
     ssm.put(new PingMessage(monitor)); // msg 3
-    ssm.execute(null); 
+    ssm.execute(null);
     assertTrue(delivery.msg.getSent() == 3);
- 
+
     tpm.ack = 2;
     ssm.execute(tpm); // ack 2
     assertTrue(delivery.msg.getSent() == 3);

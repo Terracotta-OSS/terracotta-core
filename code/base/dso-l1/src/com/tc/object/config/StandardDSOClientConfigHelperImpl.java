@@ -8,8 +8,8 @@ import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
-import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.groupConfigForL1.ServerInfo;
+import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -23,7 +23,6 @@ import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
@@ -70,9 +69,9 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
+import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
@@ -98,8 +97,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -251,7 +250,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     NewDSOApplicationConfig appConfig = configSetupManager
         .dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
 
-    supportSharingThroughReflection = appConfig.supportSharingThroughReflection().getBoolean();
+    supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
     try {
       doPreInstrumentedAutoconfig();
       doAutoconfig();
@@ -1170,7 +1169,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public int getFaultCount() {
-    return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount().getInt() : faultCount;
+    return faultCount < 0 ? this.configSetupManager.dsoL1Config().faultCount() : faultCount;
   }
 
   private Boolean readAdaptableCache(final String name) {
@@ -1896,8 +1895,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     String serverList = "";
     boolean loggedInConsole = false;
 
-    ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
-    ConnectionInfo[] connections = (ConnectionInfo[]) connectInfo.getObject();
+    ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
+    ConnectionInfo[] connections = connectInfo.getConnectionInfos();
 
     for (ConnectionInfo connection : connections) {
       if (serverList.length() > 0) serverList += ", ";
@@ -1952,10 +1951,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager);
     ServerGroups serverGroupsFromL2 = getServerGroupsFromL2(connectionComponents);
 
-    ConfigItem[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
+    ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
     HashSet<ConnectionInfo> connInfoFromL1 = new HashSet<ConnectionInfo>();
     for (int i = 0; i < connectionInfoItems.length; i++) {
-      ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItems[i].getObject();
+      ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
                                                          connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
@@ -2047,8 +2046,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     boolean loggedInConsole = false;
 
     PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
-    ConnectionInfoConfigItem connectInfo = (ConnectionInfoConfigItem) serverInfos.createConnectionInfoConfigItem();
-    ConnectionInfo[] connections = (ConnectionInfo[]) connectInfo.getObject();
+    ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
+    ConnectionInfo[] connections = connectInfo.getConnectionInfos();
 
     for (ConnectionInfo connection : connections) {
       if (serverList.length() > 0) serverList += ", ";

@@ -4,9 +4,9 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.dynamic.BindPortConfigItem;
-import com.tc.config.schema.dynamic.FileConfigItem;
-import com.tc.config.schema.dynamic.StringConfigItem;
+import com.terracottatech.config.BindPort;
+
+import java.io.File;
 
 /**
  * Contains methods exposing DSO L2 config.
@@ -17,17 +17,17 @@ public interface NewCommonL2Config extends NewConfig, NewStatisticsConfig {
   public static final int   MIN_PORTNUMBER                      = 0x0FFF;
   public static final int   MAX_PORTNUMBER                      = 0xFFFF;
 
-  FileConfigItem dataPath();
+  File dataPath();
 
-  FileConfigItem logsPath();
+  File logsPath();
 
-  FileConfigItem serverDbBackupPath();
+  File serverDbBackupPath();
 
-  FileConfigItem indexPath();
+  File indexPath();
 
-  BindPortConfigItem jmxPort();
+  BindPort jmxPort();
 
-  StringConfigItem host();
+  String host();
 
   boolean authentication();
 

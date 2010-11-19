@@ -17,9 +17,9 @@ import java.util.regex.Pattern;
 /**
  * A {@link DefaultValueProvider} that gets defaults from the schema itself.
  */
-public class FromSchemaDefaultValueProvider implements DefaultValueProvider {
+public class SchemaDefaultValueProvider implements DefaultValueProvider {
 
-  public FromSchemaDefaultValueProvider() {
+  public SchemaDefaultValueProvider() {
   // Nothing here.
   }
 

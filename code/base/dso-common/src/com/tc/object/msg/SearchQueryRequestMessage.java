@@ -36,19 +36,20 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   /**
    * Initialize message.
    * 
-   * @param SearchRequestID searchRequestID
-   * @param String cacheName
-   * @param LinkedList queryStack
-   * @param boolean keys
-   * @param Set<String> attributeSet
-   * @param Map<String,SortOperations> sortAttributeMap
-   * @param List<NVPair> aggregators
+   * @param searchRequestID
+   * @param cacheName
+   * @param queryStack
+   * @param keys
+   * @param attributeSet
+   * @param sortAttributeMap
+   * @param aggregators
+   * @param maxResults
    */
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final String cacheName,
                                           final LinkedList queryStack, final boolean keys,
                                           final Set<String> attributeSet,
                                           final Map<String, SortOperations> sortAttributesMap,
-                                          final List<NVPair> aggregators);
+                                          final List<NVPair> aggregators, int maxResults);
 
   /**
    * Name of cache to query against.
@@ -91,5 +92,10 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @return boolean
    */
   public boolean includeKeys();
+
+  /**
+   * Return maximum results size. return integer
+   */
+  public int getMaxResults();
 
 }

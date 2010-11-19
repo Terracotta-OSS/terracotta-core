@@ -20,7 +20,7 @@ public interface ManagerInternal extends Manager, TerracottaLockingInternal {
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
                                          Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                         List<NVPair> aggregators);
+                                         List<NVPair> aggregators, int maxResults);
 
   public NVPair createNVPair(String name, Object value);
 

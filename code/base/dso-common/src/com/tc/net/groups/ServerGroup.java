@@ -107,8 +107,8 @@ public class ServerGroup {
 
   private String getMembersToString() {
     String out = "";
-    for (int i = 0; i < this.members.length; i++) {
-      out += members[i] + " ";
+    for (String member : this.members) {
+      out += member + " ";
     }
     return out;
   }
@@ -128,10 +128,7 @@ public class ServerGroup {
     return this.haMode.isNetworkedActivePassive();
   }
 
-  public int getElectionTime() {
-    return this.haMode.electionTime();
-  }
-
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof ServerGroup) {
       ServerGroup that = (ServerGroup) obj;
@@ -140,17 +137,19 @@ public class ServerGroup {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return groupId.toInt();
   }
 
+  @Override
   public String toString() {
     return "ActiveServerGroup{groupId=" + groupId + "}";
   }
 
   public boolean hasMember(String serverName) {
-    for (int i = 0; i < this.members.length; i++) {
-      if (members[i].equals(serverName)) { return true; }
+    for (String member : this.members) {
+      if (member.equals(serverName)) { return true; }
     }
     return false;
   }

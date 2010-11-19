@@ -99,7 +99,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
 
   private boolean isPassiveStandBy(int jmxPort) {
     TCServerInfoMBean mbean = null;
-    boolean isActive = false;
+    boolean isPassiveStandBy = false;
     JMXConnector jmxConnector = null;
 
     try {
@@ -107,7 +107,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
       final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
       mbean = MBeanServerInvocationProxy
           .newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, false);
-      isActive = mbean.isPassiveStandby();
+      isPassiveStandBy = mbean.isPassiveStandby();
     } catch (Exception e) {
       return false;
     } finally {
@@ -120,7 +120,7 @@ public class ActivePassiveFailOverTest extends BaseDSOTestCase {
       }
     }
 
-    return isActive;
+    return isPassiveStandBy;
   }
 
   private void waitTillBecomeActive(int jmxPort) {

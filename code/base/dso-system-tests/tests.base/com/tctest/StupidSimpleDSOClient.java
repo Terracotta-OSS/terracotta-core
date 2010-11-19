@@ -60,7 +60,7 @@ public class StupidSimpleDSOClient {
                                                               args,
                                                               StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                               new FatalIllegalConfigurationChangeHandler());
-    L1TVSConfigurationSetupManager configManager = factory.createL1TVSConfigurationSetupManager();
+    L1TVSConfigurationSetupManager configManager = factory.getL1TVSConfigurationSetupManager();
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(configManager);
     IsolationClassLoader classLoader = new IsolationClassLoader(new StandardDSOClientConfigHelperImpl(configManager),
                                                                 components);

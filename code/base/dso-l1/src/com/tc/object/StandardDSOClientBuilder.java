@@ -4,7 +4,6 @@
 package com.tc.object;
 
 import com.tc.async.api.Sink;
-import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.logging.ClientIDLogger;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -26,6 +25,7 @@ import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
+import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.MBeanSpec;
@@ -90,8 +90,8 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
   }
 
   protected ConnectionAddressProvider createConnectionAddressProvider(final PreparedComponentsFromL2Connection connComp) {
-    final ConfigItem connectionInfoItem = connComp.createConnectionInfoConfigItem();
-    final ConnectionInfo[] connectionInfo = (ConnectionInfo[]) connectionInfoItem.getObject();
+    final ConnectionInfoConfig connectionInfoItem = connComp.createConnectionInfoConfigItem();
+    final ConnectionInfo[] connectionInfo = connectionInfoItem.getConnectionInfos();
     final ConnectionAddressProvider cap = new ConnectionAddressProvider(connectionInfo);
     return cap;
   }

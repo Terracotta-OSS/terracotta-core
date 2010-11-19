@@ -3,11 +3,10 @@
  */
 package com.tc.object.bytecode.hook.impl;
 
-import com.tc.config.schema.dynamic.ConfigItem;
-import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
+import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
 import com.tc.object.DistributedObjectClient;
-import com.tc.object.config.ConnectionInfoConfigItem;
+import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.util.Assert;
 
 /**
@@ -22,24 +21,24 @@ public class PreparedComponentsFromL2Connection {
     this.config = config;
   }
 
-  public ConfigItem createConnectionInfoConfigItem() {
-    return new ConnectionInfoConfigItem(this.config.l2Config().l2Data());
+  public ConnectionInfoConfig createConnectionInfoConfigItem() {
+    return new ConnectionInfoConfig(this.config.l2Config().l2Data());
   }
 
-  public ConfigItem[] createConnectionInfoConfigItemByGroup() {
+  public ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
     // this initializes the data structures in L2ConfigForL1Object
-    this.config.l2Config().l2Data().getObject();
+    this.config.l2Config().l2Data();
 
-    ObjectArrayConfigItem[] l2DataByGroup = this.config.l2Config().getL2DataByGroup();
-    ConfigItem[] items = new ConfigItem[l2DataByGroup.length];
+    L2Data[][] l2DataByGroup = this.config.l2Config().getL2DataByGroup();
+    ConnectionInfoConfig[] items = new ConnectionInfoConfig[l2DataByGroup.length];
     for (int i = 0; i < l2DataByGroup.length; i++) {
-      items[i] = new ConnectionInfoConfigItem(l2DataByGroup[i]);
+      items[i] = new ConnectionInfoConfig(l2DataByGroup[i]);
     }
     return items;
   }
   
   public boolean isActiveActive() {
-    ConfigItem[] groups = createConnectionInfoConfigItemByGroup();
+    ConnectionInfoConfig[] groups = createConnectionInfoConfigItemByGroup();
     return (groups.length > 1);
   }
 

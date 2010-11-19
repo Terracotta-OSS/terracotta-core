@@ -6,60 +6,62 @@ package com.tc.object.config.schema;
 
 import com.tc.config.schema.BaseNewConfigObject;
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 import com.terracottatech.config.DsoClientData;
+import com.terracottatech.config.RuntimeLogging;
 
 /**
  * The standard implementation of {@link DSORuntimeLoggingOptions}.
  */
 public class StandardDSORuntimeLoggingOptions extends BaseNewConfigObject implements DSORuntimeLoggingOptions {
 
-  private final BooleanConfigItem logLockDebug;
-  private final BooleanConfigItem logFieldChangeDebug;
-  private final BooleanConfigItem logWaitNotifyDebug;
-  private final BooleanConfigItem logDistributedMethodDebug;
-  private final BooleanConfigItem logNewObjectDebug;
-  private final BooleanConfigItem logNonPortableDump;
-  private final BooleanConfigItem logNamedLoaderDebug;
+  private final boolean logLockDebug;
+  private final boolean logFieldChangeDebug;
+  private final boolean logWaitNotifyDebug;
+  private final boolean logDistributedMethodDebug;
+  private final boolean logNewObjectDebug;
+  private final boolean logNonPortableDump;
+  private final boolean logNamedLoaderDebug;
 
   public StandardDSORuntimeLoggingOptions(ConfigContext context) {
     super(context);
     this.context.ensureRepositoryProvides(DsoClientData.class);
 
-    this.logLockDebug = this.context.booleanItem("debugging/runtime-logging/lock-debug");
-    this.logFieldChangeDebug = this.context.booleanItem("debugging/runtime-logging/field-change-debug");
-    this.logWaitNotifyDebug = this.context.booleanItem("debugging/runtime-logging/wait-notify-debug");
-    this.logDistributedMethodDebug = this.context.booleanItem("debugging/runtime-logging/distributed-method-debug");
-    this.logNewObjectDebug = this.context.booleanItem("debugging/runtime-logging/new-object-debug");
-    this.logNonPortableDump = this.context.booleanItem("debugging/runtime-logging/non-portable-dump");
-    this.logNamedLoaderDebug = this.context.booleanItem("debugging/runtime-logging/named-loader-debug");
+    DsoClientData dsoClientData = (DsoClientData) this.context.bean();
+    RuntimeLogging runtimeLogging = dsoClientData.getDebugging().getRuntimeLogging();
+    this.logLockDebug = runtimeLogging.getLockDebug();
+    this.logFieldChangeDebug = runtimeLogging.getFieldChangeDebug();
+    this.logWaitNotifyDebug = runtimeLogging.getWaitNotifyDebug();
+    this.logDistributedMethodDebug = runtimeLogging.getDistributedMethodDebug();
+    this.logNewObjectDebug = runtimeLogging.getNewObjectDebug();
+    this.logNonPortableDump = runtimeLogging.getNonPortableDump();
+    this.logNamedLoaderDebug = runtimeLogging.getNamedLoaderDebug();
   }
 
-  public BooleanConfigItem logLockDebug() {
+  public boolean logLockDebug() {
     return this.logLockDebug;
   }
 
-  public BooleanConfigItem logFieldChangeDebug() {
+  public boolean logFieldChangeDebug() {
     return this.logFieldChangeDebug;
   }
 
-  public BooleanConfigItem logWaitNotifyDebug() {
+  public boolean logWaitNotifyDebug() {
     return this.logWaitNotifyDebug;
   }
 
-  public BooleanConfigItem logDistributedMethodDebug() {
+  public boolean logDistributedMethodDebug() {
     return this.logDistributedMethodDebug;
   }
 
-  public BooleanConfigItem logNewObjectDebug() {
+  public boolean logNewObjectDebug() {
     return this.logNewObjectDebug;
   }
 
-  public BooleanConfigItem logNonPortableDump() {
+  public boolean logNonPortableDump() {
     return this.logNonPortableDump;
   }
 
-  public BooleanConfigItem logNamedLoaderDebug() {
+  public boolean logNamedLoaderDebug() {
     return this.logNamedLoaderDebug;
   }
 

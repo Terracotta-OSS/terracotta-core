@@ -308,7 +308,7 @@ public class NullManagerInternal implements ManagerInternal {
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
                                          Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                         List<NVPair> aggregators) {
+                                         List<NVPair> aggregators, int maxResults) {
     throw new UnsupportedOperationException();
   }
 

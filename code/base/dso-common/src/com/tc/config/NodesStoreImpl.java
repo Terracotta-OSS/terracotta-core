@@ -66,11 +66,11 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     for (int i = 0; i < serverNames.length; i++) {
       try {
         NewL2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
-        String host = l2Config.l2GroupPort().getBindAddress();
-        if (TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
-          host = l2Config.host().getString();
+        String host = l2Config.l2GroupPort().getBind();
+        if (TCSocketAddress.WILDCARD_IP.equals(host)) {
+          host = l2Config.host();
         }
-        tempNodeNamesToServerNames.put(host + ":" + l2Config.dsoPort().getBindPort(), serverNames[i]);
+        tempNodeNamesToServerNames.put(host + ":" + l2Config.dsoPort().getIntValue(), serverNames[i]);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }

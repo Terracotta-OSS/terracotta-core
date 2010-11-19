@@ -27,7 +27,6 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.ServerGroupInfo;
-import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -49,7 +48,6 @@ import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
-import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
@@ -182,15 +180,15 @@ public class TCServerImpl extends SEDA implements TCServer {
           name = L2Info.IMPLICIT_L2_NAME;
         }
 
-        String host = config.jmxPort().getBindAddress();
-        if (TCSocketAddress.WILDCARD_IP.equals(host) || TCSocketAddress.LOOPBACK_IP.equals(host)) {
-          host = config.host().getString();
+        String host = config.jmxPort().getBind();
+        if (TCSocketAddress.WILDCARD_IP.equals(host)) {
+          host = config.host();
         }
         if (StringUtils.isBlank(host)) {
           host = name;
         }
 
-        out[i] = new L2Info(name, host, config.jmxPort().getBindPort());
+        out[i] = new L2Info(name, host, config.jmxPort().getIntValue());
       } catch (ConfigurationSetupException cse) {
         throw Assert.failure("This should be impossible here", cse);
       }
@@ -269,11 +267,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public boolean isGarbageCollectionEnabled() {
-    return this.configurationSetupManager.dsoL2Config().garbageCollectionEnabled().getBoolean();
+    return this.configurationSetupManager.dsoL2Config().garbageCollection().getEnabled();
   }
 
   public int getGarbageCollectionInterval() {
-    return this.configurationSetupManager.dsoL2Config().garbageCollectionInterval().getInt();
+    return this.configurationSetupManager.dsoL2Config().garbageCollection().getInterval();
   }
 
   public String getConfig() {
@@ -286,15 +284,12 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public String getPersistenceMode() {
-    NewL2DSOConfig dsoL2Config = this.configurationSetupManager.dsoL2Config();
-    ConfigItem persistenceModel = dsoL2Config != null ? dsoL2Config.persistenceMode() : null;
-    return persistenceModel != null ? persistenceModel.getObject().toString() : "temporary-swap-only";
+    return this.configurationSetupManager.dsoL2Config().getPersistence().getMode().toString();
   }
 
   public String getFailoverMode() {
     NewHaConfig haConfig = this.configurationSetupManager.haConfig();
-    String haMode = haConfig != null ? haConfig.haMode() : null;
-    return haMode != null ? haMode : "no failover";
+    return haConfig.getHa().getMode().toString();
   }
 
   public int getDSOListenPort() {
@@ -445,11 +440,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   private boolean updateCheckEnabled() {
     String s = System.getenv("TC_UPDATE_CHECK_ENABLED");
     boolean checkEnabled = (s == null) || Boolean.parseBoolean(s);
-    return checkEnabled && this.configurationSetupManager.updateCheckConfig().isEnabled().getBoolean();
+    return checkEnabled && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
   }
 
   private int updateCheckPeriodDays() {
-    return this.configurationSetupManager.updateCheckConfig().periodDays().getInt();
+    return this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getPeriodDays();
   }
 
   protected void startServer() throws Exception {

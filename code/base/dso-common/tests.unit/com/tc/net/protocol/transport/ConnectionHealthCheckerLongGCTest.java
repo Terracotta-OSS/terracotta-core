@@ -11,13 +11,8 @@ import org.hyperic.sigar.NetInterfaceConfig;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-import EDU.oswego.cs.dl.util.concurrent.BoundedLinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
 
-import com.tc.async.api.Stage;
-import com.tc.async.impl.StageManagerImpl;
-import com.tc.lang.TCThreadGroup;
-import com.tc.lang.ThrowableHandler;
 import com.tc.logging.LogLevelImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -29,7 +24,6 @@ import com.tc.net.core.TCConnectionManager;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
-import com.tc.net.protocol.delivery.OOOEventHandler;
 import com.tc.net.protocol.delivery.OOONetworkStackHarnessFactory;
 import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
@@ -49,7 +43,6 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.SequenceGenerator;
-import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.HashSet;
@@ -85,13 +78,8 @@ public class ConnectionHealthCheckerLongGCTest extends TCTestCase {
     logger.setLevel(LogLevelImpl.DEBUG);
 
     if (enableReconnect) {
-      StageManagerImpl stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
-      final Stage oooSendStage = stageManager.createStage("OOONetSendStage", new OOOEventHandler(), 1, 5000);
-      final Stage oooReceiveStage = stageManager.createStage("OOONetReceiveStage", new OOOEventHandler(), 1, 5000);
       networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     oooSendStage.getSink(), oooReceiveStage.getSink(),
                                                                      new L1ReconnectConfigImpl(true, 120000, 5000, 16,
                                                                                                32));
     } else {

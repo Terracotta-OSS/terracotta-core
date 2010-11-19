@@ -4,11 +4,8 @@
  */
 package com.tc.config.schema;
 
-import com.tc.config.schema.dynamic.BooleanConfigItem;
-import com.tc.config.schema.dynamic.IntConfigItem;
+import com.terracottatech.config.UpdateCheck;
 
 public interface UpdateCheckConfig extends NewConfig {
-  BooleanConfigItem isEnabled();
-
-  IntConfigItem periodDays();
+  UpdateCheck getUpdateCheck();
 }

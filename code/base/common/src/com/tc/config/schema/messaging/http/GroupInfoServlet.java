@@ -57,8 +57,8 @@ public class GroupInfoServlet extends HttpServlet {
       int port = 0;
       String host = null;
       try {
-        port = configSetupManager.dsoL2ConfigFor(allServerNames[i]).dsoPort().getBindPort();
-        host = configSetupManager.dsoL2ConfigFor(allServerNames[i]).host().getString();
+        port = configSetupManager.dsoL2ConfigFor(allServerNames[i]).dsoPort().getIntValue();
+        host = configSetupManager.dsoL2ConfigFor(allServerNames[i]).host();
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }

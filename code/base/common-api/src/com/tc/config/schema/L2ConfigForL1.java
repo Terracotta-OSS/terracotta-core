@@ -7,7 +7,6 @@ package com.tc.config.schema;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
-import com.tc.config.schema.dynamic.ObjectArrayConfigItem;
 import com.tc.util.Assert;
 import com.tc.util.stringification.OurStringBuilder;
 
@@ -71,8 +70,8 @@ public interface L2ConfigForL1 {
     }
   }
 
-  ObjectArrayConfigItem l2Data();
+  L2Data[] l2Data();
 
-  ObjectArrayConfigItem[] getL2DataByGroup();
+  L2Data[][] getL2DataByGroup();
 
 }

@@ -46,14 +46,13 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private static final boolean                  DEBUG                  = TCPropertiesImpl
                                                                            .getProperties()
-                                                                           .getBoolean(
-                                                                                       TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
+                                                                           .getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_DEBUG);
 
   private static final TCLogger                 logger                 = TCLogging
                                                                            .getLogger(ClientTransactionBatchWriter.class);
@@ -78,9 +77,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private boolean                               containsSyncWriteTxn   = false;
 
   public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
-                                final ObjectStringSerializer serializer, final DNAEncoding encoding,
-                                final CommitTransactionMessageFactory commitTransactionMessageFactory,
-                                final FoldingConfig foldingConfig) {
+                                      final ObjectStringSerializer serializer, final DNAEncoding encoding,
+                                      final CommitTransactionMessageFactory commitTransactionMessageFactory,
+                                      final FoldingConfig foldingConfig) {
     this.groupID = groupID;
     this.batchID = batchID;
     this.encoding = encoding;
@@ -370,9 +369,17 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     return out;
   }
 
-  public synchronized void send() {
-    final CommitTransactionMessage msg = this.commitTransactionMessageFactory.newCommitTransactionMessage(this.groupID);
-    msg.setBatch(this, this.serializer);
+  /*
+   * message send is outside the sync, as it can deadlock with OOO StateMachines. Especially, ReceiveStateMachine remove
+   * and reallyRecycle of messages can get stuck waiting for monitor entry at TransactionBatchWriter while Transaction
+   * Batch send stage is trying to send messages.
+   */
+  public void send() {
+    final CommitTransactionMessage msg;
+    synchronized (this) {
+      msg = this.commitTransactionMessageFactory.newCommitTransactionMessage(this.groupID);
+      msg.setBatch(this, this.serializer);
+    }
     msg.send();
   }
 
@@ -724,9 +731,9 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public static FoldingConfig createFromProperties(final TCProperties props) {
-      return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED), props
-          .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT), props
-          .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT));
+      return new FoldingConfig(props.getBoolean(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_ENABLED),
+                               props.getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_OBJECT_LIMIT),
+                               props.getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_FOLDING_LOCK_LIMIT));
     }
   }
 

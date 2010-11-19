@@ -4,17 +4,16 @@
 package com.tc.object.config.schema;
 
 import com.tc.config.schema.NewConfig;
-import com.tc.config.schema.dynamic.BooleanConfigItem;
 
 /**
  * Represents the runtime-output options for DSO.
  */
 public interface DSORuntimeOutputOptions extends NewConfig {
 
-  BooleanConfigItem doAutoLockDetails();
+  boolean doAutoLockDetails();
 
-  BooleanConfigItem doCaller();
+  boolean doCaller();
 
-  BooleanConfigItem doFullStack();
+  boolean doFullStack();
 
 }

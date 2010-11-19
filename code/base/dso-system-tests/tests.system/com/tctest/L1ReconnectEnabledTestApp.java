@@ -51,7 +51,7 @@ public class L1ReconnectEnabledTestApp extends AbstractTransparentApp {
     factory.addServerToL1Config(null, portNumber, jmxPort);
     try {
       DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(factory
-          .createL1TVSConfigurationSetupManager());
+          .getL1TVSConfigurationSetupManager());
       ReconnectConfig l1ReconnectConfig = configHelper.getL1ReconnectProperties();
 
       // verify

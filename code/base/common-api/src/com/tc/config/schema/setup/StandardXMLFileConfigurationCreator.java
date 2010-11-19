@@ -7,14 +7,13 @@ package com.tc.config.schema.setup;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlInteger;
 import org.xml.sax.SAXException;
 
+import com.tc.config.schema.NewSystemConfigObject;
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.defaults.DefaultValueProvider;
-import com.tc.config.schema.defaults.FromSchemaDefaultValueProvider;
-import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.repository.ApplicationsRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.sources.ConfigurationSource;
@@ -25,12 +24,13 @@ import com.tc.config.schema.setup.sources.URLConfigurationSource;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.config.schema.NewDSOApplicationConfigObject;
+import com.tc.object.config.schema.NewL1DSOConfigObject;
+import com.tc.object.config.schema.NewL2DSOConfigObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.ThreadUtil;
-import com.terracottatech.config.Server;
-import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
@@ -49,33 +49,32 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public class StandardXMLFileConfigurationCreator implements ConfigurationCreator {
 
-  private static final TCLogger   consoleLogger                        = CustomerLogging.getConsoleLogger();
-  private static final long       GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;
-  private static final long       MIN_RETRY_TIMEOUT                    = 5 * 1000;
-  private static final Pattern    SERVER_PATTERN                       = Pattern.compile("(.*):(.*)",
-                                                                                         Pattern.CASE_INSENSITIVE);
-  private static final Pattern    RESOURCE_PATTERN                     = Pattern.compile("resource://(.*)",
-                                                                                         Pattern.CASE_INSENSITIVE);
+  private static final TCLogger      consoleLogger                        = CustomerLogging.getConsoleLogger();
+  private static final long          GET_CONFIGURATION_TOTAL_TIMEOUT      = 5 * 60 * 1000;
+  private static final long          MIN_RETRY_TIMEOUT                    = 5 * 1000;
+  private static final Pattern       SERVER_PATTERN                       = Pattern.compile("(.*):(.*)",
+                                                                                            Pattern.CASE_INSENSITIVE);
+  private static final Pattern       RESOURCE_PATTERN                     = Pattern.compile("resource://(.*)",
+                                                                                            Pattern.CASE_INSENSITIVE);
   // We require more than one character before the colon so that we don't mistake Windows-style directory paths as URLs.
-  private static final Pattern    URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
-  private static final String     WILDCARD_IP                          = "0.0.0.0";
-  private static final long       GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
-                                                                           .getProperties()
-                                                                           .getLong(
-                                                                                    TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
-                                                                                    30000);
+  private static final Pattern       URL_PATTERN                          = Pattern.compile("[A-Za-z][A-Za-z]+://.*");
+  private static final long          GET_CONFIGURATION_ONE_SOURCE_TIMEOUT = TCPropertiesImpl
+                                                                              .getProperties()
+                                                                              .getLong(
+                                                                                       TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT,
+                                                                                       30000);
 
-  private final ConfigurationSpec configurationSpec;
-  private final ConfigBeanFactory beanFactory;
-  private final TCLogger          logger;
+  private final ConfigurationSpec    configurationSpec;
+  private final ConfigBeanFactory    beanFactory;
+  private final TCLogger             logger;
 
-  private boolean                 baseConfigLoadedFromTrustedSource;
-  private String                  serverOverrideConfigDescription;
-  private boolean                 serverOverrideConfigLoadedFromTrustedSource;
-  private File                    directoryLoadedFrom;
-  private String                  baseConfigDescription                = "";
-  private volatile String         rawConfigText                        = "";
-  private TcConfigDocument        tcConfigDocument;
+  private boolean                    baseConfigLoadedFromTrustedSource;
+  private String                     serverOverrideConfigDescription;
+  private boolean                    serverOverrideConfigLoadedFromTrustedSource;
+  private File                       directoryLoadedFrom;
+  private String                     baseConfigDescription                = "";
+  private TcConfigDocument           tcConfigDocument;
+  private final DefaultValueProvider defaultValueProvider                 = new SchemaDefaultValueProvider();
 
   public StandardXMLFileConfigurationCreator(final ConfigurationSpec configurationSpec,
                                              final ConfigBeanFactory beanFactory) {
@@ -91,6 +90,17 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public void createConfigurationIntoRepositories(MutableBeanRepository l1BeanRepository,
+                                                  MutableBeanRepository l2sBeanRepository,
+                                                  MutableBeanRepository systemBeanRepository,
+                                                  MutableBeanRepository tcPropertiesRepository,
+                                                  ApplicationsRepository applicationsRepository)
+      throws ConfigurationSetupException {
+    loadConfigAndSetIntoRepositories(l1BeanRepository, l2sBeanRepository, systemBeanRepository, tcPropertiesRepository,
+                                     applicationsRepository);
+    logCopyOfConfig();
+  }
+
+  protected void loadConfigAndSetIntoRepositories(MutableBeanRepository l1BeanRepository,
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
                                                   MutableBeanRepository tcPropertiesRepository,
@@ -119,7 +129,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       serverOverrideConfigLoadedFromTrustedSource = serverOverrideConfigDataSourceStream.isTrustedSource();
       serverOverrideConfigDescription = serverOverrideConfigDataSourceStream.getDescription();
     }
-    logCopyOfConfig();
   }
 
   public void reloadServersConfiguration(MutableBeanRepository l2sBeanRepository, boolean shouldLogTcConfig,
@@ -141,7 +150,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
-  private ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
+  protected ConfigurationSource[] getConfigurationSources(String configrationSpec) throws ConfigurationSetupException {
     String[] components = configrationSpec.split(",");
     ConfigurationSource[] out = new ConfigurationSource[components.length];
 
@@ -369,24 +378,19 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     updateTcConfig(configDocument, description, false);
   }
 
-  private void updateTcConfigServerElements(TcConfigDocument configDocument, String description) {
-    updateTcConfig(configDocument, description, true);
-  }
-
   private void updateTcConfig(TcConfigDocument configDocument, String description, boolean serverElementsOnly) {
     if (!serverElementsOnly) {
-      this.tcConfigDocument = (TcConfigDocument) configDocument.copy();
+      this.tcConfigDocument = configDocument;
     } else {
       Assert.assertNotNull(this.tcConfigDocument);
       TcConfig toConfig = this.tcConfigDocument.getTcConfig();
       TcConfig fromConfig = configDocument.getTcConfig();
       if (toConfig.getServers() != null) toConfig.setServers(fromConfig.getServers());
     }
-    rawConfigText = this.tcConfigDocument.toString();
   }
 
   private void logCopyOfConfig() {
-    logger.info(describeSources() + ":\n\n" + rawConfigText);
+    logger.info(describeSources() + ":\n\n" + this.tcConfigDocument.toString());
   }
 
   private void loadConfigurationData(InputStream in, boolean trustedSource, String descrip,
@@ -417,7 +421,6 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     try {
       TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip);
       Assert.assertNotNull(configDocument);
-      updateTcConfigServerElements(configDocument, descrip);
       setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
     } catch (XmlException xmle) {
       throw new ConfigurationSetupException("The configuration data in the " + descrip + " does not obey the "
@@ -487,58 +490,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
       TcConfig config = tcConfigDoc.getTcConfig();
-      Servers servers = config.getServers();
-
-      if (servers == null) {
-        servers = Servers.Factory.newInstance();
-        Server[] serverArray = new Server[1];
-        serverArray[0] = Server.Factory.newInstance();
-        servers.setServerArray(serverArray);
-        config.setServers(servers);
-        servers = config.getServers();
-      }
-
-      if (servers != null) {
-        Server server;
-        for (int i = 0; i < servers.sizeOfServerArray(); i++) {
-          server = servers.getServerArray(i);
-          // CDV-1220: per our documentation in the schema itself, host is supposed to default to server name or '%i'
-          // and name is supposed to default to 'host:dso-port'
-          if (!server.isSetHost() || server.getHost().trim().length() == 0) {
-            if (!server.isSetName()) {
-              server.setHost("%i");
-            } else {
-              server.setHost(server.getName());
-            }
-          }
-
-          if (!server.isSetName() || server.getName().trim().length() == 0) {
-            int dsoPort = 0;
-            if (server.isSetDsoPort()) {
-              dsoPort = server.getDsoPort().getIntValue();
-            }
-            if (dsoPort == 0) {
-              // Find the default value, if we can
-              final DefaultValueProvider defaultValueProvider = new FromSchemaDefaultValueProvider();
-              if (defaultValueProvider.hasDefault(server.schemaType(), "dso-port")) {
-                final XmlInteger defaultValue = (XmlInteger) defaultValueProvider.defaultFor(server.schemaType(),
-                                                                                             "dso-port");
-                dsoPort = defaultValue.getBigIntegerValue().intValue();
-              }
-            }
-            server.setName(server.getHost() + (dsoPort > 0 ? ":" + dsoPort : ""));
-          }
-
-          if (!server.isSetBind() || server.getBind().trim().length() == 0) {
-            server.setBind(WILDCARD_IP);
-          }
-
-          // CDV-77: add parameter expansion to the <server> attributes ('host' and 'name')
-          server.setHost(ParameterSubstituter.substitute(server.getHost()));
-          server.setName(ParameterSubstituter.substitute(server.getName()));
-          server.setBind(ParameterSubstituter.substitute(server.getBind()));
-        }
-      }
+      NewSystemConfigObject.initializeSystem(config, this.defaultValueProvider);
+      NewL2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
+      NewL1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
+      NewDSOApplicationConfigObject.initializeApplication(config, this.defaultValueProvider);
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "
                                             + ioe.getLocalizedMessage(), ioe);
@@ -564,7 +519,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   }
 
   public String rawConfigText() {
-    return rawConfigText;
+    return this.tcConfigDocument.toString();
   }
 
   public String describeSources() {

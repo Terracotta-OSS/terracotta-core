@@ -4,22 +4,17 @@
  */
 package com.tc.net.protocol.delivery;
 
-import com.tc.async.api.Sink;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayer;
-import com.tc.net.protocol.delivery.OnceAndOnlyOnceProtocolNetworkLayerFactory;
 import com.tc.properties.ReconnectConfig;
 
 public class MockOnceAndOnlyOnceProtocolNetworkLayerFactory implements OnceAndOnlyOnceProtocolNetworkLayerFactory {
 
   public OnceAndOnlyOnceProtocolNetworkLayer layer;
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(Sink sendSink, Sink receiveSink,
-                                                                     ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewClientInstance(ReconnectConfig reconnectConfig) {
     return layer;
   }
 
-  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(Sink sendSink, Sink receiveSink,
-                                                                     ReconnectConfig reconnectConfig) {
+  public OnceAndOnlyOnceProtocolNetworkLayer createNewServerInstance(ReconnectConfig reconnectConfig) {
     return layer;
   }
 }

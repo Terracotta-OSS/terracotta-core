@@ -5,19 +5,19 @@
 package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
-import com.tc.config.schema.dynamic.FileConfigItem;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
 import com.terracottatech.config.Modules;
+
+import java.io.File;
 
 /**
  * The standard implementation of {@link NewCommonL1Config}.
  */
 public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewCommonL1Config {
 
-  private final FileConfigItem logsPath;
-  private final Modules        modules;
+  private final Modules modules;
 
   public NewCommonL1ConfigObject(ConfigContext context) {
     super(context);
@@ -25,21 +25,21 @@ public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewC
 
     this.context.ensureRepositoryProvides(Client.class);
 
-    this.logsPath = this.context.substitutedFileItem("logs");
-    
     final Client client = (Client) this.context.bean();
-    modules = client != null && client.isSetModules() ? client.getModules() : null;
-    
-    if(modules != null) {
-      for(int i = 0; i < modules.sizeOfRepositoryArray(); i++) {
+
+    modules = client.isSetModules() ? client.getModules() : null;
+
+    if (modules != null) {
+      for (int i = 0; i < modules.sizeOfRepositoryArray(); i++) {
         String location = modules.getRepositoryArray(i);
         modules.setRepositoryArray(i, ParameterSubstituter.substitute(location));
       }
     }
   }
 
-  public FileConfigItem logsPath() {
-    return this.logsPath;
+  public File logsPath() {
+    final Client client = (Client) this.context.bean();
+    return new File(client.getLogs());
   }
 
   public Modules modules() {
