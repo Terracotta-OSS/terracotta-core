@@ -24,23 +24,11 @@ public interface OffheapStats extends Serializable {
                                                           return 0;
                                                         }
 
-                                                        public long getObjectMaxDataSize() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getObjectAllocatedSize() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getMapMaxDataSize() {
-                                                          return 0;
-                                                        }
-
-                                                        public long getMapAllocatedSize() {
-                                                          return 0;
-                                                        }
-
                                                         public long getExactOffheapObjectCachedCount() {
+                                                          return 0;
+                                                        }
+
+                                                        public long getOffheapAllocatedDataSize() {
                                                           return 0;
                                                         }
                                                       };
@@ -58,11 +46,5 @@ public interface OffheapStats extends Serializable {
 
   long getOffheapMaxDataSize();
 
-  long getMapMaxDataSize();
-
-  long getObjectMaxDataSize();
-
-  long getMapAllocatedSize();
-
-  long getObjectAllocatedSize();
+  long getOffheapAllocatedDataSize();
 }

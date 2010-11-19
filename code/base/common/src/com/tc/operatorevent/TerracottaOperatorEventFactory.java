@@ -26,18 +26,11 @@ public class TerracottaOperatorEventFactory {
             critcalThreshold }), "");
   }
 
-  public static TerracottaOperatorEvent createOffHeapMapMemoryUsageEvent(String allocated, String maxSize,
-                                                                         int percentageUsed) {
+  public static TerracottaOperatorEvent createOffHeapMemoryUsageEvent(String allocated, String maxSize,
+                                                                      int percentageUsed) {
     return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getOffHeapMapMemoryUsageMessage(), new Object[] { allocated, maxSize,
+        .format(TerracottaOperatorEventResources.getOffHeapMemoryUsageMessage(), new Object[] { allocated, maxSize,
             percentageUsed }), "");
-  }
-
-  public static TerracottaOperatorEvent createOffHeapObjectMemoryUsageEvent(String allocated, String maxSize,
-                                                                            int percentageUsed) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER, MessageFormat
-        .format(TerracottaOperatorEventResources.getOffHeapObjectMemoryUsageMessage(), new Object[] { allocated,
-            maxSize, percentageUsed }), "");
   }
 
   /**
