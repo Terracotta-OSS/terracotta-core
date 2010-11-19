@@ -54,7 +54,7 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
 
   public boolean sendMessage(OOOProtocolMessage pmsg) {
     this.msg = pmsg;
-    return(true);
+    return (true);
   }
 
   public OOOProtocolMessage createProtocolMessage(long sent, TCNetworkMessage tcmsg) {
@@ -66,10 +66,19 @@ public class TestProtocolMessageDelivery implements OOOProtocolMessageDelivery {
     return tpm;
   }
 
-  public void clear() {
+  public void clearAll() {
     sentAck = false;
     sentAckRequest = false;
     ackCount = -1;
+    msg = null;
+    tcMessage = null;
+    created = false;
+  }
+
+  // clears all except ackCount
+  public void clear() {
+    sentAck = false;
+    sentAckRequest = false;
     msg = null;
     tcMessage = null;
     created = false;

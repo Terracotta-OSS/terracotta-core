@@ -4,48 +4,19 @@
  */
 package com.tc.net.protocol.delivery;
 
-import com.tc.properties.ReconnectConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
-public class L2ReconnectConfigImpl implements ReconnectConfig {
-  private boolean l2ReconnectEnabled;
-  private int     l2ReconnectTimeout;
-  private int     l2ReconnectSendQueueCap;
-  private int     l2ReconnectMaxDelayedAcks;
-  private int     l2ReconnectSendWindow;
+public class L2ReconnectConfigImpl extends AbstractReconnectConfig {
+
+  private static final String NAME = "L2->L2 Reconnect Config";
 
   public L2ReconnectConfigImpl() {
-    l2ReconnectEnabled = TCPropertiesImpl.getProperties()
-        .getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED);
-    l2ReconnectTimeout = TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT);
-    l2ReconnectSendQueueCap = TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP);
-    l2ReconnectMaxDelayedAcks = TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS);
-    l2ReconnectSendWindow = TCPropertiesImpl.getProperties()
-        .getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW);
-  }
-
-  public int getReconnectTimeout() {
-    return l2ReconnectTimeout;
-  }
-
-  public boolean getReconnectEnabled() {
-    return l2ReconnectEnabled;
-  }
-
-  public int getSendQueueCapacity() {
-    return l2ReconnectSendQueueCap;
-  }
-
-  public int getMaxDelayAcks() {
-    return l2ReconnectMaxDelayedAcks;
-  }
-
-  public int getSendWindow() {
-    return l2ReconnectSendWindow;
+    super(TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_ENABLED),
+          TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_TIMEOUT),
+          TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SENDQUEUE_CAP),
+          TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_MAX_DELAYEDACKS),
+          TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_SEND_WINDOW), NAME);
   }
 
 }

@@ -25,6 +25,7 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
     this.timeoutMillis = timeoutMillis;
   }
 
+  @Override
   public void notifyTransportDisconnected(MessageTransport transport, final boolean forcedDisconnect) {
     oooLayer.startRestoringConnection();
     oooLayer.notifyTransportDisconnected(transport, forcedDisconnect);
@@ -37,6 +38,7 @@ public class OOOConnectionWatcher extends ConnectionWatcher implements RestoreCo
     }
   }
 
+  @Override
   public void notifyTransportConnected(MessageTransport transport) {
     log(transport, "Transport Connected");
     oooLayer.notifyTransportConnected(transport);

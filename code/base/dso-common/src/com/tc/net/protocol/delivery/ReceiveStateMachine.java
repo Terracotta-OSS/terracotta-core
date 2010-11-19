@@ -10,37 +10,37 @@ import com.tc.util.DebugUtil;
 import com.tc.util.UUID;
 
 /**
- * 
+ * State Machine handling message receive for OOO
  */
 public class ReceiveStateMachine extends AbstractStateMachine {
   private final State                      MESSAGE_WAIT_STATE = new MessageWaitState();
+  private final int                        maxDelayedAcks;
+  private final String                     debugId;
+  private final OOOProtocolMessageDelivery delivery;
+  private static final boolean             debug              = false;
 
   private long                             received           = -1;
   private int                              delayedAcks        = 0;
-  private final int                        maxDelayedAcks;
-  private final OOOProtocolMessageDelivery delivery;
-  private StateMachineRunner               runner;
 
-  private String                           debugId            = "UNKNOWN";
-
-  private static final boolean             debug              = false;
-
-  public ReceiveStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig) {
-    // set MaxDelayedAcks from tc.properties if exist. 0 to disable ack delay.
+  public ReceiveStateMachine(OOOProtocolMessageDelivery delivery, ReconnectConfig reconnectConfig, boolean isClient) {
     maxDelayedAcks = reconnectConfig.getMaxDelayAcks();
+    this.debugId = (isClient) ? "CLIENT" : "SERVER";
     this.delivery = delivery;
   }
 
+  @Override
   public synchronized void execute(OOOProtocolMessage msg) {
     getCurrentState().execute(msg);
   }
 
+  @Override
   protected State initialState() {
     return MESSAGE_WAIT_STATE;
   }
 
-  private int getRunnerEventLength() {
-    return ((runner != null) ? runner.getEventsCount() : 0);
+  @Override
+  public String toString() {
+    return "CurrentState: " + getCurrentState() + "; Received: " + received + "; DelayedAcks: " + delayedAcks;
   }
 
   private class MessageWaitState extends AbstractState {
@@ -49,6 +49,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
       super("MESSAGE_WAIT_STATE");
     }
 
+    @Override
     public void execute(OOOProtocolMessage msg) {
       if (msg.isSend()) {
         handleSendMessage(msg);
@@ -87,13 +88,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
   }
 
   private void ackIfNeeded(long next) {
-    if ((delayedAcks < maxDelayedAcks) && (getRunnerEventLength() > 0)) {
-      ++delayedAcks;
-    } else {
-      /*
-       * saw IllegalStateException by AbstractTCNetworkMessage.checkSealed when message sent to non-established
-       * transport by MessageTransportBase.send. reset delayedAcks only ack can be sent.
-       */
+    ++delayedAcks;
+    if (delayedAcks >= maxDelayedAcks) {
       if (sendAck(next)) {
         delayedAcks = 0;
       } else {
@@ -108,6 +104,7 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     return (delivery.sendMessage(opm));
   }
 
+  @Override
   public synchronized void reset() {
     received = -1;
     delayedAcks = 0;
@@ -119,16 +116,8 @@ public class ReceiveStateMachine extends AbstractStateMachine {
     }
   }
 
-  public void setDebugId(String debugId) {
-    this.debugId = debugId;
-  }
-
   public synchronized long getReceived() {
     return received;
-  }
-
-  public void setRunner(StateMachineRunner receive) {
-    this.runner = receive;
   }
 
   // for testing purpose only

@@ -17,12 +17,13 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   public TCNetworkMessage msg;
   public long             sent;
   public long             ack;
-  public boolean          isHandshake        = false;
-  public boolean          isHandshakeReplyOk = false;
-  public boolean          isSend             = false;
-  public boolean          isAck              = false;
-  private boolean         isGoodbye          = false;
-  public UUID             sessionId          = UUID.getUUID();
+  public boolean          isHandshake          = false;
+  public boolean          isHandshakeReplyOk   = false;
+  public boolean          isHandshakeReplyFail = false;
+  public boolean          isSend               = false;
+  public boolean          isAck                = false;
+  private boolean         isGoodbye            = false;
+  public UUID             sessionId            = UUID.getUUID();
 
   public TestProtocolMessage(TCNetworkMessage msg, long sent, long ack) {
     this.msg = msg;
@@ -51,7 +52,7 @@ public class TestProtocolMessage implements OOOProtocolMessage {
   }
 
   public boolean isHandshakeReplyFail() {
-    return !isHandshakeReplyOk;
+    return isHandshakeReplyFail;
   }
 
   public boolean isSend() {

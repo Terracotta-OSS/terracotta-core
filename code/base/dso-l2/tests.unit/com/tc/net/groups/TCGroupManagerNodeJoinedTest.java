@@ -334,7 +334,10 @@ public class TCGroupManagerNodeJoinedTest extends TCTestCase {
     // verification
     for (int i = 0; i < nodes; ++i) {
       // every node shall receive hello message from reset of nodes
-      assertEquals(nodes - 1, listeners[i].size());
+      while (nodes - 1 != listeners[i].size()) {
+        Thread.sleep(1000);
+        System.out.println("XXX waiting for msg receive");
+      }
     }
 
     System.out.println("XXX 1st verification done");

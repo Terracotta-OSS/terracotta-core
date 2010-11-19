@@ -6,7 +6,6 @@ package com.tc.net.protocol.delivery;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 
-import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
@@ -39,39 +38,39 @@ import java.util.Timer;
  */
 public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTransport implements
     OnceAndOnlyOnceProtocolNetworkLayer, OOOProtocolMessageDelivery {
-  private static final TCLogger           logger           = TCLogging
-                                                               .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
-  private final OOOProtocolMessageFactory messageFactory;
-  private final OOOProtocolMessageParser  messageParser;
-  boolean                                 wasConnected     = false;
-  private MessageChannelInternal          receiveLayer;
-  private MessageTransport                sendLayer;
-  private GuaranteedDeliveryProtocol      delivery;
-  private final SynchronizedBoolean       reconnectMode    = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean       handshakeMode    = new SynchronizedBoolean(false);
-  private final SynchronizedBoolean       channelConnected = new SynchronizedBoolean(false);
-  private boolean                         isClosed         = false;
-  private final boolean                   isClient;
-  private final String                    debugId;
-  private UUID                            sessionId        = UUID.NULL_ID;
-  private final Timer                     restoreConnectTimer;
-  private static final boolean            debug            = false;
+  private static final TCLogger            logger           = TCLogging
+                                                                .getLogger(OnceAndOnlyOnceProtocolNetworkLayerImpl.class);
+  private final OOOProtocolMessageFactory  messageFactory;
+  private final OOOProtocolMessageParser   messageParser;
+  boolean                                  wasConnected     = false;
+  private MessageChannelInternal           receiveLayer;
+  private MessageTransport                 sendLayer;
+  private final GuaranteedDeliveryProtocol delivery;
+  private final SynchronizedBoolean        reconnectMode    = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean        handshakeMode    = new SynchronizedBoolean(false);
+  private final SynchronizedBoolean        channelConnected = new SynchronizedBoolean(false);
+  private boolean                          isClosed         = false;
+  private final boolean                    isClient;
+  private final String                     debugId;
+  private UUID                             sessionId        = UUID.NULL_ID;
+  private final Timer                      restoreConnectTimer;
+  private static final boolean             debug            = false;
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
-                                                 OOOProtocolMessageParser messageParser, Sink sendSink,
-                                                 Sink receiveSink, ReconnectConfig reconnectConfig, boolean isClient) {
-    this(messageFactory, messageParser, sendSink, receiveSink, reconnectConfig, isClient, null);
+                                                 OOOProtocolMessageParser messageParser,
+                                                 ReconnectConfig reconnectConfig, boolean isClient) {
+    this(messageFactory, messageParser, reconnectConfig, isClient, null);
   }
 
   public OnceAndOnlyOnceProtocolNetworkLayerImpl(OOOProtocolMessageFactory messageFactory,
-                                                 OOOProtocolMessageParser messageParser, Sink sendSink,
-                                                 Sink receiveSink, ReconnectConfig reconnectConfig, boolean isClient,
+                                                 OOOProtocolMessageParser messageParser,
+                                                 ReconnectConfig reconnectConfig, boolean isClient,
                                                  Timer restoreConnectTimer) {
     super(logger);
     this.messageFactory = messageFactory;
     this.messageParser = messageParser;
     this.isClient = isClient;
-    this.delivery = new GuaranteedDeliveryProtocol(this, sendSink, receiveSink, reconnectConfig, isClient);
+    this.delivery = new GuaranteedDeliveryProtocol(this, reconnectConfig, isClient);
     this.delivery.start();
     this.delivery.pause();
     this.restoreConnectTimer = restoreConnectTimer;
@@ -82,6 +81,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   /*********************************************************************************************************************
    * Network layer interface...
    */
+
+  public void setNewSessionID() {
+    this.sessionId = UUID.getUUID();
+  }
 
   public void setSendLayer(NetworkLayer layer) {
     if (!(layer instanceof MessageTransport)) { throw new IllegalArgumentException(
@@ -111,97 +114,126 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
 
   public void receive(TCByteBuffer[] msgData) {
     OOOProtocolMessage msg = createProtocolMessage(msgData);
-    debugLog("receive -> " + msg.getHeader().toString());
+    if (debug) {
+      debugLog("receive -> " + msg.getHeader().toString());
+    }
+
     if (msg.isSend() || msg.isAck()) {
       Assert.inv(!handshakeMode.get());
       if (!channelConnected.get()) {
         logger.warn("Drop stale message " + msg.getHeader().toString() + " from " + sendLayer.getConnectionId());
         return;
       }
-      if (!sessionId.equals(msg.getSessionId())) return; // drop bad message
-      delivery.receive(msg);
+
+      if (!sessionId.equals(msg.getSessionId())) {
+        logger.warn("Dropping old session message " + msg);
+        return;
+      } else {
+        delivery.receive(msg);
+      }
+
     } else if (msg.isHandshake()) {
       Assert.inv(!isClient);
-      debugLog("Got Handshake message...");
+      if (debug) {
+        debugLog("Got Handshake message...");
+      }
+
       if (msg.getSessionId().equals(UUID.NULL_ID)) {
-        debugLog("A brand new client is trying to connect - reply OK");
+        if (debug) {
+          debugLog("A brand new client is trying to connect - reply OK");
+        }
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
+
         delivery.resume();
         delivery.receive(createHandshakeReplyOkMessage(-1));
-        handshakeMode.set(false);
-        if (!channelConnected.get()) {
-          channelConnected.set(true);
-          receiveLayer.notifyTransportConnected(this);
-        }
-        reconnectMode.set(false);
+
+        resetModesAndfireTransportConnectedEvent();
+
       } else if (msg.getSessionId().equals(getSessionId())) {
-        debugLog("A same-session client is trying to connect - reply OK");
+        if (debug) {
+          debugLog("A same-session client is trying to connect - reply OK");
+        }
         OOOProtocolMessage reply = createHandshakeReplyOkMessage(delivery.getReceiver().getReceived());
         sendMessage(reply);
-        handshakeMode.set(false);
+
         delivery.resume();
-        // tell local sender the ackseq of client
         delivery.receive(createHandshakeReplyOkMessage(msg.getAckSequence()));
-        if (!channelConnected.get()) {
-          channelConnected.set(true);
-          receiveLayer.notifyTransportConnected(this);
-        }
-        reconnectMode.set(false);
+
+        resetModesAndfireTransportConnectedEvent();
+
       } else {
-        debugLog("A DIFF-session client is trying to connect - reply FAIL");
-        logger.info("Sending OOO handshake fail message to a different session client " + getConnectionId());
+        if (debug) {
+          debugLog("A DIFF-session client is trying to connect - request OOO Reset");
+        }
+        logger.info("Requesting OOO reset for different session client " + getConnectionId());
+
         long localAck = delivery.getReceiver().getReceived();
         sendMessage(createHandshakeReplyFailMessage(localAck));
-        handshakeMode.set(false);
-        if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, false);
-        channelConnected.set(false);
-        resetStack();
-        delivery.resume();
-        delivery.receive(createHandshakeReplyFailMessage(localAck));
-        if (!channelConnected.get()) {
-          channelConnected.set(true);
-          receiveLayer.notifyTransportConnected(this);
+
+        if (channelConnected.get()) {
+          /*
+           * Client has got some trouble in talking to me before and has resetted its OOO Stack. I am not going to
+           * accept him again.
+           */
+          receiveLayer.notifyTransportDisconnected(this, false);
+          channelConnected.set(false);
+        } else {
+          /*
+           * Probably I am a newly starting up server and don't have this client priorly connected, will accept this
+           * client with its resetted OOO Stack.
+           */
         }
-        reconnectMode.set(false);
+
+        // we need a new OOO stack
+        resetStack();
+
+        delivery.resume();
+        delivery.receive(createHandshakeReplyOkMessage(-1));
+
+        resetModesAndfireTransportConnectedEvent();
+
       }
+
     } else if (msg.isHandshakeReplyOk()) {
       Assert.inv(isClient);
       Assert.inv(handshakeMode.get());
       debugLog("Got reply OK");
+
       // current session is still ok:
       // 1. might have to resend some messages
       // 2. no need to signal to Higher Level
-      handshakeMode.set(false);
       sessionId = msg.getSessionId();
       delivery.resume();
       delivery.receive(msg);
-      if (!channelConnected.get()) {
-        channelConnected.set(true);
-        receiveLayer.notifyTransportConnected(this);
-      }
-      reconnectMode.set(false);
+
+      resetModesAndfireTransportConnectedEvent();
+
     } else if (msg.isHandshakeReplyFail()) {
-      debugLog("Received handshake fail reply");
+      if (debug) {
+        debugLog("Received handshake fail reply - request for OOO reset");
+      }
       Assert.inv(isClient);
       Assert.inv(handshakeMode.get());
-      // we did not synch'ed the existing session.
-      // 1. clear OOO state (drop messages, clear counters, etc)
-      // 2. set the new session
-      // 3. signal Higher Lever to re-synch
-      if (channelConnected.get()) receiveLayer.notifyTransportDisconnected(this, false);
-      channelConnected.set(false);
+
+      // we need a new OOO stack and make a note of new sessionID
       resetStack();
       sessionId = msg.getSessionId();
-      handshakeMode.set(false);
+
       delivery.resume();
-      delivery.receive(msg);
-      if (!channelConnected.get()) {
-        channelConnected.set(true);
-        receiveLayer.notifyTransportConnected(this);
+      delivery.receive(createHandshakeReplyOkMessage(-1));
+
+      if (channelConnected.get()) {
+        receiveLayer.notifyTransportDisconnected(this, false);
+        channelConnected.set(false);
       }
+
+      resetModesAndfireTransportConnectedEvent();
+
     } else if (msg.isGoodbye()) {
-      debugLog("Got GoodBye message - shutting down");
+      if (debug) {
+        debugLog("Got GoodBye message - shutting down");
+      }
       isClosed = true;
       sendLayer.close();
       receiveLayer.close();
@@ -209,6 +241,18 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     } else {
       Assert.inv(false);
     }
+  }
+
+  private void resetModesAndfireTransportConnectedEvent() {
+    handshakeMode.set(false);
+    if (!channelConnected.get()) {
+      channelConnected.set(true);
+      receiveLayer.notifyTransportConnected(this);
+    } else {
+      DebugUtil.trace("OOOLayer-" + debugId + "-" + sendLayer.getConnectionId()
+                      + " -> not firing Tx connected event to channel");
+    }
+    reconnectMode.set(false);
   }
 
   private void debugLog(String msg) {
@@ -235,6 +279,7 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     sendLayer.close();
   }
 
+  @Override
   public void initConnectionID(ConnectionID cid) {
     Assert.assertNotNull(sendLayer);
     sendLayer.initConnectionID(cid);
@@ -269,18 +314,6 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     }
   }
 
-  public void start() {
-    //
-  }
-
-  public void pause() {
-    this.delivery.pause();
-  }
-
-  public void resume() {
-    this.delivery.resume();
-  }
-
   public void notifyTransportConnectAttempt(MessageTransport transport) {
     if (!reconnectMode.get()) {
       receiveLayer.notifyTransportConnectAttempt(this);
@@ -304,13 +337,11 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
   }
 
   public OOOProtocolMessage createHandshakeReplyOkMessage(long ack) {
-    // FIXME: need to use correct ack
     OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyOkMessage(getSessionId(), ack);
     return rv;
   }
 
   public OOOProtocolMessage createHandshakeReplyFailMessage(long ack) {
-    // FIXME: need to use correct ack
     OOOProtocolMessage rv = this.messageFactory.createNewHandshakeReplyFailMessage(getSessionId(), ack);
     return rv;
   }

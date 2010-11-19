@@ -147,8 +147,6 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                                          new NullMessageMonitor(),
                                                                          new OOONetworkStackHarnessFactory(
                                                                                                            new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                                                           null,
-                                                                                                           null,
                                                                                                            new L1ReconnectConfigImpl()),
                                                                          new NullConnectionPolicy(), 0);
 
@@ -179,7 +177,6 @@ public class ClientMessageTransportTest extends TCTestCase {
                                                    new NullMessageMonitor(),
                                                    new OOONetworkStackHarnessFactory(
                                                                                      new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                                     null, null,
                                                                                      new L1ReconnectConfigImpl()),
                                                    new NullConnectionPolicy(), 0);
 

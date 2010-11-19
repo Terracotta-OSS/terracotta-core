@@ -9,143 +9,280 @@ import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
-import com.tc.objectserver.api.TestSink;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.test.TCTestCase;
+import com.tc.util.Assert;
 import com.tc.util.UUID;
 
-import junit.framework.TestCase;
+public class GuaranteedDeliveryProtocolTest extends TCTestCase {
+  LinkedQueue                         clientReceiveQueue;
+  LinkedQueue                         serverReceiveQueue;
+  private TestProtocolMessageDelivery clientDelivery;
+  private TestProtocolMessageDelivery serverDelivery;
+  private GuaranteedDeliveryProtocol  serverGdp;
+  private GuaranteedDeliveryProtocol  clientGdp;
+  private ReconnectConfig             reconnectConfig;
 
-/**
- * 
- */
-public class GuaranteedDeliveryProtocolTest extends TestCase {
-  LinkedQueue                         receiveQueue;
-  private TestSink                    sendSink;
-  private TestSink                    receiveSink;
-  private TestProtocolMessageDelivery delivery;
-  private GuaranteedDeliveryProtocol  gdp;
-
-  public void setUp() {
-    receiveQueue = new LinkedQueue();
-    delivery = new TestProtocolMessageDelivery(receiveQueue);
-    sendSink = new TestSink();
-    receiveSink = new TestSink();
-
-    final ReconnectConfig reconnectConfig = new L1ReconnectConfigImpl();
-    gdp = new GuaranteedDeliveryProtocol(delivery, sendSink, receiveSink, reconnectConfig, true);
-    gdp.start();
-    gdp.resume();
+  public GuaranteedDeliveryProtocolTest() {
+    // disableAllUntil("2010-12-25");
   }
 
-  public void tests() throws Exception {
-    final UUID sessionId = UUID.getUUID();
+  public void setUp(ReconnectConfig reconnectCfg) {
+    clientReceiveQueue = new LinkedQueue();
+    serverReceiveQueue = new LinkedQueue();
 
-    // hand shake state
-    // send AckRequest to receiver
-    TestProtocolMessage msg = new TestProtocolMessage();
-    msg.isHandshake = true;
-    msg.setSessionId(sessionId);
-    gdp.receive(msg);
-    runWorkSink(sendSink);
-    // reply ack=-1 from receiver
+    reconnectConfig = reconnectCfg;
+    clientDelivery = new TestProtocolMessageDelivery(clientReceiveQueue);
+    serverDelivery = new TestProtocolMessageDelivery(serverReceiveQueue);
+
+    clientGdp = new GuaranteedDeliveryProtocol(clientDelivery, reconnectConfig, true);
+    clientGdp.start();
+    clientGdp.resume();
+
+    serverGdp = new GuaranteedDeliveryProtocol(serverDelivery, reconnectConfig, true);
+    serverGdp.start();
+    serverGdp.resume();
+
+  }
+
+  public void testDefault() throws Exception {
+    setUp(new L1ReconnectConfigImpl());
+    oooTest();
+  }
+
+  public void testErrorConfig() throws Exception {
+    try {
+      setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 1, 1));
+    } catch (Exception e) {
+      System.out.println("XXX Expected : " + e);
+      return;
+    }
+    Assert.eval(false);
+  }
+
+  public void testAggressive() throws Exception {
+    setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 1, 2));
+    oooTest();
+  }
+
+  public void testLethargic() throws Exception {
+    setUp(new L1ReconnectConfigImpl(true, 5000, 5000, 100, 1000));
+    oooTest();
+  }
+
+  TCNetworkMessage    tcMessage = null;
+  TestProtocolMessage pm        = null;
+  final UUID          sessionId = UUID.getUUID();
+
+  private void oooTest() throws InterruptedException {
+    TestProtocolMessage msg;
+    new PingMessage(new NullMessageMonitor());
+
+    System.out.println("XXX 1 Client: " + clientGdp);
+    System.out.println("XXX 1 Server: " + serverGdp);
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().HANDSHAKE_WAIT_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().HANDSHAKE_WAIT_STATE);
+
+    // case 1: Normal Handshake
+    // server receives handshake request from a brand new client. Server replies to client with handshake ok and
+    // notifies its GDP.
     msg = new TestProtocolMessage(null, 0, -1);
-    msg.isAck = true;
+    msg.isHandshakeReplyOk = true;
     msg.setSessionId(sessionId);
-    gdp.receive(msg);
-    runWorkSink(sendSink);
+    serverGdp.receive(msg);
+    clientGdp.receive(msg);
 
-    TCNetworkMessage tcMessage = new PingMessage(new NullMessageMonitor());
-    assertTrue(sendSink.size() == 0);
-    gdp.send(tcMessage);
-    assertTrue(sendSink.size() == 1);
-    runWorkSink(sendSink);
-    assertTrue(delivery.created);
-    assertTrue(delivery.tcMessage == tcMessage);
-    TestProtocolMessage pm = (TestProtocolMessage) delivery.msg;
+    System.out.println("XXX 2 Client GDP: " + clientGdp);
+    System.out.println("XXX 2 Server GDP: " + serverGdp + "\n\n");
+
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+
+    clientGdp.pause();
+    clientGdp.reset();
+    clientGdp.resume();
+
+    serverGdp.pause();
+    serverGdp.reset();
+    serverGdp.resume();
+
+    // case 2: Different session client connecting, server rejecting it.
+    // Commented this, as GDP no more handles handshake Fail message
+    // msg = new TestProtocolMessage(null, 0, -1);
+    // msg.isHandshakeReplyFail = true;
+    // serverGdp.receive(msg);
+    // clientGdp.receive(msg);
+
+    System.out.println("XXX 2 Client GDP: " + clientGdp);
+    System.out.println("XXX 2 Server GDP: " + serverGdp);
+
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().HANDSHAKE_WAIT_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().HANDSHAKE_WAIT_STATE);
+
+    // Case 3: client sends messages to server and server acks it
+    clientGdp.getSender().switchToState(clientGdp.getSender().MESSAGE_WAIT_STATE);
+    serverGdp.getSender().switchToState(serverGdp.getSender().MESSAGE_WAIT_STATE);
+    clientDelivery.clear();
+    serverDelivery.clear();
+
+    int sent = 0;
+    while (sent < reconnectConfig.getMaxDelayAcks() - 1) {
+      sendMessage(false);
+      assertTrue(serverDelivery.ackCount == -1);
+      serverDelivery.clear();
+      Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
+      Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+      sent++;
+    }
+
+    sendMessage(true);
+    assertTrue(serverDelivery.ackCount == sent);
+    serverDelivery.clear();
+    sent++;
+
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+
+    sendAckToClient();
+
+    while (sent < reconnectConfig.getSendWindow() - 1) {
+      if ((sent + 1) % (reconnectConfig.getMaxDelayAcks()) == 0) {
+        sendMessage(true);
+        assertTrue(serverDelivery.sentAck);
+        assertTrue(serverDelivery.ackCount == sent);
+        sendAckToClient();
+      } else {
+        sendMessage(false);
+        assertFalse(serverDelivery.sentAck);
+        assertTrue(serverDelivery.ackCount == (sent / (reconnectConfig.getMaxDelayAcks()))
+                                              * (reconnectConfig.getMaxDelayAcks()) - 1);
+
+      }
+
+      Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
+      Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+
+      serverDelivery.clear();
+      sent++;
+    }
+
+    sendMessage(true);
+    assertTrue(serverDelivery.ackCount == sent);
+    serverDelivery.clear();
+    sent++;
+
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+
+    sendAckToClient();
+
+    int toSend = sent + reconnectConfig.getSendWindow();
+    while (sent < toSend) {
+      System.out.println("XXX sending " + (sent + 1));
+      sendMessage();
+      sent++;
+    }
+    Assert.eval(clientGdp.getSender().getCurrentState() == clientGdp.getSender().SENDWINDOW_FULL_STATE);
+    Assert.eval(serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE);
+
+    sendMessageAndCheckQueued();
+    sendMessageAndCheckQueued();
+
+    System.out.println("XXX ACK to client");
+    sendAckToClient();
+    System.out.println("XXX Client GDP: " + clientGdp);
+    System.out.println("XXX Server GDP: " + serverGdp);
+    Assert.eval((clientGdp.getSender().getCurrentState() == clientGdp.getSender().MESSAGE_WAIT_STATE)
+                || (clientGdp.getSender().getCurrentState() == clientGdp.getSender().SENDWINDOW_FULL_STATE));
+    Assert.eval((serverGdp.getSender().getCurrentState() == serverGdp.getSender().MESSAGE_WAIT_STATE)
+                || (serverGdp.getSender().getCurrentState() == serverGdp.getSender().SENDWINDOW_FULL_STATE));
+  }
+
+  private void sendMessage() throws InterruptedException {
+    tcMessage = new PingMessage(new NullMessageMonitor());
+    tcMessage.seal();
+    assertTrue(clientDelivery.msg == null);
+    clientGdp.send(tcMessage);
+    assertTrue(clientDelivery.created);
+    assertTrue(clientDelivery.msg != null);
+
+    pm = (TestProtocolMessage) clientDelivery.msg;
     pm.setSessionId(sessionId);
-    delivery.clear();
+    clientDelivery.clear();
     pm.isSend = true;
-    gdp.receive(pm);
-    assertTrue(receiveSink.size() == 1);
-    runWorkSink(receiveSink);
+    serverGdp.receive(pm);
+    assertTrue(serverReceiveQueue.take() == tcMessage);
+  }
 
-    assertTrue(receiveQueue.take() == tcMessage);
-    assertTrue(delivery.sentAck);
-    assertTrue(delivery.ackCount == 0);
+  private void sendMessage(boolean expectAckSentBack) throws InterruptedException {
+    tcMessage = new PingMessage(new NullMessageMonitor());
+    tcMessage.seal();
+    assertTrue(clientDelivery.msg == null);
+    clientGdp.send(tcMessage);
+    assertTrue(clientDelivery.created);
+    assertTrue(clientDelivery.msg != null);
 
-    delivery.clear();
+    pm = (TestProtocolMessage) clientDelivery.msg;
+    pm.setSessionId(sessionId);
+    clientDelivery.clear();
+    pm.isSend = true;
+    serverGdp.receive(pm);
+    assertTrue(serverReceiveQueue.take() == tcMessage);
+    if (expectAckSentBack) {
+      assertTrue(serverDelivery.sentAck);
+    } else {
+      assertFalse(serverDelivery.sentAck);
+    }
+  }
+
+  private void sendMessageAndCheckQueued() {
+    tcMessage = new PingMessage(new NullMessageMonitor());
+    tcMessage.seal();
+    assertTrue(clientDelivery.msg == null);
+    clientGdp.send(tcMessage);
+    assertFalse(clientDelivery.created);
+    assertTrue(clientDelivery.msg == null);
+    clientDelivery.clear();
+  }
+
+  private void sendAckToClient() {
     TestProtocolMessage ackMessage = new TestProtocolMessage();
     ackMessage.setSessionId(sessionId);
-    ackMessage.ack = 0;
+    ackMessage.ack = serverDelivery.ackCount;
     ackMessage.isAck = true;
-    gdp.receive(ackMessage);
-    assertTrue(sendSink.size() == 1);
-    runWorkSink(sendSink);
-    delivery.clear();
-
-    gdp.send(tcMessage);
-    gdp.send(tcMessage);
-    assertTrue(sendSink.size() == 1);
-    runWorkSink(sendSink);
-    assertTrue(sendSink.size() == 1);
+    clientGdp.receive(ackMessage);
+    clientDelivery.clear();
   }
 
   public void testTransportDisconnect() {
-    final UUID sessionId = UUID.getUUID();
-    SendStateMachine sender = gdp.getSender();
-    ReceiveStateMachine receiver = gdp.getReceiver();
-    
-    // hand shake state
-    // send AckRequest to receiver
-    TestProtocolMessage msg = new TestProtocolMessage();
-    msg.isHandshake = true;
-    msg.setSessionId(sessionId);
-    gdp.receive(msg);
-    runWorkSink(sendSink);
-    // reply ack=-1 from receiver
-    msg = new TestProtocolMessage(null, 0, -1);
-    msg.isAck = true;
-    msg.setSessionId(sessionId);
-    gdp.receive(msg);
-    runWorkSink(sendSink);
+    setUp(new L1ReconnectConfigImpl());
+    SendStateMachine sender = clientGdp.getSender();
+    ReceiveStateMachine receiver = serverGdp.getReceiver();
 
-    TCNetworkMessage tcMessage = new PingMessage(new NullMessageMonitor());
-    assertTrue(sendSink.size() == 0);
-    gdp.send(tcMessage);
-    gdp.send(tcMessage);
-    gdp.send(tcMessage);
-    gdp.send(tcMessage);
-    gdp.send(tcMessage);
-    assertTrue(sendSink.size() == 1);
-    runWorkSink(sendSink);
-    assertTrue(sendSink.size() == 1);
-    assertFalse(sender.isClean());
-    TestProtocolMessage pm = new TestProtocolMessage(tcMessage, 0, 0);
+    // both are handshaked
+    TestProtocolMessage msg = new TestProtocolMessage();
+    msg.isHandshakeReplyOk = true;
+    msg.ack = -1;
+    msg.setSessionId(sessionId);
+    serverGdp.receive(msg);
+    clientGdp.receive(msg);
+
+    pm = new TestProtocolMessage(msg, 0, 0);
     pm.isSend = true;
-    gdp.receive(pm);
-    pm = new TestProtocolMessage(tcMessage, 1, 1);
+    serverGdp.receive(pm);
+    pm = new TestProtocolMessage(msg, 1, 1);
     pm.isSend = true;
-    gdp.receive(pm);
-    pm = new TestProtocolMessage(tcMessage, 2, 2);
+    serverGdp.receive(pm);
+    pm = new TestProtocolMessage(msg, 2, 2);
     pm.isSend = true;
-    gdp.receive(pm);
-    runWorkSink(receiveSink);
-    assertTrue(receiveSink.size() == 1);
+    serverGdp.receive(pm);
     assertFalse(receiver.isClean());
-    
+
     // simulate transport disconnected, call reset().
-    gdp.reset();
+    clientGdp.reset();
+    serverGdp.reset();
     assertTrue(sender.isClean());
     assertTrue(receiver.isClean());
-    runWorkSink(sendSink);
-    runWorkSink(receiveSink);
-    assertTrue(sendSink.size() == 0);
-    assertTrue(receiveSink.size() == 0);
-  }
-
-  private void runWorkSink(TestSink sink) {
-    StateMachineRunner smr = (StateMachineRunner) sink.getInternalQueue().remove(0);
-    smr.run();
   }
 }
