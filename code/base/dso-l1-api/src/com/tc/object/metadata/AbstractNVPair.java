@@ -531,28 +531,26 @@ public abstract class AbstractNVPair implements NVPair {
 
   public static class EnumNVPair extends AbstractNVPair {
 
-    private final String enumClass;
-    private final String enumName;
+    private final int ordinal;
 
     public EnumNVPair(String name, Enum e) {
-      this(name, e.getClass().getName(), e.name());
+      this(name, e.ordinal());
     }
 
     public Object getObjectValue() {
-      return getEnumName();
+      return ordinal;
     }
 
-    public EnumNVPair(String name, String enumClass, String enumName) {
+    public EnumNVPair(String name, int ordinal) {
       super(name);
-      this.enumClass = enumClass;
-      this.enumName = enumName;
+      this.ordinal = ordinal;
     }
 
     @Override
     boolean basicEquals(NVPair obj) {
       if (obj instanceof EnumNVPair) {
         EnumNVPair other = (EnumNVPair) obj;
-        return enumClass.equals(other.enumClass) && enumName.equals(other.enumName);
+        return ordinal == other.ordinal;
       }
 
       return false;
@@ -560,7 +558,7 @@ public abstract class AbstractNVPair implements NVPair {
 
     @Override
     public String valueAsString() {
-      return enumClass + "(" + enumName + ")";
+      return String.valueOf(ordinal);
     }
 
     @Override
@@ -568,17 +566,13 @@ public abstract class AbstractNVPair implements NVPair {
       return ValueType.ENUM;
     }
 
-    public String getEnumClass() {
-      return enumClass;
-    }
-
-    public String getEnumName() {
-      return enumName;
-    }
-
     @Override
     public NVPair cloneWithNewName(String newName) {
-      return new EnumNVPair(newName, enumClass, enumName);
+      return new EnumNVPair(newName, ordinal);
+    }
+
+    public int getOrdinal() {
+      return ordinal;
     }
   }
 
