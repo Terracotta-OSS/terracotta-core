@@ -30,7 +30,6 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -120,8 +119,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                            }
                                                                          });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -143,7 +141,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     // do this after servers and groups have been processed
     validateGroups();
     validateDSOClusterPersistenceMode();
-    validateLicenseCapabilities();
     validateHaConfiguration();
   }
 
@@ -170,8 +167,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                          });
 
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -569,20 +565,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
             for (String member : members) {
               msg.append(member).append(" ");
             }
-            msg
-                .append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
+            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
             throw new ConfigurationSetupException(msg.toString());
           }
         }
       }
     }
 
-  }
-
-  public void validateLicenseCapabilities() {
-    if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
-      LicenseManager.verifyServerStripingCapability();
-    }
   }
 
   public void validateHaConfiguration() throws ConfigurationSetupException {

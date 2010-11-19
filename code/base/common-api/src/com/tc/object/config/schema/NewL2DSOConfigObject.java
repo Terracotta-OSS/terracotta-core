@@ -18,7 +18,6 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.license.LicenseManager;
 import com.tc.util.Assert;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DsoServerData;
@@ -74,7 +73,6 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.l2GroupPort = server.getL2GroupPort();
     if (server.getDso().getPersistence().isSetOffheap()) {
       this.offHeapConfig = server.getDso().getPersistence().getOffheap();
-      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
     } else {
       this.offHeapConfig = Offheap.Factory.newInstance();
     }

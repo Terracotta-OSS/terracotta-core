@@ -22,6 +22,7 @@ import org.terracotta.license.util.MemorySizeParser;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.util.ProductInfo;
 import com.tc.util.runtime.Vm;
 
 import java.io.InputStream;
@@ -162,5 +163,9 @@ public class LicenseManager {
       throw new LicenseException("Your license only allows up to " + maxHeapSizeFromLicense
                                  + " in offheap size. Your VM is configured with " + maxHeapFromVM + unit);
     }
+  }
+
+  public static boolean enterpriseEdition() {
+    return ProductInfo.getInstance().isEnterprise();
   }
 }

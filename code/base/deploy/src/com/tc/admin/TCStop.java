@@ -155,6 +155,7 @@ public class TCStop {
         consoleLogger.error("Unable to connect to host '" + host + "', port " + port
                             + ". Are you sure there is a Terracotta server instance running there?");
       }
+      System.exit(1);
     }
   }
 
@@ -188,7 +189,7 @@ public class TCStop {
           .findMBean(L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, mbsc);
       // wait a bit for server to be ready for shutdown
       int count = 10;
-      while(!tcServerInfo.isShutdownable() && --count > 0) {
+      while (!tcServerInfo.isShutdownable() && --count > 0) {
         consoleLogger.warn("Waiting for server to be shutdownable...");
         ThreadUtil.reallySleep(1000);
       }
