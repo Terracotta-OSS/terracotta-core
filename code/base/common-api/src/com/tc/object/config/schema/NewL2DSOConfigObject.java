@@ -26,9 +26,9 @@ import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
 import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
@@ -232,12 +232,10 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   }
 
   private static void initializeIndexDiretory(Server server, DefaultValueProvider defaultValueProvider,
-                                              File directoryLoadedFrom) throws XmlException {
+                                              File directoryLoadedFrom) {
     if (!server.isSetIndex()) {
-      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "index");
-      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
-
-      server.setIndex(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+      Assert.assertTrue(server.isSetData());
+      server.setIndex(new File(server.getData(), "index").getAbsolutePath());
     } else {
       server.setIndex(ParameterSubstituter.substitute(server.getIndex()));
     }
