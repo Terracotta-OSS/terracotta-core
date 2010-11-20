@@ -40,7 +40,7 @@
         <echo message="${get-latest.tstamp}" file=".svn.output" append="true"/>
         
         <!-- Do a 'svn update'  -->
-        <exec executable="ruby" dir="${basedir}/../../buildsystems/cruisecontrol-task" outputproperty="svn.update.output" resultproperty="svn.update.result">
+        <exec executable="jruby" dir="${basedir}/../../buildsystems/cruisecontrol-task" outputproperty="svn.update.output" resultproperty="svn.update.result">
             <arg value="svnupdate.rb"/>
             <arg value="${tc.build-control.monkey-name}"/>
         </exec>        
