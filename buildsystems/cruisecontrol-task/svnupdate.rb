@@ -23,7 +23,7 @@ class SvnUpdate
     log "ee svninfo: #{@ee_svninfo}" if @is_ee_branch
     
     @branch  = get_branch()
-    build_archive_dir = ENV['OS'] =~ /Windows/i ? 'o:/archive' : '/shares/monkeyoutput/archive'
+    build_archive_dir = ENV['OS'] =~ /Windows/i ? 'o:/archive' : '/shares/monkeyshare/output/archive'
     
     rev_file = File.join(build_archive_dir, "monkey-police", @branch, "good_rev.yml")
     if File.exists?(rev_file)
