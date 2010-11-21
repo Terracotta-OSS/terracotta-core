@@ -22,6 +22,7 @@ import com.terracottatech.config.InstrumentedClasses;
 import com.terracottatech.config.License;
 import com.terracottatech.config.Locks;
 import com.terracottatech.config.Modules;
+import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Roots;
 import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.TransientFields;
@@ -35,7 +36,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
   private static Class[] exemptedElements = { License.class, Modules.class, TcProperties.class, Locks.class,
       Roots.class, DistributedMethods.class, InstrumentedClasses.class, TransientFields.class,
       AdditionalBootJarClasses.class, WebApplications.class, InjectedInstances.class, AppGroups.class,
-      Authentication.class, HttpAuthentication.class };
+      Authentication.class, HttpAuthentication.class, Offheap.class };
   private TcConfig       config;
 
   @Override
