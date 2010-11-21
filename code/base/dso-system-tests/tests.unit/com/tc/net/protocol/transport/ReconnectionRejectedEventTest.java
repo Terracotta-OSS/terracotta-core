@@ -46,8 +46,8 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
                                                      new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
     this.clientComms = new CommunicationsManagerImpl("ClientTestCommsMgr", new NullMessageMonitor(),
                                                      new PlainNetworkStackHarnessFactory(), new NullConnectionPolicy());
-    this.listener = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(proxyMgr.getDsoPort()),
-                                               true, new DefaultConnectionIdFactory());
+    this.listener = serverComms.createListener(new NullSessionManager(), new TCSocketAddress("localhost", proxyMgr
+        .getDsoPort()), true, new DefaultConnectionIdFactory());
     this.listener.start(Collections.EMPTY_SET);
   }
 
@@ -88,8 +88,8 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
       }
     };
 
-    return clientComms.createClientChannel(new NullSessionManager(), 0, listener.getBindAddress().getHostAddress(),
-                                           connPort, timeout, getConnectionAddrProvider(connPort), transportFactory);
+    return clientComms.createClientChannel(new NullSessionManager(), 0, "localhost", connPort, timeout,
+                                           getConnectionAddrProvider(connPort), transportFactory);
 
   }
 
@@ -134,7 +134,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
     // proxy off
     this.proxyMgr.proxyDown();
-    ThreadUtil.reallySleep(1000);
+    ThreadUtil.reallySleep(10000);
     this.proxyMgr.proxyUp();
 
     ThreadUtil.reallySleep(1000);

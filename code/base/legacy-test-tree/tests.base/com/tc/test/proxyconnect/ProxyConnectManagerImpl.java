@@ -28,7 +28,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
 
   public void setupProxy() {
     try {
-      proxy = new TCPProxy(proxyPort, InetAddress.getLocalHost(), dsoPort, 0L, false, new File("."));
+      proxy = new TCPProxy(proxyPort, InetAddress.getByName("localhost"), dsoPort, 0L, false, new File("."));
       proxy.setReuseAddress(true);
     } catch (Exception x) {
       throw new RuntimeException("setupProxy failed! " + x);
@@ -50,7 +50,7 @@ public class ProxyConnectManagerImpl implements ProxyConnectManager {
   public int getDsoPort() {
     return (dsoPort);
   }
-  
+
   private String timeStamp() {
     SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
     return (formatter.format(new Date()));
