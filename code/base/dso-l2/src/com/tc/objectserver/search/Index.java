@@ -18,9 +18,9 @@ public interface Index {
 
   void upsert(Object key, List<NVPair> attributes) throws IndexException;
 
-  IndexContext search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+  SearchResult search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
                       Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults)
-      throws IOException;
+      throws IOException, IndexException;
 
   void close();
 

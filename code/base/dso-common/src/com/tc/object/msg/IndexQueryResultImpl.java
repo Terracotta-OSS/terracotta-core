@@ -48,9 +48,11 @@ public class IndexQueryResultImpl implements IndexQueryResult {
   }
 
   public Object deserializeFrom(TCByteBufferInput input) throws IOException {
-    this.attributes = new ArrayList<NVPair>();
     this.key = input.readString();
     int size = input.readInt();
+
+    this.attributes = size > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
+
     for (int i = 0; i < size; i++) {
       NVPair pair = AbstractNVPair.deserializeInstance(input);
       this.attributes.add(pair);

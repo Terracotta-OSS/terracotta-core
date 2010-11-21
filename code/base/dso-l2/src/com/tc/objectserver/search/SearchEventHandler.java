@@ -65,15 +65,16 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
     } else if (context instanceof SearchQueryContext) {
       SearchQueryContext sqc = (SearchQueryContext) context;
 
-      IndexContext indexContext;
+      SearchResult searchResult;
       try {
-        indexContext = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(), sqc
-            .getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators(), sqc.getMaxResults());
+        searchResult = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
+                                                     sqc.getAttributeSet(), sqc.getSortAttributes(),
+                                                     sqc.getAggregators(), sqc.getMaxResults());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
-      this.searchRequestManager.queryResponse(sqc, indexContext.getQueryResults(), indexContext.getAggregatorResults());
+      this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(), searchResult.getAggregatorResults());
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

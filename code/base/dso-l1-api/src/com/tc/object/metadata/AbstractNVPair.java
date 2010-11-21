@@ -531,18 +531,25 @@ public abstract class AbstractNVPair implements NVPair {
 
   public static class EnumNVPair extends AbstractNVPair {
 
-    private final int ordinal;
+    private final String className;
+    private final int    ordinal;
 
     public EnumNVPair(String name, Enum e) {
-      this(name, e.ordinal());
+      this(name, e.getClass().getName(), e.ordinal());
     }
 
     public Object getObjectValue() {
-      return ordinal;
+      try {
+        return Class.forName(className, false, Thread.currentThread().getContextClassLoader()).getEnumConstants()[ordinal];
+      } catch (ClassNotFoundException e) {
+        // XXX: Should CNFE be part of getObjectValue() signature? This runtime smells bad
+        throw new RuntimeException(e);
+      }
     }
 
-    public EnumNVPair(String name, int ordinal) {
+    public EnumNVPair(String name, String className, int ordinal) {
       super(name);
+      this.className = className;
       this.ordinal = ordinal;
     }
 
@@ -550,7 +557,7 @@ public abstract class AbstractNVPair implements NVPair {
     boolean basicEquals(NVPair obj) {
       if (obj instanceof EnumNVPair) {
         EnumNVPair other = (EnumNVPair) obj;
-        return ordinal == other.ordinal;
+        return ordinal == other.ordinal && className.equals(other.className);
       }
 
       return false;
@@ -558,7 +565,7 @@ public abstract class AbstractNVPair implements NVPair {
 
     @Override
     public String valueAsString() {
-      return String.valueOf(ordinal);
+      return className + "(" + ordinal + ")";
     }
 
     @Override
@@ -568,12 +575,17 @@ public abstract class AbstractNVPair implements NVPair {
 
     @Override
     public NVPair cloneWithNewName(String newName) {
-      return new EnumNVPair(newName, ordinal);
+      return new EnumNVPair(newName, className, ordinal);
     }
 
     public int getOrdinal() {
       return ordinal;
     }
+
+    public String getClassName() {
+      return className;
+    }
+
   }
 
   public static NVPair createNVPair(String attributeName, Object value) {
