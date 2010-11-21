@@ -108,6 +108,10 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     }
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    // NOP
+  }
+
   static class HealthCheckerMonitorThreadEngine implements Runnable {
     private final ConcurrentHashMap   connectionMap = new ConcurrentHashMap();
     private final long                pingIdleTime;

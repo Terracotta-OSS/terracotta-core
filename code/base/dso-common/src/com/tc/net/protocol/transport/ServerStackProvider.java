@@ -191,6 +191,10 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
     this.connectionPolicy.clientDisconnected(transport.getConnectionId());
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    // NOP
+  }
+
   /*********************************************************************************************************************
    * ProtocolAdaptorFactory interface
    */
@@ -245,7 +249,19 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           handleSyn((SynMessage) message);
           isSynced = true;
         } catch (StackNotFoundException e) {
-          String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName, new Object[] { e.getMessage() });
+          String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName,
+                                                                                 new Object[] { e.getMessage() });
+          // send connection rejected SycAck back to L1
+          // since stack no found, create a temp transport for sending sycAck message back
+          this.transport = messageTransportFactory.createNewTransport(((SynMessage) message).getConnectionId(),
+                                                                      ((SynMessage) message).getSource(),
+                                                                      createHandshakeErrorHandler(),
+                                                                      handshakeMessageFactory, transportListeners);
+          sendSynAck(((SynMessage) message).getConnectionId(),
+                     new TransportHandshakeErrorContext(errorMessage,
+                                                        TransportHandshakeError.ERROR_RECONNECTION_REJECTED),
+                     ((SynMessage) message).getSource(), false);
+
           handleHandshakeError(new TransportHandshakeErrorContext(errorMessage, e));
         }
       }

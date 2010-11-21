@@ -15,6 +15,7 @@ public class TransportEventMonitor implements MessageTransportListener {
   private final LinkedQueue disconnectedEvents   = new LinkedQueue();
   private final LinkedQueue connectAttemptEvents = new LinkedQueue();
   private final LinkedQueue closedEvents         = new LinkedQueue();
+  private final LinkedQueue rejectedEvents       = new LinkedQueue();
 
   public void notifyTransportConnected(MessageTransport transport) {
     try {
@@ -48,6 +49,14 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    try {
+      this.rejectedEvents.put(new Object());
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+
   public boolean waitForConnect(long timeout) throws InterruptedException {
     return this.connectedEvents.poll(timeout) != null;
   }
@@ -62,6 +71,10 @@ public class TransportEventMonitor implements MessageTransportListener {
 
   public boolean waitForClose(long timeout) throws InterruptedException {
     return this.closedEvents.poll(timeout) != null;
+  }
+
+  public boolean waitForConnectionRejected(long timeout) throws InterruptedException {
+    return this.rejectedEvents.poll(timeout) != null;
   }
 
 }

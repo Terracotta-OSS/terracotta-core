@@ -58,6 +58,10 @@ public class OOOReconnectionTimeout implements MessageTransportListener, Restore
     oooLayer.notifyTransportConnected(transport);
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    oooLayer.notifyTransportReconnectionRejected(transport);
+  }
+
   private void cancelTimerTask() {
     this.timeoutTimerTask.cancel();
     this.timeoutTimerTask = null;

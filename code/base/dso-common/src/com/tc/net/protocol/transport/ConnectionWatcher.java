@@ -36,4 +36,8 @@ public class ConnectionWatcher implements MessageTransportListener {
   public void notifyTransportConnected(MessageTransport transport) {
     target.notifyTransportConnected(transport);
   }
+
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    target.notifyTransportReconnectionRejected(transport);
+  }
 }

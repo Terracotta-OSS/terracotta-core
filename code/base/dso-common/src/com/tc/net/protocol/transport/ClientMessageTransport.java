@@ -11,6 +11,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogging;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.core.TCConnection;
 import com.tc.net.core.event.TCConnectionEvent;
 import com.tc.net.protocol.NetworkLayer;
@@ -90,7 +91,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void handleHandshakeError(HandshakeResult result) throws IOException, MaxConnectionsExceededException,
-      CommStackMismatchException {
+      CommStackMismatchException, ReconnectionRejectedException {
     if (result.hasErrorContext()) {
       switch (result.getErrorType()) {
         case TransportHandshakeError.ERROR_MAX_CONNECTION_EXCEED:
@@ -99,6 +100,9 @@ public class ClientMessageTransport extends MessageTransportBase {
         case TransportHandshakeError.ERROR_STACK_MISMATCH:
           cleanConnectionWithoutNotifyListeners();
           throw new CommStackMismatchException("Disconnect due to comm stack mismatch");
+        case TransportHandshakeError.ERROR_RECONNECTION_REJECTED:
+          cleanConnectionWithoutNotifyListeners();
+          throw new ReconnectionRejectedException("Reconnection rejected due to stack not found");
         default:
           throw new IOException("Disconnect due to transport handshake error");
       }
@@ -271,6 +275,8 @@ public class ClientMessageTransport extends MessageTransportBase {
       clearConnection();
       this.status.reset();
       throw e;
+    } catch (ReconnectionRejectedException e) {
+      throw new TCRuntimeException("Should not happen here: " + e);
     } catch (IOException e) {
       clearConnection();
       this.status.reset();
@@ -290,6 +296,11 @@ public class ClientMessageTransport extends MessageTransportBase {
     wireNewConnection(connection);
     try {
       handshakeConnection(connection);
+    } catch (ReconnectionRejectedException e) {
+      // fire transport reconnection rejected event and
+      // let exception propagate up to handle both reconnect and restoreConnect at one place
+      fireTransportReconnectionRejectedEvent();
+      throw e;
     } catch (Exception t) {
       this.status.reset();
       throw t;
@@ -297,7 +308,7 @@ public class ClientMessageTransport extends MessageTransportBase {
   }
 
   private void handshakeConnection(TCConnection connection) throws TCTimeoutException, MaxConnectionsExceededException,
-      IOException, CommStackMismatchException {
+      IOException, CommStackMismatchException, ReconnectionRejectedException {
     HandshakeResult result = handShake();
     handleHandshakeError(result);
     sendAck();

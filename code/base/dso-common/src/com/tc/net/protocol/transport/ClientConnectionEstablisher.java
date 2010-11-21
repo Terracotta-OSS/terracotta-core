@@ -13,6 +13,7 @@ import com.tc.logging.TCLogging;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.MaxConnectionsExceededException;
+import com.tc.net.ReconnectionRejectedException;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.ConnectionAddressIterator;
 import com.tc.net.core.ConnectionAddressProvider;
@@ -141,7 +142,8 @@ public class ClientConnectionEstablisher {
     return "ClientConnectionEstablisher[" + this.connAddressProvider + ", timeout=" + this.timeout + "]";
   }
 
-  private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException {
+  private void reconnect(ClientMessageTransport cmt) throws MaxConnectionsExceededException,
+      ReconnectionRejectedException {
     try {
       // Lossy logging for connection errors. Log the errors once in every 10 seconds
       LossyTCLogger connectionErrorLossyLogger = new LossyTCLogger(cmt.logger, 10000, LossyTCLoggerType.TIME_BASED,
@@ -190,6 +192,8 @@ public class ClientConnectionEstablisher {
             connected = true;
           } catch (MaxConnectionsExceededException e) {
             throw e;
+          } catch (ReconnectionRejectedException e) {
+            throw e;
           } catch (TCTimeoutException e) {
             handleConnectException(e, false, connectionErrorLossyLogger, connection);
           } catch (IOException e) {
@@ -207,7 +211,8 @@ public class ClientConnectionEstablisher {
   }
 
   private void restoreConnection(ClientMessageTransport cmt, TCSocketAddress sa, long timeoutMillis,
-                                 RestoreConnectionCallback callback) throws MaxConnectionsExceededException {
+                                 RestoreConnectionCallback callback) throws MaxConnectionsExceededException,
+      ReconnectionRejectedException {
     final long deadline = System.currentTimeMillis() + timeoutMillis;
     boolean connected = cmt.isConnected();
     if (connected) {
@@ -226,6 +231,8 @@ public class ClientConnectionEstablisher {
         throw e;
       } catch (TCTimeoutException e) {
         handleConnectException(e, false, cmt.logger, connection);
+      } catch (ReconnectionRejectedException e) {
+        throw e;
       } catch (IOException e) {
         handleConnectException(e, false, cmt.logger, connection);
       } catch (Exception e) {
@@ -325,6 +332,11 @@ public class ClientConnectionEstablisher {
           String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
           CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
           cmt.logger.warn("No longer trying to reconnect.");
+          return;
+        } catch (ReconnectionRejectedException e) {
+          String connInfo = ((cmt == null) ? "" : (cmt.getLocalAddress() + "->" + cmt.getRemoteAddress() + " "));
+          CustomerLogging.getConsoleLogger().fatal(connInfo + e.getMessage());
+          cmt.logger.warn("Reconnection rejected. No more trying to reconnect.");
           return;
         } catch (Throwable t) {
           cmt.logger.warn("Reconnect failed !", t);
