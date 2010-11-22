@@ -281,43 +281,46 @@ public class ActivePassiveServerManager extends MultipleServerManager {
       }
     }
   }
-  
+
+  @Override
   public int getDsoPort() {
     return dsoPorts[0];
   }
-  
+
+  @Override
   public int getJMXPort() {
     return jmxPorts[0];
   }
 
+  @Override
   public int getL2GroupPort() {
     return l2GroupPorts[0];
   }
-  
+
   private boolean isUnusedPort(int port) {
     boolean unused = true;
-    for (int i = 0; i < dsoPorts.length; i++) {
-      if (dsoPorts[i] == port) {
+    for (int dsoPort : dsoPorts) {
+      if (dsoPort == port) {
         unused = false;
       }
     }
-    for (int i = 0; i < jmxPorts.length; i++) {
-      if (jmxPorts[i] == port) {
+    for (int jmxPort : jmxPorts) {
+      if (jmxPort == port) {
         unused = false;
       }
     }
-    for (int i = 0; i < l2GroupPorts.length; i++) {
-      if (l2GroupPorts[i] == port) {
+    for (int l2GroupPort : l2GroupPorts) {
+      if (l2GroupPort == port) {
         unused = false;
       }
     }
-    for (int i = 0; i < proxyL2GroupPorts.length; i++) {
-      if (proxyL2GroupPorts[i] == port) {
+    for (int proxyL2GroupPort : proxyL2GroupPorts) {
+      if (proxyL2GroupPort == port) {
         unused = false;
       }
     }
-    for (int i = 0; i < proxyDsoPorts.length; i++) {
-      if (proxyDsoPorts[i] == port) {
+    for (int proxyDsoPort : proxyDsoPorts) {
+      if (proxyDsoPort == port) {
         unused = false;
       }
     }
@@ -805,15 +808,15 @@ public class ActivePassiveServerManager extends MultipleServerManager {
 
   public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory, Servers serversForL1) {
     Servers serversCopy = (Servers) serversForL1.copy();
+    configFactory.addServersAndGroupToL1Config(serversCopy);
     for (int i = 0; i < serverCount; i++) {
 
       debugPrintln("******* adding to L1 config: serverName=[" + serverNames[i] + "] dsoPort=["
                    + (isProxyDsoPorts ? proxyDsoPorts[i] : dsoPorts[i]) + "] jmxPort=[" + jmxPorts[i] + "]");
-      if(isProxyDsoPorts){
+      if (isProxyDsoPorts) {
         serversCopy.getServerArray(i).getDsoPort().setIntValue(proxyDsoPorts[i]);
       }
     }
-    configFactory.addServersAndGroupToL1Config(serversCopy);
   }
 
   public void crashServer() throws Exception {
@@ -838,13 +841,13 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   private void deleteDirectory(String directory) {
     debugPrintln("\n ##### about to delete dataFile=[" + directory + "] and all of its content...");
     File[] files = new File(directory).listFiles();
-    for (int i = 0; i < files.length; i++) {
-      if (files[i].isDirectory()) {
-        deleteDirectory(files[i].getAbsolutePath());
+    for (File file : files) {
+      if (file.isDirectory()) {
+        deleteDirectory(file.getAbsolutePath());
       } else {
-        boolean successful = files[i].delete();
-        if (!successful) { throw new AssertionError("delete file=[" + files[i].getAbsolutePath() + "] failed"); }
-        debugPrintln("\n ##### deleted file=[" + files[i].getAbsolutePath() + "]");
+        boolean successful = file.delete();
+        if (!successful) { throw new AssertionError("delete file=[" + file.getAbsolutePath() + "] failed"); }
+        debugPrintln("\n ##### deleted file=[" + file.getAbsolutePath() + "]");
       }
     }
     if (!(new File(directory).delete())) { throw new AssertionError("delete file=[" + directory + "] failed"); }
