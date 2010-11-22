@@ -5,6 +5,7 @@ package com.tc.objectserver.search;
 
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.SortOperations;
@@ -23,6 +24,7 @@ public class SearchQueryContext implements MultiThreadedEventContext {
 
   private final ClientID                    clientID;
   private final SearchRequestID             requestID;
+  private final GroupID                     groupIDFrom;
   private final String                      cacheName;
   private final LinkedList                  queryStack;
   private final boolean                     includeKeys;
@@ -31,11 +33,12 @@ public class SearchQueryContext implements MultiThreadedEventContext {
   private final List<NVPair>                aggregators;
   private final int                         maxResults;
 
-  public SearchQueryContext(ClientID clientID, SearchRequestID requestID, String cacheName, LinkedList queryStack,
-                            boolean includeKeys, Set<String> attributeSet, Map<String, SortOperations> sortAttributes,
-                            List<NVPair> aggregators, int maxResults) {
+  public SearchQueryContext(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cacheName,
+                            LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                            Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults) {
     this.clientID = clientID;
     this.requestID = requestID;
+    this.groupIDFrom = groupIDFrom;
     this.cacheName = cacheName;
     this.queryStack = queryStack;
     this.includeKeys = includeKeys;
@@ -79,6 +82,13 @@ public class SearchQueryContext implements MultiThreadedEventContext {
    */
   public SearchRequestID getRequestID() {
     return this.requestID;
+  }
+
+  /**
+   * GroupID that request originated from.
+   */
+  public GroupID getGroupIDFrom() {
+    return this.groupIDFrom;
   }
 
   /**

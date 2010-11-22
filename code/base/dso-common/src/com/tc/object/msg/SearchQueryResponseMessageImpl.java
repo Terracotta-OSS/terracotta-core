@@ -6,6 +6,7 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -28,10 +29,12 @@ import java.util.List;
 public class SearchQueryResponseMessageImpl extends DSOMessageBase implements SearchQueryResponseMessage {
 
   private final static byte      SEARCH_REQUEST_ID       = 0;
-  private final static byte      RESULTS_SIZE            = 1;
-  private final static byte      AGGREGATOR_RESULTS_SIZE = 2;
+  private final static byte      GROUP_ID_FROM           = 1;
+  private final static byte      RESULTS_SIZE            = 2;
+  private final static byte      AGGREGATOR_RESULTS_SIZE = 3;
 
   private SearchRequestID        requestID;
+  private GroupID                groupIDFrom;
   private List<IndexQueryResult> results;
   private List<NVPair>           aggregatorResults;
 
@@ -48,9 +51,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
-  public void initialSearchResponseMessage(SearchRequestID searchRequestID, List<IndexQueryResult> searchResults,
-                                           List<NVPair> aggregators) {
+  public void initialSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
+                                           List<IndexQueryResult> searchResults, List<NVPair> aggregators) {
     this.requestID = searchRequestID;
+    this.groupIDFrom = groupID;
     this.results = searchResults;
     this.aggregatorResults = aggregators;
   }
@@ -60,6 +64,13 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    */
   public SearchRequestID getRequestID() {
     return this.requestID;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public GroupID getGroupIDFrom() {
+    return this.groupIDFrom;
   }
 
   /**
@@ -81,6 +92,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
     final TCByteBufferOutputStream outStream = getOutputStream();
 
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
+    putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
     putNVPair(RESULTS_SIZE, this.results.size());
     int count = 0;
 
@@ -110,6 +122,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
     switch (name) {
       case SEARCH_REQUEST_ID:
         this.requestID = new SearchRequestID(getLongValue());
+        return true;
+
+      case GROUP_ID_FROM:
+        this.groupIDFrom = new GroupID(getIntValue());
         return true;
 
       case RESULTS_SIZE:

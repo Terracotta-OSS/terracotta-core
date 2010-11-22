@@ -22,8 +22,9 @@ public class ReceiveSearchQueryResponseHandler extends AbstractEventHandler {
       final SearchQueryResponseMessage responseMsg = (SearchQueryResponseMessage) context;
 
       this.remoteSearchRequestManager.addResponseForQuery(responseMsg.getLocalSessionID(), responseMsg.getRequestID(),
-                                                          responseMsg.getResults(), responseMsg.getAggregatorResults(),
-                                                          responseMsg.getSourceNodeID());
+                                                          responseMsg.getGroupIDFrom(), responseMsg.getResults(),
+                                                          responseMsg.getAggregatorResults(), responseMsg
+                                                              .getSourceNodeID());
     } else {
       throw new AssertionError("Unknown message type received from server - " + context.getClass().getName());
     }

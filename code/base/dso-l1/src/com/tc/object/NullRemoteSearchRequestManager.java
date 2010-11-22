@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -46,8 +47,8 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
   }
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
-                                  final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,
-                                  final NodeID nodeID) {
+                                  final GroupID groupIDFrom, final List<IndexQueryResult> queryResults,
+                                  final List<NVPair> aggregatorResults, final NodeID nodeID) {
     //
   }
 

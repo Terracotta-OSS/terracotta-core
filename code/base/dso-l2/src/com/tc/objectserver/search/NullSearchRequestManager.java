@@ -4,6 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
@@ -16,9 +17,9 @@ import java.util.Set;
 
 public class NullSearchRequestManager implements SearchRequestManager {
 
-  public void queryRequest(ClientID clientID, SearchRequestID requestID, String cachename, LinkedList queryStack,
-                           boolean includeKeys, Set<String> attributeSet, Map<String, SortOperations> sortAttributes,
-                           List<NVPair> aggregators, int maxResults) {
+  public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
+                           LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                           Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults) {
     // Do nothing
   }
 

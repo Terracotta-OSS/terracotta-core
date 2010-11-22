@@ -3,6 +3,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.metadata.NVPair;
@@ -26,7 +27,7 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
                                   Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
                                   List<NVPair> aggregators, int maxResults);
 
-  public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
+  public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
                                   final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,
                                   final NodeID nodeID);
 

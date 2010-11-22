@@ -4,6 +4,7 @@
 package com.tc.object.msg;
 
 import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
@@ -34,9 +35,15 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   public SearchRequestID getRequestID();
 
   /**
+   * GroupID message is from.
+   */
+  public GroupID getGroupIDFrom();
+
+  /**
    * Initialize message.
    * 
    * @param searchRequestID
+   * @param groupFrom
    * @param cacheName
    * @param queryStack
    * @param keys
@@ -45,8 +52,8 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @param aggregators
    * @param maxResults
    */
-  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final String cacheName,
-                                          final LinkedList queryStack, final boolean keys,
+  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
+                                          final String cacheName, final LinkedList queryStack, final boolean keys,
                                           final Set<String> attributeSet,
                                           final Map<String, SortOperations> sortAttributesMap,
                                           final List<NVPair> aggregators, int maxResults);

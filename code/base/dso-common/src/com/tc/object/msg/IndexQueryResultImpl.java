@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class IndexQueryResultImpl implements IndexQueryResult {
+public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
   private List<NVPair> attributes;
   private String       key;
@@ -78,6 +78,17 @@ public class IndexQueryResultImpl implements IndexQueryResult {
       if (other.key != null) return false;
     } else if (!key.equals(other.key)) return false;
     return true;
+  }
+
+  public int compareTo(Object o) {
+    if (this == o) return 0;
+    if (o == null) return -1;
+    if (getClass() != o.getClass()) return -1;
+    IndexQueryResultImpl other = (IndexQueryResultImpl) o;
+    if (key == null) {
+      if (other.key != null) return -1;
+    }
+    return other.key.compareTo(key);
   }
 
   @Override
