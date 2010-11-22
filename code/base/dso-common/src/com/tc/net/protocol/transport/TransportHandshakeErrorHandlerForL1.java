@@ -14,7 +14,6 @@ public class TransportHandshakeErrorHandlerForL1 implements TransportHandshakeEr
     // print error message on console
     if (e.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) consoleLogger.error(e.getMessage());
     else consoleLogger.error(e);
-    new Exception().printStackTrace();
     consoleLogger.error("I'm crashing the client!");
     try {
       Thread.sleep(30 * 1000);
