@@ -31,23 +31,11 @@
 				<members>
 					<member>server1</member>
 				</members>
-				<ha>
-					<mode>networked-active-passive</mode>
-					<networked-active-passive>
-						<election-time>5</election-time>
-					</networked-active-passive>
-				</ha>
 			</mirror-group>
 			<mirror-group>
 				<members>
 					<member>server2</member>
 				</members>
-				<ha>
-					<mode>networked-active-passive</mode>
-					<networked-active-passive>
-						<election-time>5</election-time>
-					</networked-active-passive>
-				</ha>
 			</mirror-group>
 		</mirror-groups>
 	</servers>

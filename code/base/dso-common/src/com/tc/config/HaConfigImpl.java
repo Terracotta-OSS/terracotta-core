@@ -8,6 +8,7 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.license.LicenseManager;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
@@ -35,6 +36,9 @@ public class HaConfigImpl implements HaConfig {
     this.configSetupManager = configSetupManager;
     ActiveServerGroupsConfig groupsConfig = this.configSetupManager.activeServerGroupsConfig();
     int groupCount = groupsConfig.getActiveServerGroupCount();
+    if (isActiveActive()) {
+      LicenseManager.verifyServerStripingCapability();
+    }
     this.groups = new ServerGroup[groupCount];
     this.groupIDs = new GroupID[groupCount];
     for (int i = 0; i < groupCount; i++) {
@@ -106,8 +110,8 @@ public class HaConfigImpl implements HaConfig {
   }
 
   private ServerGroup getThisGroupFrom(ServerGroup[] sg, ActiveServerGroupConfig activeServerGroupForThisL2) {
-    for (int i = 0; i < sg.length; i++) {
-      if (sg[i].getGroupId() == activeServerGroupForThisL2.getGroupId()) { return sg[i]; }
+    for (ServerGroup element : sg) {
+      if (element.getGroupId() == activeServerGroupForThisL2.getGroupId()) { return element; }
     }
     throw new RuntimeException("Unable to find this group information for " + this.thisNode + " "
                                + activeServerGroupForThisL2);
@@ -144,14 +148,14 @@ public class HaConfigImpl implements HaConfig {
       ActiveServerGroupConfig asgc = asgcs[j];
       Assert.assertNotNull(asgc);
       String[] l2Names = asgc.getMembers().getMemberArray();
-      for (int i = 0; i < l2Names.length; i++) {
+      for (String l2Name : l2Names) {
         try {
-          NewL2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Names[i]);
+          NewL2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Name);
           Node node = makeNode(l2);
           allClusterNodes.add(node);
-          addNodeToGroup(node, l2Names[i]);
+          addNodeToGroup(node, l2Name);
         } catch (ConfigurationSetupException e) {
-          throw new RuntimeException("Error getting l2 config for: " + l2Names[i], e);
+          throw new RuntimeException("Error getting l2 config for: " + l2Name, e);
         }
       }
     }
@@ -161,9 +165,9 @@ public class HaConfigImpl implements HaConfig {
   // servers and groups were checked in configSetupManger
   private void addNodeToGroup(Node node, String serverName) {
     boolean added = false;
-    for (int i = 0; i < this.groups.length; i++) {
-      if (this.groups[i].hasMember(serverName)) {
-        this.groups[i].addNode(node, serverName);
+    for (ServerGroup group : this.groups) {
+      if (group.hasMember(serverName)) {
+        group.addNode(node, serverName);
         added = true;
       }
     }

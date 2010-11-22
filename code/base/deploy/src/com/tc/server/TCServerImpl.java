@@ -150,9 +150,6 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (manager.commonl2Config().authentication()) {
       LicenseManager.verifyAuthenticationCapability();
     }
-    if (manager.activeServerGroupsConfig().getActiveServerGroupCount() > 1) {
-      LicenseManager.verifyServerStripingCapability();
-    }
   }
 
   private static OrderedGroupIDs createOrderedGroupIds(ActiveServerGroupConfig[] groupArray) {
