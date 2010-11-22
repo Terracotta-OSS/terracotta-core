@@ -190,6 +190,13 @@ artifacts:
     artifactId: quartz-terracotta
     version: 2.0.0-SNAPSHOT
     destination: quartz
+    
+  - maven_artifact: true
+    groupId: org.terracotta.quartz
+    artifactId: quartz-terracotta-ee
+    version: 2.0.0-SNAPSHOT
+    destination: quartz
+    kit_edition: enterprise
 
   - maven_artifact: true
     groupId: org.terracotta.session
