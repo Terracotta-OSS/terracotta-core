@@ -16,6 +16,7 @@ import com.tc.logging.TCLoggerProvider;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.Stats;
+import com.tc.text.PrettyPrinter;
 import com.tc.text.StringFormatter;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.QueueFactory;
@@ -24,27 +25,27 @@ import com.tc.util.concurrent.ThreadUtil;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author steve
  */
 public class StageManagerImpl implements StageManager {
 
-  private static final boolean MONITOR       = TCPropertiesImpl.getProperties()
-                                                 .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
-  private static final long    MONITOR_DELAY = TCPropertiesImpl.getProperties()
-                                                 .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
+  private static final boolean     MONITOR       = TCPropertiesImpl.getProperties()
+                                                     .getBoolean(TCPropertiesConsts.TC_STAGE_MONITOR_ENABLED);
+  private static final long        MONITOR_DELAY = TCPropertiesImpl.getProperties()
+                                                     .getLong(TCPropertiesConsts.TC_STAGE_MONITOR_DELAY);
 
-  private final Map            stages        = new HashMap();
-  private TCLoggerProvider     loggerProvider;
-  private final ThreadGroup    group;
-  private String[]             stageNames    = new String[] {};
-  private QueueFactory         queueFactory  = null;
+  private final Map<String, Stage> stages        = new ConcurrentHashMap<String, Stage>();
+  private TCLoggerProvider         loggerProvider;
+  private final ThreadGroup        group;
+  private String[]                 stageNames    = new String[] {};
+  private QueueFactory             queueFactory  = null;
 
   public StageManagerImpl(ThreadGroup threadGroup, QueueFactory queueFactory) {
     this.loggerProvider = new DefaultLoggerProvider();
@@ -105,7 +106,7 @@ public class StageManagerImpl implements StageManager {
     Object prev = stages.put(name, s);
     Assert.assertNull(prev);
     s.getSink().enableStatsCollection(MONITOR);
-    stageNames = (String[]) stages.keySet().toArray(new String[stages.size()]);
+    stageNames = stages.keySet().toArray(new String[stages.size()]);
     Arrays.sort(stageNames);
   }
 
@@ -119,8 +120,8 @@ public class StageManagerImpl implements StageManager {
       mgr.initializeContext(context);
 
     }
-    for (Iterator i = stages.values().iterator(); i.hasNext();) {
-      Stage s = (Stage) i.next();
+    for (Object element : stages.values()) {
+      Stage s = (Stage) element;
       s.start(context);
     }
   }
@@ -129,16 +130,16 @@ public class StageManagerImpl implements StageManager {
     stage.destroy();
   }
 
-  public synchronized void stopAll() {
-    for (Iterator i = stages.values().iterator(); i.hasNext();) {
-      Stage s = (Stage) i.next();
+  public void stopAll() {
+    for (Object element : stages.values()) {
+      Stage s = (Stage) element;
       s.destroy();
     }
     stages.clear();
   }
 
-  public synchronized Stage getStage(String name) {
-    return (Stage) stages.get(name);
+  public Stage getStage(String name) {
+    return stages.get(name);
   }
 
   public synchronized Stats[] getStats() {
@@ -151,7 +152,7 @@ public class StageManagerImpl implements StageManager {
     return stats;
   }
 
-  public synchronized Collection getStages() {
+  public Collection<Stage> getStages() {
     return stages.values();
   }
 
@@ -179,4 +180,11 @@ public class StageManagerImpl implements StageManager {
     }
   }
 
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.getClass().getName()).flush();
+    for (Stage stage : getStages()) {
+      out.indent().visit(stage).flush();
+    }
+    return out;
+  }
 }

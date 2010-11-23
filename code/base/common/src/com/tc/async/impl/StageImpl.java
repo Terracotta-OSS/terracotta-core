@@ -15,6 +15,7 @@ import com.tc.async.api.Stage;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLoggerProvider;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.concurrent.QueueFactory;
 
 /**
@@ -40,7 +41,7 @@ public class StageImpl implements Stage {
    *        per each queue. Ideally you would want this to be same as threadCount, in which case there is only 1 queue
    *        used internally and all thread are working on the same queue (which doesn't guarantee order in processing)
    *        or set it to 1 where each thread gets its own queue but the (multithreaded) event contexts are distributed
-   *        based on the key they return. 
+   *        based on the key they return.
    * @param group : The thread group to be used
    * @param queueFactory : Factory used to create the queues
    * @param queueSize : Max queue Size allowed
@@ -86,11 +87,12 @@ public class StageImpl implements Stage {
   }
 
   private void stopThreads() {
-    for (int i = 0; i < threads.length; i++) {
-      threads[i].shutdown();
+    for (WorkerThread thread : threads) {
+      thread.shutdown();
     }
   }
 
+  @Override
   public String toString() {
     return "StageImpl(" + name + ")";
   }
@@ -115,6 +117,7 @@ public class StageImpl implements Stage {
       return this.shutdownRequested;
     }
 
+    @Override
     public void run() {
       while (!shutdownRequested()) {
         EventContext ctxt;
@@ -141,6 +144,11 @@ public class StageImpl implements Stage {
         }
       }
     }
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    out.print(this.name + " queue depth: " + getSink().size()).flush();
+    return out;
   }
 
 }

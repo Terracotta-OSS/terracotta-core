@@ -545,6 +545,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final StageManager stageManager = this.seda.getStageManager();
     final SessionManager sessionManager = new NullSessionManager();
 
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
+
     EvictionPolicy swapCache;
     final ClientStatePersistor clientStateStore;
     final TransactionPersistor transactionPersistor;

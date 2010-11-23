@@ -42,9 +42,9 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.api.ObjectManager;
-import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.api.ObjectRequestManager;
 import com.tc.objectserver.api.ServerMapRequestManager;
+import com.tc.objectserver.api.ObjectManagerTest.TestDateDNA;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -73,6 +73,7 @@ import com.tc.stats.counter.sampled.SampledCounterImpl;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterConfig;
 import com.tc.stats.counter.sampled.derived.SampledRateCounterImpl;
 import com.tc.test.TCTestCase;
+import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
@@ -137,7 +138,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public DmiDescriptor[] getDmiDescriptors() {
       return new DmiDescriptor[0];
     }
-    
+
     public MetaDataReader[] getMetaDataReaders() {
       return new MetaDataReader[0];
     }
@@ -317,6 +318,10 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     }
 
     public void start(final ConfigurationContext context) {
+      throw new ImplementMe();
+    }
+
+    public PrettyPrinter prettyPrint(PrettyPrinter out) {
       throw new ImplementMe();
     }
 
@@ -569,7 +574,6 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public List getDmiDescriptors() {
       throw new ImplementMe();
     }
-   
 
     public GlobalTransactionID getGlobalTransactionID() {
       throw new ImplementMe();
