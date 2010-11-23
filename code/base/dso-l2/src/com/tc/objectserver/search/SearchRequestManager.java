@@ -8,11 +8,9 @@ import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,7 +37,7 @@ public interface SearchRequestManager {
    */
   public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
                            LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                           Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults);
+                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults);
 
   /**
    * Query response.

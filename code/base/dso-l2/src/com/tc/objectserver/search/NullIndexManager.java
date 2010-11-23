@@ -5,7 +5,6 @@ package com.tc.objectserver.search;
 
 import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +26,7 @@ public class NullIndexManager implements IndexManager {
   }
 
   public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                                  Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults) {
+                                  List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
     return null;
   }
 
@@ -50,7 +49,7 @@ public class NullIndexManager implements IndexManager {
     }
 
     public SearchResult search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                               Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults) {
+                               List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
       return null;
     }
 

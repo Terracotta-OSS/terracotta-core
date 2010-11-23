@@ -9,11 +9,9 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -54,8 +52,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    */
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
                                           final String cacheName, final LinkedList queryStack, final boolean keys,
-                                          final Set<String> attributeSet,
-                                          final Map<String, SortOperations> sortAttributesMap,
+                                          final Set<String> attributeSet, final List<NVPair> sortAttributesMap,
                                           final List<NVPair> aggregators, int maxResults);
 
   /**
@@ -81,10 +78,8 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
 
   /**
    * Return a map of sort attributes
-   * 
-   * @return Map<String, SortOperations>
    */
-  public Map<String, SortOperations> getSortAttributes();
+  public List<NVPair> getSortAttributes();
 
   /**
    * Return a map of attribute aggregators

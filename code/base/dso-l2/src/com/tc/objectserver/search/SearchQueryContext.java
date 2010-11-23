@@ -8,11 +8,9 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -22,20 +20,20 @@ import java.util.Set;
  */
 public class SearchQueryContext implements MultiThreadedEventContext {
 
-  private final ClientID                    clientID;
-  private final SearchRequestID             requestID;
-  private final GroupID                     groupIDFrom;
-  private final String                      cacheName;
-  private final LinkedList                  queryStack;
-  private final boolean                     includeKeys;
-  private final Set<String>                 attributeSet;
-  private final Map<String, SortOperations> sortAttributes;
-  private final List<NVPair>                aggregators;
-  private final int                         maxResults;
+  private final ClientID        clientID;
+  private final SearchRequestID requestID;
+  private final GroupID         groupIDFrom;
+  private final String          cacheName;
+  private final LinkedList      queryStack;
+  private final boolean         includeKeys;
+  private final Set<String>     attributeSet;
+  private final List<NVPair>    sortAttributes;
+  private final List<NVPair>    aggregators;
+  private final int             maxResults;
 
   public SearchQueryContext(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cacheName,
                             LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                            Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults) {
+                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
     this.clientID = clientID;
     this.requestID = requestID;
     this.groupIDFrom = groupIDFrom;
@@ -112,9 +110,9 @@ public class SearchQueryContext implements MultiThreadedEventContext {
   /**
    * Sorted attributes, pair of attributes if ascending, true
    * 
-   * @return Map<String,SortOperations> sortAttributes.
+   * @return sortAttributes.
    */
-  public Map<String, SortOperations> getSortAttributes() {
+  public List<NVPair> getSortAttributes() {
     return sortAttributes;
   }
 

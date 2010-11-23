@@ -10,11 +10,9 @@ import com.tc.object.metadata.NVPair;
 import com.tc.object.session.SessionID;
 import com.tc.search.IndexQueryResult;
 import com.tc.search.SearchQueryResults;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,8 +22,8 @@ import java.util.Set;
 public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
 
   public SearchQueryResults query(String cachename, LinkedList queryStack, boolean includeKeys,
-                                  Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                  List<NVPair> aggregators, int maxResults);
+                                  Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
+                                  int maxResults);
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
                                   final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,

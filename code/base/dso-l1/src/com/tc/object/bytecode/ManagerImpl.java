@@ -57,7 +57,6 @@ import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
-import com.tc.search.SortOperations;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -934,10 +933,10 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
-                                         Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
+                                         Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults) {
     waitForAllCurrentTransactionsToComplete();
-    return searchRequestManager.query(cachename, queryStack, includeKeys, attributeSet, sortAttributeMap, aggregators,
+    return searchRequestManager.query(cachename, queryStack, includeKeys, attributeSet, sortAttributes, aggregators,
                                       maxResults);
   }
 

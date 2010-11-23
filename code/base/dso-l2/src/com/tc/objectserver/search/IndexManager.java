@@ -5,7 +5,6 @@ package com.tc.objectserver.search;
 
 import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,7 +20,7 @@ public interface IndexManager {
   boolean deleteIndex(String name) throws IndexException;
 
   public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                                  Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults)
+                                  List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults)
       throws IndexException;
 
   void shutdown();
