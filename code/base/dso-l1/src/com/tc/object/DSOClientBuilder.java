@@ -42,9 +42,9 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
@@ -52,7 +52,6 @@ import com.tc.util.ToggleableReferenceManager;
 import com.tc.util.runtime.ThreadIDManager;
 import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
-import com.tcclient.cluster.DsoClusterInternal;
 
 import java.util.Collection;
 
@@ -73,8 +72,7 @@ public interface DSOClientBuilder {
   TunneledDomainManager createTunneledDomainManager(final ClientMessageChannel ch, final DSOMBeanConfig config,
                                                     final TunnelingEventHandler teh);
 
-  ClientGlobalTransactionManager createClientGlobalTransactionManager(
-                                                                      final RemoteTransactionManager remoteTxnMgr,
+  ClientGlobalTransactionManager createClientGlobalTransactionManager(final RemoteTransactionManager remoteTxnMgr,
                                                                       final RemoteServerMapManager remoteServerMapManager);
 
   RemoteObjectManager createRemoteObjectManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
@@ -83,8 +81,9 @@ public interface DSOClientBuilder {
   RemoteServerMapManager createRemoteServerMapManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
                                                       final SessionManager sessionManager, Sink lockRecallSink,
                                                       Sink capacityEvictionSink, Sink ttiTTLEvitionSink);
-  
-  RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger, final DSOClientMessageChannel dsoChannel,
+
+  RemoteSearchRequestManager createRemoteSearchRequestManager(final TCLogger logger,
+                                                              final DSOClientMessageChannel dsoChannel,
                                                               final SessionManager sessionManager);
 
   ClusterMetaDataManager createClusterMetaDataManager(final DSOClientMessageChannel dsoChannel,
@@ -133,8 +132,8 @@ public interface DSOClientBuilder {
 
   ClientHandshakeManager createClientHandshakeManager(final TCLogger logger, final DSOClientMessageChannel channel,
                                                       final ClientHandshakeMessageFactory chmf, final Sink pauseSink,
-                                                      final SessionManager sessionManager,
-                                                      final DsoClusterInternal dsoCluster, final String clientVersion,
+                                                      final SessionManager sessionManager, final Sink sink,
+                                                      final String clientVersion,
                                                       final Collection<ClientHandshakeCallback> callbacks);
 
   L1Management createL1Management(TunnelingEventHandler teh, StatisticsAgentSubSystem statisticsAgentSubSystem,
