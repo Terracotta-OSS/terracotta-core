@@ -225,7 +225,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
 
       server.setData(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setData(ParameterSubstituter.substitute(server.getData()));
+      server.setData(getAbsolutePath(ParameterSubstituter.substitute(server.getData()), directoryLoadedFrom));
     }
   }
 
@@ -235,7 +235,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       Assert.assertTrue(server.isSetData());
       server.setIndex(new File(server.getData(), "index").getAbsolutePath());
     } else {
-      server.setIndex(ParameterSubstituter.substitute(server.getIndex()));
+      server.setIndex(getAbsolutePath(ParameterSubstituter.substitute(server.getIndex()), directoryLoadedFrom));
     }
   }
 
@@ -246,7 +246,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
       server.setLogs(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setLogs(ParameterSubstituter.substitute(server.getLogs()));
+      server.setLogs(getAbsolutePath(ParameterSubstituter.substitute(server.getLogs()), directoryLoadedFrom));
     }
   }
 
@@ -257,8 +257,18 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
       server.setDataBackup(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setDataBackup(ParameterSubstituter.substitute(server.getDataBackup()));
+      server
+          .setDataBackup(getAbsolutePath(ParameterSubstituter.substitute(server.getDataBackup()), directoryLoadedFrom));
     }
+  }
+
+  private static String getAbsolutePath(String substituted, File directoryLoadedFrom) {
+    File out = new File(substituted);
+    if (!out.isAbsolute()) {
+      out = new File(directoryLoadedFrom, substituted);
+    }
+
+    return out.getAbsolutePath();
   }
 
   private static void initializeStatisticsDirectory(Server server, DefaultValueProvider defaultValueProvider,

@@ -313,8 +313,8 @@ public class BaseTVSConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals("abc/xyz/123", server.getData());
-    Assert.assertEquals("xyz/abc/451", server.getLogs());
+    Assert.assertEquals(new File(BaseTVSConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "abc/xyz/123").getAbsolutePath(), server.getData());
+    Assert.assertEquals(new File(BaseTVSConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "xyz/abc/451").getAbsolutePath(), server.getLogs());
     Assert.assertEquals("/qrt/opt/pqr", server.getDataBackup());
     Assert.assertEquals("/opq/pqr/123/or", server.getStatistics());
     Assert.assertEquals("/rta/try/456", server.getIndex());
@@ -335,8 +335,10 @@ public class BaseTVSConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(InetAddress.getLocalHost().getHostName(), server.getData());
-    Assert.assertEquals(InetAddress.getLocalHost().getHostAddress(), server.getLogs());
+    Assert.assertEquals(new File(BaseTVSConfigurationSetupManagerTest.class.getSimpleName() + File.separator + InetAddress.getLocalHost().getHostName())
+    .getAbsolutePath(), server.getData());
+    Assert.assertEquals(new File(BaseTVSConfigurationSetupManagerTest.class.getSimpleName() + File.separator + InetAddress.getLocalHost().getHostAddress())
+    .getAbsolutePath(), server.getLogs());
     Assert.assertEquals(System.getProperty("user.home"), server.getDataBackup());
     Assert.assertEquals(System.getProperty("user.name"), server.getStatistics());
   }
