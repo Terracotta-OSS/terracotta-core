@@ -116,6 +116,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     try {
       return method.invoke(xmlObject, new Object[0]);
     } catch (Exception e) {
+      System.out.println("Exception in invoking methdod " + method.getName() + " on " + xmlObject);
       throw new AssertionError(e);
     }
   }
