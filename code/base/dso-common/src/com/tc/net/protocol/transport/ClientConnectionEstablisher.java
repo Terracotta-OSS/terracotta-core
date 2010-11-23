@@ -227,11 +227,13 @@ public class ClientConnectionEstablisher {
         cmt.reconnect(connection);
         connected = true;
       } catch (MaxConnectionsExceededException e) {
+        callback.restoreConnectionFailed(cmt);
         // DEV-2781
         throw e;
       } catch (TCTimeoutException e) {
         handleConnectException(e, false, cmt.logger, connection);
       } catch (ReconnectionRejectedException e) {
+        callback.restoreConnectionFailed(cmt);
         throw e;
       } catch (IOException e) {
         handleConnectException(e, false, cmt.logger, connection);

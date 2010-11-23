@@ -251,19 +251,16 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
         } catch (StackNotFoundException e) {
           String errorMessage = CommsMessageFactory.createReconnectRejectMessage(this.commsManagerName,
                                                                                  new Object[] { e.getMessage() });
-          // only for L2_L1 connection
-          if (this.commsManagerName.equals(CommunicationsManager.COMMSMGR_SERVER)) {
-            // send connection rejected SycAck back to L1
-            // since stack no found, create a temp transport for sending sycAck message back
-            this.transport = messageTransportFactory.createNewTransport(((SynMessage) message).getConnectionId(),
-                                                                        ((SynMessage) message).getSource(),
-                                                                        createHandshakeErrorHandler(),
-                                                                        handshakeMessageFactory, transportListeners);
-            sendSynAck(((SynMessage) message).getConnectionId(),
-                       new TransportHandshakeErrorContext(errorMessage,
-                                                          TransportHandshakeError.ERROR_RECONNECTION_REJECTED),
-                       ((SynMessage) message).getSource(), false);
-          }
+          // send connection rejected SycAck back to L1
+          // since stack no found, create a temp transport for sending sycAck message back
+          this.transport = messageTransportFactory.createNewTransport(((SynMessage) message).getConnectionId(),
+                                                                      ((SynMessage) message).getSource(),
+                                                                      createHandshakeErrorHandler(),
+                                                                      handshakeMessageFactory, transportListeners);
+          sendSynAck(((SynMessage) message).getConnectionId(),
+                     new TransportHandshakeErrorContext(errorMessage,
+                                                        TransportHandshakeError.ERROR_RECONNECTION_REJECTED),
+                     ((SynMessage) message).getSource(), false);
 
           handleHandshakeError(new TransportHandshakeErrorContext(errorMessage, e));
         }
