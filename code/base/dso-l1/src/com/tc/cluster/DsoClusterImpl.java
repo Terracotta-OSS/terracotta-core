@@ -5,6 +5,7 @@
 package com.tc.cluster;
 
 import com.tc.cluster.exceptions.UnclusteredObjectException;
+import com.tc.exception.TCNotRunningException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
@@ -358,6 +359,8 @@ public class DsoClusterImpl implements DsoClusterInternal {
     for (DsoClusterListener listener : listeners) {
       try {
         listener.nodeLeft(event);
+      } catch (TCNotRunningException e) {
+        LOGGER.info("Ignoring TCNotRunningException : " + event, e);
       } catch (Throwable e) {
         log(event, e);
       }

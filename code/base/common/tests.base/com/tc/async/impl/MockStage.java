@@ -7,6 +7,7 @@ package com.tc.async.impl;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
+import com.tc.text.PrettyPrinter;
 
 /**
  * @author orion
@@ -44,6 +45,10 @@ public class MockStage implements Stage {
   @Override
   public String toString() {
     return "MockStage(" + name + ")";
+  }
+
+  public PrettyPrinter prettyPrint(PrettyPrinter out) {
+    return null;
   }
 
 }

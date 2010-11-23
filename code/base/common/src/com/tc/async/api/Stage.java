@@ -4,10 +4,12 @@
  */
 package com.tc.async.api;
 
+import com.tc.text.PrettyPrintable;
+
 /**
  * @author steve
  */
-public interface Stage {
+public interface Stage extends PrettyPrintable {
 
   public void destroy();
 

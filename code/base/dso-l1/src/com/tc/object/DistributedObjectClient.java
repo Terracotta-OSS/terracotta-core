@@ -406,6 +406,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     final StageManager stageManager = getStageManager();
 
+    this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
+
     // stageManager.turnTracingOn();
 
     // //////////////////////////////////
