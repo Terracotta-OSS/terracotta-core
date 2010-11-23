@@ -162,17 +162,16 @@ public enum ValueType {
   ENUM {
     @Override
     NVPair deserializeFrom(String name, TCByteBufferInput in) throws IOException {
-      String enumClass = in.readString();
-      String enumName = in.readString();
-
-      return new EnumNVPair(name, enumClass, enumName);
+      String className = in.readString();
+      int ordinal = in.readInt();
+      return new EnumNVPair(name, className, ordinal);
     }
 
     @Override
     void serializeTo(NVPair nvPair, TCByteBufferOutput out) {
       EnumNVPair enumPair = (EnumNVPair) nvPair;
-      out.writeString(enumPair.getEnumClass());
-      out.writeString(enumPair.getEnumName());
+      out.writeString(enumPair.getClassName());
+      out.writeInt(enumPair.getOrdinal());
     }
 
   };

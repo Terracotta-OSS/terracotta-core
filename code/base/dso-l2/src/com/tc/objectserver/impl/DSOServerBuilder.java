@@ -6,7 +6,7 @@ package com.tc.objectserver.impl;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.ServerTransactionFactory;
@@ -73,7 +73,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   
   MetaDataManager createMetaDataManager(Sink sink);
   
-  IndexManager createIndexManager(L2TVSConfigurationSetupManager configSetupManager) throws IOException;
+  IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager) throws IOException;
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
@@ -89,7 +89,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
 
-  GroupManager createGroupCommManager(boolean networkedHA, L2TVSConfigurationSetupManager configManager,
+  GroupManager createGroupCommManager(boolean networkedHA, L2ConfigurationSetupManager configManager,
                                       StageManager stageManager, ServerID serverNodeID, Sink httpSink,
                                       StripeIDStateManager stripeStateManager, ServerGlobalTransactionManager gtxm);
 
@@ -131,14 +131,14 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       PersistentMapStore persistentMapStore, ObjectManager objectManager,
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory,
-                                      L2TVSConfigurationSetupManager configurationSetupManager,
+                                      L2ConfigurationSetupManager configurationSetupManager,
                                       MessageRecycler recycler, StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
                                   StatisticsGatewayMBeanImpl statisticsGateway,
-                                  L2TVSConfigurationSetupManager configSetupManager,
+                                  L2ConfigurationSetupManager configSetupManager,
                                   DistributedObjectServer distributedObjectServer, InetAddress bind, int jmxPort,
                                   Sink remoteEventsSink, ServerConnectionValidator serverConnectionValidator,
                                   ServerDBBackupMBean serverDBBackupMBean) throws Exception;

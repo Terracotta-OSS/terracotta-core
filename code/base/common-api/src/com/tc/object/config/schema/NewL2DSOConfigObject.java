@@ -18,7 +18,6 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.license.LicenseManager;
 import com.tc.util.Assert;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DsoServerData;
@@ -26,9 +25,9 @@ import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
 import com.terracottatech.config.PersistenceMode;
+import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
-import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
@@ -74,7 +73,6 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
     this.l2GroupPort = server.getL2GroupPort();
     if (server.getDso().getPersistence().isSetOffheap()) {
       this.offHeapConfig = server.getDso().getPersistence().getOffheap();
-      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
     } else {
       this.offHeapConfig = Offheap.Factory.newInstance();
     }
@@ -227,19 +225,17 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
 
       server.setData(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setData(ParameterSubstituter.substitute(server.getData()));
+      server.setData(getAbsolutePath(ParameterSubstituter.substitute(server.getData()), directoryLoadedFrom));
     }
   }
 
   private static void initializeIndexDiretory(Server server, DefaultValueProvider defaultValueProvider,
-                                              File directoryLoadedFrom) throws XmlException {
+                                              File directoryLoadedFrom) {
     if (!server.isSetIndex()) {
-      final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(server.schemaType(), "index");
-      String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
-
-      server.setIndex(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
+      Assert.assertTrue(server.isSetData());
+      server.setIndex(new File(server.getData(), "index").getAbsolutePath());
     } else {
-      server.setIndex(ParameterSubstituter.substitute(server.getIndex()));
+      server.setIndex(getAbsolutePath(ParameterSubstituter.substitute(server.getIndex()), directoryLoadedFrom));
     }
   }
 
@@ -250,7 +246,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
       server.setLogs(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setLogs(ParameterSubstituter.substitute(server.getLogs()));
+      server.setLogs(getAbsolutePath(ParameterSubstituter.substitute(server.getLogs()), directoryLoadedFrom));
     }
   }
 
@@ -261,8 +257,18 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
       server.setDataBackup(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setDataBackup(ParameterSubstituter.substitute(server.getDataBackup()));
+      server
+          .setDataBackup(getAbsolutePath(ParameterSubstituter.substitute(server.getDataBackup()), directoryLoadedFrom));
     }
+  }
+
+  private static String getAbsolutePath(String substituted, File directoryLoadedFrom) {
+    File out = new File(substituted);
+    if (!out.isAbsolute()) {
+      out = new File(directoryLoadedFrom, substituted);
+    }
+
+    return out.getAbsolutePath();
   }
 
   private static void initializeStatisticsDirectory(Server server, DefaultValueProvider defaultValueProvider,

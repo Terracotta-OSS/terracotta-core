@@ -6,8 +6,8 @@ package com.tctest.runner;
 
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
@@ -56,7 +56,7 @@ public class DistributedTestRunner implements ResultsListener {
   private final List                                    errors      = new ArrayList();
   private final List                                    results     = new ArrayList();
   private final DistributedTestRunnerConfig             config;
-  private final TestTVSConfigurationSetupManagerFactory configFactory;
+  private final TestConfigurationSetupManagerFactory configFactory;
   private Control                                       control;
   private boolean                                       startTimedOut;
   private boolean                                       executionTimedOut;
@@ -90,7 +90,7 @@ public class DistributedTestRunner implements ResultsListener {
    *        threads per classloader.
    */
   public DistributedTestRunner(DistributedTestRunnerConfig config,
-                               TestTVSConfigurationSetupManagerFactory configFactory,
+                               TestConfigurationSetupManagerFactory configFactory,
                                TestClientConfigHelperFactory configHelperFactory, Class applicationClass,
                                Map optionalAttributes, ApplicationConfig applicationConfig, boolean startServer,
                                boolean isMutatorValidatorTest, boolean isMultipleServerTest,
@@ -437,7 +437,7 @@ public class DistributedTestRunner implements ResultsListener {
     ApplicationBuilder[] rv = new ApplicationBuilder[totalClientCount];
 
     for (int i = 0; i < rv.length; i++) {
-      L1TVSConfigurationSetupManager l1ConfigManager;
+      L1ConfigurationSetupManager l1ConfigManager;
       l1ConfigManager = this.configFactory.getL1TVSConfigurationSetupManager();
       l1ConfigManager.setupLogging();
       if (adapterMap != null

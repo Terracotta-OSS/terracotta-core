@@ -6,7 +6,6 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
-import com.tc.license.LicenseManager;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.AuthenticationMode;
 import com.terracottatech.config.BindPort;
@@ -46,7 +45,6 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
     this.authentication = server.isSetAuthentication();
 
     if (authentication) {
-      LicenseManager.verifyAuthenticationCapability();
       if (server.getAuthentication().isSetMode()) {
         if (server.getAuthentication().getMode().isSetLoginConfigName()) {
           loginConfig = server.getAuthentication().getMode().getLoginConfigName();

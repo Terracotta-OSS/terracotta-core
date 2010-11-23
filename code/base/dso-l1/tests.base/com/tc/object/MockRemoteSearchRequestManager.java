@@ -3,24 +3,23 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.object.session.SessionID;
 import com.tc.search.IndexQueryResult;
 import com.tc.search.SearchQueryResults;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class MockRemoteSearchRequestManager implements RemoteSearchRequestManager {
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
-                                  final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,
-                                  final NodeID nodeID) {
+                                  final GroupID groupIDFrom, final List<IndexQueryResult> queryResults,
+                                  final List<NVPair> aggregatorResults, final NodeID nodeID) {
     //
   }
 
@@ -29,8 +28,8 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
   }
 
   public SearchQueryResults query(String cachename, LinkedList queryStack, boolean includeKeys,
-                                  Set<String> attributeSet, Map<String, SortOperations> sortAttributeMap,
-                                  List<NVPair> aggregators, int maxResults) {
+                                  Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
+                                  int maxResults) {
     return null;
   }
 

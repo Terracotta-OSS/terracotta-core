@@ -11,7 +11,7 @@ import EDU.oswego.cs.dl.util.concurrent.SynchronizedBoolean;
 import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.util.DbBackup;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -50,7 +50,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
     isBackupRunning = new SynchronizedBoolean(false);
   }
 
-  public ServerDBBackup(L2TVSConfigurationSetupManager configSetupManager) throws NotCompliantMBeanException {
+  public ServerDBBackup(L2ConfigurationSetupManager configSetupManager) throws NotCompliantMBeanException {
     super(ServerDBBackupMBean.class);
 
     isBackupRunning = new SynchronizedBoolean(false);

@@ -39,4 +39,8 @@ public class ConnectionHealthCheckerEchoImpl implements ConnectionHealthChecker 
     // who cares
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    // NOP
+  }
+
 }

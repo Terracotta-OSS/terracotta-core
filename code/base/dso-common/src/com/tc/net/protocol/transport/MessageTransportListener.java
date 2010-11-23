@@ -30,4 +30,9 @@ public interface MessageTransportListener {
    * Called when the transport is closed.
    */
   public void notifyTransportClosed(MessageTransport transport);
+
+  /**
+   * Called when reconnection rejected by L2 and no more trying to reconnect.
+   */
+  public void notifyTransportReconnectionRejected(MessageTransport transport);
 }

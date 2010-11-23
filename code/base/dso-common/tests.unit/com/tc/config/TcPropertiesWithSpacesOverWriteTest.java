@@ -6,7 +6,7 @@ package com.tc.config;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
@@ -42,8 +42,8 @@ public class TcPropertiesWithSpacesOverWriteTest extends TCTestCase {
                       + "\n</servers>" 
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
-      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
+                                                                                                    TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                                                     null,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
       factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");

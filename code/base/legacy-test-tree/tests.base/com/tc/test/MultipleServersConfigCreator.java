@@ -7,7 +7,7 @@ package com.tc.test;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.ApplicationConfigBuilder;
 import com.tc.config.schema.test.GroupConfigBuilder;
 import com.tc.config.schema.test.GroupsConfigBuilder;
@@ -37,7 +37,7 @@ public class MultipleServersConfigCreator {
   protected final String                                  configModel;
   protected final File                                    configFile;
   protected final File                                    tempDir;
-  protected final TestTVSConfigurationSetupManagerFactory configFactory;
+  protected final TestConfigurationSetupManagerFactory configFactory;
   protected final String[]                                dataLocations;
   protected final DSOApplicationConfigBuilder             dsoApplicationBuilder;
   protected static TCLogger                               logger    = TCLogging
@@ -48,7 +48,7 @@ public class MultipleServersConfigCreator {
 
   public MultipleServersConfigCreator(MultipleServersTestSetupManager setupManager, GroupData[] groupData,
                                       String configModel, File configFile, File tempDir,
-                                      TestTVSConfigurationSetupManagerFactory configFactory,
+                                      TestConfigurationSetupManagerFactory configFactory,
                                       DSOApplicationConfigBuilder dsoApplicationBuilder) {
 
     this.setupManager = setupManager;

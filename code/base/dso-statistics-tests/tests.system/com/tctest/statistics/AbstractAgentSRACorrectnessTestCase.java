@@ -6,9 +6,9 @@ package com.tctest.statistics;
 
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -51,7 +51,7 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
   protected DistributedObjectClient startupClient(final int dsoPort, final int jmxPort)
       throws ConfigurationSetupException {
     configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
-    L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
+    L1ConfigurationSetupManager manager = super.createL1ConfigManager();
 
     DistributedObjectClient client = new DistributedObjectClient(new StandardDSOClientConfigHelperImpl(manager),
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
@@ -98,8 +98,8 @@ abstract public class AbstractAgentSRACorrectnessTestCase extends BaseDSOTestCas
 
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
-      TestTVSConfigurationSetupManagerFactory factory = AbstractAgentSRACorrectnessTestCase.this.configFactory();
-      L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+      TestConfigurationSetupManagerFactory factory = AbstractAgentSRACorrectnessTestCase.this.configFactory();
+      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
 
       manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
       manager.dsoL2Config().dsoPort().setBind("127.0.0.1");

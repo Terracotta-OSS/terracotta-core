@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <con:tc-config xmlns:con="http://www.terracotta.org/config">
-  <servers>
+	<servers>
 		<server host="localhost" name="server-1">
 			<dso-port>4210</dso-port>
 			<jmx-port>4220</jmx-port>
 			<l2-group-port>4200</l2-group-port>
-			<data>server-1-data</data>
-			<logs>server-1-logs</logs>
-			<statistics>server-1-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
@@ -19,16 +16,13 @@
 			<dso-port>4230</dso-port>
 			<jmx-port>4240</jmx-port>
 			<l2-group-port>4250</l2-group-port>
-			<data>server-2-data</data>
-			<logs>server-2-logs</logs>
-			<statistics>server-2-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
 				</persistence>
 			</dso>
 		</server>
-		
+
 		<mirror-groups>
 			<mirror-group>
 				<members>
@@ -49,22 +43,24 @@
 		</update-check>
 
 	</servers>
-	
-  <clients>
-    <logs>client-logs</logs>
-  </clients>
-  <application>
-    <dso>
-      <instrumented-classes>
-        <include>
-          <class-expression>com.tctest.ClusterMemberhipEventsTest$MailBox</class-expression>
-        </include>
-      </instrumented-classes>
-      <roots>
-        <root>
-          <field-name>com.tctest.ClusterMemberhipEventsTest$MailBox.barrier</field-name>
-        </root>
-      </roots>
-    </dso>
-  </application>
+
+	<clients>
+		<logs>client-logs</logs>
+	</clients>
+	<application>
+		<dso>
+			<instrumented-classes>
+				<include>
+					<class-expression>com.tctest.ClusterMemberhipEventsTest$MailBox
+					</class-expression>
+				</include>
+			</instrumented-classes>
+			<roots>
+				<root>
+					<field-name>com.tctest.ClusterMemberhipEventsTest$MailBox.barrier
+					</field-name>
+				</root>
+			</roots>
+		</dso>
+	</application>
 </con:tc-config>

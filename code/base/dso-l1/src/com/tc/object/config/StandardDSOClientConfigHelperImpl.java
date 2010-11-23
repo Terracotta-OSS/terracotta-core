@@ -24,8 +24,8 @@ import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.injection.DsoClusterInjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
@@ -115,7 +115,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final DSOClientConfigHelperLogger                  helperLogger;
 
-  private final L1TVSConfigurationSetupManager               configSetupManager;
+  private final L1ConfigurationSetupManager               configSetupManager;
   private final UUID                                         id;
 
   private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
@@ -203,13 +203,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
 
-  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager)
+  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
   }
 
   public StandardDSOClientConfigHelperImpl(final boolean initializedModulesOnlyOnce,
-                                           final L1TVSConfigurationSetupManager configSetupManager)
+                                           final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
     this(configSetupManager, true);
     if (initializedModulesOnlyOnce) {
@@ -217,7 +217,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public StandardDSOClientConfigHelperImpl(final L1TVSConfigurationSetupManager configSetupManager,
+  public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager,
                                            final boolean hasBootJar) throws ConfigurationSetupException {
     this.hasBootJar = hasBootJar;
     this.portability = new PortabilityImpl(this);
@@ -248,7 +248,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     nonportablesMatcher = new CompoundExpressionMatcher();
 
     NewDSOApplicationConfig appConfig = configSetupManager
-        .dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
+        .dsoApplicationConfigFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
 
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
     try {
@@ -2165,7 +2165,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     }
   }
 
-  public L1TVSConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {
+  public L1ConfigurationSetupManager reloadServersConfiguration() throws ConfigurationSetupException {
     configSetupManager.reloadServersConfiguration();
     return configSetupManager;
   }

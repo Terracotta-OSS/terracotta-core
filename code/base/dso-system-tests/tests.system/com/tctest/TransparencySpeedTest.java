@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 
 /**
  * @author steve
@@ -22,7 +22,7 @@ public class TransparencySpeedTest extends TransparentTestBase implements TestCo
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCIntervalInSec(300 * 10000);
   }
 

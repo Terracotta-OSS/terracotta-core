@@ -327,6 +327,10 @@ public class OnceAndOnlyOnceProtocolNetworkLayerImpl extends AbstractMessageTran
     channelConnected.set(false);
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    receiveLayer.notifyTransportReconnectionRejected(this);
+  }
+
   /*********************************************************************************************************************
    * Protocol Message Delivery interface
    */

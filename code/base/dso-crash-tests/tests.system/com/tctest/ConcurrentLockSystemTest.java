@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 
 public class ConcurrentLockSystemTest extends TransparentTestBase {
 
@@ -24,7 +24,7 @@ public class ConcurrentLockSystemTest extends TransparentTestBase {
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCVerbose(true);
     configFactory.setGCIntervalInSec(10);
   }

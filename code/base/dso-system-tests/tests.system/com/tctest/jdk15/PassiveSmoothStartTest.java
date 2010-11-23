@@ -7,8 +7,8 @@ package com.tctest.jdk15;
 import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.ApplicationConfigBuilder;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
 import com.tc.config.schema.test.GroupConfigBuilder;
@@ -63,13 +63,13 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
       writeConfigFile(configFiles[i], i);
     }
 
-    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+    TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
+                                                                                                  TestConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
                                                                                                   null,
                                                                                                   new FatalIllegalConfigurationChangeHandler());
     // to be used by in-process clients
     setConfigFactory(factory);
-    L1TVSConfigurationSetupManager manager = factory.getL1TVSConfigurationSetupManager();
+    L1ConfigurationSetupManager manager = factory.getL1TVSConfigurationSetupManager();
     setUpForMultipleExternalProcesses(factory, new StandardDSOClientConfigHelperImpl(manager), dsoPorts, jmxPorts,
                                       l2GroupPorts, null, serverNames, configFiles);
     doSetUp(this);
@@ -84,7 +84,7 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
     appConfig.setAttribute(PassiveSmoothStartTestApp.SERVER1_DATA_PATH, serverDataPath[1]);
   }
 
-  private void setConfigFactory(TestTVSConfigurationSetupManagerFactory factory) {
+  private void setConfigFactory(TestConfigurationSetupManagerFactory factory) {
     TcConfig tcConfig = TcConfigDocument.Factory.newInstance().addNewTcConfig();
     Servers servers = tcConfig.addNewServers();
     for (int i = 0; i < SERVERS; i++) {

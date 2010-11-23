@@ -224,6 +224,10 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return;
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    fireEvent(new ChannelEventImpl(ChannelEventType.TRANSPORT_RECONNECTION_REJECTED_EVENT, AbstractMessageChannel.this));
+  }
+
   public TCSocketAddress getLocalAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {

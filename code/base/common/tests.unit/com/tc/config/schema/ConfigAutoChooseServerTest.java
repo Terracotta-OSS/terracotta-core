@@ -6,8 +6,8 @@ package com.tc.config.schema;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -78,10 +78,10 @@ public class ConfigAutoChooseServerTest extends TCTestCase {
                       + "\n</servers>"
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
-      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
                                                                                                     new FatalIllegalConfigurationChangeHandler());
 
-      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, null);
       Assert.assertEquals(9510, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
       Assert.assertEquals(9520, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert.assertEquals(9530, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());

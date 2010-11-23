@@ -7,8 +7,8 @@ package com.tc.test.restart;
 import org.apache.commons.io.FileUtils;
 
 import com.tc.config.schema.MockIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -39,7 +39,7 @@ public class RestartTestEnvironment {
   private static TCLogger                               logger            = TCLogging
                                                                               .getTestingLogger(RestartTestEnvironment.class);
   private final PortChooser                             portChooser;
-  private StandardTVSConfigurationSetupManagerFactory   config;
+  private StandardConfigurationSetupManagerFactory   config;
   private File                                          configFile;
 
   private File                                          dbhome;
@@ -56,14 +56,14 @@ public class RestartTestEnvironment {
   private int                                           adminPort;
   private int                                           groupPort;
   private final OperatingMode                           operatingMode;
-  private final TestTVSConfigurationSetupManagerFactory configFactory;
+  private final TestConfigurationSetupManagerFactory configFactory;
 
   public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode) {
     this(tempDirectory, portChooser, operatingMode, null);
   }
 
   public RestartTestEnvironment(File tempDirectory, PortChooser portChooser, OperatingMode operatingMode,
-                                TestTVSConfigurationSetupManagerFactory configFactory) {
+                                TestConfigurationSetupManagerFactory configFactory) {
     this.tempDirectory = tempDirectory;
     this.portChooser = portChooser;
     this.operatingMode = operatingMode;
@@ -75,7 +75,7 @@ public class RestartTestEnvironment {
     this.configFile = new File(this.tempDirectory, "restart-test-config.xml");
   }
 
-  public StandardTVSConfigurationSetupManagerFactory getConfig() {
+  public StandardConfigurationSetupManagerFactory getConfig() {
     return config;
   }
 
@@ -113,9 +113,9 @@ public class RestartTestEnvironment {
   private void initConfig() throws Exception {
     // FIXME 2005-12-01 andrew -- This MockIllegalConfigurationChangeHandler probably isn't right. We should fix it.
 
-    config = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
-                                                             StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+    config = new StandardConfigurationSetupManagerFactory(new String[] {
+        StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFile.getAbsolutePath() },
+                                                             StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                              new MockIllegalConfigurationChangeHandler());
   }
 

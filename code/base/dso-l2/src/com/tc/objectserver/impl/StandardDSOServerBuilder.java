@@ -8,7 +8,7 @@ import com.tc.async.api.PostInit;
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.config.HaConfig;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
@@ -110,7 +110,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public GroupManager createGroupCommManager(final boolean networkedHA,
-                                             final L2TVSConfigurationSetupManager configManager,
+                                             final L2ConfigurationSetupManager configManager,
                                              final StageManager stageManager, final ServerID serverNodeID,
                                              final Sink httpSink, final StripeIDStateManager stripeStateManager,
                                              final ServerGlobalTransactionManager gtxm) {
@@ -126,7 +126,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @SuppressWarnings("unused")
-  public IndexManager createIndexManager(L2TVSConfigurationSetupManager configSetupManager) throws IOException {
+  public IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager) throws IOException {
     return new NullIndexManager();
   }
 
@@ -221,7 +221,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final ServerTransactionManager transactionManager,
                                              final ServerGlobalTransactionManager gtxm,
                                              final WeightGeneratorFactory weightGeneratorFactory,
-                                             final L2TVSConfigurationSetupManager configurationSetupManager,
+                                             final L2ConfigurationSetupManager configurationSetupManager,
                                              final MessageRecycler recycler,
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory) {
@@ -235,7 +235,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                          final LockStatisticsMonitor lockStatisticsMBean,
                                          final StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
                                          final StatisticsGatewayMBeanImpl statisticsGateway,
-                                         final L2TVSConfigurationSetupManager configSetupManager,
+                                         final L2ConfigurationSetupManager configSetupManager,
                                          final DistributedObjectServer distributedObjectServer, final InetAddress bind,
                                          final int jmxPort, final Sink remoteEventsSink,
                                          final ServerConnectionValidator serverConnectionValidator,

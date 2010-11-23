@@ -5,9 +5,9 @@
 package com.tc.simulator.app;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.properties.TCPropertiesConsts;
@@ -25,8 +25,8 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
 
   @Override
   public void setUp() throws Exception {
-    TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
-    L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+    TestConfigurationSetupManagerFactory factory = super.configFactory();
+    L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
 
     // minor hack to make server listen on an OS assigned port
     server = new TCServerImpl(manager);
@@ -37,7 +37,7 @@ public class DSOApplicationBuilderTest extends BaseDSOTestCase {
 
     this.applicationConfig = new SimpleApplicationConfig();
 
-    L1TVSConfigurationSetupManager configManager = factory.getL1TVSConfigurationSetupManager();
+    L1ConfigurationSetupManager configManager = factory.getL1TVSConfigurationSetupManager();
 
     this.builder = new DSOApplicationBuilder(new IsolationClassLoaderFactory(this, SimpleApplication.class, null,
         configManager, null) {

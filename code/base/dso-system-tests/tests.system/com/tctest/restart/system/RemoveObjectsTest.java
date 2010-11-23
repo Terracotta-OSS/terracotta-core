@@ -4,7 +4,7 @@
  */
 package com.tctest.restart.system;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tctest.RemoveObjectsTestApp;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
@@ -24,7 +24,7 @@ public class RemoveObjectsTest extends TransparentTestBase implements TestConfig
   }
 
   @Override
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     super.setupConfig(configFactory);
     configFactory.setGCEnabled(true);
     configFactory.setGCVerbose(true);

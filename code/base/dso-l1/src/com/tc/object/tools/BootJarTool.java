@@ -34,9 +34,9 @@ import com.tc.cluster.DsoClusterTopology;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.config.Directories;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCError;
@@ -644,6 +644,7 @@ public class BootJarTool {
   private void addClusterEventsAndMetaDataClasses() {
     loadTerracottaClass(DsoCluster.class.getName());
     loadTerracottaClass(DsoClusterInternal.class.getName());
+    loadTerracottaClass(DsoClusterInternal.EVENTS.class.getName());
     loadTerracottaClass(DsoClusterEvent.class.getName());
     loadTerracottaClass(DsoClusterListener.class.getName());
     loadTerracottaClass(DsoClusterTopology.class.getName());
@@ -1266,8 +1267,8 @@ public class BootJarTool {
     final ClassReader cr = new ClassReader(orig);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm
-        .isAzul(), Vm.isIBM());
+    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(),
+                                                      Vm.isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
@@ -1491,8 +1492,8 @@ public class BootJarTool {
           .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
-          .isPreInstrumented());
+      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes,
+                       spec.isPreInstrumented());
     }
   }
 
@@ -1720,8 +1721,9 @@ public class BootJarTool {
 
     final ClassReader cr = new ClassReader(bytes);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
-        .getClassName());
+    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(
+                                                                                                       cw,
+                                                                                                       spec.getClassName());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
@@ -2169,11 +2171,11 @@ public class BootJarTool {
 
     try {
       if (!cmdLine.hasOption("f")
-          && System.getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
+          && System.getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME) == null) {
         final String cwd = System.getProperty("user.dir");
         final File localConfig = new File(cwd, DEFAULT_CONFIG_SPEC);
         final String configSpec = localConfig.exists() ? localConfig.getAbsolutePath()
-            : StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
+            : StandardConfigurationSetupManagerFactory.DEFAULT_CONFIG_URI;
         final String[] newArgs = new String[args.length + 2];
         System.arraycopy(args, 0, newArgs, 0, args.length);
         newArgs[newArgs.length - 2] = "-f";
@@ -2181,14 +2183,14 @@ public class BootJarTool {
         cmdLine = new PosixParser().parse(options, newArgs);
       }
 
-      StandardTVSConfigurationSetupManagerFactory factory;
-      factory = new StandardTVSConfigurationSetupManagerFactory(
+      StandardConfigurationSetupManagerFactory factory;
+      factory = new StandardConfigurationSetupManagerFactory(
                                                                 cmdLine,
-                                                                StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                                StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                 new FatalIllegalConfigurationChangeHandler());
       final boolean verbose = cmdLine.hasOption("v");
       final TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
-      final L1TVSConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
+      final L1ConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
 
       File targetFile;
       if (cmdLine.hasOption(TARGET_FILE_OPTION)) {

@@ -5,7 +5,7 @@
 package com.tc.test.activeactive;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.stats.DGCMBean;
 import com.tc.stats.DSOMBean;
@@ -43,7 +43,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
 
   public ActiveActiveServerManager(File tempDir, PortChooser portChooser, String configModel,
                                    ActiveActiveTestSetupManager setupManger, File javaHome,
-                                   TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
+                                   TestConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                    boolean isProxyL2GroupPorts, boolean isProxyDsoPorts,
                                    DSOApplicationConfigBuilder dsoApplicationBuilder) throws Exception {
     super(setupManger);
@@ -95,7 +95,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     }
   }
 
-  public void addNewGroup(File tempDir, File javaHome, TestTVSConfigurationSetupManagerFactory configFactory)
+  public void addNewGroup(File tempDir, File javaHome, TestConfigurationSetupManagerFactory configFactory)
       throws Exception {
     int noOfServers = 0;
     ActivePassiveServerManager[] oldManagers = activePassiveServerManagers;
@@ -253,7 +253,7 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     }
   }
 
-  public void addGroupsToL1Config(TestTVSConfigurationSetupManagerFactory configFactory, Servers servers) {
+  public void addGroupsToL1Config(TestConfigurationSetupManagerFactory configFactory, Servers servers) {
     Servers serversCopy = (Servers) servers.copy();
     configFactory.addServersAndGroupToL1Config(serversCopy);
   }

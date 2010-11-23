@@ -7,8 +7,8 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
@@ -26,11 +26,11 @@ public class PortConfigBuilderTest extends TCTestCase {
   public void testPortConfig() throws ConfigurationSetupException, IOException {
     tcConfig = getTempFile("tc-config-testHaMode1.xml");
     writeConfigFile(createConfig().toString());
-    TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                  TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+    TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
+                                                                                                  TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                                                   null,
                                                                                                   new FatalIllegalConfigurationChangeHandler());
-    L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+    L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
     Assert.assertEquals("10.20.30.40", configSetupMgr.dsoL2Config().dsoPort().getBind());
     Assert.assertEquals("1.2.3.4", configSetupMgr.commonl2Config().jmxPort().getBind());
     Assert.assertEquals("4.3.2.1", configSetupMgr.dsoL2Config().l2GroupPort().getBind());

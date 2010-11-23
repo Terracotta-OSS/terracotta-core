@@ -12,7 +12,7 @@ import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +28,7 @@ public class GroupInfoServlet extends HttpServlet {
   public static final String                      GROUP_INFO_ATTRIBUTE = GroupInfoServlet.class.getName()
                                                                          + ".groupinfo";
 
-  private volatile L2TVSConfigurationSetupManager configSetupManager;
+  private volatile L2ConfigurationSetupManager configSetupManager;
   private ServerGroupsDocument                    serverGroupsDocument = null;
   private Map<String, Integer>                    serverNameToDsoPort;
   private Map<String, String>                     serverNameToHostName;
@@ -38,7 +38,7 @@ public class GroupInfoServlet extends HttpServlet {
   }
 
   private void createDocumentToSend() {
-    configSetupManager = (L2TVSConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
+    configSetupManager = (L2ConfigurationSetupManager) getServletContext().getAttribute(GROUP_INFO_ATTRIBUTE);
     serverGroupsDocument = ServerGroupsDocument.Factory.newInstance();
     createServerNameToDsoPortAndHostname();
     ServerGroups serverGroups = serverGroupsDocument.addNewServerGroups();

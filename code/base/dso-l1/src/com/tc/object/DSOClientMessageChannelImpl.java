@@ -130,7 +130,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   public SearchRequestMessageFactory getSearchRequestMessageFactory() {
     return this;
   }
-  
+
   public AcknowledgeTransactionMessageFactory getAcknowledgeTransactionMessageFactory() {
     return this;
   }
@@ -193,13 +193,13 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   public KeysForOrphanedValuesMessage newKeysForOrphanedValuesMessage(final NodeID nodeID) {
     return (KeysForOrphanedValuesMessage) this.channel.createMessage(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE);
   }
-  
-  public SearchQueryRequestMessage newSearchQueryRequestMessage(NodeID nodeID) {
-    return (SearchQueryRequestMessage) this.channel.createMessage(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE);
-  }
 
   public ServerMapRequestMessage newServerMapRequestMessage(final NodeID nodeID, final ServerMapRequestType type) {
     return type.createRequestMessage(this.channel);
+  }
+
+  public SearchQueryRequestMessage newSearchQueryRequestMessage(final NodeID remoteID) {
+    return (SearchQueryRequestMessage) this.channel.createMessage(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE);
   }
 
   public NodeMetaDataMessage newNodeMetaDataMessage() {
@@ -226,5 +226,4 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this.groups;
   }
 
- 
 }

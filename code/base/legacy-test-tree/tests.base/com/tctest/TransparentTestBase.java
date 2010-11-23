@@ -9,7 +9,7 @@ import org.apache.commons.lang.ClassUtils;
 
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -299,7 +299,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     jvmArgs.add("-Dcom.tc.properties=" + pathToTestTcProperties);
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     // do nothing
   }
 
@@ -382,13 +382,13 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
   }
 
   // only used by regular system tests (not crash or active-passive)
-  protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
+  protected final void setUpControlledServer(TestConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
                                              int groupPort, String configFile) throws Exception {
     setUpControlledServer(factory, helper, serverPort, adminPort, groupPort, configFile, null);
   }
 
-  protected final void setUpForMultipleExternalProcesses(TestTVSConfigurationSetupManagerFactory factory,
+  protected final void setUpForMultipleExternalProcesses(TestConfigurationSetupManagerFactory factory,
                                                          DSOClientConfigHelper helper, int[] dsoPorts, int[] jmxPorts,
                                                          int[] l2GroupPorts, int[] proxyPorts, String[] serverNames,
                                                          File[] configFiles) throws Exception {
@@ -417,7 +417,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setUpTransparent(factory, helper, true);
   }
 
-  protected final void setUpControlledServer(TestTVSConfigurationSetupManagerFactory factory,
+  protected final void setUpControlledServer(TestConfigurationSetupManagerFactory factory,
                                              DSOClientConfigHelper helper, int serverPort, int adminPort,
                                              int groupPort, String configFile, List jvmArgs) throws Exception {
     controlledCrashMode = true;
@@ -428,7 +428,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     setUpExternalProcess(factory, helper, serverPort, adminPort, groupPort, configFile, jvmArgs);
   }
 
-  protected void setUpExternalProcess(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
+  protected void setUpExternalProcess(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
                                       int serverPort, int adminPort, int groupPort, String configFile, List jvmArgs)
       throws Exception {
     setJavaHome();
@@ -442,12 +442,12 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
     configFactory().addServerToL1Config(null, serverPort, adminPort);
   }
 
-  private final void setUpTransparent(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
+  private final void setUpTransparent(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
     setUpTransparent(factory, helper, false);
   }
 
-  private final void setUpTransparent(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
+  private final void setUpTransparent(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper,
                                       boolean serverControlsSet) throws Exception {
     super.setUp(factory, helper);
     if (serverControlsSet) {

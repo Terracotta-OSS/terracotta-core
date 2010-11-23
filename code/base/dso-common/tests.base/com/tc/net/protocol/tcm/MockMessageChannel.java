@@ -155,6 +155,10 @@ public class MockMessageChannel implements MessageChannelInternal {
     throw new ImplementMe();
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    throw new ImplementMe();
+  }
+
   public long getLastClosedCallTimestamp() {
     return lastClosedCallTimestamp;
   }

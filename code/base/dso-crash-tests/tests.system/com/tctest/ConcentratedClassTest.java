@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.MultipleServersCrashMode;
 import com.tc.test.MultipleServersPersistenceMode;
 import com.tc.test.MultipleServersSharedDataMode;
@@ -25,7 +25,7 @@ public class ConcentratedClassTest extends ActivePassiveTransparentTestBase {
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCEnabled(true);
     configFactory.setGCVerbose(true);
     configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);

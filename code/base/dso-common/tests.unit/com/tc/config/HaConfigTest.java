@@ -8,10 +8,10 @@ import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.terracottatech.config.HaMode;
@@ -33,26 +33,26 @@ public class HaConfigTest extends TCTestCase {
       writeConfigFile(config);
 
       // test for picking up default active server group
-      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+      ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     new String[] {
                                                                                                         "-f",
                                                                                                         tcConfig
                                                                                                             .getAbsolutePath() },
-                                                                                                    StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
       HaConfig haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // test for picking up right active server group for a give server
-      factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server1" }, StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+      factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
+          "server1" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                 new FatalIllegalConfigurationChangeHandler());
       haConfig = new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
       Assert.assertTrue(haConfig.getNodesStore().getAllNodes().length == 1);
 
       // expecting an error when given non existing server for haConfig
-      factory = new StandardTVSConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
-          "server2" }, StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+      factory = new StandardConfigurationSetupManagerFactory(new String[] { "-f", tcConfig.getAbsolutePath(), "-n",
+          "server2" }, StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                 new FatalIllegalConfigurationChangeHandler());
       try {
         new HaConfigImpl(factory.createL2TVSConfigurationSetupManager(null));
@@ -89,11 +89,11 @@ public class HaConfigTest extends TCTestCase {
                       + "\n</servers>" 
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
-      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
+                                                                                                    TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                                                     null,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
-      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
       Assert.assertEquals(HaMode.NETWORKED_ACTIVE_PASSIVE, configSetupMgr.haConfig().getHa().getMode());
       
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");

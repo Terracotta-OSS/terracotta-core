@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.objectserver.api.GCStats;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
@@ -27,7 +27,7 @@ public abstract class GCAndActivePassiveTestBase extends ActivePassiveTransparen
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     gcConfigHelper.setupConfig(configFactory);
   }
 

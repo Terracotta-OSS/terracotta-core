@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.storage.api;
 
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.stats.counter.sampled.SampledCounter;
 
@@ -19,6 +19,6 @@ public interface DBFactory {
 
   DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk) throws IOException;
 
-  ServerDBBackupMBean getServerDBBackupMBean(final L2TVSConfigurationSetupManager configurationSetupManager)
+  ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException;
 }

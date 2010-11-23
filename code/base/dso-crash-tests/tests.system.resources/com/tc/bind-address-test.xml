@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-	<!--
-
-		All content copyright (c) 2003-2008 Terracotta, Inc., except as may
-		otherwise be noted in a separate copyright notice. All rights
-		reserved.
-	-->
+<!-- All content copyright (c) 2003-2008 Terracotta, Inc., except as may 
+	otherwise be noted in a separate copyright notice. All rights reserved. -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -16,9 +12,6 @@
 			<dso-port bind="127.0.0.1">4210</dso-port>
 			<jmx-port bind="0.0.0.0">4220</jmx-port>
 			<l2-group-port>4200</l2-group-port>
-			<data>server-1-data</data>
-			<logs>server-1-logs</logs>
-			<statistics>server-1-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
@@ -30,41 +23,32 @@
 			<dso-port>5210</dso-port>
 			<jmx-port>5220</jmx-port>
 			<l2-group-port>5200</l2-group-port>
-			<data>server-2-data</data>
-			<logs>server-2-logs</logs>
-			<statistics>server-2-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
 				</persistence>
 			</dso>
 		</server>
-		
+
 		<server host="localhost" name="server-3" bind="0.0.0.0">
 			<dso-port bind="127.0.0.1">6210</dso-port>
 			<jmx-port bind="127.0.0.1">6220</jmx-port>
 			<l2-group-port bind="127.0.0.1">6200</l2-group-port>
-			<data>server-3-data</data>
-			<logs>server-3-logs</logs>
-			<statistics>server-3-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
 				</persistence>
 			</dso>
 		</server>
-		
+
 		<server host="localhost" name="server-4">
-			<data>server-4-data</data>
-			<logs>server-4-logs</logs>
-			<statistics>server-4-stats</statistics>
 			<dso>
 				<persistence>
 					<mode>permanent-store</mode>
 				</persistence>
 			</dso>
 		</server>
-		
+
 		<mirror-groups>
 			<mirror-group>
 				<members>

@@ -38,4 +38,8 @@ public class ConnectionHealthCheckerDummyImpl implements ConnectionHealthChecker
     // who cares
   }
 
+  public void notifyTransportReconnectionRejected(MessageTransport transport) {
+    // NOP
+  }
+
 }

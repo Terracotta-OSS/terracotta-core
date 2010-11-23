@@ -944,7 +944,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       version = @build_environment.maven_version
     end
     @internal_config_source['version_string'] = version.gsub(/SNAPSHOT/, "nightly-rev#{@build_environment.os_revision}")
-    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyoutput/kits'
+    @internal_config_source['build-archive-dir'] = @config_source['build-archive-dir'] || '/shares/monkeyshare/output/kits'
   end
 
   def deploy(flavor, snapshot, repo_id, repo_url)

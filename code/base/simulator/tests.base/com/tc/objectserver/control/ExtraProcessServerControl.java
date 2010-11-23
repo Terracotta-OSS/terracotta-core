@@ -9,7 +9,7 @@ import org.apache.commons.lang.ArrayUtils;
 import com.tc.admin.common.MBeanServerInvocationProxy;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.Directories;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.lcp.LinkedJavaProcess;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -223,10 +223,10 @@ public class ExtraProcessServerControl extends ServerControlBase {
 
   protected List<String> getMainClassArguments() {
     if (serverName != null && !serverName.equals("")) {
-      return Arrays.asList(StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
-                           StandardTVSConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
+      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc,
+                           StandardConfigurationSetupManagerFactory.SERVER_NAME_ARGUMENT_WORD, serverName);
     } else {
-      return Arrays.asList(StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc);
+      return Arrays.asList(StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, this.configFileLoc);
     }
   }
 

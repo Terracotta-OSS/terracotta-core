@@ -531,7 +531,11 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private class RemovedObjectTimerTask extends TimerTask {
     @Override
     public void run() {
-      sendRemovedObjects();
+      try {
+        sendRemovedObjects();
+      } catch (TCNotRunningException e) {
+        logger.info("Ignoring " + e.getMessage() + " in RemovedObjectTimerTask");
+      }
     }
   }
 

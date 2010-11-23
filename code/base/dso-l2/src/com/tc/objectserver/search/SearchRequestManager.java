@@ -4,14 +4,13 @@
 package com.tc.objectserver.search;
 
 import com.tc.net.ClientID;
+import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,6 +26,7 @@ public interface SearchRequestManager {
    * 
    * @param clientID
    * @param requestID
+   * @param groupIDFrom
    * @param cachename
    * @param queryStack
    * @param includeKeys
@@ -35,9 +35,9 @@ public interface SearchRequestManager {
    * @param aggregators
    * @param maxResults
    */
-  public void queryRequest(ClientID clientID, SearchRequestID requestID, String cachename, LinkedList queryStack,
-                           boolean includeKeys, Set<String> attributeSet, Map<String, SortOperations> sortAttributes,
-                           List<NVPair> aggregators, int maxResults);
+  public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
+                           LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults);
 
   /**
    * Query response.

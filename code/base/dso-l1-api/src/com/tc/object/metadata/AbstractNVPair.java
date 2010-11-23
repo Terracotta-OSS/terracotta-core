@@ -531,28 +531,33 @@ public abstract class AbstractNVPair implements NVPair {
 
   public static class EnumNVPair extends AbstractNVPair {
 
-    private final String enumClass;
-    private final String enumName;
+    private final String className;
+    private final int    ordinal;
 
     public EnumNVPair(String name, Enum e) {
-      this(name, e.getClass().getName(), e.name());
+      this(name, e.getClass().getName(), e.ordinal());
     }
 
     public Object getObjectValue() {
-      return getEnumName();
+      try {
+        return Class.forName(className, false, Thread.currentThread().getContextClassLoader()).getEnumConstants()[ordinal];
+      } catch (ClassNotFoundException e) {
+        // XXX: Should CNFE be part of getObjectValue() signature? This runtime smells bad
+        throw new RuntimeException(e);
+      }
     }
 
-    public EnumNVPair(String name, String enumClass, String enumName) {
+    public EnumNVPair(String name, String className, int ordinal) {
       super(name);
-      this.enumClass = enumClass;
-      this.enumName = enumName;
+      this.className = className;
+      this.ordinal = ordinal;
     }
 
     @Override
     boolean basicEquals(NVPair obj) {
       if (obj instanceof EnumNVPair) {
         EnumNVPair other = (EnumNVPair) obj;
-        return enumClass.equals(other.enumClass) && enumName.equals(other.enumName);
+        return ordinal == other.ordinal && className.equals(other.className);
       }
 
       return false;
@@ -560,7 +565,7 @@ public abstract class AbstractNVPair implements NVPair {
 
     @Override
     public String valueAsString() {
-      return enumClass + "(" + enumName + ")";
+      return className + "(" + ordinal + ")";
     }
 
     @Override
@@ -568,18 +573,19 @@ public abstract class AbstractNVPair implements NVPair {
       return ValueType.ENUM;
     }
 
-    public String getEnumClass() {
-      return enumClass;
-    }
-
-    public String getEnumName() {
-      return enumName;
-    }
-
     @Override
     public NVPair cloneWithNewName(String newName) {
-      return new EnumNVPair(newName, enumClass, enumName);
+      return new EnumNVPair(newName, className, ordinal);
     }
+
+    public int getOrdinal() {
+      return ordinal;
+    }
+
+    public String getClassName() {
+      return className;
+    }
+
   }
 
   public static NVPair createNVPair(String attributeName, Object value) {

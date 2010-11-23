@@ -4,15 +4,14 @@
 package com.tc.object.msg;
 
 import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
-import com.tc.search.SortOperations;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,9 +33,15 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   public SearchRequestID getRequestID();
 
   /**
+   * GroupID message is from.
+   */
+  public GroupID getGroupIDFrom();
+
+  /**
    * Initialize message.
    * 
    * @param searchRequestID
+   * @param groupFrom
    * @param cacheName
    * @param queryStack
    * @param keys
@@ -45,10 +50,9 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @param aggregators
    * @param maxResults
    */
-  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final String cacheName,
-                                          final LinkedList queryStack, final boolean keys,
-                                          final Set<String> attributeSet,
-                                          final Map<String, SortOperations> sortAttributesMap,
+  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
+                                          final String cacheName, final LinkedList queryStack, final boolean keys,
+                                          final Set<String> attributeSet, final List<NVPair> sortAttributesMap,
                                           final List<NVPair> aggregators, int maxResults);
 
   /**
@@ -74,10 +78,8 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
 
   /**
    * Return a map of sort attributes
-   * 
-   * @return Map<String, SortOperations>
    */
-  public Map<String, SortOperations> getSortAttributes();
+  public List<NVPair> getSortAttributes();
 
   /**
    * Return a map of attribute aggregators

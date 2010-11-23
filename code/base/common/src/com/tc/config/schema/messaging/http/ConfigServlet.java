@@ -6,7 +6,7 @@ package com.tc.config.schema.messaging.http;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.ConfigurationModel;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,10 +21,10 @@ public class ConfigServlet extends HttpServlet {
 
   public static final String                      CONFIG_ATTRIBUTE = ConfigServlet.class.getName() + ".config";
 
-  private volatile L2TVSConfigurationSetupManager configSetupManager;
+  private volatile L2ConfigurationSetupManager configSetupManager;
 
   public void init() {
-    configSetupManager = (L2TVSConfigurationSetupManager) getServletContext().getAttribute(CONFIG_ATTRIBUTE);
+    configSetupManager = (L2ConfigurationSetupManager) getServletContext().getAttribute(CONFIG_ATTRIBUTE);
   }
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {

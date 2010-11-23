@@ -4,7 +4,7 @@
 package com.tc.simulator.container;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.object.TestClientConfigHelperFactory;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
 import com.tc.object.config.ConfigVisitor;
@@ -21,11 +21,11 @@ public class IsolationClassLoaderFactory {
   private final Class                          applicationClass;
   private final Map                            optionalAttributes;
   private final ConfigVisitor                  configVisitor;
-  private final L1TVSConfigurationSetupManager l1ConfigManager;
+  private final L1ConfigurationSetupManager l1ConfigManager;
   private final Map                            adapterMap;
 
   public IsolationClassLoaderFactory(TestClientConfigHelperFactory factory, Class applicationClass,
-                                     Map optionalAttributes, L1TVSConfigurationSetupManager l1ConfigManager,
+                                     Map optionalAttributes, L1ConfigurationSetupManager l1ConfigManager,
                                      Map adapterMap) {
     this.factory = factory;
     this.applicationClass = applicationClass;

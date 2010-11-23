@@ -3,6 +3,7 @@
  */
 package com.tc.object.msg;
 
+import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
@@ -23,14 +24,20 @@ public interface SearchQueryResponseMessage extends TCMessage {
   public SearchRequestID getRequestID();
 
   /**
+   * Originating request groupID.
+   */
+  public GroupID getGroupIDFrom();
+
+  /**
    * Initialize message.
    * 
+   * @param searchRequestID
+   * @param groupIDFrom
    * @param aggregatorResults
-   * @param SearchRequestID searchRequestID
-   * @param List<NVPair> aggregatorResults
+   * @param aggregatorResults
    */
-  public void initialSearchResponseMessage(SearchRequestID searchRequestID, List<IndexQueryResult> results,
-                                           List<NVPair> aggregatorResults);
+  public void initialSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
+                                           List<IndexQueryResult> results, List<NVPair> aggregatorResults);
 
   /**
    * @return List<SearchQueryResult> results.

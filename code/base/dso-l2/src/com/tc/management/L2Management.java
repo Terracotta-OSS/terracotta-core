@@ -11,7 +11,7 @@ import com.sun.jmx.remote.generic.SynchroMessageConnectionServer;
 import com.sun.jmx.remote.generic.SynchroMessageConnectionServerImpl;
 import com.sun.jmx.remote.socket.SocketConnectionServer;
 import com.tc.async.api.Sink;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.JMXLogging;
@@ -58,7 +58,7 @@ public class L2Management extends TerracottaManagement {
 
   protected MBeanServer                          mBeanServer;
   protected JMXConnectorServer                   jmxConnectorServer;
-  protected final L2TVSConfigurationSetupManager configurationSetupManager;
+  protected final L2ConfigurationSetupManager configurationSetupManager;
   private final TCServerInfoMBean                tcServerInfo;
   private final TCDumper                         tcDumper;
   private final ObjectManagementMonitor          objectManagementBean;
@@ -71,7 +71,7 @@ public class L2Management extends TerracottaManagement {
 
   public L2Management(TCServerInfoMBean tcServerInfo, LockStatisticsMonitorMBean lockStatistics,
                       StatisticsAgentSubSystem statisticsAgentSubSystem, StatisticsGatewayMBeanImpl statisticsGateway,
-                      L2TVSConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
+                      L2ConfigurationSetupManager configurationSetupManager, TCDumper tcDumper,
                       InetAddress bindAddr, int port, Sink remoteEventsSink) throws MBeanRegistrationException,
       NotCompliantMBeanException, InstanceAlreadyExistsException {
     this.tcServerInfo = tcServerInfo;

@@ -4,7 +4,7 @@
  */
 package com.tctest.longrunning;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tctest.TestConfigurator;
 import com.tctest.TransparentTestBase;
 import com.tctest.TransparentTestIface;
@@ -20,7 +20,7 @@ public class LongrunningGCTester extends TransparentTestBase implements TestConf
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCEnabled(true);
     configFactory.setGCVerbose(true);
     configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);

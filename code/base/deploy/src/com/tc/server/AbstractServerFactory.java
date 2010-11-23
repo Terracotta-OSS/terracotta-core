@@ -4,7 +4,7 @@
  */
 package com.tc.server;
 
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.util.factory.AbstractFactory;
 
@@ -16,6 +16,6 @@ public abstract class AbstractServerFactory extends AbstractFactory {
     return (AbstractServerFactory) getFactory(FACTORY_SERVICE_ID, STANDARD_SERVER_FACTORY_CLASS);
   }
 
-  public abstract TCServer createServer(L2TVSConfigurationSetupManager configurationSetupManager,
+  public abstract TCServer createServer(L2ConfigurationSetupManager configurationSetupManager,
                                         TCThreadGroup threadGroup);
 }

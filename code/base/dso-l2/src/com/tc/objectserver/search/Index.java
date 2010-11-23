@@ -4,12 +4,10 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.metadata.NVPair;
-import com.tc.search.SortOperations;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public interface Index {
@@ -18,9 +16,9 @@ public interface Index {
 
   void upsert(Object key, List<NVPair> attributes) throws IndexException;
 
-  IndexContext search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                      Map<String, SortOperations> sortAttributes, List<NVPair> aggregators, int maxResults)
-      throws IOException;
+  SearchResult search(LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                      List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) throws IOException,
+      IndexException;
 
   void close();
 

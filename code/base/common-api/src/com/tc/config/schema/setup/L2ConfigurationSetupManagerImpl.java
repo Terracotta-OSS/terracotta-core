@@ -30,7 +30,6 @@ import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -67,12 +66,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The standard implementation of {@link com.tc.config.schema.setup.L2TVSConfigurationSetupManager}.
+ * The standard implementation of {@link com.tc.config.schema.setup.L2ConfigurationSetupManager}.
  */
-public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
-    L2TVSConfigurationSetupManager {
+public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements
+    L2ConfigurationSetupManager {
 
-  private static final TCLogger             logger = TCLogging.getLogger(StandardL2TVSConfigurationSetupManager.class);
+  private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map                         l2ConfigData;
   private final NewHaConfig                 haConfig;
@@ -85,7 +84,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
   private NewSystemConfig                   systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
 
-  public StandardL2TVSConfigurationSetupManager(ConfigurationCreator configurationCreator, String thisL2Identifier,
+  public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)
@@ -120,8 +119,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                            }
                                                                          });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -143,7 +141,6 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     // do this after servers and groups have been processed
     validateGroups();
     validateDSOClusterPersistenceMode();
-    validateLicenseCapabilities();
     validateHaConfiguration();
   }
 
@@ -170,8 +167,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
                                                                          });
 
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(
-                                                                                     mirrorGroupsRepository,
+                                                                       createContext(mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -569,20 +565,13 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
             for (String member : members) {
               msg.append(member).append(" ");
             }
-            msg
-                .append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
+            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
             throw new ConfigurationSetupException(msg.toString());
           }
         }
       }
     }
 
-  }
-
-  public void validateLicenseCapabilities() {
-    if (activeServerGroupsConfig.getActiveServerGroupCount() > 1) {
-      LicenseManager.verifyServerStripingCapability();
-    }
   }
 
   public void validateHaConfiguration() throws ConfigurationSetupException {
@@ -675,7 +664,7 @@ public class StandardL2TVSConfigurationSetupManager extends BaseTVSConfiguration
     Client client = (Client) this.clientBeanRepository().bean();
     Servers servers = (Servers) this.serversBeanRepository().bean();
     Application application = (Application) this.applicationsRepository()
-        .repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
+        .repositoryFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME).bean();
 
     if (system != null) config.setSystem(system);
     if (client != null) config.setClients(client);

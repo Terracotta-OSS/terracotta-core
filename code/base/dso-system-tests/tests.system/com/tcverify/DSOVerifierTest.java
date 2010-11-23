@@ -10,8 +10,8 @@ import com.tc.config.schema.builder.InstrumentedClassConfigBuilder;
 import com.tc.config.schema.builder.LockConfigBuilder;
 import com.tc.config.schema.builder.RootConfigBuilder;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.test.InstrumentedClassConfigBuilderImpl;
 import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.LockConfigBuilderImpl;
@@ -63,10 +63,10 @@ public class DSOVerifierTest extends TCTestCase {
 
     File configFile = writeConfigFile();
 
-    StandardTVSConfigurationSetupManagerFactory config;
-    config = new StandardTVSConfigurationSetupManagerFactory(new String[] {
-        StandardTVSConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFile.getAbsolutePath() },
-                                                             StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+    StandardConfigurationSetupManagerFactory config;
+    config = new StandardConfigurationSetupManagerFactory(new String[] {
+        StandardConfigurationSetupManagerFactory.CONFIG_SPEC_ARGUMENT_WORD, configFile.getAbsolutePath() },
+                                                             StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                              new FatalIllegalConfigurationChangeHandler());
 
     server = new TCServerImpl(config.createL2TVSConfigurationSetupManager(null));
@@ -157,7 +157,7 @@ public class DSOVerifierTest extends TCTestCase {
 
     List<String> args = new ArrayList<String>();
     args.add(bootclasspath);
-    args.add("-D" + TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME + "=localhost:"
+    args.add("-D" + ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME + "=localhost:"
              + server.getDSOListenPort());
     args.add("-D" + TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_BUFFER_RANDOM_SUFFIX_ENABLED) + "=true");
     args.add("-D" + TCPropertiesImpl.tcSysProp(TCPropertiesConsts.CVT_STORE_RANDOM_SUFFIX_ENABLED) + "=true");

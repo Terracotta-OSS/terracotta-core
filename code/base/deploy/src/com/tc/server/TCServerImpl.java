@@ -30,12 +30,12 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -65,6 +65,7 @@ import com.tc.stats.DSO;
 import com.tc.stats.DSOMBean;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
+import com.terracottatech.config.Offheap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -108,32 +109,46 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final Object                         stateLock                                    = new Object();
   private final L2State                        state                                        = new L2State();
 
-  private final L2TVSConfigurationSetupManager configurationSetupManager;
+  private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy             connectionPolicy;
   private boolean                              shutdown                                     = false;
 
   /**
    * This should only be used for tests.
    */
-  public TCServerImpl(final L2TVSConfigurationSetupManager configurationSetupManager) {
+  public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager) {
     this(configurationSetupManager, new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))));
   }
 
-  public TCServerImpl(final L2TVSConfigurationSetupManager configurationSetupManager, final TCThreadGroup threadGroup) {
+  public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager, final TCThreadGroup threadGroup) {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(final L2TVSConfigurationSetupManager manager, final TCThreadGroup group,
+  public TCServerImpl(final L2ConfigurationSetupManager manager, final TCThreadGroup group,
                       final ConnectionPolicy connectionPolicy) {
     super(group, LinkedBlockingQueue.class.getName());
+
     this.connectionPolicy = connectionPolicy;
     Assert.assertNotNull(manager);
+    validateEnterpriseFeatures(manager);
     this.configurationSetupManager = manager;
 
     this.statisticsGathererSubSystem = new StatisticsGathererSubSystem();
     if (!this.statisticsGathererSubSystem.setup(manager.commonl2Config())) {
       notifyShutdown();
       System.exit(1);
+    }
+
+  }
+
+  private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
+    if (!LicenseManager.enterpriseEdition()) return;
+    if (manager.dsoL2Config().getPersistence().isSetOffheap()) {
+      Offheap offHeapConfig = manager.dsoL2Config().getPersistence().getOffheap();
+      LicenseManager.verifyServerArrayOffheapCapability(offHeapConfig.getMaxDataSize());
+    }
+    if (manager.commonl2Config().authentication()) {
+      LicenseManager.verifyAuthenticationCapability();
     }
   }
 
@@ -454,12 +469,17 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void startDSOServer(final Sink httpSink) throws Exception {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
-    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED), tcProps
-        .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS), tcProps
-        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
+    ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FAULT_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_REQUEST_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_FLUSH_LOGGING_ENABLED),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_LOGGING_PRINT_BROADCAST_STATS),
+                                                                      tcProps
+                                                                          .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
                                                    new TCServerInfo(this, this.state, objectStatsRecorder),
@@ -468,7 +488,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     registerDSOServer();
   }
 
-  protected DistributedObjectServer createDistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager,
+  protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
