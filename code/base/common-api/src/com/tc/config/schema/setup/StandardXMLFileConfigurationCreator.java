@@ -451,7 +451,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
   private void setApplicationsBean(ApplicationsRepository applicationsRepository, TcConfig config, String description)
       throws XmlException {
     if (config.isSetApplication()) {
-      applicationsRepository.repositoryFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)
+      applicationsRepository.repositoryFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME)
           .setBean(config.getApplication(), description);
     }
   }

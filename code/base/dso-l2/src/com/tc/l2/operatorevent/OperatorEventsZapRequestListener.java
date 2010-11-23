@@ -4,7 +4,7 @@
 package com.tc.l2.operatorevent;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.logging.TerracottaOperatorEventLogger;
 import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
@@ -22,11 +22,11 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
   private final Map<String, String>           nodeNameToServerName = new HashMap<String, String>();
   private final TerracottaOperatorEventLogger operatorEventLogger  = TerracottaOperatorEventLogging.getEventLogger();
 
-  public OperatorEventsZapRequestListener(L2TVSConfigurationSetupManager configSetupManager) {
+  public OperatorEventsZapRequestListener(L2ConfigurationSetupManager configSetupManager) {
     initializeServerNameMap(configSetupManager);
   }
 
-  private void initializeServerNameMap(L2TVSConfigurationSetupManager configSetupManager) {
+  private void initializeServerNameMap(L2ConfigurationSetupManager configSetupManager) {
     String[] serverNames = configSetupManager.allCurrentlyKnownServers();
     for (int i = 0; i < serverNames.length; i++) {
       try {

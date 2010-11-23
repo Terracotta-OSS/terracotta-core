@@ -9,8 +9,8 @@ import org.apache.commons.lang.ArrayUtils;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.properties.TCProperties;
@@ -52,34 +52,34 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     if (this.failTestException != null) throw this.failTestException;
   }
 
-  private TestTVSConfigurationSetupManagerFactory configFactory;
-  private L1TVSConfigurationSetupManager          l1ConfigManager;
+  private TestConfigurationSetupManagerFactory configFactory;
+  private L1ConfigurationSetupManager          l1ConfigManager;
   private DSOClientConfigHelper                   configHelper;
 
-  protected synchronized final void setUp(TestTVSConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
+  protected synchronized final void setUp(TestConfigurationSetupManagerFactory factory, DSOClientConfigHelper helper)
       throws Exception {
     super.setUp();
     this.configFactory = factory;
     this.configHelper = helper;
   }
 
-  protected synchronized final TestTVSConfigurationSetupManagerFactory configFactory()
+  protected synchronized final TestConfigurationSetupManagerFactory configFactory()
       throws ConfigurationSetupException {
     if (this.configFactory == null) this.configFactory = createDistributedConfigFactory();
     return this.configFactory;
   }
 
-  protected synchronized final TestTVSConfigurationSetupManagerFactory createDistributedConfigFactory()
+  protected synchronized final TestConfigurationSetupManagerFactory createDistributedConfigFactory()
       throws ConfigurationSetupException {
-    TestTVSConfigurationSetupManagerFactory out;
-    out = new TestTVSConfigurationSetupManagerFactory(TestTVSConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
+    TestConfigurationSetupManagerFactory out;
+    out = new TestConfigurationSetupManagerFactory(TestConfigurationSetupManagerFactory.MODE_DISTRIBUTED_CONFIG,
                                                       null, new TestFailingIllegalConfigChangeHandler());
 
     prepareFactory(out);
     return out;
   }
 
-  private synchronized void prepareFactory(TestTVSConfigurationSetupManagerFactory out)
+  private synchronized void prepareFactory(TestConfigurationSetupManagerFactory out)
       throws ConfigurationSetupException {
     // We add a root to make sure there's at least *some* application config. Otherwise, the config system will wait for
     // it on system startup.
@@ -99,7 +99,7 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     out.activateConfigurationChange();
   }
 
-  protected synchronized void setupConfigLogDataStatisticsPaths(TestTVSConfigurationSetupManagerFactory out)
+  protected synchronized void setupConfigLogDataStatisticsPaths(TestConfigurationSetupManagerFactory out)
       throws ConfigurationSetupException {
     try {
       Server server = (Server) out.l2CommonConfig().getBean();
@@ -113,21 +113,21 @@ public class BaseDSOTestCase extends TCTestCase implements TestClientConfigHelpe
     }
   }
 
-  protected synchronized final TestTVSConfigurationSetupManagerFactory createCentralizedConfigFactory()
+  protected synchronized final TestConfigurationSetupManagerFactory createCentralizedConfigFactory()
       throws ConfigurationSetupException {
-    TestTVSConfigurationSetupManagerFactory out;
-    out = new TestTVSConfigurationSetupManagerFactory(new TestFailingIllegalConfigChangeHandler());
+    TestConfigurationSetupManagerFactory out;
+    out = new TestConfigurationSetupManagerFactory(new TestFailingIllegalConfigChangeHandler());
 
     prepareFactory(out);
     return out;
   }
 
-  protected synchronized final L1TVSConfigurationSetupManager l1Manager() throws ConfigurationSetupException {
+  protected synchronized final L1ConfigurationSetupManager l1Manager() throws ConfigurationSetupException {
     if (this.l1ConfigManager == null) this.l1ConfigManager = createL1ConfigManager();
     return this.l1ConfigManager;
   }
 
-  protected synchronized final L1TVSConfigurationSetupManager createL1ConfigManager()
+  protected synchronized final L1ConfigurationSetupManager createL1ConfigManager()
       throws ConfigurationSetupException {
     return configFactory().getL1TVSConfigurationSetupManager();
   }

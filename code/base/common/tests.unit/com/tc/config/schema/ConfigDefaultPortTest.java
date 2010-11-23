@@ -6,8 +6,8 @@ package com.tc.config.schema;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.object.config.schema.NewL2DSOConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -93,10 +93,10 @@ public class ConfigDefaultPortTest extends TCTestCase {
                       + "\n      </dso>"
                       + "\n</server>" + "\n</servers>" + "\n</tc:tc-config>";
       writeConfigFile(config);
-      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
+      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
                                                                                                     new FatalIllegalConfigurationChangeHandler());
 
-      L2TVSConfigurationSetupManager configSetupMgr = null;
+      L2ConfigurationSetupManager configSetupMgr = null;
 
       // case 1: all ports specified in the config
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");

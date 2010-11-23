@@ -10,7 +10,7 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.net.GroupID;
 import com.tc.util.Assert;
 import com.terracottatech.config.Ha;
@@ -34,7 +34,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
   private final NewHaConfig   haConfig;
   private final MembersConfig membersConfig;
 
-  public ActiveServerGroupConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager) {
+  public ActiveServerGroupConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager) {
     super(context);
     context.ensureRepositoryProvides(MirrorGroup.class);
     MirrorGroup group = (MirrorGroup) context.bean();
@@ -70,7 +70,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     return this.groupId;
   }
 
-  private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager, boolean isMembers,
+  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager, boolean isMembers,
                                             final MirrorGroup group) {
     if (isMembers) {
       ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(), Members.class,

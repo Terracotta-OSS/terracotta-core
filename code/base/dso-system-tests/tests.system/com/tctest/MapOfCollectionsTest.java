@@ -3,7 +3,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.terracottatech.config.PersistenceMode;
 
 public class MapOfCollectionsTest extends GCTestBase {
@@ -14,7 +14,7 @@ public class MapOfCollectionsTest extends GCTestBase {
   }
   
   @Override
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     this.gcConfigHelper.setGarbageCollectionInterval(20);
     super.setupConfig(configFactory);
     configFactory.setPersistenceMode(PersistenceMode.PERMANENT_STORE);

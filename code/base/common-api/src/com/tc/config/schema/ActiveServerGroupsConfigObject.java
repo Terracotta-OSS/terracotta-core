@@ -11,7 +11,7 @@ import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.StandardL2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManagerImpl;
 import com.tc.util.ActiveCoordinatorHelper;
 import com.tc.util.Assert;
 import com.terracottatech.config.Ha;
@@ -23,7 +23,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
   private final ActiveServerGroupConfig[] groupConfigArray;
   private final int                       activeServerGroupCount;
 
-  public ActiveServerGroupsConfigObject(ConfigContext context, StandardL2TVSConfigurationSetupManager setupManager)
+  public ActiveServerGroupsConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager)
       throws ConfigurationSetupException {
     super(context);
     context.ensureRepositoryProvides(MirrorGroups.class);
@@ -63,7 +63,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
     return null;
   }
 
-  private final ConfigContext createContext(StandardL2TVSConfigurationSetupManager setupManager, final MirrorGroup group) {
+  private final ConfigContext createContext(L2ConfigurationSetupManagerImpl setupManager, final MirrorGroup group) {
     ChildBeanRepository beanRepository = new ChildBeanRepository(setupManager.serversBeanRepository(),
                                                                  MirrorGroup.class, new ChildBeanFetcher() {
                                                                    public XmlObject getChild(XmlObject parent) {

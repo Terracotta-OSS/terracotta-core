@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.terracottatech.config.PersistenceMode;
 
 public class GCConfigurationHelper {
@@ -43,7 +43,7 @@ public class GCConfigurationHelper {
     nodeCount = nodes;
   }
 
-  public void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  public void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCEnabled(getGCEnabled());
     configFactory.setGCVerbose(getGCVerbose());
     configFactory.setGCIntervalInSec(getGarbageCollectionInterval());

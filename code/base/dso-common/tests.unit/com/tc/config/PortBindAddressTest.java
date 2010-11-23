@@ -7,8 +7,8 @@ package com.tc.config;
 import org.apache.commons.io.IOUtils;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -64,11 +64,11 @@ public class PortBindAddressTest extends TCTestCase {
                       + "\n</servers>" 
                       + "\n</tc:tc-config>";
       writeConfigFile(config);
-      TestTVSConfigurationSetupManagerFactory factory = new TestTVSConfigurationSetupManagerFactory(
-                                                                                                    TestTVSConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
+      TestConfigurationSetupManagerFactory factory = new TestConfigurationSetupManagerFactory(
+                                                                                                    TestConfigurationSetupManagerFactory.MODE_CENTRALIZED_CONFIG,
                                                                                                     null,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
-      L2TVSConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
+      L2ConfigurationSetupManager configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server1");
       Assert.assertEquals("127.8.9.0", configSetupMgr.dsoL2Config().dsoPort().getBind());
       Assert.assertEquals("127.8.9.1", configSetupMgr.commonl2Config().jmxPort().getBind());
       Assert.assertEquals("127.8.9.2", configSetupMgr.dsoL2Config().l2GroupPort().getBind());

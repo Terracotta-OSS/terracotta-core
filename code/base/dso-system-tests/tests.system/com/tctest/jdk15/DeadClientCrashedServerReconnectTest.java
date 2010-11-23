@@ -5,7 +5,7 @@
 package com.tctest.jdk15;
 
 import com.tc.cluster.DsoClusterImpl;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
 import com.tc.logging.TCLogging;
@@ -73,7 +73,7 @@ public class DeadClientCrashedServerReconnectTest extends BaseDSOTestCase {
 
     // config for client
     configFactory().addServerToL1Config(null, proxyPort, jmxPort);
-    L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
+    L1ConfigurationSetupManager manager = super.createL1ConfigManager();
 
     DSOClientConfigHelper configHelper = new StandardDSOClientConfigHelperImpl(manager);
     PreparedComponentsFromL2Connection components = new PreparedComponentsFromL2Connection(manager);

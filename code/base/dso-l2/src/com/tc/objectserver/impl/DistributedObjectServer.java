@@ -16,7 +16,7 @@ import com.tc.async.impl.NullSink;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.CleanDirtyDatabaseException;
 import com.tc.exception.TCRuntimeException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
@@ -331,7 +331,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private final ObjectStatsRecorder              objectStatsRecorder;
   private final L2State                          l2State;
   private final DSOServerBuilder                 serverBuilder;
-  protected final L2TVSConfigurationSetupManager configSetupManager;
+  protected final L2ConfigurationSetupManager configSetupManager;
   private final Sink                             httpSink;
   protected final HaConfigImpl                   haConfig;
 
@@ -388,7 +388,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private final CallbackDumpHandler              dumpHandler      = new CallbackDumpHandler();
 
   // used by a test
-  public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager,
+  public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager,
                                  final TCThreadGroup threadGroup, final ConnectionPolicy connectionPolicy,
                                  final TCServerInfoMBean tcServerInfoMBean,
                                  final ObjectStatsRecorder objectStatsRecorder) {
@@ -397,7 +397,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   }
 
-  public DistributedObjectServer(final L2TVSConfigurationSetupManager configSetupManager,
+  public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager,
                                  final TCThreadGroup threadGroup, final ConnectionPolicy connectionPolicy,
                                  final Sink httpSink, final TCServerInfoMBean tcServerInfoMBean,
                                  final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,

@@ -5,8 +5,8 @@
 package com.tctest.jdk15;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.exception.TCRuntimeException;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
@@ -152,10 +152,10 @@ public class DSOServerBindAddressTest extends BaseDSOTestCase {
     }
   }
 
-  public L2TVSConfigurationSetupManager createL2Manager(String bindAddress, int dsoPort, int jmxPort)
+  public L2ConfigurationSetupManager createL2Manager(String bindAddress, int dsoPort, int jmxPort)
       throws ConfigurationSetupException {
-    TestTVSConfigurationSetupManagerFactory factory = super.configFactory();
-    L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+    TestConfigurationSetupManagerFactory factory = super.configFactory();
+    L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
     manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
     manager.dsoL2Config().dsoPort().setBind(bindAddress);
 

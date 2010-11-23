@@ -30,7 +30,7 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.state.StateManager;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
@@ -109,22 +109,22 @@ public class TCServerImpl extends SEDA implements TCServer {
   private final Object                         stateLock                                    = new Object();
   private final L2State                        state                                        = new L2State();
 
-  private final L2TVSConfigurationSetupManager configurationSetupManager;
+  private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy             connectionPolicy;
   private boolean                              shutdown                                     = false;
 
   /**
    * This should only be used for tests.
    */
-  public TCServerImpl(final L2TVSConfigurationSetupManager configurationSetupManager) {
+  public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager) {
     this(configurationSetupManager, new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(TCServer.class))));
   }
 
-  public TCServerImpl(final L2TVSConfigurationSetupManager configurationSetupManager, final TCThreadGroup threadGroup) {
+  public TCServerImpl(final L2ConfigurationSetupManager configurationSetupManager, final TCThreadGroup threadGroup) {
     this(configurationSetupManager, threadGroup, new ConnectionPolicyImpl(Integer.MAX_VALUE));
   }
 
-  public TCServerImpl(final L2TVSConfigurationSetupManager manager, final TCThreadGroup group,
+  public TCServerImpl(final L2ConfigurationSetupManager manager, final TCThreadGroup group,
                       final ConnectionPolicy connectionPolicy) {
     super(group, LinkedBlockingQueue.class.getName());
 
@@ -141,7 +141,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   }
 
-  private void validateEnterpriseFeatures(final L2TVSConfigurationSetupManager manager) {
+  private void validateEnterpriseFeatures(final L2ConfigurationSetupManager manager) {
     if (!LicenseManager.enterpriseEdition()) return;
     if (manager.dsoL2Config().getPersistence().isSetOffheap()) {
       Offheap offHeapConfig = manager.dsoL2Config().getPersistence().getOffheap();
@@ -488,7 +488,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     registerDSOServer();
   }
 
-  protected DistributedObjectServer createDistributedObjectServer(L2TVSConfigurationSetupManager configSetupManager,
+  protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,

@@ -4,7 +4,7 @@
 package com.tc.object.bytecode.hook.impl;
 
 import com.tc.config.schema.L2ConfigForL1.L2Data;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.object.DistributedObjectClient;
 import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.util.Assert;
@@ -14,9 +14,9 @@ import com.tc.util.Assert;
  * {@link DistributedObjectClient} eventually.
  */
 public class PreparedComponentsFromL2Connection {
-  private final L1TVSConfigurationSetupManager config;
+  private final L1ConfigurationSetupManager config;
 
-  public PreparedComponentsFromL2Connection(L1TVSConfigurationSetupManager config) {
+  public PreparedComponentsFromL2Connection(L1ConfigurationSetupManager config) {
     Assert.assertNotNull(config);
     this.config = config;
   }

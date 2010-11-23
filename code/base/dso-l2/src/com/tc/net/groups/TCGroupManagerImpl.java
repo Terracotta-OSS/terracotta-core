@@ -10,7 +10,7 @@ import com.tc.async.api.StageManager;
 import com.tc.config.NodesStore;
 import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.TopologyChangeListener;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.operatorevent.OperatorEventsNodeConnectionListener;
@@ -124,12 +124,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
-  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, StageManager stageManager,
+  public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
                             ServerID thisNodeID, Sink httpSink, NodesStore nodesStore) {
     this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore);
   }
 
-  public TCGroupManagerImpl(L2TVSConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
+  public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Sink httpSink, NodesStore nodesStore) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;

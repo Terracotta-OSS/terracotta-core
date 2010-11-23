@@ -10,9 +10,9 @@ import org.apache.commons.lang.ArrayUtils;
 import com.tc.cli.CommandLineBuilder;
 import com.tc.config.schema.NewCommonL2Config;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.management.TerracottaManagement;
@@ -41,8 +41,8 @@ public class TCStop {
   public static final int       DEFAULT_PORT  = 9520;
 
   public static final void main(String[] args) throws Exception {
-    Options options = StandardTVSConfigurationSetupManagerFactory
-        .createOptions(StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2);
+    Options options = StandardConfigurationSetupManagerFactory
+        .createOptions(StandardConfigurationSetupManagerFactory.ConfigMode.L2);
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
     commandLineBuilder.setOptions(options);
     commandLineBuilder.addOption("u", "username", true, "username", String.class, false);
@@ -63,7 +63,7 @@ public class TCStop {
       commandLineBuilder.usageAndDie();
     }
 
-    String defaultName = StandardTVSConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
+    String defaultName = StandardConfigurationSetupManagerFactory.DEFAULT_CONFIG_SPEC;
     File configFile = new File(System.getProperty("user.dir"), defaultName);
     boolean configSpecified = commandLineBuilder.hasOption('f');
     boolean nameSpecified = commandLineBuilder.hasOption('n');
@@ -91,9 +91,9 @@ public class TCStop {
       }
 
       FatalIllegalConfigurationChangeHandler changeHandler = new FatalIllegalConfigurationChangeHandler();
-      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+      ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     args,
-                                                                                                    StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                                                     changeHandler);
 
       String name = null;
@@ -101,7 +101,7 @@ public class TCStop {
         name = commandLineBuilder.getOptionValue('n');
       }
 
-      L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
+      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(name);
       String[] servers = manager.allCurrentlyKnownServers();
 
       if (nameSpecified && !Arrays.asList(servers).contains(name)) {

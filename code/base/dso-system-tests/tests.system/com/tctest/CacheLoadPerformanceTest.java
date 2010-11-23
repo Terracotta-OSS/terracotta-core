@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 
 public class CacheLoadPerformanceTest extends TransparentTestBase {
 
@@ -15,7 +15,7 @@ public class CacheLoadPerformanceTest extends TransparentTestBase {
     initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCIntervalInSec(1000000);
   }
 

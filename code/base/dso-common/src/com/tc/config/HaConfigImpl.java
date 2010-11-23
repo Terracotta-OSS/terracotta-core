@@ -7,7 +7,7 @@ package com.tc.config;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.license.LicenseManager;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 public class HaConfigImpl implements HaConfig {
 
-  private final L2TVSConfigurationSetupManager configSetupManager;
+  private final L2ConfigurationSetupManager configSetupManager;
   private final GroupID[]                      groupIDs;
   private final GroupID                        thisGroupID;
   private final GroupID                        activeCoordinatorGroupID;
@@ -32,7 +32,7 @@ public class HaConfigImpl implements HaConfig {
   private final ServerGroup[]                  groups;
   private final Node                           thisNode;
 
-  public HaConfigImpl(L2TVSConfigurationSetupManager configSetupManager) {
+  public HaConfigImpl(L2ConfigurationSetupManager configSetupManager) {
     this.configSetupManager = configSetupManager;
     ActiveServerGroupsConfig groupsConfig = this.configSetupManager.activeServerGroupsConfig();
     int groupCount = groupsConfig.getActiveServerGroupCount();

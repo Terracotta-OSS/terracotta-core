@@ -13,9 +13,9 @@ import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.util.Assert;
 
 /**
- * A base class for all {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} instances.
+ * A base class for all {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} instances.
  */
-public abstract class BaseTVSConfigurationSetupManagerFactory implements TVSConfigurationSetupManagerFactory {
+public abstract class BaseConfigurationSetupManagerFactory implements ConfigurationSetupManagerFactory {
 
   protected final IllegalConfigurationChangeHandler illegalChangeHandler;
   
@@ -23,7 +23,7 @@ public abstract class BaseTVSConfigurationSetupManagerFactory implements TVSConf
   protected final DefaultValueProvider defaultValueProvider;
   protected final XmlObjectComparator  xmlObjectComparator;
 
-  public BaseTVSConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+  public BaseConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
     Assert.assertNotNull(illegalConfigurationChangeHandler);
     
     this.illegalChangeHandler = illegalConfigurationChangeHandler;

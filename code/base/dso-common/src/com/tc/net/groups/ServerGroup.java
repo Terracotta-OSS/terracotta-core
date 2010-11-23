@@ -9,7 +9,7 @@ import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.NewHaConfig;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
 import com.tc.object.config.schema.NewL2DSOConfig;
 
@@ -35,7 +35,7 @@ public class ServerGroup {
     this.nodes = new ConcurrentHashMap();
   }
 
-  public ReloadConfigChangeContext reloadGroup(L2TVSConfigurationSetupManager manager,
+  public ReloadConfigChangeContext reloadGroup(L2ConfigurationSetupManager manager,
                                                final ActiveServerGroupConfig group) throws ConfigurationSetupException {
     String[] membersBefore = this.members;
     String[] membersNow = group.getMembers().getMemberArray();
@@ -64,7 +64,7 @@ public class ServerGroup {
     }
   }
 
-  private void addNodes(L2TVSConfigurationSetupManager configSetupManager, ActiveServerGroupConfig group,
+  private void addNodes(L2ConfigurationSetupManager configSetupManager, ActiveServerGroupConfig group,
                         List<Node> nodesAdded, String[] membersNowArray, String[] membersBeforeArray)
       throws ConfigurationSetupException {
     List<String> membersBefore = convertStringToList(membersBeforeArray);

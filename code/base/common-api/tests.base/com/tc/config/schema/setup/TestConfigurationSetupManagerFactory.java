@@ -19,7 +19,7 @@ import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.repository.MutableBeanRepository;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory.ConfigMode;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.object.config.schema.NewDSOApplicationConfig;
 import com.tc.object.config.schema.NewL1DSOConfig;
 import com.tc.object.config.schema.NewL2DSOConfig;
@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * A {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} that creates config appropriate for usage in
+ * A {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} that creates config appropriate for usage in
  * tests. This config behaves just like normal config, except that it reads no files; everything is in-memory instead.
  * You can specify whether you want this config to act like centralized config (all at L2), or distributed config (every
  * L1 has its own copy of the config, too). </p>
@@ -146,7 +146,7 @@ import java.util.Set;
  * {@link com.tc.config.schema.TestConfigObjectInvocationHandler}) in the config package in the source tree, and not
  * spread all over the place throughout our code, causing massive pain if we ever have to change anything.
  */
-public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfigurationSetupManagerFactory {
+public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetupManagerFactory {
 
   public static final int                              MODE_CENTRALIZED_CONFIG = 0;
   public static final int                              MODE_DISTRIBUTED_CONFIG = 1;
@@ -176,10 +176,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
   private boolean                                      offHeapEnabled          = false;
   private String                                       maxOffHeapDataSize      = "-1m";
   private PersistenceMode.Enum                         persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
-  private final StandardL1TVSConfigurationSetupManager sampleL1Manager;
-  private final StandardL2TVSConfigurationSetupManager sampleL2Manager;
+  private final L1ConfigurationSetupManagerImpl sampleL1Manager;
+  private final L2ConfigurationSetupManagerImpl sampleL2Manager;
 
-  public TestTVSConfigurationSetupManagerFactory(int mode, String l2Identifier,
+  public TestConfigurationSetupManagerFactory(int mode, String l2Identifier,
                                                  IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
       throws ConfigurationSetupException {
     super(illegalConfigurationChangeHandler);
@@ -223,7 +223,7 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     this.sampleL1Common = sampleL1Manager.commonL1Config();
     this.sampleL1DSO = sampleL1Manager.dsoL1Config();
     this.sampleDSOApplication = sampleL1Manager
-        .dsoApplicationConfigFor(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
+        .dsoApplicationConfigFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
 
     applyDefaultTestConfig();
   }
@@ -550,26 +550,26 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     return this.sampleDSOApplication;
   }
 
-  public TestTVSConfigurationSetupManagerFactory(String l2Identifier,
+  public TestConfigurationSetupManagerFactory(String l2Identifier,
                                                  IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
       throws ConfigurationSetupException {
     this(MODE_CENTRALIZED_CONFIG, l2Identifier, illegalConfigurationChangeHandler);
   }
 
-  public TestTVSConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+  public TestConfigurationSetupManagerFactory(IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
       throws ConfigurationSetupException {
     this(null, illegalConfigurationChangeHandler);
   }
 
-  public L1TVSConfigurationSetupManager getL1TVSConfigurationSetupManager() {
+  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() {
     return this.sampleL1Manager;
   }
 
-  public L2TVSConfigurationSetupManager getL2TVSConfigurationSetupManager() {
+  public L2ConfigurationSetupManager getL2TVSConfigurationSetupManager() {
     return this.sampleL2Manager;
   }
 
-  public StandardL1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(
+  public L1ConfigurationSetupManagerImpl createL1TVSConfigurationSetupManager(
                                                                                      TestConfigurationCreator configCreator)
       throws ConfigurationSetupException {
     if (mode == MODE_CENTRALIZED_CONFIG) {
@@ -581,10 +581,10 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
 
       l2sSpec.append(hostname + ":" + this.sampleL2DSO.dsoPort().getIntValue());
 
-      System.setProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
+      System.setProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
     }
 
-    StandardL1TVSConfigurationSetupManager configSetupManager = new StandardL1TVSConfigurationSetupManager(
+    L1ConfigurationSetupManagerImpl configSetupManager = new L1ConfigurationSetupManagerImpl(
                                                                                                            configCreator,
                                                                                                            this.defaultValueProvider,
                                                                                                            this.xmlObjectComparator,
@@ -593,21 +593,21 @@ public class TestTVSConfigurationSetupManagerFactory extends BaseTVSConfiguratio
     return configSetupManager;
   }
 
-  public StandardL2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Identifier)
+  public L2ConfigurationSetupManagerImpl createL2TVSConfigurationSetupManager(String l2Identifier)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
-    return new StandardL2TVSConfigurationSetupManager(this.configurationCreator, effectiveL2Identifier,
+    return new L2ConfigurationSetupManagerImpl(this.configurationCreator, effectiveL2Identifier,
                                                       this.defaultValueProvider, this.xmlObjectComparator,
                                                       this.illegalChangeHandler);
   }
 
   // used for just parsing and verifying tc-config.xml
-  public L2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(File tcConfig, String l2Identifier)
+  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(File tcConfig, String l2Identifier)
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
     ConfigurationCreator confiCreator = new StandardXMLFileConfigurationCreator(new ConfigurationSpec(tcConfig
         .getAbsolutePath(), ConfigMode.L2, tcConfig.getParentFile()), this.beanFactory);
-    return new StandardL2TVSConfigurationSetupManager(confiCreator, effectiveL2Identifier, this.defaultValueProvider,
+    return new L2ConfigurationSetupManagerImpl(confiCreator, effectiveL2Identifier, this.defaultValueProvider,
                                                       this.xmlObjectComparator, this.illegalChangeHandler);
   }
 }

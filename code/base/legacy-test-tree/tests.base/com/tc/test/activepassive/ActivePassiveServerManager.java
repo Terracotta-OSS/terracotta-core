@@ -5,7 +5,7 @@
 package com.tc.test.activepassive;
 
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.L2MBeanNames;
@@ -94,7 +94,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   // Should be called directly when an active-passive test is to be run.
   public ActivePassiveServerManager(boolean isActivePassiveTest, File tempDir, PortChooser portChooser,
                                     String configModel, MultipleServersTestSetupManager setupManger, File javaHome,
-                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
+                                    TestConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts,
                                     DSOApplicationConfigBuilder dsoApplicationBuilder) throws Exception {
     this(ACTIVEPASSIVE_GROUP, isActivePassiveTest, tempDir, portChooser, configModel, setupManger, javaHome,
@@ -105,7 +105,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
   public ActivePassiveServerManager(String groupName, boolean isActivePassiveTest, File tempDir,
                                     PortChooser portChooser, String configModel,
                                     MultipleServersTestSetupManager setupManger, File javaHome,
-                                    TestTVSConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
+                                    TestConfigurationSetupManagerFactory configFactory, List extraJvmArgs,
                                     boolean isProxyL2GroupPorts, boolean isProxyDsoPorts, boolean isActiveActive,
                                     int startIndexOfServer, DSOApplicationConfigBuilder dsoApplicationBuilder)
       throws Exception {
@@ -806,7 +806,7 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     return isProxyL2groupPorts ? proxyL2GroupPorts : l2GroupPorts;
   }
 
-  public void addServersAndGroupToL1Config(TestTVSConfigurationSetupManagerFactory configFactory, Servers serversForL1) {
+  public void addServersAndGroupToL1Config(TestConfigurationSetupManagerFactory configFactory, Servers serversForL1) {
     Servers serversCopy = (Servers) serversForL1.copy();
     configFactory.addServersAndGroupToL1Config(serversCopy);
     for (int i = 0; i < serverCount; i++) {

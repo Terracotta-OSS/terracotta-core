@@ -9,7 +9,7 @@ import static com.tc.l2.ha.ClusterStateDBKeyNames.DATABASE_CREATION_TIMESTAMP_KE
 import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.OrderedSink;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
@@ -86,7 +86,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private SequenceGenerator                               sequenceGenerator;
 
-  private final L2TVSConfigurationSetupManager            configSetupManager;
+  private final L2ConfigurationSetupManager            configSetupManager;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
@@ -94,7 +94,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                          final PersistentMapStore persistentStateStore, final ObjectManager objectManager,
                          final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
                          final WeightGeneratorFactory weightGeneratorFactory,
-                         final L2TVSConfigurationSetupManager configurationSetupManager,
+                         final L2ConfigurationSetupManager configurationSetupManager,
                          final MessageRecycler recycler, final GroupID thisGroupID,
                          final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory) {

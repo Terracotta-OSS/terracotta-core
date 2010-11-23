@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.terracottatech.config.PersistenceMode;
 
 public class TransparentLinkedListTest extends TransparentTestBase implements TestConfigurator {
@@ -18,7 +18,7 @@ public class TransparentLinkedListTest extends TransparentTestBase implements Te
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     configFactory.setGCEnabled(true);
     configFactory.setPersistenceMode(PersistenceMode.TEMPORARY_SWAP_ONLY);
   }

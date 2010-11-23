@@ -6,8 +6,8 @@ package com.tc.config.schema;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 
 /**
  * Validates a configuration file, and throws an exception if it fails.
@@ -17,13 +17,13 @@ public class ConfigFileValidator {
   private String description;
 
   public void validate(String[] args) throws ConfigurationSetupException {
-    StandardTVSConfigurationSetupManagerFactory factory;
+    StandardConfigurationSetupManagerFactory factory;
 
-    factory = new StandardTVSConfigurationSetupManagerFactory(
+    factory = new StandardConfigurationSetupManagerFactory(
                                                               args,
-                                                              StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                              StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                               new FatalIllegalConfigurationChangeHandler());
-    L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+    L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
     description = manager.describeSources();
   }
 

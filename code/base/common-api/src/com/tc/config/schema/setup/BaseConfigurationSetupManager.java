@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * A base class for all TVS configuration setup managers.
  */
-public class BaseTVSConfigurationSetupManager {
+public class BaseConfigurationSetupManager {
   private final ConfigurationCreator              configurationCreator;
   private final MutableBeanRepository             clientBeanRepository;
   private final MutableBeanRepository             serversBeanRepository;
@@ -52,7 +52,7 @@ public class BaseTVSConfigurationSetupManager {
   private final Map                               dsoApplicationConfigs;
   private final Map                               springApplicationConfigs;
 
-  public BaseTVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
+  public BaseConfigurationSetupManager(ConfigurationCreator configurationCreator,
                                           DefaultValueProvider defaultValueProvider,
                                           XmlObjectComparator xmlObjectComparator,
                                           IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
@@ -126,7 +126,7 @@ public class BaseTVSConfigurationSetupManager {
 
   public synchronized NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
     // When we support multiple applications, just take this assertion out.
-    Assert.eval(applicationName.equals(TVSConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME));
+    Assert.eval(applicationName.equals(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME));
 
     NewDSOApplicationConfig out = (NewDSOApplicationConfig) this.dsoApplicationConfigs.get(applicationName);
     if (out == null) {

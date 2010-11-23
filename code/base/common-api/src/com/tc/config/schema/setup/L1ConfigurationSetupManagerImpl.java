@@ -33,16 +33,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The standard implementation of {@link com.tc.config.schema.setup.L1TVSConfigurationSetupManager}.
+ * The standard implementation of {@link com.tc.config.schema.setup.L1ConfigurationSetupManager}.
  */
-public class StandardL1TVSConfigurationSetupManager extends BaseTVSConfigurationSetupManager implements
-    L1TVSConfigurationSetupManager {
+public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements
+    L1ConfigurationSetupManager {
   private final NewCommonL1Config  commonL1Config;
   private final NewL1DSOConfig     dsoL1Config;
   private final ConfigTCProperties configTCProperties;
   private final boolean            loadedFromTrustedSource;
 
-  public StandardL1TVSConfigurationSetupManager(ConfigurationCreator configurationCreator,
+  public L1ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator,
                                                 DefaultValueProvider defaultValueProvider,
                                                 XmlObjectComparator xmlObjectComparator,
                                                 IllegalConfigurationChangeHandler illegalConfigChangeHandler)

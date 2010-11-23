@@ -5,8 +5,8 @@
 package com.tc.server;
 
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.exception.MortbayMultiExceptionHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -21,9 +21,9 @@ public class TCServerMain {
     try {
       TCThreadGroup threadGroup = new TCThreadGroup(throwableHandler);
 
-      TVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+      ConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                     args,
-                                                                                                    StandardTVSConfigurationSetupManagerFactory.ConfigMode.L2,
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.L2,
                                                                                                     new FatalIllegalConfigurationChangeHandler());
       AbstractServerFactory serverFactory = AbstractServerFactory.getFactory();
       TCServer server = serverFactory.createServer(factory.createL2TVSConfigurationSetupManager(null), threadGroup);

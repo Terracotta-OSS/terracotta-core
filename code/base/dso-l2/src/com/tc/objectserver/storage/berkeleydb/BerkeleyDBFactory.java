@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.storage.berkeleydb;
 
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.objectserver.storage.api.DBEnvironment;
@@ -28,7 +28,7 @@ public class BerkeleyDBFactory implements DBFactory {
     return new BerkeleyDBEnvironment(paranoid, envHome, properties, l2FaultFromDisk);
   }
 
-  public ServerDBBackupMBean getServerDBBackupMBean(final L2TVSConfigurationSetupManager configurationSetupManager)
+  public ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException {
     return new ServerDBBackup(configurationSetupManager);
   }

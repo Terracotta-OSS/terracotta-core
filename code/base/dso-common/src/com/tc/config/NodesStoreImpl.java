@@ -4,7 +4,7 @@
 package com.tc.config;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   private final Set<Node>                                   nodes;
   private final CopyOnWriteArraySet<TopologyChangeListener> listeners               = new CopyOnWriteArraySet<TopologyChangeListener>();
-  private L2TVSConfigurationSetupManager                    configSetupManager;
+  private L2ConfigurationSetupManager                    configSetupManager;
   private volatile HashMap<String, GroupID>                 serverNameToGidMap      = new HashMap<String, GroupID>();
   private volatile HashSet<String>                          serverNamesForThisGroup = new HashSet<String>();
   private volatile HashMap<String, String>                  nodeNamesToServerNames  = new HashMap<String, String>();
@@ -33,7 +33,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
   }
 
   public NodesStoreImpl(Set<Node> nodes, Set<String> nodeNamesForThisGroup,
-                        HashMap<String, GroupID> serverNameToGidMap, L2TVSConfigurationSetupManager configSetupManager) {
+                        HashMap<String, GroupID> serverNameToGidMap, L2ConfigurationSetupManager configSetupManager) {
     this(nodes);
     serverNamesForThisGroup.addAll(nodeNamesForThisGroup);
     this.serverNameToGidMap = serverNameToGidMap;

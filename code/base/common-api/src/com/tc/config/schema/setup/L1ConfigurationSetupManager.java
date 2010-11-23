@@ -12,7 +12,7 @@ import com.tc.object.config.schema.NewL1DSOConfig;
 /**
  * Knows how to set up configuration for L1.
  */
-public interface L1TVSConfigurationSetupManager {
+public interface L1ConfigurationSetupManager {
 
   boolean loadedFromTrustedSource();
 

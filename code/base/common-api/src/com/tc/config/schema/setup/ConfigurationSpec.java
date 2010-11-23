@@ -3,7 +3,7 @@
  */
 package com.tc.config.schema.setup;
 
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory.ConfigMode;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.util.Assert;
 
 import java.io.File;

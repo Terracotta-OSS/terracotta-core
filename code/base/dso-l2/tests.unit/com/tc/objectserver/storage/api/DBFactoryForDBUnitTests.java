@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.storage.api;
 
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
 import com.tc.stats.counter.CounterManagerImpl;
@@ -32,7 +32,7 @@ public class DBFactoryForDBUnitTests implements DBFactory {
     return dbFactory.createEnvironment(paranoid, envHome, faultFromDisk);
   }
 
-  public ServerDBBackupMBean getServerDBBackupMBean(L2TVSConfigurationSetupManager configurationSetupManager) {
+  public ServerDBBackupMBean getServerDBBackupMBean(L2ConfigurationSetupManager configurationSetupManager) {
     return null;
   }
 }

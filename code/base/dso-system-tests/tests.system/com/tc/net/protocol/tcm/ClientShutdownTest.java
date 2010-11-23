@@ -6,9 +6,9 @@ package com.tc.net.protocol.tcm;
 
 import com.tc.cluster.DsoClusterImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.L2TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.L2ConfigurationSetupManager;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
@@ -68,7 +68,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
     server.getDSOServer().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
 
     configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
-    L1TVSConfigurationSetupManager manager = super.createL1ConfigManager();
+    L1ConfigurationSetupManager manager = super.createL1ConfigManager();
     preparedComponentsFromL2Connection = new PreparedComponentsFromL2Connection(manager);
 
     final DistributedObjectClient client1 = startupClient(dsoPort, jmxPort, manager, preparedComponentsFromL2Connection);
@@ -172,7 +172,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
   }
 
   protected DistributedObjectClient startupClient(final int dsoPort, final int jmxPort,
-                                                  L1TVSConfigurationSetupManager manager,
+                                                  L1ConfigurationSetupManager manager,
                                                   PreparedComponentsFromL2Connection preparedComponentsFromL2Connection2)
       throws ConfigurationSetupException {
 
@@ -215,8 +215,8 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
     public void execute() throws Throwable {
       ManagedObjectStateFactory.disableSingleton(true);
-      TestTVSConfigurationSetupManagerFactory factory = configFactory();
-      L2TVSConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
+      TestConfigurationSetupManagerFactory factory = configFactory();
+      L2ConfigurationSetupManager manager = factory.createL2TVSConfigurationSetupManager(null);
 
       manager.dsoL2Config().dsoPort().setIntValue(dsoPort);
       manager.dsoL2Config().dsoPort().setBind("127.0.0.1");

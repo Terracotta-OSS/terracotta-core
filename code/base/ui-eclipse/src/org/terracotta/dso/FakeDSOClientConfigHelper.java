@@ -14,7 +14,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.config.schema.NewCommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.exception.ImplementMe;
 import com.tc.object.Portability;
 import com.tc.object.bytecode.ClassAdapterFactory;
@@ -508,7 +508,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     //
   }
 
-  public L1TVSConfigurationSetupManager reloadServersConfiguration() {
+  public L1ConfigurationSetupManager reloadServersConfiguration() {
     return null;
   }
 }

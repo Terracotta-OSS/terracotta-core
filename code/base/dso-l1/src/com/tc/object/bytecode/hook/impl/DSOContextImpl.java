@@ -17,8 +17,8 @@ import com.tc.bundles.VirtualTimRepository;
 import com.tc.config.schema.L2ConfigForL1.L2Data;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
-import com.tc.config.schema.setup.L1TVSConfigurationSetupManager;
-import com.tc.config.schema.setup.StandardTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
+import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
 import com.tc.license.LicenseManager;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -99,13 +99,13 @@ public class DSOContextImpl implements DSOContext {
   }
 
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
-    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
-                                                                                                          StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                                                                          StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
-    L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
+    L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
     PreparedComponentsFromL2Connection l2Connection;
     try {
@@ -138,13 +138,13 @@ public class DSOContextImpl implements DSOContext {
       throw new RuntimeException(e);
     }
 
-    StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
+    StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
                                                                                                           (String[]) null,
-                                                                                                          StandardTVSConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
+                                                                                                          StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
                                                                                                           new FatalIllegalConfigurationChangeHandler(),
                                                                                                           configSpec);
 
-    L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
+    L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
     PreparedComponentsFromL2Connection l2Connection;
     try {
@@ -301,12 +301,12 @@ public class DSOContextImpl implements DSOContext {
 
   private synchronized static DSOClientConfigHelper getGlobalConfigHelper() throws ConfigurationSetupException {
     if (staticConfigHelper == null) {
-      StandardTVSConfigurationSetupManagerFactory factory = new StandardTVSConfigurationSetupManagerFactory(
-                                                                                                            StandardTVSConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+      StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
+                                                                                                            StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
                                                                                                             new FatalIllegalConfigurationChangeHandler());
 
       logger.debug("Created StandardTVSConfigurationSetupManagerFactory.");
-      L1TVSConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
+      L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
       config.setupLogging();
       logger.debug("Created L1TVSConfigurationSetupManager.");
 
@@ -321,7 +321,7 @@ public class DSOContextImpl implements DSOContext {
     return staticConfigHelper;
   }
 
-  private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1TVSConfigurationSetupManager config)
+  private static PreparedComponentsFromL2Connection validateMakeL2Connection(L1ConfigurationSetupManager config)
       throws UnknownHostException, IOException, TCTimeoutException {
     L2Data[] l2Data = config.l2Config().l2Data();
     Assert.assertNotNull(l2Data);

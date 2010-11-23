@@ -4,7 +4,7 @@
  */
 package com.tctest;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 
 public abstract class GCTestBase extends TransparentTestBase implements TestConfigurator {
 
@@ -21,7 +21,7 @@ public abstract class GCTestBase extends TransparentTestBase implements TestConf
     t.initializeTestRunner();
   }
 
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     gcConfigHelper.setupConfig(configFactory);
   }
 }

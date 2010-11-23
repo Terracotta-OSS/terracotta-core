@@ -17,10 +17,10 @@ import com.tc.logging.TCLogger;
 import java.io.File;
 
 /**
- * The standard implementation of {@link com.tc.config.schema.setup.TVSConfigurationSetupManagerFactory} &mdash; uses
+ * The standard implementation of {@link com.tc.config.schema.setup.ConfigurationSetupManagerFactory} &mdash; uses
  * system properties and command-line arguments to create the relevant factories.
  */
-public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigurationSetupManagerFactory {
+public class StandardConfigurationSetupManagerFactory extends BaseConfigurationSetupManagerFactory {
 
   private static final String     CONFIG_SPEC_ARGUMENT_NAME = "config";
   /**
@@ -33,7 +33,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
   public static final String      DEFAULT_CONFIG_SPEC       = "tc-config.xml";
   public static final String      DEFAULT_CONFIG_PATH       = "default-config.xml";
   public static final String      DEFAULT_CONFIG_URI        = "resource:///"
-                                                              + StandardTVSConfigurationSetupManagerFactory.class
+                                                              + StandardConfigurationSetupManagerFactory.class
                                                                   .getPackage().getName().replace('.', '/') + "/"
                                                               + DEFAULT_CONFIG_PATH;
 
@@ -44,26 +44,26 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     L2, CUSTOM_L1, EXPRESS_L1
   }
 
-  public StandardTVSConfigurationSetupManagerFactory(ConfigMode configMode,
+  public StandardConfigurationSetupManagerFactory(ConfigMode configMode,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
     this((String[]) null, configMode, illegalChangeHandler);
   }
 
-  public StandardTVSConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
+  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
     this(parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler);
   }
 
-  public StandardTVSConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
+  public StandardConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
     this(commandLine, configMode, illegalChangeHandler, System
-        .getProperty(TVSConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME));
+        .getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME));
   }
 
-  public StandardTVSConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
+  public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler,
                                                      String configSpec) throws ConfigurationSetupException {
     this(parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler, configSpec);
@@ -84,7 +84,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     }
   }
 
-  public StandardTVSConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
+  public StandardConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
                                                      IllegalConfigurationChangeHandler illegalChangeHandler,
                                                      String configSpec) throws ConfigurationSetupException {
     super(illegalChangeHandler);
@@ -97,7 +97,7 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
                                                                                           : "'" + cwdAsString + "'")
                                                                                       + ".)"); }
     this.configurationSpec = new ConfigurationSpec(effectiveConfigSpec, System
-        .getProperty(TVSConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME), configMode,
+        .getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME), configMode,
                                                    new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
   }
@@ -163,12 +163,12 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return options;
   }
 
-  public L1TVSConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
+  public L1ConfigurationSetupManager createL1TVSConfigurationSetupManager(TCLogger logger)
       throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(logger, this.configurationSpec,
                                                                                         this.beanFactory);
 
-    L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
+    L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
                                                                                              this.defaultValueProvider,
                                                                                              this.xmlObjectComparator,
                                                                                              this.illegalChangeHandler);
@@ -176,11 +176,11 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return setupManager;
   }
 
-  public L1TVSConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
+  public L1ConfigurationSetupManager getL1TVSConfigurationSetupManager() throws ConfigurationSetupException {
     ConfigurationCreator configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec,
                                                                                         this.beanFactory);
 
-    L1TVSConfigurationSetupManager setupManager = new StandardL1TVSConfigurationSetupManager(configurationCreator,
+    L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
                                                                                              this.defaultValueProvider,
                                                                                              this.xmlObjectComparator,
                                                                                              this.illegalChangeHandler);
@@ -188,14 +188,14 @@ public class StandardTVSConfigurationSetupManagerFactory extends BaseTVSConfigur
     return setupManager;
   }
 
-  public L2TVSConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
+  public L2ConfigurationSetupManager createL2TVSConfigurationSetupManager(String l2Name)
       throws ConfigurationSetupException {
     if (l2Name == null) l2Name = this.defaultL2Identifier;
 
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory);
 
-    return new StandardL2TVSConfigurationSetupManager(configurationCreator, l2Name, this.defaultValueProvider,
+    return new L2ConfigurationSetupManagerImpl(configurationCreator, l2Name, this.defaultValueProvider,
                                                       this.xmlObjectComparator, this.illegalChangeHandler);
   }
 }

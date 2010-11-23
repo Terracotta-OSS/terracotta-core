@@ -19,7 +19,7 @@ import java.io.InputStream;
 /**
  * Knows how to set up configuration for L2.
  */
-public interface L2TVSConfigurationSetupManager {
+public interface L2ConfigurationSetupManager {
   NewCommonL2Config commonl2Config();
 
   NewSystemConfig systemConfig();

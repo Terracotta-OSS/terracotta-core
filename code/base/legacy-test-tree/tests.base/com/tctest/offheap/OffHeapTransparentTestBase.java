@@ -1,6 +1,6 @@
 package com.tctest.offheap;
 
-import com.tc.config.schema.setup.TestTVSConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.properties.TCPropertiesConsts;
 import com.tctest.TransparentTestBase;
 
@@ -39,7 +39,7 @@ public abstract class OffHeapTransparentTestBase extends TransparentTestBase {
   }
 
   @Override
-  protected void setupConfig(TestTVSConfigurationSetupManagerFactory configFactory) {
+  protected void setupConfig(TestConfigurationSetupManagerFactory configFactory) {
     super.setupConfig(configFactory);
     configFactory.setOffHeapConfigObject(true, getMaxDataSizeInMB() + "m");
   }
