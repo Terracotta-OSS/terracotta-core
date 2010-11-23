@@ -644,6 +644,7 @@ public class BootJarTool {
   private void addClusterEventsAndMetaDataClasses() {
     loadTerracottaClass(DsoCluster.class.getName());
     loadTerracottaClass(DsoClusterInternal.class.getName());
+    loadTerracottaClass(DsoClusterInternal.EVENTS.class.getName());
     loadTerracottaClass(DsoClusterEvent.class.getName());
     loadTerracottaClass(DsoClusterListener.class.getName());
     loadTerracottaClass(DsoClusterTopology.class.getName());
@@ -1266,8 +1267,8 @@ public class BootJarTool {
     final ClassReader cr = new ClassReader(orig);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
-    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(), Vm
-        .isAzul(), Vm.isIBM());
+    final ClassVisitor cv = new JavaLangStringAdapter(cw, Vm.VERSION, shouldIncludeStringBufferAndFriends(),
+                                                      Vm.isAzul(), Vm.isIBM());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("java.lang.String", cw.toByteArray(), false);
@@ -1491,8 +1492,8 @@ public class BootJarTool {
           .getOrCreateSpec("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper");
       spec.markPreInstrumented();
       bytes = doDSOTransform(spec.getClassName(), bytes);
-      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes, spec
-          .isPreInstrumented());
+      loadClassIntoJar("com.tcclient.util.ConcurrentHashMapEntrySetWrapper$EntryWrapper", bytes,
+                       spec.isPreInstrumented());
     }
   }
 
@@ -1720,8 +1721,9 @@ public class BootJarTool {
 
     final ClassReader cr = new ClassReader(bytes);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(cw, spec
-        .getClassName());
+    final ClassVisitor cv = new LogicalClassSerializationAdapter.LogicalClassSerializationClassAdapter(
+                                                                                                       cw,
+                                                                                                       spec.getClassName());
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     bytes = cw.toByteArray();
