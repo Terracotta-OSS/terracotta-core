@@ -190,6 +190,7 @@ artifacts:
     artifactId: quartz-terracotta
     version: 2.0.0-SNAPSHOT
     destination: quartz
+    kit_edition: opensource
     
   - maven_artifact: true
     groupId: org.terracotta.quartz
