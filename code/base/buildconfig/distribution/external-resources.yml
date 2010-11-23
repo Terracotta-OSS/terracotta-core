@@ -181,7 +181,7 @@ artifacts:
     destination: quartz
     explode: true
     remove_root_folder: true
-    url: http://download.terracotta.org/quartz/quartz-2.0.0-SNAPSHOT.tar.gz
+    url: http://download.terracotta.org/nightly/quartz/quartz-2.0.0-SNAPSHOT.tar.gz
 # end QUARTZ
 
 # begin express products
