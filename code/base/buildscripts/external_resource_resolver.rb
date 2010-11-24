@@ -1,5 +1,6 @@
 class ExternalResourceResolver
-  def initialize(repositories, use_local_maven_repo = false)
+  def initialize(flavor, repositories, use_local_maven_repo = false)
+    @flavor = flavor.to_s.downcase
     @repositories = repositories
     @use_local_maven_repo = use_local_maven_repo
     @download_util = DownloadUtil.new(Registry[:static_resources].global_cache_directory)
@@ -24,6 +25,8 @@ class ExternalResourceResolver
   
   def post_actions(dest_dir, actions)
     actions.each do |action|
+      next unless (action['kit_edition'] == nil) || (action['kit_edition'] == @flavor)
+      puts "Running post action: #{action['ant']}"
       if action['ant'] == 'replace'
         arguments = action['arguments']
         arguments[:dir] = dest_dir
@@ -88,7 +91,7 @@ class ExternalResourceResolver
 
     # recover execution bits
     ant.chmod(:dir => exploded_dir, :perm => "ugo+x",
-              :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
+      :includes => "**/*.sh **/*.bat **/*.exe **/bin/** **/lib/**")
     
     if options['remove_root_folder'] == true
       # assume the zip file contains a root folder
