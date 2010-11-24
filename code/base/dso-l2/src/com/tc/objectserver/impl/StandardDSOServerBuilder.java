@@ -28,7 +28,7 @@ import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.groups.TCGroupManagerImpl;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
@@ -251,7 +251,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome,
-                                           final NewL2DSOConfig l2DSOCofig, final DumpHandlerStore dumpHandlerStore,
+                                           final L2DSOConfig l2DSOCofig, final DumpHandlerStore dumpHandlerStore,
                                            final StageManager stageManager, final SampledCounter l2FaultFromDisk,
                                            final SampledCounter l2FaultFromOffheap,
                                            final SampledCounter l2FlushFromOffheap, final DBFactory factory)

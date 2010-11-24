@@ -7,26 +7,26 @@ package com.tc.config.schema;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 
 /**
- * Unit/subsystem test for {@link NewCommonL2ConfigObject}.
+ * Unit/subsystem test for {@link CommonL2ConfigObject}.
  */
-public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
+public class CommonL2ConfigObjectTest extends ConfigObjectTestBase {
 
-  private NewCommonL2ConfigObject object;
+  private CommonL2ConfigObject object;
 
   @Override
   public void setUp() throws Exception {
     TcConfig config = TcConfig.Factory.newInstance();
     super.setUp(Server.class);
-    NewL2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory());
+    L2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory());
     setBean(config.getServers().getServerArray(0));
-    this.object = new NewCommonL2ConfigObject(context());
+    this.object = new CommonL2ConfigObject(context());
   }
 
   @Override
@@ -36,7 +36,7 @@ public class NewCommonL2ConfigObjectTest extends ConfigObjectTestBase {
 
   public void testConstruction() throws Exception {
     try {
-      new NewCommonL2ConfigObject(null);
+      new CommonL2ConfigObject(null);
       fail("Didn't get NPE on no context");
     } catch (NullPointerException npe) {
       // ok

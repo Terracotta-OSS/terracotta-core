@@ -1,6 +1,6 @@
 package com.tc.statistics;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -13,7 +13,7 @@ import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.h2.H2StatisticsBufferImpl;
 import com.tc.statistics.buffer.memory.MemoryStatisticsBufferImpl;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
 import com.tc.statistics.logging.StatisticsLogger;
@@ -75,9 +75,9 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     statisticsBuffer.setDefaultAgentDifferentiator(defaultAgentDifferentiator);
   }
 
-  public synchronized boolean setup(final StatisticsSystemType type, final NewStatisticsConfig config) {
+  public synchronized boolean setup(final StatisticsSystemType type, final StatisticsConfig config) {
     try {
-      StatisticsConfig statistics_config = new StatisticsConfigImpl();
+      DSOStatisticsConfig statistics_config = new StatisticsConfigImpl();
 
       // setup the statistics logger
       statisticsLogger = new StatisticsLoggerImpl(statistics_config);
@@ -126,7 +126,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     return true;
   }
 
-  private StatisticsBuffer createClientStatisticsBuffer(final StatisticsSystemType type, final StatisticsConfig config) {
+  private StatisticsBuffer createClientStatisticsBuffer(final StatisticsSystemType type, final DSOStatisticsConfig config) {
     final StatisticsBuffer buffer = new MemoryStatisticsBufferImpl(type, config);
     try {
       buffer.open();
@@ -145,7 +145,7 @@ public class StatisticsAgentSubSystemImpl implements StatisticsAgentSubSystem {
     return buffer;
   }
 
-  private StatisticsBuffer createServerStatisticsBuffer(final StatisticsSystemType type, final StatisticsConfig config,
+  private StatisticsBuffer createServerStatisticsBuffer(final StatisticsSystemType type, final DSOStatisticsConfig config,
                                                         final File statPath) {
     if (!TCFileUtils.ensureWritableDir(statPath, new TCFileUtils.EnsureWritableDirReporter() {
 

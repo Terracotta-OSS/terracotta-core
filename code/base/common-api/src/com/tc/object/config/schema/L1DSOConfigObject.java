@@ -9,7 +9,7 @@ import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlString;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
@@ -25,7 +25,7 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 
-public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DSOConfig {
+public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
   public static final String                     DSO_INSTRUMENTATION_LOGGING_OPTIONS_SUB_XPATH = "";
 
@@ -35,7 +35,7 @@ public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DS
   private final DSORuntimeLoggingOptions         runtimeLoggingOptions;
   private final DSORuntimeOutputOptions          runtimeOutputOptions;
 
-  public NewL1DSOConfigObject(ConfigContext context) {
+  public L1DSOConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(DsoClientData.class);

@@ -21,7 +21,7 @@ import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
 import com.tc.aspectwerkz.reflect.impl.asm.AsmClassInfo;
 import com.tc.backport175.bytecode.AnnotationElement.Annotation;
-import com.tc.config.schema.NewCommonL1Config;
+import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -61,7 +61,7 @@ import com.tc.object.config.schema.ExcludedInstrumentedClass;
 import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
+import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
@@ -247,7 +247,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     nonportablesMatcher = new CompoundExpressionMatcher();
 
-    NewDSOApplicationConfig appConfig = configSetupManager
+    DSOApplicationConfig appConfig = configSetupManager
         .dsoApplicationConfigFor(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME);
 
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
@@ -310,7 +310,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     addIncludePattern(expression, false, false, false);
   }
 
-  public NewCommonL1Config getNewCommonL1Config() {
+  public CommonL1Config getNewCommonL1Config() {
     return configSetupManager.commonL1Config();
   }
 

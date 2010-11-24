@@ -6,7 +6,7 @@ package com.tc.config.schema;
 
 import com.terracottatech.config.Ha;
 
-public interface NewHaConfig extends NewConfig {
+public interface HaConfigSchema extends Config {
   boolean isNetworkedActivePassive();
 
   Ha getHa();

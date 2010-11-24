@@ -3,12 +3,12 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.NewConfig;
+import com.tc.config.schema.Config;
 
 /**
  * Represents the runtime-output options for DSO.
  */
-public interface DSORuntimeOutputOptions extends NewConfig {
+public interface DSORuntimeOutputOptions extends Config {
 
   boolean doAutoLockDetails();
 

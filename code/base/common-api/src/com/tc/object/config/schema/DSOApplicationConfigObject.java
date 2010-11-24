@@ -7,7 +7,7 @@ package com.tc.object.config.schema;
 import org.apache.xmlbeans.XmlBoolean;
 import org.apache.xmlbeans.XmlException;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.util.Assert;
@@ -20,7 +20,7 @@ import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplications;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
-public class NewDSOApplicationConfigObject extends BaseNewConfigObject implements NewDSOApplicationConfig {
+public class DSOApplicationConfigObject extends BaseConfigObject implements DSOApplicationConfig {
   private final InstrumentedClass[]                instrumentedClasses;
   private final TransientFields                    transientFields;
   private final com.tc.object.config.schema.Root[] roots;
@@ -28,7 +28,7 @@ public class NewDSOApplicationConfigObject extends BaseNewConfigObject implement
   private final boolean                            supportSharingThroughReflection;
   private final WebApplications                    webApplications;
 
-  public NewDSOApplicationConfigObject(ConfigContext context) {
+  public DSOApplicationConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(DsoApplication.class);

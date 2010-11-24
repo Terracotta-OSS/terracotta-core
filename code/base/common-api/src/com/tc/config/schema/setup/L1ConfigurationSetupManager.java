@@ -5,9 +5,9 @@
 package com.tc.config.schema.setup;
 
 import com.tc.config.schema.L2ConfigForL1;
-import com.tc.config.schema.NewCommonL1Config;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.config.schema.NewL1DSOConfig;
+import com.tc.config.schema.CommonL1Config;
+import com.tc.object.config.schema.DSOApplicationConfig;
+import com.tc.object.config.schema.L1DSOConfig;
 
 /**
  * Knows how to set up configuration for L1.
@@ -18,17 +18,17 @@ public interface L1ConfigurationSetupManager {
 
   String rawConfigText();
 
-  NewCommonL1Config commonL1Config();
+  CommonL1Config commonL1Config();
 
   L2ConfigForL1 l2Config();
 
-  NewL1DSOConfig dsoL1Config();
+  L1DSOConfig dsoL1Config();
 
   void setupLogging();
 
   String[] applicationNames();
 
-  NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
+  DSOApplicationConfig dsoApplicationConfigFor(String applicationName);
 
   void reloadServersConfiguration() throws ConfigurationSetupException;
 }

@@ -11,19 +11,19 @@ import org.apache.xmlbeans.impl.common.XPath;
 
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
-import com.tc.config.schema.NewCommonL1Config;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewHaConfig;
-import com.tc.config.schema.NewSystemConfig;
+import com.tc.config.schema.CommonL1Config;
+import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.config.schema.NewL1DSOConfig;
-import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.DSOApplicationConfig;
+import com.tc.object.config.schema.L1DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.GroupData;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
@@ -53,7 +53,7 @@ import java.util.Set;
  * L1 has its own copy of the config, too). </p>
  * <p>
  * To use this class, simply get the appropriate config object that you need by calling a method (<em>e.g.</em>,
- * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.NewSystemConfig#dsoEnabled()},
+ * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.SystemConfig#dsoEnabled()},
  * for example); this will give you back a {@link ConfigItem}, or a subinterface thereof. Cast this item to a
  * {@link com.tc.config.schema.SettableConfigItem}, and then call {@link SettableConfigItem#setValue(Object)} on it (or
  * one of the similar methods that takes a primitive type), passing it the value you want this class to return for that
@@ -155,14 +155,14 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
   private final TestConfigurationCreator               configurationCreator;
 
-  private final NewSystemConfig                        sampleSystem;
-  private final NewCommonL1Config                      sampleL1Common;
-  private final NewL1DSOConfig                         sampleL1DSO;
-  private final NewCommonL2Config                      sampleL2Common;
-  private final NewL2DSOConfig                         sampleL2DSO;
-  private final NewDSOApplicationConfig                sampleDSOApplication;
+  private final SystemConfig                        sampleSystem;
+  private final CommonL1Config                      sampleL1Common;
+  private final L1DSOConfig                         sampleL1DSO;
+  private final CommonL2Config                      sampleL2Common;
+  private final L2DSOConfig                         sampleL2DSO;
+  private final DSOApplicationConfig                sampleDSOApplication;
   private final ActiveServerGroupsConfig               sampleActiveServerGroups;
-  private final NewHaConfig                            sampleHa;
+  private final HaConfigSchema                            sampleHa;
 
   private final String                                 defaultL2Identifier;
 
@@ -291,15 +291,15 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return allRepositories;
   }
 
-  public NewSystemConfig systemConfig() {
+  public SystemConfig systemConfig() {
     return this.sampleSystem;
   }
 
-  public NewCommonL1Config l1CommonConfig() {
+  public CommonL1Config l1CommonConfig() {
     return this.sampleL1Common;
   }
 
-  public NewL1DSOConfig l1DSOConfig() {
+  public L1DSOConfig l1DSOConfig() {
     return this.sampleL1DSO;
   }
 
@@ -354,7 +354,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
 
     TcConfig config = TcConfig.Factory.newInstance();
     config.setServers(servers);
-    NewL2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.configurationCreator
+    L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.configurationCreator
         .directoryConfigurationLoadedFrom());
 
     setServersBeanForL1s(config.getServers(), "From test froamework");
@@ -404,7 +404,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     TcConfig config = TcConfig.Factory.newInstance();
     Servers servers = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     config.setServers(servers);
-    NewL2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.configurationCreator
+    L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.configurationCreator
         .directoryConfigurationLoadedFrom());
   }
 
@@ -530,11 +530,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return persistenceMode;
   }
 
-  public NewCommonL2Config l2CommonConfig() {
+  public CommonL2Config l2CommonConfig() {
     return this.sampleL2Common;
   }
 
-  public NewL2DSOConfig l2DSOConfig() {
+  public L2DSOConfig l2DSOConfig() {
     return this.sampleL2DSO;
   }
 
@@ -542,11 +542,11 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return this.sampleActiveServerGroups;
   }
 
-  public NewHaConfig haConfig() {
+  public HaConfigSchema haConfig() {
     return this.sampleHa;
   }
 
-  public NewDSOApplicationConfig dsoApplicationConfig() {
+  public DSOApplicationConfig dsoApplicationConfig() {
     return this.sampleDSOApplication;
   }
 

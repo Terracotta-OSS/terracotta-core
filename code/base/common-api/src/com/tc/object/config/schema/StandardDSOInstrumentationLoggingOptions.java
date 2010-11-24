@@ -3,7 +3,7 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.InstrumentationLogging;
@@ -11,7 +11,7 @@ import com.terracottatech.config.InstrumentationLogging;
 /**
  * The standard implementation of {@link DSOInstrumentationLoggingOptions}.
  */
-public class StandardDSOInstrumentationLoggingOptions extends BaseNewConfigObject implements
+public class StandardDSOInstrumentationLoggingOptions extends BaseConfigObject implements
     DSOInstrumentationLoggingOptions {
 
   public StandardDSOInstrumentationLoggingOptions(ConfigContext context) {

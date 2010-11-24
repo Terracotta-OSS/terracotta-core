@@ -6,12 +6,12 @@ package com.tc.config.schema.setup;
 
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewHaConfig;
-import com.tc.config.schema.NewSystemConfig;
+import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.UpdateCheckConfig;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.DSOApplicationConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.server.ServerConnectionValidator;
 
 import java.io.InputStream;
@@ -20,13 +20,13 @@ import java.io.InputStream;
  * Knows how to set up configuration for L2.
  */
 public interface L2ConfigurationSetupManager {
-  NewCommonL2Config commonl2Config();
+  CommonL2Config commonl2Config();
 
-  NewSystemConfig systemConfig();
+  SystemConfig systemConfig();
 
-  NewL2DSOConfig dsoL2Config();
+  L2DSOConfig dsoL2Config();
 
-  NewHaConfig haConfig();
+  HaConfigSchema haConfig();
 
   UpdateCheckConfig updateCheckConfig();
 
@@ -36,7 +36,7 @@ public interface L2ConfigurationSetupManager {
 
   String[] applicationNames();
 
-  NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName);
+  DSOApplicationConfig dsoApplicationConfigFor(String applicationName);
 
   String describeSources();
 
@@ -48,9 +48,9 @@ public interface L2ConfigurationSetupManager {
 
   String getL2Identifier();
 
-  NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
+  CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException;
 
-  NewL2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
+  L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
 
   TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator) throws ConfigurationSetupException;
 }

@@ -11,7 +11,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.logging.StatisticsLogger;
 import com.tc.util.Assert;
 
@@ -28,17 +28,17 @@ public class StatisticsLoggerImpl implements StatisticsLogger {
   private final static TCLogger  DSO_LOGGER = CustomerLogging.getDSOGenericLogger();
 
   private final Timer            timer      = new Timer("Statistics Logger", true);
-  private final StatisticsConfig config;
+  private final DSOStatisticsConfig config;
   private final Set              actions    = Collections.synchronizedSet(new LinkedHashSet());
 
   private LogActionDataTask      logTask    = null;
 
-  public StatisticsLoggerImpl(final StatisticsConfig config) {
+  public StatisticsLoggerImpl(final DSOStatisticsConfig config) {
     Assert.assertNotNull("config", config);
     this.config = config;
   }
 
-  public StatisticsConfig getConfig() {
+  public DSOStatisticsConfig getConfig() {
     return config;
   }
 

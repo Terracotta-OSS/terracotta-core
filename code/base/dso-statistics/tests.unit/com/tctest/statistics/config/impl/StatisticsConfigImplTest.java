@@ -4,7 +4,7 @@
 package com.tctest.statistics.config.impl;
 
 import com.tc.statistics.beans.StatisticsEmitterMBean;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.config.impl.StatisticsConfigImpl;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 
@@ -15,37 +15,37 @@ import junit.framework.TestCase;
 
 public class StatisticsConfigImplTest extends TestCase {
   public void testInstantiation() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
     assertNull(config.getParent());
   }
 
   public void testValuesOfInvalidKeys() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
     assertNull(config.getParam("invalid"));
     assertEquals(0, config.getParamLong("invalid"));
     assertEquals(null, config.getParamString("invalid"));
   }
 
   public void testDefaultValues() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
-    assertEquals(StatisticsEmitterMBean.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    assertEquals(StatisticsEmitterMBean.DEFAULT_FREQUENCY.longValue(), config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
 
-    config.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
-    config.removeParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config.setParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config.removeParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
 
-    config.setParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
-    config.removeParam(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL);
-    assertEquals(StatisticsEmitterMBean.DEFAULT_FREQUENCY.longValue(), config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
+    config.setParam(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
+    config.removeParam(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsEmitterMBean.DEFAULT_FREQUENCY.longValue(), config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
   }
 
   public void testMappingsForAllDefaultValueKeys() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
 
-    Field[] fields = StatisticsConfig.class.getDeclaredFields();
+    Field[] fields = DSOStatisticsConfig.class.getDeclaredFields();
     for (int i = 0; i < fields.length; i++) {
       int modifiers = fields[i].getModifiers();
       if (Modifier.isStatic(modifiers)
@@ -54,7 +54,7 @@ public class StatisticsConfigImplTest extends TestCase {
           && fields[i].getType() == String.class) {
         String key = (String)fields[i].get(null);
         assertNotNull("Not all the default parameter keys have values assigned to them, please look at all the constants fields in "
-                      +StatisticsConfig.class.getName()
+                      +DSOStatisticsConfig.class.getName()
                       +" and make sure that the corresponding default values are properly setup in the constuctor of "
                       +StatisticsConfigImpl.class.getName()+".",
           config.getParam(key));
@@ -63,7 +63,7 @@ public class StatisticsConfigImplTest extends TestCase {
   }
 
   public void testSetParam() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
     assertNull(config.getParam("param1"));
     config.setParam("param1", "stringvalue");
     assertEquals("stringvalue", config.getParam("param1"));
@@ -83,7 +83,7 @@ public class StatisticsConfigImplTest extends TestCase {
   }
 
   public void testRemoveParam() throws Exception {
-    StatisticsConfig config = new StatisticsConfigImpl();
+    DSOStatisticsConfig config = new StatisticsConfigImpl();
     config.setParam("param1", "value1");
     assertEquals("value1", config.getParam("param1"));
     config.removeParam("param1");
@@ -91,10 +91,10 @@ public class StatisticsConfigImplTest extends TestCase {
   }
 
   public void testChildren() throws Exception {
-    StatisticsConfig config1 = new StatisticsConfigImpl();
-    StatisticsConfig config2a = config1.createChild();
-    StatisticsConfig config2b = config1.createChild();
-    StatisticsConfig config3a = config2a.createChild();
+    DSOStatisticsConfig config1 = new StatisticsConfigImpl();
+    DSOStatisticsConfig config2a = config1.createChild();
+    DSOStatisticsConfig config2b = config1.createChild();
+    DSOStatisticsConfig config3a = config2a.createChild();
 
     // check the parents
     assertNull(config1.getParent());
@@ -123,12 +123,12 @@ public class StatisticsConfigImplTest extends TestCase {
     assertEquals("val1", config2b.getParam("param1"));
 
     // default params
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
-    config2a.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
-    assertEquals(Long.MAX_VALUE, config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
-    config2a.removeParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
-    config2b.setParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
-    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2a.setParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(Long.MAX_VALUE, config3a.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2a.removeParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL);
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    config2b.setParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, new Long(Long.MAX_VALUE));
+    assertEquals(StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY.longValue(), config3a.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
   }
 }

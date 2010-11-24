@@ -10,7 +10,7 @@ import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.test.DSOApplicationConfigBuilderImpl;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.MultipleServersConfigCreator;
 import com.tc.test.TestConfigObject;
 import com.tc.test.activepassive.ActivePassiveServerManager;
@@ -67,7 +67,7 @@ public abstract class ActivePassiveTransparentTestBase extends MultipleServersTr
       IOException, ConfigurationSetupException {
     File configFile = new File(apServerManager.getConfigFileLocation());
     TcConfigDocument configDoc = TcConfigDocument.Factory.parse(configFile);
-    NewL2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
+    L2DSOConfigObject.initializeServers(configDoc.getTcConfig(), new SchemaDefaultValueProvider(), configFile
         .getParentFile());
     apServerManager.addServersAndGroupToL1Config(configFactory(), configDoc.getTcConfig().getServers());
   }

@@ -24,8 +24,8 @@ import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.L2Info;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
@@ -188,7 +188,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
     for (int i = 0; i < out.length; ++i) {
       try {
-        NewCommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
+        CommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
 
         String name = allKnownL2s[i];
         if (name == null) {
@@ -303,7 +303,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   }
 
   public String getFailoverMode() {
-    NewHaConfig haConfig = this.configurationSetupManager.haConfig();
+    HaConfigSchema haConfig = this.configurationSetupManager.haConfig();
     return haConfig.getHa().getMode().toString();
   }
 
@@ -417,7 +417,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
       TCServerImpl.this.startTime = System.currentTimeMillis();
 
-      NewCommonL2Config commonL2Config = TCServerImpl.this.configurationSetupManager.commonl2Config();
+      CommonL2Config commonL2Config = TCServerImpl.this.configurationSetupManager.commonl2Config();
 
       if (Runtime.getRuntime().maxMemory() != Long.MAX_VALUE) {
         consoleLogger.info("Available Max Runtime Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
@@ -497,7 +497,7 @@ public class TCServerImpl extends SEDA implements TCServer {
                                        objectStatsRecorder, l2State, this, this);
   }
 
-  private void startHTTPServer(final NewCommonL2Config commonL2Config, final TerracottaConnector tcConnector)
+  private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
       throws Exception {
     this.httpServer = new Server();
     this.httpServer.addConnector(tcConnector);

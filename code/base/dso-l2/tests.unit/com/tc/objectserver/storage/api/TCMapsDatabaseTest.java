@@ -5,7 +5,7 @@ package com.tc.objectserver.storage.api;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializer;
 import com.tc.objectserver.persistence.db.TCCollectionsSerializerImpl;
 import com.tc.test.TCTestCase;
@@ -32,7 +32,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     super.setUp();
     final File dataPath = getTempDirectory();
 
-    this.dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
+    this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
     this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome, null);

@@ -22,7 +22,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
@@ -147,7 +147,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final NewL2DSOConfig l2DSOCofig,
+  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
                                     DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                     SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
                                     SampledCounter l2FlushFromOffheap, DBFactory factory) throws IOException,

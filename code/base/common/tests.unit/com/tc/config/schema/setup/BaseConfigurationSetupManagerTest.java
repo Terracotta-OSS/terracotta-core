@@ -16,7 +16,7 @@ import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory.ConfigMode;
 import com.tc.config.schema.utils.StandardXmlObjectComparator;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
@@ -76,13 +76,13 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(9510, server.getDsoPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
 
-    int tempGroupPort = 9510 + NewL2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-    int defaultGroupPort = ((tempGroupPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
-        : (tempGroupPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempGroupPort = 9510 + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
+        : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = 9510 + NewL2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-    int defaultJmxPort = ((tempJmxPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
-        : (tempJmxPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempJmxPort = 9510 + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
+        : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
@@ -116,13 +116,13 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getDsoPort().getBind());
 
-    int tempGroupPort = dsoPort + NewL2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-    int defaultGroupPort = ((tempGroupPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
-        : (tempGroupPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
+        : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + NewL2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-    int defaultJmxPort = ((tempJmxPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
-        : (tempJmxPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
+        : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());
@@ -157,13 +157,13 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(dsoPort, server.getDsoPort().getIntValue());
     Assert.assertEquals(dsoBind, server.getDsoPort().getBind());
 
-    int tempGroupPort = dsoPort + NewL2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
-    int defaultGroupPort = ((tempGroupPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
-        : (tempGroupPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempGroupPort = dsoPort + L2DSOConfigObject.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT;
+    int defaultGroupPort = ((tempGroupPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? (tempGroupPort)
+        : (tempGroupPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
-    int tempJmxPort = dsoPort + NewL2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
-    int defaultJmxPort = ((tempJmxPort <= NewL2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
-        : (tempJmxPort % NewL2DSOConfigObject.MAX_PORTNUMBER) + NewL2DSOConfigObject.MIN_PORTNUMBER);
+    int tempJmxPort = dsoPort + L2DSOConfigObject.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT;
+    int defaultJmxPort = ((tempJmxPort <= L2DSOConfigObject.MAX_PORTNUMBER) ? tempJmxPort
+        : (tempJmxPort % L2DSOConfigObject.MAX_PORTNUMBER) + L2DSOConfigObject.MIN_PORTNUMBER);
 
     Assert.assertEquals(defaultJmxPort, server.getJmxPort().getIntValue());
     Assert.assertEquals(server.getBind(), server.getJmxPort().getBind());

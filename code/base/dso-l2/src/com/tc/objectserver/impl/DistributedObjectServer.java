@@ -96,7 +96,7 @@ import com.tc.object.cache.EvictionPolicy;
 import com.tc.object.cache.LFUConfigImpl;
 import com.tc.object.cache.LFUEvictionPolicy;
 import com.tc.object.cache.LRUEvictionPolicy;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.AcknowledgeTransactionMessageImpl;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
@@ -457,7 +457,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
 
     // perform the DSO network config verification
-    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
 
     // verify user input host name, DEV-2293
     final String host = l2DSOConfig.host();
@@ -564,7 +564,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final SampledCounter l2FlushFromOffheap = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
 
-    final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
+    final File dbhome = new File(this.configSetupManager.commonl2Config().dataPath(), L2DSOConfig.OBJECTDB_DIRNAME);
     logger.debug("persistent: " + persistent);
     if (!persistent) {
       if (dbhome.exists()) {
@@ -1293,7 +1293,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return logger;
   }
 
-  private ServerID makeServerNodeID(final NewL2DSOConfig l2DSOConfig) {
+  private ServerID makeServerNodeID(final L2DSOConfig l2DSOConfig) {
     String host = l2DSOConfig.l2GroupPort().getBind();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2DSOConfig.host();
@@ -1421,7 +1421,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
    * config value unless the special value 0 is specified for use in the tests to get a random port.
    */
   public int getListenPort() {
-    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
     final int configValue = l2DSOConfig.dsoPort().getIntValue();
     if (configValue != 0) { return configValue; }
     if (this.l1Listener != null) {
@@ -1438,7 +1438,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   }
 
   public int getGroupPort() {
-    final NewL2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
+    final L2DSOConfig l2DSOConfig = this.configSetupManager.dsoL2Config();
     final int configValue = l2DSOConfig.l2GroupPort().getIntValue();
     if (configValue != 0) { return configValue; }
     return -1;

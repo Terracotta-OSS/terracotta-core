@@ -15,13 +15,13 @@ import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 /**
- * The standard implementation of {@link NewSystemConfig}.
+ * The standard implementation of {@link SystemConfig}.
  */
-public class NewSystemConfigObject extends BaseNewConfigObject implements NewSystemConfig {
+public class SystemConfigObject extends BaseConfigObject implements SystemConfig {
 
   private final com.tc.config.schema.ConfigurationModel configModel;
 
-  public NewSystemConfigObject(ConfigContext context) {
+  public SystemConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(System.class);

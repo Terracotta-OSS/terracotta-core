@@ -8,7 +8,7 @@ import com.tc.lang.ServerExitStatus;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
@@ -48,12 +48,12 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
     checkClusterStates(0, 1);
 
     File dataHome0 = new File(appConfig.getAttribute(SERVER0_DATA_PATH));
-    File objectDB0 = new File(dataHome0, NewL2DSOConfig.OBJECTDB_DIRNAME);
-    File dirtyObjectDB0 = new File(dataHome0, NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME);
+    File objectDB0 = new File(dataHome0, L2DSOConfig.OBJECTDB_DIRNAME);
+    File dirtyObjectDB0 = new File(dataHome0, L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME);
 
     File dataHome1 = new File(appConfig.getAttribute(SERVER1_DATA_PATH));
-    File objectDB1 = new File(dataHome1, NewL2DSOConfig.OBJECTDB_DIRNAME);
-    File dirtyObjectDB1 = new File(dataHome1, NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME);
+    File objectDB1 = new File(dataHome1, L2DSOConfig.OBJECTDB_DIRNAME);
+    File dirtyObjectDB1 = new File(dataHome1, L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME);
 
     // Pre-test verifications
     Assert.eval(dataHome1.exists());
@@ -154,7 +154,7 @@ public class PassiveSmoothStartTestApp extends AbstractTransparentApp {
 
     for (int i = 0; i < dirtyObjectDBTimeStampedDirs.length; i++) {
       Assert.eval(new String(dirtyObjectDBTimeStampedDirs[0].getName())
-          .startsWith(NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX));
+          .startsWith(L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX));
       System.out.println("XXX Successfully created Timestamped DirtyObjectDB Backup dir "
                          + dirtyObjectDBTimeStampedDirs[i].getAbsolutePath());
     }

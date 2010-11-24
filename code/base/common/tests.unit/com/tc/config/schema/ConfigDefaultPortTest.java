@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 
@@ -107,9 +107,9 @@ public class ConfigDefaultPortTest extends TCTestCase {
       // case 2: just dso-port specified in the config; other port numbers are calculated
       configSetupMgr = factory.createL2TVSConfigurationSetupManager(tcConfig, "server2");
       Assert.assertEquals(8510, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
-      Assert.assertEquals(8510 + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT, configSetupMgr.commonl2Config()
+      Assert.assertEquals(8510 + CommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT, configSetupMgr.commonl2Config()
           .jmxPort().getIntValue());
-      Assert.assertEquals(8510 + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT, configSetupMgr.dsoL2Config()
+      Assert.assertEquals(8510 + L2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT, configSetupMgr.dsoL2Config()
           .l2GroupPort().getIntValue());
 
       // case 3: dso-port and group-port specified; jmx-port calculated
@@ -129,12 +129,12 @@ public class ConfigDefaultPortTest extends TCTestCase {
       Assert.assertEquals(65534, configSetupMgr.dsoL2Config().dsoPort().getIntValue());
       Assert
           .assertEquals(
-                        ((65534 + NewCommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT) % NewCommonL2Config.MAX_PORTNUMBER)
-                            + NewCommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
+                        ((65534 + CommonL2Config.DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
+                            + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.commonl2Config().jmxPort().getIntValue());
       Assert
           .assertEquals(
-                        ((65534 + NewL2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT) % NewCommonL2Config.MAX_PORTNUMBER)
-                            + NewCommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
+                        ((65534 + L2DSOConfig.DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT) % CommonL2Config.MAX_PORTNUMBER)
+                            + CommonL2Config.MIN_PORTNUMBER, configSetupMgr.dsoL2Config().l2GroupPort().getIntValue());
 
     } catch (Exception e) {
       throw new AssertionError(e);

@@ -3,16 +3,16 @@
  */
 package com.tc.statistics.config;
 
-public interface StatisticsConfig {
+public interface DSOStatisticsConfig {
   public final static String KEY_EMITTER_SCHEDULE_INTERVAL = "emitter.schedule.interval";
   public final static String KEY_EMITTER_BATCH_SIZE = "emitter.batch.size";
   public final static String KEY_RETRIEVER_SCHEDULE_INTERVAL = "retriever.schedule.interval";
   public final static String KEY_MAX_MEMORY_BUFFER_SIZE = "max.memory.buffer.size";
   public final static String KEY_MEMORY_BUFFER_PURGE_PERCENTAGE = "memory.buffer.purge.percentage";
 
-  public StatisticsConfig getParent();
+  public DSOStatisticsConfig getParent();
 
-  public StatisticsConfig createChild();
+  public DSOStatisticsConfig createChild();
 
   public void setParam(String key, Object value);
 

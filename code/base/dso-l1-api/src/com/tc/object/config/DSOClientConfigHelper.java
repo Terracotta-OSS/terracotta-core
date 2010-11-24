@@ -12,7 +12,7 @@ import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.config.schema.NewCommonL1Config;
+import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.object.Portability;
@@ -202,7 +202,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
   // HACK: is also in IStandardDSOClientConfigHelper
   void addIncludePattern(String expression);
 
-  NewCommonL1Config getNewCommonL1Config();
+  CommonL1Config getNewCommonL1Config();
 
   // Used for testing
   void addIncludePattern(String expression, boolean honorTransient);

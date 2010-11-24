@@ -5,7 +5,7 @@ package com.tc.statistics.config.impl;
 
 import com.tc.statistics.beans.StatisticsEmitterMBean;
 import com.tc.statistics.buffer.memory.MemoryStatisticsBufferImpl;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
@@ -14,9 +14,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StatisticsConfigImpl implements StatisticsConfig {
+public class StatisticsConfigImpl implements DSOStatisticsConfig {
   private final Map defaultParams;
-  private final StatisticsConfig parent;
+  private final DSOStatisticsConfig parent;
 
   private final Map params = new CopyOnWriteArrayMap();
 
@@ -33,17 +33,17 @@ public class StatisticsConfigImpl implements StatisticsConfig {
     parent = null;
   }
 
-  private StatisticsConfigImpl(final StatisticsConfig parent) {
+  private StatisticsConfigImpl(final DSOStatisticsConfig parent) {
     Assert.assertNotNull("parent", parent);
     defaultParams = Collections.EMPTY_MAP;
     this.parent = parent;
   }
 
-  public StatisticsConfig getParent() {
+  public DSOStatisticsConfig getParent() {
     return parent;
   }
 
-  public StatisticsConfig createChild() {
+  public DSOStatisticsConfig createChild() {
     return new StatisticsConfigImpl(this);
   }
 

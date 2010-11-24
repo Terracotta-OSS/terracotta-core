@@ -3,12 +3,8 @@
  */
 package com.tc.config.schema;
 
+import java.io.File;
 
-/**
- * Contains methods that expose whole-system config.
- */
-public interface NewSystemConfig extends NewConfig {
-
-  ConfigurationModel configurationModel();
-
+public interface StatisticsConfig {
+  File statisticsPath();
 }

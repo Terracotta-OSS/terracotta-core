@@ -4,7 +4,7 @@
  */
 package com.tctest.statistics;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -23,14 +23,14 @@ public class StatisticsAgentImplSetupCompleteTest extends TestCase {
   }
 
   public void testSetupCompleteSuccess() throws Exception {
-    NewStatisticsConfig config1 = new TestStatisticsConfig("child1");
+    StatisticsConfig config1 = new TestStatisticsConfig("child1");
 
     StatisticsAgentSubSystem agent1 = new StatisticsAgentSubSystemImpl();
     agent1.setup(StatisticsSystemType.CLIENT, config1);
     agent1.waitUntilSetupComplete();
     assertTrue(agent1.isActive());
 
-    NewStatisticsConfig config2 = new TestStatisticsConfig("child2");
+    StatisticsConfig config2 = new TestStatisticsConfig("child2");
 
     StatisticsAgentSubSystem agent2 = new StatisticsAgentSubSystemImpl();
     agent2.setup(StatisticsSystemType.CLIENT, config2);
@@ -39,7 +39,7 @@ public class StatisticsAgentImplSetupCompleteTest extends TestCase {
   }
 
   public void testSetupCompleteFailure() throws Exception {
-    NewStatisticsConfig config = new TestStatisticsConfig("child");
+    StatisticsConfig config = new TestStatisticsConfig("child");
 
     StatisticsAgentSubSystem agent1 = new StatisticsAgentSubSystemImpl();
     agent1.setup(StatisticsSystemType.CLIENT, config);
@@ -60,7 +60,7 @@ public class StatisticsAgentImplSetupCompleteTest extends TestCase {
     setClientFailBufferOpen(false);
   }
 
-  private static class TestStatisticsConfig implements NewStatisticsConfig {
+  private static class TestStatisticsConfig implements StatisticsConfig {
 
     private final String tmpDirChild;
 

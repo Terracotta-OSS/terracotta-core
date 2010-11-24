@@ -46,7 +46,7 @@ import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorHandlerForGroupComm;
 import com.tc.net.utils.L2Utils;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionManagerImpl;
 import com.tc.object.session.SessionProvider;
@@ -138,7 +138,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
 
-    NewL2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
+    L2DSOConfig l2DSOConfig = configSetupManager.dsoL2Config();
 
     this.groupPort = l2DSOConfig.l2GroupPort().getIntValue();
 

@@ -8,7 +8,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.util.Assert;
 
 import java.util.Collections;
@@ -65,7 +65,7 @@ public class NodesStoreImpl implements NodesStore, TopologyChangeListener {
     String[] serverNames = configSetupManager.allCurrentlyKnownServers();
     for (int i = 0; i < serverNames.length; i++) {
       try {
-        NewL2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
+        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
         String host = l2Config.l2GroupPort().getBind();
         if (TCSocketAddress.WILDCARD_IP.equals(host)) {
           host = l2Config.host();

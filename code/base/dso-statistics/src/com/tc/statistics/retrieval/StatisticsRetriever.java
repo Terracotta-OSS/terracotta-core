@@ -4,7 +4,7 @@
 package com.tc.statistics.retrieval;
 
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 
 public interface StatisticsRetriever {
   public final static Long DEFAULT_GLOBAL_FREQUENCY = new Long(1000L);
@@ -19,7 +19,7 @@ public interface StatisticsRetriever {
 
   public void registerAction(StatisticRetrievalAction action);
 
-  public StatisticsConfig getConfig();
+  public DSOStatisticsConfig getConfig();
 
   public boolean containsAction(StatisticRetrievalAction action);
 }

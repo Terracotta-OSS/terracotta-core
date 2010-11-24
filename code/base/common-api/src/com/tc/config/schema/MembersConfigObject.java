@@ -7,7 +7,7 @@ package com.tc.config.schema;
 import com.tc.config.schema.context.ConfigContext;
 import com.terracottatech.config.Members;
 
-public class MembersConfigObject extends BaseNewConfigObject implements MembersConfig {
+public class MembersConfigObject extends BaseConfigObject implements MembersConfig {
   private final String[] memberArray;
 
   public MembersConfigObject(ConfigContext context) {

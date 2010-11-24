@@ -17,10 +17,10 @@ import com.terracottatech.config.HaMode;
 import com.terracottatech.config.NetworkedActivePassive;
 import com.terracottatech.config.Servers;
 
-public class NewHaConfigObject extends BaseNewConfigObject implements NewHaConfig {
+public class HaConfigObject extends BaseConfigObject implements HaConfigSchema {
   private final Ha ha;
 
-  public NewHaConfigObject(ConfigContext context) {
+  public HaConfigObject(ConfigContext context) {
     super(context);
     context.ensureRepositoryProvides(Ha.class);
     ha = (Ha) context.bean();
@@ -57,7 +57,7 @@ public class NewHaConfigObject extends BaseNewConfigObject implements NewHaConfi
 
   public static void initializeHa(Servers servers, DefaultValueProvider defaultValueProvider)
       throws ConfigurationSetupException, XmlException {
-    Ha defaultHa = NewHaConfigObject.getDefaultCommonHa(servers, defaultValueProvider);
+    Ha defaultHa = HaConfigObject.getDefaultCommonHa(servers, defaultValueProvider);
     if (servers.isSetHa()) {
       checkAndInitializeHa(servers.getHa(), defaultHa);
     } else {

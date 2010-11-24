@@ -5,11 +5,11 @@ package com.tc.config.schema.setup;
 
 import org.apache.xmlbeans.XmlObject;
 
-import com.tc.config.schema.NewSystemConfigObject;
+import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.defaults.SchemaDefaultValueProvider;
-import com.tc.object.config.schema.NewDSOApplicationConfigObject;
-import com.tc.object.config.schema.NewL1DSOConfigObject;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.DSOApplicationConfigObject;
+import com.tc.object.config.schema.L1DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.terracottatech.config.AdditionalBootJarClasses;
@@ -43,10 +43,10 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
   protected void setUp() throws Exception {
     this.config = TcConfig.Factory.newInstance();
     SchemaDefaultValueProvider defaultValueProvider = new SchemaDefaultValueProvider();
-    NewL2DSOConfigObject.initializeServers(this.config, new SchemaDefaultValueProvider(), new File("tmp"));
-    NewSystemConfigObject.initializeSystem(this.config, defaultValueProvider);
-    NewL1DSOConfigObject.initializeClients(this.config, defaultValueProvider);
-    NewDSOApplicationConfigObject.initializeApplication(this.config, defaultValueProvider);
+    L2DSOConfigObject.initializeServers(this.config, new SchemaDefaultValueProvider(), new File("tmp"));
+    SystemConfigObject.initializeSystem(this.config, defaultValueProvider);
+    L1DSOConfigObject.initializeClients(this.config, defaultValueProvider);
+    DSOApplicationConfigObject.initializeApplication(this.config, defaultValueProvider);
     config.getServers().getMirrorGroups().getMirrorGroupArray(0).setGroupName("test-group");
   }
 

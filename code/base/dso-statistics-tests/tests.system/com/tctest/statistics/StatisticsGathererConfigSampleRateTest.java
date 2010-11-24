@@ -4,7 +4,7 @@
 package com.tctest.statistics;
 
 import com.tc.statistics.StatisticData;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.gatherer.StatisticsGatherer;
 import com.tc.statistics.gatherer.impl.StatisticsGathererImpl;
 import com.tc.statistics.retrieval.StatisticsRetriever;
@@ -48,7 +48,7 @@ public class StatisticsGathererConfigSampleRateTest extends AbstractStatisticsTr
       }
     });
 
-    gatherer.setGlobalParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY / 2);
+    gatherer.setGlobalParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL, StatisticsRetriever.DEFAULT_GLOBAL_FREQUENCY / 2);
 
     sessionid = UUID.getUUID().toString();
     gatherer.createSession(sessionid);

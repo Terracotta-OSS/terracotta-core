@@ -12,15 +12,15 @@ import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
-import com.tc.config.schema.NewCommonL1Config;
-import com.tc.config.schema.NewCommonL1ConfigObject;
+import com.tc.config.schema.CommonL1Config;
+import com.tc.config.schema.CommonL1ConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.NewL1DSOConfig;
-import com.tc.object.config.schema.NewL1DSOConfigObject;
+import com.tc.object.config.schema.L1DSOConfig;
+import com.tc.object.config.schema.L1DSOConfigObject;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -37,8 +37,8 @@ import java.util.Map;
  */
 public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements
     L1ConfigurationSetupManager {
-  private final NewCommonL1Config  commonL1Config;
-  private final NewL1DSOConfig     dsoL1Config;
+  private final CommonL1Config  commonL1Config;
+  private final L1DSOConfig     dsoL1Config;
   private final ConfigTCProperties configTCProperties;
   private final boolean            loadedFromTrustedSource;
 
@@ -54,9 +54,9 @@ public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     runConfigurationCreator();
     loadedFromTrustedSource = configurationCreator().loadedFromTrustedSource();
 
-    commonL1Config = new NewCommonL1ConfigObject(createContext(clientBeanRepository(), null));
+    commonL1Config = new CommonL1ConfigObject(createContext(clientBeanRepository(), null));
     configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
-    dsoL1Config = new NewL1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
+    dsoL1Config = new L1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
                                                                                  DsoClientData.class,
                                                                                  new ChildBeanFetcher() {
                                                                                    public XmlObject getChild(
@@ -86,11 +86,11 @@ public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                                null));
   }
 
-  public NewCommonL1Config commonL1Config() {
+  public CommonL1Config commonL1Config() {
     return this.commonL1Config;
   }
 
-  public NewL1DSOConfig dsoL1Config() {
+  public L1DSOConfig dsoL1Config() {
     return this.dsoL1Config;
   }
 

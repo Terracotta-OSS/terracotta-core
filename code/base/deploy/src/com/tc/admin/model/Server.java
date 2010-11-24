@@ -30,7 +30,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
 import com.tc.statistics.beans.StatisticsMBeanNames;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.stats.DSOClassInfo;
 import com.tc.stats.DSOMBean;
 import com.tc.stats.DSORootMBean;
@@ -1812,7 +1812,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     StatisticsLocalGathererMBean theClusterStatsBean = getClusterStatsBean();
     if (theClusterStatsBean != null) {
       theClusterStatsBean.createSession(sessionId);
-      theClusterStatsBean.setSessionParam(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
+      theClusterStatsBean.setSessionParam(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL,
                                           Long.valueOf(samplePeriodMillis));
       theClusterStatsBean.enableStatistics(statsToRecord);
       theClusterStatsBean.startCapturing();

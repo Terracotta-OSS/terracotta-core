@@ -4,13 +4,13 @@
  */
 package com.tc.l2.state;
 
-import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.HaConfigSchema;
 
 public class StateManagerConfigImpl implements StateManagerConfig {
 
-  private final NewHaConfig haConfig;
+  private final HaConfigSchema haConfig;
 
-  public StateManagerConfigImpl(NewHaConfig haConfig) {
+  public StateManagerConfigImpl(HaConfigSchema haConfig) {
     this.haConfig = haConfig;
   }
 

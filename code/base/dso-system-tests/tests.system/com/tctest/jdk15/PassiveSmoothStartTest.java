@@ -20,7 +20,7 @@ import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.MembersConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.util.Assert;
 import com.tc.util.PortChooser;
@@ -95,7 +95,7 @@ public class PassiveSmoothStartTest extends TransparentTestBase {
       server.addNewJmxPort().setIntValue(jmxPorts[i]);
     }
     try {
-      NewL2DSOConfigObject.initializeServers(tcConfig, new SchemaDefaultValueProvider(), getTempDirectory());
+      L2DSOConfigObject.initializeServers(tcConfig, new SchemaDefaultValueProvider(), getTempDirectory());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

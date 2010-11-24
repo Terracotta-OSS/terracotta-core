@@ -10,7 +10,7 @@ import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.ZapEventListener;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
 import com.tc.util.Assert;
 
@@ -30,7 +30,7 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
     String[] serverNames = configSetupManager.allCurrentlyKnownServers();
     for (int i = 0; i < serverNames.length; i++) {
       try {
-        NewL2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
+        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
         this.nodeNameToServerName.put(l2Config.host() + ":" + l2Config.dsoPort().getIntValue(),
                                       serverNames[i]);
       } catch (ConfigurationSetupException e) {

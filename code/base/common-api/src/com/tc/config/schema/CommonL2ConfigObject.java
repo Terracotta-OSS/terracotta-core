@@ -17,9 +17,9 @@ import java.io.File;
 import javax.xml.namespace.QName;
 
 /**
- * The standard implementation of {@link NewCommonL2Config}.
+ * The standard implementation of {@link CommonL2Config}.
  */
-public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewCommonL2Config {
+public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Config {
 
   private final BindPort jmxPort;
   private final String   host;
@@ -30,7 +30,7 @@ public class NewCommonL2ConfigObject extends BaseNewConfigObject implements NewC
   private final boolean  httpAuthentication;
   private final String   userRealmFile;
 
-  public NewCommonL2ConfigObject(ConfigContext context) {
+  public CommonL2ConfigObject(ConfigContext context) {
     super(context);
     context.ensureRepositoryProvides(Server.class);
 

@@ -9,7 +9,7 @@ import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.xml.sax.SAXException;
 
-import com.tc.config.schema.NewSystemConfigObject;
+import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.beanfactory.BeanWithErrors;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -24,9 +24,9 @@ import com.tc.config.schema.setup.sources.URLConfigurationSource;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.NewDSOApplicationConfigObject;
-import com.tc.object.config.schema.NewL1DSOConfigObject;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.DSOApplicationConfigObject;
+import com.tc.object.config.schema.L1DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
@@ -490,10 +490,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
 
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
       TcConfig config = tcConfigDoc.getTcConfig();
-      NewSystemConfigObject.initializeSystem(config, this.defaultValueProvider);
-      NewL2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
-      NewL1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
-      NewDSOApplicationConfigObject.initializeApplication(config, this.defaultValueProvider);
+      SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
+      L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
+      L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
+      DSOApplicationConfigObject.initializeApplication(config, this.defaultValueProvider);
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "
                                             + ioe.getLocalizedMessage(), ioe);

@@ -12,7 +12,7 @@ import com.tc.asm.ClassWriter;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.FieldInfo;
 import com.tc.aspectwerkz.reflect.MemberInfo;
-import com.tc.config.schema.NewCommonL1Config;
+import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.exception.ImplementMe;
@@ -238,7 +238,7 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return null;
   }
 
-  public NewCommonL1Config getNewCommonL1Config() {
+  public CommonL1Config getNewCommonL1Config() {
     return null;
   }
 

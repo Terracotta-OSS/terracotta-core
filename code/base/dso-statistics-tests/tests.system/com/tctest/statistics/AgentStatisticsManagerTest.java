@@ -3,7 +3,7 @@
  */
 package com.tctest.statistics;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsAgentSubSystem;
@@ -47,7 +47,7 @@ public class AgentStatisticsManagerTest extends TCTestCase {
 
   protected void setUp() throws Exception {
     agentSubSystem = new StatisticsAgentSubSystemImpl();
-    agentSubSystem.setup(StatisticsSystemType.CLIENT, new NewStatisticsConfig() {
+    agentSubSystem.setup(StatisticsSystemType.CLIENT, new StatisticsConfig() {
       public File statisticsPath() {
         try {
           return AgentStatisticsManagerTest.this.getTempDirectory();
