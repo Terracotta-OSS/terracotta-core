@@ -28,4 +28,11 @@ public interface IndexQueryResult extends TCSerializable {
    * @return attributes
    */
   public List<NVPair> getAttributes();
+
+  /**
+   * Entry sortAttributes.
+   * 
+   * @return attributes
+   */
+  public List<NVPair> getSortAttributes();
 }

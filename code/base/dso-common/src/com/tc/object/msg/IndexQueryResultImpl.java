@@ -16,16 +16,18 @@ import java.util.List;
 
 public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
-  private List<NVPair> attributes;
   private String       key;
+  private List<NVPair> attributes;
+  private List<NVPair> sortAttributes;
 
   public IndexQueryResultImpl() {
     // do nothing.
   }
 
-  public IndexQueryResultImpl(String key, List<NVPair> attributes) {
+  public IndexQueryResultImpl(String key, List<NVPair> attributes, List<NVPair> sortAttributes) {
     this.key = key;
     this.attributes = attributes;
+    this.sortAttributes = sortAttributes;
   }
 
   /**
@@ -40,6 +42,13 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
    */
   public List<NVPair> getAttributes() {
     return Collections.unmodifiableList(this.attributes);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public List<NVPair> getSortAttributes() {
+    return Collections.unmodifiableList(this.sortAttributes);
   }
 
   @Override
@@ -57,6 +66,14 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
       NVPair pair = AbstractNVPair.deserializeInstance(input);
       this.attributes.add(pair);
     }
+
+    int sortSize = input.readInt();
+    this.sortAttributes = sortSize > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
+
+    for (int i = 0; i < sortSize; i++) {
+      NVPair pair = AbstractNVPair.deserializeInstance(input);
+      this.sortAttributes.add(pair);
+    }
     return this;
   }
 
@@ -64,6 +81,11 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
     output.writeString(this.key);
     output.writeInt(this.attributes.size());
     for (NVPair pair : this.attributes) {
+      pair.serializeTo(output);
+    }
+
+    output.writeInt(this.sortAttributes.size());
+    for (NVPair pair : this.sortAttributes) {
       pair.serializeTo(output);
     }
   }
