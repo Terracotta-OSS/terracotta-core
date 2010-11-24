@@ -15,11 +15,22 @@ class ExternalResourceResolver
 
     file = get(resource, dest_dir)
     explode(file, dest_dir, resource) if resource['explode'] == true
+    post_actions(dest_dir, resource['post_actions']) if resource['post_actions']
   end
 
   private
 
   LOCAL_MAVEN_REPO = "#{ENV['HOME']}/.m2/repository"
+  
+  def post_actions(dest_dir, actions)
+    actions.each do |action|
+      if action['ant'] == 'replace'
+        arguments = action['arguments']
+        arguments[:dir] = dest_dir
+        ant.replace(arguments)
+      end
+    end
+  end
 
   def ant
     Registry[:ant]
