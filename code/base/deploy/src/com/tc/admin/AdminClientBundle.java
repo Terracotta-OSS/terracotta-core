@@ -232,6 +232,8 @@ public class AdminClientBundle extends ListResourceBundle {
         { "onheap.usage.used", "onheap memory used" },
         { "offheap.usage.max", "offheap memory max" },
         { "offheap.usage.used", "offheap memory used" },
+        { "offheap.map.usage", "offheap map memory used" },
+        { "offheap.object.usage", "offheap object memory used" },
         { "heap.usage.max", "heap memory max" },
         { "heap.usage.used", "heap memory used" },
         { "client.stats.cpu.usage", "Host CPU Usage" },
