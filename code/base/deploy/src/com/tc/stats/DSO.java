@@ -30,7 +30,6 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
-import com.tc.offheap.OffheapJMXStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.statistics.StatisticData;
@@ -701,10 +700,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     } catch (InterruptedException ie) {/**/
     }
     return result;
-  }
-
-  public OffheapStats getOffheapStats() {
-    return new OffheapJMXStats(this.offheapStats);
   }
 
   public long getOffHeapFaultRate() {
