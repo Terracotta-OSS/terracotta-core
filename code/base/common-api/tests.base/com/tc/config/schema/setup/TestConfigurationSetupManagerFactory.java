@@ -10,10 +10,10 @@ import org.apache.xmlbeans.XmlOptions;
 import org.apache.xmlbeans.impl.common.XPath;
 
 import com.tc.config.schema.ActiveServerGroupsConfig;
-import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.beanfactory.ConfigBeanFactory;
 import com.tc.config.schema.beanfactory.TerracottaDomainConfigurationDocumentBeanFactory;
@@ -53,8 +53,8 @@ import java.util.Set;
  * L1 has its own copy of the config, too). </p>
  * <p>
  * To use this class, simply get the appropriate config object that you need by calling a method (<em>e.g.</em>,
- * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.SystemConfig#dsoEnabled()},
- * for example); this will give you back a {@link ConfigItem}, or a subinterface thereof. Cast this item to a
+ * {@link #systemConfig()}). Then, call a method on it (like {@link com.tc.config.schema.SystemConfig#dsoEnabled()}, for
+ * example); this will give you back a {@link ConfigItem}, or a subinterface thereof. Cast this item to a
  * {@link com.tc.config.schema.SettableConfigItem}, and then call {@link SettableConfigItem#setValue(Object)} on it (or
  * one of the similar methods that takes a primitive type), passing it the value you want this class to return for that
  * item. Make sure you get the class right &mdash; if you don't, you'll get a nasty {@link ClassCastException} when
@@ -148,39 +148,39 @@ import java.util.Set;
  */
 public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetupManagerFactory {
 
-  public static final int                              MODE_CENTRALIZED_CONFIG = 0;
-  public static final int                              MODE_DISTRIBUTED_CONFIG = 1;
-  public static final String                           DEFAULT_HOST            = "localhost";
-  public static final String                           DEFAULT_SERVER_NAME     = "default";
+  public static final int                       MODE_CENTRALIZED_CONFIG = 0;
+  public static final int                       MODE_DISTRIBUTED_CONFIG = 1;
+  public static final String                    DEFAULT_HOST            = "localhost";
+  public static final String                    DEFAULT_SERVER_NAME     = "default";
 
-  private final TestConfigurationCreator               configurationCreator;
+  private final TestConfigurationCreator        configurationCreator;
 
-  private final SystemConfig                        sampleSystem;
-  private final CommonL1Config                      sampleL1Common;
-  private final L1DSOConfig                         sampleL1DSO;
-  private final CommonL2Config                      sampleL2Common;
-  private final L2DSOConfig                         sampleL2DSO;
-  private final DSOApplicationConfig                sampleDSOApplication;
-  private final ActiveServerGroupsConfig               sampleActiveServerGroups;
-  private final HaConfigSchema                            sampleHa;
+  private final SystemConfig                    sampleSystem;
+  private final CommonL1Config                  sampleL1Common;
+  private final L1DSOConfig                     sampleL1DSO;
+  private final CommonL2Config                  sampleL2Common;
+  private final L2DSOConfig                     sampleL2DSO;
+  private final DSOApplicationConfig            sampleDSOApplication;
+  private final ActiveServerGroupsConfig        sampleActiveServerGroups;
+  private final HaConfigSchema                  sampleHa;
 
-  private final String                                 defaultL2Identifier;
+  private final String                          defaultL2Identifier;
 
-  private final int                                    mode;
+  private final int                             mode;
 
-  private boolean                                      gcEnabled               = true;
-  private boolean                                      gcVerbose               = false;
-  private int                                          gcIntervalInSec         = 3600;
+  private boolean                               gcEnabled               = true;
+  private boolean                               gcVerbose               = false;
+  private int                                   gcIntervalInSec         = 3600;
 
-  private boolean                                      isConfigDone            = false;
-  private boolean                                      offHeapEnabled          = false;
-  private String                                       maxOffHeapDataSize      = "-1m";
-  private PersistenceMode.Enum                         persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
+  private boolean                               isConfigDone            = false;
+  private boolean                               offHeapEnabled          = false;
+  private String                                maxOffHeapDataSize      = "-1m";
+  private PersistenceMode.Enum                  persistenceMode         = PersistenceMode.TEMPORARY_SWAP_ONLY;
   private final L1ConfigurationSetupManagerImpl sampleL1Manager;
   private final L2ConfigurationSetupManagerImpl sampleL2Manager;
 
   public TestConfigurationSetupManagerFactory(int mode, String l2Identifier,
-                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+                                              IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
       throws ConfigurationSetupException {
     super(illegalConfigurationChangeHandler);
 
@@ -393,8 +393,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   public void appendNewServersAndGroupToL1Config(int gn, String groupName, String[] name, int[] dsoPorts, int[] jmxPorts)
       throws ConfigurationSetupException, XmlException {
 
-    cleanServersForL1s();
-
     for (int i = 0; i < name.length; i++) {
       addServerToL1Config(name[i], dsoPorts[i], jmxPorts[i], false);
     }
@@ -406,6 +404,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     config.setServers(servers);
     L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.configurationCreator
         .directoryConfigurationLoadedFrom());
+    setServersBeanForL1s(config.getServers(), "From Test Framework");
   }
 
   private void assertIfCalledBefore() throws AssertionError {
@@ -551,7 +550,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
   }
 
   public TestConfigurationSetupManagerFactory(String l2Identifier,
-                                                 IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
+                                              IllegalConfigurationChangeHandler illegalConfigurationChangeHandler)
       throws ConfigurationSetupException {
     this(MODE_CENTRALIZED_CONFIG, l2Identifier, illegalConfigurationChangeHandler);
   }
@@ -569,8 +568,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     return this.sampleL2Manager;
   }
 
-  public L1ConfigurationSetupManagerImpl createL1TVSConfigurationSetupManager(
-                                                                                     TestConfigurationCreator configCreator)
+  public L1ConfigurationSetupManagerImpl createL1TVSConfigurationSetupManager(TestConfigurationCreator configCreator)
       throws ConfigurationSetupException {
     if (mode == MODE_CENTRALIZED_CONFIG) {
       StringBuffer l2sSpec = new StringBuffer();
@@ -584,11 +582,10 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       System.setProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME, l2sSpec.toString());
     }
 
-    L1ConfigurationSetupManagerImpl configSetupManager = new L1ConfigurationSetupManagerImpl(
-                                                                                                           configCreator,
-                                                                                                           this.defaultValueProvider,
-                                                                                                           this.xmlObjectComparator,
-                                                                                                           this.illegalChangeHandler);
+    L1ConfigurationSetupManagerImpl configSetupManager = new L1ConfigurationSetupManagerImpl(configCreator,
+                                                                                             this.defaultValueProvider,
+                                                                                             this.xmlObjectComparator,
+                                                                                             this.illegalChangeHandler);
 
     return configSetupManager;
   }
@@ -597,8 +594,8 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       throws ConfigurationSetupException {
     String effectiveL2Identifier = l2Identifier == null ? this.defaultL2Identifier : l2Identifier;
     return new L2ConfigurationSetupManagerImpl(this.configurationCreator, effectiveL2Identifier,
-                                                      this.defaultValueProvider, this.xmlObjectComparator,
-                                                      this.illegalChangeHandler);
+                                               this.defaultValueProvider, this.xmlObjectComparator,
+                                               this.illegalChangeHandler);
   }
 
   // used for just parsing and verifying tc-config.xml
@@ -608,6 +605,6 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     ConfigurationCreator confiCreator = new StandardXMLFileConfigurationCreator(new ConfigurationSpec(tcConfig
         .getAbsolutePath(), ConfigMode.L2, tcConfig.getParentFile()), this.beanFactory);
     return new L2ConfigurationSetupManagerImpl(confiCreator, effectiveL2Identifier, this.defaultValueProvider,
-                                                      this.xmlObjectComparator, this.illegalChangeHandler);
+                                               this.xmlObjectComparator, this.illegalChangeHandler);
   }
 }
