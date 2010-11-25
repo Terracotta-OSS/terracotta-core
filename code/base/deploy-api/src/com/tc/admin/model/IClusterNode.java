@@ -20,7 +20,7 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
   static final String POLLED_ATTR_TRANSACTION_RATE      = "TransactionRate";
   static final String POLLED_ATTR_LIVE_OBJECT_COUNT     = "LiveObjectCount";
   static final String POLLED_ATTR_OFFHEAP_MAX_MEMORY    = "OffheapMaxDataSize";
-  static final String POLLED_ATTR_OFFHEAP_USED_MEMORY   = "OffheapAllocatedDataSize";
+  static final String POLLED_ATTR_OFFHEAP_USED_MEMORY   = "OffheapTotalOccupiedSize";
   static final String POLLED_ATTR_OFFHEAP_OBJECT_MEMORY = "OffheapObjectOccupiedMemory";
   static final String POLLED_ATTR_OFFHEAP_MAP_MEMORY    = "OffheapMapOccupiedMemory";
 

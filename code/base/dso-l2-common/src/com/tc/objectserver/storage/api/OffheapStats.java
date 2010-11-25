@@ -28,7 +28,7 @@ public interface OffheapStats extends Serializable {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapAllocatedDataSize() {
+                                                        public long getOffheapTotalOccupiedSize() {
                                                           return 0;
                                                         }
 
@@ -54,7 +54,7 @@ public interface OffheapStats extends Serializable {
 
   long getOffheapMaxDataSize();
 
-  long getOffheapAllocatedDataSize();
+  long getOffheapTotalOccupiedSize();
 
   long getOffheapObjectOccupiedMemory();
 

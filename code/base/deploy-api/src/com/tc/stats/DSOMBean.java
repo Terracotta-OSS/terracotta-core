@@ -87,5 +87,4 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
 
   Map<ObjectName, Long> getServerMapGetValueRequestsRate();
 
-  long getOffheapAllocatedDataSize();
 }
