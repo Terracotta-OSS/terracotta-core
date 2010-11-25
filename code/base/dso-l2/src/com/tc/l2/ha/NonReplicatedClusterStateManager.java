@@ -31,7 +31,11 @@ public class NonReplicatedClusterStateManager implements ReplicatedClusterStateM
   }
 
   public void setCurrentState(State currentState) {
-    //Nop
+    // Nop
+  }
+
+  public void publishNextAvailableDGCID(long nextGcIteration) {
+    // Nop
   }
 
 }

@@ -73,6 +73,7 @@ import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.util.runtime.ThreadDumpUtil;
+import com.tc.util.sequence.DGCSequenceProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,9 +102,11 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  final ObjectManager objectManager,
                                                  final ClientStateManager clientStateManger,
                                                  final GCStatsEventPublisher gcEventListener,
-                                                 final StatisticsAgentSubSystem statsAgentSubSystem) {
+                                                 final StatisticsAgentSubSystem statsAgentSubSystem,
+                                                 final DGCSequenceProvider dgcSequenceProvider) {
     final MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr,
-                                                                             stateManager, gcPublisher);
+                                                                             stateManager, gcPublisher,
+                                                                             dgcSequenceProvider);
     gc.addListener(gcEventListener);
     gc.addListener(new DGCOperatorEventPublisher());
     return gc;
@@ -224,11 +227,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final L2ConfigurationSetupManager configurationSetupManager,
                                              final MessageRecycler recycler,
                                              final StripeIDStateManager stripeStateManager,
-                                             final ServerTransactionFactory serverTransactionFactory) {
+                                             final ServerTransactionFactory serverTransactionFactory,
+                                             final DGCSequenceProvider dgcSequenceProvider) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory);
+                               serverTransactionFactory, dgcSequenceProvider);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

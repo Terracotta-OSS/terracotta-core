@@ -22,7 +22,8 @@ public class ClusterStateMessageFactory {
   }
 
   public static GroupMessage createNGSplitBrainResponse(ClusterStateMessage msg) {
-    ClusterStateMessage response = new ClusterStateMessage(ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN, msg.getMessageID());
+    ClusterStateMessage response = new ClusterStateMessage(ClusterStateMessage.OPERATION_FAILED_SPLIT_BRAIN, msg
+        .getMessageID());
     return response;
   }
 
@@ -44,6 +45,12 @@ public class ClusterStateMessageFactory {
 
   public static GroupMessage createNextAvailableGlobalTransactionIDMessage(ClusterState state) {
     ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.GLOBAL_TRANSACTION_ID);
+    msg.initMessage(state);
+    return msg;
+  }
+
+  public static GroupMessage createNextAvailableDGCIterationMessage(ClusterState state) {
+    ClusterStateMessage msg = new ClusterStateMessage(ClusterStateMessage.DGC_ID);
     msg.initMessage(state);
     return msg;
   }
