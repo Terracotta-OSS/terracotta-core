@@ -815,6 +815,24 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("/abc/xyz/tra", client.getLogs());
   }
+  
+  public void testClientLogDirectory1() throws IOException, ConfigurationSetupException {
+    this.tcConfig = getTempFile("default-config.xml");
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
+                    + "<clients>"
+                    +   "<logs>%i</logs>" 
+                    + "</clients>" 
+                    + "</tc:tc-config>";
+
+    writeConfigFile(config);
+
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+
+    Client client = (Client) configSetupMgr.clientBeanRepository().bean();
+    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
+                                 + ParameterSubstituter.substitute("%i")).getAbsolutePath(), client.getLogs());
+  }
+
 
   public void testDefaultFaultCount() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");

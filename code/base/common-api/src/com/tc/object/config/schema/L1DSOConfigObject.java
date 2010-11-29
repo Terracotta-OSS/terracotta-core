@@ -63,25 +63,30 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
     return faultCount;
   }
 
-  public static void initializeClients(TcConfig config, DefaultValueProvider defaultValueProvider) throws XmlException {
+  public static void initializeClients(TcConfig config, DefaultValueProvider defaultValueProvider,
+                                       File directoryLoadedFrom) throws XmlException {
     Client client;
     if (!config.isSetClients()) {
       client = config.addNewClients();
     } else {
       client = config.getClients();
     }
-    initializeLogsDirectory(client, defaultValueProvider);
+    initializeLogsDirectory(client, defaultValueProvider, directoryLoadedFrom);
     initializeModules(client, defaultValueProvider);
     initiailizeDsoClient(client, defaultValueProvider);
   }
 
-  private static void initializeLogsDirectory(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    if (client != null && !client.isSetLogs()) {
+  private static void initializeLogsDirectory(Client client, DefaultValueProvider defaultValueProvider,
+                                              File directoryLoadedFrom) throws XmlException {
+    Assert.assertNotNull(client);
+    if (!client.isSetLogs()) {
       final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(client.schemaType(), "logs");
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
 
       client.setLogs(new File(substitutedString).getAbsolutePath());
+    } else {
+      Assert.assertNotNull(client.getLogs());
+      client.setLogs(getAbsolutePath(ParameterSubstituter.substitute(client.getLogs()), directoryLoadedFrom));
     }
   }
 
@@ -238,6 +243,15 @@ public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
       runtimeOutputOptions.setFullStack(getDefaultFullStackRuntimeOutputOption(client, defaultValueProvider));
     }
 
+  }
+
+  private static String getAbsolutePath(String substituted, File directoryLoadedFrom) {
+    File out = new File(substituted);
+    if (!out.isAbsolute()) {
+      out = new File(directoryLoadedFrom, substituted);
+    }
+
+    return out.getAbsolutePath();
   }
 
   private static int getDefaultFaultCount(Client client, DefaultValueProvider defaultValueProvider) throws XmlException {
