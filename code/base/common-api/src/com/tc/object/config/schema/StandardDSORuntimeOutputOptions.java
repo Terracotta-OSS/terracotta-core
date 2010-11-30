@@ -4,7 +4,7 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
@@ -15,7 +15,7 @@ import com.terracottatech.config.RuntimeOutputOptions;
 /**
  * The standard implementation of {@link DSORuntimeOutputOptions}.
  */
-public class StandardDSORuntimeOutputOptions extends BaseNewConfigObject implements DSORuntimeOutputOptions {
+public class StandardDSORuntimeOutputOptions extends BaseConfigObject implements DSORuntimeOutputOptions {
 
   private final boolean doAutoLockDetails;
   private final boolean doCaller;

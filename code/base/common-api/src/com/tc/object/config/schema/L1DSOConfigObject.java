@@ -9,7 +9,7 @@ import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlString;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
@@ -25,7 +25,7 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 
-public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DSOConfig {
+public class L1DSOConfigObject extends BaseConfigObject implements L1DSOConfig {
 
   public static final String                     DSO_INSTRUMENTATION_LOGGING_OPTIONS_SUB_XPATH = "";
 
@@ -35,7 +35,7 @@ public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DS
   private final DSORuntimeLoggingOptions         runtimeLoggingOptions;
   private final DSORuntimeOutputOptions          runtimeOutputOptions;
 
-  public NewL1DSOConfigObject(ConfigContext context) {
+  public L1DSOConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(DsoClientData.class);
@@ -63,25 +63,30 @@ public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DS
     return faultCount;
   }
 
-  public static void initializeClients(TcConfig config, DefaultValueProvider defaultValueProvider) throws XmlException {
+  public static void initializeClients(TcConfig config, DefaultValueProvider defaultValueProvider,
+                                       File directoryLoadedFrom) throws XmlException {
     Client client;
     if (!config.isSetClients()) {
       client = config.addNewClients();
     } else {
       client = config.getClients();
     }
-    initializeLogsDirectory(client, defaultValueProvider);
+    initializeLogsDirectory(client, defaultValueProvider, directoryLoadedFrom);
     initializeModules(client, defaultValueProvider);
     initiailizeDsoClient(client, defaultValueProvider);
   }
 
-  private static void initializeLogsDirectory(Client client, DefaultValueProvider defaultValueProvider)
-      throws XmlException {
-    if (client != null && !client.isSetLogs()) {
+  private static void initializeLogsDirectory(Client client, DefaultValueProvider defaultValueProvider,
+                                              File directoryLoadedFrom) throws XmlException {
+    Assert.assertNotNull(client);
+    if (!client.isSetLogs()) {
       final XmlString defaultValue = (XmlString) defaultValueProvider.defaultFor(client.schemaType(), "logs");
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
 
       client.setLogs(new File(substitutedString).getAbsolutePath());
+    } else {
+      Assert.assertNotNull(client.getLogs());
+      client.setLogs(getAbsolutePath(ParameterSubstituter.substitute(client.getLogs()), directoryLoadedFrom));
     }
   }
 
@@ -238,6 +243,15 @@ public class NewL1DSOConfigObject extends BaseNewConfigObject implements NewL1DS
       runtimeOutputOptions.setFullStack(getDefaultFullStackRuntimeOutputOption(client, defaultValueProvider));
     }
 
+  }
+
+  private static String getAbsolutePath(String substituted, File directoryLoadedFrom) {
+    File out = new File(substituted);
+    if (!out.isAbsolute()) {
+      out = new File(directoryLoadedFrom, substituted);
+    }
+
+    return out.getAbsolutePath();
   }
 
   private static int getDefaultFaultCount(Client client, DefaultValueProvider defaultValueProvider) throws XmlException {

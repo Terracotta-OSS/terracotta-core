@@ -9,9 +9,9 @@ import com.terracottatech.config.System;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 /**
- * Unit/subsystem test for {@link NewSystemConfigObject}.
+ * Unit/subsystem test for {@link SystemConfigObject}.
  */
-public class NewSystemConfigObjectTest extends ConfigObjectTestBase {
+public class SystemConfigObjectTest extends ConfigObjectTestBase {
 
   public void setUp() throws Exception {
     super.setUp(System.class);
@@ -23,7 +23,7 @@ public class NewSystemConfigObjectTest extends ConfigObjectTestBase {
 
   public void testConstruction() throws Exception {
     try {
-      new NewSystemConfigObject(null);
+      new SystemConfigObject(null);
       fail("Didn't get NPE on no context");
     } catch (NullPointerException npe) {
       // ok

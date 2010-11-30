@@ -4,7 +4,7 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.BaseNewConfigObject;
+import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.terracottatech.config.DsoClientData;
 import com.terracottatech.config.RuntimeLogging;
@@ -12,7 +12,7 @@ import com.terracottatech.config.RuntimeLogging;
 /**
  * The standard implementation of {@link DSORuntimeLoggingOptions}.
  */
-public class StandardDSORuntimeLoggingOptions extends BaseNewConfigObject implements DSORuntimeLoggingOptions {
+public class StandardDSORuntimeLoggingOptions extends BaseConfigObject implements DSORuntimeLoggingOptions {
 
   private final boolean logLockDebug;
   private final boolean logFieldChangeDebug;

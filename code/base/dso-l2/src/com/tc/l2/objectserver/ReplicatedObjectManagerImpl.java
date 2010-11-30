@@ -41,12 +41,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener {
 
-  private static final TCLogger              logger        = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
+  private static final TCLogger              logger = TCLogging.getLogger(ReplicatedObjectManagerImpl.class);
 
   private final ObjectManager                objectManager;
   private final GroupManager                 groupManager;
@@ -57,7 +56,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final Sink                         objectsSyncRequestSink;
   private final SequenceGenerator            sequenceGenerator;
   private final GCMonitor                    gcMonitor;
-  private final AtomicLong                   gcIdGenerator = new AtomicLong();
   private final boolean                      isCleanDB;
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
@@ -298,7 +296,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     private void notifyGCResultToPassives(final GarbageCollectionInfo gcInfo, final ObjectIDSet deleted) {
       if (deleted.isEmpty()) { return; }
       final GCResultMessage msg = GCResultMessageFactory.createGCResultMessage(gcInfo, deleted);
-      final long id = ReplicatedObjectManagerImpl.this.gcIdGenerator.incrementAndGet();
+      final long id = gcInfo.getIteration();
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
             public void onCompletion() {

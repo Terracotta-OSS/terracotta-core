@@ -22,7 +22,7 @@ import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
 import com.tc.net.protocol.tcm.ChannelManager;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.msg.MessageRecycler;
 import com.tc.object.net.ChannelStatsImpl;
 import com.tc.object.net.DSOChannelManager;
@@ -59,6 +59,7 @@ import com.tc.statistics.StatisticsAgentSubSystemImpl;
 import com.tc.statistics.beans.impl.StatisticsGatewayMBeanImpl;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.stats.counter.sampled.SampledCounter;
+import com.tc.util.sequence.DGCSequenceProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,9 +71,9 @@ import javax.management.MBeanServer;
 public interface DSOServerBuilder extends TCDumper, PostInit {
 
   TransactionFilter getTransactionFilter(List<PostInit> toInit, StageManager stageManager, int maxStageSize);
-  
+
   MetaDataManager createMetaDataManager(Sink sink);
-  
+
   IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager) throws IOException;
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
@@ -84,7 +85,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                   Sink respondObjectRequestSink, ObjectStatsRecorder statsRecorder,
                                                   List<PostInit> toInit, StageManager stageManager, int maxStageSize,
                                                   DumpHandlerStore dumpHandlerStore);
-  
+
   SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink searchEventSink);
 
   void populateAdditionalStatisticsRetrivalRegistry(StatisticsRetrievalRegistry registry);
@@ -98,7 +99,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                           StageManager stageManager, int maxStageSize,
                                           GarbageCollectionInfoPublisher gcPublisher, ObjectManager objectManager,
                                           ClientStateManager clientStateManger, GCStatsEventPublisher gcEventListener,
-                                          StatisticsAgentSubSystem statsSubSystem);
+                                          StatisticsAgentSubSystem statsSubSystem,
+                                          DGCSequenceProvider dgcSequenceProvider);
 
   ServerConfigurationContext createServerConfigurationContext(StageManager stageManager, ObjectManager objMgr,
                                                               ObjectRequestManager objRequestMgr,
@@ -131,9 +133,10 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       PersistentMapStore persistentMapStore, ObjectManager objectManager,
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory,
-                                      L2ConfigurationSetupManager configurationSetupManager,
-                                      MessageRecycler recycler, StripeIDStateManager stripeStateManager,
-                                      ServerTransactionFactory serverTransactionFactory);
+                                      L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
+                                      StripeIDStateManager stripeStateManager,
+                                      ServerTransactionFactory serverTransactionFactory,
+                                      DGCSequenceProvider dgcSequenceProvider);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,
@@ -147,7 +150,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                  TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider,
                                  MBeanServer l2MbeanServer);
 
-  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final NewL2DSOConfig l2DSOCofig,
+  DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
                                     DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                     SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
                                     SampledCounter l2FlushFromOffheap, DBFactory factory) throws IOException,

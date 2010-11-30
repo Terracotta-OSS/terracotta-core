@@ -6,9 +6,9 @@ package com.tc.statistics.beans.impl;
 
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedLong;
 
-import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.CommonL2Config;
 import com.tc.management.AbstractTerracottaMBean;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticsGathererSubSystem;
 import com.tc.statistics.beans.StatisticsLocalGathererMBean;
@@ -41,13 +41,13 @@ public class StatisticsLocalGathererMBeanImpl extends AbstractTerracottaMBean im
   private final SynchronizedLong              sequenceNumber;
 
   private final StatisticsGathererSubSystem   subsystem;
-  private final NewCommonL2Config             config;
-  private final NewL2DSOConfig                dsoConfig;
+  private final CommonL2Config             config;
+  private final L2DSOConfig                dsoConfig;
   private String                              username;
   private String                              password;
 
-  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final NewCommonL2Config config,
-                                          final NewL2DSOConfig dsoConfig) throws NotCompliantMBeanException {
+  public StatisticsLocalGathererMBeanImpl(final StatisticsGathererSubSystem subsystem, final CommonL2Config config,
+                                          final L2DSOConfig dsoConfig) throws NotCompliantMBeanException {
     super(StatisticsLocalGathererMBean.class, true);
     Assert.assertNotNull("subsystem", subsystem);
     Assert.assertNotNull("config", config);

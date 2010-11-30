@@ -25,6 +25,7 @@ import com.tc.text.Banner;
 import com.tc.util.Assert;
 import com.tc.util.State;
 import com.tc.util.UUID;
+import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.Collections;
@@ -42,11 +43,13 @@ public class ClusterState {
   private final GlobalTransactionIDSequenceProvider gidSequenceProvider;
   private final GroupID                             thisGroupID;
   private final StripeIDStateManager                stripeIDStateManager;
+  private final DGCSequenceProvider                 dgcSequenceProvider;
 
   private final Set                                 connections          = Collections.synchronizedSet(new HashSet());
   private long                                      nextAvailObjectID    = -1;
   private long                                      nextAvailChannelID   = -1;
   private long                                      nextAvailGlobalTxnID = -1;
+  private long                                      nextAvailableDGCId   = -1;
   private State                                     currentState;
   private StripeID                                  stripeID;
   private final TerracottaOperatorEventLogger       operatorEventLogger  = TerracottaOperatorEventLogging
@@ -54,19 +57,22 @@ public class ClusterState {
 
   public ClusterState(PersistentMapStore persistentStateStore, ObjectIDSequence oidSequence,
                       ConnectionIDFactory connectionIdFactory, GlobalTransactionIDSequenceProvider gidSequenceProvider,
-                      GroupID thisGroupID, StripeIDStateManager stripeIDStateManager) {
+                      GroupID thisGroupID, StripeIDStateManager stripeIDStateManager,
+                      DGCSequenceProvider dgcSequenceProvider) {
     this.persistentStateStore = persistentStateStore;
     this.oidSequence = oidSequence;
     this.connectionIdFactory = connectionIdFactory;
     this.gidSequenceProvider = gidSequenceProvider;
     this.thisGroupID = thisGroupID;
     this.stripeIDStateManager = stripeIDStateManager;
+    this.dgcSequenceProvider = dgcSequenceProvider;
     String sid = persistentStateStore.get(CLUSTER_ID_KEY);
     this.stripeID = (sid != null) ? new StripeID(sid) : StripeID.NULL_ID;
     validateStartupState(persistentStateStore.get(L2_STATE_KEY));
     this.nextAvailObjectID = this.oidSequence.currentObjectIDValue();
     this.nextAvailGlobalTxnID = this.gidSequenceProvider.currentGID();
     this.nextAvailChannelID = this.connectionIdFactory.getCurrentConnectionID();
+    this.nextAvailableDGCId = this.dgcSequenceProvider.currentIDValue();
   }
 
   private void validateStartupState(String stateStr) {
@@ -115,6 +121,10 @@ public class ClusterState {
     return nextAvailGlobalTxnID;
   }
 
+  public long getNextAvailableDGCID() {
+    return nextAvailableDGCId;
+  }
+
   public void setNextAvailableGlobalTransactionID(long nextAvailGID) {
     if (nextAvailGID < nextAvailGlobalTxnID) {
       // Could happen when two actives fight it out. Dont want to assert, let the state manager fight it out.
@@ -135,13 +145,24 @@ public class ClusterState {
     this.nextAvailChannelID = nextAvailableCID;
   }
 
-  public void syncInternal() {
-    syncConnectionIDs();
-    syncOIDSequence();
-    syncGIDSequence();
+  public void setNextAvailableDGCId(long nextDGCId) {
+    if (nextDGCId < this.nextAvailableDGCId) {
+      // Could happen when two actives fight it out. Dont want to assert, let the state manager fight it out.
+      logger.error("Trying to set Next Available GC ID to a lesser value : known = " + nextAvailableDGCId
+                   + " new value = " + nextDGCId + " IGNORING");
+      return;
+    }
+    this.nextAvailableDGCId = nextDGCId;
   }
 
-  private void syncConnectionIDs() {
+  public void syncInternal() {
+    syncConnectionIDsToDisk();
+    syncOIDSequenceToDisk();
+    syncGIDSequenceToDisk();
+    syncDGCIDSequenceToDisk();
+  }
+
+  private void syncConnectionIDsToDisk() {
     Assert.assertNotNull(stripeID);
     connectionIdFactory.init(stripeID.getName(), nextAvailChannelID, connections);
   }
@@ -170,7 +191,7 @@ public class ClusterState {
     persistentStateStore.put(CLUSTER_ID_KEY, stripeID.getName());
   }
 
-  private void syncOIDSequence() {
+  private void syncOIDSequenceToDisk() {
     long nextOID = getNextAvailableObjectID();
     if (nextOID != -1) {
       logger.info("Setting the Next Available OID to " + nextOID);
@@ -178,7 +199,12 @@ public class ClusterState {
     }
   }
 
-  private void syncGIDSequence() {
+  private void syncDGCIDSequenceToDisk() {
+    logger.info("Setting the next Available DGC sequence to " + this.nextAvailableDGCId);
+    this.dgcSequenceProvider.setNextAvailableDGCId(this.nextAvailableDGCId);
+  }
+
+  private void syncGIDSequenceToDisk() {
     long nextGID = getNextAvailableGlobalTxnID();
     if (nextGID != -1) {
       logger.info("Setting the Next Available Global Transaction ID to " + nextGID);
@@ -241,6 +267,7 @@ public class ClusterState {
     strBuilder.append(" nextAvailGlobalTxnID: ").append(this.nextAvailGlobalTxnID);
     strBuilder.append(" nextAvailChannelID: ").append(this.nextAvailChannelID);
     strBuilder.append(" nextAvailObjectID: ").append(this.nextAvailObjectID);
+    strBuilder.append(" nextAvailDGCSequence: ").append(this.nextAvailableDGCId);
     strBuilder.append(" currentState: ").append(this.currentState);
     strBuilder.append(" stripeID: ").append(this.stripeID);
     strBuilder.append(" ]");

@@ -6,6 +6,6 @@ package com.tc.config.schema;
 
 import com.terracottatech.config.UpdateCheck;
 
-public interface UpdateCheckConfig extends NewConfig {
+public interface UpdateCheckConfig extends Config {
   UpdateCheck getUpdateCheck();
 }

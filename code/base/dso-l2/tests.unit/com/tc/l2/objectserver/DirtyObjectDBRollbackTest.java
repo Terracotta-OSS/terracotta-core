@@ -8,7 +8,7 @@ import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.objectserver.persistence.db.DirtyObjectDbCleaner;
 import com.tc.objectserver.persistence.db.TCMapStore;
@@ -43,7 +43,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     dataPath = getTempDirectory();
 
     // create dbHome dir
-    dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
+    dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
     dbenv = new BerkeleyDBEnvironment(true, dbHome);
@@ -55,7 +55,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
 
     // create db backup dir
     dirtyDbBackupPath = new TCFileImpl(new File(dataPath.getAbsolutePath() + File.separator
-                                                + NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
+                                                + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
     dirtyDbBackupPath.forceMkdir();
 
     System.out.println("XXX dbHome: " + dbHome.getAbsolutePath());
@@ -89,7 +89,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
     Assert.eval(parentDir.exists());
     File[] dirs = parentDir.listFiles(new FilenameFilter() {
       public boolean accept(File dir, String name) {
-        if (name.startsWith(NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX)) { return true; }
+        if (name.startsWith(L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX)) { return true; }
         return false;
       }
     });
@@ -97,7 +97,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   }
 
   public void testRollbackMore() throws Exception {
-    createBackupDirs(dirtyDbBackupPath.getFile(), NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 5);
+    createBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 5);
     dbCleaner.rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(), 3);
     File[] backupDirs = getDbBackupDirs(dirtyDbBackupPath.getFile());
 
@@ -115,13 +115,13 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   }
 
   public void testRollbackLess() throws Exception {
-    createBackupDirs(dirtyDbBackupPath.getFile(), NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 3);
+    createBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 3);
     dbCleaner.rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(), 5);
     Assert.assertEquals(3, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
   }
 
   public void testRollbackNone() throws Exception {
-    createBackupDirs(dirtyDbBackupPath.getFile(), NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 5);
+    createBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX, 5);
     dbCleaner.rollDirtyObjectDbBackups(dirtyDbBackupPath.getFile(), 0);
     Assert.assertEquals(5, getDbBackupDirs(dirtyDbBackupPath.getFile()).length);
   }
@@ -130,7 +130,7 @@ public class DirtyObjectDBRollbackTest extends TCTestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
     dbenv.close();
-    cleanBackupDirs(dirtyDbBackupPath.getFile(), NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
+    cleanBackupDirs(dirtyDbBackupPath.getFile(), L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX);
   }
 
   class TestDirtyObjectDBCleaner extends DirtyObjectDbCleaner {

@@ -3,7 +3,7 @@
  */
 package com.tc.statistics;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseStructureMismatchError;
@@ -29,7 +29,7 @@ public class StatisticsGathererSubSystem {
     return active;
   }
 
-  public synchronized boolean setup(final NewStatisticsConfig config) {
+  public synchronized boolean setup(final StatisticsConfig config) {
     // create the statistics store
     File stat_path = config.statisticsPath();
     if (!TCFileUtils.ensureWritableDir(stat_path, 

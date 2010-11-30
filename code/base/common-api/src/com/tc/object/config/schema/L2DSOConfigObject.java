@@ -11,8 +11,8 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlString;
 
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
-import com.tc.config.schema.BaseNewConfigObject;
-import com.tc.config.schema.NewHaConfigObject;
+import com.tc.config.schema.BaseConfigObject;
+import com.tc.config.schema.HaConfigObject;
 import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -33,9 +33,9 @@ import com.terracottatech.config.TcConfigDocument.TcConfig;
 import java.io.File;
 
 /**
- * The standard implementation of {@link NewL2DSOConfig}.
+ * The standard implementation of {@link L2DSOConfig}.
  */
-public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DSOConfig {
+public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private static final String     WILDCARD_IP                           = "0.0.0.0";
   public static final short       DEFAULT_JMXPORT_OFFSET_FROM_DSOPORT   = 10;
   public static final short       DEFAULT_GROUPPORT_OFFSET_FROM_DSOPORT = 20;
@@ -52,7 +52,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
   private final String            serverName;
   private final String            bind;
 
-  public NewL2DSOConfigObject(ConfigContext context) {
+  public L2DSOConfigObject(ConfigContext context) {
     super(context);
 
     this.context.ensureRepositoryProvides(Server.class);
@@ -141,7 +141,7 @@ public class NewL2DSOConfigObject extends BaseNewConfigObject implements NewL2DS
       initializeDso(server, defaultValueProvider);
     }
 
-    NewHaConfigObject.initializeHa(servers, defaultValueProvider);
+    HaConfigObject.initializeHa(servers, defaultValueProvider);
     ActiveServerGroupsConfigObject.initializeMirrorGroups(servers, defaultValueProvider);
     UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
   }

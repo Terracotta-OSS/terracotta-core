@@ -16,7 +16,7 @@ import com.tc.management.beans.L2MBeanNames;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.BaseDSOTestCase;
 import com.tc.object.config.DSOClientConfigHelper;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.objectserver.control.ExtraProcessServerControl;
 import com.tc.objectserver.control.ServerControl;
 import com.tc.properties.TCProperties;
@@ -409,7 +409,7 @@ public abstract class TransparentTestBase extends BaseDSOTestCase implements Tra
       }
       List al = new ArrayList();
       al.add("-Dtc.node-name=" + serverNames[i]);
-      NewL2DSOConfigObject.initializeServers(TcConfigDocument.Factory.parse(configFiles[i]).getTcConfig(),
+      L2DSOConfigObject.initializeServers(TcConfigDocument.Factory.parse(configFiles[i]).getTcConfig(),
                                              new SchemaDefaultValueProvider(), configFiles[i].getParentFile());
       serverControls[i] = new ExtraProcessServerControl("localhost", dsoPorts[i], jmxPorts[i], configFiles[i]
           .getAbsolutePath(), true, serverNames[i], null, javaHome, true);

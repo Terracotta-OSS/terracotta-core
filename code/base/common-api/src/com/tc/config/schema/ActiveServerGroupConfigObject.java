@@ -19,7 +19,7 @@ import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 
-public class ActiveServerGroupConfigObject extends BaseNewConfigObject implements ActiveServerGroupConfig {
+public class ActiveServerGroupConfigObject extends BaseConfigObject implements ActiveServerGroupConfig {
 
   // TODO: the defaultValueProvider is not implemented to fetch default values
   // for attributes... possibly fix this and
@@ -31,7 +31,7 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
 
   private GroupID             groupId;
   private String              grpName;
-  private final NewHaConfig   haConfig;
+  private final HaConfigSchema   haConfig;
   private final MembersConfig membersConfig;
 
   public ActiveServerGroupConfigObject(ConfigContext context, L2ConfigurationSetupManagerImpl setupManager) {
@@ -43,14 +43,14 @@ public class ActiveServerGroupConfigObject extends BaseNewConfigObject implement
     this.grpName = groupName;
 
     membersConfig = new MembersConfigObject(createContext(setupManager, true, group));
-    haConfig = new NewHaConfigObject(createContext(setupManager, false, group));
+    haConfig = new HaConfigObject(createContext(setupManager, false, group));
   }
 
   public void setGroupId(GroupID groupId) {
     this.groupId = groupId;
   }
 
-  public NewHaConfig getHaHolder() {
+  public HaConfigSchema getHaHolder() {
     return this.haConfig;
   }
   

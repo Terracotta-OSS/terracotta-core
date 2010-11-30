@@ -4,7 +4,7 @@
  */
 package com.tc.statistics;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
 import com.tc.util.UUID;
 
@@ -49,7 +49,7 @@ public interface StatisticsAgentSubSystem {
    * 
    * @return {@code true} if the statistics agent was setup successfully; or {@code false} otherwise
    */
-  public boolean setup(StatisticsSystemType type, NewStatisticsConfig config);
+  public boolean setup(StatisticsSystemType type, StatisticsConfig config);
 
   public boolean waitUntilSetupComplete();
 

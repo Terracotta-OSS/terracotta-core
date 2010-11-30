@@ -3,8 +3,12 @@
  */
 package com.tc.config.schema;
 
-import java.io.File;
 
-public interface NewStatisticsConfig {
-  File statisticsPath();
+/**
+ * Contains methods that expose whole-system config.
+ */
+public interface SystemConfig extends Config {
+
+  ConfigurationModel configurationModel();
+
 }

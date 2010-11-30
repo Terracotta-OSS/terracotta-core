@@ -13,7 +13,7 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingSessionNotFoundException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferUnknownCaptureSessionException;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.statistics.retrieval.impl.StatisticsRetrieverImpl;
 import com.tc.util.Assert;
@@ -31,12 +31,12 @@ public class MemoryStatisticsBufferImpl extends AbstractStatisticsBuffer {
   public final static Long                                 DEFAULT_PURGE_PERCENTAGE = new Long(10);
 
   private final StatisticsSystemType                       type;
-  private final StatisticsConfig                           config;
+  private final DSOStatisticsConfig                           config;
 
   private final ConcurrentMap<String, List<StatisticData>> buffer                   = new ConcurrentHashMap<String, List<StatisticData>>();
   private final ConcurrentMap<String, Date>                sessions                 = new ConcurrentHashMap<String, Date>();
 
-  public MemoryStatisticsBufferImpl(final StatisticsSystemType type, final StatisticsConfig config) {
+  public MemoryStatisticsBufferImpl(final StatisticsSystemType type, final DSOStatisticsConfig config) {
     super();
     
     Assert.assertNotNull("type", type);
@@ -114,8 +114,8 @@ public class MemoryStatisticsBufferImpl extends AbstractStatisticsBuffer {
     
     synchronized (sessionDataList) {
       // using >= instead of == explicitly for defensive coding, you never know if a bug makes the size grow larger that the max allowed value
-      if (sessionDataList.size() >= config.getParamLong(StatisticsConfig.KEY_MAX_MEMORY_BUFFER_SIZE)) {
-        final int amountToRemove = (int) ((sessionDataList.size() / 100) * config.getParamLong(StatisticsConfig.KEY_MEMORY_BUFFER_PURGE_PERCENTAGE));
+      if (sessionDataList.size() >= config.getParamLong(DSOStatisticsConfig.KEY_MAX_MEMORY_BUFFER_SIZE)) {
+        final int amountToRemove = (int) ((sessionDataList.size() / 100) * config.getParamLong(DSOStatisticsConfig.KEY_MEMORY_BUFFER_PURGE_PERCENTAGE));
         final ListIterator<StatisticData> it = sessionDataList.listIterator(0);
         for (int i = 0; i < amountToRemove; i++) {
           it.next();

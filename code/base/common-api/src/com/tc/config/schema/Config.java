@@ -10,7 +10,7 @@ import com.tc.config.schema.dynamic.ConfigItem;
 /**
  * An interface implemented by all config objects.
  */
-public interface NewConfig {
+public interface Config {
 
   void changesInItemIgnored(ConfigItem item);
   

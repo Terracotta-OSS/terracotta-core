@@ -24,14 +24,14 @@ import java.util.Set;
 final class MarkAndSweepGCAlgorithm {
 
   private final GCHook                         gcHook;
-  private final int                            gcIteration;
+  private final long                           gcIteration;
   private final GarbageCollector               collector;
   private final GarbageCollectionInfoPublisher gcPublisher;
   private final LifeCycleState                 gcState;
-  private final String                         uuid                  = UUID.getUUID().toString();
+  private final String                         uuid = UUID.getUUID().toString();
 
   public MarkAndSweepGCAlgorithm(GarbageCollector collector, GCHook gcHook, GarbageCollectionInfoPublisher gcPublisher,
-                                 LifeCycleState gcState, int gcIteration) {
+                                 LifeCycleState gcState, long gcIteration) {
     this.collector = collector;
     this.gcHook = gcHook;
     this.gcPublisher = gcPublisher;

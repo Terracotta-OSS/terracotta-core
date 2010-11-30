@@ -14,7 +14,7 @@ import com.sleepycat.je.util.DbBackup;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.stats.AbstractNotifyingMBean;
@@ -104,7 +104,7 @@ public class ServerDBBackup extends AbstractNotifyingMBean implements ServerDBBa
 
     backupFileLogger = new FileLoggerForBackup(destinationDir);
 
-    destinationDir = destinationDir + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME;
+    destinationDir = destinationDir + File.separator + L2DSOConfig.OBJECTDB_DIRNAME;
     backupFileLogger.logStartMessage();
     logger.info("Starting backup");
 

@@ -19,7 +19,7 @@ import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStartCapturingSessionNotFoundException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.exceptions.AgentStatisticsManagerException;
 import com.tc.statistics.exceptions.StatisticDataInjectionErrorException;
 import com.tc.statistics.retrieval.StatisticsRetrievalRegistry;
@@ -40,12 +40,12 @@ import javax.management.NotCompliantMBeanException;
 public class StatisticsManagerMBeanImpl extends AbstractTerracottaMBean implements StatisticsManagerMBean, AgentStatisticsManager {
   private final static TCLogger LOGGER = TCLogging.getLogger(StatisticsManagerMBeanImpl.class);
 
-  private final StatisticsConfig config;
+  private final DSOStatisticsConfig config;
   private final StatisticsRetrievalRegistry registry;
   private final StatisticsBuffer buffer;
   private final Map retrieverMap = new ConcurrentHashMap();
 
-  public StatisticsManagerMBeanImpl(final StatisticsConfig config, final StatisticsRetrievalRegistry registry, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
+  public StatisticsManagerMBeanImpl(final DSOStatisticsConfig config, final StatisticsRetrievalRegistry registry, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
     super(StatisticsManagerMBean.class, false);
 
     Assert.assertNotNull("config", config);

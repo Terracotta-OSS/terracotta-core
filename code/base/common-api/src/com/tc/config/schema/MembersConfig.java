@@ -4,6 +4,6 @@
  */
 package com.tc.config.schema;
 
-public interface MembersConfig extends NewConfig {
+public interface MembersConfig extends Config {
   String[] getMemberArray();
 }

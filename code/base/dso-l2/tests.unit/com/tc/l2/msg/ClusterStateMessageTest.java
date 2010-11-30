@@ -23,6 +23,7 @@ import com.tc.objectserver.persistence.db.ConnectionIDFactoryImpl;
 import com.tc.objectserver.persistence.impl.TestMutableSequence;
 import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.util.State;
+import com.tc.util.sequence.DGCSequenceProvider;
 import com.tc.util.sequence.ObjectIDSequence;
 
 import java.util.HashMap;
@@ -37,11 +38,13 @@ public class ClusterStateMessageTest extends TestCase {
   private ClusterState     clusterState_1;
   private ClusterState     clusterState_2;
 
+  @Override
   public void setUp() {
     resetClusterState(CLUSTER_STATE_1);
     resetClusterState(CLUSTER_STATE_2);
   }
 
+  @Override
   public void tearDown() {
     clusterState_1 = null;
     clusterState_2 = null;
@@ -56,13 +59,14 @@ public class ClusterStateMessageTest extends TestCase {
     GlobalTransactionIDSequenceProvider gidSequenceProvider = new GlobalTransactionIDBatchRequestHandler(
                                                                                                          new TestMutableSequence());
     StripeIDStateManager stripeIDStateManager = new DummyStripeIDStateManager();
+    DGCSequenceProvider dgcSequenceProvider = new DGCSequenceProvider(new TestMutableSequence());
     if (clusterState == CLUSTER_STATE_1) {
       clusterState_1 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider,
-                                        new GroupID(1), stripeIDStateManager);
+                                        new GroupID(1), stripeIDStateManager, dgcSequenceProvider);
       clusterState_1.setStripeID("foobar");
     } else {
       clusterState_2 = new ClusterState(clusterStateStore, oidSequence, connectionIdFactory, gidSequenceProvider,
-                                        new GroupID(1), stripeIDStateManager);
+                                        new GroupID(1), stripeIDStateManager, dgcSequenceProvider);
       clusterState_2.setStripeID("foobar");
     }
   }

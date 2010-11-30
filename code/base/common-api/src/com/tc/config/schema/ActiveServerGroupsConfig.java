@@ -4,7 +4,7 @@
  */
 package com.tc.config.schema;
 
-public interface ActiveServerGroupsConfig extends NewConfig {
+public interface ActiveServerGroupsConfig extends Config {
 	ActiveServerGroupConfig[] getActiveServerGroupArray();
 
 	ActiveServerGroupConfig getActiveServerGroupForL2(String l2Name);

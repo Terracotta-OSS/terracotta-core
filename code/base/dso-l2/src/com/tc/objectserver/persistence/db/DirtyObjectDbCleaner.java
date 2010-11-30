@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils;
 import com.tc.io.TCFile;
 import com.tc.io.TCFileImpl;
 import com.tc.logging.TCLogger;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.object.persistence.api.ClusterStatePersistentMapStore;
 import com.tc.object.persistence.api.PersistentMapStore;
 import com.tc.properties.TCPropertiesConsts;
@@ -62,7 +62,7 @@ public class DirtyObjectDbCleaner {
     Assert.assertNotBlank(dataPath);
 
     TCFile dirtyDbBackupPath = new TCFileImpl(new File(dataPath + File.separator
-                                                       + NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
+                                                       + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_DIRNAME));
     if (!dirtyDbBackupPath.exists()) {
       logger.info("Creating dirtyDbBackupPath : " + dirtyDbBackupPath.getFile().getAbsolutePath());
       try {
@@ -79,9 +79,9 @@ public class DirtyObjectDbCleaner {
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmssSS");
     Date d = new Date();
     String timeStamp = dateFormat.format(d);
-    File dirtyDbSourcedir = new File(dataPath + File.separator + NewL2DSOConfig.OBJECTDB_DIRNAME + File.separator);
+    File dirtyDbSourcedir = new File(dataPath + File.separator + L2DSOConfig.OBJECTDB_DIRNAME + File.separator);
     File dirtyDbBackupDestDir = new File(dirtyDbBackupPath + File.separator
-                                         + NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX + timeStamp);
+                                         + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX + timeStamp);
 
     try {
       boolean success = dirtyDbSourcedir.renameTo(dirtyDbBackupDestDir);
@@ -112,7 +112,7 @@ public class DirtyObjectDbCleaner {
     if (null == contents) return;
 
     String pathPrefix = dirtyDbBackupPath.getAbsolutePath() + File.separator
-                        + NewL2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX;
+                        + L2DSOConfig.DIRTY_OBJECTDB_BACKUP_PREFIX;
 
     Arrays.sort(contents, new Comparator<File>() {
       public int compare(File o1, File o2) {

@@ -19,7 +19,7 @@ import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.MirrorGroups;
 import com.terracottatech.config.Servers;
 
-public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implements ActiveServerGroupsConfig {
+public class ActiveServerGroupsConfigObject extends BaseConfigObject implements ActiveServerGroupsConfig {
   private final ActiveServerGroupConfig[] groupConfigArray;
   private final int                       activeServerGroupCount;
 
@@ -96,7 +96,7 @@ public class ActiveServerGroupsConfigObject extends BaseNewConfigObject implemen
         if (!mirrorGroup.isSetHa()) {
           mirrorGroup.setHa(servers.getHa());
         } else {
-          NewHaConfigObject.checkAndInitializeHa(mirrorGroup.getHa(), servers.getHa());
+          HaConfigObject.checkAndInitializeHa(mirrorGroup.getHa(), servers.getHa());
         }
       }
     }

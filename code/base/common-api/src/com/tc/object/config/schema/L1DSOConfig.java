@@ -3,12 +3,12 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.NewConfig;
+import com.tc.config.schema.Config;
 
 /**
  * Represents all configuration read directly by the L1 for DSO and which is independent of application.
  */
-public interface NewL1DSOConfig extends NewConfig {
+public interface L1DSOConfig extends Config {
 
   int faultCount();
 

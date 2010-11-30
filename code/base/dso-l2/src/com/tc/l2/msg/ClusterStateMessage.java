@@ -26,12 +26,14 @@ public class ClusterStateMessage extends AbstractGroupMessage {
   public static final int        NEW_CONNECTION_CREATED       = 0x01;
   public static final int        CONNECTION_DESTROYED         = 0x02;
   public static final int        GLOBAL_TRANSACTION_ID        = 0x03;
+  public static final int        DGC_ID                       = 0x04;
   public static final int        COMPLETE_STATE               = 0xF0;
   public static final int        OPERATION_FAILED_SPLIT_BRAIN = 0xFE;
   public static final int        OPERATION_SUCCESS            = 0xFF;
 
   private long                   nextAvailableObjectID;
   private long                   nextAvailableGID;
+  private long                   nextAvailableDGCId;
   private String                 clusterID;
   private ConnectionID           connectionID;
   private long                   nextAvailableChannelID;
@@ -56,6 +58,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     this.connectionID = connID;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     switch (getType()) {
       case OBJECT_ID:
@@ -63,6 +66,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         break;
       case GLOBAL_TRANSACTION_ID:
         nextAvailableGID = in.readLong();
+        break;
+      case DGC_ID:
+        nextAvailableDGCId = in.readLong();
         break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
@@ -72,6 +78,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         nextAvailableObjectID = in.readLong();
         nextAvailableGID = in.readLong();
         nextAvailableChannelID = in.readLong();
+        nextAvailableDGCId = in.readLong();
         clusterID = in.readString();
         int size = in.readInt();
         connectionIDs = new HashSet(size);
@@ -90,6 +97,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
     }
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     switch (getType()) {
       case OBJECT_ID:
@@ -97,6 +105,9 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         break;
       case GLOBAL_TRANSACTION_ID:
         out.writeLong(nextAvailableGID);
+        break;
+      case DGC_ID:
+        out.writeLong(nextAvailableDGCId);
         break;
       case NEW_CONNECTION_CREATED:
       case CONNECTION_DESTROYED:
@@ -106,6 +117,7 @@ public class ClusterStateMessage extends AbstractGroupMessage {
         out.writeLong(nextAvailableObjectID);
         out.writeLong(nextAvailableGID);
         out.writeLong(nextAvailableChannelID);
+        out.writeLong(nextAvailableDGCId);
         out.writeString(clusterID);
         out.writeInt(connectionIDs.size());
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
@@ -155,10 +167,14 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case GLOBAL_TRANSACTION_ID:
         nextAvailableGID = state.getNextAvailableGlobalTxnID();
         break;
+      case DGC_ID:
+        nextAvailableDGCId = state.getNextAvailableDGCID();
+        break;
       case COMPLETE_STATE:
         nextAvailableObjectID = state.getNextAvailableObjectID();
         nextAvailableGID = state.getNextAvailableGlobalTxnID();
         nextAvailableChannelID = state.getNextAvailableChannelID();
+        nextAvailableDGCId = state.getNextAvailableDGCID();
         clusterID = state.getStripeID().getName();
         connectionIDs = state.getAllConnections();
         stripeIDMap = state.getStripeIDMap();
@@ -176,10 +192,14 @@ public class ClusterStateMessage extends AbstractGroupMessage {
       case GLOBAL_TRANSACTION_ID:
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         break;
+      case DGC_ID:
+        state.setNextAvailableDGCId(nextAvailableDGCId);
+        break;
       case COMPLETE_STATE:
         state.setNextAvailableObjectID(nextAvailableObjectID);
         state.setNextAvailableGlobalTransactionID(nextAvailableGID);
         state.setNextAvailableChannelID(nextAvailableChannelID);
+        state.setNextAvailableDGCId(nextAvailableDGCId);
         for (Iterator i = connectionIDs.iterator(); i.hasNext();) {
           ConnectionID conn = (ConnectionID) i.next();
           state.addNewConnection(conn);

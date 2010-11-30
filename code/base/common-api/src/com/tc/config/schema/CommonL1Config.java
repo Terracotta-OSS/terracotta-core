@@ -11,7 +11,7 @@ import java.io.File;
 /**
  * Contains methods for L1 DSO.
  */
-public interface NewCommonL1Config extends NewConfig {
+public interface CommonL1Config extends Config {
 
   File logsPath();
 

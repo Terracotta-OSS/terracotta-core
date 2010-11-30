@@ -4,7 +4,7 @@
 package com.tc.statistics.logging;
 
 import com.tc.statistics.StatisticRetrievalAction;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 
 public interface StatisticsLogger {
   public final static int DEFAULT_LOGGING_INTERVAL = 15 * 60; // 15 minutes
@@ -17,7 +17,7 @@ public interface StatisticsLogger {
 
   public void registerAction(StatisticRetrievalAction action);
 
-  public StatisticsConfig getConfig();
+  public DSOStatisticsConfig getConfig();
 
   public boolean containsAction(StatisticRetrievalAction action);
 }

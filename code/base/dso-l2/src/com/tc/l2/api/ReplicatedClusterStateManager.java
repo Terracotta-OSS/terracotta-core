@@ -7,8 +7,9 @@ package com.tc.l2.api;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupException;
 import com.tc.util.State;
+import com.tc.util.sequence.DGCIdPublisher;
 
-public interface ReplicatedClusterStateManager {
+public interface ReplicatedClusterStateManager extends DGCIdPublisher {
 
   public void publishNextAvailableObjectID(long l);
 

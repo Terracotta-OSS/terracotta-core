@@ -18,13 +18,13 @@ import java.lang.reflect.Array;
 /**
  * A base class for all new config objects.
  */
-public class BaseNewConfigObject implements NewConfig {
+public class BaseConfigObject implements Config {
 
-  private static final TCLogger logger = TCLogging.getLogger(BaseNewConfigObject.class);
+  private static final TCLogger logger = TCLogging.getLogger(BaseConfigObject.class);
 
   protected final ConfigContext context;
 
-  public BaseNewConfigObject(ConfigContext context) {
+  public BaseConfigObject(ConfigContext context) {
     Assert.assertNotNull(context);
     this.context = context;
   }

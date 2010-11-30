@@ -7,11 +7,11 @@ package com.tc.net.groups;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.ReloadConfigChangeContext;
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.NewHaConfig;
+import com.tc.config.schema.HaConfigSchema;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.net.GroupID;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +25,7 @@ public class ServerGroup {
 
   private final GroupID     groupId;
   private String[]          members;
-  private final NewHaConfig haMode;
+  private final HaConfigSchema haMode;
   private final Map         nodes;
 
   public ServerGroup(final ActiveServerGroupConfig group) {
@@ -71,7 +71,7 @@ public class ServerGroup {
     List<String> membersNow = convertStringToList(membersNowArray);
     membersNow.removeAll(membersBefore);
     for (String member : membersNow) {
-      NewL2DSOConfig l2 = configSetupManager.dsoL2ConfigFor(member);
+      L2DSOConfig l2 = configSetupManager.dsoL2ConfigFor(member);
       Node node = HaConfigImpl.makeNode(l2);
       nodesAdded.add(node);
       this.addNode(node, member);

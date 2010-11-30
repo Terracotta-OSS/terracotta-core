@@ -26,7 +26,7 @@ import com.tc.statistics.buffer.exceptions.StatisticsBufferStatisticStorageError
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingErrorException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferStopCapturingSessionNotFoundException;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferUnknownCaptureSessionException;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.database.StatisticsDatabase;
 import com.tc.statistics.database.exceptions.StatisticsDatabaseException;
 import com.tc.statistics.database.impl.H2StatisticsDatabase;
@@ -77,13 +77,13 @@ public class H2StatisticsBufferImpl extends AbstractStatisticsBuffer {
   private final static Random rand = new Random();
 
   private final StatisticsSystemType type;
-  private final StatisticsConfig config;
+  private final DSOStatisticsConfig config;
   private final File lockFile;
   private final StatisticsDatabase database;
 
   private volatile boolean open = false;
 
-  public H2StatisticsBufferImpl(final StatisticsSystemType type, final StatisticsConfig config, final File dbDir) {
+  public H2StatisticsBufferImpl(final StatisticsSystemType type, final DSOStatisticsConfig config, final File dbDir) {
     super();
     
     Assert.assertNotNull("type", type);

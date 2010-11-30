@@ -16,7 +16,7 @@ import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.StatisticsConsumer;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.util.Assert;
 
@@ -47,14 +47,14 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
 
   private final SynchronizedLong sequenceNumber;
 
-  private final StatisticsConfig config;
+  private final DSOStatisticsConfig config;
   private final StatisticsBuffer buffer;
   private final Set activeSessionIds;
 
   private Timer timer = null;
   private SendStatsTask task = null;
 
-  public StatisticsEmitterMBeanImpl(final StatisticsConfig config, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
+  public StatisticsEmitterMBeanImpl(final DSOStatisticsConfig config, final StatisticsBuffer buffer) throws NotCompliantMBeanException {
     super(StatisticsEmitterMBean.class, true, false);
     Assert.assertNotNull("config", config);
     Assert.assertNotNull("buffer", buffer);
@@ -88,7 +88,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
 
     timer = new Timer("Statistics Emitter Timer", true);
     task = new SendStatsTask();
-    timer.scheduleAtFixedRate(task, 0, config.getParamLong(StatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
+    timer.scheduleAtFixedRate(task, 0, config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_SCHEDULE_INTERVAL));
   }
 
   private synchronized void disableTimer() {
@@ -152,7 +152,7 @@ public class StatisticsEmitterMBeanImpl extends AbstractTerracottaMBean implemen
             final List notification_data = new ArrayList();
             buffer.consumeStatistics((String)it.next(), new StatisticsConsumer() {
               public long getMaximumConsumedDataCount() {
-                return config.getParamLong(StatisticsConfig.KEY_EMITTER_BATCH_SIZE);
+                return config.getParamLong(DSOStatisticsConfig.KEY_EMITTER_BATCH_SIZE);
               }
 
               public boolean consumeStatisticData(StatisticData data) {

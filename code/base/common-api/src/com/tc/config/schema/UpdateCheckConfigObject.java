@@ -14,7 +14,7 @@ import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.UpdateCheck;
 
-public class UpdateCheckConfigObject extends BaseNewConfigObject implements UpdateCheckConfig {
+public class UpdateCheckConfigObject extends BaseConfigObject implements UpdateCheckConfig {
 
   public UpdateCheckConfigObject(ConfigContext context) {
     super(context);

@@ -17,11 +17,11 @@ import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
-import com.tc.config.schema.NewCommonL2Config;
-import com.tc.config.schema.NewCommonL2ConfigObject;
-import com.tc.config.schema.NewHaConfig;
-import com.tc.config.schema.NewSystemConfig;
-import com.tc.config.schema.NewSystemConfigObject;
+import com.tc.config.schema.CommonL2Config;
+import com.tc.config.schema.CommonL2ConfigObject;
+import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.SystemConfig;
+import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
@@ -32,8 +32,8 @@ import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.object.config.schema.NewL2DSOConfig;
-import com.tc.object.config.schema.NewL2DSOConfigObject;
+import com.tc.object.config.schema.L2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
@@ -74,14 +74,14 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map                         l2ConfigData;
-  private final NewHaConfig                 haConfig;
+  private final HaConfigSchema                 haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
   private final L2ConfigData                myConfigData;
   private final ConfigTCProperties          configTCProperties;
   private final Set<InetAddress>            localInetAddresses;
 
-  private NewSystemConfig                   systemConfig;
+  private SystemConfig                   systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
@@ -271,8 +271,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   // make sure there is at most one of these
-  private NewHaConfig getHaConfig() {
-    NewHaConfig newHaConfig = null;
+  private HaConfigSchema getHaConfig() {
+    HaConfigSchema newHaConfig = null;
     if (this.activeServerGroupsConfig.getActiveServerGroupCount() != 0) {
       ActiveServerGroupConfig groupConfig = getActiveServerGroupForThisL2();
       if (groupConfig != null) {
@@ -323,24 +323,24 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     private final String              name;
     private final ChildBeanRepository beanRepository;
 
-    private final NewCommonL2Config   commonL2Config;
-    private final NewL2DSOConfig      dsoL2Config;
+    private final CommonL2Config   commonL2Config;
+    private final L2DSOConfig      dsoL2Config;
 
     public L2ConfigData(String name) throws ConfigurationSetupException {
       this.name = name;
       findMyL2Bean(); // To get the exception in case things are screwed up
       this.beanRepository = new ChildBeanRepository(serversBeanRepository(), Server.class, new BeanFetcher());
-      this.commonL2Config = new NewCommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
+      this.commonL2Config = new CommonL2ConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()));
-      this.dsoL2Config = new NewL2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
+      this.dsoL2Config = new L2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()));
     }
 
-    public NewCommonL2Config commonL2Config() {
+    public CommonL2Config commonL2Config() {
       return this.commonL2Config;
     }
 
-    public NewL2DSOConfig dsoL2Config() {
+    public L2DSOConfig dsoL2Config() {
       return this.dsoL2Config;
     }
 
@@ -490,7 +490,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private L2ConfigData setupConfigDataForL2(final String l2Identifier) throws ConfigurationSetupException {
-    this.systemConfig = new NewSystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
+    this.systemConfig = new SystemConfigObject(createContext(systemBeanRepository(), configurationCreator()
         .directoryConfigurationLoadedFrom()));
     L2ConfigData serverConfigData = configDataFor(this.thisL2Identifier);
     LogSettingConfigItemListener listener = new LogSettingConfigItemListener(TCLogging.PROCESS_TYPE_L2);
@@ -593,27 +593,27 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                         + " group(s) set to disk-based HA."); }
   }
 
-  public NewCommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
+  public CommonL2Config commonL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).commonL2Config();
   }
 
-  public NewCommonL2Config commonl2Config() {
+  public CommonL2Config commonl2Config() {
     return this.myConfigData.commonL2Config();
   }
 
-  public NewSystemConfig systemConfig() {
+  public SystemConfig systemConfig() {
     return this.systemConfig;
   }
 
-  public NewL2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
+  public L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException {
     return configDataFor(name).dsoL2Config();
   }
 
-  public NewL2DSOConfig dsoL2Config() {
+  public L2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
   }
 
-  public NewHaConfig haConfig() {
+  public HaConfigSchema haConfig() {
     return haConfig;
   }
 

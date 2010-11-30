@@ -14,7 +14,7 @@ import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.groups.Node;
 import com.tc.net.groups.ServerGroup;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.util.Assert;
 
 import java.util.HashMap;
@@ -150,7 +150,7 @@ public class HaConfigImpl implements HaConfig {
       String[] l2Names = asgc.getMembers().getMemberArray();
       for (String l2Name : l2Names) {
         try {
-          NewL2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Name);
+          L2DSOConfig l2 = this.configSetupManager.dsoL2ConfigFor(l2Name);
           Node node = makeNode(l2);
           allClusterNodes.add(node);
           addNodeToGroup(node, l2Name);
@@ -180,11 +180,11 @@ public class HaConfigImpl implements HaConfig {
   }
 
   private Node makeThisNode() {
-    NewL2DSOConfig l2 = this.configSetupManager.dsoL2Config();
+    L2DSOConfig l2 = this.configSetupManager.dsoL2Config();
     return makeNode(l2);
   }
 
-  public static Node makeNode(NewL2DSOConfig l2) {
+  public static Node makeNode(L2DSOConfig l2) {
     String host = l2.l2GroupPort().getBind();
     if (TCSocketAddress.WILDCARD_IP.equals(host)) {
       host = l2.host();

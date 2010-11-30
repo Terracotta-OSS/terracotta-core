@@ -25,7 +25,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     resource_config = YAML.load_file(File.join(@basedir.to_s, resource_def))
     default_repos = resource_config['default_repos']
     puts "Repos for external resources: \n#{default_repos.join("\n")}"
-    resolver = ExternalResourceResolver.new(default_repos,
+    resolver = ExternalResourceResolver.new(@flavor, default_repos,
                                             config_source['maven.useLocalRepo'])
     artifacts = resource_config['artifacts']
     artifacts.each do |artifact|

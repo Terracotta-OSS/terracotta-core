@@ -8,7 +8,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.lang.ArrayUtils;
 
 import com.tc.cli.CommandLineBuilder;
-import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
@@ -122,7 +122,7 @@ public class TCStop {
         System.exit(1);
       }
 
-      NewCommonL2Config serverConfig = manager.commonL2ConfigFor(name);
+      CommonL2Config serverConfig = manager.commonL2ConfigFor(name);
 
       host = serverConfig.host();
       if (host == null) host = name;

@@ -4,7 +4,7 @@
  */
 package com.tc.statistics.mock;
 
-import com.tc.config.schema.NewStatisticsConfig;
+import com.tc.config.schema.StatisticsConfig;
 import com.tc.statistics.AgentStatisticsManager;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemCallback;
@@ -49,7 +49,7 @@ public class NullStatisticsAgentSubSystem implements StatisticsAgentSubSystem {
     // no-op
   }
 
-  public boolean setup(final StatisticsSystemType type, final NewStatisticsConfig config) {
+  public boolean setup(final StatisticsSystemType type, final StatisticsConfig config) {
     // nothing to setup
     return true;
   }

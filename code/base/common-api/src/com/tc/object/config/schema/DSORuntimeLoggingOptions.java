@@ -4,12 +4,12 @@
  */
 package com.tc.object.config.schema;
 
-import com.tc.config.schema.NewConfig;
+import com.tc.config.schema.Config;
 
 /**
  * Represents the runtime-logging options for DSO.
  */
-public interface DSORuntimeLoggingOptions extends NewConfig {
+public interface DSORuntimeLoggingOptions extends Config {
 
   boolean logLockDebug();
 

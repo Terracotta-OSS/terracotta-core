@@ -103,6 +103,11 @@ public class ReplicatedClusterStateManagerImpl implements ReplicatedClusterState
     publishToAll(ClusterStateMessageFactory.createNextAvailableObjectIDMessage(state));
   }
 
+  public synchronized void publishNextAvailableDGCID(long nextGcIteration) {
+    state.setNextAvailableDGCId(nextGcIteration);
+    publishToAll(ClusterStateMessageFactory.createNextAvailableDGCIterationMessage(state));
+  }
+
   // TODO:: Sync only once a while to the passives
   public void publishNextAvailableGlobalTransactionID(long minID) {
     state.setNextAvailableGlobalTransactionID(minID);

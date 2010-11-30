@@ -9,7 +9,7 @@ import com.tc.config.schema.test.L2ConfigBuilder;
 import com.tc.config.schema.test.L2SConfigBuilder;
 import com.tc.config.schema.test.SystemConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.process.Exec;
 import com.tc.test.TCTestCase;
 import com.tc.util.ExternalProcessStreamWriter;
@@ -40,7 +40,7 @@ public final class ArchiveUtilTest extends TCTestCase {
   private static final String MK_SERVER_LOG0     = "terracotta-server.log";
   private static final String MK_SERVER_LOG1     = "terracotta-server.log.1";
   private static final String MK_SERVER_DATA_DIR = "server-data";
-  private static final String MK_SERVER_DATA0    = NewL2DSOConfig.OBJECTDB_DIRNAME;
+  private static final String MK_SERVER_DATA0    = L2DSOConfig.OBJECTDB_DIRNAME;
   private static final String MK_SERVER_DATA1    = "startup.lck";
 
   private File                mockDataDir;

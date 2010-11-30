@@ -18,8 +18,8 @@ import com.tc.config.schema.repository.MutableBeanRepository;
 import com.tc.config.schema.repository.StandardApplicationsRepository;
 import com.tc.config.schema.repository.StandardBeanRepository;
 import com.tc.config.schema.utils.XmlObjectComparator;
-import com.tc.object.config.schema.NewDSOApplicationConfig;
-import com.tc.object.config.schema.NewDSOApplicationConfigObject;
+import com.tc.object.config.schema.DSOApplicationConfig;
+import com.tc.object.config.schema.DSOApplicationConfigObject;
 import com.tc.util.Assert;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.Client;
@@ -124,11 +124,11 @@ public class BaseConfigurationSetupManager {
     return new StandardConfigContext(beanRepository, this.defaultValueProvider, this.illegalConfigurationChangeHandler);
   }
 
-  public synchronized NewDSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
+  public synchronized DSOApplicationConfig dsoApplicationConfigFor(String applicationName) {
     // When we support multiple applications, just take this assertion out.
     Assert.eval(applicationName.equals(ConfigurationSetupManagerFactory.DEFAULT_APPLICATION_NAME));
 
-    NewDSOApplicationConfig out = (NewDSOApplicationConfig) this.dsoApplicationConfigs.get(applicationName);
+    DSOApplicationConfig out = (DSOApplicationConfig) this.dsoApplicationConfigs.get(applicationName);
     if (out == null) {
       out = createNewDSOApplicationConfig(applicationName);
       this.dsoApplicationConfigs.put(applicationName, out);
@@ -137,8 +137,8 @@ public class BaseConfigurationSetupManager {
     return out;
   }
 
-  protected NewDSOApplicationConfig createNewDSOApplicationConfig(String applicationName) {
-    return new NewDSOApplicationConfigObject(createContext(new ChildBeanRepository(this.applicationsRepository
+  protected DSOApplicationConfig createNewDSOApplicationConfig(String applicationName) {
+    return new DSOApplicationConfigObject(createContext(new ChildBeanRepository(this.applicationsRepository
         .repositoryFor(applicationName), DsoApplication.class, new ChildBeanFetcher() {
       public XmlObject getChild(XmlObject parent) {
         return ((Application) parent).getDso();

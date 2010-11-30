@@ -13,13 +13,13 @@ import com.terracottatech.config.Modules;
 import java.io.File;
 
 /**
- * The standard implementation of {@link NewCommonL1Config}.
+ * The standard implementation of {@link CommonL1Config}.
  */
-public class NewCommonL1ConfigObject extends BaseNewConfigObject implements NewCommonL1Config {
+public class CommonL1ConfigObject extends BaseConfigObject implements CommonL1Config {
 
   private final Modules modules;
 
-  public NewCommonL1ConfigObject(ConfigContext context) {
+  public CommonL1ConfigObject(ConfigContext context) {
     super(context);
     Assert.assertNotNull(context);
 

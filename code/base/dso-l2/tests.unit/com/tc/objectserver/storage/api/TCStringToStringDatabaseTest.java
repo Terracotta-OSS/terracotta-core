@@ -5,7 +5,7 @@ package com.tc.objectserver.storage.api;
 
 import org.apache.commons.io.FileUtils;
 
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
@@ -25,7 +25,7 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     super.setUp();
     File dataPath = getTempDirectory();
 
-    dbHome = new File(dataPath.getAbsolutePath(), NewL2DSOConfig.OBJECTDB_DIRNAME);
+    dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
     dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null);

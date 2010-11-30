@@ -16,7 +16,7 @@ import com.tc.statistics.StatisticType;
 import com.tc.statistics.buffer.StatisticsBuffer;
 import com.tc.statistics.buffer.StatisticsBufferListener;
 import com.tc.statistics.buffer.exceptions.StatisticsBufferException;
-import com.tc.statistics.config.StatisticsConfig;
+import com.tc.statistics.config.DSOStatisticsConfig;
 import com.tc.statistics.retrieval.StatisticsRetriever;
 import com.tc.statistics.retrieval.actions.SRAShutdownTimestamp;
 import com.tc.statistics.retrieval.actions.SRAStartupTimestamp;
@@ -40,7 +40,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
 
   private Timer                     timer;
 
-  private final StatisticsConfig    config;
+  private final DSOStatisticsConfig    config;
   private final StatisticsBuffer    buffer;
   private final String              sessionId;
 
@@ -52,7 +52,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
   private LogRetrievalInProcessTask infoTask                      = null;
   private RetrieveStatsTask         statsTask                     = null;
 
-  public StatisticsRetrieverImpl(final StatisticsConfig config, final StatisticsBuffer buffer, final String sessionId) {
+  public StatisticsRetrieverImpl(final DSOStatisticsConfig config, final StatisticsBuffer buffer, final String sessionId) {
     Assert.assertNotNull("config", config);
     Assert.assertNotNull("buffer", buffer);
     Assert.assertNotNull("sessionId", sessionId);
@@ -82,7 +82,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
     return sessionId;
   }
 
-  public StatisticsConfig getConfig() {
+  public DSOStatisticsConfig getConfig() {
     return config;
   }
 
@@ -180,7 +180,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
         .getInt(TCPropertiesConsts.CVT_RETRIEVER_NOTIFICATION_INTERVAL, DEFAULT_NOTIFICATION_INTERVAL) * 1000);
 
     statsTask = new RetrieveStatsTask();
-    timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
+    timer.scheduleAtFixedRate(statsTask, 0, config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL));
   }
 
   private synchronized void disableTimerAndTasks() {
@@ -188,7 +188,7 @@ public class StatisticsRetrieverImpl implements StatisticsRetriever, StatisticsB
       statsTask.shutdown();
 
       final long before_shutdown_wait = System.currentTimeMillis();
-      final long shutdown_wait_expiration = config.getParamLong(StatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 3;
+      final long shutdown_wait_expiration = config.getParamLong(DSOStatisticsConfig.KEY_RETRIEVER_SCHEDULE_INTERVAL) * 3;
       boolean interrupted = false;
       try {
         while (!statsTask.isShutdown()

@@ -4,10 +4,10 @@
  */
 package com.tc.server;
 
-import com.tc.config.schema.NewCommonL2Config;
+import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
-import com.tc.object.config.schema.NewL2DSOConfig;
+import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticDataCSVParser;
 import com.tc.statistics.StatisticsGathererSubSystem;
@@ -62,8 +62,8 @@ public class StatisticsGathererServlet extends RestfulServlet implements Statist
   private synchronized void startup() throws StatisticsGathererException {
     if (connected) { return; }
 
-    final NewCommonL2Config commonConfig = configSetupManager.commonl2Config();
-    final NewL2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
+    final CommonL2Config commonConfig = configSetupManager.commonl2Config();
+    final L2DSOConfig dsoConfig = configSetupManager.dsoL2Config();
     String hostname = configSetupManager.commonl2Config().jmxPort().getBind();
     if (null == hostname) {
       hostname = dsoConfig.host();
