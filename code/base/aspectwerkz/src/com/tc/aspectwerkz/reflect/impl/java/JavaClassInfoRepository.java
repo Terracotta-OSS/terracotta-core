@@ -22,8 +22,7 @@ public class JavaClassInfoRepository {
   /**
    * Map with all the class info repositories mapped to their class loader.
    */
-  private static final Map<ClassLoader, JavaClassInfoRepository> s_repositories         = new MapMaker().weakKeys()
-                                                                                            .weakValues().makeMap();
+  private static final Map<ClassLoader, JavaClassInfoRepository> s_repositories         = new MapMaker().weakKeys().makeMap();
 
   private static final JavaClassInfoRepository                   NULL_LOADER_REPOSITORY = new JavaClassInfoRepository(
                                                                                                                       null);
@@ -64,6 +63,10 @@ public class JavaClassInfoRepository {
       s_repositories.put(loader, repo);
       return repo;
     }
+  }
+  
+  synchronized static int repositoriesSize() {
+    return s_repositories.size();
   }
 
   /**
