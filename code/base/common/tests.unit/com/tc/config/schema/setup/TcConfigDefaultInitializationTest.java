@@ -45,7 +45,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     SchemaDefaultValueProvider defaultValueProvider = new SchemaDefaultValueProvider();
     L2DSOConfigObject.initializeServers(this.config, new SchemaDefaultValueProvider(), new File("tmp"));
     SystemConfigObject.initializeSystem(this.config, defaultValueProvider);
-    L1DSOConfigObject.initializeClients(this.config, defaultValueProvider, new File("tmp"));
+    L1DSOConfigObject.initializeClients(this.config, defaultValueProvider);
     DSOApplicationConfigObject.initializeApplication(this.config, defaultValueProvider);
     config.getServers().getMirrorGroups().getMirrorGroupArray(0).setGroupName("test-group");
   }
