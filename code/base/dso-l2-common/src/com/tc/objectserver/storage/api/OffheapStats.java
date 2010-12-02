@@ -28,15 +28,15 @@ public interface OffheapStats extends Serializable {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapTotalOccupiedSize() {
+                                                        public long getOffheapTotalAllocatedSize() {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapMapOccupiedMemory() {
+                                                        public long getOffheapMapAllocatedMemory() {
                                                           return 0;
                                                         }
 
-                                                        public long getOffheapObjectOccupiedMemory() {
+                                                        public long getOffheapObjectAllocatedMemory() {
                                                           return 0;
                                                         }
                                                       };
@@ -54,9 +54,9 @@ public interface OffheapStats extends Serializable {
 
   long getOffheapMaxDataSize();
 
-  long getOffheapTotalOccupiedSize();
+  long getOffheapTotalAllocatedSize();
 
-  long getOffheapObjectOccupiedMemory();
+  long getOffheapObjectAllocatedMemory();
 
-  long getOffheapMapOccupiedMemory();
+  long getOffheapMapAllocatedMemory();
 }
