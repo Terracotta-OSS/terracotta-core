@@ -88,36 +88,32 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private TitledBorder             offHeapUsageTitle;
   private NumberAxis               offHeapValueAxis;
 
-  private final String             flushRateLabelFormat         = "{0} Flushes/sec.";
-  private final String             faultRateLabelFormat         = "{0} Faults/sec.";
-  private final String             txnRateLabelFormat           = "{0} Txns/sec.";
-  private final String             onHeapFaultRateLabelFormat   = "{0} OnHeap Faults/sec.";
-  private final String             onHeapFlushRateLabelFormat   = "{0} OnHeap Flushes/sec.";
-  private final String             offHeapFaultRateLabelFormat  = "{0} OffHeap Faults/sec.";
-  private final String             offHeapFlushRateLabelFormat  = "{0} OffHeap Flushes/sec.";
-  private final String             onHeapUsedLabelFormat        = "{0} OnHeap Used";
-  private final String             onHeapMaxLabelFormat         = "{0} OnHeap Max";
-  private final String             offHeapUsedLabelFormat       = "{0} OffHeap Used";
-  private final String             offHeapObjectUsedLabelFormat = "{0} OffHeap Object % Used";
-  private final String             offHeapMapUsedLabelFormat    = "{0} OffHeap Map % Used";
-  private final String             offHeapMaxLabelFormat        = "{0} OffHeap Max";
+  private final String             flushRateLabelFormat        = "{0} Flushes/sec.";
+  private final String             faultRateLabelFormat        = "{0} Faults/sec.";
+  private final String             txnRateLabelFormat          = "{0} Txns/sec.";
+  private final String             onHeapFaultRateLabelFormat  = "{0} OnHeap Faults/sec.";
+  private final String             onHeapFlushRateLabelFormat  = "{0} OnHeap Flushes/sec.";
+  private final String             offHeapFaultRateLabelFormat = "{0} OffHeap Faults/sec.";
+  private final String             offHeapFlushRateLabelFormat = "{0} OffHeap Flushes/sec.";
+  private final String             onHeapUsedLabelFormat       = "{0} OnHeap Used";
+  private final String             onHeapMaxLabelFormat        = "{0} OnHeap Max";
 
-  private static final Set<String> POLLED_ATTRIBUTE_SET         = new HashSet(
-                                                                              Arrays
-                                                                                  .asList(POLLED_ATTR_CPU_USAGE,
-                                                                                          POLLED_ATTR_USED_MEMORY,
-                                                                                          POLLED_ATTR_MAX_MEMORY,
-                                                                                          POLLED_ATTR_OBJECT_FLUSH_RATE,
-                                                                                          POLLED_ATTR_OBJECT_FAULT_RATE,
-                                                                                          POLLED_ATTR_TRANSACTION_RATE,
-                                                                                          POLLED_ATTR_ONHEAP_FLUSH_RATE,
-                                                                                          POLLED_ATTR_ONHEAP_FAULT_RATE,
-                                                                                          POLLED_ATTR_OFFHEAP_FLUSH_RATE,
-                                                                                          POLLED_ATTR_OFFHEAP_FAULT_RATE,
-                                                                                          POLLED_ATTR_OFFHEAP_MAX_MEMORY,
-                                                                                          POLLED_ATTR_OFFHEAP_USED_MEMORY,
-                                                                                          POLLED_ATTR_OFFHEAP_OBJECT_MEMORY,
-                                                                                          POLLED_ATTR_OFFHEAP_MAP_MEMORY));
+  private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
+                                                                             Arrays
+                                                                                 .asList(POLLED_ATTR_CPU_USAGE,
+                                                                                         POLLED_ATTR_USED_MEMORY,
+                                                                                         POLLED_ATTR_MAX_MEMORY,
+                                                                                         POLLED_ATTR_OBJECT_FLUSH_RATE,
+                                                                                         POLLED_ATTR_OBJECT_FAULT_RATE,
+                                                                                         POLLED_ATTR_TRANSACTION_RATE,
+                                                                                         POLLED_ATTR_ONHEAP_FLUSH_RATE,
+                                                                                         POLLED_ATTR_ONHEAP_FAULT_RATE,
+                                                                                         POLLED_ATTR_OFFHEAP_FLUSH_RATE,
+                                                                                         POLLED_ATTR_OFFHEAP_FAULT_RATE,
+                                                                                         POLLED_ATTR_OFFHEAP_MAX_MEMORY,
+                                                                                         POLLED_ATTR_OFFHEAP_USED_MEMORY,
+                                                                                         POLLED_ATTR_OFFHEAP_OBJECT_MEMORY,
+                                                                                         POLLED_ATTR_OFFHEAP_MAP_MEMORY));
 
   public ServerRuntimeStatsPanel(ApplicationContext appContext, IServer server) {
     super(appContext);
