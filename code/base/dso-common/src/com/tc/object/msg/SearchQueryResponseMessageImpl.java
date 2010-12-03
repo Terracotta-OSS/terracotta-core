@@ -16,7 +16,6 @@ import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.session.SessionID;
 import com.tc.search.IndexQueryResult;
-import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,12 +32,14 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private final static byte      RESULTS_SIZE            = 2;
   private final static byte      AGGREGATOR_RESULTS_SIZE = 3;
   private final static byte      ERROR_MESSAGE           = 4;
+  private final static byte      IS_ERROR                = 5;
 
   private SearchRequestID        requestID;
   private GroupID                groupIDFrom;
   private List<IndexQueryResult> results;
   private List<NVPair>           aggregatorResults;
   private String                 errorMessage;
+  private boolean                isError;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -55,6 +56,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
                                         List<IndexQueryResult> searchResults, List<NVPair> aggregators) {
+    this.isError = false;
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
@@ -65,6 +67,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    * {@inheritDoc}
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID, String errMsg) {
+    this.isError = true;
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.errorMessage = errMsg;
@@ -75,6 +78,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    */
   public String getErrorMessage() {
     return errorMessage;
+  }
+
+  public boolean isError() {
+    return isError;
   }
 
   /**
@@ -111,29 +118,28 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
     putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
-    putNVPair(RESULTS_SIZE, this.results.size());
-    int count = 0;
 
-    for (IndexQueryResult result : this.results) {
-      // TODO: does the key need to be encoded?
-      result.serializeTo(outStream);
-      count++;
+    if (results != null) {
+      putNVPair(RESULTS_SIZE, this.results.size());
+
+      for (IndexQueryResult result : this.results) {
+        result.serializeTo(outStream);
+      }
     }
-    Assert.assertEquals(this.results.size(), count);
 
-    putNVPair(AGGREGATOR_RESULTS_SIZE, this.aggregatorResults.size());
-    count = 0;
+    if (aggregatorResults != null) {
+      putNVPair(AGGREGATOR_RESULTS_SIZE, this.aggregatorResults.size());
 
-    for (NVPair result : this.aggregatorResults) {
-      // TODO: does the key need to be encoded?
-      result.serializeTo(outStream);
-      count++;
+      for (NVPair result : this.aggregatorResults) {
+        result.serializeTo(outStream);
+      }
     }
-    Assert.assertEquals(this.aggregatorResults.size(), count);
 
     if (errorMessage != null) {
       putNVPair(ERROR_MESSAGE, errorMessage);
     }
+
+    putNVPair(IS_ERROR, isError);
   }
 
   @Override
@@ -151,9 +157,8 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
       case RESULTS_SIZE:
         int size = getIntValue();
-        this.results = new ArrayList((int) (size * 1.5));
+        this.results = new ArrayList(size);
         while (size-- > 0) {
-          // TODO: Do we need to decode?
           IndexQueryResult result = new IndexQueryResultImpl();
           result.deserializeFrom(input);
           this.results.add(result);
@@ -162,9 +167,8 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
       case AGGREGATOR_RESULTS_SIZE:
         int aggregatorSize = getIntValue();
-        this.aggregatorResults = new ArrayList((int) (aggregatorSize * 1.5));
+        this.aggregatorResults = new ArrayList(aggregatorSize);
         while (aggregatorSize-- > 0) {
-
           NVPair pair = AbstractNVPair.deserializeInstance(input);
           this.aggregatorResults.add(pair);
         }
@@ -172,10 +176,12 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       case ERROR_MESSAGE:
         this.errorMessage = input.readString();
         return true;
+      case IS_ERROR:
+        this.isError = input.readBoolean();
+        return true;
       default:
         return false;
     }
-
   }
 
 }

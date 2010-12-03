@@ -60,4 +60,6 @@ public interface SearchQueryResponseMessage extends TCMessage {
 
   public String getErrorMessage();
 
+  public boolean isError();
+
 }
