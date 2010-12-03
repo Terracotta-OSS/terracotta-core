@@ -126,6 +126,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_dev(product_code = 'DSO', flavor = OPENSOURCE)
+    @internal_config_source[MAVEN_USE_LOCAL_REPO_KEY] = 'true'
     if flavor == ENTERPRISE then dist_maven_all else dist_maven end
     build_external
     
