@@ -70,11 +70,13 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
         searchResult = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
                                                      sqc.getAttributeSet(), sqc.getSortAttributes(),
                                                      sqc.getAggregators(), sqc.getMaxResults());
+        this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(),
+                                                searchResult.getAggregatorResults());
       } catch (IndexException e) {
-        // TODO: figure out what to do with IndexException, rethrow for now.
-        throw new EventHandlerException(e);
+        // XXX: log something?
+        this.searchRequestManager.queryErrorResponse(sqc, e.getMessage());
       }
-      this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(), searchResult.getAggregatorResults());
+
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

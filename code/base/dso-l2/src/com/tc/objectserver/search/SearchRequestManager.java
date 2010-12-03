@@ -49,4 +49,9 @@ public interface SearchRequestManager {
   public void queryResponse(SearchQueryContext queriedContext, List<IndexQueryResult> results,
                             List<NVPair> aggregatorResults);
 
+  /**
+   * Query error response
+   */
+  public void queryErrorResponse(SearchQueryContext sqc, String message);
+
 }

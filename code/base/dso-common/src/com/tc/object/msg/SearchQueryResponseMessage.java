@@ -36,8 +36,17 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * @param aggregatorResults
    * @param aggregatorResults
    */
-  public void initialSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
-                                           List<IndexQueryResult> results, List<NVPair> aggregatorResults);
+  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
+                                        List<IndexQueryResult> results, List<NVPair> aggregatorResults);
+
+  /**
+   * Initialize error response
+   * 
+   * @param searchRequestID
+   * @param groupIDFrom
+   * @param errorMessage
+   */
+  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom, String errorMessage);
 
   /**
    * @return List<SearchQueryResult> results.
@@ -48,5 +57,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * @return List<NVPair> aggregator results.
    */
   public List<NVPair> getAggregatorResults();
+
+  public String getErrorMessage();
 
 }

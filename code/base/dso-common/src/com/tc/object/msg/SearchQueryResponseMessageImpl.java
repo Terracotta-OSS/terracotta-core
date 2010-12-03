@@ -32,11 +32,13 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private final static byte      GROUP_ID_FROM           = 1;
   private final static byte      RESULTS_SIZE            = 2;
   private final static byte      AGGREGATOR_RESULTS_SIZE = 3;
+  private final static byte      ERROR_MESSAGE           = 4;
 
   private SearchRequestID        requestID;
   private GroupID                groupIDFrom;
   private List<IndexQueryResult> results;
   private List<NVPair>           aggregatorResults;
+  private String                 errorMessage;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -51,12 +53,28 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
-  public void initialSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
-                                           List<IndexQueryResult> searchResults, List<NVPair> aggregators) {
+  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
+                                        List<IndexQueryResult> searchResults, List<NVPair> aggregators) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
     this.aggregatorResults = aggregators;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID, String errMsg) {
+    this.requestID = searchRequestID;
+    this.groupIDFrom = groupID;
+    this.errorMessage = errMsg;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public String getErrorMessage() {
+    return errorMessage;
   }
 
   /**
@@ -113,6 +131,9 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
     }
     Assert.assertEquals(this.aggregatorResults.size(), count);
 
+    if (errorMessage != null) {
+      putNVPair(ERROR_MESSAGE, errorMessage);
+    }
   }
 
   @Override
@@ -147,6 +168,9 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
           NVPair pair = AbstractNVPair.deserializeInstance(input);
           this.aggregatorResults.add(pair);
         }
+        return true;
+      case ERROR_MESSAGE:
+        this.errorMessage = input.readString();
         return true;
       default:
         return false;
