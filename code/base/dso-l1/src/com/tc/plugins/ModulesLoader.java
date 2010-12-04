@@ -457,7 +457,6 @@ public class ModulesLoader {
 
       // otherwise, merge it with the current configuration
       try {
-        System.out.println("XXX Loading " + bundle.getSymbolicName());
         final DsoApplication application = DsoApplication.Factory.parse(is);
         if (application != null) {
           final ConfigLoader loader = new ConfigLoader(configHelper, logger);
