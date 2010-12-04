@@ -48,7 +48,7 @@ public class DSOApplicationConfigObject extends BaseConfigObject implements DSOA
       dsoApplication.addNewRoots();
     }
     this.roots = translateRoots(dsoApplication.getRoots());
-    if (roots.length > 0) {
+    if (LicenseManager.enterpriseEdition() && roots.length > 0) {
       LicenseManager.verifyRootCapability();
     }
 
