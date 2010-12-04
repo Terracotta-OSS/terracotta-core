@@ -220,6 +220,13 @@ patch [level=IDENTIFIER] [maven.repo=URL]
     other Maven commands, the maven.repositoryId parameter can also be used to
     link to a server/id element in the Maven settings.xml.
 
+HOW TO CREATE A DEV PATCH
+
+  A "dev" patch is usually built by engineers and has not been verified by QA
+
+./tcbuild patch dso enterprise level=dev
+
+    
 DEPLOYING MAVEN ARTIFACTS
 
 dist_maven [maven.repo=URL args...]
