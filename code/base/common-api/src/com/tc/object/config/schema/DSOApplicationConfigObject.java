@@ -10,15 +10,16 @@ import org.apache.xmlbeans.XmlException;
 import com.tc.config.schema.BaseConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
+import com.tc.license.LicenseManager;
 import com.tc.util.Assert;
 import com.terracottatech.config.AdditionalBootJarClasses;
 import com.terracottatech.config.Application;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.Root;
 import com.terracottatech.config.Roots;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplications;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 public class DSOApplicationConfigObject extends BaseConfigObject implements DSOApplicationConfig {
   private final InstrumentedClass[]                instrumentedClasses;
@@ -47,6 +48,9 @@ public class DSOApplicationConfigObject extends BaseConfigObject implements DSOA
       dsoApplication.addNewRoots();
     }
     this.roots = translateRoots(dsoApplication.getRoots());
+    if (roots.length > 0) {
+      LicenseManager.verifyRootCapability();
+    }
 
     if (!dsoApplication.isSetTransientFields()) {
       dsoApplication.addNewTransientFields();
