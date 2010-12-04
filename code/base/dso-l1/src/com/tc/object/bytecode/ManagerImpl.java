@@ -944,4 +944,9 @@ public class ManagerImpl implements ManagerInternal {
     return AbstractNVPair.createNVPair(name, value);
   }
 
+  // for testing purpose
+  public DistributedObjectClient getDso() {
+    return this.dso;
+  }
+
 }
