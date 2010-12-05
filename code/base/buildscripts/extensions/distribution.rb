@@ -221,7 +221,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     libdir.delete
 
     add_module_packages(component, destdir)
-    create_build_data(@config_source, File.join(destdir.to_s, 'resources'))
+    create_data_file(@config_source, File.join(destdir.to_s, 'resources'), :build_data, @build_environment.edition(flavor))
   end
 
   def mvn_install(flavor=OPENSOURCE)

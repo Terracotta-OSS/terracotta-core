@@ -20,13 +20,13 @@ module BuildData
   # Creates a 'build data' file at the given location, putting into it a number
   # of properties that specify when, where, and how the code in it was compiled.
   def create_build_data(config_source, destdir = self.build_data_dir)
-    create_data_file(config_source, destdir, :build_data, @build_environment.edition)
+    create_data_file(config_source, destdir, :build_data, @build_environment.edition(@config_source['flavor']))
   end
 
   # Creates a 'patch data' file at the given location, putting into it a number
   # of properties that specify when, where, and how the patch in it was compiled.
   def create_patch_data(level, config_source, destdir = self.build_data_dir)
-    create_data_file(config_source, destdir, :patch_data, @build_environment.edition, level)
+    create_data_file(config_source, destdir, :patch_data, @build_environment.edition(@config_source['flavor']), level)
   end
 
   def create_data_file(config_source, destdir, type, edition, level = nil)

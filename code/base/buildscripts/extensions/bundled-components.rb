@@ -190,6 +190,7 @@ module BundledComponents
     ant.attribute(:name => 'BuildInfo-Timestamp', :value => @build_environment.build_timestamp_string)
     ant.attribute(:name => 'BuildInfo-Revision-OSS', :value => @build_environment.os_revision)
     ant.attribute(:name => 'BuildInfo-Branch', :value => @build_environment.current_branch)
+    ant.attribute(:name => 'BuildInfo-Edition', :value => @build_environment.edition(@config_source['flavor']))
     if @build_environment.is_ee_branch?
       ant.attribute(:name => 'BuildInfo-Revision-EE', :value => @build_environment.ee_revision)
     end
