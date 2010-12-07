@@ -46,8 +46,9 @@ public class ClientBeanBag {
     this.l2MBeanServer = l2MBeanServer;
     this.channel = channel;
     this.uuid = uuid;
-    setTunneledDomains(tunneledDomains);
     this.l1Connection = l1Connection;
+
+    setTunneledDomains(tunneledDomains);
   }
 
   synchronized void unregisterBeans() {
@@ -130,25 +131,22 @@ public class ClientBeanBag {
   synchronized void registerBean(final ObjectName objName) {
     LOGGER.info("registerBean: " + objName);
 
+    ObjectName modifiedObjName = null;
     try {
       if (queryExp.apply(objName)) {
-        ObjectName modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
+        modifiedObjName = TerracottaManagement.addNodeInfo(objName, channel.getRemoteAddress());
         if (beanNames.add(modifiedObjName)) {
-          try {
-            MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
-            l2MBeanServer.registerMBean(mirror, modifiedObjName);
-          } catch (Throwable t) {
-            beanNames.remove(modifiedObjName);
-            if (t instanceof Error) throw (Error) t;
-            if (t instanceof Exception) throw (Exception) t;
-            throw new RuntimeException(t);
-          }
+          MBeanMirror mirror = MBeanMirrorFactory.newMBeanMirror(l1Connection, objName, modifiedObjName);
+          l2MBeanServer.registerMBean(mirror, modifiedObjName);
           LOGGER.info("Tunneled MBean '" + modifiedObjName + "'");
         }
       } else {
         LOGGER.info("Ignoring bean for registration: " + objName);
       }
     } catch (Exception e) {
+      if (modifiedObjName != null) {
+        beanNames.remove(modifiedObjName);
+      }
       LOGGER.warn("Unable to register DSO client bean[" + objName + "] due to " + e.getMessage());
     }
   }
