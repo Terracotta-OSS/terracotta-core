@@ -34,7 +34,7 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
 
     dnaWriter = new TestDNAWriter();
     state.dehydrate(new ObjectID(1), dnaWriter, DNAType.L1_FAULT); // Only dehydrate the fields
-    Assert.assertEquals(6, dnaWriter.getActionCount()); // only the physical fields are dehydrated
+    Assert.assertEquals(7, dnaWriter.getActionCount()); // only the physical fields are dehydrated
 
     final TestDNACursor cursor3 = dnaWriter.getDNACursor();
     final ConcurrentDistributedServerMapManagedObjectState state3 = (ConcurrentDistributedServerMapManagedObjectState) createManagedObjectState(
@@ -50,11 +50,17 @@ public class ConcurrentDistributedServerMapManagedObjectStateTest extends Abstra
     cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.DSO_LOCK_TYPE_FIELDNAME, new Integer(1), false);
     cursor.addPhysicalAction(ConcurrentDistributedMapManagedObjectState.LOCK_STRATEGY_FIELDNAME, new ObjectID(20),
                              false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME, new Integer(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME, new Integer(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME, new Integer(0), false);
-    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME, new Integer(0), false);
-  
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTI_SECONDS_FIELDNAME,
+                             new Integer(0), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.MAX_TTL_SECONDS_FIELDNAME,
+                             new Integer(0), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME,
+                             new Integer(0), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.TARGET_MAX_TOTAL_COUNT_FIELDNAME,
+                             new Integer(0), false);
+    cursor.addPhysicalAction(ConcurrentDistributedServerMapManagedObjectState.INVALIDATE_ON_CHANGE, new Boolean(false),
+                             false);
+
     for (int i = 0; i < 500; i++) {
       cursor.addLogicalAction(SerializationUtil.PUT, new Object[] { "key-" + i, new ObjectID(1000 + i) });
     }
