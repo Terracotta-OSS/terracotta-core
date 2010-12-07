@@ -52,20 +52,25 @@ public class JavaClassInfoRepository {
    * @param loader
    * @return
    */
-  public static synchronized JavaClassInfoRepository getRepository(ClassLoader loader) {
+  public static JavaClassInfoRepository getRepository(ClassLoader loader) {
     if (loader == null) { return NULL_LOADER_REPOSITORY; }
 
     JavaClassInfoRepository repository = s_repositories.get(loader);
-    if (repository != null) {
-      return repository;
-    } else {
+    if (repository != null) { return repository; }
+
+    synchronized (JavaClassInfoRepository.class) {
+      // check again now that we're locked
+      repository = s_repositories.get(loader);
+      if (repository != null) { return repository; }      
+      
       JavaClassInfoRepository repo = new JavaClassInfoRepository(loader);
       s_repositories.put(loader, repo);
       return repo;
     }
   }
   
-  synchronized static int repositoriesSize() {
+  
+  static int repositoriesSize() {
     return s_repositories.size();
   }
 
