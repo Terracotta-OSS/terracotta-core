@@ -88,12 +88,16 @@ public class TCObjectFactoryImpl implements TCObjectFactory {
     try {
       rv = ctor.newInstance(args);
       if (parent != null) {
-        UnsafeUtil.setField(rv, type.getParentField(), parent);
+        while (type != null) {
+          if (type.getParentField() != null) {
+            UnsafeUtil.setField(rv, type.getParentField(), parent);
+          }
+          type = type.getSuperclass();
+        }
       }
     } finally {
       if (adjustTCL) thread.setContextClassLoader(prevLoader);
     }
     return rv;
   }
-
 }
