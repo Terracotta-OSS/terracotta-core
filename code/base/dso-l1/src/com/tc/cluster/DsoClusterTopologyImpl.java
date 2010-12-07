@@ -85,8 +85,16 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
   }
 
   DsoNodeInternal registerDsoNode(final NodeID nodeId) {
+    return registerDsoNodeBase(nodeId, false);
+  }
+
+  DsoNodeInternal registerThisDsoNode(final NodeID nodeId) {
+    return registerDsoNodeBase(nodeId, true);
+  }
+
+  private DsoNodeInternal registerDsoNodeBase(final NodeID nodeId, boolean isLocalNode) {
     final ClientID clientId = (ClientID) nodeId;
-    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong());
+    final DsoNodeInternal node = new DsoNodeImpl(clientId.toString(), clientId.toLong(), isLocalNode);
 
     nodesWriteLock.lock();
     try {
@@ -96,4 +104,5 @@ public class DsoClusterTopologyImpl implements DsoClusterTopology {
       nodesWriteLock.unlock();
     }
   }
+
 }
