@@ -1,7 +1,6 @@
 package com.tc.object.bytecode;
 
 import com.tc.cluster.DsoCluster;
-import com.tc.exception.ImplementMe;
 import com.tc.logging.TCLogger;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.object.ObjectID;
@@ -316,7 +315,6 @@ public class NullManagerInternal implements ManagerInternal {
   }
 
   public void verifySearchCapbility() {
-    throw new ImplementMe();
-
+    throw new UnsupportedOperationException();
   }
 }
