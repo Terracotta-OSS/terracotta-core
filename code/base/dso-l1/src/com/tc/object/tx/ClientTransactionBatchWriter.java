@@ -654,10 +654,10 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   }
 
   private static class FoldingKey {
-    private final Set               objectIDs;
-    private final TxnType           txnType;
-    private final TransactionBuffer buffer;
-    private boolean                 closed;
+    private final Set         objectIDs;
+    private final TxnType     txnType;
+    private TransactionBuffer buffer;
+    private boolean           closed;
 
     FoldingKey(final TransactionBuffer txnBuffer, final TxnType txnType, final Set objectIDs) {
       this.buffer = txnBuffer;
@@ -675,6 +675,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     }
 
     public void close() {
+      this.buffer = null;
       this.closed = true;
     }
 
