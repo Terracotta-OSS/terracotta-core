@@ -69,6 +69,16 @@ public class BootJarSignatureTest extends TCTestCase {
     assertEquals("hotspot_win32_142_12", sig.getSignature());
   }
 
+  public void testUnknown() throws UnsupportedVMException {
+    Properties props = makeProps("Joe bob's OS", "Sun Microsystems Inc.", "1.5.0_06", null, null);
+    BootJarSignature sig = new BootJarSignature(props);
+    assertEquals("hotspot_unknown_150_06", sig.getSignature());
+
+    props = makeProps("Windows XP", "hot dog vendor", "1.6.0_23", null, null);
+    sig = new BootJarSignature(props);
+    assertEquals("unknown_win32_160_23", sig.getSignature());
+  }
+
   public void testMac() throws UnsupportedVMException {
     Properties props = makeProps("Mac OS X", "Apple Computer, Inc.", "1.5.0_05", null, null);
     BootJarSignature sig = new BootJarSignature(props);

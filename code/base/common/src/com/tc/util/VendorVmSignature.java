@@ -11,6 +11,7 @@ import java.util.Properties;
 public class VendorVmSignature {
   public static final char    SIGNATURE_SEPARATOR = '_';
 
+  // unfortunately all windows OS will be this (even if 64 bit)
   private static final String OS_WINDOWS          = "win32";
   private static final String OS_LINUX            = "linux";
   private static final String OS_SOLARIS_SPARC    = "solaris";
