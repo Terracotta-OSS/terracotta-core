@@ -10,7 +10,10 @@ import com.tc.util.AbstractIdentifier;
  * @author steve
  */
 public class TransactionID extends AbstractIdentifier {
-  public final static TransactionID NULL_ID = new TransactionID();
+  public final static TransactionID NULL_ID   = new TransactionID();
+  public final static TransactionID IGNORE_ID = new TransactionID() {
+                                                // new instance
+                                              };
 
   public TransactionID(long id) {
     super(id);
@@ -20,6 +23,7 @@ public class TransactionID extends AbstractIdentifier {
     super();
   }
 
+  @Override
   public String getIdentifierType() {
     return "TransactionID";
   }

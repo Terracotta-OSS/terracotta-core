@@ -8,23 +8,22 @@ import com.tc.net.NodeID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
-
 /**
  * Context holding search index deletion information.
- *  
+ * 
  * @author Nabib El-Rahman
  */
 public class SearchDeleteContext extends AbstractMetaDataContext implements MultiThreadedEventContext {
-  
+
   private final String name;
-  private final String cacheKey;
-  
-  public SearchDeleteContext(NodeID id, TransactionID transactionID, String name, String cacheKey) {
+  private final Object cacheKey;
+
+  public SearchDeleteContext(NodeID id, TransactionID transactionID, String name, Object cacheKey) {
     super(id, transactionID);
     this.name = name;
     this.cacheKey = cacheKey;
   }
-  
+
   /**
    * Name of index.
    */
@@ -35,15 +34,15 @@ public class SearchDeleteContext extends AbstractMetaDataContext implements Mult
   /**
    * key of cache entry.
    */
-  public String getCacheKey() {
+  public Object getCacheKey() {
     return cacheKey;
   }
-    
+
   /**
    * {@inheritDoc}
    */
   public Object getKey() {
     return getSourceID();
   }
-  
+
 }

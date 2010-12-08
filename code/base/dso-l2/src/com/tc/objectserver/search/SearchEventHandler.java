@@ -41,8 +41,7 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
       try {
         Index index = this.indexManager.getIndex(suc.getName());
         if (index == null) {
-          this.indexManager.createIndex(suc.getName(), extractSchema(suc.getAttributes()));
-          index = this.indexManager.getIndex(suc.getName());
+          index = this.indexManager.createIndex(suc.getName(), extractSchema(suc.getAttributes()));
         }
         index.upsert(suc.getCacheKey(), suc.getAttributes());
       } catch (IndexException e) {
@@ -67,11 +66,10 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
 
       SearchResult searchResult;
       try {
-        searchResult = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
-                                                     sqc.getAttributeSet(), sqc.getSortAttributes(),
-                                                     sqc.getAggregators(), sqc.getMaxResults());
-        this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(),
-                                                searchResult.getAggregatorResults());
+        searchResult = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(), sqc
+            .getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators(), sqc.getMaxResults());
+        this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(), searchResult
+            .getAggregatorResults());
       } catch (IndexException e) {
         // XXX: log something?
         this.searchRequestManager.queryErrorResponse(sqc, e.getMessage());

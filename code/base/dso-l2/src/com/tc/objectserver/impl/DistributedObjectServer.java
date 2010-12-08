@@ -441,7 +441,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.threadGroup.addCallbackOnExitDefaultHandler(this.dumpHandler);
 
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
-    this.indexManager = this.serverBuilder.createIndexManager(this.configSetupManager);
 
     TerracottaOperatorEventLogging.setNodeNameProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
         .serverName()));
@@ -1109,6 +1108,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     recycler, this.stripeIDStateManager,
                                                                     serverTransactionFactory, dgcSequenceProvider);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
+      this.indexManager = this.serverBuilder.createIndexManager(this.configSetupManager, searchEventSink);
+
+      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexManager);
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
