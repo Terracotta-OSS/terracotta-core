@@ -7,6 +7,7 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_AUTHENTICATION;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_DCV2;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_OPERATOR_CONSOLE;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_ROOTS;
+import static org.terracotta.license.LicenseConstants.CAPABILITY_SEARCH;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SESSIONS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP;
@@ -167,5 +168,9 @@ public class LicenseManager {
 
   public static boolean enterpriseEdition() {
     return ProductInfo.getInstance().isEnterprise();
+  }
+
+  public static void verifySearchCapability() {
+    verifyCapability(CAPABILITY_SEARCH);
   }
 }

@@ -22,4 +22,6 @@ public interface ManagerInternal extends Manager, TerracottaLockingInternal {
 
   public NVPair createNVPair(String name, Object value);
 
+  void verifySearchCapbility();
+
 }
