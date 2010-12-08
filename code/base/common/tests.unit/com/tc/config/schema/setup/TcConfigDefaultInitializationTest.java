@@ -24,10 +24,10 @@ import com.terracottatech.config.Locks;
 import com.terracottatech.config.Modules;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Roots;
+import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
 import com.terracottatech.config.TransientFields;
 import com.terracottatech.config.WebApplications;
-import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -51,7 +51,6 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
   }
 
   public void testDefaultInitialization() throws Exception {
-
     testAllInitialized("TcConfig", config);
     testAllArrayInitialized("TcConfig", config);
   }
@@ -126,7 +125,7 @@ public class TcConfigDefaultInitializationTest extends TCTestCase {
     Method[] methods = xmlObject.getClass().getMethods();
 
     for (Method method : methods) {
-      if (method.getName().equals(getMethod)) { return method; }
+      if (method.getName().equals(getMethod) && method.getParameterTypes().length == 0) { return method; }
     }
 
     throw new AssertionError("can't get the method with method name : " + getMethod);
