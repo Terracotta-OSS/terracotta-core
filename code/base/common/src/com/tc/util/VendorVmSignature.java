@@ -22,6 +22,7 @@ public class VendorVmSignature {
   private static final String VM_VENDOR_SUN       = "hotspot";
   private static final String VM_VENDOR_IBM       = "ibm";
   private static final String VM_VENDOR_BEA       = "jrockit";
+  private static final String VM_VENDOR_ORACLE    = "oracle";
   private static final String VM_VENDOR_AZUL      = "azul";
 
   private final String        signature;
@@ -56,6 +57,7 @@ public class VendorVmSignature {
     if (vendor.toLowerCase().startsWith("apple ")) { return VM_VENDOR_SUN; }
     if (vendor.toLowerCase().startsWith("ibm ")) { return VM_VENDOR_IBM; }
     if (vendor.toLowerCase().startsWith("azul ")) { return VM_VENDOR_AZUL; }
+    if (vendor.toLowerCase().startsWith("oracle")) { return VM_VENDOR_ORACLE; }
 
     if (vendor.toLowerCase().startsWith("sun ")) {
       final VmVersion vmVersion;
