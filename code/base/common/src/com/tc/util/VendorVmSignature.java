@@ -17,13 +17,16 @@ public class VendorVmSignature {
   private static final String OS_MAC_OSX          = "osx";
   private static final String OS_SOLARIS_X86      = "solaris-x86";
   private static final String OS_SOLARIS_AMD64    = "solaris-amd64";
+  private static final String OS_SOLARIS_UNKNOWN  = "solaris-unknown";
   private static final String OS_AIX              = "aix";
+  private static final String OS_UNKNOWN          = "unknown";
 
   private static final String VM_VENDOR_SUN       = "hotspot";
   private static final String VM_VENDOR_IBM       = "ibm";
   private static final String VM_VENDOR_BEA       = "jrockit";
   private static final String VM_VENDOR_ORACLE    = "oracle";
   private static final String VM_VENDOR_AZUL      = "azul";
+  private static final String VM_VENDOR_UNKNOWN   = "unknown";
 
   private final String        signature;
 
@@ -69,7 +72,7 @@ public class VendorVmSignature {
       return VM_VENDOR_SUN;
     }
 
-    throw new VendorVmSignatureException("Unknown or unsupported vendor string: " + vendor);
+    return VM_VENDOR_UNKNOWN;
   }
 
   private static String getVMVersion(final Properties source) {
@@ -98,7 +101,7 @@ public class VendorVmSignature {
         } else if ("amd64".equals(lowerCaseArch)) {
           return OS_SOLARIS_AMD64;
         } else {
-          throw new VendorVmSignatureException("Unknown Solaris architecture: " + "(\"os.arch\" = " + arch + ")");
+          return OS_SOLARIS_UNKNOWN;
         }
       } else {
         throw new VendorVmSignatureException("Cannot determine Solaris architecture: "
@@ -106,7 +109,7 @@ public class VendorVmSignature {
       }
     }
 
-    throw new VendorVmSignatureException("Unknown or unsupported OS detected: " + osProp);
+    return OS_UNKNOWN;
   }
 
   private static void validateComponent(final String component) {

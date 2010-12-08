@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tools;
 
@@ -33,13 +34,6 @@ public class BootJarSignatureTest extends TCTestCase {
 
     try {
       new BootJarSignature(makeProps("Windows NT", "1.4.2_04", null, null, "i686"));
-      fail();
-    } catch (Exception uve) {
-      // expected
-    }
-
-    try {
-      new BootJarSignature(makeProps("Linux", "Sun", "1.5.0", "unknown", null));
       fail();
     } catch (Exception uve) {
       // expected
