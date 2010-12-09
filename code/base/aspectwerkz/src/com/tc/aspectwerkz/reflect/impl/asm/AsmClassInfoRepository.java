@@ -86,19 +86,18 @@ public class AsmClassInfoRepository {
   public static AsmClassInfoRepository getRepository(final ClassLoader loader) {
     if (loader == null) return NULL_LOADER_REPOSITORYU;
 
-    synchronized (s_repositories) {
-      AsmClassInfoRepository repository = lookup(loader);
+    AsmClassInfoRepository repository = lookup(loader);
 
-      // normal return case for existing repositories
-      if (repository != null) { return repository; }
-    }
+    // normal return case for existing repositories
+    if (repository != null) { return repository; }
+
 
     // Construct the repo outside of the lock (see CDV-116)
     AsmClassInfoRepository repo = new AsmClassInfoRepository(loader);
 
-    // check again
     synchronized (s_repositories) {
-      AsmClassInfoRepository repository = lookup(loader);
+      // check again
+      repository = lookup(loader);
 
       // another thread won, don't replace the mapping
       if (repository != null) { return repository; }
@@ -107,7 +106,6 @@ public class AsmClassInfoRepository {
     }
 
     return repo;
-
   }
 
   private static AsmClassInfoRepository lookup(ClassLoader loader) {

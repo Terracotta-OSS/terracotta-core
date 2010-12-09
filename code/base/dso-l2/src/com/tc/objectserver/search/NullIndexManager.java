@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
 
@@ -13,8 +14,8 @@ import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
 
-  public boolean createIndex(String name, Map<String, ValueType> schema) {
-    return false;
+  public Index createIndex(String name, Map<String, ValueType> schema) {
+    return null;
   }
 
   public boolean deleteIndex(String name) {
@@ -32,6 +33,10 @@ public class NullIndexManager implements IndexManager {
 
   public void shutdown() {
     // no nothing
+  }
+
+  public void l2StateChanged(StateChangedEvent sce) {
+    //
   }
 
   private static final class NullIndex implements Index {

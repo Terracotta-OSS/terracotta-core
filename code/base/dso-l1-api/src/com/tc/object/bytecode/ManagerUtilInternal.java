@@ -119,4 +119,7 @@ public class ManagerUtilInternal {
     return mgr.isLockedByCurrentThread(lock, LockLevel.fromInt(lockLevel));
   }
 
+  public static void verifySearchCapability() {
+    getInternalManager().verifySearchCapbility();
+  }
 }

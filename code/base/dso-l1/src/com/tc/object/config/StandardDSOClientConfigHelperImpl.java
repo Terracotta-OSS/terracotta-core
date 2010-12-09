@@ -8,8 +8,9 @@ import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument;
-import org.terracotta.groupConfigForL1.ServerInfo;
 import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
+import org.terracotta.groupConfigForL1.ServerInfo;
+import org.terracotta.license.LicenseException;
 
 import com.tc.asm.ClassAdapter;
 import com.tc.asm.ClassVisitor;
@@ -24,8 +25,8 @@ import com.tc.backport175.bytecode.AnnotationElement.Annotation;
 import com.tc.config.schema.CommonL1Config;
 import com.tc.config.schema.builder.DSOApplicationConfigBuilder;
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
+import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.injection.DsoClusterInjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentation;
 import com.tc.injection.InjectionInstrumentationRegistry;
@@ -54,6 +55,7 @@ import com.tc.object.bytecode.TreeMapAdapter;
 import com.tc.object.bytecode.aspectwerkz.ExpressionHelper;
 import com.tc.object.bytecode.hook.impl.ClassProcessorHelper;
 import com.tc.object.bytecode.hook.impl.PreparedComponentsFromL2Connection;
+import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.config.schema.DSOInstrumentationLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeLoggingOptions;
 import com.tc.object.config.schema.DSORuntimeOutputOptions;
@@ -61,7 +63,6 @@ import com.tc.object.config.schema.ExcludedInstrumentedClass;
 import com.tc.object.config.schema.IncludeOnLoad;
 import com.tc.object.config.schema.IncludedInstrumentedClass;
 import com.tc.object.config.schema.InstrumentedClass;
-import com.tc.object.config.schema.DSOApplicationConfig;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
@@ -69,9 +70,9 @@ import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
+import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
-import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
@@ -97,8 +98,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -115,7 +116,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private final DSOClientConfigHelperLogger                  helperLogger;
 
-  private final L1ConfigurationSetupManager               configSetupManager;
+  private final L1ConfigurationSetupManager                  configSetupManager;
   private final UUID                                         id;
 
   private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
@@ -185,13 +186,15 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   private int                                                faultCount                         = -1;
 
-  private Collection<ModuleSpec>                             moduleSpecs                        = Collections.synchronizedList(new ArrayList<ModuleSpec>());
+  private final Collection<ModuleSpec>                       moduleSpecs                        = Collections
+                                                                                                    .synchronizedList(new ArrayList<ModuleSpec>());
 
   private MBeanSpec[]                                        mbeanSpecs                         = null;
 
   private SRASpec[]                                          sraSpecs                           = null;
 
-  private Set<String>                                        tunneledMBeanDomains               = Collections.synchronizedSet(new HashSet<String>());
+  private final Set<String>                                  tunneledMBeanDomains               = Collections
+                                                                                                    .synchronizedSet(new HashSet<String>());
 
   private final ModulesContext                               modulesContext                     = new ModulesContext();
 
@@ -329,8 +332,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     clearAdaptableCache();
   }
-  
-  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile) {
+
+  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad,
+                                boolean honorVolatile) {
     IncludeOnLoad onLoad = new IncludeOnLoad(IncludeOnLoad.METHOD, methodToCallOnLoad);
     addInstrumentationDescriptor(new IncludedInstrumentedClass(expression, honorTransient, honorVolatile, onLoad));
 
@@ -676,8 +680,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       type = fi.getType().getName();
     }
     InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(type);
-    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi
-        .getName(), fi.getType().getName()); }
+    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(),
+                                                                                         fi.getName(), fi.getType()
+                                                                                             .getName()); }
 
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
     spec.setHasOnLoadInjection(true);
@@ -1385,9 +1390,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     if (moduleSpecs != null) {
       for (ModuleSpec moduleSpec : moduleSpecs) {
         Class klass = moduleSpec.getPeerClass(clazz);
-        if (klass != null) {
-           return klass;
-        }
+        if (klass != null) { return klass; }
       }
     }
     return clazz;
@@ -1570,11 +1573,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public SRASpec[] getSRASpecs() {
     return this.sraSpecs;
   }
-  
+
   public void addTunneledMBeanDomain(final String tunneledMBeanDomain) {
     this.tunneledMBeanDomains.add(tunneledMBeanDomain);
   }
-  
 
   /*
    * public String getChangeApplicatorClassNameFor(String className) { TransparencyClassSpec spec = getSpec(className);
@@ -1844,9 +1846,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
   public SessionConfiguration getSessionConfiguration(String name) {
     if (ProductInfo.getInstance().isEnterprise()) {
-      LicenseManager.verifySessionCapability();
+      try {
+        LicenseManager.verifySessionCapability();
+      } catch (LicenseException e) {
+        logger.error(e);
+        System.exit(1);
+      }
     }
-    
+
     name = ClassProcessorHelper.computeAppName(name);
 
     for (Entry<String, SessionConfiguration> entry : webApplications.entrySet()) {
@@ -1857,12 +1864,12 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
         return config;
       }
     }
-    
+
     // log this for custom mode only
     if (hasBootJar) {
       logger.info("Clustered HTTP sessions is NOT enabled for [" + name + "]");
     }
-    
+
     return null;
   }
 
@@ -1957,8 +1964,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
-                                                         connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
-                                                             .getGroupName());
+                                                         connectionInfo[j].getPort(), i * j + j,
+                                                         connectionInfo[j].getGroupName());
         connInfoFromL1.add(connectionIn);
       }
     }
@@ -2132,7 +2139,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   public UUID getUUID() {
     return id;
   }
-  
+
   public String[] getTunneledDomains() {
     synchronized (tunneledMBeanDomains) {
       String[] result = new String[tunneledMBeanDomains.size()];

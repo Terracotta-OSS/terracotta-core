@@ -461,7 +461,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     DSO_LOGGER.debug("Created channel.");
 
-    TerracottaOperatorEventLogging.setNodeNameProvider(new ClientNameProvider(this.channel));
+    TerracottaOperatorEventLogging.setNodeNameProvider(new ClientNameProvider(this.dsoCluster));
 
     final ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(this.runtimeLogger);
 

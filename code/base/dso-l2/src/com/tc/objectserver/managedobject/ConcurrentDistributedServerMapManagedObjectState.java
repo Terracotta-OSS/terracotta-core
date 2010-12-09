@@ -31,8 +31,10 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String MAX_TTL_SECONDS_FIELDNAME            = "maxTTLSeconds";
   public static final String TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
+  public static final String INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
 
   private boolean            evictionInitiated                    = false;
+  private boolean            invalidateOnChange;
   private int                maxTTISeconds;
   private int                maxTTLSeconds;
   private int                targetMaxInMemoryCount;
@@ -44,6 +46,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     this.maxTTLSeconds = in.readInt();
     this.targetMaxInMemoryCount = in.readInt();
     this.targetMaxTotalCount = in.readInt();
+    this.invalidateOnChange = in.readBoolean();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -78,6 +81,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     writer.addPhysicalAction(MAX_TTL_SECONDS_FIELDNAME, Integer.valueOf(this.maxTTLSeconds));
     writer.addPhysicalAction(TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxInMemoryCount));
     writer.addPhysicalAction(TARGET_MAX_TOTAL_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
+    writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
   }
 
   @Override
@@ -104,6 +108,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           this.targetMaxInMemoryCount = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(TARGET_MAX_TOTAL_COUNT_FIELDNAME)) {
           this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
+        } else if (fieldName.equals(INVALIDATE_ON_CHANGE)) {
+          this.invalidateOnChange = ((Boolean) physicalAction.getObject());
         } else {
           throw new AssertionError("unexpected field name: " + fieldName);
         }
@@ -157,6 +163,8 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     out.writeInt(this.maxTTLSeconds);
     out.writeInt(this.targetMaxInMemoryCount);
     out.writeInt(this.targetMaxTotalCount);
+    out.writeBoolean(this.evictionInitiated);
+    out.writeBoolean(this.invalidateOnChange);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -169,7 +177,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     final ConcurrentDistributedServerMapManagedObjectState mmo = (ConcurrentDistributedServerMapManagedObjectState) o;
     return super.basicEquals(o) && this.maxTTISeconds == mmo.maxTTISeconds && this.maxTTLSeconds == mmo.maxTTLSeconds
            && this.targetMaxInMemoryCount == mmo.targetMaxInMemoryCount
-           && this.targetMaxTotalCount == mmo.targetMaxTotalCount;
+           && this.invalidateOnChange == mmo.invalidateOnChange && this.targetMaxTotalCount == mmo.targetMaxTotalCount;
   }
 
   static MapManagedObjectState readFrom(final ObjectInput in) throws IOException {

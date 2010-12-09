@@ -126,6 +126,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_dev(product_code = 'DSO', flavor = OPENSOURCE)
+    @internal_config_source[MAVEN_USE_LOCAL_REPO_KEY] = 'true'
     if flavor == ENTERPRISE then dist_maven_all else dist_maven end
     build_external
     
@@ -220,7 +221,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     libdir.delete
 
     add_module_packages(component, destdir)
-    create_build_data(@config_source, File.join(destdir.to_s, 'resources'))
+    create_data_file(@config_source, File.join(destdir.to_s, 'resources'), :build_data, @build_environment.edition(flavor))
   end
 
   def mvn_install(flavor=OPENSOURCE)

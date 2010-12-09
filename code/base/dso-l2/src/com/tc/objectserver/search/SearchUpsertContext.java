@@ -20,9 +20,9 @@ public class SearchUpsertContext extends AbstractMetaDataContext implements Mult
 
   private final String       name;
   private final List<NVPair> attributes;
-  private final String       cacheKey;
+  private final Object       cacheKey;
 
-  public SearchUpsertContext(NodeID id, TransactionID transactionID, String name, String cacheKey,
+  public SearchUpsertContext(NodeID id, TransactionID transactionID, String name, Object cacheKey,
                              List<NVPair> attributes) {
     super(id, transactionID);
     this.name = name;
@@ -42,7 +42,7 @@ public class SearchUpsertContext extends AbstractMetaDataContext implements Mult
   /**
    * Key for cache entry.
    */
-  public String getCacheKey() {
+  public Object getCacheKey() {
     return cacheKey;
   }
 

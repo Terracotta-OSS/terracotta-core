@@ -26,4 +26,7 @@ public class NullSearchRequestManager implements SearchRequestManager {
     // Do nothing
   }
 
+  public void queryErrorResponse(SearchQueryContext sqc, String message) {
+    // Do nothing
+  }
 }

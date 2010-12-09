@@ -100,10 +100,10 @@ public class DSOContextImpl implements DSOContext {
 
   public static DSOContext createContext(String configSpec) throws ConfigurationSetupException {
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                          (String[]) null,
-                                                                                                          StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
-                                                                                                          new FatalIllegalConfigurationChangeHandler(),
-                                                                                                          configSpec);
+                                                                                                    (String[]) null,
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                                                                    new FatalIllegalConfigurationChangeHandler(),
+                                                                                                    configSpec);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
@@ -129,7 +129,7 @@ public class DSOContextImpl implements DSOContext {
     // load license via normal methods before attempt to load it from application resource
     if (LicenseManager.getLicense() == null) {
       String licenseLocation = "/" + LICENSE_KEY_FILENAME;
-      LicenseManager.loadLicenseFromStream(loader.getClass().getResourceAsStream(licenseLocation), licenseLocation);
+      LicenseManager.loadLicenseFromStream(loader.getResourceAsStream(licenseLocation), licenseLocation);
     }
 
     try {
@@ -139,10 +139,10 @@ public class DSOContextImpl implements DSOContext {
     }
 
     StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                          (String[]) null,
-                                                                                                          StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
-                                                                                                          new FatalIllegalConfigurationChangeHandler(),
-                                                                                                          configSpec);
+                                                                                                    (String[]) null,
+                                                                                                    StandardConfigurationSetupManagerFactory.ConfigMode.EXPRESS_L1,
+                                                                                                    new FatalIllegalConfigurationChangeHandler(),
+                                                                                                    configSpec);
 
     L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();
     config.setupLogging();
@@ -302,8 +302,8 @@ public class DSOContextImpl implements DSOContext {
   private synchronized static DSOClientConfigHelper getGlobalConfigHelper() throws ConfigurationSetupException {
     if (staticConfigHelper == null) {
       StandardConfigurationSetupManagerFactory factory = new StandardConfigurationSetupManagerFactory(
-                                                                                                            StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
-                                                                                                            new FatalIllegalConfigurationChangeHandler());
+                                                                                                      StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                                                                      new FatalIllegalConfigurationChangeHandler());
 
       logger.debug("Created StandardTVSConfigurationSetupManagerFactory.");
       L1ConfigurationSetupManager config = factory.getL1TVSConfigurationSetupManager();

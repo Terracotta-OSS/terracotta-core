@@ -11,4 +11,8 @@ public interface SearchQueryResults {
 
   public List getAggregatorResults();
 
+  public boolean isError();
+
+  public String getErrorMessage();
+
 }

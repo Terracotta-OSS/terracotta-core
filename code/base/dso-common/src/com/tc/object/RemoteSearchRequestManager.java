@@ -29,6 +29,9 @@ public interface RemoteSearchRequestManager extends ClientHandshakeCallback {
                                   final List<IndexQueryResult> queryResults, final List<NVPair> aggregatorResults,
                                   final NodeID nodeID);
 
+  public void addErrorResponseForQuery(final SessionID sessionID, final SearchRequestID requestID, GroupID groupIDFrom,
+                                       final String errorMessage, final NodeID nodeID);
+
   public boolean hasRequestID(SearchRequestID requestID);
 
 }

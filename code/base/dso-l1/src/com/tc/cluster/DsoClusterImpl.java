@@ -287,7 +287,7 @@ public class DsoClusterImpl implements DsoClusterInternal {
       if (currentNode != null) return;
 
       currentClientID = (ClientID) nodeId;
-      currentNode = topology.registerDsoNode(nodeId);
+      currentNode = topology.registerThisDsoNode(nodeId);
       isNodeJoined = true;
 
       for (NodeID otherNodeId : clusterMembers) {

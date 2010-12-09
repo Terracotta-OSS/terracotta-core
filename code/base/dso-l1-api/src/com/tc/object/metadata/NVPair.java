@@ -5,7 +5,9 @@ package com.tc.object.metadata;
 
 import com.tc.io.TCSerializable;
 
-public interface NVPair extends TCSerializable {
+import java.io.Serializable;
+
+public interface NVPair extends TCSerializable, Serializable {
 
   String getName();
 

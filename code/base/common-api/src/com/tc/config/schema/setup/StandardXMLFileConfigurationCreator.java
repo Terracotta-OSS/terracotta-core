@@ -492,7 +492,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       TcConfig config = tcConfigDoc.getTcConfig();
       SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
       L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
-      L1DSOConfigObject.initializeClients(config, this.defaultValueProvider, this.directoryLoadedFrom);
+      L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
       DSOApplicationConfigObject.initializeApplication(config, this.defaultValueProvider);
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "

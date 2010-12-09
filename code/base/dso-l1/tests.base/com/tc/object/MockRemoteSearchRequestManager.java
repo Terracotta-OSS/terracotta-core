@@ -49,4 +49,9 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
     //
   }
 
+  public void addErrorResponseForQuery(SessionID sessionID, SearchRequestID requestID, GroupID groupIDFrom,
+                                       String errorMessage, NodeID nodeID) {
+    //
+  }
+
 }

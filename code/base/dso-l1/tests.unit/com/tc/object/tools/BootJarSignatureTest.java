@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.tools;
 
@@ -37,13 +38,6 @@ public class BootJarSignatureTest extends TCTestCase {
     } catch (Exception uve) {
       // expected
     }
-
-    try {
-      new BootJarSignature(makeProps("Linux", "Sun", "1.5.0", "unknown", null));
-      fail();
-    } catch (Exception uve) {
-      // expected
-    }
   }
 
   public void testSolaris() throws UnsupportedVMException {
@@ -73,6 +67,16 @@ public class BootJarSignatureTest extends TCTestCase {
     props = makeProps("Windows 2000", "Sun Microsystems Inc.", "1.4.2_12", null, null);
     sig = new BootJarSignature(props);
     assertEquals("hotspot_win32_142_12", sig.getSignature());
+  }
+
+  public void testUnknown() throws UnsupportedVMException {
+    Properties props = makeProps("Joe bob's OS", "Sun Microsystems Inc.", "1.5.0_06", null, null);
+    BootJarSignature sig = new BootJarSignature(props);
+    assertEquals("hotspot_unknown_150_06", sig.getSignature());
+
+    props = makeProps("Windows XP", "hot dog vendor", "1.6.0_23", null, null);
+    sig = new BootJarSignature(props);
+    assertEquals("unknown_win32_160_23", sig.getSignature());
   }
 
   public void testMac() throws UnsupportedVMException {

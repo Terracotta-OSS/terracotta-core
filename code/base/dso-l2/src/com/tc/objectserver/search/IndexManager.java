@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.l2.state.StateChangeListener;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
 
@@ -11,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface IndexManager {
+public interface IndexManager extends StateChangeListener {
 
   Index getIndex(String name);
 
-  boolean createIndex(String name, Map<String, ValueType> schema) throws IndexException;
+  Index createIndex(String name, Map<String, ValueType> schema) throws IndexException;
 
   boolean deleteIndex(String name) throws IndexException;
 

@@ -4,18 +4,28 @@
  */
 package com.tcclient.cluster;
 
+import com.tc.exception.TCRuntimeException;
 import com.tc.object.bytecode.ManagerUtil;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class DsoNodeImpl implements DsoNodeInternal, Comparable {
 
   private final String             id;
   private final long               channelId;
+  private final boolean            isLocalNode;
 
   private volatile DsoNodeMetaData metaData;
 
   public DsoNodeImpl(final String id, final long channelId) {
+    this(id, channelId, false);
+  }
+
+  public DsoNodeImpl(final String id, final long channelId, boolean isLocalNode) {
     this.id = id;
     this.channelId = channelId;
+    this.isLocalNode = isLocalNode;
   }
 
   public String getId() {
@@ -34,11 +44,32 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
     return getOrRetrieveMetaData().getHostname();
   }
 
+  private boolean isLocalNode() {
+    return this.isLocalNode;
+  }
+
+  private DsoNodeMetaData resolveLocalIPAndHostname() {
+    InetAddress addr;
+    try {
+      addr = InetAddress.getLocalHost();
+    } catch (UnknownHostException e) {
+      throw new TCRuntimeException(e);
+    }
+    return new DsoNodeMetaData(addr.getHostAddress(), addr.getHostName());
+  }
+
   private DsoNodeMetaData getOrRetrieveMetaData() {
-    // Doing this through the manager API to not have to keep a reference
-    // to the cluster instance in the node instance. This makes it easier to
-    // share DsoNodeImpl instances.
-    return getOrRetrieveMetaData(((DsoClusterInternal) ManagerUtil.getManager().getDsoCluster()));
+    if (metaData == null) {
+      if (isLocalNode()) {
+        metaData = resolveLocalIPAndHostname();
+      } else {
+        // Doing this through the manager API to not have to keep a reference
+        // to the cluster instance in the node instance. This makes it easier to
+        // share DsoNodeImpl instances.
+        metaData = getOrRetrieveMetaData(((DsoClusterInternal) ManagerUtil.getManager().getDsoCluster()));
+      }
+    }
+    return metaData;
   }
 
   public DsoNodeMetaData getOrRetrieveMetaData(DsoClusterInternal cluster) {
@@ -74,6 +105,6 @@ public class DsoNodeImpl implements DsoNodeInternal, Comparable {
   }
 
   public int compareTo(final Object o) {
-    return id.compareTo(((DsoNodeImpl)o).id);
+    return id.compareTo(((DsoNodeImpl) o).id);
   }
 }

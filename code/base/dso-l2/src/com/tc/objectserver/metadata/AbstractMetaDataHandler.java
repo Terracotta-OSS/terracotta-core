@@ -7,6 +7,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
+import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransactionManager;
 
@@ -31,6 +32,7 @@ public abstract class AbstractMetaDataHandler extends AbstractEventHandler {
 
     if (context instanceof AbstractMetaDataContext) {
       AbstractMetaDataContext metaDataContext = (AbstractMetaDataContext) context;
+      if (metaDataContext.getTransactionID() == TransactionID.IGNORE_ID) { return; }
       if (this.manager.metaDataProcessingCompleted(metaDataContext.getTransactionID())) {
         this.txnManager.processingMetaDataCompleted(metaDataContext.getSourceID(), metaDataContext.getTransactionID());
       }

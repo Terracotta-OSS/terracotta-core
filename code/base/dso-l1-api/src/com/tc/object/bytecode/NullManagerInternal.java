@@ -313,4 +313,8 @@ public class NullManagerInternal implements ManagerInternal {
   public NVPair createNVPair(String name, Object value) {
     throw new UnsupportedOperationException();
   }
+
+  public void verifySearchCapbility() {
+    throw new UnsupportedOperationException();
+  }
 }

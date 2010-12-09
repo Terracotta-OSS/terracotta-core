@@ -10,7 +10,6 @@ import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
 import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.object.bytecode.SessionConfiguration;
 import com.tc.object.config.schema.ExcludedInstrumentedClass;
@@ -75,10 +74,6 @@ public class ConfigLoader {
   }
 
   private void addRoot(final Root root) throws ConfigurationSetupException {
-    if (LicenseManager.enterpriseEdition()) {
-      LicenseManager.verifyRootCapability();
-    }
-
     String rootName = root.getRootName();
     String fieldName = root.getFieldName();
     String fieldExpression = root.getFieldExpression();

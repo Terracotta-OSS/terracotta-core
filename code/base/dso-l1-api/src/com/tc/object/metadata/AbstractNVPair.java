@@ -589,33 +589,30 @@ public abstract class AbstractNVPair implements NVPair {
   }
 
   public static NVPair createNVPair(String attributeName, Object value) {
-    NVPair pair = null;
     if (value instanceof Byte) {
-      pair = new ByteNVPair(attributeName, (Byte) value);
+      return new ByteNVPair(attributeName, (Byte) value);
     } else if (value instanceof Boolean) {
-      pair = new BooleanNVPair(attributeName, (Boolean) value);
+      return new BooleanNVPair(attributeName, (Boolean) value);
     } else if (value instanceof Character) {
-      pair = new CharNVPair(attributeName, (Character) value);
+      return new CharNVPair(attributeName, (Character) value);
     } else if (value instanceof Double) {
-      pair = new DoubleNVPair(attributeName, (Double) value);
+      return new DoubleNVPair(attributeName, (Double) value);
     } else if (value instanceof Float) {
-      pair = new FloatNVPair(attributeName, (Float) value);
+      return new FloatNVPair(attributeName, (Float) value);
     } else if (value instanceof Integer) {
-      pair = new IntNVPair(attributeName, (Integer) value);
+      return new IntNVPair(attributeName, (Integer) value);
     } else if (value instanceof Short) {
-      pair = new ShortNVPair(attributeName, (Short) value);
+      return new ShortNVPair(attributeName, (Short) value);
     } else if (value instanceof Long) {
-      pair = new LongNVPair(attributeName, (Long) value);
+      return new LongNVPair(attributeName, (Long) value);
     } else if (value instanceof String) {
-      pair = new StringNVPair(attributeName, (String) value);
+      return new StringNVPair(attributeName, (String) value);
     } else if (value instanceof byte[]) {
-      pair = new ByteArrayNVPair(attributeName, (byte[]) value);
+      return new ByteArrayNVPair(attributeName, (byte[]) value);
     } else if (value instanceof Date) {
-      pair = new DateNVPair(attributeName, (Date) value);
-    } else if (value instanceof Enum) {
-      pair = new EnumNVPair(attributeName, (Enum) value);
-    }
-    return pair;
-  }
+      return new DateNVPair(attributeName, (Date) value);
+    } else if (value instanceof Enum) { return new EnumNVPair(attributeName, (Enum) value); }
 
+    throw new IllegalArgumentException("Unsupported type: " + ((value == null) ? "(null)" : value.getClass().getName()));
+  }
 }

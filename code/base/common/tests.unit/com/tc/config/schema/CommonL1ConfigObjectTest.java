@@ -25,7 +25,7 @@ public class CommonL1ConfigObjectTest extends ConfigObjectTestBase {
   public void setUp() throws Exception {
     TcConfig config = TcConfig.Factory.newInstance();
     super.setUp(Client.class);
-    L1DSOConfigObject.initializeClients(config, new SchemaDefaultValueProvider(), getTempDirectory());
+    L1DSOConfigObject.initializeClients(config, new SchemaDefaultValueProvider());
     setBean(config.getClients());
     this.object = new CommonL1ConfigObject(context());
   }

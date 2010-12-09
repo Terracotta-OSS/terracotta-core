@@ -129,7 +129,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @SuppressWarnings("unused")
-  public IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager) throws IOException {
+  public IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager, Sink sink) throws IOException {
     return new NullIndexManager();
   }
 
@@ -158,7 +158,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(
+                                                                     StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -254,9 +255,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     // NOP
   }
 
-  public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome,
-                                           final L2DSOConfig l2DSOCofig, final DumpHandlerStore dumpHandlerStore,
-                                           final StageManager stageManager, final SampledCounter l2FaultFromDisk,
+  public DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
+                                           final DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
+                                           final SampledCounter l2FaultFromDisk,
                                            final SampledCounter l2FaultFromOffheap,
                                            final SampledCounter l2FlushFromOffheap, final DBFactory factory)
       throws IOException {

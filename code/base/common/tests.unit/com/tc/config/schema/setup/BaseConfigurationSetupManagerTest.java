@@ -829,8 +829,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
-                                 + ParameterSubstituter.substitute("%i")).getAbsolutePath(), client.getLogs());
+    Assert.assertEquals(ParameterSubstituter.substitute("%i"), client.getLogs());
   }
 
 

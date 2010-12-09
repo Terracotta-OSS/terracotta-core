@@ -74,7 +74,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   MetaDataManager createMetaDataManager(Sink sink);
 
-  IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager) throws IOException;
+  IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager, Sink sink) throws IOException;
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
