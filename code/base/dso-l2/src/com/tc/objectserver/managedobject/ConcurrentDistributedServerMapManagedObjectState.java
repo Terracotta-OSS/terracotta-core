@@ -15,6 +15,7 @@ import com.tc.objectserver.api.EvictableMap;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,12 +34,18 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
   public static final String INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
 
-  private boolean            evictionInitiated                    = false;
-  private boolean            invalidateOnChange;
-  private int                maxTTISeconds;
-  private int                maxTTLSeconds;
-  private int                targetMaxInMemoryCount;
-  private int                targetMaxTotalCount;
+  enum EvictionStatus {
+    NOT_INITIATED, INITIATED, SAMPLED
+  }
+
+  // This is a transient field tracking the status of the eviction for this CDSM
+  private EvictionStatus evictionStatus = EvictionStatus.NOT_INITIATED;
+
+  private boolean        invalidateOnChange;
+  private int            maxTTISeconds;
+  private int            maxTTLSeconds;
+  private int            targetMaxInMemoryCount;
+  private int            targetMaxTotalCount;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -136,13 +143,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       // This is currently used by evictor, in future we may support all of ConcurrentMap operations at the server
       // directly
       applyRemoveIfValueEqual(params);
+    } else if (method == SerializationUtil.EVICTION_COMPLETED) {
+      evictionCompleted();
     } else if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
       // ignore CLEAR_LOCAL_CACHE, nothing to do, but broadcast
       super.applyMethod(objectID, applyInfo, method, params);
     }
     if (applyInfo.isActiveTxn() && method == SerializationUtil.PUT && this.targetMaxTotalCount > 0
-        && !this.evictionInitiated && this.references.size() > this.targetMaxTotalCount * 1.15) { // 15 % overshoot
-      this.evictionInitiated = true;
+        && this.evictionStatus == EvictionStatus.NOT_INITIATED
+        && this.references.size() > this.targetMaxTotalCount * 1.15) { // 15 % overshoot
+      this.evictionStatus = EvictionStatus.INITIATED;
       applyInfo.initiateEvictionFor(objectID);
     }
   }
@@ -209,11 +219,19 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     return this.maxTTLSeconds;
   }
 
+  public void evictionCompleted() {
+    this.evictionStatus = EvictionStatus.NOT_INITIATED;
+  }
+
   // TODO:: This implementation could be better, could use LinkedHashMap to increase the chances of getting the
   // right samples, also should it return a sorted Map ? Are objects with lower OIDs having more changes to be evicted ?
   public Map getRandomSamples(final int count, final SortedSet<ObjectID> ignoreList) {
-    // TODO::May be delay this setting to later, in evict, but have to be careful not to miss setting it.
-    this.evictionInitiated = false;
+    if (evictionStatus == EvictionStatus.SAMPLED) {
+      // There is already a random sample that is yet to be processed, so returning empty collection. This can happen if
+      // both period and capacity Evictors are working at the same object one after the other.
+      return Collections.EMPTY_MAP;
+    }
+    this.evictionStatus = EvictionStatus.SAMPLED;
     final Map samples = new HashMap(count);
     final Map ignored = new HashMap(count);
     final Random r = new Random();

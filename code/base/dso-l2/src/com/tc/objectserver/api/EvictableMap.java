@@ -20,4 +20,6 @@ public interface EvictableMap {
 
   public Map getRandomSamples(int count, SortedSet<ObjectID> ignoreList);
 
+  public void evictionCompleted();
+
 }

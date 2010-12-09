@@ -68,14 +68,16 @@ public final class ServerMapEvictionDNA implements DNA {
 
   private static final class ServerMapEvictionDNACursor implements DNACursor {
 
-    private final Iterator<Entry> actions;
-    private final int             actionsCompleted = 0;
-    private LogicalAction         currentAction;
-    private final Map             candidates;
+    private static final LogicalAction evictionCompleted = new LogicalAction(SerializationUtil.EVICTION_COMPLETED,
+                                                                             new Object[] {});
+
+    private final Iterator<Entry>      actions;
+    private int                        actionsCount;
+    private LogicalAction              currentAction;
 
     public ServerMapEvictionDNACursor(final Map candidates) {
-      this.candidates = candidates;
       this.actions = candidates.entrySet().iterator();
+      this.actionsCount = candidates.size() + 1; // plus one for evictionComplete action
     }
 
     public Object getAction() {
@@ -83,7 +85,7 @@ public final class ServerMapEvictionDNA implements DNA {
     }
 
     public int getActionCount() {
-      return this.candidates.size() - this.actionsCompleted;
+      return actionsCount;
     }
 
     public LogicalAction getLogicalAction() {
@@ -99,8 +101,13 @@ public final class ServerMapEvictionDNA implements DNA {
         final Entry e = this.actions.next();
         this.currentAction = new LogicalAction(SerializationUtil.REMOVE_IF_VALUE_EQUAL, new Object[] { e.getKey(),
             e.getValue() });
+        actionsCount--;
         return true;
-      }
+      } else if (actionsCount == 1) {
+        currentAction = evictionCompleted;
+        actionsCount--;
+        return true;
+      } else if (actionsCount > 0) { throw new AssertionError("Expected Actions count to be 0 : " + actionsCount); }
       return false;
     }
 
