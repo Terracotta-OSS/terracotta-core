@@ -10,8 +10,8 @@ import com.tc.util.AbstractIdentifier;
  * @author steve
  */
 public class TransactionID extends AbstractIdentifier {
-  public final static TransactionID NULL_ID             = new TransactionID();
-  public final static TransactionID META_DATA_IGNORE_ID = new MetaDataIgnoreTransactionID();
+  public final static TransactionID NULL_ID   = new TransactionID();
+  public final static TransactionID IGNORE_ID = new MetaDataIgnoreTransactionID();
 
   public TransactionID(long id) {
     super(id);
