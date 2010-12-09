@@ -163,7 +163,6 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     out.writeInt(this.maxTTLSeconds);
     out.writeInt(this.targetMaxInMemoryCount);
     out.writeInt(this.targetMaxTotalCount);
-    out.writeBoolean(this.evictionInitiated);
     out.writeBoolean(this.invalidateOnChange);
   }
 
