@@ -54,6 +54,8 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
             broadcastMessage.send();
             broadcastCounter.increment();
           }
+          // send the eviction notice to only one client which has faulted in the map being evicted
+          // See DEV-5097 for more details
           break;
         }
       }
