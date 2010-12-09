@@ -45,16 +45,16 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
     final ServerMapEvictionBroadcastContext broadcastContext = (ServerMapEvictionBroadcastContext) context;
     final MessageChannel[] channels = channelManager.getActiveChannels();
     for (MessageChannel channel : channels) {
-      if (channel.isClosed()) {
-        continue;
-      }
-      if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
-        for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
-          final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
-              .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
-          broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch);
-          broadcastMessage.send();
-          broadcastCounter.increment();
+      if (!channel.isClosed()) {
+        if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
+          for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
+            final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
+                .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
+            broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch);
+            broadcastMessage.send();
+            broadcastCounter.increment();
+          }
+          break;
         }
       }
     }
