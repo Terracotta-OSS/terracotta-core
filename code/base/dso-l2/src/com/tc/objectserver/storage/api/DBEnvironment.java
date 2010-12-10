@@ -121,5 +121,6 @@ public interface DBEnvironment {
 
   public StatisticRetrievalAction[] getSRAs();
 
-  public abstract OffheapStats getOffheapStats();
+  public abstract OffheapJMXStats getOffheapJMXStats();
+
 }

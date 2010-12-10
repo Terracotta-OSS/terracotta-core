@@ -27,7 +27,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.storage.api.OffheapStats;
+import com.tc.objectserver.storage.api.OffheapJMXStats;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 import com.tc.operatorevent.TerracottaOperatorEvent;
@@ -81,11 +81,11 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ObjectInstanceMonitorMBean             instanceMonitor;
   private final ClientStateManager                     clientStateManager;
   private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
-  private final OffheapStats                           offheapStats;
+  private final OffheapJMXStats                        offheapStats;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
              final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher,
-             TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider, OffheapStats offheapStats)
+             TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider, OffheapJMXStats offheapStats)
       throws NotCompliantMBeanException {
     super(DSOMBean.class);
     try {
@@ -737,4 +737,9 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   public long getOffheapObjectAllocatedMemory() {
     return offheapStats.getOffheapObjectAllocatedMemory();
   }
+
+  public OffheapJMXStats getOffheapAccurateStats() {
+    return offheapStats;
+  }
+
 }

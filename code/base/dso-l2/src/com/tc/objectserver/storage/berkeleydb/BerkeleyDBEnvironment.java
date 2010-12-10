@@ -29,7 +29,7 @@ import com.tc.objectserver.persistence.db.DatabaseNotOpenException;
 import com.tc.objectserver.persistence.db.DatabaseOpenException;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.DBEnvironment;
-import com.tc.objectserver.storage.api.OffheapStats;
+import com.tc.objectserver.storage.api.OffheapJMXStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
 import com.tc.objectserver.storage.api.TCIntToBytesDatabase;
@@ -589,8 +589,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
-        .get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
+                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
@@ -601,7 +601,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     }
   }
 
-  public OffheapStats getOffheapStats() {
-    return OffheapStats.NULL_OFFHEAP_STATS;
+  public OffheapJMXStats getOffheapJMXStats() {
+    return OffheapJMXStats.NULL_OFFHEAP_JMXSTATS;
   }
+
 }
