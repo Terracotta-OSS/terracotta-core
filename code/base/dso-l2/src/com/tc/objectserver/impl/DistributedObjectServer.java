@@ -39,6 +39,8 @@ import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
+import com.tc.l2.state.StateSyncManager;
+import com.tc.l2.state.StateSyncManagerImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CustomerLogging;
@@ -1102,17 +1104,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                        this.transactionManager,
                                                                                                        host, serverPort);
       logger.info("L2 Networked HA Enabled ");
+      this.indexManager = this.serverBuilder.createIndexManager(this.configSetupManager, searchEventSink);
+
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                     this.groupCommManager,
                                                                     this.persistor.getPersistentStateStore(),
                                                                     this.objectManager, this.transactionManager, gtxm,
                                                                     weightGeneratorFactory, this.configSetupManager,
                                                                     recycler, this.stripeIDStateManager,
-                                                                    serverTransactionFactory, dgcSequenceProvider);
+                                                                    serverTransactionFactory, dgcSequenceProvider,
+                                                                    createStateSyncManager(this.indexManager));
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
-      this.indexManager = this.serverBuilder.createIndexManager(this.configSetupManager, searchEventSink);
-
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexManager);
+
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
       this.l2State.setState(StateManager.ACTIVE_COORDINATOR);
@@ -1172,6 +1176,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startL1Listener();
     }
     setLoggerOnExit();
+  }
+
+  protected StateSyncManager createStateSyncManager(IndexManager idxManager) {
+    return new StateSyncManagerImpl();
   }
 
   public void startGroupManagers() {

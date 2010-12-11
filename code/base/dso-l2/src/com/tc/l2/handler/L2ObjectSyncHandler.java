@@ -15,7 +15,7 @@ import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.msg.ServerTxnAckMessageFactory;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
-import com.tc.l2.state.StateManager;
+import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.AbstractGroupMessage;
@@ -38,7 +38,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
 
   private Sink                           sendSink;
   private ReplicatedTransactionManager   rTxnManager;
-  private StateManager                   stateManager;
+  private StateSyncManager               stateSyncManager;
 
   private final ServerTransactionFactory serverTransactionFactory;
 
@@ -59,8 +59,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     } else if (context instanceof ObjectSyncCompleteMessage) {
       final ObjectSyncCompleteMessage msg = (ObjectSyncCompleteMessage) context;
       logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
-      // Now this node can move to Passive StandBy
-      this.stateManager.moveToPassiveStandbyState();
+      stateSyncManager.objectSyncComplete();
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
@@ -107,7 +106,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.batchReaderFactory = oscc.getTransactionBatchReaderFactory();
     this.rTxnManager = oscc.getL2Coordinator().getReplicatedTransactionManager();
-    this.stateManager = oscc.getL2Coordinator().getStateManager();
+    this.stateSyncManager = oscc.getL2Coordinator().getStateSyncManager();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
   }
 

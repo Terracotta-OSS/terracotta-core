@@ -11,7 +11,9 @@ import com.tc.l2.objectserver.NonReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
 import com.tc.l2.state.DummyStateManager;
+import com.tc.l2.state.NullStateSyncManager;
 import com.tc.l2.state.StateManager;
+import com.tc.l2.state.StateSyncManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.SingleNodeGroupManager;
 import com.tc.text.PrettyPrintable;
@@ -24,6 +26,7 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
   private final ReplicatedClusterStateManager clusterStateMgr  = new NonReplicatedClusterStateManager();
   private final ReplicatedObjectManager       replicatedObjMgr = new NonReplicatedObjectManager();
   private final ReplicatedTransactionManager  replicatedTxnMgr = new NonReplicatedTransactionManager();
+  private final StateSyncManager              stateSyncManager = new NullStateSyncManager();
 
   public L2HADisabledCooridinator(GroupManager groupCommManager) {
     this.groupManager = groupCommManager;
@@ -58,7 +61,7 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
   public ReplicatedTransactionManager getReplicatedTransactionManager() {
     return replicatedTxnMgr;
   }
-  
+
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
     out.print(this.getClass().getSimpleName()).flush();
     StringBuilder strBuffer = new StringBuilder();
@@ -67,6 +70,10 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
     strBuffer.append(" ]");
     out.indent().print(strBuffer.toString()).flush();
     return out;
+  }
+
+  public StateSyncManager getStateSyncManager() {
+    return stateSyncManager;
   }
 
 }
