@@ -25,7 +25,7 @@ public class TickerTokenMessageHandler extends AbstractEventHandler {
       TickerToken token = message.getTickerToken();
       this.tickerManager.receive(token);
     } else {
-      new AssertionError("Invalid Message TickerTokenMessageHandler " + context.getClass());
+      throw new AssertionError("Invalid Message TickerTokenMessageHandler " + context.getClass());
     }
   }
 }

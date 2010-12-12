@@ -29,7 +29,7 @@ public class DGCIntervalMarker extends IntervalMarker implements ToolTipProvider
     this.dgcInfo = dgcStats;
     double endValue;
     long elapsedTime = dgcInfo.getElapsedTime();
-    if (dgcInfo.getStatus().equals(GCStats.GC_CANCELED)) {
+    if (dgcInfo.getStatus().equals(GCStats.GC_CANCELED.getName())) {
       if (elapsedTime == -1) {
         elapsedTime = System.currentTimeMillis();
       }
