@@ -846,8 +846,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
-                                 + "node123").getAbsolutePath(), client.getLogs());
+    Assert.assertEquals("node123", client.getLogs());
   }
 
   public void testDefaultFaultCount() throws IOException, ConfigurationSetupException {
