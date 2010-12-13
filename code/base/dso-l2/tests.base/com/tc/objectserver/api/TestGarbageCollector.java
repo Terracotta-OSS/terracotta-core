@@ -196,6 +196,9 @@ public class TestGarbageCollector implements GarbageCollector {
 
   public void notifyGCComplete() {
     try {
+      this.isPausing = false;
+      this.isPaused = false;
+      this.isStarted = false;
       this.notifyGCCompleteCalls.put(new Object());
     } catch (final InterruptedException e) {
       throw new AssertionError(e);
@@ -284,11 +287,8 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public boolean deleteGarbage(final GCResultContext resultContext) {
-    this.isPausing = false;
-    this.isPaused = false;
-    this.isStarted = false;
-    this.objectProvider.notifyGCComplete(resultContext);
     this.notifyGCComplete();
+    this.objectProvider.notifyGCComplete(resultContext);
     return true;
   }
 
