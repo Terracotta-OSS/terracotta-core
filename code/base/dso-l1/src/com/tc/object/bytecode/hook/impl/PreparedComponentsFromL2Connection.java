@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object.bytecode.hook.impl;
 
@@ -25,9 +26,14 @@ public class PreparedComponentsFromL2Connection {
     return new ConnectionInfoConfig(this.config.l2Config().l2Data());
   }
 
-  public ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
-    // this initializes the data structures in L2ConfigForL1Object
-    this.config.l2Config().l2Data();
+  public synchronized ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
+    /**
+     * this block is synchronized because of the apache bug https://issues.apache.org/jira/browse/XMLBEANS-328. In multi
+     * threaded environment we used to get ArrayIndexOutOfBoundsException See MNK-1984, 2010, 2013 for more details
+     */
+    synchronized (this.config) {
+      this.config.l2Config().l2Data();
+    }
 
     L2Data[][] l2DataByGroup = this.config.l2Config().getL2DataByGroup();
     ConnectionInfoConfig[] items = new ConnectionInfoConfig[l2DataByGroup.length];
@@ -36,7 +42,7 @@ public class PreparedComponentsFromL2Connection {
     }
     return items;
   }
-  
+
   public boolean isActiveActive() {
     ConnectionInfoConfig[] groups = createConnectionInfoConfigItemByGroup();
     return (groups.length > 1);
