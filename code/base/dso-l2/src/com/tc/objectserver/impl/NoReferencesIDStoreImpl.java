@@ -7,8 +7,7 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
-import com.tc.util.ObjectIDSet;
-import com.tc.util.ObjectIDSet.ObjectIDSetType;
+import com.tc.util.StripedObjectIDSet;
 
 public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
 
@@ -40,22 +39,19 @@ public class NoReferencesIDStoreImpl implements NoReferencesIDStore {
   }
 
   public class OidSetStore implements NoReferencesIDStore {
-
-    private final ObjectIDSet store = new ObjectIDSet(ObjectIDSetType.BITSET_BASED_SET);
+    private final StripedObjectIDSet store = new StripedObjectIDSet();
 
     public void addToNoReferences(final ManagedObject mo) {
       if (mo.getManagedObjectState().hasNoReferences()) {
-        synchronized (this) {
-          this.store.add(mo.getID());
-        }
+        this.store.add(mo.getID());
       }
     }
 
-    public synchronized void clearFromNoReferencesStore(final ObjectID id) {
+    public void clearFromNoReferencesStore(final ObjectID id) {
       this.store.remove(id);
     }
 
-    public synchronized boolean hasNoReferences(final ObjectID id) {
+    public boolean hasNoReferences(final ObjectID id) {
       return this.store.contains(id);
     }
 

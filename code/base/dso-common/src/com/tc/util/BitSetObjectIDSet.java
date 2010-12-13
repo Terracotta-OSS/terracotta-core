@@ -219,7 +219,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     return new ObjectID(max.last());
   }
 
-  private long calculateStart(final long lid) {
+  public static long calculateStart(final long lid) {
     if (lid < 0) {
       return (-BitSet.RANGE_SIZE + ((lid + 1) / BitSet.RANGE_SIZE) * BitSet.RANGE_SIZE);
     } else {
@@ -334,7 +334,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  private static class BitSet extends AANode implements Cloneable, Comparable {
+  public static class BitSet extends AANode implements Cloneable, Comparable {
     private long            start;
     private long            nextLongs  = 0;
     public static final int RANGE_SIZE = 64;
