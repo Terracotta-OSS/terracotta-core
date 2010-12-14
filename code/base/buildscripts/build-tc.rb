@@ -163,11 +163,12 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     write_build_info_file if monkey?
   end
   
-  def findbugs
+  def findbugs(with_gui=nil)
     depends :compile
     
     @ant.taskdef(:name => "findbugs",  :classname => "edu.umd.cs.findbugs.anttask.FindBugsTask")
-    findbugs_home = File.join(@basedir.to_s, "..", "..", "buildsystems", "findbugs-1.3.9")
+    findbugs_home = ENV['FINDBUGS_HOME'] || ''
+    raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
 
     @ant.findbugs( :home => findbugs_home, :output => "xml:withMessages", :outputFile => "build/findbugs.xml",
                    :jvmargs => "-Xmx512m") do
@@ -175,12 +176,27 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
         src_subtree = build_module.subtree("src")
         src_path = src_subtree.source_root.to_s
         if File.exists?(src_path)
-          puts "analyzing #{src_path}"
           build_path = @build_results.classes_directory(src_subtree).to_s
           @ant.sourcePath(:path => src_path)
           @ant.class(:location => build_path)
         end
       end
+    end
+    
+    if with_gui == 'gui'
+      findbugs_gui
+    end
+    
+  end
+  
+  def findbugs_gui
+    findbugs_home = ENV['FINDBUGS_HOME'] || ''
+    raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
+    params = "-gui -look:native -maxHeap 512"
+    if ENV['OS'] =~ /windows/i
+      `#{findbugs_home.gsub('\\', '/')}/bin/findbugs.bat #{params}`
+    else
+      `#{findbugs_home}/bin/findbugs #{param}`
     end
   end
 

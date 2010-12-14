@@ -20,7 +20,14 @@ if test "$1" = ""; then
   exit 0
 fi
 
+CYGWIN=false
+if [ `uname | grep CYGWIN` ]; then
+  CYGWIN=true
+fi
+
 jruby_version=jruby-1.1.6a
+findbugs_version=findbugs-1.3.9
+
 build_system_dir=`dirname $0`/../../buildsystems
 cache_dir=$HOME/.tc
 extra_jruby_cp=
@@ -28,7 +35,7 @@ for j in $build_system_dir/jruby-lib/*.jar; do
   extra_jruby_cp=${extra_jruby_cp}:${j}
 done
 
-if [ `uname | grep CYGWIN` ]; then
+if [ %CYGWIN ]; then
   cache_dir=c:/temp/tc
   cache_dir=`cygpath -u $cache_dir`
 fi
@@ -37,12 +44,21 @@ if [ ! -d "$cache_dir" ]; then
   mkdir -p $cache_dir
 fi  
 
-JRUBY_HOME="$cache_dir/$jruby_version"
-export JRUBY_HOME
+export JRUBY_HOME="$cache_dir/$jruby_version"
+export FINDBUGS_HOME="$cache_dir/$findbugs_version"
 
 if [ ! -d "${JRUBY_HOME}" ]; then
   echo "JRuby not found at $JRUBY_HOME. Installing..."
-	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-jruby-build.xml"
+	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-tools.xml" install-jruby
+fi
+
+if [ ! -d "${FINDBUGS_HOME}" ]; then
+  echo "FindBugs not found at $FINDBUGS_HOME. Installing..."
+	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-tools.xml" install-findbugs
+fi
+
+if [ %CYGWIN ]; then
+  export FINDBUGS_HOME=`cygpath -w $FINDBUGS_HOME`
 fi
 
 export TC_CP=$extra_jruby_cp

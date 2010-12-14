@@ -304,6 +304,14 @@ show_config
 generate_config_classes
     Generates XMLBeans against the Terracotta schema
 
+findbugs
+    Runs FindBugs analysis. The result find is saved to build/findbugs.xml.
+    If you run 'tcbuild findbugs gui' it will run findbugs analysis first then start the GUI
+
+fingbugs_gui
+    Starts FindBugs GUI. You can use this GUI to read the build/findbugs.xml
+    
+    
 JDK SELECTION
 
 You can override the default JDK used for compiling and/or testing by

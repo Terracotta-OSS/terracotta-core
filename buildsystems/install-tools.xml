@@ -1,0 +1,34 @@
+<project name="buildsystems">
+  <property name="jruby.package" value="jruby-1.1.6a.tar.gz"/>
+  <property name="findbugs.package" value="findbugs-1.3.9.tar.gz"/>
+
+  <target name="install-jruby">
+    <condition property="cache.dest" value="C:\temp\tc" else="${user.home}/.tc">
+      <os family="windows"/>
+    </condition>
+    
+    <echo message="JRuby cache: ${cache.dest}"/>
+    
+    <get src="http://download.terracotta.org/jruby/${jruby.package}"
+     dest="${cache.dest}/${jruby.package}"
+     verbose="true"
+     usetimestamp="true"/>
+     
+    <untar src="${cache.dest}/${jruby.package}" dest="${cache.dest}" compression="gzip"/> 
+  </target>
+  
+  <target name="install-findbugs">
+    <condition property="cache.dest" value="C:\temp\tc" else="${user.home}/.tc">
+      <os family="windows"/>
+    </condition>
+    
+    <echo message="FindBugs cache: ${cache.dest}"/>
+    
+    <get src="http://download.terracotta.org/findbugs/${findbugs.package}"
+     dest="${cache.dest}/${findbugs.package}"
+     verbose="true"
+     usetimestamp="true"/>
+     
+    <untar src="${cache.dest}/${findbugs.package}" dest="${cache.dest}" compression="gzip"/> 
+  </target>  
+</project>
