@@ -37,7 +37,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
   public CreateRescueCandidatesYoungGCTestApp(String appId, ApplicationConfig config, ListenerProvider listenerProvider) {
     super(appId, config, listenerProvider);
 
-    TEST_DURATION = Os.isSolaris() ? (2 * MINUTE) : (5 * MINUTE);
+    TEST_DURATION = Os.isSolaris() ? (1 * MINUTE) : (5 * MINUTE);
     THREAD_DURATION_TOLERANCE = Os.isSolaris() ? (15 * 1000) : (30 * 1000);
     THREAD_DURATION = TEST_DURATION - THREAD_DURATION_TOLERANCE;
   }
