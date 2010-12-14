@@ -20,10 +20,7 @@ if test "$1" = ""; then
   exit 0
 fi
 
-CYGWIN=false
-if [ `uname | grep CYGWIN` ]; then
-  CYGWIN=true
-fi
+CYGWIN=`uname | grep CYGWIN`
 
 jruby_version=jruby-1.1.6a
 findbugs_version=findbugs-1.3.9
@@ -35,7 +32,7 @@ for j in $build_system_dir/jruby-lib/*.jar; do
   extra_jruby_cp=${extra_jruby_cp}:${j}
 done
 
-if [ %CYGWIN ]; then
+if [ $CYGWIN ]; then
   cache_dir=c:/temp/tc
   cache_dir=`cygpath -u $cache_dir`
 fi
@@ -57,7 +54,7 @@ if [ ! -d "${FINDBUGS_HOME}" ]; then
 	"${ANT_HOME}/bin/ant" -buildfile "$build_system_dir/install-tools.xml" install-findbugs
 fi
 
-if [ %CYGWIN ]; then
+if [ $CYGWIN ]; then
   export FINDBUGS_HOME=`cygpath -w $FINDBUGS_HOME`
 fi
 
