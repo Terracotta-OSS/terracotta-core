@@ -15,8 +15,8 @@
     <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
     <dependency name="log4j" rev="1.2.9" org="log4j"/>
     <dependency name="servlet-api-2.5" rev="6.1.8" org="org.mortbay.jetty"/>
-    <dependency name="slf4j-nop" rev="1.5.11" org="org.slf4j"/>
-    <dependency name="slf4j-api" rev="1.5.11" org="org.slf4j"/>
+    <dependency name="slf4j-nop" rev="1.6.1" org="org.slf4j"/>
+    <dependency name="slf4j-api" rev="1.6.1" org="org.slf4j"/>
     <dependency name="trove" rev="1.1-beta-5" org="trove"/>
   </dependencies>
 </ivy-module>
