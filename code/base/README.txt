@@ -328,6 +328,9 @@ jdk.def.yml, or the path to a Java installation.  For example:
   tests-jdk=1.6               # run tests using JAVASE_16
   jdk=/usr/local/jdk1.6.0     # do everything with JAVASE_16
 
+You could skip JDK enforcement (using JDK16 in place of JDK15) by passing
+skip.jdk.check=true to tcbuild, or put that option in file build-config.local  
+  
 SEE ALSO
 
 Further documentation is available on the following wiki pages:
