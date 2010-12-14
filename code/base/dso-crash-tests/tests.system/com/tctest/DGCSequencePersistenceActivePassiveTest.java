@@ -246,8 +246,8 @@ public class DGCSequencePersistenceActivePassiveTest extends BaseDSOTestCase {
   @Override
   protected void tearDown() throws Exception {
     System.err.println("in tearDown");
-    if (server_1 != null) server_1.stop();
-    if (server_2 != null) server_2.stop();
+    if (server_1 != null && server_1.isInitialized()) server_1.stop();
+    if (server_2 != null && server_2.isInitialized()) server_2.stop();
   }
 
   private File getWorkDir(final String subDir) throws IOException {
