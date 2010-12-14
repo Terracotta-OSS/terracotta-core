@@ -26,7 +26,7 @@ public class PreparedComponentsFromL2Connection {
     return new ConnectionInfoConfig(this.config.l2Config().l2Data());
   }
 
-  public synchronized ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
+  public ConnectionInfoConfig[] createConnectionInfoConfigItemByGroup() {
     /**
      * this block is synchronized because of the apache bug https://issues.apache.org/jira/browse/XMLBEANS-328. In multi
      * threaded environment we used to get ArrayIndexOutOfBoundsException See MNK-1984, 2010, 2013 for more details
