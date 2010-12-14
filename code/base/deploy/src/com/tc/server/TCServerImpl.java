@@ -634,7 +634,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider = this.dsoServer
         .getOperatorEventsHistoryProvider();
     DSOMBean dso = new DSO(mgmtContext, configContext, mBeanServer, gcStatsPublisher, operatorEventHistoryProvider,
-                           this.dsoServer.getOffheapJMXStats());
+                           this.dsoServer.getOffheapStats());
     mBeanServer.registerMBean(dso, L2MBeanNames.DSO);
   }
 

@@ -223,7 +223,7 @@ import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.search.SearchRequestMessageHandler;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
-import com.tc.objectserver.storage.api.OffheapJMXStats;
+import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
@@ -1619,8 +1619,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     }
   }
 
-  public OffheapJMXStats getOffheapJMXStats() {
-    return this.dbenv.getOffheapJMXStats();
+  public OffheapStats getOffheapStats() {
+    return this.dbenv.getOffheapStats();
   }
 
   public ReconnectConfig getL1ReconnectProperties() {

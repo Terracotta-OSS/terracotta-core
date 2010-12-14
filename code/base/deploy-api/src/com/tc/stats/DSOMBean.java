@@ -10,7 +10,6 @@ import com.tc.object.ObjectID;
 import com.tc.objectserver.api.NoSuchObjectException;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
-import com.tc.objectserver.storage.api.OffheapJMXStats;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.statistics.StatisticData;
@@ -87,7 +86,5 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
   Map<ObjectName, Long> getServerMapGetSizeRequestsRate();
 
   Map<ObjectName, Long> getServerMapGetValueRequestsRate();
-
-  OffheapJMXStats getOffheapAccurateStats();
 
 }
