@@ -4,10 +4,8 @@
 package com.tc.objectserver.storage.api;
 
 import java.io.Serializable;
-import com.tc.text.PrettyPrintable;
-import com.tc.text.PrettyPrinter;
 
-public interface OffheapStats extends Serializable, PrettyPrintable {
+public interface OffheapStats extends Serializable {
   public static final OffheapStats NULL_OFFHEAP_STATS = new OffheapStats() {
 
                                                         public long getOffheapObjectCachedCount() {
@@ -40,10 +38,6 @@ public interface OffheapStats extends Serializable, PrettyPrintable {
 
                                                         public long getOffheapObjectAllocatedMemory() {
                                                           return 0;
-                                                        }
-
-                                                        public PrettyPrinter prettyPrint(PrettyPrinter out) {
-                                                          return out;
                                                         }
 
                                                       };
