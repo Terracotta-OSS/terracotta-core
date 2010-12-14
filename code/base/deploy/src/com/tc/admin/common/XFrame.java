@@ -104,7 +104,7 @@ public class XFrame extends JFrame {
   }
 
   public void storeBounds() {
-    if ((getExtendedState() & NORMAL) != NORMAL) { return; }
+    if (getExtendedState() != NORMAL) { return; }
     Preferences prefs = getPreferences();
     if (prefs != null) {
       prefs.put("Bounds", getBoundsString());

@@ -13,6 +13,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.ServerTransactionFactory;
+import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -158,8 +159,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(
-                                                                     StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -229,11 +229,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final MessageRecycler recycler,
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
-                                             final DGCSequenceProvider dgcSequenceProvider) {
+                                             final DGCSequenceProvider dgcSequenceProvider,
+                                             final StateSyncManager stateSyncManager) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider);
+                               serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

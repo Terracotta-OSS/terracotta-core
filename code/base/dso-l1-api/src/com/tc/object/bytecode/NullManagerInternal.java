@@ -314,7 +314,7 @@ public class NullManagerInternal implements ManagerInternal {
     throw new UnsupportedOperationException();
   }
 
-  public void verifySearchCapbility() {
+  public void verifyCapability(String capability) {
     throw new UnsupportedOperationException();
   }
 }

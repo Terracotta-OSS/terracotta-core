@@ -205,7 +205,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     jmxPort.setIntValue(9520);
     server.addNewJmxPort();
     server.setJmxPort(jmxPort);
-    
+
     BindPort dsoPort = BindPort.Factory.newInstance();
     dsoPort.setBind("0.0.0.0");
     dsoPort.setIntValue(9510);
@@ -488,7 +488,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       if (servers != null) {
         for (Server server : servers.getServerArray()) {
           String serverName = ParameterSubstituter.substitute(server.getName());
-          if (serverName != null && name.equals(name)) { return server; }
+          if (serverName != null && serverName.equals(name)) { return server; }
         }
       }
     }
@@ -1009,19 +1009,19 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
     server.setHost("%i");
     server.setName("localhost");
-    
+
     BindPort dsoPort = BindPort.Factory.newInstance();
     dsoPort.setBind("0.0.0.0");
     dsoPort.setIntValue(9510);
     server.addNewDsoPort();
     server.setDsoPort(dsoPort);
-    
+
     BindPort jmxPort = BindPort.Factory.newInstance();
     jmxPort.setBind("0.0.0.0");
     jmxPort.setIntValue(9520);
     server.addNewJmxPort();
     server.setJmxPort(jmxPort);
-    
+
     server.setData("terracotta/server-data");
     server.setLogs("terracotta/server-logs");
     server.setStatistics("terracotta/cluster-statistics");

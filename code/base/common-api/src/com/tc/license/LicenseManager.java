@@ -96,7 +96,7 @@ public class LicenseManager {
     }
   }
 
-  private static void verifyCapability(String capability) {
+  public static void verifyCapability(String capability) {
     assertLicenseValid();
     if (!getLicense().isCapabilityEnabled(capability)) {
       //

@@ -162,6 +162,11 @@ class JVM
   # Checks that the version of this JVM lies within the limits set by the :min_version and
   # :max_version arguments to the constructor.
   def check_version(descrip)
+    if Registry[:config_source]["skip.jdk.check"] == "true"
+      loud_message("skip.jdk.check detected. Enforcing of JDK version is skipped")
+      return
+    end
+    
     unless @min_version.nil? && @max_version.nil?
       this_version = JavaVersion.new(actual_version)
 

@@ -27,24 +27,24 @@ import java.io.PrintWriter;
 
 public class MultipleServersConfigCreator {
 
-  public static final String                              DEV_MODE  = "development";
-  public static final String                              PROD_MODE = "production";
+  public static final String                           DEV_MODE  = "development";
+  public static final String                           PROD_MODE = "production";
 
-  protected final int                                     serverCount;
+  protected final int                                  serverCount;
 
-  protected final String                                  serverPersistence;
-  protected final boolean                                 serverDiskless;
-  protected final String                                  configModel;
-  protected final File                                    configFile;
-  protected final File                                    tempDir;
+  protected final String                               serverPersistence;
+  protected final boolean                              serverDiskless;
+  protected final String                               configModel;
+  protected final File                                 configFile;
+  protected final File                                 tempDir;
   protected final TestConfigurationSetupManagerFactory configFactory;
-  protected final String[]                                dataLocations;
-  protected final DSOApplicationConfigBuilder             dsoApplicationBuilder;
-  protected static TCLogger                               logger    = TCLogging
-                                                                        .getTestingLogger(MultipleServersConfigCreator.class);
+  protected final String[]                             dataLocations;
+  protected final DSOApplicationConfigBuilder          dsoApplicationBuilder;
+  protected static TCLogger                            logger    = TCLogging
+                                                                     .getTestingLogger(MultipleServersConfigCreator.class);
 
-  private final MultipleServersTestSetupManager           setupManager;
-  private final GroupData[]                               groupData;
+  private final MultipleServersTestSetupManager        setupManager;
+  private final GroupData[]                            groupData;
 
   public MultipleServersConfigCreator(MultipleServersTestSetupManager setupManager, GroupData[] groupData,
                                       String configModel, File configFile, File tempDir,
@@ -128,6 +128,7 @@ public class MultipleServersConfigCreator {
     for (int i = 0; i < groupData.length; i++) {
       for (int j = 0; j < groupData[i].getServerCount(); j++) {
         L2ConfigBuilder l2 = new L2ConfigBuilder();
+        l2.setReconnectWindowForPrevConnectedClients(setupManager.getReconnectWindow());
         String mode = setupManager.getGroupServerShareDataMode(i);
         boolean isServerDiskless = !mode.equals(MultipleServersSharedDataMode.DISK) ? true : false;
         if (isServerDiskless) {

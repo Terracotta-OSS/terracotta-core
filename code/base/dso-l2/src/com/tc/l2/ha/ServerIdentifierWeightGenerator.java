@@ -25,7 +25,7 @@ public class ServerIdentifierWeightGenerator implements WeightGenerator {
     byte[] addr = getIpAddressinBytes(host);
     for (byte element : addr) {
       val <<= 8;
-      val += element;
+      val += element & 0xff;
     }
     val <<= 16;
     val += port;

@@ -62,6 +62,13 @@ public class StageQueueImpl implements Sink {
     StageQueueStatsCollector statsCollector = new NullStageQueueStatsCollector(stage);
     TCQueue q = null;
     int queueCount = -1;
+
+    if (queueSize != Integer.MAX_VALUE) {
+      int totalQueueToBeConstructed = (int) Math.ceil(((double) threads) / threadsToQueueRatio);
+      queueSize = (int) Math.ceil(((double) queueSize) / totalQueueToBeConstructed);
+    }
+    Assert.eval(queueSize > 0);
+
     for (int i = 0; i < threads; i++) {
       if (threadsToQueueRatio > 0) {
         if (i % threadsToQueueRatio == 0) {

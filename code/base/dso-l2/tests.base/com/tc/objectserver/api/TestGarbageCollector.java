@@ -16,7 +16,6 @@ import com.tc.objectserver.dgc.api.GarbageCollectorEventListener;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
-import com.tc.util.TCCollections;
 import com.tc.util.concurrent.LifeCycleState;
 import com.tc.util.concurrent.NullLifeCycleState;
 import com.tc.util.concurrent.StoppableThread;
@@ -248,10 +247,11 @@ public class TestGarbageCollector implements GarbageCollector {
   }
 
   public void doGC(final GCType type) {
-    collect(null, this.objectProvider.getRootIDs(), this.objectProvider.getAllObjectIDs(), new NullLifeCycleState());
+    collectedObjects = collect(null, this.objectProvider.getRootIDs(), this.objectProvider.getAllObjectIDs(),
+                               new NullLifeCycleState());
     this.requestGCPause();
     this.blockUntilReadyToGC();
-    this.deleteGarbage(new GCResultContext(TCCollections.EMPTY_OBJECT_ID_SET, new GarbageCollectionInfo()));
+    this.deleteGarbage(new GCResultContext(collectedObjects, new GarbageCollectionInfo()));
   }
 
   public void start() {

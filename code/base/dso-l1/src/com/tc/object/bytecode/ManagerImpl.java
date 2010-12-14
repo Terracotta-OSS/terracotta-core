@@ -951,8 +951,7 @@ public class ManagerImpl implements ManagerInternal {
     return this.dso;
   }
 
-  public void verifySearchCapbility() {
-    LicenseManager.verifySearchCapability();
+  public void verifyCapability(String capability) {
+    LicenseManager.verifyCapability(capability);
   }
-
 }

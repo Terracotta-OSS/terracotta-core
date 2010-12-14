@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.google.common.base.internal.Finalizer;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.ConnectionInfo;
@@ -75,6 +76,8 @@ public class ClientShutdownManager {
         }
       }
     }
+
+    Finalizer.shutdown();
   }
 
   private void closeStatisticsAgent() {

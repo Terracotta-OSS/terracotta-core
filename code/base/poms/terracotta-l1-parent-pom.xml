@@ -131,8 +131,8 @@
       <artifactId>trove</artifactId>
     </dependency>     
     <dependency>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
+      <groupId>org.terracotta</groupId>
+      <artifactId>google-collections-tc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta.license</groupId>

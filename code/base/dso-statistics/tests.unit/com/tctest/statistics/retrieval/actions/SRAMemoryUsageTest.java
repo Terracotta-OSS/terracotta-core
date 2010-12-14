@@ -83,9 +83,18 @@ public class SRAMemoryUsageTest extends TestCase {
           fail();
           break;
       }
-      values[i] = ((Long) data[i].getData()).longValue();
+      values[i] = getLongValue((String) data[i].getData());
     }
 
     return values;
+  }
+
+  private long getLongValue(String data) {
+    if (data.endsWith("MB")) {
+      return (long) (Double.parseDouble(data.replace("MB", "")) * SRAMemoryUsage.MB);
+    } else if (data.endsWith("KB")) {
+      return (long) (Double.parseDouble(data.replace("KB", "")) * SRAMemoryUsage.KB);
+    } else if (data.endsWith("Bytes")) { return Long.parseLong(data.replace("Bytes", "")); }
+    return 0;
   }
 }

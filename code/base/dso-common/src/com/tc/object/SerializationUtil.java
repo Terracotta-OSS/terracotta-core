@@ -1,12 +1,13 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.object;
 
-import java.util.regex.Pattern;
-
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
+
+import java.util.regex.Pattern;
 
 /**
  * Some utility stuff for logical serialization
@@ -43,8 +44,7 @@ public class SerializationUtil {
   public final static int         REMOVE_IF_VALUE_EQUAL            = 27;
   public final static int         URL_SET                          = 28;
   public final static int         CLEAR_LOCAL_CACHE                = 29;
-  
-  
+  public final static int         EVICTION_COMPLETED               = 30;
 
   public final static String      PUSH_SIGNATURE                   = "push(Ljava/lang/Object;)java/lang/Object;";
   public final static String      POP_SIGNATURE                    = "pop()java/lang/Object;";
@@ -60,6 +60,7 @@ public class SerializationUtil {
   public final static String      ADD_FIRST_SIGNATURE              = "addFirst(Ljava/lang/Object;)V";
   public final static String      CLEAR_SIGNATURE                  = "clear()V";
   public final static String      CLEAR_LOCAL_CACHE_SIGNATURE      = "clearLocalCache()V";
+  public final static String      EVICTION_COMPLETED_SIGNATURE     = "evictionCompleted()V";
   public final static String      PUT_SIGNATURE                    = "put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
   public final static String      GET_SIGNATURE                    = "get(Ljava/lang/Object;)Ljava/lang/Object;";
   public final static String      SET_SIGNATURE                    = "set(ILjava/lang/Object;)Ljava/lang/Object;";
@@ -121,7 +122,6 @@ public class SerializationUtil {
   public final static String      TRANSFORM_VALUES_SIGNATURE       = "transformValues(Lgnu/trove/TObjectFunction;)V";
   public final static String      URL_SET_SIGNATURE                = "set(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
 
-
   private final TObjectIntHashMap mappings                         = new TObjectIntHashMap();
 
   public SerializationUtil() {
@@ -163,6 +163,7 @@ public class SerializationUtil {
     mappings.put(REPLACE_IF_VALUE_EQUAL_SIGNATURE, REPLACE_IF_VALUE_EQUAL);
     mappings.put(URL_SET_SIGNATURE, URL_SET);
     mappings.put(CLEAR_LOCAL_CACHE_SIGNATURE, CLEAR_LOCAL_CACHE);
+    mappings.put(EVICTION_COMPLETED_SIGNATURE, EVICTION_COMPLETED);
   }
 
   public String[] getSignatures() {
@@ -182,6 +183,7 @@ public class SerializationUtil {
   }
 
   private static final Pattern PARENT_FIELD_PATTERN = Pattern.compile("^this\\$\\d+$");
+
   public boolean isParent(String fieldName) {
     return PARENT_FIELD_PATTERN.matcher(fieldName).matches();
   }

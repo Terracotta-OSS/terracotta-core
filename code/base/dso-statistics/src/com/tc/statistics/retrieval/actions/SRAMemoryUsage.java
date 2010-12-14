@@ -20,8 +20,8 @@ import java.text.DecimalFormat;
  */
 public class SRAMemoryUsage implements StatisticRetrievalAction {
 
-  private static final double    KB             = 1024D;
-  private static final double    MB             = KB * KB;
+  public static final double     KB             = 1024D;
+  public static final double     MB             = KB * KB;
 
   public final static String     ACTION_NAME    = "memory";
 

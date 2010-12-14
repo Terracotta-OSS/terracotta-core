@@ -304,6 +304,14 @@ show_config
 generate_config_classes
     Generates XMLBeans against the Terracotta schema
 
+findbugs
+    Runs FindBugs analysis. The result find is saved to build/findbugs.xml.
+    If you run 'tcbuild findbugs gui' it will run findbugs analysis first then start the GUI
+
+fingbugs_gui
+    Starts FindBugs GUI. You can use this GUI to read the build/findbugs.xml
+    
+    
 JDK SELECTION
 
 You can override the default JDK used for compiling and/or testing by
@@ -320,6 +328,9 @@ jdk.def.yml, or the path to a Java installation.  For example:
   tests-jdk=1.6               # run tests using JAVASE_16
   jdk=/usr/local/jdk1.6.0     # do everything with JAVASE_16
 
+You could skip JDK enforcement (using JDK16 in place of JDK15) by passing
+skip.jdk.check=true to tcbuild, or put that option in file build-config.local  
+  
 SEE ALSO
 
 Further documentation is available on the following wiki pages:

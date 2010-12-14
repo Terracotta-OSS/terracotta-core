@@ -10,6 +10,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.ServerTransactionFactory;
+import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
@@ -136,7 +137,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider);
+                                      DGCSequenceProvider dgcSequenceProvider, StateSyncManager stateSyncManager);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

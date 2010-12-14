@@ -13,6 +13,7 @@ public abstract class MultipleServersTestSetupManager {
   private MultipleServersPersistenceMode persistenceMode;
   protected MultipleServersCrashMode     crashMode;
   protected int                          electionTime             = 5;
+  protected int                          reconnectWindow          = 120;
 
   public void setServerCount(int count) {
     serverCount = count;
@@ -79,6 +80,14 @@ public abstract class MultipleServersTestSetupManager {
 
   public int getElectionTime() {
     return this.electionTime;
+  }
+
+  public void setReconnectWindow(int time) {
+    this.reconnectWindow = time;
+  }
+
+  public int getReconnectWindow() {
+    return this.reconnectWindow;
   }
 
   public abstract int getActiveServerGroupCount();

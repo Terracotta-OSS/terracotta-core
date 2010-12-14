@@ -50,8 +50,10 @@ public class StageManagerImplTest extends TestCase {
   protected void setUp() throws Exception {
     super.setUp();
     try {
-      stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(StageManagerImpl.class))), new QueueFactory(BoundedLinkedQueue.class.getName()));
+      stageManager = new StageManagerImpl(new TCThreadGroup(
+                                                            new ThrowableHandler(TCLogging
+                                                                .getLogger(StageManagerImpl.class))),
+                                          new QueueFactory(BoundedLinkedQueue.class.getName()));
       testEventHandler = new TestEventHandler();
     } catch (Throwable t) {
       t.printStackTrace();
@@ -76,7 +78,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedStage() {
-    stageManager.createStage("testStage2", testEventHandler, 3, 1, 10);
+    stageManager.createStage("testStage2", testEventHandler, 3, 1, 30);
     Stage s = stageManager.getStage("testStage2");
     assertTrue(s != null);
     s.getSink().add(new TestEventContext());
@@ -101,7 +103,7 @@ public class StageManagerImplTest extends TestCase {
   }
 
   public void testMultiThreadedContext() {
-    stageManager.createStage("testStage2", testEventHandler, 3, 1, 10);
+    stageManager.createStage("testStage2", testEventHandler, 3, 1, 30);
     Stage s = stageManager.getStage("testStage2");
     assertTrue(s != null);
     s.getSink().add(new TestMultiThreadedEventContext());
@@ -125,6 +127,34 @@ public class StageManagerImplTest extends TestCase {
     stageManager.stopAll();
   }
 
+  public void testMultiThreadedContextExtended() {
+    stageManager.createStage("testStage2", testEventHandler, 3, 1, 10);
+    Stage s = stageManager.getStage("testStage2");
+    assertTrue(s != null);
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-1"));
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-2"));
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-3"));
+
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-1"));
+    assertTrue(s.getSink().size() == 4);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-2"));
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-3"));
+
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-1"));
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-2"));
+    s.getSink().add(new TestMultiThreadedEventContext("Thread-3"));
+    assertTrue(s.getSink().size() == 9);
+    assertTrue(testEventHandler.getContexts().size() == 0);
+
+    s.start(new ConfigurationContextImpl(null));
+    ThreadUtil.reallySleep(1000);
+    assertTrue(s.getSink().size() == 0);
+    assertTrue(testEventHandler.getContexts().size() == 9);
+    stageManager.stopAll();
+  }
+
   /*
    * @see TestCase#tearDown()
    */
@@ -141,8 +171,18 @@ public class StageManagerImplTest extends TestCase {
   }
 
   private static class TestMultiThreadedEventContext implements MultiThreadedEventContext {
+    final Object name;
+
+    public TestMultiThreadedEventContext() {
+      name = new Object();
+    }
+
+    public TestMultiThreadedEventContext(String string) {
+      name = string;
+    }
+
     public Object getKey() {
-      return new Object();
+      return name;
     }
 
   }

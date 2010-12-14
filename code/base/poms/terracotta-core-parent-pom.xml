@@ -159,8 +159,16 @@
       <artifactId>h2</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>google-collections-tc</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta.license</groupId>

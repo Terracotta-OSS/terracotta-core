@@ -43,6 +43,7 @@ public class ExternalDsoServer {
   private final List                jvmArgs                = new ArrayList();
   private final File                workingDir;
   private String                    serverName;
+  private boolean                   inited                 = false;
 
   private FileOutputStream          logOutputStream;
 
@@ -127,12 +128,14 @@ public class ExternalDsoServer {
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
     serverProc.getJvmArgs().addAll(jvmArgs);
+    inited = true;
   }
 
   public void stop() throws Exception {
     Assert.assertNotNull(serverProc);
     Assert.assertNotNull(logOutputStream);
     serverProc.shutdown();
+    inited = false;
     IOUtils.closeQuietly(logOutputStream);
   }
 
@@ -203,4 +206,7 @@ public class ExternalDsoServer {
     this.serverProc.dumpServerControl();
   }
 
+  public boolean isInitialized() {
+    return this.inited;
+  }
 }

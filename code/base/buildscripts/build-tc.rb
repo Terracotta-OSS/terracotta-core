@@ -162,6 +162,43 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     
     write_build_info_file if monkey?
   end
+  
+  def findbugs(with_gui=nil)
+    depends :compile
+    
+    @ant.taskdef(:name => "findbugs",  :classname => "edu.umd.cs.findbugs.anttask.FindBugsTask")
+    findbugs_home = ENV['FINDBUGS_HOME'] || ''
+    raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
+
+    @ant.findbugs( :home => findbugs_home, :output => "xml:withMessages", :outputFile => "build/findbugs.xml",
+                   :jvmargs => "-Xmx512m") do
+      @module_set.each do |build_module|
+        src_subtree = build_module.subtree("src")
+        src_path = src_subtree.source_root.to_s
+        if File.exists?(src_path)
+          build_path = @build_results.classes_directory(src_subtree).to_s
+          @ant.sourcePath(:path => src_path)
+          @ant.class(:location => build_path)
+        end
+      end
+    end
+    
+    if with_gui == 'gui'
+      findbugs_gui
+    end
+    
+  end
+  
+  def findbugs_gui
+    findbugs_home = ENV['FINDBUGS_HOME'] || ''
+    raise("FINDBUGS_HOME is not defined or doesn't exist") unless File.exists?(findbugs_home)
+    params = "-gui -look:native -maxHeap 512"
+    if ENV['OS'] =~ /windows/i
+      `#{findbugs_home.gsub('\\', '/')}/bin/findbugs.bat #{params}`
+    else
+      `#{findbugs_home}/bin/findbugs #{param}`
+    end
+  end
 
   # Download and install dependencies as specified by the various ivy*.xml
   # files in the individual modules.
