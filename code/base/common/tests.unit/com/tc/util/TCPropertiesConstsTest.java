@@ -41,6 +41,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.L2_SEDA_MANAGEDOBJECTRESPONSESTAGE_THREADS);
 
     exemptedProperties.add(TCPropertiesConsts.L2_NHA_TCGROUPCOMM_RECONNECT_L2PROXY_TO_PORT);
+
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MAX_CHUNK_SIZE);
+    exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_CACHE_MIN_CHUNK_SIZE);
   }
 
   private void loadDefaults(String propFile) {
