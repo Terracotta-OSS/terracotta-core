@@ -39,7 +39,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalRemoveIncoherent(final TCServerMap map, final Object key);
+  public void doLogicalRemoveIncoherent(final TCServerMap map, final Object key,
+                                        final List<MetaDataDescriptor> metaDatas);
 
   /**
    * Does a logical put and updates the local cache
@@ -71,7 +72,8 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPutIncoherent(final TCServerMap map, final Object key, final Object value);
+  public void doLogicalPutIncoherent(final TCServerMap map, final Object key, final Object value,
+                                     final List<MetaDataDescriptor> metaDatas);
 
   /**
    * Returns the value for a particular Key in a ServerTCMap, gets it from the server and doesn't cache the value
