@@ -38,17 +38,21 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
   public void loadMap(final PersistenceTransaction tx, final long id, final Map map,
                       final TCCollectionsSerializer serializer) throws TCDatabaseException {
     final byte idb[] = Conversion.long2Bytes(id);
+    TCMapsDatabaseCursor c = null;
     try {
-      final TCMapsDatabaseCursor c = openCursor(tx, id);
+      c = openCursor(tx, id);
       while (c.hasNext()) {
         final TCDatabaseEntry<byte[], byte[]> entry = c.next();
         final Object mkey = serializer.deserialize(idb.length, entry.getKey());
         final Object mvalue = serializer.deserialize(entry.getValue());
         map.put(mkey, mvalue);
       }
-      c.close();
     } catch (final Exception t) {
       throw new TCDatabaseException(t.getMessage());
+    } finally {
+      if (c != null) {
+        c.close();
+      }
     }
   }
 

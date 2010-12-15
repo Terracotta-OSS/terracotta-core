@@ -5,7 +5,7 @@
     <dependency name="commons-httpclient" rev="3.1" org="commons-httpclient"/>
     <dependency name="commons-codec" rev="1.2" org="commons-codec"/>
     <dependency name="h2" rev="1.0.67" org="com.h2database"/>
-    <dependency name="log4j" rev="1.2.9" org="log4j"/>
+    <dependency name="log4j" rev="1.2.16" org="log4j"/>
     <dependency name="jline" rev="0.9.94" org="jline">
       <exclude module="junit" org="junit" conf="default"/>
     </dependency>    

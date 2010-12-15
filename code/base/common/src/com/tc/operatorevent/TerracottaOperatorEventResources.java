@@ -24,12 +24,8 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("high.memory.usage");
   }
 
-  static String getOffHeapMapMemoryUsageMessage() {
-    return instance.resources.getString("offheap.map.memory.usage");
-  }
-
-  static String getOffHeapObjectMemoryUsageMessage() {
-    return instance.resources.getString("offheap.object.memory.usage");
+  static String getOffHeapMemoryUsageMessage() {
+    return instance.resources.getString("offheap.memory.usage");
   }
 
   /**

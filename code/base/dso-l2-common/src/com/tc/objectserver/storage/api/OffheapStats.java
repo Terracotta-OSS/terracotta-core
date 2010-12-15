@@ -24,24 +24,30 @@ public interface OffheapStats extends Serializable {
                                                           return 0;
                                                         }
 
-                                                        public long getObjectMaxDataSize() {
+                                                        public long getExactOffheapObjectCachedCount() {
                                                           return 0;
                                                         }
 
-                                                        public long getObjectAllocatedSize() {
+                                                        public long getOffheapTotalAllocatedSize() {
                                                           return 0;
                                                         }
 
-                                                        public long getMapMaxDataSize() {
+                                                        public long getOffheapMapAllocatedMemory() {
                                                           return 0;
                                                         }
 
-                                                        public long getMapAllocatedSize() {
+                                                        public long getOffheapObjectAllocatedMemory() {
                                                           return 0;
                                                         }
+
                                                       };
 
   long getOffheapObjectCachedCount();
+
+  /**
+   * This will be locked
+   */
+  long getExactOffheapObjectCachedCount();
 
   long getOffHeapFaultRate();
 
@@ -49,11 +55,9 @@ public interface OffheapStats extends Serializable {
 
   long getOffheapMaxDataSize();
 
-  long getMapMaxDataSize();
+  long getOffheapTotalAllocatedSize();
 
-  long getObjectMaxDataSize();
+  long getOffheapObjectAllocatedMemory();
 
-  long getMapAllocatedSize();
-
-  long getObjectAllocatedSize();
+  long getOffheapMapAllocatedMemory();
 }

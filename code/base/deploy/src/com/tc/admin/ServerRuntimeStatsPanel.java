@@ -8,7 +8,9 @@ import static com.tc.admin.model.IClusterNode.POLLED_ATTR_CPU_USAGE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_MAX_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FAULT_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OBJECT_FLUSH_RATE;
+import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_MAP_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_MAX_MEMORY;
+import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_OBJECT_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_OFFHEAP_USED_MEMORY;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_TRANSACTION_RATE;
 import static com.tc.admin.model.IClusterNode.POLLED_ATTR_USED_MEMORY;
@@ -20,7 +22,9 @@ import static com.tc.admin.model.IServer.POLLED_ATTR_ONHEAP_FLUSH_RATE;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYAreaRenderer;
 import org.jfree.data.time.TimeSeries;
 
 import com.tc.admin.common.ApplicationContext;
@@ -48,6 +52,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.BorderFactory;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
@@ -59,10 +64,8 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private StatusView               onHeapMaxLabel;
   private TimeSeries               onHeapUsedSeries;
   private StatusView               onHeapUsedLabel;
-  private TimeSeries               offHeapMaxSeries;
-  private StatusView               offHeapMaxLabel;
-  private TimeSeries               offHeapUsedSeries;
-  private StatusView               offHeapUsedLabel;
+  private TimeSeries               offHeapMapUsedSeries;
+  private TimeSeries               offHeapObjectUsedSeries;
 
   private ChartPanel               cpuPanel;
   private TimeSeries[]             cpuTimeSeries;
@@ -81,6 +84,9 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private StatusView               offHeapFaultRateLabel;
   private TimeSeries               offHeapFlushRateSeries;
   private StatusView               offHeapFlushRateLabel;
+  private String                   offHeapUsageTitlePattern;
+  private TitledBorder             offHeapUsageTitle;
+  private NumberAxis               offHeapValueAxis;
 
   private final String             flushRateLabelFormat        = "{0} Flushes/sec.";
   private final String             faultRateLabelFormat        = "{0} Faults/sec.";
@@ -91,8 +97,6 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   private final String             offHeapFlushRateLabelFormat = "{0} OffHeap Flushes/sec.";
   private final String             onHeapUsedLabelFormat       = "{0} OnHeap Used";
   private final String             onHeapMaxLabelFormat        = "{0} OnHeap Max";
-  private final String             offHeapUsedLabelFormat      = "{0} OffHeap Used";
-  private final String             offHeapMaxLabelFormat       = "{0} OffHeap Max";
 
   private static final Set<String> POLLED_ATTRIBUTE_SET        = new HashSet(
                                                                              Arrays
@@ -107,7 +111,9 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
                                                                                          POLLED_ATTR_OFFHEAP_FLUSH_RATE,
                                                                                          POLLED_ATTR_OFFHEAP_FAULT_RATE,
                                                                                          POLLED_ATTR_OFFHEAP_MAX_MEMORY,
-                                                                                         POLLED_ATTR_OFFHEAP_USED_MEMORY));
+                                                                                         POLLED_ATTR_OFFHEAP_USED_MEMORY,
+                                                                                         POLLED_ATTR_OFFHEAP_OBJECT_MEMORY,
+                                                                                         POLLED_ATTR_OFFHEAP_MAP_MEMORY));
 
   public ServerRuntimeStatsPanel(ApplicationContext appContext, IServer server) {
     super(appContext);
@@ -252,16 +258,28 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       }
 
       n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAX_MEMORY);
-      updateSeries(offHeapMaxSeries, n);
+      long offHeapMax = 0;
       if (n != null) {
-        offHeapMaxLabel.setText(MessageFormat.format(offHeapMaxLabelFormat, convert(n.longValue())));
+        offHeapMax = n.longValue();
+      }
+      offHeapValueAxis.setUpperBound(offHeapMax);
+
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAP_MEMORY);
+      updateSeries(offHeapMapUsedSeries, n);
+      long mapOffHeapUsedLong = 0;
+      if (n != null) {
+        mapOffHeapUsedLong = n.longValue();
       }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_USED_MEMORY);
-      updateSeries(offHeapUsedSeries, n);
+      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_OBJECT_MEMORY);
+      updateSeries(offHeapObjectUsedSeries, n);
+      long objectOffHeapUsed = 0;
       if (n != null) {
-        offHeapUsedLabel.setText(MessageFormat.format(offHeapUsedLabelFormat, convert(n.longValue())));
+        objectOffHeapUsed = n.longValue();
       }
+
+      offHeapUsageTitle.setTitle(MessageFormat.format(offHeapUsageTitlePattern, convert(offHeapMax),
+                                                      convert(mapOffHeapUsedLong), convert(objectOffHeapUsed)));
 
       if (cpuTimeSeries != null) {
         StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
@@ -374,24 +392,25 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
   }
 
   private void setupOffHeapPanel(XContainer parent) {
-    offHeapMaxSeries = createTimeSeries(appContext.getString("offheap.usage.max"));
-    offHeapUsedSeries = createTimeSeries(appContext.getString("offheap.usage.used"));
-    JFreeChart chart = createChart(new TimeSeries[] { offHeapMaxSeries, offHeapUsedSeries }, false);
+    offHeapMapUsedSeries = createTimeSeries(appContext.getString("offheap.map.usage"));
+    offHeapObjectUsedSeries = createTimeSeries(appContext.getString("offheap.object.usage"));
+    JFreeChart chart = createChart(new TimeSeries[] { offHeapObjectUsedSeries, offHeapMapUsedSeries }, true);
     XYPlot plot = (XYPlot) chart.getPlot();
-    NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
-    numberAxis.setAutoRangeIncludesZero(true);
+    XYAreaRenderer areaRenderer2 = new XYAreaRenderer(XYAreaRenderer.AREA,
+                                                      StandardXYToolTipGenerator.getTimeSeriesInstance(), null);
+    plot.setRenderer(areaRenderer2);
+    areaRenderer2.setSeriesPaint(0, (Color) appContext.getObject("chart.color.1"));
+    areaRenderer2.setSeriesPaint(1, (Color) appContext.getObject("chart.color.2"));
+    offHeapValueAxis = (NumberAxis) plot.getRangeAxis();
+    offHeapValueAxis.setAutoRangeIncludesZero(true);
     ChartPanel chartPanel = createChartPanel(chart);
+    String offHeapUsageLabel = appContext.getString("server.stats.offheap.usage");
+    offHeapUsageTitlePattern = offHeapUsageLabel + " (max: {0}, map: {1}, object: {2})";
+    offHeapUsageTitle = BorderFactory.createTitledBorder(offHeapUsageLabel);
+    chartPanel.setBorder(offHeapUsageTitle);
     parent.add(chartPanel);
     chartPanel.setPreferredSize(fDefaultGraphSize);
-    chartPanel.setBorder(new TitledBorder(appContext.getString("server.stats.offheap.usage")));
     chartPanel.setToolTipText(appContext.getString("server.stats.offheap.usage.tip"));
-    chartPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbc = new GridBagConstraints();
-    XContainer labelHolder = new XContainer(new GridLayout(0, 1));
-    labelHolder.add(offHeapMaxLabel = createStatusLabel(Color.red));
-    labelHolder.add(offHeapUsedLabel = createStatusLabel(Color.blue));
-    labelHolder.setOpaque(false);
-    chartPanel.add(labelHolder, gbc);
   }
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {
@@ -463,13 +482,13 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
       list.add(onHeapUsedSeries);
       onHeapUsedSeries = null;
     }
-    if (offHeapMaxSeries != null) {
-      list.add(offHeapMaxSeries);
-      offHeapMaxSeries = null;
+    if (offHeapObjectUsedSeries != null) {
+      list.add(offHeapObjectUsedSeries);
+      offHeapObjectUsedSeries = null;
     }
-    if (offHeapUsedSeries != null) {
-      list.add(offHeapUsedSeries);
-      offHeapUsedSeries = null;
+    if (offHeapMapUsedSeries != null) {
+      list.add(offHeapMapUsedSeries);
+      offHeapMapUsedSeries = null;
     }
     if (flushRateSeries != null) {
       list.add(flushRateSeries);

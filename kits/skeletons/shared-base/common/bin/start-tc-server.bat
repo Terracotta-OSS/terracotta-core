@@ -34,7 +34,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 set CLASSPATH=%TC_INSTALL_DIR%\lib\tc.jar
-set OPTS=%SERVER_OPT% -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError
+set OPTS=%SERVER_OPT% -Xms512m -Xmx512m -XX:MaxDirectMemorySize=64g -XX:+HeapDumpOnOutOfMemoryError
 set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%

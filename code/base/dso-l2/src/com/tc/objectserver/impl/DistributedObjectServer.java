@@ -988,7 +988,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,
-                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor), 1, maxStageSize);
+                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor),
+                             this.l2Properties.getInt("servermap.capacityEvictor.threads", 1), maxStageSize);
 
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,

@@ -112,49 +112,53 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private StatisticsLocalGathererMBean    clusterStatsBean;
   private boolean                         clusterStatsSupported;
 
-  private static final PolledAttribute    PA_CPU_USAGE                       = new PolledAttribute(
-                                                                                                   L2MBeanNames.TC_SERVER_INFO,
-                                                                                                   POLLED_ATTR_CPU_USAGE);
-  private static final PolledAttribute    PA_USED_MEMORY                     = new PolledAttribute(
-                                                                                                   L2MBeanNames.TC_SERVER_INFO,
-                                                                                                   POLLED_ATTR_USED_MEMORY);
-  private static final PolledAttribute    PA_MAX_MEMORY                      = new PolledAttribute(
-                                                                                                   L2MBeanNames.TC_SERVER_INFO,
-                                                                                                   POLLED_ATTR_MAX_MEMORY);
-  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OBJECT_FLUSH_RATE);
-  private static final PolledAttribute    PA_OBJECT_FAULT_RATE               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OBJECT_FAULT_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_RATE                = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_TRANSACTION_RATE);
-  private static final PolledAttribute    PA_CACHE_MISS_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_CACHE_MISS_RATE);
-  private static final PolledAttribute    PA_ONHEAP_FAULT_RATE               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_ONHEAP_FAULT_RATE);
-  private static final PolledAttribute    PA_ONHEAP_FLUSH_RATE               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_ONHEAP_FLUSH_RATE);
-  private static final PolledAttribute    PA_OFFHEAP_FAULT_RATE              = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OFFHEAP_FAULT_RATE);
-  private static final PolledAttribute    PA_OFFHEAP_FLUSH_RATE              = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OFFHEAP_FLUSH_RATE);
-  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT               = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_LIVE_OBJECT_COUNT);
-  private static final PolledAttribute    PA_LOCK_RECALL_RATE                = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_LOCK_RECALL_RATE);
-  private static final PolledAttribute    PA_BROADCAST_RATE                  = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_BROADCAST_RATE);
-  private static final PolledAttribute    PA_TRANSACTION_SIZE_RATE           = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_TRANSACTION_SIZE_RATE);
-  private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT      = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-  private static final PolledAttribute    PA_CACHED_OBJECT_COUNT             = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_CACHED_OBJECT_COUNT);
-  private static final PolledAttribute    PA_OFFHEAP_OBJECT_CACHED_COUNT     = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
-  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_MAX_MEMORY  = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OFFHEAP_MAX_MEMORY);
-  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_USED_MEMORY = new PolledAttribute(L2MBeanNames.DSO,
-                                                                                                   POLLED_ATTR_OFFHEAP_USED_MEMORY);
+  private static final PolledAttribute    PA_CPU_USAGE                         = new PolledAttribute(
+                                                                                                     L2MBeanNames.TC_SERVER_INFO,
+                                                                                                     POLLED_ATTR_CPU_USAGE);
+  private static final PolledAttribute    PA_USED_MEMORY                       = new PolledAttribute(
+                                                                                                     L2MBeanNames.TC_SERVER_INFO,
+                                                                                                     POLLED_ATTR_USED_MEMORY);
+  private static final PolledAttribute    PA_MAX_MEMORY                        = new PolledAttribute(
+                                                                                                     L2MBeanNames.TC_SERVER_INFO,
+                                                                                                     POLLED_ATTR_MAX_MEMORY);
+  private static final PolledAttribute    PA_OBJECT_FLUSH_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OBJECT_FLUSH_RATE);
+  private static final PolledAttribute    PA_OBJECT_FAULT_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OBJECT_FAULT_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_RATE                  = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_TRANSACTION_RATE);
+  private static final PolledAttribute    PA_CACHE_MISS_RATE                   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_CACHE_MISS_RATE);
+  private static final PolledAttribute    PA_ONHEAP_FAULT_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_ONHEAP_FAULT_RATE);
+  private static final PolledAttribute    PA_ONHEAP_FLUSH_RATE                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_ONHEAP_FLUSH_RATE);
+  private static final PolledAttribute    PA_OFFHEAP_FAULT_RATE                = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_FAULT_RATE);
+  private static final PolledAttribute    PA_OFFHEAP_FLUSH_RATE                = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_FLUSH_RATE);
+  private static final PolledAttribute    PA_LIVE_OBJECT_COUNT                 = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_LIVE_OBJECT_COUNT);
+  private static final PolledAttribute    PA_LOCK_RECALL_RATE                  = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_LOCK_RECALL_RATE);
+  private static final PolledAttribute    PA_BROADCAST_RATE                    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_BROADCAST_RATE);
+  private static final PolledAttribute    PA_TRANSACTION_SIZE_RATE             = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_TRANSACTION_SIZE_RATE);
+  private static final PolledAttribute    PA_PENDING_TRANSACTIONS_COUNT        = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+  private static final PolledAttribute    PA_CACHED_OBJECT_COUNT               = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_CACHED_OBJECT_COUNT);
+  private static final PolledAttribute    PA_OFFHEAP_OBJECT_CACHED_COUNT       = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_MAX_MEMORY    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_MAX_MEMORY);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_USED_MEMORY   = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_USED_MEMORY);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_MAP_MEMORY    = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_MAP_MEMORY);
+  private static final PolledAttribute    PA_POLLED_ATTR_OFFHEAP_OBJECT_MEMORY = new PolledAttribute(L2MBeanNames.DSO,
+                                                                                                     POLLED_ATTR_OFFHEAP_OBJECT_MEMORY);
 
   public Server(IClusterModel clusterModel) {
     this(clusterModel, ConnectionContext.DEFAULT_HOST, ConnectionContext.DEFAULT_PORT,
@@ -263,6 +267,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     registerPolledAttribute(PA_OFFHEAP_OBJECT_CACHED_COUNT);
     registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_MAX_MEMORY);
     registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_USED_MEMORY);
+    registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_OBJECT_MEMORY);
+    registerPolledAttribute(PA_POLLED_ATTR_OFFHEAP_MAP_MEMORY);
   }
 
   private void filterReadySet() {
@@ -1210,8 +1216,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
-                                                        acn.getNewValue());
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
+          .getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }

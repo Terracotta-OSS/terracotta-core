@@ -30,7 +30,6 @@ import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
-import com.tc.offheap.OffheapJMXStats;
 import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.statistics.StatisticData;
@@ -703,26 +702,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
-  public OffheapStats getOffheapStats() {
-    return new OffheapJMXStats(this.offheapStats);
-  }
-
-  public long getMapAllocatedSize() {
-    return offheapStats.getMapAllocatedSize();
-  }
-
-  public long getMapMaxDataSize() {
-    return offheapStats.getMapMaxDataSize();
-  }
-
-  public long getObjectAllocatedSize() {
-    return offheapStats.getObjectAllocatedSize();
-  }
-
-  public long getObjectMaxDataSize() {
-    return offheapStats.getObjectMaxDataSize();
-  }
-
   public long getOffHeapFaultRate() {
     return offheapStats.getOffHeapFaultRate();
   }
@@ -735,10 +714,6 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return offheapStats.getOffheapMaxDataSize();
   }
 
-  public long getOffheapAllocatedDataSize() {
-    return getMapAllocatedSize() + getObjectAllocatedSize();
-  }
-
   public long getOffheapObjectCachedCount() {
     return offheapStats.getOffheapObjectCachedCount();
   }
@@ -747,4 +722,19 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return getStats().getL2DiskFaultRate();
   }
 
+  public long getExactOffheapObjectCachedCount() {
+    return offheapStats.getExactOffheapObjectCachedCount();
+  }
+
+  public long getOffheapTotalAllocatedSize() {
+    return offheapStats.getOffheapTotalAllocatedSize();
+  }
+
+  public long getOffheapMapAllocatedMemory() {
+    return offheapStats.getOffheapMapAllocatedMemory();
+  }
+
+  public long getOffheapObjectAllocatedMemory() {
+    return offheapStats.getOffheapObjectAllocatedMemory();
+  }
 }

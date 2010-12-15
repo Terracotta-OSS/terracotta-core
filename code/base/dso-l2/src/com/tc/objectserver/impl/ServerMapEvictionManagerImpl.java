@@ -124,7 +124,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
   public void runEvictor() {
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Started ");
+      logger.info("Server Map Eviction  : Periodic Evictor Started ");
     }
     evictionStats.periodicEvictionStarted();
 
@@ -155,6 +155,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       logger.info("Ignoring eviction request as its already in progress : " + oid);
       return;
     }
+
+    if (EVICTOR_LOGGING && !periodicEvictor) {
+      logger.info("Server Map Eviction  : Capacity Evictor Started");
+    }
+
     try {
       basicDoEviction(oid, faultedInClients, periodicEvictor);
     } finally {
@@ -162,6 +167,11 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       // requires more careful surgery as we should make sure all exit paths are covered.
       markEvictionDone(oid);
     }
+
+    if (EVICTOR_LOGGING && !periodicEvictor) {
+      logger.info("Server Map Eviction  : Capacity Evictor Ended");
+    }
+
   }
 
   private void basicDoEviction(final ObjectID oid, final SortedSet<ObjectID> faultedInClients,
@@ -208,6 +218,10 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final int targetMaxTotalCount = ev.getMaxTotalCount();
     final int currentSize = ev.getSize();
     if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) {
+      if (EVICTOR_LOGGING) {
+        logger.info("Server Map Eviction  : Eviction not required for " + oid + "; currentSize: " + currentSize
+                    + " Vs targetMaxTotalCout: " + targetMaxTotalCount);
+      }
       if (periodicEvictor) {
         evictionStats.evictionNotRequired(oid, ev, targetMaxTotalCount, currentSize);
       }
