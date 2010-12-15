@@ -33,10 +33,10 @@ import com.tc.cluster.DsoClusterListener;
 import com.tc.cluster.DsoClusterTopology;
 import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.config.Directories;
+import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.config.schema.setup.FatalIllegalConfigurationChangeHandler;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.StandardConfigurationSetupManagerFactory;
-import com.tc.config.schema.setup.ConfigurationSetupManagerFactory;
 import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCError;
@@ -108,7 +108,6 @@ import com.tc.object.bytecode.Manager;
 import com.tc.object.bytecode.ManagerInternal;
 import com.tc.object.bytecode.ManagerUtil;
 import com.tc.object.bytecode.ManagerUtilInternal;
-import com.tc.object.bytecode.MergeTCToJavaClassAdapter;
 import com.tc.object.bytecode.NotClearable;
 import com.tc.object.bytecode.NullManager;
 import com.tc.object.bytecode.NullManagerInternal;
@@ -687,8 +686,8 @@ public class BootJarTool {
     final ClassWriter cw = new ClassWriter(jCR, ClassWriter.COMPUTE_MAXS);
 
     final Map instrumentedContext = new HashMap();
-    final ClassVisitor cv = new MergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
-                                                          instrumentedContext);
+    final ClassVisitor cv = new FixedMergeTCToJavaClassAdapter(cw, null, jClassNameDots, tcClassNameDots, tcCN,
+                                                               instrumentedContext);
     jCR.accept(cv, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     loadClassIntoJar(jClassNameDots, jData, true);
@@ -1314,8 +1313,8 @@ public class BootJarTool {
 
     cr = new ClassReader(cw.toByteArray());
     cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    cv = new MergeTCToJavaClassAdapter(cw, null, "sun.misc.Launcher$AppClassLoader", "sun.misc.AppClassLoaderTC", tcCN,
-                                       new HashMap(), ByteCodeUtil.TC_METHOD_PREFIX, false);
+    cv = new FixedMergeTCToJavaClassAdapter(cw, null, "sun.misc.Launcher$AppClassLoader", "sun.misc.AppClassLoaderTC",
+                                            tcCN, new HashMap(), ByteCodeUtil.TC_METHOD_PREFIX, false);
     cr.accept(cv, ClassReader.SKIP_FRAMES);
 
     loadClassIntoJar("sun.misc.Launcher$AppClassLoader", cw.toByteArray(), false);
@@ -1402,9 +1401,10 @@ public class BootJarTool {
       final TransparencyClassAdapter dsoAdapter = this.configHelper
           .createDsoClassAdapterFor(cw, jClassInfo, this.instrumentationLogger, getClass().getClassLoader(), true, true);
       final Map instrumentedContext = new HashMap();
-      final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                                      tcClassNameDots, tcCN,
-                                                                                      instrumentedContext));
+      final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                           jClassNameDots,
+                                                                                           tcClassNameDots, tcCN,
+                                                                                           instrumentedContext));
       jCR.accept(cv, ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
       jData = doDSOTransform(jClassNameDots, jData);
@@ -1551,13 +1551,13 @@ public class BootJarTool {
       final Map instrumentedContext = new HashMap();
       final ClassVisitor cv = new SerialVersionUIDAdder(
                                                         new JavaUtilConcurrentLinkedBlockingQueueClassAdapter(
-                                                                                                              new MergeTCToJavaClassAdapter(
-                                                                                                                                            cw,
-                                                                                                                                            dsoAdapter,
-                                                                                                                                            jClassNameDots,
-                                                                                                                                            tcClassNameDots,
-                                                                                                                                            tcCN,
-                                                                                                                                            instrumentedContext)));
+                                                                                                              new FixedMergeTCToJavaClassAdapter(
+                                                                                                                                                 cw,
+                                                                                                                                                 dsoAdapter,
+                                                                                                                                                 jClassNameDots,
+                                                                                                                                                 tcClassNameDots,
+                                                                                                                                                 tcCN,
+                                                                                                                                                 instrumentedContext)));
       jCR.accept(cv, ClassReader.SKIP_FRAMES);
       jData = cw.toByteArray();
 
@@ -1793,11 +1793,11 @@ public class BootJarTool {
                                                                                            this.instrumentationLogger,
                                                                                            getClass().getClassLoader(),
                                                                                            true, false);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter,
-                                                                                    jInnerClassNameDots,
-                                                                                    tcInnerClassNameDots, tcCN,
-                                                                                    instrumentedContext, methodPrefix,
-                                                                                    false));
+    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                         jInnerClassNameDots,
+                                                                                         tcInnerClassNameDots, tcCN,
+                                                                                         instrumentedContext,
+                                                                                         methodPrefix, false));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
 
@@ -1834,10 +1834,11 @@ public class BootJarTool {
                                                                                            this.instrumentationLogger,
                                                                                            getClass().getClassLoader(),
                                                                                            true, true);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                                    tcClassNameDots, tcCN,
-                                                                                    instrumentedContext, methodPrefix,
-                                                                                    true));
+    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                         jClassNameDots,
+                                                                                         tcClassNameDots, tcCN,
+                                                                                         instrumentedContext,
+                                                                                         methodPrefix, true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);
@@ -1902,9 +1903,10 @@ public class BootJarTool {
                                                                                            this.instrumentationLogger,
                                                                                            getClass().getClassLoader(),
                                                                                            true, false);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                                    tcClassNameDots, tcCN,
-                                                                                    instrumentedContext));
+    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                         jClassNameDots,
+                                                                                         tcClassNameDots, tcCN,
+                                                                                         instrumentedContext));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     loadClassIntoJar(jClassNameDots, cw.toByteArray(), true);
 
@@ -2045,10 +2047,11 @@ public class BootJarTool {
                                                                                            this.instrumentationLogger,
                                                                                            getClass().getClassLoader(),
                                                                                            true, true);
-    final ClassVisitor cv = new SerialVersionUIDAdder(new MergeTCToJavaClassAdapter(cw, dsoAdapter, jClassNameDots,
-                                                                                    tcClassNameDots, tcCN,
-                                                                                    instrumentedContext, methodPrefix,
-                                                                                    true));
+    final ClassVisitor cv = new SerialVersionUIDAdder(new FixedMergeTCToJavaClassAdapter(cw, dsoAdapter,
+                                                                                         jClassNameDots,
+                                                                                         tcClassNameDots, tcCN,
+                                                                                         instrumentedContext,
+                                                                                         methodPrefix, true));
     jCR.accept(cv, ClassReader.SKIP_FRAMES);
     jData = cw.toByteArray();
     jData = doDSOTransform(jClassNameDots, jData);
@@ -2185,9 +2188,9 @@ public class BootJarTool {
 
       StandardConfigurationSetupManagerFactory factory;
       factory = new StandardConfigurationSetupManagerFactory(
-                                                                cmdLine,
-                                                                StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
-                                                                new FatalIllegalConfigurationChangeHandler());
+                                                             cmdLine,
+                                                             StandardConfigurationSetupManagerFactory.ConfigMode.CUSTOM_L1,
+                                                             new FatalIllegalConfigurationChangeHandler());
       final boolean verbose = cmdLine.hasOption("v");
       final TCLogger logger = verbose ? CustomerLogging.getConsoleLogger() : new NullTCLogger();
       final L1ConfigurationSetupManager config = factory.createL1TVSConfigurationSetupManager(logger);
