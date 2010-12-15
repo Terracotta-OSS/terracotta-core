@@ -291,7 +291,9 @@ public class DsoClusterImpl implements DsoClusterInternal {
       isNodeJoined = true;
 
       for (NodeID otherNodeId : clusterMembers) {
-        topology.registerDsoNode(otherNodeId);
+        if (!currentClientID.equals(otherNodeId)) {
+          topology.registerDsoNode(otherNodeId);
+        }
       }
     } finally {
       stateWriteLock.unlock();
