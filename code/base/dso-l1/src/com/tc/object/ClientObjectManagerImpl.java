@@ -390,7 +390,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookup(pojo);
   }
 
-  public synchronized ObjectID lookupExistingObjectID(final Object pojo) {
+  public ObjectID lookupExistingObjectID(final Object pojo) {
     final TCObject obj = basicLookup(pojo);
     if (obj == null) { throw new AssertionError("Missing object ID for: Object of class " + pojo.getClass().getName()
                                                 + " [Identity Hashcode : 0x"
