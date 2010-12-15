@@ -9,25 +9,26 @@ import com.tc.util.Assert;
 import com.tc.util.SinglyLinkedList;
 
 import java.util.Stack;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNode> {
 
-  private static final Executor UNPARK_HANDLER = Executors.newCachedThreadPool(new ThreadFactory() {
-    public Thread newThread(Runnable r) {
-      Thread t = new Thread(r, "Unpark Handler Thread");
-      t.setDaemon(true);
-      return t;
-    }
-  });
-  
-  private final ThreadID     owner;
+  private static final ExecutorService UNPARK_HANDLER = Executors.newCachedThreadPool(new ThreadFactory() {
+                                                        public Thread newThread(Runnable r) {
+                                                          Thread t = new Thread(r, "Unpark Handler Thread");
+                                                          t.setDaemon(true);
+                                                          return t;
+                                                        }
+                                                      });
 
-  private LockStateNode      next;
+  private final ThreadID               owner;
+
+  private LockStateNode                next;
 
   LockStateNode(ThreadID owner) {
     this.owner = owner;
@@ -76,6 +77,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     return old;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -86,6 +88,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     }
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + " : " + owner;
   }
@@ -173,6 +176,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return javaThread;
     }
 
+    @Override
     void park() {
       Assert.assertEquals(getJavaThread(), Thread.currentThread());
       try {
@@ -182,6 +186,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
+    @Override
     void unpark() {
       permit.release();
     }
@@ -214,6 +219,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return responded && awarded;
     }
 
+    @Override
     LockAcquireResult allowsHold(LockHold newHold) {
       if (getOwner().equals(newHold.getOwner()) && getLockLevel().equals(newHold.getLockLevel())) {
         if (isAwarded()) { return LockAcquireResult.SUCCESS; }
@@ -222,6 +228,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return LockAcquireResult.UNKNOWN;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o == this) {
         return true;
@@ -232,10 +239,12 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
+    @Override
     public int hashCode() {
       return (5 * super.hashCode()) ^ (7 * level.hashCode());
     }
 
+    @Override
     public String toString() {
       return super.toString() + " : " + getLockLevel() + " : delegated=" + !canDelegate() + ", awarded=" + isAwarded()
              + ", refused=" + isRefused() + ", " + delegationMethod;
@@ -359,15 +368,19 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
 
     @Override
     void unpark() {
-      UNPARK_HANDLER.execute(new Runnable() {
-        
+      Runnable unparker = new Runnable() {
         public void run() {
           synchronized (waitObject) {
             unparked = true;
             waitObject.notifyAll();
           }
         }
-      });
+      };
+      try {
+        UNPARK_HANDLER.execute(unparker);
+      } catch (RejectedExecutionException e) {
+        new Thread(unparker, "Temporary Unparker Thread [" + toString() + "]").start();
+      }
     }
 
     @Override
@@ -407,6 +420,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       return reacquires;
     }
 
+    @Override
     void park() throws InterruptedException {
       synchronized (waitObject) {
         if (!notified) {
@@ -415,6 +429,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
+    @Override
     void park(long timeout) throws InterruptedException {
       synchronized (waitObject) {
         if (!notified) {
@@ -423,19 +438,25 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
+    @Override
     void unpark() {
       // this is a slight hack to avoiding blocking the stage thread
-      UNPARK_HANDLER.execute(new Runnable() {
-        
+      Runnable unparker = new Runnable() {
         public void run() {
           synchronized (waitObject) {
             notified = true;
             waitObject.notifyAll();
           }
         }
-      });
+      };
+      try {
+        UNPARK_HANDLER.execute(unparker);
+      } catch (RejectedExecutionException e) {
+        new Thread(unparker, "Temporary Unpark Thread [" + toString() + "]").start();
+      }
     }
 
+    @Override
     public boolean equals(Object o) {
       if (o == this) {
         return true;
@@ -446,6 +467,7 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
       }
     }
 
+    @Override
     public int hashCode() {
       return super.hashCode();
     }
@@ -454,5 +476,9 @@ abstract class LockStateNode implements SinglyLinkedList.LinkedNode<LockStateNod
     ClientServerExchangeLockContext toContext(LockID lock, ClientID node) {
       return new ClientServerExchangeLockContext(lock, node, getOwner(), ServerLockContext.State.WAITER, getTimeout());
     }
+  }
+
+  public static void shutdown() {
+    UNPARK_HANDLER.shutdown();
   }
 }
