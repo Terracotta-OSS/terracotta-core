@@ -35,10 +35,6 @@ class GuaranteedDeliveryProtocol {
     } while (true);
 
     sender.execute(null);
-    /*
-     * try { if (sendInProgress.tryLock()) { sendAttempt.increment(); do { sender.execute(null); } while
-     * (sendAttempt.decrement() >= 0); } else { sendAttempt.increment(); } } finally { sendInProgress.unlock(); }
-     */
 
     if (interrupted) {
       Util.selfInterruptIfNeeded(interrupted);
