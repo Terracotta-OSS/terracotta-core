@@ -524,6 +524,7 @@ public interface TCPropertiesConsts {
   public static final String   TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT                         = "tc.bytebuffer.threadlocal.pool.maxcount";
   public static final String   TC_MESSAGE_GROUPING_ENABLED                                     = "tc.messages.grouping.enabled";
   public static final String   TC_MESSAGE_GROUPING_MAXSIZE_KB                                  = "tc.messages.grouping.maxSizeKiloBytes";
+  public static final String   TC_MESSAGE_PACKUP_ENABLED                                       = "tc.messages.packup.enabled";
 
   /*********************************************************************************************************************
    * <code>

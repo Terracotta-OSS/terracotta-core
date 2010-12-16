@@ -94,6 +94,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                              .getProperties()
                                                                              .getInt(TCPropertiesConsts.TC_MESSAGE_GROUPING_MAXSIZE_KB,
                                                                                      128) * 1024;
+  private static final boolean               MESSSAGE_PACKUP             = TCPropertiesImpl
+                                                                             .getProperties()
+                                                                             .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED);
 
   static {
     logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
@@ -375,23 +378,21 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     WriteContext context;
     while (this.writeContexts.size() > 0) {
       context = this.writeContexts.get(0);
-      final ByteBuffer[] buffers = context.clonedData;
+      final TCByteBuffer[] buffers = context.entireMessageData;
 
       long bytesWritten = 0;
       try {
         // Do the write in a loop, instead of calling write(ByteBuffer[]).
-        // This seems to avoid memory leaks on sun's 1.4.2 JDK
+        // This seems to avoid memory leaks and faster
         for (int i = context.index, nn = buffers.length; i < nn; i++) {
-          final ByteBuffer buf = buffers[i];
-          final int written = gbc.write(buf);
-
+          final int written = gbc.write(buffers[i].getNioBuffer());
           if (written == 0) {
             break;
           }
 
           bytesWritten += written;
 
-          if (buf.hasRemaining()) {
+          if (buffers[i].hasRemaining()) {
             break;
           } else {
             context.incrementIndexAndCleanOld();
@@ -432,15 +433,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
     }
     return totalBytesWritten;
-  }
-
-  static private ByteBuffer[] extractNioBuffers(final TCByteBuffer[] src) {
-    final ByteBuffer[] rv = new ByteBuffer[src.length];
-    for (int i = 0, n = src.length; i < n; i++) {
-      rv[i] = src[i].getNioBuffer();
-    }
-
-    return rv;
   }
 
   static private ByteBuffer extractNioBuffer(final TCByteBuffer buffer) {
@@ -774,37 +766,91 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private static class WriteContext {
     private final TCNetworkMessage message;
-    private final ByteBuffer[]     clonedData;
     private int                    index = 0;
+    private final TCByteBuffer[]   entireMessageData;
 
     WriteContext(final TCNetworkMessage message) {
       // either WireProtocolMessage or WireProtocolMessageGroup
       this.message = message;
 
-      final ByteBuffer[] msgData = extractNioBuffers(message.getEntireMessageData());
-      this.clonedData = new ByteBuffer[msgData.length];
-
-      for (int i = 0; i < msgData.length; i++) {
-        this.clonedData[i] = msgData[i].duplicate().asReadOnlyBuffer();
+      if (MESSSAGE_PACKUP) {
+        this.entireMessageData = getPackedUpMessage(message.getEntireMessageData());
+      } else {
+        this.entireMessageData = getClonedMessage(message.getEntireMessageData());
       }
+
     }
 
     boolean done() {
-      for (int i = this.index, n = this.clonedData.length; i < n; i++) {
-        if (this.clonedData[i].hasRemaining()) { return false; }
+      for (int i = index, n = entireMessageData.length; i < n; i++) {
+        if (entireMessageData[i].hasRemaining()) { return false; }
       }
 
       return true;
     }
 
     void incrementIndexAndCleanOld() {
-      this.clonedData[this.index] = null;
+      if (MESSSAGE_PACKUP) {
+        // we created these new messages. lets recycle it.
+        entireMessageData[index].recycle();
+      }
+      entireMessageData[index] = null;
       this.index++;
     }
 
     void writeComplete() {
       this.message.wasSent();
     }
+
+    private static TCByteBuffer[] getClonedMessage(final TCByteBuffer[] sourceMessageByteBuffers) {
+      final TCByteBuffer[] msgData = sourceMessageByteBuffers;
+      TCByteBuffer[] clonedMessageData = new TCByteBuffer[msgData.length];
+      for (int i = 0; i < msgData.length; i++) {
+        clonedMessageData[i] = msgData[i].duplicate().asReadOnlyBuffer();
+      }
+      return clonedMessageData;
+    }
+
+    private static TCByteBuffer[] getPackedUpMessage(final TCByteBuffer[] sourceMessageByteBuffers) {
+
+      int srcIndex = 0, srcOffset = 0, dstIndex = 0, srcRem = 0, dstRem = 0, written = 0, len = 0;
+      for (TCByteBuffer sourceMessageByteBuffer : sourceMessageByteBuffers) {
+        len += sourceMessageByteBuffer.remaining();
+      }
+
+      // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
+      TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getFixedSizedInstancesForLength(true, len);
+      while (srcIndex < sourceMessageByteBuffers.length) {
+        dstRem = packedUpMessageByteBuffers[dstIndex].remaining();
+        srcRem = sourceMessageByteBuffers[srcIndex].limit() - srcOffset;
+        if (srcRem > dstRem) {
+          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
+          srcOffset += dstRem;
+          dstIndex++;
+          written += dstRem;
+        } else if (srcRem == dstRem) {
+          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
+          dstIndex++;
+          srcIndex++;
+          srcOffset = 0;
+          written += dstRem;
+        } else {
+          packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, srcRem);
+          srcIndex++;
+          srcOffset = 0;
+          written += srcRem;
+        }
+      }
+
+      for (TCByteBuffer compactedMessageByteBuffer : packedUpMessageByteBuffers) {
+        compactedMessageByteBuffer.flip();
+      }
+      if (len != written) {
+        Assert.assertEquals("Comms Write: packed-up message length is different from original. ", len, written);
+      }
+      return packedUpMessageByteBuffers;
+    }
+
   }
 
   public void addWeight(final int addWeightBy) {
