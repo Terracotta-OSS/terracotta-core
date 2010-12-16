@@ -4,9 +4,8 @@
 package com.tc.objectserver.search;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.NodeID;
 import com.tc.object.metadata.NVPair;
-import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 import java.util.List;
@@ -22,9 +21,8 @@ public class SearchUpsertContext extends AbstractMetaDataContext implements Mult
   private final List<NVPair> attributes;
   private final Object       cacheKey;
 
-  public SearchUpsertContext(NodeID id, TransactionID transactionID, String name, Object cacheKey,
-                             List<NVPair> attributes) {
-    super(id, transactionID);
+  public SearchUpsertContext(ServerTransactionID transactionID, String name, Object cacheKey, List<NVPair> attributes) {
+    super(transactionID);
     this.name = name;
     this.cacheKey = cacheKey;
     this.attributes = attributes;

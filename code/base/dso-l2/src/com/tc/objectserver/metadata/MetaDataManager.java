@@ -4,7 +4,7 @@
 package com.tc.objectserver.metadata;
 
 import com.tc.object.dna.api.MetaDataReader;
-import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
 
 /**
@@ -28,9 +28,8 @@ public interface MetaDataManager {
    * 
    * @return boolean return true of all metadatas associated with @{link TrasnactionID}
    *         has been processed.
-   *          
-   * @param TransactionID id, transaction id metadata belongs to.
+   * @param ServerTransactionID id, transaction id metadata belongs to.
    */
-  public boolean metaDataProcessingCompleted(TransactionID id);
+  public boolean metaDataProcessingCompleted(ServerTransactionID id);
 
 }

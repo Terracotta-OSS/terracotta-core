@@ -4,8 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.NodeID;
-import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 /**
@@ -18,8 +17,8 @@ public class SearchDeleteContext extends AbstractMetaDataContext implements Mult
   private final String name;
   private final Object cacheKey;
 
-  public SearchDeleteContext(NodeID id, TransactionID transactionID, String name, Object cacheKey) {
-    super(id, transactionID);
+  public SearchDeleteContext(ServerTransactionID transactionID, String name, Object cacheKey) {
+    super(transactionID);
     this.name = name;
     this.cacheKey = cacheKey;
   }

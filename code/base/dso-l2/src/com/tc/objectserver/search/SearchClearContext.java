@@ -4,8 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.NodeID;
-import com.tc.object.tx.TransactionID;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 /**
@@ -17,8 +16,8 @@ public class SearchClearContext extends AbstractMetaDataContext implements Multi
 
   private final String name;
 
-  public SearchClearContext(NodeID id, TransactionID transactionID, String name) {
-    super(id, transactionID);
+  public SearchClearContext(ServerTransactionID transactionID, String name) {
+    super(transactionID);
     this.name = name;
   }
 

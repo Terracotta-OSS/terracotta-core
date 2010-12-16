@@ -18,7 +18,10 @@ import com.tc.util.Assert;
  * and a client TransactionID)
  */
 public class ServerTransactionID implements Comparable {
-  public static final ServerTransactionID NULL_ID = new ServerTransactionID(ClientID.NULL_ID, TransactionID.NULL_ID);
+  public static final ServerTransactionID NULL_ID             = new ServerTransactionID(ClientID.NULL_ID,
+                                                                                        TransactionID.NULL_ID);
+
+  public final static ServerTransactionID META_DATA_IGNORE_ID = new MetaDataIgnoreTransactionID();
 
   private final TransactionID             txnID;
   private final NodeID                    sourceID;
@@ -50,15 +53,18 @@ public class ServerTransactionID implements Comparable {
     return sourceID.isNull() && txnID.isNull();
   }
 
+  @Override
   public String toString() {
     return new StringBuffer().append("ServerTransactionID{").append(sourceID).append(',').append(txnID).append('}')
         .toString();
   }
 
+  @Override
   public int hashCode() {
     return this.hashCode;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (obj instanceof ServerTransactionID) {
       ServerTransactionID other = (ServerTransactionID) obj;
@@ -103,6 +109,19 @@ public class ServerTransactionID implements Comparable {
     } else {
       return cmp;
     }
-
   }
+
+  private static class MetaDataIgnoreTransactionID extends ServerTransactionID {
+    // make this a separate subclass so it can never be equal() to a "real" ServerTransactionID
+
+    MetaDataIgnoreTransactionID() {
+      super(ClientID.NULL_ID, TransactionID.NULL_ID);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this;
+    }
+  }
+
 }
