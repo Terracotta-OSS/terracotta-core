@@ -99,9 +99,17 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
         Assert.assertTrue(msg.getSourceNodeID().equals(pingReceived.getSourceNodeID()));
         Assert.assertTrue(server.getDSOServer().getServerNodeID().equals(pingReceived.getDestinationNodeID()));
 
-        // check for client1
-        System.out.println("XXX DsoNode get IP/hostname when connected");
+        // check for client1's cluster topology view
+        System.out.println("XXX DsoNode get IP/hostname when connected - Client 1");
         Collection<DsoNode> nodes = dsoCluster1.getClusterTopology().getNodes();
+        for (DsoNode node : nodes) {
+          System.out.println("XXX node: " + node);
+          System.out.println("XXX IP:" + node.getIp() + " hostname: " + node.getHostname());
+        }
+
+        // check for client2's cluster topology view
+        System.out.println("XXX DsoNode get IP/hostname when connected - Client 2");
+        nodes = dsoCluster2.getClusterTopology().getNodes();
         for (DsoNode node : nodes) {
           System.out.println("XXX node: " + node);
           System.out.println("XXX IP:" + node.getIp() + " hostname: " + node.getHostname());
@@ -169,8 +177,9 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
     return tcmanager;
   }
 
-  protected final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                          .getLogger(DistributedObjectServer.class)));
+  protected final TCThreadGroup group = new TCThreadGroup(
+                                                          new ThrowableHandler(TCLogging
+                                                              .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
     private final int dsoPort;
