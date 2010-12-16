@@ -54,6 +54,13 @@ public interface TCObjectServerMap<L> extends TCObject {
                            final List<MetaDataDescriptor> metaDatas);
 
   /**
+   * Clear this map
+   * 
+   * @param map ServerTCMap
+   */
+  public void doClear(final TCServerMap map, final List<MetaDataDescriptor> metaDatas);
+
+  /**
    * Does a logical put but doesn't add it to the local cache, old cache entries could be cleared
    * 
    * @param map ServerTCMap

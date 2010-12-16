@@ -16,6 +16,8 @@ public interface IndexManager extends StateChangeListener {
 
   void upsert(String indexName, Object key, List<NVPair> attributes) throws IndexException;
 
+  void clear(String indexName) throws IndexException;
+
   public SearchResult searchIndex(String indexName, LinkedList queryStack, boolean includeKeys,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) throws IndexException;

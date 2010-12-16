@@ -61,6 +61,14 @@ public class SearchEventHandler extends AbstractMetaDataHandler {
         // XXX: log something?
         this.searchRequestManager.queryErrorResponse(sqc, e.getMessage());
       }
+    } else if (context instanceof SearchClearContext) {
+      SearchClearContext scc = (SearchClearContext) context;
+      try {
+        this.indexManager.clear(scc.getName());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

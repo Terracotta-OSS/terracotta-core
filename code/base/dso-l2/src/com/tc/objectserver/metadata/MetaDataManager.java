@@ -13,21 +13,21 @@ import com.tc.objectserver.tx.ServerTransaction;
  * @author Nabib El-Rahman
  */
 public interface MetaDataManager {
-  
+
   /**
    * Process metadata.
    * 
    * @param ServerTransaction transaction associated with metadata reader.
    * @param MetaDataReader metadata reader associated with a DNA.
-   * 
+   * @return true if any meta data will be processed
    */
-  public void processMetaDatas(ServerTransaction txn, MetaDataReader[] readers);
-  
+  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers);
+
   /**
    * Notify MetaDataMaanger that a Meta has been processed for TransactionID.
    * 
    * @return boolean return true of all metadatas associated with @{link TrasnactionID}
-   *          has been processed.
+   *         has been processed.
    *          
    * @param TransactionID id, transaction id metadata belongs to.
    */

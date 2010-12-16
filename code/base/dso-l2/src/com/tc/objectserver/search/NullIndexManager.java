@@ -33,8 +33,11 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void l2StateChanged(StateChangedEvent sce) {
+  public void clear(String indexName) {
     //
   }
 
+  public void l2StateChanged(StateChangedEvent sce) {
+    //
+  }
 }

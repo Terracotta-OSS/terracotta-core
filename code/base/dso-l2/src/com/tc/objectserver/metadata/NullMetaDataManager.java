@@ -9,8 +9,8 @@ import com.tc.objectserver.tx.ServerTransaction;
 
 public class NullMetaDataManager implements MetaDataManager {
 
-  public void processMetaDatas(ServerTransaction txn, MetaDataReader[] readers) {
-    //
+  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers) {
+    return false;
   }
 
   public boolean metaDataProcessingCompleted(TransactionID id) {

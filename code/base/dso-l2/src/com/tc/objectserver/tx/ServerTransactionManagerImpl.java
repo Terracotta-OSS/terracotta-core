@@ -49,8 +49,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -450,10 +450,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   private void processMetaData(ServerTransaction txn) {
-    final int metaDataSize = txn.getMetaDataReaders().length;
-    if (metaDataSize > 0) {
-      this.metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders());
-    } else {
+    if (!this.metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders())) {
       processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
     }
   }
