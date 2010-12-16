@@ -134,6 +134,7 @@ public class ReconnectionRejectedEventTest extends TCTestCase {
 
     // proxy off
     this.proxyMgr.proxyDown();
+    this.proxyMgr.closeClientConnections();
     ThreadUtil.reallySleep(10000);
     this.proxyMgr.proxyUp();
 
