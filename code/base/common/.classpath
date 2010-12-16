@@ -27,8 +27,8 @@
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/log4j-1.2.16.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/native-tool-1.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/servlet-api-2.5-6.1.8.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-api-1.5.11.jar"/>
-	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-log4j12-1.5.11.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-api-1.6.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/dependencies/lib/slf4j-log4j12-1.6.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="/dependencies/lib/trove-1.1-beta-5.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/common-api"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/tim-api"/>
