@@ -13,7 +13,7 @@ import static org.terracotta.license.LicenseConstants.CAPABILITY_SESSIONS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_TERRACOTTA_SERVER_ARRAY_OFFHEAP;
 import static org.terracotta.license.LicenseConstants.LICENSE_CAPABILITIES;
 import static org.terracotta.license.LicenseConstants.LICENSE_KEY_FILENAME;
-import static org.terracotta.license.LicenseConstants.LICENSE_PATH_KEY;
+import static org.terracotta.license.LicenseConstants.PRODUCTKEY_PATH_PROPERTY;
 import static org.terracotta.license.LicenseConstants.TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP;
 
 import org.terracotta.license.AbstractLicenseResolverFactory;
@@ -85,7 +85,7 @@ public class LicenseManager {
           .error("Terracotta license key is required for Enterprise capabilities. Please place "
                  + LICENSE_KEY_FILENAME
                  + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
-                 + LICENSE_PATH_KEY + "=/path/to/key");
+                 + PRODUCTKEY_PATH_PROPERTY + "=/path/to/key");
       System.exit(1);
     }
     Date expirationDate = getLicense().expirationDate();
