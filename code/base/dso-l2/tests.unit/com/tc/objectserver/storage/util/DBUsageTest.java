@@ -6,7 +6,6 @@ package com.tc.objectserver.storage.util;
 
 import com.tc.objectserver.persistence.db.AbstractDBUtilsTestBase;
 import com.tc.objectserver.persistence.db.DBPersistorImpl;
-import com.tc.objectserver.storage.util.DBUsage;
 
 import java.io.File;
 
@@ -34,6 +33,9 @@ public class DBUsageTest extends AbstractDBUtilsTestBase {
     sleepycatPersistor = getSleepycatPersistor(databaseDir);
     // By getObjectCount() to wait for completion of ObjectIdReaderThread
     sleepycatPersistor.getManagedObjectPersistor().getObjectCount();
+    // By snapshot to wait for completion of ObjectIdReaderThread
+    sleepycatPersistor.getManagedObjectPersistor().snapshotMapTypeObjectIDs();
+    sleepycatPersistor.getManagedObjectPersistor().snapshotEvictableObjectIDs();
     sleepycatPersistor.close();
 
     // db is not populated
