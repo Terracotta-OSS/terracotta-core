@@ -315,6 +315,6 @@ public class NullManagerInternal implements ManagerInternal {
   }
 
   public void verifyCapability(String capability) {
-    throw new UnsupportedOperationException();
+    // do nothing
   }
 }
