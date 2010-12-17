@@ -45,7 +45,7 @@ public abstract class AbstractMetaDataHandler extends AbstractEventHandler {
     }
   }
 
-  public abstract void handleMetaDataEvent(EventContext context) throws EventHandlerException, IOException;
+  protected abstract void handleMetaDataEvent(EventContext context) throws EventHandlerException, IOException;
 
   @Override
   protected void initialize(ConfigurationContext context) {
