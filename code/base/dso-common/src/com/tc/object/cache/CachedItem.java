@@ -4,7 +4,6 @@
 package com.tc.object.cache;
 
 import com.tc.cache.ExpirableEntry;
-import com.tc.object.locks.LockID;
 
 public class CachedItem {
 
@@ -13,22 +12,25 @@ public class CachedItem {
   }
 
   private final DisposeListener listener;
-  private final LockID          lockID;
+  /*
+   * Could be a LockID or an ObjectID that this CacheItem is mapped to in RemoteServerMapManagerImpl
+   */
+  private final Object          id;
   private final Object          key;
   private volatile Object       value;
   private volatile boolean      accessed = true;
   private volatile boolean      expired  = false;
   private CachedItem            next;
 
-  public CachedItem(final DisposeListener listener, final LockID lockID, final Object key, final Object value) {
+  public CachedItem(final Object id, final DisposeListener listener, final Object key, final Object value) {
     this.listener = listener;
-    this.lockID = lockID;
+    this.id = id;
     this.key = key;
     this.value = value;
   }
 
-  public LockID getLockID() {
-    return this.lockID;
+  public Object getID() {
+    return this.id;
   }
 
   public Object getKey() {

@@ -3,7 +3,6 @@
  */
 package com.tc.object.cache;
 
-import com.tc.object.locks.LockID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -19,11 +18,11 @@ public class IncoherentCachedItem extends CachedItem {
   private final long        lastCoherentTime;
 
   public IncoherentCachedItem(final CachedItem item) {
-    this(item.getListener(), item.getLockID(), item.getKey(), item.getValue());
+    this(item.getID(), item.getListener(), item.getKey(), item.getValue());
   }
 
-  public IncoherentCachedItem(final DisposeListener listener, final LockID lockID, final Object key, final Object value) {
-    super(listener, lockID, key, value);
+  public IncoherentCachedItem(final Object id, final DisposeListener listener, final Object key, final Object value) {
+    super(id, listener, key, value);
     this.lastCoherentTime = System.nanoTime();
   }
 

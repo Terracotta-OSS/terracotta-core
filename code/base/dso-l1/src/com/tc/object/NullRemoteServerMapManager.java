@@ -31,7 +31,7 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void removeCachedItemForLock(final LockID lockID, final CachedItem item) {
+  public void removeCachedItem(final Object id, final CachedItem item) {
     //
   }
 
@@ -48,7 +48,7 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     return null;
   }
 
-  public void flush(final LockID lockID) {
+  public void flush(final Object id) {
     //
   }
 
@@ -67,7 +67,7 @@ public final class NullRemoteServerMapManager implements RemoteServerMapManager 
     //
   }
 
-  public void addCachedItemForLock(final LockID lockID, final CachedItem item) {
+  public void addCachedItem(final Object id, final CachedItem item) {
     //
   }
 

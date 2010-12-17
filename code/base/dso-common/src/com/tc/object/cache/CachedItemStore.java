@@ -3,40 +3,39 @@
  */
 package com.tc.object.cache;
 
-import com.tc.object.locks.LockID;
 import com.tc.util.concurrent.TCConcurrentStore;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
 import java.util.Map;
 
-public class CachedItemStore {
+public class CachedItemStore<L> {
 
-  private final TCConcurrentStore<LockID, CachedItem> store;
-  private final AddCallBack                           addCallback    = new AddCallBack();
-  private final RemoveCallBack                        removeCallback = new RemoveCallBack();
+  private final TCConcurrentStore<L, CachedItem> store;
+  private final AddCallBack                      addCallback    = new AddCallBack();
+  private final RemoveCallBack                   removeCallback = new RemoveCallBack();
 
   /**
    * Creates a CachedItemStore with the specified initial capacity, load factor and concurrency level.
    */
   public CachedItemStore(int initialCapacity, final float loadFactor, int concurrencyLevel) {
-    this.store = new TCConcurrentStore<LockID, CachedItem>(initialCapacity, loadFactor, concurrencyLevel);
+    this.store = new TCConcurrentStore<L, CachedItem>(initialCapacity, loadFactor, concurrencyLevel);
   }
 
   // For tests
-  CachedItem get(final LockID lockID) {
-    return this.store.get(lockID);
+  CachedItem get(final L id) {
+    return this.store.get(id);
   }
 
-  public void add(final LockID lockID, final CachedItem item) {
-    this.store.executeUnderWriteLock(lockID, item, this.addCallback);
+  public void add(final L id, final CachedItem item) {
+    this.store.executeUnderWriteLock(id, item, this.addCallback);
   }
 
-  public void remove(final LockID lockID, final CachedItem item) {
-    this.store.executeUnderWriteLock(lockID, item, this.removeCallback);
+  public void remove(final L id, final CachedItem item) {
+    this.store.executeUnderWriteLock(id, item, this.removeCallback);
   }
 
-  public void flush(final LockID lockID) {
-    final CachedItem head = this.store.remove(lockID);
+  public void flush(final L id) {
+    final CachedItem head = this.store.remove(id);
     dispose(head);
   }
 
@@ -47,11 +46,11 @@ public class CachedItemStore {
     }
   }
 
-  private static final class AddCallBack implements TCConcurrentStoreCallback<LockID, CachedItem> {
+  private static final class AddCallBack<L> implements TCConcurrentStoreCallback<L, CachedItem> {
     // Called under segment lock
-    public Object callback(LockID lockID, Object param, Map<LockID, CachedItem> segment) {
+    public Object callback(L id, Object param, Map<L, CachedItem> segment) {
       final CachedItem item = (CachedItem) param;
-      final CachedItem old = segment.put(lockID, item);
+      final CachedItem old = segment.put(id, item);
       if (old != null) {
         item.setNext(old);
       }
@@ -60,14 +59,14 @@ public class CachedItemStore {
 
   }
 
-  private static final class RemoveCallBack implements TCConcurrentStoreCallback<LockID, CachedItem> {
+  private static final class RemoveCallBack<L> implements TCConcurrentStoreCallback<L, CachedItem> {
     // Called under segment lock
-    public Object callback(LockID lockID, Object param, Map<LockID, CachedItem> segment) {
+    public Object callback(L id, Object param, Map<L, CachedItem> segment) {
       final CachedItem item = (CachedItem) param;
-      CachedItem head = segment.remove(lockID);
+      CachedItem head = segment.remove(id);
       head = removeNode(head, item);
       if (head != null) {
-        segment.put(lockID, head);
+        segment.put(id, head);
       }
       return true;
     }

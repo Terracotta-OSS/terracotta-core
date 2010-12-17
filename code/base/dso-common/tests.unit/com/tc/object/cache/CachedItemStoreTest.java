@@ -38,20 +38,20 @@ public class CachedItemStoreTest extends TestCase {
     final ArrayList<CachedItem> middleEntriesOfThree = new ArrayList<CachedItem>();
     for (int i = 0; i < 50; i++) {
       final LockID lockID = getLockId(i);
-      CachedItem item = new CachedItem(this.disposeHandler, lockID, getKey(i), getValue(i));
+      CachedItem item = new CachedItem(lockID, this.disposeHandler, getKey(i), getValue(i));
       this.parent.put(getKey(i), item);
       this.store.add(lockID, item);
       if (i % 2 == 0) {
         lastEntriesOfTwo.add(item);
-        item = new CachedItem(this.disposeHandler, lockID, getKey(i + 10000), getValue(i + 10000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 10000), getValue(i + 10000));
         this.parent.put(getKey(i + 10000), item);
         this.store.add(lockID, item);
       } else if (i % 3 == 0) {
-        item = new CachedItem(this.disposeHandler, lockID, getKey(i + 20000), getValue(i + 20000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 20000), getValue(i + 20000));
         middleEntriesOfThree.add(item);
         this.parent.put(getKey(i + 20000), item);
         this.store.add(lockID, item);
-        item = new CachedItem(this.disposeHandler, lockID, getKey(i + 30000), getValue(i + 30000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 30000), getValue(i + 30000));
         this.parent.put(getKey(i + 30000), item);
         this.store.add(lockID, item);
       }
@@ -73,23 +73,23 @@ public class CachedItemStoreTest extends TestCase {
 
     // remove last entries
     for (final CachedItem item : lastEntriesOfTwo) {
-      final LockID lockID = item.getLockID();
+      final LockID lockID = (LockID) item.getID();
       CachedItem head = this.store.get(lockID);
       final int index = getIndex(lockID);
       verifyTwo(head, index + 10000, index, lockID);
       this.store.remove(lockID, item);
-      head = this.store.get(item.getLockID());
+      head = this.store.get(item.getID());
       verifyOne(head, index + 10000, lockID);
     }
 
     // remove middle entries
     for (final CachedItem item : middleEntriesOfThree) {
-      final LockID lockID = item.getLockID();
+      final LockID lockID = (LockID) item.getID();
       CachedItem head = this.store.get(lockID);
       final int index = getIndex(lockID);
       verifyThree(head, index + 30000, index + 20000, index, lockID);
       this.store.remove(lockID, item);
-      head = this.store.get(item.getLockID());
+      head = this.store.get(item.getID());
       verifyTwo(head, index + 30000, index, lockID);
     }
 
@@ -135,7 +135,7 @@ public class CachedItemStoreTest extends TestCase {
   }
 
   private void verify(final int i, final LockID lockID, final CachedItem item) {
-    assertEquals(lockID, item.getLockID());
+    assertEquals(lockID, item.getID());
     assertEquals(getKey(i), item.getKey());
     assertEquals(getValue(i), item.getValue());
   }

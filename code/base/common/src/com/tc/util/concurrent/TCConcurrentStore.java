@@ -14,10 +14,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * This class provides basic map operations like put,get, remove with the specified amount of concurrency. It doesn't do
  * various optimizations like {@link java.util.concurrent.ConcurrentHashMap} on reads so get might be slower than CHM
- * but is still striped so faster than Hashtable for concurrent usecases.
+ * but is still striped so faster than Hashtable for concurrent use cases.
  * <p>
  * Where this class will excel is when you want to perform certain operation (using the callback) with in the lock for
- * that segment. For example, create a MultiMap becomes as simple as
+ * that segment. For example, creating a MultiMap becomes as simple as
  * <p>
  * <hr>
  * <blockquote>

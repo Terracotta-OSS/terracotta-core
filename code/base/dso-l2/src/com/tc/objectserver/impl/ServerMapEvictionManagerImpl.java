@@ -320,7 +320,6 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     if (EVICTOR_LOGGING) {
       logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid);
     }
-
   }
 
   private boolean canEvict(final Object value, final int ttiSeconds, final int ttlSeconds) {

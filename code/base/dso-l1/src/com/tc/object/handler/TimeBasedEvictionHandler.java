@@ -12,6 +12,7 @@ import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.cache.CachedItem;
 import com.tc.object.context.CachedItemExpiredContext;
 import com.tc.object.locks.ClientLockManager;
+import com.tc.object.locks.LockID;
 import com.tc.object.locks.ServerLockLevel;
 
 public class TimeBasedEvictionHandler extends AbstractEventHandler {
@@ -28,9 +29,9 @@ public class TimeBasedEvictionHandler extends AbstractEventHandler {
       final Object value = ci.getValue();
       if (value != null) { // If null, its Already removed
         serverMap.evictExpired(ci.getKey(), value);
-        if (ci.getLockID() != null) {          
+        if (ci.getID() instanceof LockID) {
           // recall the locks in-line to save memory and also to keep the local cache count in check
-          this.lockManager.recall(ci.getLockID(), ServerLockLevel.WRITE, -1);
+          this.lockManager.recall((LockID) ci.getID(), ServerLockLevel.WRITE, -1);
         }
       }
     }

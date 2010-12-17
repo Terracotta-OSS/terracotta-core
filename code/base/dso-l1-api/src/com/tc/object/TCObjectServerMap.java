@@ -33,14 +33,13 @@ public interface TCObjectServerMap<L> extends TCObject {
   public void doLogicalRemove(final TCServerMap map, final Object key, final List<MetaDataDescriptor> metaDatas);
 
   /**
-   * Does a logic remove and mark as removed in the local cache if present. The cached item is incoherent
+   * Does a logic remove and mark as removed in the local cache if present. The cached item is not associated to a lock.
    * 
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalRemoveIncoherent(final TCServerMap map, final Object key,
-                                        final List<MetaDataDescriptor> metaDatas);
+  public void doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final List<MetaDataDescriptor> metaDatas);
 
   /**
    * Does a logical put and updates the local cache
@@ -61,49 +60,27 @@ public interface TCObjectServerMap<L> extends TCObject {
   public void doClear(final TCServerMap map, final List<MetaDataDescriptor> metaDatas);
 
   /**
-   * Does a logical put but doesn't add it to the local cache, old cache entries could be cleared
+   * Does a logical put and updates the local cache without using a lock. The cached Item is not associated to a lock.
    * 
    * @param map ServerTCMap
    * @param lockID, lock under which this entry is added
    * @param key Key Object
    * @param value Object in the mapping
    */
-  public void doLogicalPutButDontCache(final TCServerMap map, final Object key, final Object value,
-                                       final List<MetaDataDescriptor> metaDatas);
-
-  /**
-   * Does a logical put and updates the local cache. The cached item is incoherent
-   * 
-   * @param map ServerTCMap
-   * @param lockID, lock under which this entry is added
-   * @param key Key Object
-   * @param value Object in the mapping
-   */
-  public void doLogicalPutIncoherent(final TCServerMap map, final Object key, final Object value,
-                                     final List<MetaDataDescriptor> metaDatas);
-
-  /**
-   * Returns the value for a particular Key in a ServerTCMap, gets it from the server and doesn't cache the value
-   * locally
-   * 
-   * @param map ServerTCMap
-   * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
-   *        but not shared, it is not supported.
-   * @return value Object in the mapping, null if no mapping present.
-   */
-  public Object getValueButDontCache(final TCServerMap map, final Object key);
+  public void doLogicalPutUnlocked(final TCServerMap map, final Object key, final Object value,
+                                   final List<MetaDataDescriptor> metaDatas);
 
   /**
    * Returns the value for a particular key in a TCServerMap. If already present in local cache, returns the value
    * otherwise fetches it from server and returns it, after caching it in local cache (if present). The cached item is
-   * incoherent.
+   * is not associated to a lock.
    * 
    * @param map ServerTCMap
    * @param key Key Object : Note currently only literal keys or shared keys are supported. Even if the key is portable,
    *        but not shared, it is not supported.
    * @return value Object in the mapping, null if no mapping present.
    */
-  public Object getValueIncoherent(final TCServerMap map, final Object key);
+  public Object getValueUnlocked(final TCServerMap map, final Object key);
 
   /**
    * Returns a snapshot of keys for the giver ServerTCMap

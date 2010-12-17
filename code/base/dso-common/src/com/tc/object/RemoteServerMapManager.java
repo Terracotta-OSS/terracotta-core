@@ -32,11 +32,18 @@ public interface RemoteServerMapManager extends ClientHandshakeCallback {
 
   public void objectNotFoundFor(SessionID sessionID, ObjectID mapID, ServerMapRequestID requestID, NodeID nodeID);
 
-  public void addCachedItemForLock(LockID lockID, CachedItem item);
+  /**
+   * Adds this CachedItem to LockID or ObjectID. When the lock is recalled or the Object is invalidated this CachedItem
+   * will be invalidated too.
+   */
+  public void addCachedItem(Object id, CachedItem item);
 
-  public void removeCachedItemForLock(LockID lockID, CachedItem item);
+  /**
+   * Removes the mapping from ObjectID or LockID to CachedItem
+   */
+  public void removeCachedItem(Object id, CachedItem item);
 
-  public void flush(LockID lockID);
+  public void flush(Object id);
 
   public void clearCachedItemsForLocks(Set<LockID> toEvict);
 
