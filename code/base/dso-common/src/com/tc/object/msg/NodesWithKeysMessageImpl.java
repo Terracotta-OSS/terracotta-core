@@ -7,8 +7,6 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ObjectID;
-import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.session.SessionID;
 
@@ -21,27 +19,22 @@ import java.util.Set;
  */
 public class NodesWithKeysMessageImpl extends DSOMessageBase implements NodesWithKeysMessage {
 
-  private static final byte        OBJECT_ID = 0;
-  private static final byte        KEYS_SIZE = 1;
-  private static final byte        THREAD_ID = 2;
+  private static final byte OBJECT_ID = 0;
+  private static final byte KEYS_SIZE = 1;
+  private static final byte THREAD_ID = 2;
 
-  private ObjectID      objectID;
-  private Set<Object>   keys;
-  private ThreadID      threadID;
+  private ObjectID          objectID;
+  private Set<Object>       keys;
+  private ThreadID          threadID;
 
-  public NodesWithKeysMessageImpl(final SessionID sessionID,
-                                  final MessageMonitor monitor,
-                                  final TCByteBufferOutputStream out,
-                                  final MessageChannel channel,
+  public NodesWithKeysMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                  final TCByteBufferOutputStream out, final MessageChannel channel,
                                   final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public NodesWithKeysMessageImpl(final SessionID sessionID,
-                                  final MessageMonitor monitor,
-                                  final MessageChannel channel,
-                                  final TCMessageHeader header,
-                                  final TCByteBuffer[] data) {
+  public NodesWithKeysMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                  final MessageChannel channel, final TCMessageHeader header, final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 

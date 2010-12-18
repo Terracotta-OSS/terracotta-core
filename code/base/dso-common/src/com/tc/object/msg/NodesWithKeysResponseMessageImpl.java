@@ -22,31 +22,27 @@ import java.util.Set;
  */
 public class NodesWithKeysResponseMessageImpl extends DSOMessageBase implements NodesWithKeysResponseMessage {
 
-  private static final byte THREAD_ID    = 0;
-  private static final byte KEY_SET_SIZE = 1;
+  private static final byte        THREAD_ID    = 0;
+  private static final byte        KEY_SET_SIZE = 1;
 
   private ThreadID                 threadID;
   private Map<Object, Set<NodeID>> response;
 
-  public NodesWithKeysResponseMessageImpl(final SessionID sessionID,
-                                          final MessageMonitor monitor,
-                                          final TCByteBufferOutputStream out,
-                                          final MessageChannel channel,
+  public NodesWithKeysResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                          final TCByteBufferOutputStream out, final MessageChannel channel,
                                           final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
-  public NodesWithKeysResponseMessageImpl(final SessionID sessionID,
-                                          final MessageMonitor monitor,
-                                          final MessageChannel channel,
-                                          final TCMessageHeader header,
+  public NodesWithKeysResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
+                                          final MessageChannel channel, final TCMessageHeader header,
                                           final TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialize(final ThreadID threadID, final Map<Object, Set<NodeID>> response) {
-    this.threadID = threadID;
-    this.response = response;
+  public void initialize(final ThreadID tid, final Map<Object, Set<NodeID>> resp) {
+    this.threadID = tid;
+    this.response = resp;
   }
 
   public Map<Object, Set<NodeID>> getNodesWithKeys() {
@@ -81,13 +77,13 @@ public class NodesWithKeysResponseMessageImpl extends DSOMessageBase implements 
       case KEY_SET_SIZE:
         size = getIntValue();
         response = new HashMap<Object, Set<NodeID>>(size, 1.0f);
-        while(size-- > 0) {
+        while (size-- > 0) {
           Object key;
           key = getInputStream().readString();
           int setSize = getIntValue();
           HashSet<NodeID> set = new HashSet<NodeID>(setSize, 1.0f);
           response.put(key, set);
-          while(setSize-- > 0) {
+          while (setSize-- > 0) {
             set.add(getNodeIDValue());
           }
         }
