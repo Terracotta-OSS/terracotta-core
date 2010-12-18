@@ -60,7 +60,7 @@ public class ServerConnectionManager implements NotificationListener {
                                                                                  .getInteger("ServerConnectionManager.connectMonitorPeriodMillis",
                                                                                              DEFAULT_CONNECT_MONITOR_PERIOD);
 
-  private static final int                   DEFAULT_CONNECT_TIMEOUT_SECONDS = 3;
+  private static final int                   DEFAULT_CONNECT_TIMEOUT_SECONDS = 10;
   private static final int                   CONNECT_TIMEOUT_SECONDS         = Integer
                                                                                  .getInteger("ServerConnectionManager.connectTimeoutSeconds",
                                                                                              DEFAULT_CONNECT_TIMEOUT_SECONDS);
