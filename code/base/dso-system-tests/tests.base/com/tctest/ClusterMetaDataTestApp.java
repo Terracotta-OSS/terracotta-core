@@ -16,6 +16,7 @@ import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tc.util.Assert;
+import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoNode;
 
 import java.net.InetAddress;
@@ -23,6 +24,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -41,7 +43,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
   private final Map           treeMap    = new TreeMap();
 
   @InjectedDsoInstance
-  private DsoCluster          cluster;
+  private DsoCluster cluster;
 
   public ClusterMetaDataTestApp(final String appId, final ApplicationConfig config,
                                 final ListenerProvider listenerProvider) {
@@ -187,6 +189,32 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
       Assert.assertSame(unclustered, e.getUnclusteredObject());
     }
   }
+
+  void testGetNodesWithKeysNull() throws Exception {
+    DsoClusterInternal dsoClusterInternal = (DsoClusterInternal)cluster;
+    final Map<?, Set<DsoNode>> result1 = dsoClusterInternal.getNodesWithKeys(null, new HashSet());
+    Assert.assertNotNull(result1);
+    Assert.assertEquals(0, result1.size());
+
+    final int nodeId = barrier.await();
+
+    SomePojo value;
+    synchronized (map) {
+      if (1 == nodeId) {
+        value = new SomePojo();
+        map.put("TESTING", value);
+      }
+    }
+    barrier.await();
+    HashSet<String> keys = new HashSet<String>();
+    keys.add("TESTING");
+    final Map<?, Set<DsoNode>> result2 = dsoClusterInternal.getNodesWithKeys(map, keys);
+    Assert.assertNotNull(result2);
+    Set<DsoNode> dsoNodes = result2.get("TESTING");
+    Assert.assertNotNull(dsoNodes);
+    Assert.assertEquals(dsoNodes.size(), 1);
+  }
+
 
   void testGetNodesWithObject() throws InterruptedException, BrokenBarrierException {
     final int nodeId = barrier.await();

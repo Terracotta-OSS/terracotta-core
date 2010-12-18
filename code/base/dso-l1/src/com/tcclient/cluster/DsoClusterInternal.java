@@ -5,9 +5,14 @@
 package com.tcclient.cluster;
 
 import com.tc.cluster.DsoCluster;
+import com.tc.cluster.exceptions.UnclusteredObjectException;
 import com.tc.net.NodeID;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClusterMetaDataManager;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public interface DsoClusterInternal extends DsoCluster {
 
@@ -42,5 +47,8 @@ public interface DsoClusterInternal extends DsoCluster {
   public void fireOperationsEnabled();
 
   public void fireOperationsDisabled();
+
+  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map, final Collection<? extends K> keys)
+      throws UnclusteredObjectException;
 
 }

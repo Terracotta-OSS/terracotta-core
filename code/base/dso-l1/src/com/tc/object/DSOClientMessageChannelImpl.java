@@ -30,6 +30,8 @@ import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessage;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithKeysMessage;
+import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -53,7 +55,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     ObjectIDBatchRequestMessageFactory, CommitTransactionMessageFactory, AcknowledgeTransactionMessageFactory,
     CompletedTransactionLowWaterMarkMessageFactory, NodesWithObjectsMessageFactory, ServerMapMessageFactory,
     KeysForOrphanedValuesMessageFactory, NodeMetaDataMessageFactory, LockStatisticsReponseMessageFactory,
-    SearchRequestMessageFactory {
+    SearchRequestMessageFactory, NodesWithKeysMessageFactory {
 
   private final ClientMessageChannel channel;
   private final GroupID              groups[];
@@ -161,6 +163,10 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this;
   }
 
+  public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory() {
+    return this;
+  }
+
   public ObjectIDBatchRequestMessage newObjectIDBatchRequestMessage() {
     return (ObjectIDBatchRequestMessage) this.channel.createMessage(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE);
   }
@@ -226,4 +232,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return this.groups;
   }
 
+  public NodesWithKeysMessage newNodesWithKeysMessage(final NodeID nodeID) {
+    return (NodesWithKeysMessage) this.channel.createMessage(TCMessageType.NODES_WITH_KEYS_MESSAGE);
+  }
 }

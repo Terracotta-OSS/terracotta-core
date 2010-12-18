@@ -138,6 +138,32 @@ public class DsoClusterImpl implements DsoClusterInternal {
     return getNodesWithObjects(Arrays.asList(objects));
   }
 
+  public <K> Map<K, Set<DsoNode>> getNodesWithKeys(final Map<K, ?> map,
+                                                   final Collection<? extends K> keys) throws UnclusteredObjectException {
+    Assert.assertNotNull(clusterMetaDataManager);
+
+    if (null == keys || 0 == keys.size() || null == map) { return Collections.emptyMap(); }
+
+    Map<K, Set<DsoNode>> result = new HashMap<K, Set<DsoNode>>();
+
+    if (map instanceof Manageable) {
+      Manageable manageable = (Manageable)map;
+      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
+        Map<K, Set<NodeID>> rawResult = clusterMetaDataManager.getNodesWithKeys((TCMap)map, keys);
+        for (Map.Entry<K, Set<NodeID>> entry : rawResult.entrySet()) {
+          Set<DsoNode> dsoNodes = new HashSet<DsoNode>(rawResult.entrySet().size(), 1.0f);
+          for (NodeID nodeID : entry.getValue()) {
+            DsoNodeInternal dsoNode = topology.getAndRegisterDsoNode(nodeID);
+            dsoNodes.add(dsoNode);
+          }
+          result.put(entry.getKey(), dsoNodes);
+        }
+      }
+    }
+    return result;
+  }
+
+
   public Map<?, Set<DsoNode>> getNodesWithObjects(final Collection<?> objects) throws UnclusteredObjectException {
     Assert.assertNotNull(clusterMetaDataManager);
 

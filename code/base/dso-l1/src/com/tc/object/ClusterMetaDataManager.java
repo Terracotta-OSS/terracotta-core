@@ -30,4 +30,5 @@ public interface ClusterMetaDataManager extends ClientHandshakeCallback {
 
   public void setResponse(ThreadID threadId, Object response);
 
+  public <K> Map<K, Set<NodeID>> getNodesWithKeys(TCMap tcMap, Collection<? extends K> keys);
 }

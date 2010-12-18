@@ -120,6 +120,8 @@ import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.NodeMetaDataMessageImpl;
 import com.tc.object.msg.NodeMetaDataResponseMessageImpl;
+import com.tc.object.msg.NodesWithKeysMessageImpl;
+import com.tc.object.msg.NodesWithKeysResponseMessageImpl;
 import com.tc.object.msg.NodesWithObjectsMessageImpl;
 import com.tc.object.msg.NodesWithObjectsResponseMessageImpl;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -1228,6 +1230,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
+    this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_KEYS_MESSAGE, clusterMetaDataStage.getSink(),
+                                     hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
@@ -1277,6 +1281,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                                     NodesWithObjectsResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE,
                                     KeysForOrphanedValuesMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,

@@ -21,6 +21,8 @@ import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessage;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithKeysMessage;
+import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.util.Assert;
@@ -59,10 +61,12 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
   private final NodesWithObjectsMessageFactory              nwoFactory;
   private final KeysForOrphanedValuesMessageFactory         kfovFactory;
   private final NodeMetaDataMessageFactory                  nmdmFactory;
+  private final NodesWithKeysMessageFactory                 nwkmFactory;
 
   private final Map<ThreadID, NodesWithObjectsMessage>      outstandingNodesWithObjectsRequests      = new ConcurrentHashMap<ThreadID, NodesWithObjectsMessage>();
   private final Map<ThreadID, KeysForOrphanedValuesMessage> outstandingKeysForOrphanedValuesRequests = new ConcurrentHashMap<ThreadID, KeysForOrphanedValuesMessage>();
   private final Map<ThreadID, NodeMetaDataMessage>          outstandingNodeMetaDataRequests          = new ConcurrentHashMap<ThreadID, NodeMetaDataMessage>();
+  private final Map<ThreadID, NodesWithKeysMessage>         outstandingNodesWithKeysRequests         = new ConcurrentHashMap<ThreadID, NodesWithKeysMessage>();
 
   private final Map<ThreadID, WaitForResponse>              waitObjects                              = new HashMap<ThreadID, WaitForResponse>();
   private final Map<ThreadID, Object>                       responses                                = new HashMap<ThreadID, Object>();
@@ -72,13 +76,15 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
                                     final ThreadIDManager threadIDManager,
                                     final NodesWithObjectsMessageFactory nwoFactory,
                                     final KeysForOrphanedValuesMessageFactory kfovFactory,
-                                    final NodeMetaDataMessageFactory nmdmFactory) {
+                                    final NodeMetaDataMessageFactory nmdmFactory,
+                                    final NodesWithKeysMessageFactory nwkmFactory) {
     this.groupID = groupID;
     this.encoding = encoding;
     this.threadIDManager = threadIDManager;
     this.nwoFactory = nwoFactory;
     this.kfovFactory = kfovFactory;
     this.nmdmFactory = nmdmFactory;
+    this.nwkmFactory = nwkmFactory;
   }
 
   public DNAEncoding getEncoding() {
@@ -172,6 +178,16 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     }
   }
 
+  public <K> Map<K, Set<NodeID>> sendNodesWithKeysMessageAndWait(final NodesWithKeysMessage message) {
+    final ThreadID thisThread = threadIDManager.getThreadID();
+    outstandingNodesWithKeysRequests.put(thisThread, message);
+    try {
+      return sendMessageAndWait(thisThread, message);
+    } finally {
+      outstandingNodesWithKeysRequests.remove(thisThread);
+    }
+  }
+
   private DsoNodeMetaData sendNodeMetaDataMessageAndWait(final NodeMetaDataMessage message) {
     final ThreadID thisThread = threadIDManager.getThreadID();
     outstandingNodeMetaDataRequests.put(thisThread, message);
@@ -235,6 +251,16 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       waitObject.markResponseReceived();
       waitObject.notifyAll();
     }
+  }
+
+  public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
+    waitUntilRunning();
+
+    final ObjectID mapObjectID = ((Manageable) tcMap).__tc_managed().getObjectID();
+    NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
+    message.setMapObjectID(mapObjectID);
+    message.setKeys((Set<Object>)keys);
+    return sendMessageAndWait(threadIDManager.getThreadID(), message);
   }
 
   private void resendOutstanding() {

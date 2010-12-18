@@ -22,6 +22,7 @@ import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.msg.ObjectIDBatchRequestMessageFactory;
 import com.tc.object.msg.RequestManagedObjectMessageFactory;
@@ -79,6 +80,8 @@ public interface DSOClientMessageChannel {
   public KeysForOrphanedValuesMessageFactory getKeysForOrphanedValuesMessageFactory();
 
   public NodeMetaDataMessageFactory getNodeMetaDataMessageFactory();
+
+  public NodesWithKeysMessageFactory getNodesWithKeysMessageFactory();
 
   public LockStatisticsReponseMessageFactory getLockStatisticsReponseMessageFactory();
 

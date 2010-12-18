@@ -8,6 +8,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.NodeMetaDataMessage;
+import com.tc.object.msg.NodesWithKeysMessage;
 import com.tc.object.msg.NodesWithObjectsMessage;
 import com.tc.objectserver.clustermetadata.ServerClusterMetaDataManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -25,6 +26,8 @@ public class ServerClusterMetaDataHandler extends AbstractEventHandler {
       this.clusterMetaDataManager.handleMessage((KeysForOrphanedValuesMessage)context);
     } else if (context instanceof NodeMetaDataMessage) {
       this.clusterMetaDataManager.handleMessage((NodeMetaDataMessage)context);
+    } else if (context instanceof NodesWithKeysMessage) {
+      this.clusterMetaDataManager.handleMessage((NodesWithKeysMessage)context);
     } else {
       Assert.fail("Unknown event type "+context.getClass().getName());
     }

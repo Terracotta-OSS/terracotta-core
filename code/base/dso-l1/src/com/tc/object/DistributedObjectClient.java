@@ -120,6 +120,8 @@ import com.tc.object.msg.LockRequestMessage;
 import com.tc.object.msg.LockResponseMessage;
 import com.tc.object.msg.NodeMetaDataMessageImpl;
 import com.tc.object.msg.NodeMetaDataResponseMessageImpl;
+import com.tc.object.msg.NodesWithKeysMessageImpl;
+import com.tc.object.msg.NodesWithKeysResponseMessageImpl;
 import com.tc.object.msg.NodesWithObjectsMessageImpl;
 import com.tc.object.msg.NodesWithObjectsResponseMessageImpl;
 import com.tc.object.msg.ObjectIDBatchRequestMessage;
@@ -572,7 +574,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.clusterMetaDataManager = this.dsoClientBuilder
         .createClusterMetaDataManager(this.channel, encoding, this.threadIDManager, this.channel
             .getNodesWithObjectsMessageFactory(), this.channel.getKeysForOrphanedValuesMessageFactory(), this.channel
-            .getNodeMetaDataMessageFactory());
+            .getNodeMetaDataMessageFactory(), this.channel.getNodesWithKeysMessageFactory());
 
     // Set up the JMX management stuff
     final TunnelingEventHandler teh = this.dsoClientBuilder.createTunnelingEventHandler(this.channel.channel(),
@@ -737,6 +739,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
                                  CompletedTransactionLowWaterMarkMessage.class);
     this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                                  NodesWithObjectsResponseMessageImpl.class);
     this.channel
@@ -850,6 +854,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE,
                                   clusterMembershipEventStage.getSink(), hydrateSink);
     this.channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                                  hydrateSink);
+    this.channel.routeMessageType(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE, clusterMetaDataStage
         .getSink(), hydrateSink);

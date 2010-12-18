@@ -79,6 +79,8 @@ public final class TCMessageType {
   public static final int           TYPE_GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE     = 64;
   public static final int           TYPE_SEARCH_QUERY_REQUEST_MESSAGE                 = 65;
   public static final int           TYPE_SEARCH_QUERY_RESPONSE_MESSAGE                = 66;
+  public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
+  public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
@@ -115,6 +117,8 @@ public final class TCMessageType {
   public static final TCMessageType GROUP_HANDSHAKE_MESSAGE                           = new TCMessageType();
   public static final TCMessageType NODES_WITH_OBJECTS_MESSAGE                        = new TCMessageType();
   public static final TCMessageType NODES_WITH_OBJECTS_RESPONSE_MESSAGE               = new TCMessageType();
+  public static final TCMessageType NODES_WITH_KEYS_MESSAGE                           = new TCMessageType();
+  public static final TCMessageType NODES_WITH_KEYS_RESPONSE_MESSAGE                  = new TCMessageType();
   public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_MESSAGE                  = new TCMessageType();
   public static final TCMessageType KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE         = new TCMessageType();
   public static final TCMessageType NODE_META_DATA_MESSAGE                            = new TCMessageType();

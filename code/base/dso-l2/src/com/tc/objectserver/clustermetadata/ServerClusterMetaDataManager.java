@@ -5,10 +5,12 @@ package com.tc.objectserver.clustermetadata;
 
 import com.tc.object.msg.KeysForOrphanedValuesMessage;
 import com.tc.object.msg.NodeMetaDataMessage;
+import com.tc.object.msg.NodesWithKeysMessage;
 import com.tc.object.msg.NodesWithObjectsMessage;
 
 public interface ServerClusterMetaDataManager {
   public void handleMessage(NodesWithObjectsMessage message);
   public void handleMessage(KeysForOrphanedValuesMessage message);
   public void handleMessage(NodeMetaDataMessage message);
+  public void handleMessage(NodesWithKeysMessage message);
 }

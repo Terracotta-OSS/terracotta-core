@@ -38,6 +38,7 @@ import com.tc.object.msg.ClientHandshakeMessageFactory;
 import com.tc.object.msg.KeysForOrphanedValuesMessageFactory;
 import com.tc.object.msg.LockRequestMessageFactory;
 import com.tc.object.msg.NodeMetaDataMessageFactory;
+import com.tc.object.msg.NodesWithKeysMessageFactory;
 import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
@@ -91,7 +92,8 @@ public interface DSOClientBuilder {
                                                       final ThreadIDManager threadIDManager,
                                                       final NodesWithObjectsMessageFactory nwoFactory,
                                                       final KeysForOrphanedValuesMessageFactory kfovFactory,
-                                                      final NodeMetaDataMessageFactory nmdmFactory);
+                                                      final NodeMetaDataMessageFactory nmdmFactory,
+                                                      final NodesWithKeysMessageFactory nwkmFactory);
 
   ClientObjectManagerImpl createObjectManager(final RemoteObjectManager remoteObjectManager,
                                               final DSOClientConfigHelper dsoConfig, final ObjectIDProvider idProvider,

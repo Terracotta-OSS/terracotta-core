@@ -14,6 +14,7 @@ import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessage;
 import com.tc.object.msg.NodeMetaDataResponseMessage;
+import com.tc.object.msg.NodesWithKeysResponseMessage;
 import com.tc.object.msg.NodesWithObjectsResponseMessage;
 import com.tcclient.cluster.DsoNodeMetaData;
 
@@ -32,9 +33,15 @@ public class ClusterMetaDataHandler extends AbstractEventHandler {
       handleKeysForOrphanedValuesResponseMessage((KeysForOrphanedValuesResponseMessage)context);
     } else if (context instanceof NodeMetaDataResponseMessage) {
       handleNodeMetaDataResponseMessage((NodeMetaDataResponseMessage)context);
+    } else if (context instanceof NodesWithKeysResponseMessage) {
+      handleNodeMetaDataResponseMessage((NodesWithKeysResponseMessage)context);
     } else {
       throw new AssertionError("Unknown event type: " + context.getClass().getName());
     }
+  }
+
+  private void handleNodeMetaDataResponseMessage(final NodesWithKeysResponseMessage message) {
+    clusterMetaDataManager.setResponse(message.getThreadID(), message.getNodesWithKeys());
   }
 
   private void handleNodesWithObjectsResponseMessage(final NodesWithObjectsResponseMessage message) {

@@ -61,6 +61,10 @@ public class DsoClusterTest extends TCTestCase {
       // no-op
     }
 
+    public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
     public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {
       // no-op
 
