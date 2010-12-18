@@ -5,6 +5,7 @@
 package com.tc.admin;
 
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.SyncHTMLEditorKit;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.dso.ClientsNode;
@@ -53,6 +54,7 @@ public class TopologyNode extends ComponentNode implements HyperlinkListener {
   public Component getComponent() {
     if (topologyPanel == null) {
       XTextPane textPane = new XTextPane();
+      textPane.setEditorKit(new SyncHTMLEditorKit());
       topologyPanel = new XScrollPane(textPane);
       try {
         textPane.setPage(getClass().getResource("TopologyIntro.html"));

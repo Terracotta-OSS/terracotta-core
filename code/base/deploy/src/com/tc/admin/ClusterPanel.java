@@ -8,6 +8,7 @@ import com.tc.admin.common.BasicWorker;
 import com.tc.admin.common.ExceptionHelper;
 import com.tc.admin.common.PagedView;
 import com.tc.admin.common.StatusView;
+import com.tc.admin.common.SyncHTMLEditorKit;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -147,6 +148,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
     connectedPanel.add(topPanel, BorderLayout.NORTH);
 
     introPane = new XTextPane();
+    introPane.setEditorKit(new SyncHTMLEditorKit());
     try {
       introPane.setPage(getClass().getResource("Intro.html"));
     } catch (Exception e) {

@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 
 import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.ComponentNode;
+import com.tc.admin.common.SyncHTMLEditorKit;
 import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTextPane;
 import com.tc.admin.dso.ClientsNode;
@@ -300,6 +301,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
   public Component getComponent() {
     if (myApplicationPanel == null) {
       XTextPane textPane = new XTextPane();
+      textPane.setEditorKit(new SyncHTMLEditorKit());
       myApplicationPanel = new XScrollPane(textPane);
       try {
         textPane.setPage(getClass().getResource("MyApplication.html"));

@@ -22,6 +22,7 @@ import com.tc.admin.common.BrowserLauncher;
 import com.tc.admin.common.DemoChartFactory;
 import com.tc.admin.common.LinkButton;
 import com.tc.admin.common.StatusView;
+import com.tc.admin.common.SyncHTMLEditorKit;
 import com.tc.admin.common.XButton;
 import com.tc.admin.common.XContainer;
 import com.tc.admin.common.XLabel;
@@ -592,6 +593,7 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
   protected void setupHypericInstructions(JComponent comp) {
     comp.removeAll();
     XTextPane textPane = new XTextPane();
+    textPane.setEditorKit(new SyncHTMLEditorKit());
     textPane.setEditable(false);
     textPane.setBackground(Color.WHITE);
     textPane.addHyperlinkListener(new HypericInstructionsLinkListener());
