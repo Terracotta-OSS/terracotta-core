@@ -81,6 +81,7 @@ public final class TCMessageType {
   public static final int           TYPE_SEARCH_QUERY_RESPONSE_MESSAGE                = 66;
   public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
   public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
+  public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
@@ -136,6 +137,7 @@ public final class TCMessageType {
   public static final TCMessageType SEARCH_QUERY_RESPONSE_MESSAGE                     = new TCMessageType();
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE           = new TCMessageType();
   public static final TCMessageType GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE          = new TCMessageType();
+  public static final TCMessageType INVALIDATE_OBJECTS_MESSAGE                        = new TCMessageType();
 
   public static TCMessageType getInstance(final int i) {
     return (TCMessageType) typeMap.get(i);

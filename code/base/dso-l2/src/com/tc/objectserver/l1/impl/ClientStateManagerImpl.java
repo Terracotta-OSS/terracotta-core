@@ -40,7 +40,8 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
 
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                        final ApplyTransactionInfo applyInfo, final NodeID id,
-                                                       final Set<ObjectID> lookupObjectIDs) {
+                                                       final Set<ObjectID> lookupObjectIDs,
+                                                       final Set<ObjectID> invalidateObjectIDs) {
     final ClientStateImpl clientState = getClientState(id);
     if (clientState == null) {
       this.logger.warn(": createPrunedChangesAndAddObjectIDTo : Client state is NULL (probably due to disconnect) : "
@@ -69,9 +70,21 @@ public class ClientStateManagerImpl implements ClientStateManager, PrettyPrintab
       clientState.addReferencedChildrenTo(lookupObjectIDs, applyInfo);
       clientState.removeReferencedObjectIDsFrom(lookupObjectIDs);
 
+      addInvalidateObjectIDsTo(clientState, invalidateObjectIDs, applyInfo.getObjectIDsToInvalidate());
+
       return prunedChanges;
     } finally {
       clientState.unlock();
+    }
+  }
+
+  private void addInvalidateObjectIDsTo(ClientStateImpl clientState, Set<ObjectID> invalidatedObjectIDsForClient,
+                                        Set<ObjectID> invalidatedObjectIDs) {
+    if (invalidatedObjectIDs.isEmpty()) return;
+    for (ObjectID oid : invalidatedObjectIDs) {
+      if (clientState.containsReference(oid)) {
+        invalidatedObjectIDsForClient.add(oid);
+      }
     }
   }
 

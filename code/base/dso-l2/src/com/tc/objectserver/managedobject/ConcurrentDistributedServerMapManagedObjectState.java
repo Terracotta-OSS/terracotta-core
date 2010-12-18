@@ -157,6 +157,13 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
   }
 
+  @Override
+  protected void invalidateIfNeeded(ApplyTransactionInfo applyInfo, ObjectID old) {
+    if (invalidateOnChange) {
+      applyInfo.invalidate(old);
+    }
+  }
+
   private void applyRemoveIfValueEqual(final Object[] params) {
     final Object key = getKey(params);
     final Object value = getValue(params);

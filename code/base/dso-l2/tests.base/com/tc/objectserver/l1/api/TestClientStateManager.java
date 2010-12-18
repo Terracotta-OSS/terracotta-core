@@ -45,7 +45,7 @@ public class TestClientStateManager implements ClientStateManager {
 
   public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                        final ApplyTransactionInfo includeIDs, final NodeID clientID,
-                                                       final Set<ObjectID> objectIDs) {
+                                                       final Set<ObjectID> objectIDs, final Set<ObjectID> invalidIDs) {
     return Collections.emptyList();
   }
 

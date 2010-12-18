@@ -21,6 +21,7 @@ import java.util.Set;
 public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
 
   private final AddCallBack<K, V>            addCallback    = new AddCallBack<K, V>();
+  private final AddAllCallBack<K, V>         addAllCallback = new AddAllCallBack<K, V>();
   private final RemoveCallBack<K, V>         removeCallback = new RemoveCallBack<K, V>();
 
   private final TCConcurrentStore<K, Set<V>> store;
@@ -80,6 +81,17 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
   }
 
   /**
+   * Adds all mapping of key to Set of values to the Multimap. If there already exists a mapping for the key, then the
+   * value is added to the set of values mapped to that key.
+   * 
+   * @return true, if there exists no mapping for this key before this call.
+   * @throws NullPointerException if key or value is null
+   */
+  public boolean addAll(final K key, final Set<V> values) {
+    return (Boolean) this.store.executeUnderWriteLock(key, values, this.addAllCallback);
+  }
+
+  /**
    * Removes the mapping of key to value if it exists in the Multimap.
    * 
    * @returns true if the mapping existed and was successfully removed, false if the mapping didn't exist.
@@ -129,7 +141,7 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     return true;
   }
 
-  private static final class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
+  private static class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
     public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
       boolean newEntry = false;
@@ -140,6 +152,20 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
         newEntry = true;
       }
       set.add((V) value);
+      return newEntry;
+    }
+  }
+
+  private static final class AddAllCallBack<K, V> extends AddCallBack<K, V> implements
+      TCConcurrentStoreCallback<K, Set<V>> {
+    // Called under segment lock
+    @Override
+    public Object callback(final K key, final Object values, final Map<K, Set<V>> segment) {
+      boolean newEntry = false;
+      Set<V> values2Add = (Set<V>) values;
+      for (V value : values2Add) {
+        newEntry |= (Boolean) super.callback(key, value, segment);
+      }
       return newEntry;
     }
   }

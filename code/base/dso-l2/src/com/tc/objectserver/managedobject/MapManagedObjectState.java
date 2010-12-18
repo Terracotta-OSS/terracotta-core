@@ -42,17 +42,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
     super(in);
   }
 
-  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo includeIDs)
+  public void apply(final ObjectID objectID, final DNACursor cursor, final ApplyTransactionInfo applyInfo)
       throws IOException {
     while (cursor.next()) {
       final LogicalAction action = cursor.getLogicalAction();
       final int method = action.getMethod();
       final Object[] params = action.getParameters();
-      applyMethod(objectID, includeIDs, method, params);
+      applyMethod(objectID, applyInfo, method, params);
     }
   }
 
-  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo includeIDs, final int method,
+  protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                              final Object[] params) {
     switch (method) {
       case SerializationUtil.PUT:
@@ -60,20 +60,26 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         mapPreProcess(params);
         final Object key = getKey(params);
         final Object value = getValue(params);
-        this.references.put(key, value);
+        Object old = this.references.put(key, value);
         if (key instanceof ObjectID) {
           final ObjectID v = (ObjectID) key;
           getListener().changed(objectID, null, v);
-          addBackReferenceForKey(includeIDs, v, objectID);
+          addBackReferenceForKey(applyInfo, v, objectID);
         }
         if (value instanceof ObjectID) {
           final ObjectID v = (ObjectID) value;
           getListener().changed(objectID, null, v);
-          addBackReferenceForValue(includeIDs, v, objectID);
+          addBackReferenceForValue(applyInfo, v, objectID);
+        }
+        if (old instanceof ObjectID) {
+          invalidateIfNeeded(applyInfo, (ObjectID) old);
         }
         break;
       case SerializationUtil.REMOVE:
-        this.references.remove(params[0]);
+        old = this.references.remove(params[0]);
+        if (old instanceof ObjectID) {
+          invalidateIfNeeded(applyInfo, (ObjectID) old);
+        }
         break;
       case SerializationUtil.CLEAR:
         this.references.clear();
@@ -82,6 +88,10 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
         throw new AssertionError("Invalid action:" + method);
     }
 
+  }
+
+  protected void invalidateIfNeeded(ApplyTransactionInfo applyInfo, ObjectID objectID) {
+    // Overridden by subclasses
   }
 
   protected void addBackReferenceForKey(final ApplyTransactionInfo includeIDs, final ObjectID key, final ObjectID map) {

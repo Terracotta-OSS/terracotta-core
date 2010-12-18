@@ -80,6 +80,7 @@ import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.handler.LockResponseHandler;
 import com.tc.object.handler.LockStatisticsEnableDisableHandler;
 import com.tc.object.handler.LockStatisticsResponseHandler;
+import com.tc.object.handler.ReceiveInvalidationHandler;
 import com.tc.object.handler.ReceiveObjectHandler;
 import com.tc.object.handler.ReceiveRootIDHandler;
 import com.tc.object.handler.ReceiveSearchQueryResponseHandler;
@@ -113,6 +114,7 @@ import com.tc.object.msg.GetAllSizeServerMapRequestMessageImpl;
 import com.tc.object.msg.GetAllSizeServerMapResponseMessageImpl;
 import com.tc.object.msg.GetValueServerMapRequestMessageImpl;
 import com.tc.object.msg.GetValueServerMapResponseMessageImpl;
+import com.tc.object.msg.InvalidateObjectsMessage;
 import com.tc.object.msg.JMXMessage;
 import com.tc.object.msg.KeysForOrphanedValuesMessageImpl;
 import com.tc.object.msg.KeysForOrphanedValuesResponseMessageImpl;
@@ -683,6 +685,9 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final Stage jmxRemoteTunnelStage = stageManager.createStage(ClientConfigurationContext.JMXREMOTE_TUNNEL_STAGE, teh,
                                                                 1, maxSize);
+    final Stage receiveInvalidationStage = stageManager
+        .createStage(ClientConfigurationContext.RECEIVE_INVALIDATE_OBJECTS_STAGE,
+                     new ReceiveInvalidationHandler(remoteServerMapManager), 1, maxSize);
 
     final List<ClientHandshakeCallback> clientHandshakeCallbacks = new ArrayList<ClientHandshakeCallback>();
     clientHandshakeCallbacks.add(this.lockManager);
@@ -827,6 +832,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                    }
                                  });
     this.channel.addClassMapping(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
+    this.channel.addClassMapping(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
 
     DSO_LOGGER.debug("Added class mappings.");
 
@@ -874,6 +880,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.channel.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
                                   receiveServerMapEvictionBroadcastStage.getSink(), hydrateSink);
     this.channel.routeMessageType(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, receiveSearchQueryStage.getSink(),
+                                  hydrateSink);
+    this.channel.routeMessageType(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, receiveInvalidationStage.getSink(),
                                   hydrateSink);
 
     int i = 0;

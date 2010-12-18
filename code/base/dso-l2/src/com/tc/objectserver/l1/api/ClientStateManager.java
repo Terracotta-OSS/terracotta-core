@@ -44,7 +44,8 @@ public interface ClientStateManager {
    * Prunes the changes list down to include only changes for objects the given client has.
    */
   public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
-                                                       NodeID clientID, Set<ObjectID> objectIDs);
+                                                       NodeID clientID, Set<ObjectID> objectIDs,
+                                                       Set<ObjectID> invalidateObjectIDs);
 
   public Set<ObjectID> addAllReferencedIdsTo(Set<ObjectID> rescueIds);
 

@@ -12,6 +12,7 @@ import com.tc.net.ClientID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.TCMessageType;
+import com.tc.object.ObjectID;
 import com.tc.object.ObjectRequestID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
@@ -22,10 +23,12 @@ import com.tc.objectserver.context.BroadcastChangeContext;
 import com.tc.objectserver.context.ObjectRequestServerContextImpl;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
+import com.tc.util.ObjectIDSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,27 +36,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.SortedSet;
 
 /**
  * Broadcast the change to all connected clients
  */
 public class BroadcastChangeHandler extends AbstractEventHandler {
 
-  private DSOChannelManager         channelManager;
-  private ClientStateManager        clientStateManager;
-  private ServerTransactionManager  transactionManager;
-  private Sink                      managedObjectRequestSink;
-  private final ObjectStatsRecorder objectStatsRecorder;
+  private DSOChannelManager             channelManager;
+  private ClientStateManager            clientStateManager;
+  private ServerTransactionManager      transactionManager;
+  private Sink                          managedObjectRequestSink;
+  private final ObjectStatsRecorder     objectStatsRecorder;
 
-  private final SampledCounter      broadcastCounter;
-  private final SampledRateCounter  changesPerBroadcast;
+  private final SampledCounter          broadcastCounter;
+  private final SampledRateCounter      changesPerBroadcast;
+  private final InvalidateObjectManager invalidateObjMgr;
 
   public BroadcastChangeHandler(final SampledCounter broadcastCounter, final ObjectStatsRecorder objectStatsRecorder,
-                                final SampledRateCounter changesPerBroadcast) {
+                                final SampledRateCounter changesPerBroadcast, InvalidateObjectManager invalidateObjMgr) {
     this.broadcastCounter = broadcastCounter;
     this.objectStatsRecorder = objectStatsRecorder;
     this.changesPerBroadcast = changesPerBroadcast;
+    this.invalidateObjMgr = invalidateObjMgr;
   }
 
   @Override
@@ -72,11 +77,16 @@ public class BroadcastChangeHandler extends AbstractEventHandler {
       final Map newRoots = bcc.getNewRoots();
       final Set notifiedWaiters = bcc.getNewlyPendingWaiters().getNotifiedFor(clientID);
       List prunedChanges = Collections.EMPTY_LIST;
-      final TreeSet lookupObjectIDs = new TreeSet();
+      final SortedSet<ObjectID> lookupObjectIDs = new ObjectIDSet();
+      final SortedSet<ObjectID> invalidateObjectIDs = new ObjectIDSet();
 
       if (!clientID.equals(committerID)) {
         prunedChanges = this.clientStateManager.createPrunedChangesAndAddObjectIDTo(bcc.getChanges(), bcc
-            .getApplyInfo(), clientID, lookupObjectIDs);
+            .getApplyInfo(), clientID, lookupObjectIDs, invalidateObjectIDs);
+      }
+
+      if (!invalidateObjectIDs.isEmpty()) {
+        invalidateObjMgr.invalidateObjectFor(clientID, invalidateObjectIDs);
       }
 
       if (this.objectStatsRecorder.getBroadcastDebug()) {

@@ -79,7 +79,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String SERVER_MAP_EVICTION_BROADCAST_STAGE                = "server_map_eviction_broadcast_stage";
   public static final String SEARCH_EVENT_STAGE                                 = "search_event_stage";
   public static final String SEARCH_QUERY_REQUEST_STAGE                         = "search_query_request_stage";
-  
+  public static final String INVALIDATE_OBJECTS_STAGE                           = "invalidate_objects_stage";
+
   // TODO::Move to enterprise
   public static final String AA_TRANSACTION_WATERMARK_BROADCAST_STAGE           = "aa_transaction_watermark_broadcast_stage";
   public static final String AA_TRANSACTION_WATERMARK_RECEIVE_STAGE             = "aa_transaction_watermark_receive_stage";
@@ -119,8 +120,8 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public ServerClusterMetaDataManager getClusterMetaDataManager();
 
   public MetaDataManager getMetaDataManager();
-  
+
   public IndexManager getIndexManager();
-  
+
   public SearchRequestManager getSearchRequestManager();
 }

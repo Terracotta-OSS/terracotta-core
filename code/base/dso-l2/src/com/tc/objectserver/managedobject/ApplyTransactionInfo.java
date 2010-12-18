@@ -5,6 +5,7 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.util.ObjectIDSet;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,8 +19,9 @@ public class ApplyTransactionInfo {
   private final Map     nodes;
   private final Set     parents;
   private final boolean activeTxn;
-  private Set           ignoreBroadcasts = Collections.EMPTY_SET;
-  private Set           initiateEviction = Collections.EMPTY_SET;
+  private Set<ObjectID> ignoreBroadcasts = Collections.EMPTY_SET;
+  private Set<ObjectID> initiateEviction = Collections.EMPTY_SET;
+  private Set<ObjectID> invalidate       = Collections.EMPTY_SET;
 
   // For tests
   public ApplyTransactionInfo() {
@@ -117,7 +119,7 @@ public class ApplyTransactionInfo {
 
   public void ignoreBroadcastFor(final ObjectID objectID) {
     if (this.ignoreBroadcasts == Collections.EMPTY_SET) {
-      this.ignoreBroadcasts = new HashSet();
+      this.ignoreBroadcasts = new ObjectIDSet();
     }
     this.ignoreBroadcasts.add(objectID);
   }
@@ -128,12 +130,23 @@ public class ApplyTransactionInfo {
 
   public void initiateEvictionFor(final ObjectID objectID) {
     if (this.initiateEviction == Collections.EMPTY_SET) {
-      this.initiateEviction = new HashSet();
+      this.initiateEviction = new ObjectIDSet();
     }
     this.initiateEviction.add(objectID);
   }
 
   public Set getObjectIDsToInitateEviction() {
     return this.initiateEviction;
+  }
+
+  public void invalidate(ObjectID old) {
+    if (this.invalidate == Collections.EMPTY_SET) {
+      this.invalidate = new ObjectIDSet();
+    }
+    this.invalidate.add(old);
+  }
+
+  public Set<ObjectID> getObjectIDsToInvalidate() {
+    return invalidate;
   }
 }

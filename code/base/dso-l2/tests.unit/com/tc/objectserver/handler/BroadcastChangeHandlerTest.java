@@ -3,6 +3,8 @@
  */
 package com.tc.objectserver.handler;
 
+import org.mockito.Mockito;
+
 import com.tc.async.api.AddPredicate;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
@@ -51,6 +53,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.locks.NotifiedWaiters;
 import com.tc.objectserver.managedobject.ApplyTransactionInfo;
@@ -100,7 +103,8 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     super.setUp();
     final SampledCounterImpl sci = new SampledCounterImpl(new SampledCounterConfig(5, 10, true, 0));
     final SampledRateCounterImpl srci = new SampledRateCounterImpl(new SampledRateCounterConfig(5, 10, true));
-    this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci);
+    this.handler = new BroadcastChangeHandler(sci, new ObjectStatsRecorder(), srci, Mockito
+        .mock(InvalidateObjectManager.class));
     this.serverCfgCxt = new TestServerConfigurationContext(NO_OF_CLIENTS, DISCONNECTED_CLIENT);
     this.handler.initialize(this.serverCfgCxt);
   }
@@ -627,9 +631,9 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       return null;
     }
 
-    public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
-                                                         final ApplyTransactionInfo references, final NodeID clientID,
-                                                         final Set<ObjectID> objectIDs) {
+    public List<DNA> createPrunedChangesAndAddObjectIDTo(Collection<DNA> changes, ApplyTransactionInfo references,
+                                                         NodeID clientID, Set<ObjectID> objectIDs,
+                                                         Set<ObjectID> invalidateObjectIDs) {
       final ArrayList<DNA> list = new ArrayList<DNA>();
       final ObjectID dateID = new ObjectID(1);
       list.add(new TestDateDNA("java.util.Date", dateID));

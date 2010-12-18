@@ -93,8 +93,8 @@ public class ObjectRequestManagerTest extends TestCase {
 
     ManagedObjectStateFactory.disableSingleton(true);
     final DBPersistorImpl persistor = new DBPersistorImpl(TCLogging.getLogger(ObjectRequestManagerTest.class),
-                                                                new BerkeleyDBEnvironment(true, new File(".")),
-                                                                new CustomSerializationAdapterFactory());
+                                                          new BerkeleyDBEnvironment(true, new File(".")),
+                                                          new CustomSerializationAdapterFactory());
 
     final ManagedObjectChangeListenerProviderImpl moclp = new ManagedObjectChangeListenerProviderImpl();
     moclp.setListener(new ManagedObjectChangeListener() {
@@ -792,7 +792,7 @@ public class ObjectRequestManagerTest extends TestCase {
 
     public List<DNA> createPrunedChangesAndAddObjectIDTo(final Collection<DNA> changes,
                                                          final ApplyTransactionInfo references, final NodeID clientID,
-                                                         final Set<ObjectID> objectIDs) {
+                                                         final Set<ObjectID> objectIDs, final Set<ObjectID> invalidIDs) {
       throw new NotImplementedException(TestClientStateManager.class);
     }
 
