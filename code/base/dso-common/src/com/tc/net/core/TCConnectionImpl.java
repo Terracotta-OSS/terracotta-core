@@ -96,7 +96,8 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
                                                                                      128) * 1024;
   private static final boolean               MESSSAGE_PACKUP             = TCPropertiesImpl
                                                                              .getProperties()
-                                                                             .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED);
+                                                                             .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
+                                                                                         false);
 
   static {
     logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
