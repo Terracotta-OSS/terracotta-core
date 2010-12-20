@@ -3,16 +3,14 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 /**
  * Context holding search index clear information.
  * 
  * @author teck
  */
-public class SearchClearContext extends AbstractMetaDataContext implements MultiThreadedEventContext {
+public class SearchClearContext extends BaseSearchEventContext {
 
   private final String name;
 
@@ -27,12 +25,4 @@ public class SearchClearContext extends AbstractMetaDataContext implements Multi
   public String getName() {
     return name;
   }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Object getKey() {
-    return getSourceID();
-  }
-
 }

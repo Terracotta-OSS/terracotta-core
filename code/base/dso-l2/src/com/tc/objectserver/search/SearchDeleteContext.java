@@ -3,16 +3,14 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 /**
  * Context holding search index deletion information.
  * 
  * @author Nabib El-Rahman
  */
-public class SearchDeleteContext extends AbstractMetaDataContext implements MultiThreadedEventContext {
+public class SearchDeleteContext extends BaseSearchEventContext {
 
   private final String name;
   private final Object cacheKey;
@@ -35,13 +33,6 @@ public class SearchDeleteContext extends AbstractMetaDataContext implements Mult
    */
   public Object getCacheKey() {
     return cacheKey;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Object getKey() {
-    return getSourceID();
   }
 
 }

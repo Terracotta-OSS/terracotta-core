@@ -3,10 +3,8 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.tx.ServerTransactionID;
-import com.tc.objectserver.metadata.AbstractMetaDataContext;
 
 import java.util.List;
 
@@ -15,7 +13,7 @@ import java.util.List;
  * 
  * @author Nabib El-Rahman
  */
-public class SearchUpsertContext extends AbstractMetaDataContext implements MultiThreadedEventContext {
+public class SearchUpsertContext extends BaseSearchEventContext {
 
   private final String       name;
   private final List<NVPair> attributes;
@@ -49,13 +47,6 @@ public class SearchUpsertContext extends AbstractMetaDataContext implements Mult
    */
   public List<NVPair> getAttributes() {
     return attributes;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public Object getKey() {
-    return getSourceID();
   }
 
 }
