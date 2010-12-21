@@ -52,7 +52,7 @@ public class SRAMemoryUsage implements StatisticRetrievalAction {
 
   private String formatMemory(long memory) {
     if (memory >= MB) {
-      DecimalFormat decimalFormat = new DecimalFormat("#.000 MB");
+      DecimalFormat decimalFormat = new DecimalFormat("#.000000 MB");
       return decimalFormat.format(memory / MB);
     } else if (memory >= KB) {
       DecimalFormat decimalFormat = new DecimalFormat("#.000 KB");
