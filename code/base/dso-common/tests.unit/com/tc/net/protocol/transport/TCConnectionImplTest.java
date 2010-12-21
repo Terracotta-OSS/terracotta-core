@@ -17,6 +17,7 @@ import com.tc.net.protocol.TCNetworkMessage;
 import com.tc.net.protocol.TCProtocolAdaptor;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
@@ -118,7 +119,7 @@ public class TCConnectionImplTest extends TestCase {
 
     checker.start();
     long startTime = System.currentTimeMillis();
-    for (int i = 0; i < 25; i++) {
+    for (int i = 0; i < 100; i++) {
 
       int bufCount = r.nextInt(15 + 1);
       fullySent.set(false);
@@ -154,12 +155,44 @@ public class TCConnectionImplTest extends TestCase {
     long totLen = 0;
     while (bufCunt > 0) {
       len = r.nextInt(500 + 1);
-      bufs.add(TCByteBufferFactory.wrap(new byte[len]));
+
+      TCByteBuffer sourceBuffer = TCByteBufferFactory.wrap(getContent(len).getBytes());
+
+      switch (len % 3) {
+        case 0:
+          break;
+        case 1:
+          int pos = r.nextInt(len);
+          if (pos < 0 || pos > sourceBuffer.limit()) pos = 0;
+          sourceBuffer.position(pos);
+          sourceBuffer = sourceBuffer.slice();
+          break;
+        case 2:
+          if (sourceBuffer.hasRemaining()) sourceBuffer.get();
+          if (sourceBuffer.remaining() > TCMessageHeader.HEADER_LENGTH) sourceBuffer
+              .get(new byte[TCMessageHeader.HEADER_LENGTH]);
+          sourceBuffer = sourceBuffer.duplicate();
+      }
+
+      bufs.add(sourceBuffer);
       bufCunt--;
       totLen += len;
     }
     TCNetworkMessage message = getDSOMessage(monitor, bufs.toArray(new TCByteBuffer[] {}), totLen);
     return message;
+  }
+
+  private String getContent(final int length) {
+    StringBuffer buf = new StringBuffer();
+    String str = new String("abcde12345abcde12345abcde");
+
+    int remaining = length;
+    while (remaining > 0) {
+      int copyLen = (remaining > str.length()) ? str.length() : remaining;
+      buf.append(str.substring(0, copyLen));
+      remaining -= copyLen;
+    }
+    return buf.toString();
   }
 
   private TCNetworkMessage getDSOMessage(final MessageMonitor monitor, TCByteBuffer[] bufs, long totLen) {
