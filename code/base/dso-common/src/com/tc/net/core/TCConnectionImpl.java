@@ -97,7 +97,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private static final boolean               MESSSAGE_PACKUP             = TCPropertiesImpl
                                                                              .getProperties()
                                                                              .getBoolean(TCPropertiesConsts.TC_MESSAGE_PACKUP_ENABLED,
-                                                                                         false);
+                                                                                         true);
 
   static {
     logger.info("Comms Message Batching " + (MSG_GROUPING_ENABLED ? "enabled" : "disabled"));
@@ -812,6 +812,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       return clonedMessageData;
     }
 
+    /**
+     * Copies full message contents onto series of 4K chunk direct byte buffers. Since this routine operates on source
+     * message byte buffer's backing arrays, these buffers shouldn't be readOnlyBuffers.
+     */
     private static TCByteBuffer[] getPackedUpMessage(final TCByteBuffer[] sourceMessageByteBuffers) {
 
       int srcIndex = 0, srcOffset = 0, dstIndex = 0, srcRem = 0, dstRem = 0, written = 0, len = 0;
@@ -821,9 +825,12 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
       // packedup message is direct byte buffers based. so that system socket write can avoid copy over of data
       TCByteBuffer[] packedUpMessageByteBuffers = TCByteBufferFactory.getFixedSizedInstancesForLength(true, len);
+      srcOffset = sourceMessageByteBuffers[srcIndex].arrayOffset();
       while (srcIndex < sourceMessageByteBuffers.length) {
         dstRem = packedUpMessageByteBuffers[dstIndex].remaining();
-        srcRem = sourceMessageByteBuffers[srcIndex].limit() - srcOffset;
+        srcRem = (sourceMessageByteBuffers[srcIndex].arrayOffset() + sourceMessageByteBuffers[srcIndex].limit())
+                 - srcOffset;
+
         if (srcRem > dstRem) {
           packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
           srcOffset += dstRem;
@@ -833,12 +840,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
           packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, dstRem);
           dstIndex++;
           srcIndex++;
-          srcOffset = 0;
+          srcOffset = ((srcIndex < sourceMessageByteBuffers.length) ? sourceMessageByteBuffers[srcIndex].arrayOffset()
+              : 0);
           written += dstRem;
         } else {
           packedUpMessageByteBuffers[dstIndex].put(sourceMessageByteBuffers[srcIndex].array(), srcOffset, srcRem);
           srcIndex++;
-          srcOffset = 0;
+          srcOffset = ((srcIndex < sourceMessageByteBuffers.length) ? sourceMessageByteBuffers[srcIndex].arrayOffset()
+              : 0);
           written += srcRem;
         }
       }
@@ -846,12 +855,13 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       for (TCByteBuffer compactedMessageByteBuffer : packedUpMessageByteBuffers) {
         compactedMessageByteBuffer.flip();
       }
+
       if (len != written) {
         Assert.assertEquals("Comms Write: packed-up message length is different from original. ", len, written);
       }
+
       return packedUpMessageByteBuffers;
     }
-
   }
 
   public void addWeight(final int addWeightBy) {
