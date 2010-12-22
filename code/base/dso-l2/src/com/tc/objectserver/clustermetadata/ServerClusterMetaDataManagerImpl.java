@@ -30,6 +30,7 @@ import com.tc.objectserver.managedobject.PartialMapManagedObjectState;
 import java.io.ByteArrayOutputStream;
 import java.net.InetAddress;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -104,8 +105,9 @@ public class ServerClusterMetaDataManagerImpl implements ServerClusterMetaDataMa
           }
           responseMessage.initialize(message.getThreadID(), resultMap);
         } else {
-          logger.error("Received keys for orphaned values message for object '" + message.getMapObjectID()
+          logger.error("Received nodes for keys message for object '" + message.getMapObjectID()
                        + "' whose managed state isn't a partial map, returning an empty set.");
+          responseMessage.initialize(message.getThreadID(), Collections.<Object, Set<NodeID>>emptyMap());
         }
       } finally {
         objectManager.releaseReadOnly(managedMap);
