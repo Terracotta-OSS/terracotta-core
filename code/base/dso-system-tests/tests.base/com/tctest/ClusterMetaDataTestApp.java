@@ -43,7 +43,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
   private final Map           treeMap    = new TreeMap();
 
   @InjectedDsoInstance
-  private DsoCluster cluster;
+  private DsoCluster          cluster;
 
   public ClusterMetaDataTestApp(final String appId, final ApplicationConfig config,
                                 final ListenerProvider listenerProvider) {
@@ -190,8 +190,11 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     }
   }
 
+  /**
+   *
+   */
   void testGetNodesWithKeys() throws Exception {
-    DsoClusterInternal dsoClusterInternal = (DsoClusterInternal)cluster;
+    DsoClusterInternal dsoClusterInternal = (DsoClusterInternal) cluster;
     final Map<?, Set<DsoNode>> result1 = dsoClusterInternal.getNodesWithKeys(null, new HashSet());
     Assert.assertNotNull(result1);
     Assert.assertEquals(0, result1.size());
@@ -227,10 +230,9 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     barrier.await();
 
-    Object value;
     if (1 == nodeId) {
       synchronized (map) {
-        value = map.get("TESTING");
+        map.get("TESTING");
       }
     }
 
@@ -243,7 +245,6 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     Assert.assertNotNull("Failed on node " + nodeId, dsoNodes);
     Assert.assertEquals("Failed on node " + nodeId, 2, dsoNodes.size());
   }
-
 
   void testGetNodesWithObject() throws InterruptedException, BrokenBarrierException {
     final int nodeId = barrier.await();
@@ -390,8 +391,8 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     if (0 == nodeId) {
       checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(pojo.getYourMojo(), null, pojo.getMyMojo()));
-      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null, pojo
-          .getMyMojo())));
+      checkGetNodesWithObjectsResult(cluster.getNodesWithObjects(Arrays.asList(pojo.getYourMojo(), null,
+                                                                               pojo.getMyMojo())));
     }
 
     barrier.await();
