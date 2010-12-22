@@ -51,7 +51,7 @@ public class ToolkitVersion {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName() + "(" + major + "." + minor + (isEE() ? "-ee" : "");
+    return getClass().getSimpleName() + "(" + major + "." + minor + (isEE() ? "-ee)" : ")");
   }
 
   public int getMajor() {
