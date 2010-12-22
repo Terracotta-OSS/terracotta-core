@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassiveTransparentTestBase {
 
   private static final int NODE_COUNT = 4;
-  
+
   public LinkedBlockingQueueL2ReconnectActivePassiveTest() {
     if (Os.isWindows()) {
       // System.err.println("Disabling it for windows only for now");
@@ -24,30 +24,34 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassi
     }
   }
 
+  @Override
   protected void setJvmArgsL2Reconnect(final ArrayList jvmArgs) {
     super.setJvmArgsL2Reconnect(jvmArgs);
-    if (Os.isSolaris()) {
-      setL2ReconnectTimout(jvmArgs, 5000);
-    }
+    setL2ReconnectTimout(jvmArgs, 5000);
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return LinkedBlockingQueueCrashTestApp.class;
   }
-  
+
+  @Override
   protected boolean enableL2Reconnect() {
     return true;
   }
-  
+
+  @Override
   protected boolean canRunL2ProxyConnect() {
     return true;
   }
 
+  @Override
   protected void setupL2ProxyConnectTest(ProxyConnectManager[] managers) {
     /*
      * subclass can overwrite to change the test parameters.
@@ -58,6 +62,7 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassi
     }
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
@@ -65,5 +70,5 @@ public class LinkedBlockingQueueL2ReconnectActivePassiveTest extends ActivePassi
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
- 
+
 }
