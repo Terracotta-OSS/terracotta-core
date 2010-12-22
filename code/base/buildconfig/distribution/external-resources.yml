@@ -70,14 +70,14 @@ artifacts:
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-api
-    version: 1.5.11
+    version: 1.6.1
     destination: ehcache/lib
     kit_edition: opensource
 
   - maven_artifact: true
     groupId: org.slf4j
     artifactId: slf4j-jdk14
-    version: 1.5.11
+    version: 1.6.1
     destination: ehcache/lib
     kit_edition: opensource
 
