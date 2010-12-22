@@ -190,7 +190,7 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
     }
   }
 
-  void testGetNodesWithKeysNull() throws Exception {
+  void testGetNodesWithKeys() throws Exception {
     DsoClusterInternal dsoClusterInternal = (DsoClusterInternal)cluster;
     final Map<?, Set<DsoNode>> result1 = dsoClusterInternal.getNodesWithKeys(null, new HashSet());
     Assert.assertNotNull(result1);
@@ -198,21 +198,50 @@ public class ClusterMetaDataTestApp extends DedicatedMethodsTestApp {
 
     final int nodeId = barrier.await();
 
-    SomePojo value;
-    synchronized (map) {
-      if (1 == nodeId) {
-        value = new SomePojo();
-        map.put("TESTING", value);
+    if (0 == nodeId) {
+      SomePojo v1 = new SomePojo();
+      SomePojo v2 = new SomePojo();
+      synchronized (map) {
+        map.put("TESTING", v1);
+        map.put("KEY", v2);
       }
     }
+
     barrier.await();
+
     HashSet<String> keys = new HashSet<String>();
     keys.add("TESTING");
-    final Map<?, Set<DsoNode>> result2 = dsoClusterInternal.getNodesWithKeys(map, keys);
+    keys.add("NOT HERE!");
+    final Map<String, Set<DsoNode>> result2 = dsoClusterInternal.getNodesWithKeys(map, keys);
+
+    Set<DsoNode> dsoNodes;
+
     Assert.assertNotNull(result2);
-    Set<DsoNode> dsoNodes = result2.get("TESTING");
+    Assert.assertNull(result2.get("KEY"));
+    dsoNodes = result2.get("TESTING");
+    Assert.assertNotNull("Failed on node " + nodeId, dsoNodes);
+    Assert.assertEquals("Failed on node " + nodeId, 1, dsoNodes.size());
+    dsoNodes = result2.get("NOT HERE!");
     Assert.assertNotNull(dsoNodes);
-    Assert.assertEquals(dsoNodes.size(), 1);
+    Assert.assertEquals(0, dsoNodes.size());
+
+    barrier.await();
+
+    Object value;
+    if (1 == nodeId) {
+      synchronized (map) {
+        value = map.get("TESTING");
+      }
+    }
+
+    barrier.await();
+
+    final Map<String, Set<DsoNode>> result3 = dsoClusterInternal.getNodesWithKeys(map, keys);
+    Assert.assertNotNull("Failed on node " + nodeId, result3);
+    Assert.assertNull("Failed on node " + nodeId, result3.get("KEY"));
+    dsoNodes = result3.get("TESTING");
+    Assert.assertNotNull("Failed on node " + nodeId, dsoNodes);
+    Assert.assertEquals("Failed on node " + nodeId, 2, dsoNodes.size());
   }
 
 

@@ -260,7 +260,13 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
     message.setMapObjectID(mapObjectID);
     message.setKeys((Set<Object>)keys);
-    return sendMessageAndWait(threadIDManager.getThreadID(), message);
+    Map<K, Set<NodeID>> result = sendMessageAndWait(threadIDManager.getThreadID(), message);
+    for (K key : keys) {
+      if(!result.containsKey(key)) {
+        result.put(key, Collections.<NodeID>emptySet());
+      }
+    }
+    return result;
   }
 
   private void resendOutstanding() {
