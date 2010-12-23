@@ -11,16 +11,12 @@ import com.tc.async.api.Sink;
 import com.tc.l2.context.IndexSyncContext;
 import com.tc.l2.context.SyncIndexesRequest;
 import com.tc.l2.objectserver.L2IndexStateManager;
-import com.tc.logging.TCLogger;
-import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
 public class L2IndexSyncRequestHandler extends AbstractEventHandler {
-
-  private static final TCLogger     logger = TCLogging.getLogger(L2IndexSyncRequestHandler.class);
 
   private final L2IndexStateManager l2IndexStateManager;
   private final SequenceGenerator   sequenceGenerator;
