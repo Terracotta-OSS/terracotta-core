@@ -87,6 +87,10 @@ public interface ServerConfigurationContext extends ConfigurationContext {
   public static final String AA_OBJECT_REQUEST_LOOKUP_STAGE                     = "aa_object_request_lookup_stage";
   public static final String AA_CLOSE_CHANNEL_STAGE                             = "aa_close_channel_stage";
 
+  public static final String INDEXES_SYNC_REQUEST_STAGE                         = "indexes_sync_request_stage";
+  public static final String INDEXES_SYNC_SEND_STAGE                            = "indexes_sync_send_stage";
+  public static final String INDEXES_SYNC_STAGE                                 = "indexes_sync_stage";
+
   public L2Coordinator getL2Coordinator();
 
   public ObjectManager getObjectManager();

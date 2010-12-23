@@ -37,6 +37,7 @@ import com.tc.l2.ha.L2HADisabledCooridinator;
 import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
+import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
@@ -224,7 +225,7 @@ import com.tc.objectserver.persistence.db.SerializationAdapterFactory;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.persistence.db.TempSwapDBPersistorImpl;
 import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
-import com.tc.objectserver.search.IndexManager;
+import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.search.SearchRequestMessageHandler;
@@ -390,7 +391,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private Stage                                  hydrateStage;
   private StripeIDStateManagerImpl               stripeIDStateManager;
   private DBEnvironment                          dbenv;
-  private IndexManager                           indexManager;
+  private IndexHACoordinator                     indexHACoordinator;
   private MetaDataManager                        metaDataManager;
   private SearchRequestManager                   searchRequestManager;
 
@@ -1115,18 +1116,25 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                        this.transactionManager,
                                                                                                        host, serverPort);
       logger.info("L2 Networked HA Enabled ");
-      this.indexManager = this.serverBuilder.createIndexManager(this.configSetupManager, searchEventSink);
+      this.indexHACoordinator = this.serverBuilder.createIndexHACoordinator(this.configSetupManager, searchEventSink);
+
+      L2IndexStateManager l2IndexStateManager = this.serverBuilder.createL2IndexStateManager(this.indexHACoordinator,
+                                                                                             this.transactionManager);
 
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                     this.groupCommManager, this.persistor
-                                                                        .getPersistentStateStore(), this.objectManager,
-                                                                    this.transactionManager, gtxm,
-                                                                    weightGeneratorFactory, this.configSetupManager,
-                                                                    recycler, this.stripeIDStateManager,
+                                                                        .getPersistentStateStore(),
+                                                                    l2IndexStateManager, this.objectManager,
+                                                                    this.indexHACoordinator, this.transactionManager,
+                                                                    gtxm, weightGeneratorFactory,
+                                                                    this.configSetupManager, recycler,
+                                                                    this.stripeIDStateManager,
                                                                     serverTransactionFactory, dgcSequenceProvider,
-                                                                    createStateSyncManager(this.indexManager));
+                                                                    createStateSyncManager(this.indexHACoordinator));
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
-      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexManager);
+      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
+
+      this.indexHACoordinator.setStateManager(this.l2Coordinator.getStateManager());
 
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
@@ -1147,7 +1155,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        serverStats, this.connectionIdFactory,
                                                                        maxStageSize, this.l1Listener
                                                                            .getChannelManager(), this, metaDataManager,
-                                                                       indexManager, searchRequestManager);
+                                                                       indexHACoordinator, searchRequestManager);
     toInit.add(this.serverBuilder);
 
     stageManager.startAll(this.context, toInit);
@@ -1188,7 +1196,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     setLoggerOnExit();
   }
 
-  protected StateSyncManager createStateSyncManager(IndexManager idxManager) {
+  protected StateSyncManager createStateSyncManager(IndexHACoordinator coordinator) {
     return new StateSyncManagerImpl();
   }
 
@@ -1237,8 +1245,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_KEYS_MESSAGE, clusterMetaDataStage.getSink(),
-                                     hydrateSink);
+    this.l1Listener
+        .routeMessageType(TCMessageType.NODES_WITH_KEYS_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
                                      hydrateSink);
     this.l1Listener.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
@@ -1289,7 +1297,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                                     NodesWithObjectsResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE,
+                                    NodesWithKeysResponseMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE,
                                     KeysForOrphanedValuesMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
@@ -1480,7 +1489,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   public synchronized void stop() {
 
     try {
-      this.indexManager.shutdown();
+      this.indexHACoordinator.shutdown();
     } catch (Throwable t) {
       logger.warn(t);
     }

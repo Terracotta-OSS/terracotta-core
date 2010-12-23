@@ -186,6 +186,10 @@ public class StateManagerImpl implements StateManager {
     return (state == ACTIVE_COORDINATOR);
   }
 
+  public boolean isPassiveUnitialized() {
+    return (state == PASSIVE_UNINTIALIZED);
+  }
+
   public void moveNodeToPassiveStandby(NodeID nodeID) {
     Assert.assertTrue(isActiveCoordinator());
     logger.info("Requesting node " + nodeID + " to move to " + PASSIVE_STANDBY);
@@ -393,7 +397,7 @@ public class StateManagerImpl implements StateManager {
   public String toString() {
     return StateManagerImpl.class.getSimpleName() + ":" + this.state.toString();
   }
-  
+
   private void fireStateChangedOperatorEvent() {
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
         .createClusterNodeStateChangedEvent(new Object[] { state.getName() }));

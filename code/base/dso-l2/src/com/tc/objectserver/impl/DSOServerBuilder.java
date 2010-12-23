@@ -9,6 +9,7 @@ import com.tc.async.api.StageManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
@@ -45,6 +46,7 @@ import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
+import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.DBEnvironment;
@@ -75,7 +77,11 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   MetaDataManager createMetaDataManager(Sink sink);
 
-  IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager, Sink sink) throws IOException;
+  IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
+      throws IOException;
+
+  L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
+                                                ServerTransactionManager transactionManager);
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
@@ -131,7 +137,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, GroupManager groupCommsManager,
-                                      PersistentMapStore persistentMapStore, ObjectManager objectManager,
+                                      PersistentMapStore persistentMapStore, L2IndexStateManager l2IndexStateManager,
+                                      ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,

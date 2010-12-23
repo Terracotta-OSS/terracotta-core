@@ -30,6 +30,8 @@ public interface StateManager {
 
   public boolean isActiveCoordinator();
 
+  public boolean isPassiveUnitialized();
+
   public void moveNodeToPassiveStandby(NodeID nodeID);
 
   public void moveToPassiveStandbyState();

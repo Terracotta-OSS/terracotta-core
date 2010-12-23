@@ -12,6 +12,8 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
+import com.tc.l2.objectserver.L2IndexStateManager;
+import com.tc.l2.objectserver.NullL2IndexStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
@@ -54,8 +56,9 @@ import com.tc.objectserver.metadata.MetaDataManager;
 import com.tc.objectserver.metadata.NullMetaDataManager;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
+import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.IndexManager;
-import com.tc.objectserver.search.NullIndexManager;
+import com.tc.objectserver.search.NullIndexHACoordinator;
 import com.tc.objectserver.search.NullSearchRequestManager;
 import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.DBEnvironment;
@@ -130,8 +133,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   @SuppressWarnings("unused")
-  public IndexManager createIndexManager(L2ConfigurationSetupManager configSetupManager, Sink sink) throws IOException {
-    return new NullIndexManager();
+  public IndexHACoordinator createIndexHACoordinator(L2ConfigurationSetupManager configSetupManager, Sink sink)
+      throws IOException {
+    return new NullIndexHACoordinator();
+  }
+
+  public L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
+                                                       ServerTransactionManager transactionManager) {
+    return new NullL2IndexStateManager();
   }
 
   public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink searchEventSink) {
@@ -159,7 +168,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(
+                                                                     StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -221,7 +231,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   public L2Coordinator createL2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                                              final StageManager stageManager, final GroupManager groupCommsManager,
                                              final PersistentMapStore persistentMapStore,
+                                             final L2IndexStateManager l2IndexStateManager,
                                              final ObjectManager objectManager,
+                                             final IndexHACoordinator indexHACoordinator,
                                              final ServerTransactionManager transactionManager,
                                              final ServerGlobalTransactionManager gtxm,
                                              final WeightGeneratorFactory weightGeneratorFactory,
@@ -232,9 +244,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final DGCSequenceProvider dgcSequenceProvider,
                                              final StateSyncManager stateSyncManager) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
-                               objectManager, transactionManager, gtxm, weightGeneratorFactory,
-                               configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
+                               objectManager, indexHACoordinator, l2IndexStateManager, transactionManager, gtxm,
+                               weightGeneratorFactory, configurationSetupManager, recycler, this.thisGroupID,
+                               stripeStateManager, serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,
@@ -264,4 +276,5 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
       throws IOException {
     return factory.createEnvironment(persistent, dbhome, l2FaultFromDisk);
   }
+
 }

@@ -3,11 +3,13 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.l2.context.StateChangedEvent;
 import com.tc.object.metadata.NVPair;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
@@ -37,7 +39,12 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void l2StateChanged(StateChangedEvent sce) {
+  public Map<String, List<File>> getFilesToSync() {
+    return Collections.emptyMap();
+  }
+
+  public void syncCompletedAndRelease() {
     //
   }
+
 }

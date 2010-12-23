@@ -3,11 +3,18 @@
  */
 package com.tc.l2.state;
 
+import com.tc.net.NodeID;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class StateSyncManagerImpl implements StateSyncManager {
 
-  private volatile StateManager stateManager;
+  protected final Map<NodeID, SyncValue> syncs              = new ConcurrentHashMap<NodeID, SyncValue>();
 
-  private boolean               objectSyncComplete = false;
+  protected volatile StateManager        stateManager;
+
+  protected volatile boolean             objectSyncComplete = false;
 
   public StateSyncManagerImpl() {
     //
@@ -30,6 +37,32 @@ public class StateSyncManagerImpl implements StateSyncManager {
     }
   }
 
+  public boolean objectSyncComplete(NodeID nodeID) {
+    SyncValue value = syncs.get(nodeID);
+    if (value == null) {
+      value = createSyncValue();
+      syncs.put(nodeID, value);
+    }
+
+    value.objectSyncComplete();
+
+    final boolean move = value.isSynced();
+
+    if (move) {
+      this.stateManager.moveNodeToPassiveStandby(nodeID);
+    }
+
+    return move;
+
+  }
+
+  public boolean isSyncComplete(NodeID nodeID) {
+    SyncValue value = syncs.get(nodeID);
+    if (value == null) { return false; }
+
+    return value.isSynced();
+  }
+
   public void indexSyncComplete() {
     // overridden in EE
   }
@@ -47,8 +80,42 @@ public class StateSyncManagerImpl implements StateSyncManager {
     return true;
   }
 
+  public boolean indexSyncComplete(NodeID nodeID) {
+    // overridden in EE
+    return true;
+  }
+
   protected void moveState() {
     this.stateManager.moveToPassiveStandbyState();
+  }
+
+  static interface SyncValue {
+
+    public void indexSyncComplete();
+
+    public void objectSyncComplete();
+
+    public boolean isSynced();
+  }
+
+  protected SyncValue createSyncValue() {
+    return new SyncValue() {
+
+      private volatile boolean objectSync = false;
+
+      public void indexSyncComplete() {
+        //
+      }
+
+      public void objectSyncComplete() {
+        this.objectSync = true;
+      }
+
+      public boolean isSynced() {
+        return this.objectSync;
+      }
+
+    };
   }
 
 }
