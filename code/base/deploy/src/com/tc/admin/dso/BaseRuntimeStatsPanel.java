@@ -163,6 +163,10 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     addHierarchyListener(this);
   }
 
+  public XContainer getChartsPanel() {
+    return chartsPanel;
+  }
+
   public static ChartPanel createChartPanel(JFreeChart chart) {
     boolean useBuffer = false;
     boolean properties = false;
@@ -373,13 +377,10 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
     }
   }
 
-  @Override
-  public void addNotify() {
-    super.addNotify();
-
+  protected void updateFixedRangeAxisSpace(XContainer theChartsPanel) {
     double fixedRangeAxisSpace = 0;
     List<XYPlot> plotList = new ArrayList<XYPlot>();
-    java.awt.Component[] chartPanels = chartsPanel.getComponents();
+    java.awt.Component[] chartPanels = theChartsPanel.getComponents();
     for (java.awt.Component comp : chartPanels) {
       if (!(comp instanceof ChartPanel)) {
         continue;
@@ -411,6 +412,12 @@ public class BaseRuntimeStatsPanel extends XContainer implements RuntimeStatisti
         plot.setFixedRangeAxisSpace(rangeAxisSpace);
       }
     }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    updateFixedRangeAxisSpace(chartsPanel);
   }
 
   private double getRangeAxisTickWidth(Graphics graphics, XYPlot plot) {
