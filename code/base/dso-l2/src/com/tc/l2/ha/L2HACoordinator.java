@@ -58,6 +58,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.gtx.ServerGlobalTransactionManager;
 import com.tc.objectserver.impl.DistributedObjectServer;
 import com.tc.objectserver.tx.ServerTransactionManager;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.sequence.DGCSequenceProvider;
@@ -119,6 +121,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
 
     final boolean isCleanDB = isCleanDB(persistentStateStore);
+    final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
     final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
                                                        this.server.getConnectionIdFactory(),
@@ -126,7 +129,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                        stripeIDStateManager, dgcSequenceProvider);
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
 
-    new L2StateChangeHandler(), 1, Integer.MAX_VALUE).getSink();
+    new L2StateChangeHandler(), 1, MAX_STAGE_SIZE).getSink();
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(this.configSetupManager.haConfig()),
@@ -145,25 +148,25 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
     final Sink objectsSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
-                     new L2ObjectSyncRequestHandler(this.l2ObjectStateManager), 1, Integer.MAX_VALUE).getSink();
+                     new L2ObjectSyncRequestHandler(this.l2ObjectStateManager), 1, MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(serverTransactionFactory), 1,
-                                                          Integer.MAX_VALUE).getSink();
+                                                          MAX_STAGE_SIZE).getSink();
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE,
-                             new L2ObjectSyncDehydrateHandler(this.sequenceGenerator), 1, Integer.MAX_VALUE);
+                             new L2ObjectSyncDehydrateHandler(this.sequenceGenerator), 1, MAX_STAGE_SIZE);
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
                              new L2ObjectSyncSendHandler(this.l2ObjectStateManager, serverTransactionFactory), 1,
-                             Integer.MAX_VALUE);
+                             MAX_STAGE_SIZE);
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
                              new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
-                             Integer.MAX_VALUE);
+                             MAX_STAGE_SIZE);
     final Sink ackProcessingSink = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
-                     new ServerTransactionAckHandler(), 1, Integer.MAX_VALUE).getSink();
+                     new ServerTransactionAckHandler(), 1, MAX_STAGE_SIZE).getSink();
     final Sink stateMessageSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_MESSAGE_HANDLER_STAGE,
-                                                           new L2StateMessageHandler(), 1, Integer.MAX_VALUE).getSink();
+                                                           new L2StateMessageHandler(), 1, MAX_STAGE_SIZE).getSink();
     final Sink gcResultSink = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
-                                                       new GCResultHandler(), 1, Integer.MAX_VALUE).getSink();
+                                                       new GCResultHandler(), 1, MAX_STAGE_SIZE).getSink();
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
                                                                   this.groupManager,
@@ -193,7 +196,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(GCResultMessage.class, gcResultSink);
 
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
-                                                          new GroupEventsDispatchHandler(this), 1, Integer.MAX_VALUE)
+                                                          new GroupEventsDispatchHandler(this), 1, MAX_STAGE_SIZE)
         .getSink();
     final GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
     this.groupManager.registerForGroupEvents(dispatcher);
