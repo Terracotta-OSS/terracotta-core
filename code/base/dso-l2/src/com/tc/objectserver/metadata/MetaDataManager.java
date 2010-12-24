@@ -4,8 +4,8 @@
 package com.tc.objectserver.metadata;
 
 import com.tc.object.dna.api.MetaDataReader;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
+import com.tc.objectserver.tx.ServerTransactionManager;
 
 /**
  * Manager to process Metadata from a DNA
@@ -19,17 +19,9 @@ public interface MetaDataManager {
    * 
    * @param ServerTransaction transaction associated with metadata reader.
    * @param MetaDataReader metadata reader associated with a DNA.
-   * @return true if any meta data will be processed
    */
-  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers);
+  public void processMetaDatas(ServerTransaction txn, MetaDataReader[] readers);
 
-  /**
-   * Notify MetaDataMaanger that a Meta has been processed for TransactionID.
-   * 
-   * @return boolean return true of all metadatas associated with @{link TrasnactionID}
-   *         has been processed.
-   * @param ServerTransactionID id, transaction id metadata belongs to.
-   */
-  public boolean metaDataProcessingCompleted(ServerTransactionID id);
+  public void setTransactionManager(ServerTransactionManager transactionManager);
 
 }

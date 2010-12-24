@@ -4,6 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 /**
  * Context holding search index deletion information.
@@ -15,8 +16,9 @@ public class SearchDeleteContext extends BaseSearchEventContext {
   private final String name;
   private final Object cacheKey;
 
-  public SearchDeleteContext(ServerTransactionID transactionID, String name, Object cacheKey) {
-    super(transactionID);
+  public SearchDeleteContext(ServerTransactionID transactionID, String name, Object cacheKey,
+                             MetaDataProcessingContext metaDataContext) {
+    super(transactionID, metaDataContext);
     this.name = name;
     this.cacheKey = cacheKey;
   }
