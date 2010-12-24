@@ -4,17 +4,17 @@
 package com.tc.objectserver.metadata;
 
 import com.tc.object.dna.api.MetaDataReader;
+import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.tx.ServerTransaction;
-import com.tc.objectserver.tx.ServerTransactionManager;
 
 public class NullMetaDataManager implements MetaDataManager {
 
-  public void processMetaDatas(ServerTransaction txn, MetaDataReader[] readers) {
-    // no-op
+  public boolean processMetaDatas(ServerTransaction txn, MetaDataReader[] readers) {
+    return false;
   }
 
-  public void setTransactionManager(ServerTransactionManager transactionManager) {
-    // no-op
+  public boolean metaDataProcessingCompleted(ServerTransactionID id) {
+    return false;
   }
 
 }

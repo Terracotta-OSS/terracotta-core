@@ -450,7 +450,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   private void processMetaData(ServerTransaction txn) {
-    this.metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders());
+    if (!this.metaDataManager.processMetaDatas(txn, txn.getMetaDataReaders())) {
+      processingMetaDataCompleted(txn.getSourceID(), txn.getTransactionID());
+    }
   }
 
   public long getTotalNumOfActiveTransactions() {

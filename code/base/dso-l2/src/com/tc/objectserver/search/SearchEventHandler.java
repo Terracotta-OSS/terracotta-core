@@ -3,12 +3,12 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.EventHandlerException;
 import com.tc.async.api.MultiThreadedEventContext;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
+import com.tc.objectserver.metadata.AbstractMetaDataHandler;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
  * 
  * @author Nabib El-Rahman
  */
-public class SearchEventHandler extends AbstractEventHandler {
+public class SearchEventHandler extends AbstractMetaDataHandler {
 
   private IndexManager         indexManager;
   private SearchRequestManager searchRequestManager;
@@ -29,13 +29,12 @@ public class SearchEventHandler extends AbstractEventHandler {
    * @throws IOException
    */
   @Override
-  public void handleEvent(EventContext context) throws EventHandlerException {
+  public void handleMetaDataEvent(EventContext context) throws EventHandlerException {
     if (context instanceof SearchUpsertContext) {
       SearchUpsertContext suc = (SearchUpsertContext) context;
 
       try {
-        this.indexManager.upsert(suc.getName(), suc.getCacheKey(), suc.getAttributes(),
-                                 suc.getMetaDataProcessingContext());
+        this.indexManager.upsert(suc.getName(), suc.getCacheKey(), suc.getAttributes());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -43,7 +42,7 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchDeleteContext) {
       SearchDeleteContext sdc = (SearchDeleteContext) context;
       try {
-        this.indexManager.remove(sdc.getName(), sdc.getCacheKey(), sdc.getMetaDataProcessingContext());
+        this.indexManager.remove(sdc.getName(), sdc.getCacheKey());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -65,7 +64,7 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchClearContext) {
       SearchClearContext scc = (SearchClearContext) context;
       try {
-        this.indexManager.clear(scc.getName(), scc.getMetaDataProcessingContext());
+        this.indexManager.clear(scc.getName());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
