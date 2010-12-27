@@ -554,7 +554,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     this.tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(),
                                                 cacheConfig.isOnlyOldGenMonitored(), getThreadGroup());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
-    final LongGCLogger gcLogger = new LongGCLogger(timeOut);
+    final LongGCLogger gcLogger = this.dsoClientBuilder.createLongGCLogger(timeOut);
     this.tcMemManager.registerForMemoryEvents(gcLogger);
     // CDV-1181 warn if using CMS
     this.tcMemManager.checkGarbageCollectors();

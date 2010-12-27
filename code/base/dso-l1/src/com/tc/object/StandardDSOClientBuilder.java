@@ -57,14 +57,15 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.RemoteTransactionManagerImpl;
 import com.tc.object.tx.TransactionBatchFactory;
 import com.tc.object.tx.TransactionBatchWriterFactory;
 import com.tc.object.tx.TransactionIDGenerator;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
+import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
@@ -277,6 +278,10 @@ public class StandardDSOClientBuilder implements DSOClientBuilder {
                                                                      final DSOClientMessageChannel dsoChannel,
                                                                      final SessionManager sessionManager) {
     return new NullRemoteSearchRequestManager();
+  }
+
+  public LongGCLogger createLongGCLogger(long gcTimeOut) {
+    return new LongGCLogger(gcTimeOut);
   }
 
 }

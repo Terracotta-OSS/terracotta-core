@@ -43,9 +43,10 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
+import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
 import com.tc.stats.counter.sampled.derived.SampledRateCounter;
@@ -148,4 +149,6 @@ public interface DSOClientBuilder {
   TCClassFactory createTCClassFactory(final DSOClientConfigHelper config, final ClassProvider classProvider,
                                       final DNAEncoding dnaEncoding, final Manager manager,
                                       final RemoteServerMapManager remoteServerMapManager);
+
+  LongGCLogger createLongGCLogger(long gcTimeOut);
 }

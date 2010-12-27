@@ -56,6 +56,7 @@ import com.tc.objectserver.tx.TransactionBatchManagerImpl;
 import com.tc.objectserver.tx.TransactionFilter;
 import com.tc.objectserver.tx.TransactionalObjectManager;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
+import com.tc.runtime.logging.LongGCLogger;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.statistics.StatisticsAgentSubSystemImpl;
@@ -163,4 +164,6 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                     SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
                                     SampledCounter l2FlushFromOffheap, DBFactory factory) throws IOException,
       TCDatabaseException;
+
+  LongGCLogger createLongGCLogger(long gcTimeOut);
 }
