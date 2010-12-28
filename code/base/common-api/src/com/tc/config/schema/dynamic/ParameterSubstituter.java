@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.config.schema.dynamic;
 
@@ -39,7 +40,7 @@ public class ParameterSubstituter {
           case 'D':
             value = getDatestamp();
             break;
-            
+
           case 'h':
             value = getHostName();
             break;
@@ -89,7 +90,7 @@ public class ParameterSubstituter {
 
             if (foundEnd) {
               String prop = propertyName.toString();
-              String defaultValue = "";
+              String defaultValue = "%(" + prop + ")";
               int index = prop.lastIndexOf(":");
 
               if (index > 0) {
@@ -150,7 +151,7 @@ public class ParameterSubstituter {
     SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     return format.format(new Date(System.currentTimeMillis()));
   }
-  
+
   public static String getCanonicalHostName() {
     try {
       return InetAddress.getLocalHost().getCanonicalHostName();
@@ -158,7 +159,7 @@ public class ParameterSubstituter {
       throw new RuntimeException(uhe);
     }
   }
-  
+
   public static String getHostName() {
     try {
       return InetAddress.getLocalHost().getHostName();
