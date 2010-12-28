@@ -21,9 +21,9 @@ import java.util.concurrent.CountDownLatch;
 
 public class LongGCLoggerTest extends TCTestCase {
 
-  private CountDownLatch latch        = new CountDownLatch(1);
-  private final int      LOOP_COUNT   = 20;
-  private final int      OBJECT_COUNT = 1000;
+  private final CountDownLatch latch        = new CountDownLatch(1);
+  private final int            LOOP_COUNT   = 20;
+  private final int            OBJECT_COUNT = 1000;
 
   public void test() throws Exception {
     TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
@@ -96,7 +96,20 @@ public class LongGCLoggerTest extends TCTestCase {
   private void register() {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
     TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp);
-    LongGCLogger logger = new LongGCLogger(1);
+    LongGCLogger logger = new TestLongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);
+  }
+
+  private static class TestLongGCLogger extends LongGCLogger {
+
+    public TestLongGCLogger(long gcTimeOut) {
+      super(gcTimeOut);
+    }
+
+    @Override
+    protected void fireLongGCEvent(TerracottaOperatorEvent tcEvent) {
+      super.fireLongGCEvent(tcEvent);
+      TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(tcEvent);
+    }
   }
 }
