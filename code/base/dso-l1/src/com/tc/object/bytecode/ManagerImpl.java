@@ -15,12 +15,13 @@ import com.tc.exception.ExceptionWrapper;
 import com.tc.exception.ExceptionWrapperImpl;
 import com.tc.exception.TCNotRunningException;
 import com.tc.lang.StartupHelper;
-import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandler;
+import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.license.LicenseManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.management.TunneledDomainUpdater;
 import com.tc.object.ClientObjectManager;
 import com.tc.object.ClientShutdownManager;
@@ -55,6 +56,10 @@ import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.tx.ClientTransactionManager;
 import com.tc.object.tx.UnlockedSharedObjectException;
+import com.tc.operatorevent.TerracottaOperatorEvent;
+import com.tc.operatorevent.TerracottaOperatorEventImpl;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
@@ -953,5 +958,10 @@ public class ManagerImpl implements ManagerInternal {
 
   public void verifyCapability(String capability) {
     LicenseManager.verifyCapability(capability);
+  }
+
+  public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
+    TerracottaOperatorEvent opEvent = new TerracottaOperatorEventImpl(eventLevel, eventSubsystem, eventMessage, "");
+    TerracottaOperatorEventLogging.getEventLogger().fireOperatorEvent(opEvent);
   }
 }

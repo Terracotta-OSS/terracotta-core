@@ -155,6 +155,7 @@ import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.NVPair;
 import com.tc.object.util.OverrideCheck;
 import com.tc.object.util.ToggleableStrongReference;
+import com.tc.operatorevent.TerracottaOperatorEvent;
 import com.tc.plugins.ModulesLoader;
 import com.tc.properties.TCProperties;
 import com.tc.search.AggregatorOperations;
@@ -481,6 +482,8 @@ public class BootJarTool {
       loadTerracottaClass(TCNonPortableObjectError.class.getName());
       loadTerracottaClass(TCError.class.getName());
       loadTerracottaClass(TCNotRunningException.class.getName());
+      loadTerracottaClass(TerracottaOperatorEvent.EventType.class.getName());
+      loadTerracottaClass(TerracottaOperatorEvent.EventSubsystem.class.getName());
 
       loadTerracottaClass(THashMapCollectionWrapper.class.getName());
       loadTerracottaClass(THashMapCollectionWrapper.class.getName() + "$IteratorWrapper");

@@ -14,6 +14,8 @@ import com.tc.object.locks.UnclusteredLockID;
 import com.tc.object.logging.InstrumentationLogger;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.NVPair;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
+import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.properties.TCProperties;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -316,5 +318,9 @@ public class NullManagerInternal implements ManagerInternal {
 
   public void verifyCapability(String capability) {
     // do nothing
+  }
+
+  public void fireOperatorEvent(EventType eventLevel, EventSubsystem eventSubsystem, String eventMessage) {
+    throw new UnsupportedOperationException();
   }
 }
