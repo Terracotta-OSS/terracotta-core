@@ -352,9 +352,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public void indexFilesFor(NodeID nodeID, int indexFiles) {
     if (indexFiles == 0) {
-      if (stateSyncManager.indexSyncComplete(nodeID)) {
-        this.gcMonitor.syncCompleteFor(nodeID);
-      }
+      indexSyncCompleteFor(nodeID);
     } else {
       this.indexSyncRequestSink.add(new SyncIndexesRequest(nodeID));
     }
@@ -568,8 +566,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   private static class SyncingPassiveValue {
-    protected Set<ObjectID>     oids;
-    protected boolean syncIndex;
+    protected Set<ObjectID> oids;
+    protected boolean       syncIndex;
 
     public SyncingPassiveValue() {
       this(Collections.emptySet(), false);
