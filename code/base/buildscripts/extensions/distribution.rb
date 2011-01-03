@@ -216,7 +216,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     component = get_spec(:bundled_components, []).find { |component| /^#{component_name}$/i =~ component[:name] }
     libdir    = FilePath.new(@build_results.build_dir, 'tmp').ensure_directory
-    destdir   = @build_results.artifacts_directory
+    destdir   = FilePath.new(@build_results.artifacts_directory, flavor.downcase)
     add_binaries(component, libdir, destdir, false)
     libdir.delete
 

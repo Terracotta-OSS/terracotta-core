@@ -35,7 +35,7 @@ module BundledComponents
   end
 
   def add_binaries(component, libdir=libpath(component), destdir=libpath(component), include_runtime=true)
-    runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, 'tc')
+    runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, @config_source['flavor'].downcase, 'tc')
     if !runtime_classes_dir.exist?
       @internal_config_source['fresh_dist_jars'] = 'true'
       runtime_classes_dir.ensure_directory
@@ -108,7 +108,7 @@ module BundledComponents
   def add_module_packages(component, destdir=libpath(component))
     (component[:module_packages] || []).each do |module_package|
       module_package.keys.each do |name|
-        runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, name)
+        runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, @config_source['flavor'].downcase, name)
         if !runtime_classes_dir.exist?
           @internal_config_source['fresh_dist_jars'] = 'true'
           runtime_classes_dir.ensure_directory
@@ -133,24 +133,8 @@ module BundledComponents
               end
             end
           end
-          
-          if javadoc
-            puts "Generating javadoc for #{a_module.name}"
-            javadoc_destdir = FilePath.new(File.dirname(destdir.to_s), "platform", "docs", "javadoc").ensure_directory
-            title = "Terracotta version #{build_environment.version}"
-            ant.javadoc(:destdir => javadoc_destdir.to_s,
-              :author => true, :version => true, :use => true, :defaultexcludes => "true",
-              :header => title,
-              :bottom => "<i>All content copyright Terracotta, Inc., unless otherwise indicated. All rights reserved.</i>",
-              :doctitle => title, :windowtitle => title) do
-              ant.packageset(:dir => a_module.name + '/src', :defaultexcludes => true) do
-                ant.include(:name => '**/**')
-              end
-            end
-            puts "Done javadoc"
-          end
         end
-        install_directory = module_package[name]['install_directory'] || @build_results.artifacts_directory
+        install_directory = module_package[name]['install_directory'] || destdir
         jarfile = FilePath.new(install_directory, interpolate("#{name}.jar"))
         ant.create_jar(jarfile, :basedir => runtime_classes_dir.to_s, :excludes => '**/build-data.txt') do
           ant.manifest do

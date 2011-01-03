@@ -58,7 +58,7 @@ class BuildSubtree
         end
       else
         puts "Compiling #{build_module.name}/#{name}... with #{jdk.short_description}"
-        compile_log = "build/compile.log"
+        compile_log = "build/#{build_module.name}-compile.log"
         ant.record(:name => compile_log, :action=>"start")
         ant.javac(
           :destdir => build_results.classes_directory(self).to_s,

@@ -142,11 +142,11 @@ maven_deploy:
 
   - groupId: org.terracotta
     artifact: terracotta-ee
-    file: build/artifacts/tc.jar
+    file: build/artifacts/enterprise/tc.jar
     pom: poms/terracotta-ee-pom.xml
     inject: 
-      - build/artifacts/resources/build-data.txt
-      - build/artifacts/resources/tim-get.properties
+      - build/artifacts/enterprise/resources/build-data.txt
+      - build/artifacts/enterprise/resources/tim-get.properties
     dev_dist: true
 
   - groupId: org.terracotta
@@ -157,8 +157,8 @@ maven_deploy:
     
   - groupId: org.terracotta
     artifact: terracotta-l1-ee
-    file: build/artifacts/terracotta-l1.jar
+    file: build/artifacts/enterprise/terracotta-l1.jar
     pom: poms/terracotta-l1-ee-pom.xml
     inject: 
-      - build/artifacts/resources/build-data.txt
+      - build/artifacts/enterprise/resources/build-data.txt
     dev_dist: true

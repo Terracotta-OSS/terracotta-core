@@ -332,18 +332,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       loud_message("--no-compile option found.  Skipping compilation.")
       return
     end
-    
-    dist_jar_log = File.join(@build_results.build_dir.to_s, "dist_jar.log")
-    prev_dist_jar_flavor = 'unknown'
-    if File.exists?(dist_jar_log)
-      prev_dist_jar_flavor = YAML.load_file(dist_jar_log)['flavor']
-    end
-
-    if @flavor != prev_dist_jar_flavor
-      @ant.delete(:dir => @build_results.artifacts_classes_directory.to_s)
-      @internal_config_source['fresh_dist_jars'] = 'true'
-    end
-
+   
     compile_only = config_source['compile_only']
     unless compile_only.nil?
       loud_message("compile_only option found. Only specified modules will be compiled.")
@@ -356,11 +345,6 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
       @module_set.each do |build_module|
         build_module.compile(@jvm_set, @build_results, ant, config_source, @build_environment)
       end
-    end
-
-    @build_results.build_dir.ensure_directory
-    File.open(dist_jar_log, "w") do | f |
-      YAML.dump({'flavor' => @flavor}, f)
     end
   end
 
