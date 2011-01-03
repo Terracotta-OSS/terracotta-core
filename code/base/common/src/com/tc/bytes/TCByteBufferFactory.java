@@ -23,54 +23,51 @@ import com.tc.util.VicariousThreadLocal;
  */
 public class TCByteBufferFactory {
 
-  public static final int                 DEFAULT_FIXED_BUFFERSIZE = 4 * 1024;                                                        // 4KiB
-  private static final int                WARN_THRESHOLD           = 10 * 1024 * 1024;                                                // 10MiB
-  private static final int                FIXED_BUFFER_SIZE        = DEFAULT_FIXED_BUFFERSIZE;
-  private static final TCByteBuffer[]     EMPTY_BB_ARRAY           = new TCByteBuffer[0];
-  private static final TCLogger           logger                   = TCLogging.getLogger(TCByteBufferFactory.class);
-  private static final TCByteBuffer       ZERO_BYTE_BUFFER         = TCByteBufferImpl.wrap(new byte[0]);
+  public static final int                 FIXED_BUFFER_SIZE       = 4 * 1024;                                                        // 4KiB
+  private static final int                WARN_THRESHOLD          = 10 * 1024 * 1024;                                                // 10MiB
+  private static final TCByteBuffer[]     EMPTY_BB_ARRAY          = new TCByteBuffer[0];
+  private static final TCByteBuffer       ZERO_BYTE_BUFFER        = TCByteBufferImpl.wrap(new byte[0]);
+  private static final TCLogger           logger                  = TCLogging.getLogger(TCByteBufferFactory.class);
 
-  private static final boolean            disablePooling           = !(TCPropertiesImpl.getProperties()
-                                                                       .getBoolean(TCPropertiesConsts.TC_BYTEBUFFER_POOLING_ENABLED));
-  private static final int                poolMaxBufCount          = (TCPropertiesImpl.getProperties()
-                                                                       .getInt(TCPropertiesConsts.TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT,
-                                                                               2000));
-  private static final int                commonPoolMaxBufCount    = (TCPropertiesImpl.getProperties()
-                                                                       .getInt(TCPropertiesConsts.TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT,
-                                                                               3000));
+  private static final boolean            disablePooling          = !(TCPropertiesImpl.getProperties()
+                                                                      .getBoolean(TCPropertiesConsts.TC_BYTEBUFFER_POOLING_ENABLED));
+  private static final int                poolMaxBufCount         = (TCPropertiesImpl.getProperties()
+                                                                      .getInt(TCPropertiesConsts.TC_BYTEBUFFER_THREADLOCAL_POOL_MAXCOUNT,
+                                                                              2000));
+  private static final int                commonPoolMaxBufCount   = (TCPropertiesImpl.getProperties()
+                                                                      .getInt(TCPropertiesConsts.TC_BYTEBUFFER_COMMON_POOL_MAXCOUNT,
+                                                                              3000));
 
   // always use ThreadLocal variables for accessing the buffer pools.
-  private static final BoundedLinkedQueue directCommonFreePool     = new BoundedLinkedQueue(commonPoolMaxBufCount);
-  private static final BoundedLinkedQueue nonDirectCommonFreePool  = new BoundedLinkedQueue(commonPoolMaxBufCount);
+  private static final BoundedLinkedQueue directCommonFreePool    = new BoundedLinkedQueue(commonPoolMaxBufCount);
+  private static final BoundedLinkedQueue nonDirectCommonFreePool = new BoundedLinkedQueue(commonPoolMaxBufCount);
 
-  private static final ThreadLocal        directFreePool           = new VicariousThreadLocal() {
-                                                                     @Override
-                                                                     protected Object initialValue() {
-                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
-                                                                         return new BoundedLinkedQueue(poolMaxBufCount);
-                                                                       } else {
-                                                                         logger.debug("Buf pool direct for "
-                                                                                      + Thread.currentThread()
-                                                                                          .getName()
-                                                                                      + " - using Common Pool");
-                                                                         return directCommonFreePool;
-                                                                       }
-                                                                     }
-                                                                   };
-  private static final ThreadLocal        nonDirectFreePool        = new VicariousThreadLocal() {
-                                                                     @Override
-                                                                     protected Object initialValue() {
-                                                                       if (TCThreadGroup.currentThreadInTCThreadGroup()) {
-                                                                         return new BoundedLinkedQueue(poolMaxBufCount);
-                                                                       } else {
-                                                                         logger.debug("Buf pool nonDirect for "
-                                                                                      + Thread.currentThread()
-                                                                                          .getName()
-                                                                                      + " - using Common Pool");
-                                                                         return nonDirectCommonFreePool;
-                                                                       }
-                                                                     }
-                                                                   };
+  private static final ThreadLocal        directFreePool          = new VicariousThreadLocal() {
+                                                                    @Override
+                                                                    protected Object initialValue() {
+                                                                      if (TCThreadGroup.currentThreadInTCThreadGroup()) {
+                                                                        return new BoundedLinkedQueue(poolMaxBufCount);
+                                                                      } else {
+                                                                        logger.debug("Buf pool direct for "
+                                                                                     + Thread.currentThread().getName()
+                                                                                     + " - using Common Pool");
+                                                                        return directCommonFreePool;
+                                                                      }
+                                                                    }
+                                                                  };
+  private static final ThreadLocal        nonDirectFreePool       = new VicariousThreadLocal() {
+                                                                    @Override
+                                                                    protected Object initialValue() {
+                                                                      if (TCThreadGroup.currentThreadInTCThreadGroup()) {
+                                                                        return new BoundedLinkedQueue(poolMaxBufCount);
+                                                                      } else {
+                                                                        logger.debug("Buf pool nonDirect for "
+                                                                                     + Thread.currentThread().getName()
+                                                                                     + " - using Common Pool");
+                                                                        return nonDirectCommonFreePool;
+                                                                      }
+                                                                    }
+                                                                  };
 
   private static TCByteBuffer createNewInstance(boolean direct, int capacity, int index, int totalCount) {
     try {

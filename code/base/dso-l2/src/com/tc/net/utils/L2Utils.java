@@ -42,8 +42,8 @@ public class L2Utils {
 
     long totalDirectMemeoryNeeded;
     if (poolingEnabled) {
-      totalDirectMemeoryNeeded = (totalCommsThreads * directMemoryThreadLocalPool * TCByteBufferFactory.DEFAULT_FIXED_BUFFERSIZE)
-                                 + (directMemoryCommonPool * TCByteBufferFactory.DEFAULT_FIXED_BUFFERSIZE);
+      totalDirectMemeoryNeeded = (totalCommsThreads * directMemoryThreadLocalPool * TCByteBufferFactory.FIXED_BUFFER_SIZE)
+                                 + (directMemoryCommonPool * TCByteBufferFactory.FIXED_BUFFER_SIZE);
     } else {
       int maxPossbileMessageBytesSend = (TCPropertiesImpl.getProperties()
           .getBoolean(TCPropertiesConsts.TC_MESSAGE_GROUPING_ENABLED) ? TCPropertiesImpl.getProperties()
