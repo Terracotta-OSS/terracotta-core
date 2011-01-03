@@ -132,13 +132,11 @@ maven_deploy:
     artifact: parent
     srcfile: pom.xml
     pom: pom.xml
-    dev_dist: true
 
   - groupId: org.terracotta
     artifact: terracotta-core-parent
     srcfile: poms/terracotta-core-parent-pom.xml
     pom: poms/terracotta-core-parent-pom.xml
-    dev_dist: true
 
   - groupId: org.terracotta
     artifact: terracotta-ee
@@ -147,13 +145,11 @@ maven_deploy:
     inject: 
       - build/artifacts/enterprise/resources/build-data.txt
       - build/artifacts/enterprise/resources/tim-get.properties
-    dev_dist: true
 
   - groupId: org.terracotta
     artifact: terracotta-l1-parent
     srcfile: poms/terracotta-l1-parent-pom.xml
     pom: poms/terracotta-l1-parent-pom.xml            
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: terracotta-l1-ee
@@ -161,4 +157,3 @@ maven_deploy:
     pom: poms/terracotta-l1-ee-pom.xml
     inject: 
       - build/artifacts/enterprise/resources/build-data.txt
-    dev_dist: true

@@ -108,17 +108,14 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def dist_maven
-    @internal_config_source['dev_dist'] = 'true'
     mvn_install(OPENSOURCE)
   end
 
   def dist_maven_ee
-    @internal_config_source['dev_dist'] = 'true'
     mvn_install(ENTERPRISE)
   end
 
   def dist_maven_all
-    @internal_config_source['dev_dist'] = 'true'
     mvn_install(OPENSOURCE)
     @flavor = ENTERPRISE
     load_config
@@ -232,7 +229,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
     puts "Maven install #{flavor.upcase} artifacts to #{@internal_config_source[MAVEN_REPO_CONFIG_KEY]}"
     dist_jars(product_code, 'common', flavor)
-    package_sources_artifacts(@config['package_sources']) if flavor.upcase == OPENSOURCE && @config_source['dev_dist'] != 'true'
+    package_sources_artifacts(@config['package_sources']) if @config_source['include_sources'] == 'true'
     deploy_maven_artifacts(@config['maven_deploy'])
   end
 
@@ -337,7 +334,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
       fail("Expecting to deploy #{expected_count} TC maven artifacts but found only #{args.size}") unless args.size == expected_count
 
       args.each do |arg|
-        next if arg['dev_dist'] != true && @config_source['dev_dist'] == 'true'
+        next if arg['classifier'] =~ /sources/ && @config_source['include_sources'] != 'true'
         if arg['file']
           file = FilePath.new(@basedir, interpolate(arg['file']))
         else

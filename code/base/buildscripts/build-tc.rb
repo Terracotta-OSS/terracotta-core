@@ -972,6 +972,7 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     @internal_config_source[MAVEN_SNAPSHOT_CONFIG_KEY] = snapshot.to_s
     @internal_config_source[MAVEN_REPO_ID_CONFIG_KEY] = repo_id
     @internal_config_source[MAVEN_REPO_CONFIG_KEY] = repo_url
+    @internal_config_source['include_sources'] = 'true'
     mvn_install(flavor)
   end
 

@@ -144,45 +144,37 @@ maven_deploy:
   - groupId: org.terracotta.modules
     artifact: clustered-surefire-2.3
     file: build/modules/org/terracotta/modules/clustered-surefire-2.3/{maven.version}/clustered-surefire-2.3-{maven.version}.jar
-    dev_dist: false
 
   - groupId: org.terracotta.modules
     artifact: excludes-config
     file: build/modules/org/terracotta/modules/excludes-config/{maven.version}/excludes-config-{maven.version}.jar
-    dev_dist: false
     
   - groupId: org.terracotta.modules
     artifact: guimodels-config
     file: build/modules/org/terracotta/modules/guimodels-config/{maven.version}/guimodels-config-{maven.version}.jar
-    dev_dist: false
     
   - groupId: org.terracotta.modules
     artifact: jdk15-preinst-config
     file: build/modules/org/terracotta/modules/jdk15-preinst-config/{maven.version}/jdk15-preinst-config-{maven.version}.jar
-    dev_dist: false
     
   - groupId: org.terracotta.modules
     artifact: standard-config
     file: build/modules/org/terracotta/modules/standard-config/{maven.version}/standard-config-{maven.version}.jar
-    dev_dist: false
     
   - groupId: org.terracotta
     artifact: parent
     srcfile: pom.xml
     pom: pom.xml
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: terracotta-core-parent
     srcfile: poms/terracotta-core-parent-pom.xml
     pom: poms/terracotta-core-parent-pom.xml
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: terracotta-l1-parent
     srcfile: poms/terracotta-l1-parent-pom.xml
     pom: poms/terracotta-l1-parent-pom.xml       
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: terracotta
@@ -197,7 +189,6 @@ maven_deploy:
     inject: 
       - build/artifacts/opensource/resources/build-data.txt
       - build/artifacts/opensource/resources/tim-get.properties
-    dev_dist: true
 
   - groupId: org.terracotta
     artifact: terracotta-l1
@@ -205,25 +196,21 @@ maven_deploy:
     pom: poms/terracotta-l1-os-pom.xml
     inject: 
       - build/artifacts/opensource/resources/build-data.txt
-    dev_dist: true
 
   - groupId: org.terracotta
     artifact: tcconfig
     file: common-api/lib/tcconfig-xmlbeans-generated.jar
     pom: poms/tcconfig-pom.xml
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: tc-l1-reconnect-properties
     file: dso-common/lib/tc-l1-reconnect-properties.jar
     pom: poms/tc-l1-reconnect-properties-pom.xml
-    dev_dist: true
     
   - groupId: org.terracotta
     artifact: tcstats
     file: dso-statistics/lib/tcstats-xmlbeans-generated.jar
     pom: poms/tcstats-pom.xml
-    dev_dist: true
 
   - groupId: org.terracotta.api
     artifact: test-api
@@ -237,6 +224,5 @@ maven_deploy:
     pom: poms/terracotta-test-api-pom.xml
     inject: 
       - build/artifacts/opensource/resources/build-data.txt
-    dev_dist: true
 
     
