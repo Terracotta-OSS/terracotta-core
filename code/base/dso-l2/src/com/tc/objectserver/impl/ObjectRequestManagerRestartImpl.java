@@ -74,7 +74,7 @@ public class ObjectRequestManagerRestartImpl extends AbstractServerTransactionLi
     if (this.state != INIT) { throw new AssertionError("Cant add Resent transactions after start up ! " + sTxIDs.size()
                                                        + "Txns : " + this.state); }
     this.resentTransactionIDs.addAll(sTxIDs);
-    logger.info("resentTransactions = " + this.resentTransactionIDs.size());
+    logger.info("resentTransactions = " + sTxIDs.size());
   }
 
   @Override
