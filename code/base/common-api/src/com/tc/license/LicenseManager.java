@@ -88,7 +88,7 @@ public class LicenseManager {
                  + LICENSE_KEY_FILENAME
                  + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
                  + PRODUCTKEY_PATH_PROPERTY + "=/path/to/key");
-      LOGGER.error(new LicenseException("License key not found"));
+      LOGGER.error("License key not found", new LicenseException());
       System.exit(1);
     }
     Date expirationDate = getLicense().expirationDate();
