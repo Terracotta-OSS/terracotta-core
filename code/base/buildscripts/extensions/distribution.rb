@@ -229,7 +229,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     end
     puts "Maven install #{flavor.upcase} artifacts to #{@internal_config_source[MAVEN_REPO_CONFIG_KEY]}"
     dist_jars(product_code, 'common', flavor)
-    package_sources_artifacts(@config['package_sources']) if @config_source['include_sources'] == 'true'
+    package_sources_artifacts(@config['package_sources']) if @config_source['include_sources'] == 'true' && @config['package_sources']
     deploy_maven_artifacts(@config['maven_deploy'])
   end
 
@@ -314,6 +314,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def package_sources_artifacts(args)
+    return unless args
     args.each do |arg|
       destdir = FilePath.new(arg['dest']).ensure_directory
       puts "packaging #{arg['artifact']} to #{destdir.to_s}"
