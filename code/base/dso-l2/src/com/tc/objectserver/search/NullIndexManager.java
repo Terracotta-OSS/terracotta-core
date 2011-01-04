@@ -4,6 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.metadata.NVPair;
+import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 import java.io.File;
 import java.util.Collections;
@@ -27,15 +28,15 @@ public class NullIndexManager implements IndexManager {
     // no nothing
   }
 
-  public void remove(String indexName, Object key) {
+  public void remove(String indexName, Object key, MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void upsert(String indexName, Object key, List<NVPair> attributes) {
+  public void upsert(String indexName, Object key, List<NVPair> attributes, MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void clear(String indexName) {
+  public void clear(String indexName, MetaDataProcessingContext metaDataContext) {
     //
   }
 

@@ -4,6 +4,7 @@
 package com.tc.objectserver.search;
 
 import com.tc.object.tx.ServerTransactionID;
+import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 /**
  * Context holding search index clear information.
@@ -14,8 +15,8 @@ public class SearchClearContext extends BaseSearchEventContext {
 
   private final String name;
 
-  public SearchClearContext(ServerTransactionID transactionID, String name) {
-    super(transactionID);
+  public SearchClearContext(ServerTransactionID transactionID, String name, MetaDataProcessingContext metaDataContext) {
+    super(transactionID, metaDataContext);
     this.name = name;
   }
 
