@@ -7,7 +7,7 @@ package com.tc.bundles;
 final class Version extends org.osgi.framework.Version {
 
   public Version(String arg0) {
-    super(arg0.replace('-', '.'));
+    super(MavenToOSGi.projectVersionToBundleVersion(arg0));
   }
 
   public Version(int major, int minor, int micro) {
@@ -19,10 +19,12 @@ final class Version extends org.osgi.framework.Version {
   }
 
   public static Version parse(String version) {
-    org.osgi.framework.Version v = org.osgi.framework.Version.parseVersion(version.replace('-', '.'));
+    org.osgi.framework.Version v = org.osgi.framework.Version.parseVersion(MavenToOSGi
+        .projectVersionToBundleVersion(version));
     return new Version(v.getMajor(), v.getMinor(), v.getMicro(), v.getQualifier());
   }
-  
+
+  @Override
   public String toString() {
     return getMajor() + ";" + getMinor() + ";" + getMicro() + ";" + getQualifier();
   }
