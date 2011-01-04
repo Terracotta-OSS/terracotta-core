@@ -76,7 +76,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         end
       end
 
-      patch_file_name = File.basename(Dir.pwd) + "-patch-#{patch_level}.tar.gz"
+      patch_file_name = File.basename(Dir.pwd) + "-patch#{patch_level}.tar.gz"
       patch_file = FilePath.new(self.dist_directory, patch_file_name)
       ant.tar(:destfile => patch_file.to_s, :compression => 'gzip', :longfile => 'gnu') do
         ant.tarfileset(:dir => Dir.pwd, :includes => patch_files.join(','))
@@ -210,10 +210,10 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
     check_if_type_supplied(product_code, flavor)
 
     depends :init, :compile, :load_config
-
+    @flavor = flavor.downcase
     component = get_spec(:bundled_components, []).find { |component| /^#{component_name}$/i =~ component[:name] }
     libdir    = FilePath.new(@build_results.build_dir, 'tmp').ensure_directory
-    destdir   = FilePath.new(@build_results.artifacts_directory, flavor.downcase)
+    destdir   = FilePath.new(@build_results.artifacts_directory, @flavor)
     add_binaries(component, libdir, destdir, false)
     libdir.delete
 

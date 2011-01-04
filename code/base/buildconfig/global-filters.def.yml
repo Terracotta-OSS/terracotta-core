@@ -12,7 +12,7 @@ filters:
   # Anywhere there is a config_source key that matches /version/, assume it
   # is a version number and define an additional filter fit for OSGi manifest entries.
   <% if key =~ /version/i %>
-  - <%= key + ".OSGi" %>: <%= value.sub(/-SNAPSHOT$/, '.SNAPSHOT') %>
+  - <%= key + ".OSGi" %>: <%= value.sub(/-SNAPSHOT$/, '.SNAPSHOT').sub(/-patch/, '.patch') %>
   <% end %>
   <% end %>
 

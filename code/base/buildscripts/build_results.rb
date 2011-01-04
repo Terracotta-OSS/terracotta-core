@@ -165,7 +165,8 @@ class BuildResults
     if build_module.module?
       module_metainf_dir = FilePath.new(self.classes_directory(build_module.subtree('src')), 'META-INF')
       manifest = FilePath.new(module_metainf_dir, "MANIFEST.MF")
-      module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT')
+      module_version = extract_version_from_manifest(manifest.to_s).gsub(/\.SNAPSHOT/,'-SNAPSHOT').gsub(/\.patch/, '-patch')
+      puts "module_version: #{module_version}"
       artifact = build_module.name
       output_dir = FilePath.new(self.modules_home, build_module.group_id.gsub(/\./, '/'),
         artifact, module_version).ensure_directory
