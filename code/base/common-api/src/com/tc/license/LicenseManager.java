@@ -23,6 +23,7 @@ import org.terracotta.license.util.MemorySizeParser;
 
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.util.ProductInfo;
 import com.tc.util.runtime.Vm;
 
@@ -32,7 +33,8 @@ import java.util.Date;
 public class LicenseManager {
   private static final long                           BYTES_PER_MEGABYTE = 1024 * 1024L;
   private static final long                           BYTES_PER_GIGABYTE = 1024 * 1024L * 1024L;
-  private static final TCLogger                       LOGGER             = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                       CONSOLE_LOGGER     = CustomerLogging.getConsoleLogger();
+  private static final TCLogger                       LOGGER             = TCLogging.getLogger(LicenseManager.class);
   public static final String                          EXIT_MESSAGE       = "TERRACOTTA IS EXITING. Contact your Terracotta sales representative to "
                                                                            + "learn how to enable licensed usage of this feature. For more information, "
                                                                            + "visit Terracotta support at http://www.terracotta.org.";
@@ -64,7 +66,7 @@ public class LicenseManager {
   private static void afterInit(String licenseLocation) {
     initialized = true;
     if (license != null) {
-      LOGGER.info("Terracotta license loaded from " + licenseLocation + "\n" + license.toString());
+      CONSOLE_LOGGER.info("Terracotta license loaded from " + licenseLocation + "\n" + license.toString());
     }
   }
 
@@ -81,17 +83,18 @@ public class LicenseManager {
   public static void assertLicenseValid() {
     if (getLicense() == null) {
       //
-      LOGGER
+      CONSOLE_LOGGER
           .error("Terracotta license key is required for Enterprise capabilities. Please place "
                  + LICENSE_KEY_FILENAME
                  + " in Terracotta installed directory or in resource path. You could also specify it through system property -D"
                  + PRODUCTKEY_PATH_PROPERTY + "=/path/to/key");
+      LOGGER.error(new LicenseException("License key not found"));
       System.exit(1);
     }
     Date expirationDate = getLicense().expirationDate();
     if (expirationDate != null && expirationDate.before(new Date())) {
       //
-      LOGGER.error("Your Terracotta license has expired on " + expirationDate);
+      CONSOLE_LOGGER.error("Your Terracotta license has expired on " + expirationDate);
       System.exit(1);
     }
   }
@@ -149,9 +152,9 @@ public class LicenseManager {
     String maxHeapSizeFromLicense = getLicense().getRequiredProperty(TERRACOTTA_SERVER_ARRAY_MAX_OFFHEAP);
     long maxHeapAllowedInBytes = MemorySizeParser.parse(maxHeapSizeFromLicense);
 
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("max offheap from VM: " + maxHeapFromVMInBytes);
-      LOGGER.debug("max offheap allowed: " + maxHeapAllowedInBytes);
+    if (CONSOLE_LOGGER.isDebugEnabled()) {
+      CONSOLE_LOGGER.debug("max offheap from VM: " + maxHeapFromVMInBytes);
+      CONSOLE_LOGGER.debug("max offheap allowed: " + maxHeapAllowedInBytes);
     }
 
     if (maxHeapFromVMInBytes > maxHeapAllowedInBytes) {
