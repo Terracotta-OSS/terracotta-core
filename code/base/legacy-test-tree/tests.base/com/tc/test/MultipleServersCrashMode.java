@@ -12,6 +12,8 @@ public abstract class MultipleServersCrashMode {
   public static final String RANDOM_SERVER_CRASH     = "random-server-crash";
   public static final String AP_CUSTOMIZED_CRASH     = "active-passive-customized-crash";
   public static final String AA_CUSTOMIZED_CRASH     = "active-active-customized-crash";
+  // only crash active-active group-0
+  public static final String AA_CONTINUOUS_CRASH_ONE = "active-active-continuous-crash-one";
 
   protected String           mode;
 

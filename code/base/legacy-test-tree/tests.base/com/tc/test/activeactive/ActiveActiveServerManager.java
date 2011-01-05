@@ -181,7 +181,12 @@ public class ActiveActiveServerManager extends MultipleServerManager {
     testSetupManager.setMaxCrashCount(setupManger.getMaxCrashCount());
     testSetupManager.setServerCount(setupManger.getGroupMemberCount(grpIndex));
     ActiveActiveCrashMode mode = new ActiveActiveCrashMode(setupManger.getServerCrashMode());
-    if (mode.getMode().equals(MultipleServersCrashMode.AA_CUSTOMIZED_CRASH)) {
+    if (mode.getMode().equals(MultipleServersCrashMode.AA_CONTINUOUS_CRASH_ONE)) {
+      testSetupManager
+          .setServerCrashMode(new ActivePassiveCrashMode(
+                                                         grpIndex == 0 ? MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH
+                                                             : MultipleServersCrashMode.NO_CRASH));
+    } else if (mode.getMode().equals(MultipleServersCrashMode.AA_CUSTOMIZED_CRASH)) {
       testSetupManager.setServerCrashMode(new ActivePassiveCrashMode(MultipleServersCrashMode.AP_CUSTOMIZED_CRASH));
     } else {
       testSetupManager.setServerCrashMode(new ActivePassiveCrashMode(mode.getMode()));

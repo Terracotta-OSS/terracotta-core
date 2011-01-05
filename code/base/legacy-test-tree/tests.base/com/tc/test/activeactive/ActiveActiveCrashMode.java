@@ -12,10 +12,12 @@ public class ActiveActiveCrashMode extends MultipleServersCrashMode {
     super(mode);
   }
 
+  @Override
   public void checkMode() {
     if (!mode.equals(CRASH_AFTER_MUTATE) && !mode.equals(CONTINUOUS_ACTIVE_CRASH) && !mode.equals(RANDOM_SERVER_CRASH)
-        && !mode.equals(AA_CUSTOMIZED_CRASH) && !mode.equals(NO_CRASH)) { throw new AssertionError(
-                                                                                                   "Unrecognized crash mode ["
-                                                                                                       + mode + "]"); }
+        && !mode.equals(AA_CUSTOMIZED_CRASH) && !mode.equals(NO_CRASH) && !mode.equals(AA_CONTINUOUS_CRASH_ONE)) { throw new AssertionError(
+                                                                                                                                            "Unrecognized crash mode ["
+                                                                                                                                                + mode
+                                                                                                                                                + "]"); }
   }
 }
