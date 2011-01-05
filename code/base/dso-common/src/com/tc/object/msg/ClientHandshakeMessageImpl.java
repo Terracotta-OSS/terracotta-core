@@ -34,12 +34,14 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte REQUEST_OBJECT_IDS       = 5;
   private static final byte CLIENT_VERSION           = 6;
   private static final byte SERVER_HIGH_WATER_MARK   = 7;
+  private static final byte ENTERPRISE_CLIENT        = 8;
 
   private final Set         objectIDs                = new HashSet();
   private final Set         lockContexts             = new HashSet();
   private final List        sequenceIDs              = new ArrayList();
   private final List        txnIDs                   = new ArrayList();
   private boolean           requestObjectIDs;
+  private boolean           enterpriseClient         = false;
   private long              serverHighWaterMark      = 0;
   private String            clientVersion            = "UNKNOW";
 
@@ -112,6 +114,7 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       putNVPair(RESENT_TRANSACTION_IDS, ((TransactionID) i.next()).toLong());
     }
     putNVPair(REQUEST_OBJECT_IDS, this.requestObjectIDs);
+    putNVPair(ENTERPRISE_CLIENT, this.enterpriseClient);
     putNVPair(CLIENT_VERSION, this.clientVersion);
     putNVPair(SERVER_HIGH_WATER_MARK, this.serverHighWaterMark);
   }
@@ -134,6 +137,9 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       case REQUEST_OBJECT_IDS:
         this.requestObjectIDs = getBooleanValue();
         return true;
+      case ENTERPRISE_CLIENT:
+        this.enterpriseClient = getBooleanValue();
+        return true;
       case CLIENT_VERSION:
         this.clientVersion = getStringValue();
         return true;
@@ -151,5 +157,13 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
 
   public void setServerHighWaterMark(long serverHWM) {
     this.serverHighWaterMark = serverHWM;
+  }
+
+  public boolean enterpriseClient() {
+    return this.enterpriseClient;
+  }
+
+  public void setEnterpriseClient(boolean isEnterpriseClient) {
+    this.enterpriseClient = isEnterpriseClient;
   }
 }

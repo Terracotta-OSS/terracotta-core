@@ -62,6 +62,10 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("node.state");
   }
 
+  static String getHandshakeRejectedMessage() {
+    return instance.resources.getString("handshake.reject");
+  }
+
   /**
    * Zap Messagse
    */

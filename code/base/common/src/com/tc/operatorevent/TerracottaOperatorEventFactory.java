@@ -71,6 +71,12 @@ public class TerracottaOperatorEventFactory {
         .format(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage(), arguments), "");
   }
 
+  public static TerracottaOperatorEvent createHandShakeRejectedEvent(String clientVersion, String serverVersion) {
+    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
+        .format(TerracottaOperatorEventResources.getHandshakeRejectedMessage(), new Object[] { clientVersion,
+            serverVersion }), "handshake rejected");
+  }
+
   /**
    * zap events
    */

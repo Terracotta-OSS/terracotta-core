@@ -114,14 +114,17 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
     }
     changeToStarting(remoteNode);
 
-    ClientHandshakeMessage handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode);
-    handshakeMessage.setClientVersion(this.clientVersion);
-
+    ClientHandshakeMessage handshakeMessage = this.chmf.newClientHandshakeMessage(remoteNode, this.clientVersion,
+                                                                                  enterpriseClient());
     notifyCallbackOnHandshake(remoteNode, handshakeMessage);
     notifyTransitionComplete();
 
     this.logger.debug("Sending handshake message...");
     handshakeMessage.send();
+  }
+
+  protected boolean enterpriseClient() {
+    return false;
   }
 
   public void notifyChannelEvent(final ChannelEvent event) {
@@ -198,8 +201,8 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager, Chann
   }
 
   public void acknowledgeHandshake(final ClientHandshakeAckMessage handshakeAck) {
-    acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(),
-                         handshakeAck.getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
+    acknowledgeHandshake(handshakeAck.getSourceNodeID(), handshakeAck.getPersistentServer(), handshakeAck
+        .getThisNodeId(), handshakeAck.getAllNodes(), handshakeAck.getServerVersion());
   }
 
   private synchronized boolean areAllGroupsConnected() {

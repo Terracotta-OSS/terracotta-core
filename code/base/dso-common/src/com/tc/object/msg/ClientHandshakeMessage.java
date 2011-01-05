@@ -39,4 +39,8 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public long getServerHighWaterMark();
 
+  public void setEnterpriseClient(boolean isEnterpirseClient);
+
+  public boolean enterpriseClient();
+
 }

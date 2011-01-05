@@ -7,18 +7,26 @@ package com.tc.object.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.logging.CustomerLogging;
+import com.tc.logging.TCLogger;
 import com.tc.object.ClientConfigurationContext;
 import com.tc.object.context.PauseContext;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
 import com.tc.object.msg.ClientHandshakeAckMessage;
+import com.tc.object.msg.ClientHandshakeRefusedMessage;
 
 public class ClientCoordinationHandler extends AbstractEventHandler {
 
-  private ClientHandshakeManager   handshakeManager;
+  private static final TCLogger  consoleLogger = CustomerLogging.getConsoleLogger();
+  private ClientHandshakeManager handshakeManager;
 
   @Override
   public void handleEvent(final EventContext context) {
-     if (context instanceof ClientHandshakeAckMessage) {
+    if (context instanceof ClientHandshakeRefusedMessage) {
+      consoleLogger.error(((ClientHandshakeRefusedMessage) context).getRefualsCause());
+      consoleLogger.info("L1 Exiting...");
+      throw new RuntimeException(((ClientHandshakeRefusedMessage) context).getRefualsCause());
+    } else if (context instanceof ClientHandshakeAckMessage) {
       handleClientHandshakeAckMessage((ClientHandshakeAckMessage) context);
     } else if (context instanceof PauseContext) {
       handlePauseContext((PauseContext) context);

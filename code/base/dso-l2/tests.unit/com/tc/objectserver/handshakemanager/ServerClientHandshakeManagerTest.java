@@ -466,6 +466,11 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       return new ClientID(channelID.toLong());
     }
 
+    public void notifyConnectionRefused(ClientID clientID, String message) {
+      throw new ImplementMe();
+
+    }
+
   }
 
   private static class TestClientHandshakeAckMessage extends TestTCMessage implements ClientHandshakeAckMessage {

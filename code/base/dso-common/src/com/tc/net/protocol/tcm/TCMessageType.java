@@ -82,6 +82,7 @@ public final class TCMessageType {
   public static final int           TYPE_NODES_WITH_KEYS_MESSAGE                      = 67;
   public static final int           TYPE_NODES_WITH_KEYS_RESPONSE_MESSAGE             = 68;
   public static final int           TYPE_INVALIDATE_OBJECTS_MESSAGE                   = 69;
+  public static final int           TYPE_CLIENT_HANDSHAKE_REJECTED_MESSAGE            = 70;
 
   public static final TCMessageType PING_MESSAGE                                      = new TCMessageType();
   public static final TCMessageType PONG_MESSAGE                                      = new TCMessageType();
@@ -102,6 +103,7 @@ public final class TCMessageType {
   public static final TCMessageType ACKNOWLEDGE_TRANSACTION_MESSAGE                   = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_MESSAGE                          = new TCMessageType();
   public static final TCMessageType CLIENT_HANDSHAKE_ACK_MESSAGE                      = new TCMessageType();
+  public static final TCMessageType CLIENT_HANDSHAKE_REJECTED_MESSAGE                 = new TCMessageType();
   public static final TCMessageType BATCH_TRANSACTION_ACK_MESSAGE                     = new TCMessageType();
   public static final TCMessageType CONFIG_PUSH_MESSAGE                               = new TCMessageType();
   public static final TCMessageType OVERRIDE_APPLICATION_CONFIG_MESSAGE               = new TCMessageType();

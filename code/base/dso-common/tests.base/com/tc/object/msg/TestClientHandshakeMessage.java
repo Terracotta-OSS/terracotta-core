@@ -28,6 +28,7 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
   public List                   lockContexts                   = new ArrayList();
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
+  private boolean               enterpriseClient             = false;
   public NoExceptionLinkedQueue setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue();
   public NoExceptionLinkedQueue setTransactionIDsCalls         = new NoExceptionLinkedQueue();
   public List                   transactionSequenceIDs         = new ArrayList();
@@ -131,5 +132,13 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
 
   public void addLockContext(ClientServerExchangeLockContext ctxt) {
     this.lockContexts.add(ctxt);
+  }
+
+  public boolean enterpriseClient() {
+    return this.enterpriseClient;
+  }
+
+  public void setEnterpriseClient(boolean isEnterpirseClient) {
+    this.enterpriseClient = isEnterpirseClient;
   }
 }

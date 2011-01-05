@@ -141,9 +141,12 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     return (AcknowledgeTransactionMessage) this.channel.createMessage(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE);
   }
 
-  public ClientHandshakeMessage newClientHandshakeMessage(final NodeID remoteNode) {
+  public ClientHandshakeMessage newClientHandshakeMessage(NodeID remoteNode, String clientVersion,
+                                                          boolean isEnterpriseClient) {
     final ClientHandshakeMessage rv = (ClientHandshakeMessage) this.channel
         .createMessage(TCMessageType.CLIENT_HANDSHAKE_MESSAGE);
+    rv.setClientVersion(clientVersion);
+    rv.setEnterpriseClient(isEnterpriseClient);
     return rv;
   }
 

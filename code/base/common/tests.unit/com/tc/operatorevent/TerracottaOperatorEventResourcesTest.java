@@ -50,6 +50,9 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
     Assert.assertTrue(TerracottaOperatorEventResources.getClusterNodeStateChangedMessage()
         .equals(this.resources.getObject("node.state")));
 
+    Assert.assertTrue(TerracottaOperatorEventResources.getHandshakeRejectedMessage()
+        .equals(this.resources.getObject("handshake.reject")));
+
     /**
      * Zap Messagse
      */

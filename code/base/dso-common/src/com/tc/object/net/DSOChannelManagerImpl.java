@@ -23,6 +23,7 @@ import com.tc.net.protocol.tcm.MessageChannelInternal;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
+import com.tc.object.msg.ClientHandshakeRefusedMessage;
 import com.tc.util.concurrent.CopyOnWriteArrayMap;
 
 import java.util.Collection;
@@ -107,6 +108,13 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
         .createMessage(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE);
   }
 
+  private ClientHandshakeRefusedMessage newClientHandshakeRejectedMessage(final ClientID clientID)
+      throws NoSuchChannelException {
+    MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
+    if (channel == null) { throw new NoSuchChannelException(); }
+    return (ClientHandshakeRefusedMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE);
+  }
+
   private ClientHandshakeAckMessage newClientHandshakeAckMessage(final ClientID clientID) throws NoSuchChannelException {
     MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
     if (channel == null) { throw new NoSuchChannelException(); }
@@ -132,6 +140,19 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     } catch (NoSuchChannelException nsce) {
       logger.warn("Not sending handshake message to disconnected client: " + clientID);
     }
+  }
+
+  public void notifyConnectionRefused(ClientID clientID, String message) {
+    try {
+      ClientHandshakeRefusedMessage ackMsg = newClientHandshakeRejectedMessage(clientID);
+      synchronized (activeChannels) {
+        ackMsg.initialize(message);
+        ackMsg.send();
+      }
+    } catch (NoSuchChannelException nsce) {
+      logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
+    }
+
   }
 
   private Set<ClientID> getAllActiveClientIDs() {

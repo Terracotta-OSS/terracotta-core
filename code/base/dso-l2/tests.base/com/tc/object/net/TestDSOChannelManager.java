@@ -82,4 +82,9 @@ public class TestDSOChannelManager implements DSOChannelManager {
   public ClientID getClientIDFor(ChannelID channelID) {
     return new ClientID(channelID.toLong());
   }
+
+  public void notifyConnectionRefused(ClientID clientID, String message) {
+    throw new ImplementMe();
+
+  }
 }

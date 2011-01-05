@@ -445,6 +445,11 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
     public BatchTransactionAcknowledgeMessage newBatchTransactionAcknowledgeMessage(final NodeID nid) {
       throw new ImplementMe();
     }
+
+    public void notifyConnectionRefused(ClientID clientID, String message) {
+      throw new ImplementMe();
+
+    }
   }
 
   private class TestMessageChannel implements MessageChannel {
