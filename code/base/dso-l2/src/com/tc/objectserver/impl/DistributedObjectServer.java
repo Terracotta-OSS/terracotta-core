@@ -57,8 +57,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
+import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -753,7 +753,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(),
                                                                      cacheConfig.getLeastCount(),
                                                                      cacheConfig.isOnlyOldGenMonitored(),
-                                                                     this.threadGroup);
+                                                                     this.threadGroup, offHeapConfig.getEnabled());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.serverBuilder.createLongGCLogger(timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
@@ -1295,7 +1295,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                     AcknowledgeTransactionMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE, ClientHandshakeRejectedMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE,
+                                    ClientHandshakeRejectedMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);

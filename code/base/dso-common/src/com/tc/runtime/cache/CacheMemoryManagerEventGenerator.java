@@ -42,7 +42,7 @@ public class CacheMemoryManagerEventGenerator implements MemoryEventsListener {
                                                          + " Outside range"); }
   }
 
-  public void memoryUsed(MemoryUsage usage) {
+  public void memoryUsed(MemoryUsage usage, boolean offheapEnabled) {
     int usedPercentage = usage.getUsedPercentage();
     if (usedPercentage < threshold) {
       if (currentState != CacheMemoryEventType.BELOW_THRESHOLD) {

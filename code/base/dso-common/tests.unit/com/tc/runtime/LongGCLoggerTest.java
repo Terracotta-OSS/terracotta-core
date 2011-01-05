@@ -10,8 +10,8 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.logging.TerracottaOperatorEventLogging;
 import com.tc.operatorevent.TerracottaOperatorEvent;
-import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
+import com.tc.operatorevent.TerracottaOperatorEventCallback;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.test.TCTestCase;
 
@@ -21,11 +21,17 @@ import java.util.concurrent.CountDownLatch;
 
 public class LongGCLoggerTest extends TCTestCase {
 
-  private final CountDownLatch latch        = new CountDownLatch(1);
-  private final int            LOOP_COUNT   = 20;
-  private final int            OBJECT_COUNT = 1000;
+  private final int      LOOP_COUNT   = 20;
+  private final int      OBJECT_COUNT = 1000;
+  private CountDownLatch latch;
 
-  public void test() throws Exception {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    latch = new CountDownLatch(1);
+  }
+
+  public void testBasic() throws Exception {
     TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
 
       TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
@@ -33,13 +39,43 @@ public class LongGCLoggerTest extends TCTestCase {
       public void logOperatorEvent(TerracottaOperatorEvent event) {
         if (event.getEventType() == EventType.WARN) {
           logger.warn(event);
-          latch.countDown();
+          if (event.toString().contains("BigMemory")) {
+            latch.countDown();
+          } else {
+            logger.warn("testBasic: latch not counted down");
+          }
         } else {
           logger.info(event);
         }
       }
     });
     register();
+    // Create some data for GC in a diff thread
+    createThreadAndCollectGarbage();
+    // wait in a thread to get notified
+    latch.await();
+  }
+
+  public void testOffheapLongGCLog() throws Exception {
+    TerracottaOperatorEventLogging.getEventLogger().registerEventCallback(new TerracottaOperatorEventCallback() {
+
+      TCLogger logger = TCLogging.getLogger(LongGCLoggerTest.class);
+
+      public void logOperatorEvent(TerracottaOperatorEvent event) {
+        if (event.getEventType() == EventType.WARN) {
+          logger.warn(event);
+          if (!event.toString().contains("BigMemory")) {
+            latch.countDown();
+          } else {
+            logger.warn("testOffheapLongGCLog: latch not counted down");
+          }
+
+        } else {
+          logger.info(event);
+        }
+      }
+    });
+    register(true);
     // Create some data for GC in a diff thread
     createThreadAndCollectGarbage();
     // wait in a thread to get notified
@@ -94,8 +130,12 @@ public class LongGCLoggerTest extends TCTestCase {
   }
 
   private void register() {
+    register(false);
+  }
+
+  private void register(boolean offheapEnabled) {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, offheapEnabled);
     LongGCLogger logger = new TestLongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);
   }

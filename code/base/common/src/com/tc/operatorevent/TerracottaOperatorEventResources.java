@@ -20,6 +20,10 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("long.gc");
   }
 
+  static String getLongGCAndOffheapRecommendationMessage() {
+    return instance.resources.getString("long.gc.no.offheap");
+  }
+
   static String getHighMemoryUsageMessage() {
     return instance.resources.getString("high.memory.usage");
   }
