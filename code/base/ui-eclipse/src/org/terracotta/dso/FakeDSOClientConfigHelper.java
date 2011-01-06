@@ -50,8 +50,10 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
+  private final Map<Bundle, URL> bundleURLs = new ConcurrentHashMap<Bundle, URL>();
 
   public String rawConfigText() {
     return null;
@@ -99,11 +101,12 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
                                 final boolean oldStyleCallConstructorOnLoad, final boolean honorVolatile) {
     /**/
   }
-  
-  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad, boolean honorVolatile) {
+
+  public void addIncludePattern(String expression, boolean honorTransient, String methodToCallOnLoad,
+                                boolean honorVolatile) {
     /**/
   }
-  
+
   public void addLock(final String methodPattern, final LockDefinition lockDefinition) {
     /**/
   }
@@ -484,12 +487,12 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
     return false;
   }
 
-  public void recordBundleURLs(final Map<Bundle, URL> bundleURLs) {
-    //
+  public void recordBundleURLs(final Map<Bundle, URL> toAdd) {
+    this.bundleURLs.putAll(toAdd);
   }
 
   public URL getBundleURL(final Bundle bundle) {
-    return null;
+    return this.bundleURLs.get(bundle);
   }
 
   public UUID getUUID() {

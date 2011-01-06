@@ -96,6 +96,7 @@ import org.terracotta.dso.decorator.TransientDecorator;
 import org.terracotta.dso.dialogs.ConfigProblemsDialog;
 import org.terracotta.dso.editors.ConfigurationEditor;
 import org.terracotta.dso.wizards.ProjectWizard;
+import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
 
 import com.tc.bundles.EmbeddedOSGiEventHandler;
 import com.tc.bundles.EmbeddedOSGiRuntime;
@@ -103,8 +104,13 @@ import com.tc.bundles.Resolver;
 import com.tc.bundles.ResolverUtils;
 import com.tc.config.Loader;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
+import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.util.JarResourceLoader;
 import com.tc.plugins.ModulesLoader;
+import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConstants;
 import com.tc.util.Assert;
 import com.tc.util.ProductInfo;
@@ -132,9 +138,10 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -362,8 +369,8 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
       wizard.setWindowTitle("Terracotta Project Wizard");
       dialog.open();
     } catch (Exception e) {
-      MessageDialog.openInformation(shell, "Terracotta", "Cannot add Terracotta nature:\n"
-                                                         + ActionUtil.getStatusMessages(e));
+      MessageDialog.openInformation(shell, "Terracotta",
+                                    "Cannot add Terracotta nature:\n" + ActionUtil.getStatusMessages(e));
     } finally {
       if (shell != null) shell.setCursor(null);
     }
@@ -456,8 +463,12 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
     wc.setAttribute(ATTR_MAIN_TYPE_NAME, ServerConstants.SERVER_MAIN_CLASS_NAME);
     wc.setAttribute(SERVER_NAME_LAUNCH_ATTR, server.getName());
     wc.setAttribute(SERVER_HOST_LAUNCH_ATTR, server.getHost());
-    wc.setAttribute(SERVER_JMX_PORT_LAUNCH_ATTR, server.getJmxPort().getIntValue());
-    wc.setAttribute(SERVER_DSO_PORT_LAUNCH_ATTR, server.getDsoPort().getIntValue());
+    BindPort dsoBindPort = server.getDsoPort();
+    int dsoPort = dsoBindPort != null ? dsoBindPort.getIntValue() : 9510;
+    wc.setAttribute(SERVER_DSO_PORT_LAUNCH_ATTR, dsoPort);
+    BindPort jmxBindPort = server.getJmxPort();
+    int jmxPort = jmxBindPort != null ? jmxBindPort.getIntValue() : (dsoPort + 10);
+    wc.setAttribute(SERVER_JMX_PORT_LAUNCH_ATTR, jmxPort);
 
     IFile configFile = getConfigurationFile(project);
 
@@ -719,16 +730,22 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
 
       resolver.resolve(allModules);
 
+      DSOClientConfigHelper configHelper = new FakeDSOClientConfigHelper();
+      final Map<Bundle, URL> bundleURLs = new HashMap<Bundle, URL>();
       for (URL location : resolver.getResolvedURLs()) {
         try {
-          osgiRuntime.installBundle(location);
+          Bundle b = osgiRuntime.installBundle(location);
+          bundleURLs.put(b, location);
         } catch (BundleException be) {
-          /**/
+          be.printStackTrace();
         }
       }
+      configHelper.recordBundleURLs(bundleURLs);
 
-      osgiRuntime.registerService("com.tc.object.config.StandardDSOClientConfigHelper",
-                                  new FakeDSOClientConfigHelper(), new Properties());
+      osgiRuntime.registerService("com.tc.object.config.StandardDSOClientConfigHelper", configHelper, new Hashtable());
+      osgiRuntime.registerService(TCLogger.class.getName(), TCLogging.getLogger(TerracottaConfiguratorModule.class),
+                                  new Hashtable());
+      osgiRuntime.registerService(TCProperties.class.getName(), TCPropertiesImpl.getProperties(), new Hashtable());
 
       osgiRuntime.startBundles(resolver.getResolvedURLs(), new EmbeddedOSGiEventHandler() {
         public void callback(final Object payload) throws BundleException {
@@ -740,7 +757,7 @@ public class TcPlugin extends AbstractUIPlugin implements QualifiedNames, IJavaL
         }
       });
     } catch (Exception e) {
-      /**/
+      e.printStackTrace();
     } finally {
       if (osgiRuntime != null) {
         osgiRuntime.shutdown();

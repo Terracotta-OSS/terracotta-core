@@ -40,7 +40,8 @@ public class VersionMatcher {
   }
 
   private boolean tcMatches(String moduleTcVersion) {
-    return ANY_VERSION.equals(moduleTcVersion) || tcVersion.equals(moduleTcVersion);
+    return ANY_VERSION.equals(moduleTcVersion) /* || tcVersion.equals("[unknown]") */
+           || tcVersion.equals(moduleTcVersion);
   }
 
   private boolean apiMatches(String moduleApiVersion) {

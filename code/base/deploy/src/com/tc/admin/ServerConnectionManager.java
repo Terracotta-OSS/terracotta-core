@@ -351,7 +351,7 @@ public class ServerConnectionManager implements NotificationListener {
           if (!cancel) {
             setConnected(isConnected);
           }
-          return;
+          if (isConnected) { return; }
         } catch (TimeoutException te) {
           if (cancel) { return; }
         } catch (Exception e) {

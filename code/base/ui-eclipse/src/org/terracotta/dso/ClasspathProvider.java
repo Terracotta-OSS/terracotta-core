@@ -87,10 +87,13 @@ public class ClasspathProvider extends StandardClasspathProvider {
 
     String[] dirs = { "deploy", "deploy-api", "common", "common-api", "management", "management-api", "aspectwerkz",
         "sigarstats", "thirdparty", "dso-common", "dso-common-jdk16", "dso-l1", "dso-l1-api", "dso-l2",
-        "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool", "license-common" };
+        "dso-l2-common", "dso-statistics", "dso-statistics-api", "tim-get-tool", "tim-api" };
 
     for (String dir : dirs) {
-      list.add(buildPath.append(dir).append("build.eclipse").append("src.classes"));
+      IPath classesPath = buildPath.append(dir).append("build.eclipse").append("src.classes");
+      if (classesPath.toFile().exists()) {
+        list.add(classesPath);
+      }
     }
 
     // this is to get access to build-data.txt in dev mode

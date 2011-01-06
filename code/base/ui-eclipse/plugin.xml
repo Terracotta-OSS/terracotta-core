@@ -953,7 +953,7 @@
       </decorator>
       <decorator
             lightweight="true"
-            location="BOTTOM_RIGHT"
+            location="BOTTOM_LEFT"
             adaptable="true"
             label="%distributedMethodDecoratorLabel"
             state="true"
