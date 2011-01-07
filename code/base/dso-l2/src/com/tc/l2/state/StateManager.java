@@ -22,6 +22,8 @@ public interface StateManager {
 
   public void startElection();
 
+  public State getCurrentState();
+
   public void startElectionIfNecessary(NodeID disconnectedNode);
 
   public void registerForStateChangeEvents(StateChangeListener listener);
@@ -29,8 +31,6 @@ public interface StateManager {
   public void fireStateChangedEvent(StateChangedEvent sce);
 
   public boolean isActiveCoordinator();
-
-  public boolean isPassiveUnitialized();
 
   public void moveNodeToPassiveStandby(NodeID nodeID);
 

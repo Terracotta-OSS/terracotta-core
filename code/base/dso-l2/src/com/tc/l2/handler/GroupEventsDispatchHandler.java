@@ -10,20 +10,28 @@ import com.tc.async.api.Sink;
 import com.tc.net.NodeID;
 import com.tc.net.groups.GroupEventsListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GroupEventsDispatchHandler extends AbstractEventHandler {
 
-  private final GroupEventsListener target;
+  private final List<GroupEventsListener> listeners = new ArrayList();
 
-  public GroupEventsDispatchHandler(GroupEventsListener target) {
-    this.target = target;
+  public void addListener(GroupEventsListener listener) {
+    this.listeners.add(listener);
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     GroupEvent e = (GroupEvent) context;
     if (e.nodeJoined()) {
-      target.nodeJoined(e.getNodeID());
+      for (GroupEventsListener listener : listeners) {
+        listener.nodeJoined(e.getNodeID());
+      }
     } else {
-      target.nodeLeft(e.getNodeID());
+      for (GroupEventsListener listener : listeners) {
+        listener.nodeLeft(e.getNodeID());
+      }
     }
   }
 

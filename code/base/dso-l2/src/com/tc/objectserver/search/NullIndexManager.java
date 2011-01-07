@@ -44,7 +44,7 @@ public class NullIndexManager implements IndexManager {
     return Collections.emptyMap();
   }
 
-  public void syncCompletedAndRelease() {
+  public void release() {
     //
   }
 

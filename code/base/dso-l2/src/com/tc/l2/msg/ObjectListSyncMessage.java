@@ -10,6 +10,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.MessageID;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.State;
 
 import java.io.IOException;
 import java.util.Set;
@@ -21,6 +22,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
   public static final int FAILED_RESPONSE = 2;
 
   private ObjectIDSet     oids;
+  private State           currentState;
   private boolean         isCleanDB;
 
   // To make serialization happy
@@ -32,9 +34,10 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
     super(type);
   }
 
-  public ObjectListSyncMessage(MessageID messageID, int type, Set oids, boolean isCleanDB) {
+  public ObjectListSyncMessage(MessageID messageID, int type, State currentState, Set oids, boolean isCleanDB) {
     super(type, messageID);
-    this.oids = (ObjectIDSet)oids;
+    this.currentState = currentState;
+    this.oids = (ObjectIDSet) oids;
     this.isCleanDB = isCleanDB;
   }
 
@@ -51,6 +54,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         break;
       case RESPONSE:
         isCleanDB = in.readBoolean();
+        currentState = new State(in.readString());
         oids = new ObjectIDSet();
         oids.deserializeFrom(in);
         break;
@@ -68,6 +72,7 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
         break;
       case RESPONSE:
         out.writeBoolean(isCleanDB);
+        out.writeString(this.currentState.getName());
         Assert.assertNotNull(oids);
         oids.serializeTo(out);
         break;
@@ -83,6 +88,10 @@ public class ObjectListSyncMessage extends AbstractGroupMessage {
 
   public boolean isCleanDB() {
     return this.isCleanDB;
+  }
+
+  public State getCurrentState() {
+    return this.currentState;
   }
 
   @Override

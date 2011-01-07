@@ -6,10 +6,11 @@ package com.tc.l2.objectserver;
 import com.tc.l2.context.IndexSyncContext;
 import com.tc.l2.context.NullIndexSyncContext;
 import com.tc.net.NodeID;
+import com.tc.util.State;
 
 public class NullL2IndexStateManager implements L2IndexStateManager {
 
-  public boolean addL2(NodeID nodeID, boolean syncIndex) {
+  public boolean addL2(NodeID nodeID, State currentState) {
     return false;
   }
 

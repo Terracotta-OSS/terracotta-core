@@ -6,6 +6,7 @@ package com.tc.l2.msg;
 
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.l2.state.StateManager;
 import com.tc.object.ObjectID;
 import com.tc.util.ObjectIDSet;
 
@@ -18,6 +19,7 @@ public class ObjectListSyncMessageTest extends TestCase {
   private ObjectListSyncMessage objectListSyncMessage;
   private Set                   oids;
 
+  @Override
   public void setUp() {
     objectListSyncMessage = new ObjectListSyncMessage();
     oids = new ObjectIDSet();
@@ -26,6 +28,7 @@ public class ObjectListSyncMessageTest extends TestCase {
     oids.add(new ObjectID(9068));
   }
 
+  @Override
   public void tearDown() {
     objectListSyncMessage = null;
     oids = null;
@@ -67,7 +70,7 @@ public class ObjectListSyncMessageTest extends TestCase {
     validate(olsm, olsm1);
 
     olsm = (ObjectListSyncMessage) ObjectListSyncMessageFactory
-        .createObjectListSyncResponseMessage(objectListSyncMessage, oids, true);
+        .createObjectListSyncResponseMessage(objectListSyncMessage, StateManager.PASSIVE_UNINTIALIZED, oids, true);
     olsm1 = writeAndRead(olsm);
     validate(olsm, olsm1);
   }

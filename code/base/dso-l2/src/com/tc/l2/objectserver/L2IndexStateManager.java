@@ -6,6 +6,7 @@ package com.tc.l2.objectserver;
 
 import com.tc.l2.context.IndexSyncContext;
 import com.tc.net.NodeID;
+import com.tc.util.State;
 
 public interface L2IndexStateManager {
 
@@ -17,7 +18,7 @@ public interface L2IndexStateManager {
 
   public void removeL2(NodeID nodeID);
 
-  public boolean addL2(NodeID nodeID, boolean syncIndex);
+  public boolean addL2(NodeID nodeID, State l2State);
 
   public IndexSyncContext getIndexToSyncContext(final NodeID nodeID);
 

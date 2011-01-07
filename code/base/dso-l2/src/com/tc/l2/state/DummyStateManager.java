@@ -7,6 +7,7 @@ package com.tc.l2.state;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.net.NodeID;
+import com.tc.util.State;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,6 +26,10 @@ public class DummyStateManager implements StateManager {
       StateChangeListener listener = element;
       listener.l2StateChanged(sce);
     }
+  }
+
+  public State getCurrentState() {
+    return new State("NO_STATE");
   }
 
   public boolean isActiveCoordinator() {

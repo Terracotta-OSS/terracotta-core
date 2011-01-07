@@ -208,10 +208,10 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager, this.stateSyncManager,
                                                           this.l2ObjectStateManager, l2IndexStateManager,
-                                                          this.rTxnManager, objectManager, indexHACoordinator,
-                                                          transactionManager, objectsSyncRequestSink,
-                                                          indexSyncRequestSink, this.sequenceGenerator,
-                                                          this.indexSequenceGenerator, isCleanDB);
+                                                          this.rTxnManager, objectManager, transactionManager,
+                                                          objectsSyncRequestSink, indexSyncRequestSink,
+                                                          this.sequenceGenerator, this.indexSequenceGenerator,
+                                                          isCleanDB);
 
     this.stateSyncManager.setStateManager(stateManager);
 
@@ -224,10 +224,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.groupManager.routeMessages(L2StateMessage.class, stateMessageSink);
     this.groupManager.routeMessages(GCResultMessage.class, gcResultSink);
 
+    GroupEventsDispatchHandler dispatchHandler = new GroupEventsDispatchHandler();
+    dispatchHandler.addListener(this);
+
     final Sink groupEventsSink = stageManager.createStage(ServerConfigurationContext.GROUP_EVENTS_DISPATCH_STAGE,
-                                                          new GroupEventsDispatchHandler(this), 1, MAX_STAGE_SIZE)
-        .getSink();
+                                                          dispatchHandler, 1, MAX_STAGE_SIZE).getSink();
     final GroupEventsDispatcher dispatcher = new GroupEventsDispatcher(groupEventsSink);
+
     this.groupManager.registerForGroupEvents(dispatcher);
   }
 

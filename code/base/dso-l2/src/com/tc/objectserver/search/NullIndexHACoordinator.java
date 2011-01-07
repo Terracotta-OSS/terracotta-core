@@ -5,14 +5,11 @@ package com.tc.objectserver.search;
 
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.state.StateManager;
+import com.tc.net.NodeID;
 
 import java.io.IOException;
 
 public class NullIndexHACoordinator extends NullIndexManager implements IndexHACoordinator {
-
-  public boolean syncIndex() {
-    return false;
-  }
 
   public void setStateManager(StateManager stateManager) {
     //
@@ -29,6 +26,14 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
 
   public void applyIndexSync(String cacheName, String fileName, byte[] data) {
     //  
+  }
+
+  public void nodeJoined(NodeID nodeID) {
+    //
+  }
+
+  public void nodeLeft(NodeID nodeID) {
+    //
   }
 
 }

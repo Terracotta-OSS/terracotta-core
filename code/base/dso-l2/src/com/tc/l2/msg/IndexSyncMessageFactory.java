@@ -3,21 +3,8 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.net.groups.GroupMessage;
 
 public class IndexSyncMessageFactory {
-
-  public static GroupMessage createIndexCheckSyncRequestMessage() {
-    return new IndexCheckSyncMessage(IndexCheckSyncMessage.REQUEST);
-  }
-
-  public static GroupMessage createIndexCheckSyncResponseMessage(IndexCheckSyncMessage initiatedMsg, boolean syncIndex) {
-    return new IndexCheckSyncMessage(initiatedMsg.getMessageID(), IndexCheckSyncMessage.RESPONSE, syncIndex);
-  }
-
-  public static GroupMessage createIndexCheckSyncFailedMessage(IndexCheckSyncMessage initiatedMsg) {
-    return new IndexCheckSyncMessage(initiatedMsg.getMessageID(), IndexCheckSyncMessage.FAILED_RESPONSE);
-  }
 
   public static IndexSyncMessage createIndexSyncMessage(String cacheName, String fileName, int length, byte[] fileData,
                                                         long sequenceID) {

@@ -54,6 +54,10 @@ public class StateManagerImpl implements StateManager {
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
   }
 
+  public State getCurrentState() {
+    return this.state;
+  }
+
   /*
    * XXX:: If ACTIVE went dead before any passive moved to STANDBY state, then the cluster is hung and there is no going
    * around it. If ACTIVE in persistent mode, it can come back and recover the cluster

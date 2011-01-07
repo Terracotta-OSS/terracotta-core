@@ -27,7 +27,7 @@ public interface IndexManager {
 
   public Map<String, List<File>> getFilesToSync();
 
-  void syncCompletedAndRelease();
+  void release();
 
   void shutdown();
 }

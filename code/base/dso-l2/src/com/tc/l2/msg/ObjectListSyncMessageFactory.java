@@ -5,6 +5,7 @@
 package com.tc.l2.msg;
 
 import com.tc.net.groups.GroupMessage;
+import com.tc.util.State;
 
 import java.util.Set;
 
@@ -14,13 +15,14 @@ public class ObjectListSyncMessageFactory {
     return new ObjectListSyncMessage(ObjectListSyncMessage.REQUEST);
   }
 
-  public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg, Set knownIDs,
-                                                                 boolean isCleanDB) {
-    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, knownIDs, isCleanDB);
+  public static GroupMessage createObjectListSyncResponseMessage(ObjectListSyncMessage initiatingMsg,
+                                                                 State currentState, Set knownIDs, boolean isCleanDB) {
+    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.RESPONSE, currentState,
+                                     knownIDs, isCleanDB);
   }
 
   public static GroupMessage createObjectListSyncFailedResponseMessage(ObjectListSyncMessage initiatingMsg) {
-    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.FAILED_RESPONSE );
+    return new ObjectListSyncMessage(initiatingMsg.getMessageID(), ObjectListSyncMessage.FAILED_RESPONSE);
   }
 
 }
