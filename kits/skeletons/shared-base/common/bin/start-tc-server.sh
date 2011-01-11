@@ -32,18 +32,21 @@ if $cygwin; then
   [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
 fi
 
-${JAVA_HOME}/bin/java -server > /dev/null 2>&1
-if test "$?" = "0" ; then
-  SERVER_OPT=-server
-else
-  SERVER_OPT=
-fi
+for JAVA_COMMAND in \
+"${JAVA_HOME}/bin/java -d64 -server -XX:MaxDirectMemorySize=64g" \
+"${JAVA_HOME}/bin/java -server -XX:MaxDirectMemorySize=1g" \
+"${JAVA_HOME}/bin/java -d64 -client  -XX:MaxDirectMemorySize=64g" \
+"${JAVA_HOME}/bin/java -client -XX:MaxDirectMemorySize=1g" \
+"${JAVA_HOME}/bin/java"
+do
+  ${JAVA_COMMAND} -version > /dev/null 2>&1
+  if test "$?" = "0" ; then break; fi
+done
 
 start=true
 while "$start"
 do
-"${JAVA_HOME}/bin/java" \
-   $SERVER_OPT -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
+${JAVA_COMMAND} -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    ${JAVA_OPTS} \
