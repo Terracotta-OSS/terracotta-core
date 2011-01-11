@@ -49,8 +49,9 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       testExceptions();
       testSubclass();
       testMultiple();
-      // CDV-1539
-      // testGraphs();
+
+      // XXX: CDV-1539
+      if (false) testGraphs();
     }
 
     private void testMultiple() {
