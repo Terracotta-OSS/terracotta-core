@@ -6,8 +6,8 @@ package com.tc.object.tx;
 
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
-import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.logging.TCLogger;
+import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
@@ -38,10 +38,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
@@ -52,10 +52,12 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   private static final int                        MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
+                                                                                  .getInt(
+                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
   private static final long                       COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+                                                                                  .getLong(
+                                                                                           TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
   private static final State                      RUNNING                     = new State("RUNNING");
   private static final State                      PAUSED                      = new State("PAUSED");
@@ -552,6 +554,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         ctm.send();
       } catch (final TCNotRunningException e) {
         RemoteTransactionManagerImpl.this.logger.info("Ignoring TCNotRunningException while sending Low water mark : ");
+        this.cancel();
       } catch (final Exception e) {
         RemoteTransactionManagerImpl.this.logger.error("Error sending Low water mark : ", e);
         throw new AssertionError(e);

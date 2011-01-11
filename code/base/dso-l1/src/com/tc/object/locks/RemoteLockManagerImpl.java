@@ -213,6 +213,7 @@ public class RemoteLockManagerImpl implements RemoteLockManager {
       synchronized (queue) {
         if (shutdown) {
           logger.info("Ignoring Batched Recall Requests Timer task as timer is already shut down.");
+          this.cancel();
           return;
         }
         sendBatchedRequestsImmediately();

@@ -20,9 +20,9 @@ import com.tc.util.runtime.ThreadIDManager;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -466,7 +466,13 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
           this.lockLeaseTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-              ClientLockManagerImpl.this.recall(lock, level, -1, batch);
+              try {
+                ClientLockManagerImpl.this.recall(lock, level, -1, batch);
+              } catch (TCNotRunningException e) {
+                logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName()
+                            + " and cancelling timer task");
+                this.cancel();
+              }
             }
           }, lease);
         }
@@ -791,34 +797,39 @@ public class ClientLockManagerImpl implements ClientLockManager, ClientLockManag
 
     @Override
     public void run() {
-      int gcCount = 0;
-      for (final Entry<LockID, ClientLock> entry : ClientLockManagerImpl.this.locks.entrySet()) {
-        ClientLockManagerImpl.this.stateGuard.readLock().lock();
-        try {
-          if (ClientLockManagerImpl.this.state != State.RUNNING) { return; }
+      try {
+        int gcCount = 0;
+        for (final Entry<LockID, ClientLock> entry : ClientLockManagerImpl.this.locks.entrySet()) {
+          ClientLockManagerImpl.this.stateGuard.readLock().lock();
+          try {
+            if (ClientLockManagerImpl.this.state != State.RUNNING) { return; }
 
-          final LockID lock = entry.getKey();
-          final ClientLock lockState = entry.getValue();
-          if (lockState == null) {
-            continue;
+            final LockID lock = entry.getKey();
+            final ClientLock lockState = entry.getValue();
+            if (lockState == null) {
+              continue;
+            }
+
+            if (lockState.tryMarkAsGarbage(ClientLockManagerImpl.this.remoteManager)
+                && ClientLockManagerImpl.this.locks.remove(lock, lockState)) {
+              gcCount++;
+            }
+          } finally {
+            ClientLockManagerImpl.this.stateGuard.readLock().unlock();
           }
+        }
+        if (gcCount > 0) {
+          ClientLockManagerImpl.this.logger.info("Lock GC collected " + gcCount + " garbage locks");
+        }
 
-          if (lockState.tryMarkAsGarbage(ClientLockManagerImpl.this.remoteManager)
-              && ClientLockManagerImpl.this.locks.remove(lock, lockState)) {
-            gcCount++;
+        if (gcCount > GCED_LOCK_THRESHOLD) {
+          for (LockEventListener lockGCEventListener : lockEventListeners) {
+            lockGCEventListener.fireLockGCEvent(gcCount);
           }
-        } finally {
-          ClientLockManagerImpl.this.stateGuard.readLock().unlock();
         }
-      }
-      if (gcCount > 0) {
-        ClientLockManagerImpl.this.logger.info("Lock GC collected " + gcCount + " garbage locks");
-      }
-
-      if (gcCount > GCED_LOCK_THRESHOLD) {
-        for (LockEventListener lockGCEventListener : lockEventListeners) {
-          lockGCEventListener.fireLockGCEvent(gcCount);
-        }
+      } catch (TCNotRunningException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
       }
     }
   }

@@ -524,7 +524,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private class SendPendingRequestsTaskTimer extends TimerTask {
     @Override
     public void run() {
-      sendPendingRequests();
+      try {
+        sendPendingRequests();
+      } catch (TCNotRunningException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
+      }
     }
   }
 
@@ -534,7 +539,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
       try {
         sendRemovedObjects();
       } catch (TCNotRunningException e) {
-        logger.info("Ignoring " + e.getMessage() + " in RemovedObjectTimerTask");
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
       }
     }
   }
@@ -542,7 +548,12 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private class CleanupUnusedDNATimerTask extends TimerTask {
     @Override
     public void run() {
-      clearAllUnrequestedDNABatches();
+      try {
+        clearAllUnrequestedDNABatches();
+      } catch (TCNotRunningException e) {
+        logger.info("Ignoring " + e.getMessage() + " in " + this.getClass().getName() + " and cancelling timer task");
+        this.cancel();
+      }
     }
   }
 
