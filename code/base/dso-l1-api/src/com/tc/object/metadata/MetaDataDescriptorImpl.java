@@ -125,6 +125,11 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
   }
 
   public void add(String name, Object value) {
+    if (value == null) {
+      metaDatas.add(new AbstractNVPair.NullNVPair(name));
+      return;
+    }
+
     Class type = value.getClass();
     ValueType vt = TYPES.get(type);
 
@@ -175,6 +180,9 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
           break;
         }
         case ENUM: {
+          throw new AssertionError();
+        }
+        case NULL: {
           throw new AssertionError();
         }
       }

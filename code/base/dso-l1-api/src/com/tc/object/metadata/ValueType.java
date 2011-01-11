@@ -15,6 +15,7 @@ import com.tc.object.metadata.AbstractNVPair.EnumNVPair;
 import com.tc.object.metadata.AbstractNVPair.FloatNVPair;
 import com.tc.object.metadata.AbstractNVPair.IntNVPair;
 import com.tc.object.metadata.AbstractNVPair.LongNVPair;
+import com.tc.object.metadata.AbstractNVPair.NullNVPair;
 import com.tc.object.metadata.AbstractNVPair.ShortNVPair;
 import com.tc.object.metadata.AbstractNVPair.StringNVPair;
 
@@ -22,6 +23,18 @@ import java.io.IOException;
 import java.util.Date;
 
 public enum ValueType {
+  NULL {
+    @Override
+    NVPair deserializeFrom(String name, TCByteBufferInput in) {
+      return new NullNVPair(name);
+    }
+
+    @Override
+    void serializeTo(NVPair nvPair, TCByteBufferOutput out) {
+      // no state
+    }
+  },
+
   BOOLEAN {
     @Override
     public NVPair deserializeFrom(String name, TCByteBufferInput in) throws IOException {

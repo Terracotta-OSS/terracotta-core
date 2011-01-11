@@ -588,7 +588,41 @@ public abstract class AbstractNVPair implements NVPair {
 
   }
 
+  public static class NullNVPair extends AbstractNVPair {
+
+    public NullNVPair(String name) {
+      super(name);
+    }
+
+    public Object getObjectValue() {
+      return null;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new NullNVPair(newName);
+    }
+
+    @Override
+    boolean basicEquals(NVPair other) {
+      return other instanceof NullNVPair;
+    }
+
+    @Override
+    public String valueAsString() {
+      // XXX: is this a good return value?
+      return "null";
+    }
+
+    @Override
+    public ValueType getType() {
+      return ValueType.NULL;
+    }
+  }
+
   public static NVPair createNVPair(String attributeName, Object value) {
+    if (value == null) { return new NullNVPair(attributeName); }
+
     if (value instanceof Byte) {
       return new ByteNVPair(attributeName, (Byte) value);
     } else if (value instanceof Boolean) {
@@ -613,6 +647,6 @@ public abstract class AbstractNVPair implements NVPair {
       return new DateNVPair(attributeName, (Date) value);
     } else if (value instanceof Enum) { return new EnumNVPair(attributeName, (Enum) value); }
 
-    throw new IllegalArgumentException("Unsupported type: " + ((value == null) ? "(null)" : value.getClass().getName()));
+    throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());
   }
 }
