@@ -455,7 +455,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final int maxConnectRetries = tcProperties.getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
     if (socketConnectTimeout < 0) { throw new IllegalArgumentException("invalid socket time value: "
                                                                        + socketConnectTimeout); }
-    ChannelEventListener reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(clusterInternalEventsStage
+    final Stage clusterRejoinEventsStage = stageManager
+        .createStage(ClientConfigurationContext.CLUSTER_REJOIN_EVENTS_STAGE,
+                     new ClusterInternalEventsHandler(this.dsoCluster), 1, maxSize);
+    ChannelEventListener reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(clusterRejoinEventsStage
         .getSink());
     this.channel = this.dsoClientBuilder.createDSOClientMessageChannel(this.communicationsManager,
                                                                        this.connectionComponents, sessionProvider,
