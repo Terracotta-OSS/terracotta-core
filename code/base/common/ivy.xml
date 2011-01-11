@@ -11,7 +11,7 @@
     <dependency name="commons-logging" rev="1.0.3" org="commons-logging"/>
     <dependency name="concurrent" rev="1.3.4" org="concurrent"/>
     <dependency name="knopflerfish-tc" rev="2.0.1-20100819" org="knopflerfish-tc"/>
-    <dependency name="je" rev="4.1.6" org="berkeleydb"/>
+    <dependency name="je" rev="4.1.7" org="berkeleydb"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
     <dependency name="log4j" rev="1.2.16" org="log4j"/>
     <dependency name="servlet-api-2.5" rev="6.1.8" org="org.mortbay.jetty"/>
