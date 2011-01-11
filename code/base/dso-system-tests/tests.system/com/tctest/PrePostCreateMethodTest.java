@@ -12,6 +12,8 @@ import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,6 +49,8 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       testExceptions();
       testSubclass();
       testMultiple();
+      // CDV-1539
+      // testGraphs();
     }
 
     private void testMultiple() {
@@ -112,6 +116,21 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       assertEquals(3, postCreateCalls.get());
     }
 
+    private void testGraphs() {
+      reset();
+      Collection<PostCreate> posts = new HashSet<PostCreate>();
+      posts.add(new PostCreate());
+      posts.add(new PostCreate());
+      Collection<PreCreate> pres = new HashSet<PreCreate>();
+      pres.add(new PreCreate());
+      pres.add(new PreCreate());
+
+      root.put("posts", posts);
+      root.put("pres", pres);
+      assertEquals(2, postCreateCalls.get());
+      assertEquals(2, preCreateCalls.get());
+    }
+
     public static void visitL1DSOConfig(ConfigVisitor visitor, DSOClientConfigHelper config) {
       String testClassName = App.class.getName();
       TransparencyClassSpec spec = config.getOrCreateSpec(testClassName);
@@ -122,13 +141,13 @@ public class PrePostCreateMethodTest extends TransparentTestBase {
       spec.setPostCreateMethod("postCreate");
 
       spec = config.getOrCreateSpec(PreCreate.class.getName());
-      spec.setPostCreateMethod("preCreate");
+      spec.setPreCreateMethod("preCreate");
 
       spec = config.getOrCreateSpec(SubclassWithPostCreate.class.getName());
       spec.setPostCreateMethod("subclassPostCreate");
 
       spec = config.getOrCreateSpec(SubclassWithPreCreate.class.getName());
-      spec.setPostCreateMethod("subclassPreCreate");
+      spec.setPreCreateMethod("subclassPreCreate");
 
       config.addIncludePattern(PostSubclass.class.getName());
       config.addIncludePattern(PreSubclass.class.getName());
