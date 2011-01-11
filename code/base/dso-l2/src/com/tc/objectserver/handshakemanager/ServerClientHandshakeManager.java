@@ -151,9 +151,9 @@ public class ServerClientHandshakeManager {
     }
   }
 
-  public void notifyClientRejected(ClientHandshakeMessage clientMsg, String message) {
+  public void notifyClientRefused(ClientHandshakeMessage clientMsg, String message) {
     final ClientID clientID = (ClientID) clientMsg.getSourceNodeID();
-    this.channelManager.notifyConnectionRefused(clientID, message);
+    this.channelManager.makeChannelRefuse(clientID, message);
   }
 
   private void sendAckMessageFor(final ClientID clientID) {

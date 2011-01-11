@@ -41,9 +41,10 @@ public interface DSOChannelManager {
 
   public void makeChannelActive(ClientID clientID, boolean persistent);
 
+  public void makeChannelRefuse(ClientID clientID, String message);
+
   public void makeChannelActiveNoAck(MessageChannel channel);
 
   public ClientID getClientIDFor(ChannelID channelID);
 
-  public void notifyConnectionRefused(ClientID clientID, String message);
 }

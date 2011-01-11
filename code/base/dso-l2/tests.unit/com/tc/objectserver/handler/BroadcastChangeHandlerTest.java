@@ -446,7 +446,7 @@ public class BroadcastChangeHandlerTest extends TCTestCase {
       throw new ImplementMe();
     }
 
-    public void notifyConnectionRefused(ClientID clientID, String message) {
+    public void makeChannelRefuse(ClientID clientID, String message) {
       throw new ImplementMe();
 
     }

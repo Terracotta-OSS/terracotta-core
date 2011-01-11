@@ -105,7 +105,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
-import com.tc.object.msg.ClientHandshakeRejectedMessageImpl;
+import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
@@ -738,8 +738,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         .addClassMapping(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE,
-                                 ClientHandshakeRejectedMessageImpl.class);
+    this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE,
+                                 ClientHandshakeRefusedMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     this.channel.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     this.channel.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
@@ -858,7 +858,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, batchTxnAckStage.getSink(), hydrateSink);
     this.channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE, pauseStage.getSink(), hydrateSink);
+    this.channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseStage.getSink(), hydrateSink);
     this.channel.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
                                   hydrateSink);
     this.channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE,

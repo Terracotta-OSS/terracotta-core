@@ -741,7 +741,7 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 
-    public void notifyConnectionRefused(ClientID clientID, String message) {
+    public void makeChannelRefuse(ClientID clientID, String message) {
       throw new NotImplementedException(TestDSOChannelManager.class);
     }
 

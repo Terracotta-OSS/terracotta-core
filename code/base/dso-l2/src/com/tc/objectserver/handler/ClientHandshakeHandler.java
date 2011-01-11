@@ -43,7 +43,7 @@ public class ClientHandshakeHandler extends AbstractEventHandler {
       c.close();
     } catch (ServerClientModeInCompatibleException e) {
       getLogger().error("Handshake Error : ", e);
-      this.handshakeManager.notifyClientRejected(clientMsg, e.getMessage());
+      this.handshakeManager.notifyClientRefused(clientMsg, e.getMessage());
       // client should go away after reading this message and the channel should get closed there by.
     }
   }

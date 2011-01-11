@@ -105,7 +105,7 @@ import com.tc.object.msg.BatchTransactionAcknowledgeMessageImpl;
 import com.tc.object.msg.BroadcastTransactionMessageImpl;
 import com.tc.object.msg.ClientHandshakeAckMessageImpl;
 import com.tc.object.msg.ClientHandshakeMessageImpl;
-import com.tc.object.msg.ClientHandshakeRejectedMessageImpl;
+import com.tc.object.msg.ClientHandshakeRefusedMessageImpl;
 import com.tc.object.msg.ClusterMembershipMessage;
 import com.tc.object.msg.CommitTransactionMessageImpl;
 import com.tc.object.msg.CompletedTransactionLowWaterMarkMessage;
@@ -1291,8 +1291,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                     AcknowledgeTransactionMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE,
-                                    ClientHandshakeRejectedMessageImpl.class);
+    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE,
+                                    ClientHandshakeRefusedMessageImpl.class);
     this.l1Listener.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
     this.l1Listener.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);

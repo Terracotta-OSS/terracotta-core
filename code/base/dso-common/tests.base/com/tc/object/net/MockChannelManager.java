@@ -77,7 +77,7 @@ public class MockChannelManager implements DSOChannelManager {
     return new ClientID(channelID.toLong());
   }
 
-  public void notifyConnectionRefused(ClientID clientID, String message) {
+  public void makeChannelRefuse(ClientID clientID, String message) {
     throw new ImplementMe();
 
   }

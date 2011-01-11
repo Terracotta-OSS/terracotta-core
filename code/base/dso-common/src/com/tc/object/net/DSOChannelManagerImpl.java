@@ -42,8 +42,7 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
   private final CopyOnWriteArrayMap  activeChannels = new CopyOnWriteArrayMap(
                                                                               new CopyOnWriteArrayMap.TypedArrayFactory() {
 
-                                                                                public Object[] createTypedArray(
-                                                                                                                 final int size) {
+                                                                                public Object[] createTypedArray(final int size) {
                                                                                   return new MessageChannel[size];
                                                                                 }
 
@@ -108,11 +107,11 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
         .createMessage(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE);
   }
 
-  private ClientHandshakeRefusedMessage newClientHandshakeRejectedMessage(final ClientID clientID)
+  private ClientHandshakeRefusedMessage newClientHandshakeRefusedMessage(final ClientID clientID)
       throws NoSuchChannelException {
     MessageChannelInternal channel = genericChannelManager.getChannel(new ChannelID(clientID.toLong()));
     if (channel == null) { throw new NoSuchChannelException(); }
-    return (ClientHandshakeRefusedMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_REJECTED_MESSAGE);
+    return (ClientHandshakeRefusedMessage) channel.createMessage(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE);
   }
 
   private ClientHandshakeAckMessage newClientHandshakeAckMessage(final ClientID clientID) throws NoSuchChannelException {
@@ -132,8 +131,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
       synchronized (activeChannels) {
         activeChannels.put(clientID, channel);
         ackMsg.initialize(persistent, getAllActiveClientIDs(), clientID, serverVersion, this.thisGroupID,
-                          this.stripeIDStateManager.getStripeID(this.thisGroupID), this.stripeIDStateManager
-                              .getStripeIDMap(true));
+                          this.stripeIDStateManager.getStripeID(this.thisGroupID),
+                          this.stripeIDStateManager.getStripeIDMap(true));
         ackMsg.send();
       }
       fireChannelCreatedEvent(channel);
@@ -142,12 +141,12 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
     }
   }
 
-  public void notifyConnectionRefused(ClientID clientID, String message) {
+  public void makeChannelRefuse(ClientID clientID, String message) {
     try {
-      ClientHandshakeRefusedMessage ackMsg = newClientHandshakeRejectedMessage(clientID);
+      ClientHandshakeRefusedMessage handshakeRefuseMsg = newClientHandshakeRefusedMessage(clientID);
       synchronized (activeChannels) {
-        ackMsg.initialize(message);
-        ackMsg.send();
+        handshakeRefuseMsg.initialize(message);
+        handshakeRefuseMsg.send();
       }
     } catch (NoSuchChannelException nsce) {
       logger.warn("Not sending handshake rejeceted message to disconnected client: " + clientID);
