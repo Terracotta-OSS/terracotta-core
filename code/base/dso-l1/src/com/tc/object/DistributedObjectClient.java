@@ -75,6 +75,7 @@ import com.tc.object.handler.ClientCoordinationHandler;
 import com.tc.object.handler.ClusterInternalEventsHandler;
 import com.tc.object.handler.ClusterMemberShipEventsHandler;
 import com.tc.object.handler.ClusterMetaDataHandler;
+import com.tc.object.handler.ClusterRejoinEventsHandler;
 import com.tc.object.handler.DmiHandler;
 import com.tc.object.handler.LockRecallHandler;
 import com.tc.object.handler.LockResponseHandler;
@@ -457,7 +458,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                        + socketConnectTimeout); }
     final Stage clusterRejoinEventsStage = stageManager
         .createStage(ClientConfigurationContext.CLUSTER_REJOIN_EVENTS_STAGE,
-                     new ClusterInternalEventsHandler(this.dsoCluster), 1, maxSize);
+                     new ClusterRejoinEventsHandler(this.dsoCluster), 1, maxSize);
     ChannelEventListener reconnectionRejectedListener = new ReconnectionRejectedListenerImpl(clusterRejoinEventsStage
         .getSink());
     this.channel = this.dsoClientBuilder.createDSOClientMessageChannel(this.communicationsManager,
@@ -751,7 +752,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                  CompletedTransactionLowWaterMarkMessage.class);
     this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
+    this.channel
+        .addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
     this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
                                  NodesWithObjectsResponseMessageImpl.class);
     this.channel

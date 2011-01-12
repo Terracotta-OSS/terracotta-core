@@ -9,13 +9,13 @@ import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoClusterInternal;
 
 /**
- * Handler firing the dso cluster internal events to the listeners
+ * Handler firing the dso cluster rejoin(ThisNodeLeft) events to the listeners
  */
-public class ClusterInternalEventsHandler extends AbstractEventHandler {
+public class ClusterRejoinEventsHandler extends AbstractEventHandler {
 
   private final DsoClusterInternal dsoCluster;
 
-  public ClusterInternalEventsHandler(final DsoClusterInternal cluster) {
+  public ClusterRejoinEventsHandler(final DsoClusterInternal cluster) {
     this.dsoCluster = cluster;
   }
 
@@ -31,26 +31,9 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
   private void handleClusterInternalEvents(ClusterInternalEventsContext context) {
 
     switch (context.getEventType()) {
-      case THIS_NODE_JOIN:
-        this.dsoCluster.fireThisNodeJoined(context.getEventNodeID(), context.getOtherNodeIDs());
+      case THIS_NODE_LEFT:
+        this.dsoCluster.fireThisNodeLeft();
         break;
-
-      case NODE_JOIN:
-        this.dsoCluster.fireNodeJoined(context.getEventNodeID());
-        break;
-
-      case NODE_LEFT:
-        this.dsoCluster.fireNodeLeft(context.getEventNodeID());
-        break;
-
-      case OPERATIONS_ENABLED:
-        this.dsoCluster.fireOperationsEnabled();
-        break;
-
-      case OPERATIONS_DISABLED:
-        this.dsoCluster.fireOperationsDisabled();
-        break;
-
       default:
         throw new AssertionError("Unknown cluster event : " + context);
     }
