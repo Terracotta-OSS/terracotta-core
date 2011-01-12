@@ -86,10 +86,6 @@ bundled_modules:
       install_directory: platform/modules
       manifest:
         - clustered-surefire-2.3
-        - excludes-config
-        - guimodels-config
-        - jdk15-preinst-config
-        - standard-config
 packaging:
   - tar
   - izpack

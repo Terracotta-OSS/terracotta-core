@@ -21,22 +21,6 @@
         dependencyManagement section of the parent POM.
     -->
     <dependency>
-      <groupId>org.terracotta.modules</groupId>
-      <artifactId>excludes-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.modules</groupId>
-      <artifactId>guimodels-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.modules</groupId>
-      <artifactId>jdk15-preinst-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.modules</groupId>
-      <artifactId>standard-config</artifactId>
-    </dependency>    
-    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcconfig</artifactId>
     </dependency>

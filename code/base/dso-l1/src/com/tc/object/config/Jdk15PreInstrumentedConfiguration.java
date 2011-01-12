@@ -2,18 +2,21 @@
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
-package org.terracotta.modules;
+package com.tc.object.config;
 
-import org.osgi.framework.BundleContext;
-import org.terracotta.modules.configuration.TerracottaConfiguratorModule;
-
+import com.tc.bundles.LegacyDefaultModuleBase;
+import com.tc.object.config.StandardDSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.util.runtime.Vm;
 
-public class Jdk15PreInstrumentedConfiguration extends TerracottaConfiguratorModule {
+public class Jdk15PreInstrumentedConfiguration extends LegacyDefaultModuleBase {
 
-  protected void addInstrumentation(final BundleContext context) {
-    super.addInstrumentation(context);
+  public Jdk15PreInstrumentedConfiguration(StandardDSOClientConfigHelper configHelper) {
+    super(configHelper);
+  }
+
+  @Override
+  public void apply() {
     addJDK15PreInstrumentedSpec();
   }
 

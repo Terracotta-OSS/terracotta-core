@@ -255,6 +255,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
     try {
+      doLegacyDefaultModuleConfig();
       doPreInstrumentedAutoconfig();
       doAutoconfig();
     } catch (Exception e) {
@@ -270,6 +271,13 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     logger.debug("distributed-methods: " + this.distributedMethods);
 
     rewriteHashtableAutoLockSpecIfNecessary();
+  }
+
+  private void doLegacyDefaultModuleConfig() {
+    new ExcludesConfiguration(this).apply();
+    new GUIModelsConfiguration(this).apply();
+    new Jdk15PreInstrumentedConfiguration(this).apply();
+    new StandardConfiguration(this).apply();
   }
 
   public String rawConfigText() {
