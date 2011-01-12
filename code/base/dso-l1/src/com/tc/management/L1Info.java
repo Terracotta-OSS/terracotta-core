@@ -4,8 +4,6 @@
  */
 package com.tc.management;
 
-import sun.management.ManagementFactory;
-
 import com.tc.handler.LockInfoDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -19,6 +17,7 @@ import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockInfoByThreadIDImpl;
 import com.tc.util.runtime.ThreadDumpUtil;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -193,7 +192,7 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     logger.info(text);
     return text;
   }
-  
+
   public byte[] takeCompressedThreadDump(long requestMillis) {
     LockInfoByThreadID lockInfo = new LockInfoByThreadIDImpl();
     this.lockInfoDumpHandler.addAllLocksTo(lockInfo);
@@ -207,8 +206,8 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
     List list = new ArrayList();
     StatisticData[] statsData = cpuSRA.retrieveStatisticData();
     if (statsData != null) {
-      for (int i = 0; i < statsData.length; i++) {
-        list.add(statsData[i].getElement());
+      for (StatisticData element : statsData) {
+        list.add(element.getElement());
       }
     }
     return cpuNames = (String[]) list.toArray(new String[0]);
