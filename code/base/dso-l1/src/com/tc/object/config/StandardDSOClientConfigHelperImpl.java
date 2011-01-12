@@ -255,9 +255,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
 
     supportSharingThroughReflection = appConfig.supportSharingThroughReflection();
     try {
-      doLegacyDefaultModuleConfig();
       doPreInstrumentedAutoconfig();
       doAutoconfig();
+      doLegacyDefaultModuleConfig();
     } catch (Exception e) {
       throw new ConfigurationSetupException(e.getLocalizedMessage(), e);
     }
