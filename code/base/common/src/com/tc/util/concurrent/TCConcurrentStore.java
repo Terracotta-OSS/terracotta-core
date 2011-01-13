@@ -9,6 +9,7 @@ import com.tc.text.PrettyPrinter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -172,9 +173,9 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
    * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the
    * key.
    * <p>
-   * More formally, if this store contains a mapping from a key {@code k} to a value {@code v} such that {@code
-   * key.equals(k)}, then this method returns {@code v}; otherwise it returns {@code null}. (There can be at most one
-   * such mapping.)
+   * More formally, if this store contains a mapping from a key {@code k} to a value {@code v} such that
+   * {@code key.equals(k)}, then this method returns {@code v}; otherwise it returns {@code null}. (There can be at most
+   * one such mapping.)
    * 
    * @throws NullPointerException if the specified key is null
    */
@@ -256,6 +257,20 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
   }
 
   /**
+   * Adds a snapshot of all the keys in the concurrent store to the set that is passed in. This method does not lock the
+   * entire map so concurrent modifications are possible while this call is executing.
+   * 
+   * @param keySet the Set to add the keys to
+   * @return the set that is passed in.
+   */
+  public Set addAllKeysTo(Set keySet) {
+    for (Segment<K, V> seg : segments) {
+      seg.addAllKeysTo(keySet);
+    }
+    return keySet;
+  }
+
+  /**
    * The callback interface that needs to be implemented so <code>executeUnderWriteLock</code> and
    * <code>executeUnderReadLock</code> can be called
    */
@@ -280,6 +295,16 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
 
     public Segment(final int initialCapacity, final float loadFactor) {
       this.map = new HashMap<K, V>(initialCapacity, loadFactor);
+    }
+
+    public Set addAllKeysTo(Set keySet) {
+      this.lock.readLock().lock();
+      try {
+        keySet.addAll(this.map.keySet());
+        return keySet;
+      } finally {
+        this.lock.readLock().unlock();
+      }
     }
 
     public V get(final K key) {
@@ -354,5 +379,4 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
       return out;
     }
   }
-
 }

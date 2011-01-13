@@ -7,6 +7,7 @@ import com.tc.util.concurrent.TCConcurrentStore;
 import com.tc.util.concurrent.TCConcurrentStore.TCConcurrentStoreCallback;
 
 import java.util.Map;
+import java.util.Set;
 
 public class CachedItemStore<L> {
 
@@ -44,6 +45,10 @@ public class CachedItemStore<L> {
       head.dispose();
       head = head.getNext();
     }
+  }
+
+  public Set addAllKeysTo(Set keySet) {
+    return this.store.addAllKeysTo(keySet);
   }
 
   private static final class AddCallBack<L> implements TCConcurrentStoreCallback<L, CachedItem> {

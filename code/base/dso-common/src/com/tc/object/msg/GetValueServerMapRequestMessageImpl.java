@@ -33,7 +33,6 @@ public class GetValueServerMapRequestMessageImpl extends DSOMessageBase implemen
   private final static byte                                         REQUESTS_COUNT = 0;
   private final static byte                                         MAP_ID         = 1;
 
-  // TODO::Comeback and verify
   private final static DNAEncoding                                  encoder        = new SerializerDNAEncodingImpl();
   private final static DNAEncoding                                  decoder        = new StorageDNAEncodingImpl();
 
