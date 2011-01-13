@@ -855,6 +855,8 @@ public interface TCPropertiesConsts {
   public static final String   L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE                        = "l2.offHeapCache.object.initialDataSize";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_TABLESIZE                               = "l2.offHeapCache.object.tableSize";
   public static final String   L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY                             = "l2.offHeapCache.object.concurrency";
+  public static final String   L2_OFFHEAP_TEMP_SWAP_FLUSH_TO_DISK_COUNT                        = "l2.offHeapCache.temp.swap.flush.to.disk.count";
+  public static final String   L2_OFFHEAP_TEMP_SWAP_THROTTLE_SIZE                              = "l2.offHeapCache.temp.swap.throttle.size";
 
   // for tests
   public static final String   L2_OFFHEAP_SKIP_JVMARG_CHECK                                    = "l2.offHeapCache.skip.jvmarg.check";
