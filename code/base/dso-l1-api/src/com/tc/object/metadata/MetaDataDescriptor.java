@@ -3,6 +3,8 @@
  */
 package com.tc.object.metadata;
 
+import com.tc.object.ObjectID;
+
 import java.util.Date;
 
 /**
@@ -37,6 +39,10 @@ public interface MetaDataDescriptor {
   void add(String name, byte[] value);
 
   void add(String name, Object value);
+
+  void add(String name, ObjectID value);
+
+  void addNull(String name);
 
   String getCategory();
 

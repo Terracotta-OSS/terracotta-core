@@ -7,6 +7,7 @@ import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.io.TCSerializable;
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.AbstractNVPair.EnumNVPair;
 import com.tc.util.ClassUtils;
 
@@ -124,9 +125,17 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     metaDatas.add(new AbstractNVPair.DateNVPair(name, value));
   }
 
+  public void add(String name, ObjectID value) {
+    metaDatas.add(new AbstractNVPair.ObjectIdNVPair(name, value));
+  }
+
+  public void addNull(String name) {
+    metaDatas.add(new AbstractNVPair.NullNVPair(name));
+  }
+
   public void add(String name, Object value) {
     if (value == null) {
-      metaDatas.add(new AbstractNVPair.NullNVPair(name));
+      addNull(name);
       return;
     }
 
@@ -185,6 +194,9 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
         case NULL: {
           throw new AssertionError();
         }
+        case OBJECT_ID: {
+          add(name, (ObjectID) value);
+        }
       }
 
       return;
@@ -218,6 +230,7 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     map.put(String.class, ValueType.STRING);
     map.put(Date.class, ValueType.DATE);
     map.put(byte[].class, ValueType.BYTE_ARRAY);
+    map.put(ObjectID.class, ValueType.OBJECT_ID);
 
     TYPES = map;
   }

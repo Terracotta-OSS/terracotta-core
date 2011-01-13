@@ -98,6 +98,7 @@ public class DNAImplTest extends TestCase {
     md2.add("tim", "rulez");
     md2.add("e-noom", TestEnum.FOO);
     md2.add("null value", (Object) null);
+    md2.add("oid", new ObjectID(23));
 
     // make sure we cover all the types (if you add a new type and this is going off then add it to this test) :-)
     assertEquals(ValueType.values().length, md2.getMetaDatas().size());

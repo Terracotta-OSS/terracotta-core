@@ -5,6 +5,7 @@ package com.tc.object.metadata;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.ObjectID;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -617,6 +618,45 @@ public abstract class AbstractNVPair implements NVPair {
     @Override
     public ValueType getType() {
       return ValueType.NULL;
+    }
+  }
+
+  public static class ObjectIdNVPair extends AbstractNVPair {
+
+    private final ObjectID oid;
+
+    public ObjectIdNVPair(String name, ObjectID oid) {
+      super(name);
+      this.oid = oid;
+    }
+
+    public Object getObjectValue() {
+      return oid;
+    }
+
+    public ObjectID getValue() {
+      return oid;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new ObjectIdNVPair(newName, oid);
+    }
+
+    @Override
+    boolean basicEquals(NVPair other) {
+      if (other instanceof ObjectIdNVPair) { return oid.equals(((ObjectIdNVPair) other).oid); }
+      return false;
+    }
+
+    @Override
+    public String valueAsString() {
+      return oid.toString();
+    }
+
+    @Override
+    public ValueType getType() {
+      return ValueType.OBJECT_ID;
     }
   }
 

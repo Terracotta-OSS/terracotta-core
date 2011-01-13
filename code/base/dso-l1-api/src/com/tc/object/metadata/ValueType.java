@@ -5,6 +5,7 @@ package com.tc.object.metadata;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.AbstractNVPair.BooleanNVPair;
 import com.tc.object.metadata.AbstractNVPair.ByteArrayNVPair;
 import com.tc.object.metadata.AbstractNVPair.ByteNVPair;
@@ -16,6 +17,7 @@ import com.tc.object.metadata.AbstractNVPair.FloatNVPair;
 import com.tc.object.metadata.AbstractNVPair.IntNVPair;
 import com.tc.object.metadata.AbstractNVPair.LongNVPair;
 import com.tc.object.metadata.AbstractNVPair.NullNVPair;
+import com.tc.object.metadata.AbstractNVPair.ObjectIdNVPair;
 import com.tc.object.metadata.AbstractNVPair.ShortNVPair;
 import com.tc.object.metadata.AbstractNVPair.StringNVPair;
 
@@ -23,6 +25,18 @@ import java.io.IOException;
 import java.util.Date;
 
 public enum ValueType {
+  OBJECT_ID {
+    @Override
+    NVPair deserializeFrom(String name, TCByteBufferInput in) throws IOException {
+      return new ObjectIdNVPair(name, new ObjectID(in.readLong()));
+    }
+
+    @Override
+    void serializeTo(NVPair nvPair, TCByteBufferOutput out) {
+      out.writeLong(((ObjectIdNVPair) nvPair).getValue().toLong());
+    }
+  },
+
   NULL {
     @Override
     NVPair deserializeFrom(String name, TCByteBufferInput in) {
