@@ -7,5 +7,5 @@ public interface TCServerMap extends Manageable {
 
   public boolean evictExpired(Object key, Object value);
 
-  public void evictedInServer(int clientIndex, Object key);
+  public void evictedInServer(boolean notifyEvicted, Object key);
 }
