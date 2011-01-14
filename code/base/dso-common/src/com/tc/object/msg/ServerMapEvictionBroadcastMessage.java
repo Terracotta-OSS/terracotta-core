@@ -14,6 +14,8 @@ public interface ServerMapEvictionBroadcastMessage extends TCMessage {
 
   public Set getEvictedKeys();
 
-  public void initializeEvictionBroadcastMessage(ObjectID mapID, Set evictedKeys);
+  public int getClientIndex();
+
+  public void initializeEvictionBroadcastMessage(ObjectID mapID, Set evictedKeys, int clientIndex);
 
 }

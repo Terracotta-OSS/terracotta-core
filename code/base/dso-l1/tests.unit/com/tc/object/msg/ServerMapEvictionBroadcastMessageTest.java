@@ -52,7 +52,7 @@ public class ServerMapEvictionBroadcastMessageTest extends TestCase {
       evictedObjectKeys.add("key-" + i);
     }
 
-    this.msg.initializeEvictionBroadcastMessage(mapObjectID, evictedObjectKeys);
+    this.msg.initializeEvictionBroadcastMessage(mapObjectID, evictedObjectKeys, 10);
     this.msg.dehydrate();
 
     TCByteBuffer[] data = this.out.toArray();
@@ -63,9 +63,11 @@ public class ServerMapEvictionBroadcastMessageTest extends TestCase {
                                                                                               this.channel, header,
                                                                                               data, decoder);
     hydratedMsg.hydrate();
+    int clientIndex = hydratedMsg.getClientIndex();
     ObjectID actualMapId = hydratedMsg.getMapID();
     Set actualKeys = hydratedMsg.getEvictedKeys();
 
+    assertEquals(10, clientIndex);
     assertEquals(mapObjectID, actualMapId);
     assertTrue(actualKeys.size() == 100);
 

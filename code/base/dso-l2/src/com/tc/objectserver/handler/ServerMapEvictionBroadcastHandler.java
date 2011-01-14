@@ -44,19 +44,18 @@ public class ServerMapEvictionBroadcastHandler extends AbstractEventHandler impl
     }
     final ServerMapEvictionBroadcastContext broadcastContext = (ServerMapEvictionBroadcastContext) context;
     final MessageChannel[] channels = channelManager.getActiveChannels();
+    int clientIndex = 0;
     for (MessageChannel channel : channels) {
-      if (!channel.isClosed()) {
-        if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
-          for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
-            final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
-                .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
-            broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch);
-            broadcastMessage.send();
-            broadcastCounter.increment();
-          }
-          // send the eviction notice to only one client which has faulted in the map being evicted
-          // See DEV-5097 for more details
-          break;
+      if (channel.isClosed()) {
+        continue;
+      }
+      if (clientStateManager.hasReference(channel.getRemoteNodeID(), broadcastContext.getMapOid())) {
+        for (Set keysBatch : getEvictedKeysInBatches(broadcastContext.getEvictedKeys(), EVICTION_BROADCAST_MAX_KEYS)) {
+          final ServerMapEvictionBroadcastMessage broadcastMessage = (ServerMapEvictionBroadcastMessage) channel
+              .createMessage(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE);
+          broadcastMessage.initializeEvictionBroadcastMessage(broadcastContext.getMapOid(), keysBatch, clientIndex++);
+          broadcastMessage.send();
+          broadcastCounter.increment();
         }
       }
     }

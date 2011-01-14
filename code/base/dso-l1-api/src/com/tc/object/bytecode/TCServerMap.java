@@ -6,6 +6,6 @@ package com.tc.object.bytecode;
 public interface TCServerMap extends Manageable {
 
   public boolean evictExpired(Object key, Object value);
-  
-  public void evictedInServer(Object key);
+
+  public void evictedInServer(int clientIndex, Object key);
 }

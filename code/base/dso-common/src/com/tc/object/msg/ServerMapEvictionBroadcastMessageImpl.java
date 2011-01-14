@@ -14,6 +14,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.session.SessionID;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
 
   private final static byte        MAP_OBJECT_ID     = 0;
   private final static byte        EVICTED_KEYS_SIZE = 1;
+  private final static byte        CLIENT_INDEX      = 2;
 
   // TODO::Comeback and verify
   private static final DNAEncoding encoder           = new StorageDNAEncodingImpl();
@@ -31,6 +33,7 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
 
   private ObjectID                 mapID;
   private Set                      evictedKeys;
+  private int                      clientIndex       = -1;
 
   public ServerMapEvictionBroadcastMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
                                                final MessageChannel channel, final TCMessageHeader header,
@@ -46,13 +49,17 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
     this.decoder = null; // shouldn't be used
   }
 
-  public void initializeEvictionBroadcastMessage(final ObjectID mapObjectID, final Set evictedObjectKeys) {
+  public void initializeEvictionBroadcastMessage(final ObjectID mapObjectID, final Set evictedObjectKeys,
+                                                 final int clientindex) {
     this.mapID = mapObjectID;
     this.evictedKeys = evictedObjectKeys;
+    this.clientIndex = clientindex;
   }
 
   @Override
   protected void dehydrateValues() {
+    Assert.assertTrue(this.clientIndex >= 0);
+    putNVPair(CLIENT_INDEX, this.clientIndex);
     putNVPair(MAP_OBJECT_ID, this.mapID.toLong());
     putNVPair(EVICTED_KEYS_SIZE, this.evictedKeys.size());
     for (final Object evictedKey : this.evictedKeys) {
@@ -63,6 +70,11 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
   @Override
   protected boolean hydrateValue(final byte name) throws IOException {
     switch (name) {
+      case CLIENT_INDEX:
+        this.clientIndex = getIntValue();
+        Assert.assertTrue(this.clientIndex >= 0);
+        return true;
+
       case MAP_OBJECT_ID:
         this.mapID = new ObjectID(getLongValue());
         return true;
@@ -90,6 +102,10 @@ public class ServerMapEvictionBroadcastMessageImpl extends DSOMessageBase implem
 
   public Set getEvictedKeys() {
     return evictedKeys;
+  }
+
+  public int getClientIndex() {
+    return this.clientIndex;
   }
 
 }

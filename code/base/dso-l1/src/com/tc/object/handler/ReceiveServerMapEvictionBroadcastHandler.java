@@ -30,12 +30,13 @@ public class ReceiveServerMapEvictionBroadcastHandler extends AbstractEventHandl
       tco = clientObjectManager.lookupIfLocal(msg.getMapID());
       if (tco == null || !(tco.getPeerObject() instanceof TCServerMap)) { return; }
       if (EVICTOR_LOGGING) {
-        getLogger().info("Processing Server Map Eviction Broadcast msg Map OID=" + msg.getMapID() + " keys="
+        getLogger().info(
+                         "Processing Server Map Eviction Broadcast msg Map OID=" + msg.getMapID() + " keys="
                              + msg.getEvictedKeys().size());
       }
       TCServerMap serverMap = (TCServerMap) tco.getPeerObject();
       for (Object key : msg.getEvictedKeys()) {
-        serverMap.evictedInServer(key);
+        serverMap.evictedInServer(msg.getClientIndex(), key);
       }
     } else {
       throw new AssertionError("Unknown message type received from server - " + context.getClass().getName());
