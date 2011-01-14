@@ -30,7 +30,6 @@ import com.tc.object.session.NullSessionManager;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.test.TCTestCase;
-import com.tc.util.Assert;
 import com.tc.util.PortChooser;
 import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -39,8 +38,8 @@ import java.net.InetAddress;
 import java.util.Collections;
 
 public class NoReconnectThreadTest extends TCTestCase implements ChannelEventListener {
-  private int             L1_RECONNECT_TIMEOUT = 5000;
-  private SynchronizedInt connections          = new SynchronizedInt(0);
+  private final int             L1_RECONNECT_TIMEOUT = 5000;
+  private final SynchronizedInt connections          = new SynchronizedInt(0);
 
   @Override
   protected void setUp() throws Exception {
@@ -72,8 +71,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                       getNetworkStackHarnessFactory(ooo),
                                                                       new NullConnectionPolicy());
     ClientMessageChannel clientMsgCh = clientComms
-        .createClientChannel(
-                             new NullSessionManager(),
+        .createClientChannel(new NullSessionManager(),
                              0,
                              "localhost",
                              port,
@@ -122,18 +120,20 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     assertTrue(client3.isConnected());
 
     // closing all connections from server side
-    System.out.println("XXX closing all client connections");
+    System.err.println("XXX closing all client connections");
     serverCommsMgr.getConnectionManager().closeAllConnections(1000);
 
     while (connections.compareTo(0) != 0) {
       ThreadUtil.reallySleep(2000);
-      System.out.println(".");
+      System.err.println(".");
     }
 
     // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client
-    // CommsManager
-    // is created with reconnect 0
-    ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
+    // CommsManager is created with reconnect 0. we might need to wait till the created CCE gets quit request.
+    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > 0) {
+      ThreadUtil.reallySleep(1000);
+      System.err.println("-");
+    }
 
     listener.stop(5000);
 
@@ -178,7 +178,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
     assertTrue(client3.isConnected());
 
     // closing all connections from server side
-    System.out.println("XXX closing all client connections");
+    System.err.println("XXX closing all client connections");
     proxy.stop();
 
     // let the OOO settle down
@@ -186,21 +186,28 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
 
     while (connections.compareTo(0) != 0) {
       ThreadUtil.reallySleep(2000);
-      System.out.println(".");
+      System.err.println(".");
     }
 
     // None of the clients should start the ClientConnectionEstablisher Thread for reconnect as the Client CommsManager
     // is created with reconnect 0
-    ensureThreadAbsent(ClientConnectionEstablisher.RECONNECT_THREAD_NAME);
+    while (getThreadCount(ClientConnectionEstablisher.RECONNECT_THREAD_NAME) > 0) {
+      ThreadUtil.reallySleep(1000);
+      System.err.println("-");
+    }
+
     listener.stop(5000);
   }
 
-  private void ensureThreadAbsent(String absentThreadName) {
+  private int getThreadCount(String absentThreadName) {
     Thread[] allThreads = ThreadDumpUtil.getAllThreads();
+    int count = 0;
     for (Thread t : allThreads) {
-      System.out.println("XXX " + t);
-      Assert.assertFalse(t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME));
+      if (t.getName().contains(ClientConnectionEstablisher.RECONNECT_THREAD_NAME)) {
+        count++;
+      }
     }
+    return count;
   }
 
   @Override
