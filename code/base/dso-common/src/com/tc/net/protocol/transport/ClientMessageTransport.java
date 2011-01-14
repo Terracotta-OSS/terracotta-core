@@ -34,8 +34,7 @@ import java.util.List;
 public class ClientMessageTransport extends MessageTransportBase {
   public static final long                  TRANSPORT_HANDSHAKE_SYNACK_TIMEOUT = TCPropertiesImpl
                                                                                    .getProperties()
-                                                                                   .getLong(
-                                                                                            TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
+                                                                                   .getLong(TCPropertiesConsts.TC_TRANSPORT_HANDSHAKE_TIMEOUT,
                                                                                             10000);
   private final ClientConnectionEstablisher connectionEstablisher;
   private boolean                           wasOpened                          = false;
@@ -165,28 +164,13 @@ public class ClientMessageTransport extends MessageTransportBase {
     } else {
       SynAckMessage synAck = (SynAckMessage) message;
       if (synAck.hasErrorContext()) {
-        // if stack is mismatched then get the client side communication stack
-        // and append in the error message
         if (synAck.getErrorType() == TransportHandshakeError.ERROR_STACK_MISMATCH) {
-          String errorMessage = "\n\nLayers Present in Client side communication stack: ";
-          // get the names of stack layers present
-          errorMessage += getCommunicationStackNames(this);
-
-          errorMessage = "\nTHERE IS A MISMATCH IN THE COMMUNICATION STACKS\n" + synAck.getErrorContext()
-                         + errorMessage;
-
-          if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0) {
-            this.logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
-            errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
-          } else {
-            this.logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
-            errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT + errorMessage;
-          }
-          handleHandshakeError(new TransportHandshakeErrorContext(errorMessage + "\n\nPLEASE RECONFIGURE THE STACKS",
-                                                                  TransportHandshakeError.ERROR_STACK_MISMATCH));
+          handleHandshakeError(new TransportHandshakeErrorContext(getCommsStackMismatchErrorMessage(synAck)
+                                                                  + "\n\nPLEASE RECONFIGURE THE STACKS",
+                                                                  synAck.getErrorType()));
         } else {
           handleHandshakeError(new TransportHandshakeErrorContext(synAck.getErrorContext() + message,
-                                                                  TransportHandshakeError.ERROR_GENERIC));
+                                                                  synAck.getErrorType()));
         }
       }
 
@@ -196,7 +180,6 @@ public class ClientMessageTransport extends MessageTransportBase {
       }
       if (!synAck.isMaxConnectionsExceeded()) {
         this.connectionId = synAck.getConnectionId();
-
         Assert.assertNotNull("Connection id from the server was null!", this.connectionId);
         Assert.eval(!ConnectionID.NULL_ID.equals(this.connectionId));
         Assert.assertNotNull(this.waitForSynAckResult);
@@ -206,6 +189,24 @@ public class ClientMessageTransport extends MessageTransportBase {
       setRemoteCallbackPort(synAck.getCallbackPort());
     }
     return;
+  }
+
+  /**
+   * If communication stacks are mismatched then get the client side communication stack and append in the error message
+   */
+  private String getCommsStackMismatchErrorMessage(final SynAckMessage synAck) {
+    String errorMessage = "\n\nLayers Present in Client side communication stack: ";
+    // get the names of stack layers present
+    errorMessage += getCommunicationStackNames(this);
+    errorMessage = "\nTHERE IS A MISMATCH IN THE COMMUNICATION STACKS\n" + synAck.getErrorContext() + errorMessage;
+    if ((getCommunicationStackFlags(this) & NetworkLayer.TYPE_OOO_LAYER) != 0) {
+      this.logger.error(NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER);
+      errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_CLIENT_NOT_IN_SERVER + errorMessage;
+    } else {
+      this.logger.error(NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT);
+      errorMessage = "\n\n" + NetworkLayer.ERROR_OOO_IN_SERVER_NOT_IN_CLIENT + errorMessage;
+    }
+    return errorMessage;
   }
 
   private boolean verifySynAck(TCNetworkMessage message) {
