@@ -18,9 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSequence, PrettyPrintable {
-
-  public int getObjectCount();
+public interface ManagedObjectStore extends ManagedObjectStoreStats, ManagedObjectProvider, ObjectIDSequence,
+    PrettyPrintable {
 
   public void addNewObject(ManagedObject managed);
 
@@ -39,7 +38,7 @@ public interface ManagedObjectStore extends ManagedObjectProvider, ObjectIDSeque
   public ObjectIDSet getAllObjectIDs();
 
   public ObjectIDSet getAllEvictableObjectIDs();
-  
+
   public ObjectIDSet getAllMapTypeObjectIDs();
 
   public boolean containsObject(ObjectID id);

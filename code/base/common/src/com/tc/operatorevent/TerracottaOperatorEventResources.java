@@ -32,6 +32,14 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("offheap.memory.usage");
   }
 
+  static String getOffHeapMemoryEvictionMessage() {
+    return instance.resources.getString("offheap.memory.eviction");
+  }
+
+  static String getOffHeapObjectCachedMessage() {
+    return instance.resources.getString("offheap.memory.objectCached");
+  }
+
   /**
    * DGC messages
    */

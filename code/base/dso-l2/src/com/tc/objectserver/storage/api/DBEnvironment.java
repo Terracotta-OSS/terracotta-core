@@ -5,6 +5,7 @@ package com.tc.objectserver.storage.api;
 
 import com.tc.logging.TCLogger;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.objectserver.persistence.api.ManagedObjectStoreStats;
 import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.sequence.MutableSequence;
@@ -62,6 +63,11 @@ public interface DBEnvironment {
    * Initializes the back up mbean.
    */
   public abstract void initBackupMbean(ServerDBBackupMBean mBean) throws TCDatabaseException;
+
+  /**
+   * Initializes Object Store Stats.
+   */
+  public abstract void initObjectStoreStats(ManagedObjectStoreStats objectStoreStats);
 
   /**
    * Returns the persistence transaction provider which can be used to create new transactions.

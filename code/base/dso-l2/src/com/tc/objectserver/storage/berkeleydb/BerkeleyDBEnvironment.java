@@ -24,6 +24,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.object.ServerDBBackup;
 import com.tc.management.beans.object.ServerDBBackupMBean;
+import com.tc.objectserver.persistence.api.ManagedObjectStoreStats;
 import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.persistence.db.DatabaseNotOpenException;
 import com.tc.objectserver.persistence.db.DatabaseOpenException;
@@ -108,6 +109,10 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     if (mBean != null) {
       ((ServerDBBackup) mBean).setDbEnvironment(this.getEnvironment(), this.getEnvironmentHome());
     }
+  }
+
+  public void initObjectStoreStats(ManagedObjectStoreStats objectStoreStats) {
+    //
   }
 
   // For tests
@@ -589,8 +594,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
-        .get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
+                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {

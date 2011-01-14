@@ -66,5 +66,10 @@ public class TerracottaOperatorEventResourcesTest extends TCTestCase {
      */
     Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapMemoryUsageMessage()
         .equals(this.resources.getObject("offheap.memory.usage")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapMemoryEvictionMessage()
+        .equals(this.resources.getObject("offheap.memory.eviction")));
+    Assert.assertTrue(TerracottaOperatorEventResources.getOffHeapObjectCachedMessage()
+        .equals(this.resources.getObject("offheap.memory.objectCached")));
+
   }
 }

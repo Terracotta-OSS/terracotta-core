@@ -36,10 +36,22 @@ public class TerracottaOperatorEventFactory {
 
   public static TerracottaOperatorEvent createOffHeapMemoryUsageEvent(String allocated, String maxSize,
                                                                       int percentageUsed) {
-    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER,
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.MEMORY_MANAGER,
                                            MessageFormat.format(TerracottaOperatorEventResources
                                                .getOffHeapMemoryUsageMessage(), new Object[] { allocated, maxSize,
                                                percentageUsed }), "");
+  }
+
+  public static TerracottaOperatorEvent createOffHeapMemoryEvictionEvent() {
+    return new TerracottaOperatorEventImpl(EventType.WARN, EventSubsystem.MEMORY_MANAGER,
+                                           TerracottaOperatorEventResources.getOffHeapMemoryEvictionMessage(), "");
+  }
+
+  public static TerracottaOperatorEvent createOffHeapObjectCachedEvent(int objectCachedPercentage) {
+    return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.MEMORY_MANAGER,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                                                    .getOffHeapObjectCachedMessage(),
+                                                                new Object[] { objectCachedPercentage }), "");
   }
 
   /**
@@ -85,9 +97,10 @@ public class TerracottaOperatorEventFactory {
   }
 
   public static TerracottaOperatorEvent createHandShakeRejectedEvent(String clientVersion, String serverVersion) {
-    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY, MessageFormat
-        .format(TerracottaOperatorEventResources.getHandshakeRejectedMessage(), new Object[] { clientVersion,
-            serverVersion }), "handshake rejected");
+    return new TerracottaOperatorEventImpl(EventType.ERROR, EventSubsystem.CLUSTER_TOPOLOGY,
+                                           MessageFormat.format(TerracottaOperatorEventResources
+                                               .getHandshakeRejectedMessage(), new Object[] { clientVersion,
+                                               serverVersion }), "handshake rejected");
   }
 
   /**
