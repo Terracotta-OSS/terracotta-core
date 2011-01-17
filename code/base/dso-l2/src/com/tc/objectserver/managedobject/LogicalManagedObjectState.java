@@ -5,6 +5,7 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.util.ObjectIDSet;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -39,7 +40,7 @@ public abstract class LogicalManagedObjectState extends AbstractManagedObjectSta
   }
 
   public final Set getObjectReferences() {
-    final HashSet refs = new HashSet();
+    final ObjectIDSet refs = new ObjectIDSet();
     addAllObjectReferencesTo(refs);
     return refs;
   }

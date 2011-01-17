@@ -6,10 +6,10 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.mgmt.FacadeUtil;
 import com.tc.objectserver.mgmt.LogicalManagedObjectFacade;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
@@ -24,8 +24,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * state for maps
@@ -131,8 +131,17 @@ public class MapManagedObjectState extends LogicalManagedObjectState implements 
 
   @Override
   protected void addAllObjectReferencesTo(final Set refs) {
-    addAllObjectReferencesFromIteratorTo(this.references.keySet().iterator(), refs);
-    addAllObjectReferencesFromIteratorTo(this.references.values().iterator(), refs);
+    for (final Iterator i = this.references.entrySet().iterator(); i.hasNext();) {
+      final Entry entry = (Entry) i.next();
+      final Object key = entry.getKey();
+      final Object value = entry.getValue();
+      if (key instanceof ObjectID) {
+        refs.add(key);
+      }
+      if (value instanceof ObjectID) {
+        refs.add(value);
+      }
+    }
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
