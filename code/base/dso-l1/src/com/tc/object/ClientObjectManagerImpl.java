@@ -75,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -1063,6 +1063,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     public void checkPortability(final TraversedReference reference, final Class referringClass,
                                  final NonPortableEventContext context) throws TCNonPortableObjectError {
       checkPortabilityOfTraversedReference(reference, referringClass, context);
+      executePreCreateMethods(reference.getValue());
     }
   }
 
