@@ -278,7 +278,7 @@ public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanCon
 
   boolean reflectionEnabled();
 
-  public ReconnectConfig getL1ReconnectProperties();
+  public ReconnectConfig getL1ReconnectProperties() throws ConfigurationSetupException;
 
   public void validateGroupInfo() throws ConfigurationSetupException;
 

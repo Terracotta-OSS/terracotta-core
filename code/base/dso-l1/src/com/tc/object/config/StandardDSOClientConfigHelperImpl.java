@@ -68,6 +68,8 @@ import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
 import com.tc.util.ClassUtils.ClassSpec;
@@ -106,42 +108,37 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
   private static final String                                CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
+  private static final int                                   MAX_CONNECT_TRIES                  = TCPropertiesImpl
+                                                                                                    .getProperties()
+                                                                                                    .getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
+  private static final long                                  CONNECT_RETRY_INTERVAL;
+  private static final long                                  MIN_RETRY_INTERVAL                 = 1000;
 
   private static final TCLogger                              logger                             = CustomerLogging
                                                                                                     .getDSOGenericLogger();
   private static final TCLogger                              consoleLogger                      = CustomerLogging
                                                                                                     .getConsoleLogger();
-
   private static final InstrumentationDescriptor             DEFAULT_INSTRUMENTATION_DESCRIPTOR = new NullInstrumentationDescriptor();
 
   private final DSOClientConfigHelperLogger                  helperLogger;
-
   private final L1ConfigurationSetupManager                  configSetupManager;
   private final UUID                                         id;
-
   private final Map                                          classLoaderNameToAppGroup          = new ConcurrentHashMap();
   private final Map                                          webAppNameToAppGroup               = new ConcurrentHashMap();
-
   private final List                                         locks                              = new CopyOnWriteArrayList();
   private final List                                         roots                              = new CopyOnWriteArrayList();
   private final Set                                          transients                         = Collections
                                                                                                     .synchronizedSet(new HashSet());
   private final Map<String, String>                          injectedFields                     = new ConcurrentHashMap<String, String>();
-
   private final Map<String, SessionConfiguration>            webApplications                    = Collections
                                                                                                     .synchronizedMap(new HashMap());
-
   private final CompoundExpressionMatcher                    permanentExcludesMatcher;
   private final CompoundExpressionMatcher                    nonportablesMatcher;
   private final List                                         autoLockExcludes                   = new CopyOnWriteArrayList();
   private final List                                         distributedMethods                 = new CopyOnWriteArrayList();
-
-  // private final ClassInfoFactory classInfoFactory;
   private final ExpressionHelper                             expressionHelper;
-
   private final Map                                          adaptableCache                     = Collections
                                                                                                     .synchronizedMap(new HashMap());
-
   private final Set<TimCapability>                           timCapabilities                    = Collections
                                                                                                     .synchronizedSet(EnumSet
                                                                                                         .noneOf(TimCapability.class));
@@ -173,38 +170,32 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   // ====================================================================================================================
 
   private final Map<String, Collection<ClassAdapterFactory>> customAdapters                     = new HashMap<String, Collection<ClassAdapterFactory>>();
-
   private final ClassReplacementMapping                      classReplacements                  = new ClassReplacementMappingImpl();
-
   private final Map<String, Resource>                        classResources                     = new ConcurrentHashMap<String, Resource>();
-
   private final Map                                          aspectModules                      = new ConcurrentHashMap();
-
   private final boolean                                      supportSharingThroughReflection;
-
   private final Portability                                  portability;
-
   private int                                                faultCount                         = -1;
-
   private final Collection<ModuleSpec>                       moduleSpecs                        = Collections
                                                                                                     .synchronizedList(new ArrayList<ModuleSpec>());
-
   private MBeanSpec[]                                        mbeanSpecs                         = null;
-
   private SRASpec[]                                          sraSpecs                           = null;
-
   private final Set<String>                                  tunneledMBeanDomains               = Collections
                                                                                                     .synchronizedSet(new HashSet<String>());
-
   private final ModulesContext                               modulesContext                     = new ModulesContext();
-
   private ReconnectConfig                                    l1ReconnectConfig                  = null;
-
   private final InjectionInstrumentationRegistry             injectionRegistry                  = new InjectionInstrumentationRegistry();
-
   private final boolean                                      hasBootJar;
-
   private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
+
+  static {
+    long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
+    if (value < MIN_RETRY_INTERVAL) {
+      logger.info("Setting config connect retry interval to " + MIN_RETRY_INTERVAL + " ms");
+      value = MIN_RETRY_INTERVAL;
+    }
+    CONNECT_RETRY_INTERVAL = value;
+  }
 
   public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -1882,7 +1873,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   public static InputStream getPropertiesFromL2Stream(final ConnectionInfo[] connectInfo, final String message,
-                                                      final String httpPathExtension) throws Exception {
+                                                      final String httpPathExtension) {
     URLConnection connection = null;
     InputStream l1PropFromL2Stream = null;
     URL theURL = null;
@@ -1905,37 +1896,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return null;
   }
 
-  private static ServerGroups getServerGroupsFromL2(final PreparedComponentsFromL2Connection serverInfos) {
+  private static ServerGroups getServerGroupsFromL2(final PreparedComponentsFromL2Connection serverInfos)
+      throws ConfigurationSetupException {
     InputStream in = null;
-    String serverList = "";
-    boolean loggedInConsole = false;
 
     ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
     ConnectionInfo[] connections = connectInfo.getConnectionInfos();
 
-    for (ConnectionInfo connection : connections) {
-      if (serverList.length() > 0) serverList += ", ";
-      serverList += connection;
-    }
-    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
-                  + "]. Retrying...\n";
-
-    while (in == null) {
-      try {
-        in = getPropertiesFromL2Stream(connections, "Cluster topology", "/groupinfo");
-
-        if (in == null) {
-          if (loggedInConsole == false) {
-            consoleLogger.warn(text);
-            loggedInConsole = true;
-          }
-          if (connections.length > 1) logger.warn(text);
-          ThreadUtil.reallySleep(1000);
-        }
-      } catch (Exception e) {
-        throw new AssertionError(e);
-      }
-    }
+    in = getPropertiesFromServerViaHttp(connections, "Cluster topology", "/groupinfo");
 
     ServerGroupsDocument serversGrpDocument;
     try {
@@ -2055,38 +2023,14 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return address.getHostAddress();
   }
 
-  private void setupL1ReconnectProperties() {
+  private void setupL1ReconnectProperties() throws ConfigurationSetupException {
     InputStream in = null;
-    String serverList = "";
-    boolean loggedInConsole = false;
 
     PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
     ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
     ConnectionInfo[] connections = connectInfo.getConnectionInfos();
 
-    for (ConnectionInfo connection : connections) {
-      if (serverList.length() > 0) serverList += ", ";
-      serverList += connection;
-    }
-    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
-                  + "]. Retrying...\n";
-
-    while (in == null) {
-      try {
-        in = getPropertiesFromL2Stream(connections, "L1 Reconnect Properties", "/l1reconnectproperties");
-
-        if (in == null) {
-          if (loggedInConsole == false) {
-            consoleLogger.warn(text);
-            loggedInConsole = true;
-          }
-          if (connections.length > 1) logger.warn(text);
-          ThreadUtil.reallySleep(1000);
-        }
-      } catch (Exception e) {
-        throw new AssertionError(e);
-      }
-    }
+    in = getPropertiesFromServerViaHttp(connections, "L1 Reconnect Properties", "/l1reconnectproperties");
 
     L1ReconnectPropertiesDocument l1ReconnectPropFromL2;
     try {
@@ -2121,8 +2065,48 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
                                                        l1ReconnectMaxdelayedacks, l1ReconnectSendwindow);
   }
 
-  public synchronized ReconnectConfig getL1ReconnectProperties() {
-    if (l1ReconnectConfig == null) setupL1ReconnectProperties();
+  private static InputStream getPropertiesFromServerViaHttp(ConnectionInfo[] connections, String message,
+                                                            String httpPathExtension)
+      throws ConfigurationSetupException {
+    InputStream in = null;
+    String serverList = "";
+    boolean loggedInConsole = false;
+
+    for (ConnectionInfo connection : connections) {
+      if (serverList.length() > 0) serverList += ", ";
+      serverList += connection;
+    }
+
+    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
+                  + "].";
+
+    int count = 0;
+    while (true) {
+      count++;
+      in = getPropertiesFromL2Stream(connections, message, httpPathExtension);
+
+      if (in == null) {
+        if (loggedInConsole == false) {
+          consoleLogger.warn(text + "Retrying... \n");
+          loggedInConsole = true;
+        }
+        if (connections.length > 1) {
+          logger.warn(text + "Retrying... \n");
+        }
+
+        if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text); }
+        ThreadUtil.reallySleep(CONNECT_RETRY_INTERVAL);
+      } else {
+        return in;
+      }
+    }
+
+  }
+
+  public synchronized ReconnectConfig getL1ReconnectProperties() throws ConfigurationSetupException {
+    if (l1ReconnectConfig == null) {
+      setupL1ReconnectProperties();
+    }
     return l1ReconnectConfig;
   }
 
