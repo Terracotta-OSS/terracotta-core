@@ -4,6 +4,7 @@
 package com.tc.object;
 
 import com.tc.object.bytecode.TCServerMap;
+import com.tc.object.metadata.MetaDataDescriptor;
 
 import java.util.Set;
 
@@ -142,4 +143,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * Get from local cache.
    */
   public Object getValueFromLocalCache(Object key);
+
+  /**
+   * Add meta data to this server map
+   */
+  public void addMetaData(MetaDataDescriptor mdd);
 }
