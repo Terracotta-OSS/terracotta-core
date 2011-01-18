@@ -191,6 +191,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
         ev.evictionCompleted();
         this.objectManager.releaseReadOnly(mo);
       } else {
+        // Reason for doing this is DEV-5207 which is to avoid deadlock
         this.objectManager.releaseReadOnly(mo);
         this.evictorSink.add(context);
       }
