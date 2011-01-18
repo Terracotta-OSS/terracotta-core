@@ -177,18 +177,23 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private void basicDoEviction(final ObjectID oid, final SortedSet<ObjectID> faultedInClients,
                                final boolean periodicEvictor) {
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
+    ServerMapEvictionContext context = null;
     if (mo == null) { return; }
     final ManagedObjectState state = mo.getManagedObjectState();
     final String className = state.getClassName();
     final String loaderDesc = state.getLoaderDescription();
+    EvictableMap ev = null;
     try {
-      final EvictableMap ev = getEvictableMapFrom(mo.getID(), state);
-      final boolean evictionInitiated = doEviction(oid, ev, faultedInClients, className, loaderDesc, periodicEvictor);
-      if (!evictionInitiated) {
-        ev.evictionCompleted();
-      }
+      ev = getEvictableMapFrom(mo.getID(), state);
+      context = doEviction(oid, ev, faultedInClients, className, loaderDesc, periodicEvictor);
     } finally {
-      this.objectManager.releaseReadOnly(mo);
+      if (context == null) {
+        ev.evictionCompleted();
+        this.objectManager.releaseReadOnly(mo);
+      } else {
+        this.objectManager.releaseReadOnly(mo);
+        this.evictorSink.add(context);
+      }
     }
   }
 
@@ -213,8 +218,9 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
    * 
    * @return true, if eviction is initiated, false otherwise
    */
-  private boolean doEviction(final ObjectID oid, final EvictableMap ev, final SortedSet<ObjectID> faultedInClients,
-                             final String className, final String loaderDesc, final boolean periodicEvictor) {
+  private ServerMapEvictionContext doEviction(final ObjectID oid, final EvictableMap ev,
+                                              final SortedSet<ObjectID> faultedInClients, final String className,
+                                              final String loaderDesc, final boolean periodicEvictor) {
     final int targetMaxTotalCount = ev.getMaxTotalCount();
     final int currentSize = ev.getSize();
     if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) {
@@ -225,7 +231,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       if (periodicEvictor) {
         evictionStats.evictionNotRequired(oid, ev, targetMaxTotalCount, currentSize);
       }
-      return false;
+      return null;
     }
     final int overshoot = currentSize - targetMaxTotalCount;
     if (EVICTOR_LOGGING) {
@@ -242,16 +248,15 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " : Random Samples : "
                   + samples.size() + " overshoot : " + overshoot);
     }
-    final boolean initiateEviction = !samples.isEmpty();
-    if (initiateEviction) {
-      final ServerMapEvictionContext context = new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl,
-                                                                            samples, overshoot, className, loaderDesc);
-      this.evictorSink.add(context);
-    }
     if (periodicEvictor) {
       evictionStats.evictionRequested(oid, ev, targetMaxTotalCount, overshoot, samples.size());
     }
-    return initiateEviction;
+
+    if (samples.isEmpty()) {
+      return null;
+    } else {
+      return new ServerMapEvictionContext(oid, targetMaxTotalCount, tti, ttl, samples, overshoot, className, loaderDesc);
+    }
   }
 
   private boolean isInterestedInTTIOrTTL(final int tti, final int ttl) {
