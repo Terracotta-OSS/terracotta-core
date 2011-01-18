@@ -141,6 +141,15 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     return true;
   }
 
+  /**
+   * Returns the number of keys present across all segments. This method is fully locked and hence costly to call.
+   * 
+   * @return size
+   */
+  public int size() {
+    return store.size();
+  }
+
   private static class AddCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
     public Object callback(final K key, final Object value, final Map<K, Set<V>> segment) {
@@ -156,16 +165,18 @@ public class TCConcurrentMultiMap<K, V> implements PrettyPrintable {
     }
   }
 
-  private static final class AddAllCallBack<K, V> extends AddCallBack<K, V> implements
-      TCConcurrentStoreCallback<K, Set<V>> {
+  private static final class AddAllCallBack<K, V> implements TCConcurrentStoreCallback<K, Set<V>> {
     // Called under segment lock
-    @Override
     public Object callback(final K key, final Object values, final Map<K, Set<V>> segment) {
       boolean newEntry = false;
-      Set<V> values2Add = (Set<V>) values;
-      for (V value : values2Add) {
-        newEntry |= (Boolean) super.callback(key, value, segment);
+      Set<V> set = segment.get(key);
+      if (set == null) {
+        set = new HashSet<V>();
+        segment.put(key, set);
+        newEntry = true;
       }
+      Set<V> values2Add = (Set<V>) values;
+      set.addAll(values2Add);
       return newEntry;
     }
   }

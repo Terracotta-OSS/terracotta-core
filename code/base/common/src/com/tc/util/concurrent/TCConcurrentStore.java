@@ -271,13 +271,33 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
   }
 
   /**
-   * The callback interface that needs to be implemented so <code>executeUnderWriteLock</code> and
-   * <code>executeUnderReadLock</code> can be called
+   * Returns the number of keys present across all segments. This method is fully locked and hence costly to call.
+   * 
+   * @return size
    */
-  public interface TCConcurrentStoreCallback<K, V> {
+  public int size() {
+    fullyReadLock();
+    try {
+      int size = 0;
+      for (Segment<K, V> seg : segments) {
+        size += seg.size();
+      }
+      return size;
+    } finally {
+      fullyReadUnlock();
+    }
+  }
 
-    public Object callback(K key, Object param, Map<K, V> segment);
+  private void fullyReadLock() {
+    for (Segment<K, V> seg : segments) {
+      seg.readLock().lock();
+    }
+  }
 
+  private void fullyReadUnlock() {
+    for (Segment<K, V> seg : segments) {
+      seg.readLock().unlock();
+    }
   }
 
   public PrettyPrinter prettyPrint(PrettyPrinter out) {
@@ -288,45 +308,57 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
     return out;
   }
 
-  private static final class Segment<K, V> implements PrettyPrintable {
+  /**
+   * The callback interface that needs to be implemented so <code>executeUnderWriteLock</code> and
+   * <code>executeUnderReadLock</code> can be called
+   */
+  public interface TCConcurrentStoreCallback<K, V> {
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private final HashMap<K, V>          map;
+    public Object callback(K key, Object param, Map<K, V> segment);
+  }
+
+  private static final class Segment<K, V> extends ReentrantReadWriteLock implements PrettyPrintable {
+
+    private final HashMap<K, V> map;
 
     public Segment(final int initialCapacity, final float loadFactor) {
       this.map = new HashMap<K, V>(initialCapacity, loadFactor);
     }
 
+    public int size() {
+      return map.size();
+    }
+
     public Set addAllKeysTo(Set keySet) {
-      this.lock.readLock().lock();
+      this.readLock().lock();
       try {
         keySet.addAll(this.map.keySet());
         return keySet;
       } finally {
-        this.lock.readLock().unlock();
+        this.readLock().unlock();
       }
     }
 
     public V get(final K key) {
-      this.lock.readLock().lock();
+      this.readLock().lock();
       try {
         return this.map.get(key);
       } finally {
-        this.lock.readLock().unlock();
+        this.readLock().unlock();
       }
     }
 
     public V put(final K key, final V value) {
-      this.lock.writeLock().lock();
+      this.writeLock().lock();
       try {
         return this.map.put(key, value);
       } finally {
-        this.lock.writeLock().unlock();
+        this.writeLock().unlock();
       }
     }
 
     public V putIfAbsent(final K key, final V value) {
-      this.lock.writeLock().lock();
+      this.writeLock().lock();
       try {
         if (!this.map.containsKey(key)) {
           return this.map.put(key, value);
@@ -334,39 +366,39 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
           return this.map.get(key);
         }
       } finally {
-        this.lock.writeLock().unlock();
+        this.writeLock().unlock();
       }
     }
 
     public V remove(final K key) {
-      this.lock.writeLock().lock();
+      this.writeLock().lock();
       try {
         return this.map.remove(key);
       } finally {
-        this.lock.writeLock().unlock();
+        this.writeLock().unlock();
       }
     }
 
     public Object executeUnderReadLock(final K key, final Object param, final TCConcurrentStoreCallback<K, V> callback) {
-      this.lock.readLock().lock();
+      this.readLock().lock();
       try {
         return callback.callback(key, param, this.map);
       } finally {
-        this.lock.readLock().unlock();
+        this.readLock().unlock();
       }
     }
 
     public Object executeUnderWriteLock(final K key, final Object param, final TCConcurrentStoreCallback<K, V> callback) {
-      this.lock.writeLock().lock();
+      this.writeLock().lock();
       try {
         return callback.callback(key, param, this.map);
       } finally {
-        this.lock.writeLock().unlock();
+        this.writeLock().unlock();
       }
     }
 
     public PrettyPrinter prettyPrint(PrettyPrinter out) {
-      this.lock.readLock().lock();
+      this.readLock().lock();
       try {
         Iterator<Map.Entry<K, V>> entries = this.map.entrySet().iterator();
         while (entries.hasNext()) {
@@ -374,7 +406,7 @@ public class TCConcurrentStore<K, V> implements PrettyPrintable {
           out.duplicateAndIndent().duplicateAndIndent().indent().print(e.getKey() + " => " + e.getValue()).flush();
         }
       } finally {
-        this.lock.readLock().unlock();
+        this.readLock().unlock();
       }
       return out;
     }
