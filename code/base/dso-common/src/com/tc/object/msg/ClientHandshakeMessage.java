@@ -17,6 +17,8 @@ public interface ClientHandshakeMessage extends TCMessage {
 
   public Set getObjectIDs();
 
+  public Set getObjectIDsToValidate();
+
   public void addLockContext(ClientServerExchangeLockContext ctxt);
 
   public Collection<ClientServerExchangeLockContext> getLockContexts();

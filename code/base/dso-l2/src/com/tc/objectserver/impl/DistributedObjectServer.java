@@ -199,6 +199,7 @@ import com.tc.objectserver.handler.SyncWriteTransactionReceivedHandler;
 import com.tc.objectserver.handler.TransactionAcknowledgementHandler;
 import com.tc.objectserver.handler.TransactionLookupHandler;
 import com.tc.objectserver.handler.TransactionLowWaterMarkHandler;
+import com.tc.objectserver.handler.ValidateObjectsHandler;
 import com.tc.objectserver.handshakemanager.ServerClientHandshakeManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.l1.impl.ClientStateManagerImpl;
@@ -948,10 +949,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage rootRequest = stageManager.createStage(ServerConfigurationContext.MANAGED_ROOT_REQUEST_STAGE,
                                                        new RequestRootHandler(), 1, maxStageSize);
 
-    final InvalidateObjectManagerImpl invalidateObjMgr = new InvalidateObjectManagerImpl();
+    final InvalidateObjectManagerImpl invalidateObjMgr = new InvalidateObjectManagerImpl(transactionManager);
     toInit.add(invalidateObjMgr);
     stageManager.createStage(ServerConfigurationContext.INVALIDATE_OBJECTS_STAGE,
                              new InvalidateObjectsHandler(invalidateObjMgr, channelManager), 8, maxStageSize);
+    stageManager.createStage(ServerConfigurationContext.VALIDATE_OBJECTS_STAGE,
+                             new ValidateObjectsHandler(invalidateObjMgr, objectManager, objectStore), 1, maxStageSize);
 
     final BroadcastChangeHandler broadcastChangeHandler = new BroadcastChangeHandler(broadcastCounter,
                                                                                      this.objectStatsRecorder,
@@ -1074,6 +1077,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  transactionBatchManager,
                                                                                                  sequenceValidator,
                                                                                                  this.clientStateManager,
+                                                                                                 invalidateObjMgr,
                                                                                                  this.lockManager,
                                                                                                  this.serverMapEvictor,
                                                                                                  stageManager

@@ -4,6 +4,8 @@
  */
 package com.tc.objectserver.handshakemanager;
 
+import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.tc.exception.ImplementMe;
@@ -21,12 +23,12 @@ import com.tc.net.protocol.tcm.TestTCMessage;
 import com.tc.net.protocol.transport.ConnectionID;
 import com.tc.object.ObjectID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
-import com.tc.object.locks.StringLockID;
-import com.tc.object.locks.TestLockManager;
-import com.tc.object.locks.ThreadID;
 import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.ServerLockContext.Type;
+import com.tc.object.locks.StringLockID;
+import com.tc.object.locks.TestLockManager;
 import com.tc.object.locks.TestLockManager.ReestablishLockContext;
+import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.BatchTransactionAcknowledgeMessage;
 import com.tc.object.msg.ClientHandshakeAckMessage;
 import com.tc.object.msg.TestClientHandshakeMessage;
@@ -34,6 +36,7 @@ import com.tc.object.net.DSOChannelManager;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.api.TestSink;
+import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.l1.api.TestClientStateManager;
 import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
 import com.tc.objectserver.tx.TestServerTransactionManager;
@@ -67,6 +70,8 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private TestChannelManager           channelManager;
   private SequenceValidator            sequenceValidator;
   private TestTransactionBatchManager  transactionBatchManager;
+  private InvalidateObjectManager      invalidateObjMgr;
+
   private static long                  SHORT_RECONNECT_TIMEOUT   = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL / 3;
   private static long                  MEDIUM_RECONNECT_TIMEOUT  = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL;
   private static long                  LONG_RECONNECT_TIMEOUT    = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL * 2;
@@ -83,14 +88,15 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     this.channelManager = new TestChannelManager();
     this.sequenceValidator = new SequenceValidator(0);
     this.transactionBatchManager = new TestTransactionBatchManager();
+    this.invalidateObjMgr = Mockito.mock(InvalidateObjectManager.class);
   }
 
   private void initHandshakeManager(final long reconnectTimeout) {
     final TCLogger logger = TCLogging.getLogger(ServerClientHandshakeManager.class);
     this.hm = new ServerClientHandshakeManager(logger, this.channelManager, new TestServerTransactionManager(),
                                                this.transactionBatchManager, this.sequenceValidator,
-                                               this.clientStateManager, this.lockManager, Mockito
-                                                   .mock(ServerMapEvictionManager.class), this.lockResponseSink,
+                                               this.clientStateManager, this.invalidateObjMgr, this.lockManager,
+                                               Mockito.mock(ServerMapEvictionManager.class), this.lockResponseSink,
                                                this.objectIDRequestSink, this.timer, reconnectTimeout, false, logger);
     this.hm.setStarting(convertToConnectionIds(this.existingUnconnectedClients));
   }
@@ -195,6 +201,7 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     handshake.transactionSequenceIDs = sequenceIDs;
     handshake.clientObjectIds.add(new ObjectID(200));
     handshake.clientObjectIds.add(new ObjectID(20002));
+    handshake.validateObjectIds.add(new ObjectID(20002));
 
     final List<ClientServerExchangeLockContext> lockContexts = new LinkedList();
     lockContexts.add(new ClientServerExchangeLockContext(new StringLockID("my lock"), clientID1, new ThreadID(10001),
@@ -247,6 +254,15 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       assertTrue(handshake.clientObjectIds.remove(ctxt.objectID));
     }
     assertTrue(handshake.clientObjectIds.isEmpty());
+
+    // make sure object validation ids are added to InvalidateObjectManager
+    assertTrue(handshake.validateObjectIds.size() > 0);
+    final ArgumentCaptor<Set> requestContextArg = ArgumentCaptor.forClass(Set.class);
+
+    Mockito.verify(invalidateObjMgr, Mockito.atMost(1)).addObjectsToValidateFor((ClientID) Matchers.eq(handshake
+                                                                                    .getSourceNodeID()),
+                                                                                requestContextArg.capture());
+    assertEquals(handshake.validateObjectIds, requestContextArg.getValue());
 
     // make sure outstanding locks are reestablished
     assertEquals(lockContexts.size(), handshake.lockContexts.size());

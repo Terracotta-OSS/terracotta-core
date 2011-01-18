@@ -23,12 +23,13 @@ import java.util.Set;
 
 public class TestClientHandshakeMessage extends TestTCMessage implements ClientHandshakeMessage {
   public Set                    clientObjectIds                = new HashSet();
+  public Set                    validateObjectIds              = new HashSet();
   public NoExceptionLinkedQueue sendCalls                      = new NoExceptionLinkedQueue();
   public ClientID               clientID;
   public List                   lockContexts                   = new ArrayList();
   public boolean                isChangeListener;
   public boolean                requestedObjectIDs;
-  private boolean               enterpriseClient             = false;
+  private boolean               enterpriseClient               = false;
   public NoExceptionLinkedQueue setTransactionSequenceIDsCalls = new NoExceptionLinkedQueue();
   public NoExceptionLinkedQueue setTransactionIDsCalls         = new NoExceptionLinkedQueue();
   public List                   transactionSequenceIDs         = new ArrayList();
@@ -140,5 +141,9 @@ public class TestClientHandshakeMessage extends TestTCMessage implements ClientH
 
   public void setEnterpriseClient(boolean isEnterpirseClient) {
     this.enterpriseClient = isEnterpirseClient;
+  }
+
+  public Set getObjectIDsToValidate() {
+    return validateObjectIds;
   }
 }

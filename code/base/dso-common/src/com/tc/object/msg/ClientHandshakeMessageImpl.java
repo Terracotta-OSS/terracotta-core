@@ -11,10 +11,10 @@ import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
-import com.tc.object.ObjectID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
+import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class ClientHandshakeMessageImpl extends DSOMessageBase implements ClientHandshakeMessage {
 
-  private static final byte MANAGED_OBJECT_ID        = 1;
+  private static final byte MANAGED_OBJECT_IDS       = 1;
   private static final byte LOCK_CONTEXT             = 2;
   private static final byte TRANSACTION_SEQUENCE_IDS = 3;
   private static final byte RESENT_TRANSACTION_IDS   = 4;
@@ -35,8 +35,10 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   private static final byte CLIENT_VERSION           = 6;
   private static final byte SERVER_HIGH_WATER_MARK   = 7;
   private static final byte ENTERPRISE_CLIENT        = 8;
+  private static final byte OBJECTS_TO_VALIDATE      = 9;
 
-  private final Set         objectIDs                = new HashSet();
+  private final ObjectIDSet objectIDs                = new ObjectIDSet();
+  private final ObjectIDSet objectsToValidate        = new ObjectIDSet();
   private final Set         lockContexts             = new HashSet();
   private final List        sequenceIDs              = new ArrayList();
   private final List        txnIDs                   = new ArrayList();
@@ -61,6 +63,10 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
 
   public Set getObjectIDs() {
     return this.objectIDs;
+  }
+
+  public Set getObjectIDsToValidate() {
+    return this.objectsToValidate;
   }
 
   public List getTransactionSequenceIDs() {
@@ -99,11 +105,26 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
     this.lockContexts.add(ctxt);
   }
 
+  public long getServerHighWaterMark() {
+    return this.serverHighWaterMark;
+  }
+
+  public void setServerHighWaterMark(long serverHWM) {
+    this.serverHighWaterMark = serverHWM;
+  }
+
+  public boolean enterpriseClient() {
+    return this.enterpriseClient;
+  }
+
+  public void setEnterpriseClient(boolean isEnterpriseClient) {
+    this.enterpriseClient = isEnterpriseClient;
+  }
+
   @Override
   protected void dehydrateValues() {
-    for (Iterator i = this.objectIDs.iterator(); i.hasNext();) {
-      putNVPair(MANAGED_OBJECT_ID, ((ObjectID) i.next()).toLong());
-    }
+    putNVPair(MANAGED_OBJECT_IDS, objectIDs);
+    putNVPair(OBJECTS_TO_VALIDATE, objectsToValidate);
     for (Iterator i = this.lockContexts.iterator(); i.hasNext();) {
       putNVPair(LOCK_CONTEXT, (TCSerializable) i.next());
     }
@@ -122,8 +143,11 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
   @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
-      case MANAGED_OBJECT_ID:
-        this.objectIDs.add(new ObjectID(getLongValue()));
+      case MANAGED_OBJECT_IDS:
+        this.objectIDs.deserializeFrom(getInputStream());
+        return true;
+      case OBJECTS_TO_VALIDATE:
+        this.objectsToValidate.deserializeFrom(getInputStream());
         return true;
       case LOCK_CONTEXT:
         this.lockContexts.add(getObject(new ClientServerExchangeLockContext()));
@@ -149,21 +173,5 @@ public class ClientHandshakeMessageImpl extends DSOMessageBase implements Client
       default:
         return false;
     }
-  }
-
-  public long getServerHighWaterMark() {
-    return this.serverHighWaterMark;
-  }
-
-  public void setServerHighWaterMark(long serverHWM) {
-    this.serverHighWaterMark = serverHWM;
-  }
-
-  public boolean enterpriseClient() {
-    return this.enterpriseClient;
-  }
-
-  public void setEnterpriseClient(boolean isEnterpriseClient) {
-    this.enterpriseClient = isEnterpriseClient;
   }
 }

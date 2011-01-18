@@ -18,6 +18,7 @@ import com.tc.object.msg.ObjectIDBatchRequest;
 import com.tc.object.net.DSOChannelManager;
 import com.tc.objectserver.api.ServerMapEvictionManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
+import com.tc.objectserver.l1.api.InvalidateObjectManager;
 import com.tc.objectserver.locks.LockManager;
 import com.tc.objectserver.tx.ServerTransactionManager;
 import com.tc.objectserver.tx.TransactionBatchManager;
@@ -58,12 +59,14 @@ public class ServerClientHandshakeManager {
   private final TCLogger                 consoleLogger;
   private final TransactionBatchManager  transactionBatchManager;
   private final ServerMapEvictionManager serverMapEvictor;
+  private final InvalidateObjectManager  invalidateObjMgr;
 
   public ServerClientHandshakeManager(final TCLogger logger, final DSOChannelManager channelManager,
                                       final ServerTransactionManager transactionManager,
                                       final TransactionBatchManager transactionBatchManager,
                                       final SequenceValidator sequenceValidator,
-                                      final ClientStateManager clientStateManager, final LockManager lockManager,
+                                      final ClientStateManager clientStateManager,
+                                      final InvalidateObjectManager invalidateObjMgr, final LockManager lockManager,
                                       final ServerMapEvictionManager serverMapEvictor, final Sink lockResponseSink,
                                       final Sink oidRequestSink, final Timer timer, final long reconnectTimeout,
                                       final boolean persistent, final TCLogger consoleLogger) {
@@ -73,6 +76,7 @@ public class ServerClientHandshakeManager {
     this.transactionBatchManager = transactionBatchManager;
     this.sequenceValidator = sequenceValidator;
     this.clientStateManager = clientStateManager;
+    this.invalidateObjMgr = invalidateObjMgr;
     this.lockManager = lockManager;
     this.serverMapEvictor = serverMapEvictor;
     this.oidRequestSink = oidRequestSink;
@@ -98,7 +102,7 @@ public class ServerClientHandshakeManager {
       this.logger.debug("Handling client handshake...");
       this.clientStateManager.startupNode(clientID);
       if (this.state == STARTED) {
-        if (handshake.getObjectIDs().size() > 0) {
+        if (handshake.getObjectIDs().size() > 0 || handshake.getObjectIDsToValidate().size() > 0) {
           //
           throw new ClientHandshakeException(
                                              "Clients connected after startup should have no existing object references.");
@@ -129,6 +133,7 @@ public class ServerClientHandshakeManager {
       this.sequenceValidator.initSequence(clientID, handshake.getTransactionSequenceIDs());
 
       this.clientStateManager.addReferences(clientID, handshake.getObjectIDs());
+      this.invalidateObjMgr.addObjectsToValidateFor(clientID, handshake.getObjectIDsToValidate());
 
       this.lockManager.reestablishState(clientID, handshake.getLockContexts());
 
@@ -193,6 +198,7 @@ public class ServerClientHandshakeManager {
     final Set cids = Collections.unmodifiableSet(this.channelManager.getAllClientIDs());
     this.transactionManager.start(cids);
     this.serverMapEvictor.startEvictor();
+    this.invalidateObjMgr.start();
     // It is important to start all the managers before sending the ack to the clients
     for (final Iterator i = cids.iterator(); i.hasNext();) {
       final ClientID clientID = (ClientID) i.next();
