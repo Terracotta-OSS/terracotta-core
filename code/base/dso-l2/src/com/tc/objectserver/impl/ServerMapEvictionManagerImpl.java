@@ -22,7 +22,6 @@ import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ManagedObjectState;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.l1.api.ClientStateManager;
-import com.tc.objectserver.managedobject.ConcurrentDistributedServerMapManagedObjectState;
 import com.tc.objectserver.persistence.api.ManagedObjectStore;
 import com.tc.objectserver.persistence.api.PersistentCollectionsUtil;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -177,11 +176,10 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final ManagedObject mo = this.objectManager.getObjectByIDOrNull(oid);
     ServerMapEvictionContext context = null;
     if (mo == null) { return; }
-    final ConcurrentDistributedServerMapManagedObjectState state = (ConcurrentDistributedServerMapManagedObjectState) mo
-        .getManagedObjectState();
+    final ManagedObjectState state = mo.getManagedObjectState();
     final String className = state.getClassName();
     final String loaderDesc = state.getLoaderDescription();
-    final String cacheName = state.getCacheName();
+    final String cacheName = ((EvictableMap) state).getCacheName();
 
     EvictableMap ev = null;
     try {

@@ -22,4 +22,6 @@ public interface EvictableMap {
 
   public void evictionCompleted();
 
+  public String getCacheName();
+
 }
