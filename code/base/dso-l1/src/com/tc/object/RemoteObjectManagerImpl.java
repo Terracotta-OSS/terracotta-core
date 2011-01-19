@@ -135,8 +135,8 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
-  public void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
-                                  final ClientHandshakeMessage handshakeMessage) {
+  public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
+                                               final ClientHandshakeMessage handshakeMessage) {
     if (isStopped()) { return; }
     assertPaused("Attempt to init handshake while not PAUSED");
     this.state = State.STARTING;
