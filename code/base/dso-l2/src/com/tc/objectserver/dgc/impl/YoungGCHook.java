@@ -54,7 +54,7 @@ public class YoungGCHook extends AbstractGCHook {
   }
 
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
-    return this.objectManager.getObjectReferencesFrom(id, true);
+    return getObjectReferencesFrom(id, true);
   }
 
   public ObjectIDSet getRescueIDs() {

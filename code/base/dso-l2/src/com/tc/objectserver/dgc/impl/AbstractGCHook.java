@@ -7,15 +7,14 @@ package com.tc.objectserver.dgc.impl;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.l1.api.ClientStateManager;
 
-public abstract class AbstractGCHook implements GCHook {
+public abstract class AbstractGCHook extends DGCRequestThrottler implements GCHook {
   protected final MarkAndSweepGarbageCollector collector;
-  protected final ObjectManager                objectManager;
   protected final ClientStateManager           stateManager;
 
   protected AbstractGCHook(MarkAndSweepGarbageCollector collector, ObjectManager objectManager,
                            ClientStateManager stateManager) {
+    super(objectManager);
     this.collector = collector;
-    this.objectManager = objectManager;
     this.stateManager = stateManager;
   }
 

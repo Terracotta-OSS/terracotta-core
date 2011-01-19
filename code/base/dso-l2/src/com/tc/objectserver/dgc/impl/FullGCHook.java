@@ -51,7 +51,7 @@ public class FullGCHook extends AbstractGCHook {
   }
 
   public Set<ObjectID> getObjectReferencesFrom(ObjectID id) {
-    return this.objectManager.getObjectReferencesFrom(id, false);
+    return getObjectReferencesFrom(id, false);
   }
 
   public ObjectIDSet getRescueIDs() {

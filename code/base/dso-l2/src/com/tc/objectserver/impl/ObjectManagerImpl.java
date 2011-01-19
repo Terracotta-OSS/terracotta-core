@@ -45,7 +45,6 @@ import com.tc.util.Counter;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.TCCollections;
 import com.tc.util.concurrent.TCConcurrentMultiMap;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,37 +75,30 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     RETRY, NOT_AVAILABLE, AVAILABLE
   }
 
-  private static final TCLogger                                 logger                = TCLogging
-                                                                                          .getLogger(ObjectManager.class);
+  private static final TCLogger                                 logger          = TCLogging
+                                                                                    .getLogger(ObjectManager.class);
 
-  private static final int                                      MAX_COMMIT_SIZE       = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
-  private static final long                                     THROTTLE_GC_MILLIS    = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_THROTTLE_TIME);
-
-  private static final long                                     REQUESTS_PER_THROTTLE = TCPropertiesImpl
-                                                                                          .getProperties()
-                                                                                          .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE);
+  private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
+                                                                                    .getProperties()
+                                                                                    .getInt(
+                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
   private final EvictionPolicy                                  evictionPolicy;
-  private final Counter                                         flushInProgress       = new Counter();
-  private final AtomicInteger                                   checkedOutCount       = new AtomicInteger();
-  private final AtomicInteger                                   preFetchedCount       = new AtomicInteger();
-  private final PendingList                                     pending               = new PendingList();
-  private final AtomicBoolean                                   inShutdown            = new AtomicBoolean();
+  private final Counter                                         flushInProgress = new Counter();
+  private final AtomicInteger                                   checkedOutCount = new AtomicInteger();
+  private final AtomicInteger                                   preFetchedCount = new AtomicInteger();
+  private final PendingList                                     pending         = new PendingList();
+  private final AtomicBoolean                                   inShutdown      = new AtomicBoolean();
 
-  private GarbageCollector                                      collector             = new NullGarbageCollector();
-  private ObjectManagerStatsListener                            stats                 = new NullObjectManagerStatsListener();
-  private TransactionalObjectManager                            txnObjectMgr          = new NullTransactionalObjectManager();
+  private GarbageCollector                                      collector       = new NullGarbageCollector();
+  private ObjectManagerStatsListener                            stats           = new NullObjectManagerStatsListener();
+  private TransactionalObjectManager                            txnObjectMgr    = new NullTransactionalObjectManager();
 
   // A Lock that prevents checkouts when some critical operation is going on
-  private final ReentrantReadWriteLock                          lock                  = new ReentrantReadWriteLock();
-  private final Condition                                       signal                = this.lock.writeLock()
-                                                                                          .newCondition();
+  private final ReentrantReadWriteLock                          lock            = new ReentrantReadWriteLock();
+  private final Condition                                       signal          = this.lock.writeLock().newCondition();
 
   private final ClientStateManager                              stateManager;
   private final ObjectManagerConfig                             config;
@@ -529,8 +521,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
-      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
-                                                                                    context.getMissingObjectIDs());
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater, context
+          .getMissingObjectIDs());
       context.setResults(results);
       return LookupState.AVAILABLE;
     } else {
@@ -728,19 +720,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // Object either not in cache or is a new object, return emtpy set
       return TCCollections.EMPTY_OBJECT_ID_SET;
     }
-    throttleIfNecessary();
     final ManagedObject mo = lookup(id, false, true);
     final Set references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
-  }
-
-  private long request_count = 0;
-
-  private void throttleIfNecessary() {
-    if (THROTTLE_GC_MILLIS > 0 && ++this.request_count % REQUESTS_PER_THROTTLE == 0) {
-      ThreadUtil.reallySleep(THROTTLE_GC_MILLIS);
-    }
   }
 
   private void postRelease() {
