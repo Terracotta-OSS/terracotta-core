@@ -35,9 +35,8 @@ public class L2PassiveSyncStateManager {
   public synchronized boolean addL2(NodeID nodeID, Set oids, State l2State) {
     boolean objectAddL2 = this.objectStateManager.addL2(nodeID, oids);
     boolean indexAddL2 = this.indexStateManager.addL2(nodeID, l2State);
-    Assert
-        .assertTrue("ObjectAddL2.addobject: " + objectAddL2 + " IndexAddL2.indexObject: " + indexAddL2, objectAddL2
-                                                                                                        && indexAddL2);
+    Assert.assertTrue("ObjectAddL2.addobject: " + objectAddL2 + " IndexAddL2.indexObject: " + indexAddL2,
+                      objectAddL2 == indexAddL2);
     return objectAddL2 && indexAddL2;
   }
 }
