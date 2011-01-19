@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +41,12 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     this.metaDatas = metaDatas;
   }
 
-  public List<NVPair> getMetaDatas() {
-    return metaDatas;
+  public Iterator<NVPair> getMetaDatas() {
+    return metaDatas.iterator();
+  }
+
+  public int numberOfNvPairs() {
+    return metaDatas.size();
   }
 
   public String getCategory() {
@@ -209,10 +214,6 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     }
 
     throw new IllegalArgumentException("Unsupported type: " + type);
-  }
-
-  public int size() {
-    return metaDatas.size();
   }
 
   private static final Map<Class, ValueType> TYPES;

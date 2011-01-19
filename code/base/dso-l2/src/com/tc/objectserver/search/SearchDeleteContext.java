@@ -13,21 +13,12 @@ import com.tc.objectserver.metadata.MetaDataProcessingContext;
  */
 public class SearchDeleteContext extends BaseSearchEventContext {
 
-  private final String name;
   private final Object cacheKey;
 
   public SearchDeleteContext(ServerTransactionID transactionID, String name, Object cacheKey,
                              MetaDataProcessingContext metaDataContext) {
-    super(transactionID, metaDataContext);
-    this.name = name;
+    super(transactionID, name, metaDataContext);
     this.cacheKey = cacheKey;
-  }
-
-  /**
-   * Name of index.
-   */
-  public String getName() {
-    return name;
   }
 
   /**

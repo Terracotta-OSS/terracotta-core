@@ -17,6 +17,7 @@ import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.tx.ServerMapEvictionDNA;
+import com.tc.objectserver.tx.ServerMapEvictionMetaDataReader;
 import com.tc.objectserver.tx.ServerTransaction;
 import com.tc.objectserver.tx.ServerTransactionImpl;
 import com.tc.util.SequenceID;
@@ -27,16 +28,17 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerTransactionFactory {
 
-  private static final LockID[]         NULL_LOCK_ID           = new LockID[0];
-  private static final long[]           EMPTY_HIGH_WATER_MARK  = new long[0];
-  private static final DmiDescriptor[]  NULL_DMI_DESCRIPTOR    = new DmiDescriptor[0];
-  private static final MetaDataReader[] NULL_META_DATA_READERS = new MetaDataReader[0];
+  private static final LockID[]        NULL_LOCK_ID          = new LockID[0];
+  private static final long[]          EMPTY_HIGH_WATER_MARK = new long[0];
+  private static final DmiDescriptor[] NULL_DMI_DESCRIPTOR   = new DmiDescriptor[0];
 
-  private final AtomicLong              tid                    = new AtomicLong();
+  private final AtomicLong             tid                   = new AtomicLong();
 
   public ServerTransaction createTxnFrom(final ObjectSyncMessage syncMsg) {
-    final ObjectSyncServerTransaction txn = new ObjectSyncServerTransaction(syncMsg.getServerTransactionID(), syncMsg
-        .getOids(), syncMsg.getDnaCount(), syncMsg.getDNAs(), syncMsg.getRootsMap(), syncMsg.messageFrom());
+    final ObjectSyncServerTransaction txn = new ObjectSyncServerTransaction(syncMsg.getServerTransactionID(),
+                                                                            syncMsg.getOids(), syncMsg.getDnaCount(),
+                                                                            syncMsg.getDNAs(), syncMsg.getRootsMap(),
+                                                                            syncMsg.messageFrom());
     return txn;
   }
 
@@ -55,13 +57,20 @@ public class ServerTransactionFactory {
   public ServerTransaction createServerMapEvictionTransactionFor(final NodeID localNodeID, final ObjectID oid,
                                                                  final String className, final String loaderDesc,
                                                                  final Map candidates,
-                                                                 final ObjectStringSerializer serializer) {
+                                                                 final ObjectStringSerializer serializer,
+                                                                 final String cacheName) {
     return new ServerTransactionImpl(TxnBatchID.NULL_BATCH_ID, getNextTransactionID(), SequenceID.NULL_ID,
-                                     NULL_LOCK_ID, localNodeID, Collections
-                                         .singletonList(createServerMapEvictionDNAFor(oid, className, loaderDesc,
-                                                                                      candidates)), serializer,
-                                     Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
-                                     NULL_DMI_DESCRIPTOR, NULL_META_DATA_READERS, 1, EMPTY_HIGH_WATER_MARK);
+                                     NULL_LOCK_ID, localNodeID,
+                                     Collections.singletonList(createServerMapEvictionDNAFor(oid, className,
+                                                                                             loaderDesc, candidates)),
+                                     serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
+                                     NULL_DMI_DESCRIPTOR,
+                                     new MetaDataReader[] { createEvictionMetaDataFor(cacheName, candidates) }, 1,
+                                     EMPTY_HIGH_WATER_MARK);
+  }
+
+  private MetaDataReader createEvictionMetaDataFor(String cacheName, Map candidates) {
+    return new ServerMapEvictionMetaDataReader(cacheName, candidates);
   }
 
   private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final String loaderDesc,

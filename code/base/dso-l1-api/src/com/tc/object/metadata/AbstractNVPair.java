@@ -685,6 +685,8 @@ public abstract class AbstractNVPair implements NVPair {
       return new ByteArrayNVPair(attributeName, (byte[]) value);
     } else if (value instanceof Date) {
       return new DateNVPair(attributeName, (Date) value);
+    } else if (value instanceof ObjectID) {
+      return new ObjectIdNVPair(attributeName, (ObjectID) value);
     } else if (value instanceof Enum) { return new EnumNVPair(attributeName, (Enum) value); }
 
     throw new IllegalArgumentException("Unsupported type: " + value.getClass().getName());

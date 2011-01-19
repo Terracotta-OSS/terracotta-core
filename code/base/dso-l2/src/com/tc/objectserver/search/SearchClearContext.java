@@ -13,17 +13,8 @@ import com.tc.objectserver.metadata.MetaDataProcessingContext;
  */
 public class SearchClearContext extends BaseSearchEventContext {
 
-  private final String name;
-
   public SearchClearContext(ServerTransactionID transactionID, String name, MetaDataProcessingContext metaDataContext) {
-    super(transactionID, metaDataContext);
-    this.name = name;
+    super(transactionID, name, metaDataContext);
   }
 
-  /**
-   * Name of index.
-   */
-  public String getName() {
-    return name;
-  }
 }

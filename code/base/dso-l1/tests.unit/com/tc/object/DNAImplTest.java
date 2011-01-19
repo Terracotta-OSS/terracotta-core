@@ -20,11 +20,13 @@ import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
+import com.tc.object.metadata.NVPair;
 import com.tc.object.metadata.ValueType;
 import com.tc.util.Assert;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 
 import junit.framework.TestCase;
 
@@ -101,7 +103,7 @@ public class DNAImplTest extends TestCase {
     md2.add("oid", new ObjectID(23));
 
     // make sure we cover all the types (if you add a new type and this is going off then add it to this test) :-)
-    assertEquals(ValueType.values().length, md2.getMetaDatas().size());
+    assertEquals(ValueType.values().length, md2.numberOfNvPairs());
 
     if (parentID) {
       dnaWriter.setParentObjectID(pid);
@@ -205,7 +207,14 @@ public class DNAImplTest extends TestCase {
 
   private void verifyMetaData(MetaDataDescriptorInternal expect, MetaDataDescriptorInternal actual) {
     assertEquals(expect.getCategory(), actual.getCategory());
-    assertEquals(expect.getMetaDatas(), actual.getMetaDatas());
+    assertEquals(expect.numberOfNvPairs(), actual.numberOfNvPairs());
+
+    Iterator<NVPair> i1 = expect.getMetaDatas();
+    Iterator<NVPair> i2 = actual.getMetaDatas();
+    while (i1.hasNext()) {
+      assertEquals(i1.next(), i2.next());
+    }
+    assertFalse(i2.hasNext());
   }
 
   protected DNAImpl createDNAImpl(final ObjectStringSerializer serializer) {

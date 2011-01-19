@@ -20,6 +20,6 @@ public interface ServerMapEvictionManager extends PostInit, PrettyPrintable {
                            final boolean periodicEvictorRun);
 
   public void evict(ObjectID oid, Map samples, int targetMaxTotalCount, int ttiSeconds, int ttlSeconds, int overshoot,
-                    String className, String loaderDesc);
+                    String className, String loaderDesc, String cacheName);
 
 }

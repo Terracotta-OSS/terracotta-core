@@ -34,7 +34,7 @@ public class SearchEventHandler extends AbstractEventHandler {
       SearchUpsertContext suc = (SearchUpsertContext) context;
 
       try {
-        this.indexManager.upsert(suc.getName(), suc.getCacheKey(), suc.getAttributes(),
+        this.indexManager.upsert(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
                                  suc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
@@ -43,7 +43,7 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchDeleteContext) {
       SearchDeleteContext sdc = (SearchDeleteContext) context;
       try {
-        this.indexManager.remove(sdc.getName(), sdc.getCacheKey(), sdc.getMetaDataProcessingContext());
+        this.indexManager.remove(sdc.getCacheName(), sdc.getCacheKey(), sdc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -65,7 +65,16 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchClearContext) {
       SearchClearContext scc = (SearchClearContext) context;
       try {
-        this.indexManager.clear(scc.getName(), scc.getMetaDataProcessingContext());
+        this.indexManager.clear(scc.getCacheName(), scc.getMetaDataProcessingContext());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
+    } else if (context instanceof SearchEvictionRemoveContext) {
+      SearchEvictionRemoveContext serc = (SearchEvictionRemoveContext) context;
+      try {
+        this.indexManager.removeIfValueEqual(serc.getCacheName(), serc.getRemoves(),
+                                             serc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

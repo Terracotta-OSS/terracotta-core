@@ -16,25 +16,16 @@ import java.util.List;
  */
 public class SearchUpsertContext extends BaseSearchEventContext {
 
-  private final String       name;
   private final List<NVPair> attributes;
   private final Object       cacheKey;
+  private final Object       cacheValue;
 
-  public SearchUpsertContext(ServerTransactionID transactionID, String name, Object cacheKey, List<NVPair> attributes,
-                             MetaDataProcessingContext metaDataContext) {
-    super(transactionID, metaDataContext);
-    this.name = name;
+  public SearchUpsertContext(ServerTransactionID transactionID, String name, Object cacheKey, Object cacheValue,
+                             List<NVPair> attributes, MetaDataProcessingContext metaDataContext) {
+    super(transactionID, name, metaDataContext);
     this.cacheKey = cacheKey;
+    this.cacheValue = cacheValue;
     this.attributes = attributes;
-  }
-
-  /**
-   * Name of index.
-   * 
-   * @return String name
-   */
-  public String getName() {
-    return name;
   }
 
   /**
@@ -42,6 +33,13 @@ public class SearchUpsertContext extends BaseSearchEventContext {
    */
   public Object getCacheKey() {
     return cacheKey;
+  }
+
+  /**
+   * Value for cache entry
+   */
+  public Object getCacheValue() {
+    return cacheValue;
   }
 
   /**

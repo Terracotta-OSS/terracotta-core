@@ -5,11 +5,12 @@ package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
+import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.objectserver.api.EvictableMap;
 
 import java.io.IOException;
@@ -20,10 +21,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 
 public class ConcurrentDistributedServerMapManagedObjectState extends ConcurrentDistributedMapManagedObjectState
     implements EvictableMap {
@@ -33,6 +34,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   public static final String TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME = "targetMaxInMemoryCount";
   public static final String TARGET_MAX_TOTAL_COUNT_FIELDNAME     = "targetMaxTotalCount";
   public static final String INVALIDATE_ON_CHANGE                 = "invalidateOnChange";
+  public static final String CACHE_NAME_FIELDNAME                 = "cacheName";
 
   enum EvictionStatus {
     NOT_INITIATED, INITIATED, SAMPLED
@@ -46,6 +48,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   private int            maxTTLSeconds;
   private int            targetMaxInMemoryCount;
   private int            targetMaxTotalCount;
+  private String         cacheName;
 
   protected ConcurrentDistributedServerMapManagedObjectState(final ObjectInput in) throws IOException {
     super(in);
@@ -54,6 +57,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     this.targetMaxInMemoryCount = in.readInt();
     this.targetMaxTotalCount = in.readInt();
     this.invalidateOnChange = in.readBoolean();
+    this.cacheName = in.readUTF();
   }
 
   protected ConcurrentDistributedServerMapManagedObjectState(final long classId, final Map map) {
@@ -89,6 +93,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     writer.addPhysicalAction(TARGET_MAX_IN_MEMORY_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxInMemoryCount));
     writer.addPhysicalAction(TARGET_MAX_TOTAL_COUNT_FIELDNAME, Integer.valueOf(this.targetMaxTotalCount));
     writer.addPhysicalAction(INVALIDATE_ON_CHANGE, Boolean.valueOf(this.invalidateOnChange));
+    writer.addPhysicalAction(CACHE_NAME_FIELDNAME, cacheName);
   }
 
   @Override
@@ -117,6 +122,16 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
           this.targetMaxTotalCount = ((Integer) physicalAction.getObject());
         } else if (fieldName.equals(INVALIDATE_ON_CHANGE)) {
           this.invalidateOnChange = ((Boolean) physicalAction.getObject());
+        } else if (fieldName.equals(CACHE_NAME_FIELDNAME)) {
+          Object value = physicalAction.getObject();
+          String name;
+          if (value instanceof UTF8ByteDataHolder) {
+            name = ((UTF8ByteDataHolder) value).asString();
+          } else {
+            name = (String) value;
+          }
+
+          this.cacheName = name;
         } else {
           throw new AssertionError("unexpected field name: " + fieldName);
         }
@@ -181,6 +196,7 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     out.writeInt(this.targetMaxInMemoryCount);
     out.writeInt(this.targetMaxTotalCount);
     out.writeBoolean(this.invalidateOnChange);
+    out.writeUTF(this.cacheName);
   }
 
   public Object getValueForKey(final Object portableKey) {
@@ -262,5 +278,9 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
       }
     }
     return samples;
+  }
+
+  public String getCacheName() {
+    return cacheName;
   }
 }

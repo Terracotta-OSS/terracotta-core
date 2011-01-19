@@ -45,7 +45,4 @@ public interface MetaDataDescriptor {
   void addNull(String name);
 
   String getCategory();
-
-  int size();
-
 }

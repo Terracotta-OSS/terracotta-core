@@ -14,10 +14,16 @@ import java.util.Set;
 
 public interface IndexManager {
 
+  /**
+   * This method is used by the server side evictor
+   */
+  void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, MetaDataProcessingContext metaDataContext)
+      throws IndexException;
+
   void remove(String indexName, Object key, MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  void upsert(String indexName, Object key, List<NVPair> attributes, MetaDataProcessingContext metaDataContext)
-      throws IndexException;
+  void upsert(String indexName, Object key, Object value, List<NVPair> attributes,
+              MetaDataProcessingContext metaDataContext) throws IndexException;
 
   void clear(String indexName, MetaDataProcessingContext metaDataContext) throws IndexException;
 

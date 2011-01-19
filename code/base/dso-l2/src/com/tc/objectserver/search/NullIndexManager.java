@@ -15,10 +15,6 @@ import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
 
-  public boolean deleteIndex(String name) {
-    return false;
-  }
-
   public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
                                   List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
     return null;
@@ -32,7 +28,8 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void upsert(String indexName, Object key, List<NVPair> attributes, MetaDataProcessingContext metaDataContext) {
+  public void upsert(String indexName, Object key, Object value, List<NVPair> attributes,
+                     MetaDataProcessingContext metaDataContext) {
     //
   }
 
@@ -45,6 +42,11 @@ public class NullIndexManager implements IndexManager {
   }
 
   public void release() {
+    //
+  }
+
+  public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove,
+                                 MetaDataProcessingContext metaDataContext) {
     //
   }
 

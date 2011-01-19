@@ -66,7 +66,8 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final ServerTransactionFactory factory = new ServerTransactionFactory();
     final ObjectStringSerializer serializer = new ObjectStringSerializer();
     final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid, className,
-                                                                                loaderDesc, candidates, serializer);
+                                                                                loaderDesc, candidates, serializer,
+                                                                                "foo");
     final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(TxnBatchID.NULL_BATCH_ID,
                                                                                     serializer);
     final TCByteBuffer[] buffer = txnWriter.writeTransactionBatch(Collections.singletonList(txn));
@@ -101,8 +102,10 @@ public class ServerTransactionBatchWriterTest extends TestCase {
 
     // server map eviction txn
     final ServerTransactionFactory factory = new ServerTransactionFactory();
-    final ServerTransaction serverMapEvictionTxn = factory
-        .createServerMapEvictionTransactionFor(nodeID, oid, className, loaderDesc, candidates, serializer);
+    final ServerTransaction serverMapEvictionTxn = factory.createServerMapEvictionTransactionFor(nodeID, oid,
+                                                                                                 className, loaderDesc,
+                                                                                                 candidates,
+                                                                                                 serializer, "foo");
     serverTransactions.add(serverMapEvictionTxn);
 
     // few more general server transactions

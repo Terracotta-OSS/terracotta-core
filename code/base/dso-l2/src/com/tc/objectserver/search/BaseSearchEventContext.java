@@ -11,9 +11,11 @@ class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventCo
 
   private final MetaDataProcessingContext metaDataContext;
   private final ServerTransactionID       txnID;
+  private final String                    cacheName;
 
-  public BaseSearchEventContext(ServerTransactionID txnID, MetaDataProcessingContext metaDataContext) {
+  public BaseSearchEventContext(ServerTransactionID txnID, String cacheName, MetaDataProcessingContext metaDataContext) {
     this.txnID = txnID;
+    this.cacheName = cacheName;
     this.metaDataContext = metaDataContext;
   }
 
@@ -25,4 +27,9 @@ class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventCo
   public MetaDataProcessingContext getMetaDataProcessingContext() {
     return metaDataContext;
   }
+
+  public String getCacheName() {
+    return cacheName;
+  }
+
 }
