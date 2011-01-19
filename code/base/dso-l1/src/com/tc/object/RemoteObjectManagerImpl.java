@@ -91,7 +91,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
   private final SessionManager                     sessionManager;
   private final TCLogger                           logger;
 
-  private volatile State                           state                    = State.RUNNING;
+  private State                                    state                    = State.RUNNING;
   private ObjectIDSet                              removeObjects            = new ObjectIDSet();
 
   private boolean                                  pendingSendTaskScheduled = false;
@@ -165,7 +165,6 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
           wait();
         } catch (final InterruptedException e) {
           isInterrupted = true;
-          break;
         }
       }
     } finally {
