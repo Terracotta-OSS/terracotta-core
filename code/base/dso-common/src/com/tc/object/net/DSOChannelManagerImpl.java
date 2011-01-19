@@ -83,6 +83,8 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
         if (channel != null) {
           channel.close();
         }
+      } else {
+        logger.info("Ignoring close for " + o);
       }
     }
   }
