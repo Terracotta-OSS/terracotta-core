@@ -27,25 +27,21 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
 
   private final int             leastCount;
   private final long            sleepInterval;
-  private final boolean         offheapEnabled;
+  private final boolean         recommendOffheap;
   private final boolean         monitorOldGenOnly;
 
   private MemoryMonitor         monitor;
 
   private final TCThreadGroup   threadGroup;
 
-  public TCMemoryManagerImpl(long sleepInterval, int leastCount, boolean monitorOldGenOnly, TCThreadGroup threadGroup) {
-    this(sleepInterval, leastCount, monitorOldGenOnly, threadGroup, false);
-  }
-
   public TCMemoryManagerImpl(long sleepInterval, int leastCount, boolean monitorOldGenOnly, TCThreadGroup threadGroup,
-                             boolean offheapEnabled) {
+                             boolean recommendOffheap) {
     this.threadGroup = threadGroup;
     verifyInput(sleepInterval, leastCount);
     this.monitorOldGenOnly = monitorOldGenOnly;
     this.leastCount = leastCount;
     this.sleepInterval = sleepInterval;
-    this.offheapEnabled = offheapEnabled;
+    this.recommendOffheap = recommendOffheap;
   }
 
   // CDV-1181 warn if using CMS
@@ -115,7 +111,7 @@ public class TCMemoryManagerImpl implements TCMemoryManager {
   private void fireMemoryEvent(MemoryUsage mu) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MemoryEventsListener listener = (MemoryEventsListener) i.next();
-      listener.memoryUsed(mu, this.offheapEnabled);
+      listener.memoryUsed(mu, this.recommendOffheap);
     }
   }
 

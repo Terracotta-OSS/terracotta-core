@@ -14,17 +14,17 @@ import com.tc.test.TCTestCase;
 
 public class CacheMemoryEventGenaratorTest extends TCTestCase {
 
-  private Object  belowThreshold      = new Object();
-  private Object  aboveThreshold      = new Object();
-  private boolean belowThresholdRecvd = false;
-  private boolean aboveThresholdRecvd = false;
+  private final Object belowThreshold      = new Object();
+  private final Object aboveThreshold      = new Object();
+  private boolean      belowThresholdRecvd = false;
+  private boolean      aboveThresholdRecvd = false;
 
-  private byte[]  temp;
+  private byte[]       temp;
 
   private void register() {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging
         .getLogger(CacheMemoryEventGenaratorTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, true);
     int threshold = 20;
     int criticalThreshold = 30;
     int leastCount = 2;

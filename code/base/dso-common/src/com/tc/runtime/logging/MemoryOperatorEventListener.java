@@ -22,7 +22,7 @@ public class MemoryOperatorEventListener implements MemoryEventsListener {
     this.critcalThreshold = criticalThreshold;
   }
 
-  public void memoryUsed(MemoryUsage currentUsage, boolean offheapEnabled) {
+  public void memoryUsed(MemoryUsage currentUsage, boolean recommendOffheap) {
     if (!canFireOpEvent && currentUsage.getUsedPercentage() < this.critcalThreshold) {
       this.canFireOpEvent = true;
     }

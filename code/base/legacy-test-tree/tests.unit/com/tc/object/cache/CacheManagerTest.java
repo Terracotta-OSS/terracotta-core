@@ -34,13 +34,14 @@ public class CacheManagerTest extends TCTestCase implements Evictable {
   TCMemoryManagerImpl      tcMemManager;
   TCThreadGroup            thrdGrp;
 
+  @Override
   public void setUp() {
     callCount = new SynchronizedInt(0);
     v = new Vector();
     cacheConfig = new TestCacheConfig();
     thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(CacheManagerTest.class)));
     tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig.getLeastCount(), cacheConfig
-        .isOnlyOldGenMonitored(), thrdGrp);
+        .isOnlyOldGenMonitored(), thrdGrp, true);
     System.gc();
     System.gc();
     System.gc();

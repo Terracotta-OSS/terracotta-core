@@ -21,7 +21,7 @@ public class LongGCLogger implements MemoryEventsListener {
     this.gcTimeout = gcTimeOut;
   }
 
-  public void memoryUsed(MemoryUsage currentUsage, boolean offheapEnabled) {
+  public void memoryUsed(MemoryUsage currentUsage, boolean recommendOffheap) {
     if (lastMemoryUsage == null) {
       lastMemoryUsage = currentUsage;
       return;
@@ -31,7 +31,7 @@ public class LongGCLogger implements MemoryEventsListener {
     if (countDiff > 0 && timeDiff > gcTimeout) {
 
       TerracottaOperatorEvent tcEvent;
-      if (offheapEnabled) {
+      if (!recommendOffheap) {
         tcEvent = TerracottaOperatorEventFactory.createLongGCOperatorEvent(new Object[] { gcTimeout, countDiff,
             timeDiff });
       } else {

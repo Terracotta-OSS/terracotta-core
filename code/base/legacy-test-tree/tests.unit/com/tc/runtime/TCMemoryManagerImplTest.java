@@ -19,21 +19,21 @@ import java.util.Vector;
 
 public class TCMemoryManagerImplTest extends TCTestCase implements CacheMemoryEventsListener {
 
-  int             usedThreshold         = 70;
-  int             usedCriticalThreshold = 90;
-  long            sleepInterval         = 50;
-  int             lc                    = 2;
-  SynchronizedInt callCount             = new SynchronizedInt(0);
+  int                  usedThreshold         = 70;
+  int                  usedCriticalThreshold = 90;
+  long                 sleepInterval         = 50;
+  int                  lc                    = 2;
+  SynchronizedInt      callCount             = new SynchronizedInt(0);
 
-  Vector          v                     = new Vector();
-  private int     lastCall;
-  private boolean lastIsBelowThreshold  = false;
-  private Vector  errors                = new Vector();
+  Vector               v                     = new Vector();
+  private int          lastCall;
+  private boolean      lastIsBelowThreshold  = false;
+  private final Vector errors                = new Vector();
 
   public void test() throws Throwable {
     TCMemoryManager mm = new TCMemoryManagerImpl(sleepInterval, lc, true,
                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
-                                                     .getLogger(TCMemoryManagerImplTest.class))));
+                                                     .getLogger(TCMemoryManagerImplTest.class))), true);
 
     new CacheMemoryManagerEventGenerator(usedThreshold, usedCriticalThreshold, lc, mm, this);
     try {
