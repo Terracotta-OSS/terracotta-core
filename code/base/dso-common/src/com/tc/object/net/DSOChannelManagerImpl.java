@@ -74,11 +74,15 @@ public class DSOChannelManagerImpl implements DSOChannelManager, DSOChannelManag
 
   public void closeAll(final Collection clientIDs) {
     for (Iterator i = clientIDs.iterator(); i.hasNext();) {
-      ClientID id = (ClientID) i.next();
+      Object o = i.next();
+      // we might get passed a ServerID here for server generated transactions
+      if (o instanceof ClientID) {
+        ClientID id = (ClientID) o;
 
-      MessageChannel channel = genericChannelManager.getChannel(new ChannelID(id.toLong()));
-      if (channel != null) {
-        channel.close();
+        MessageChannel channel = genericChannelManager.getChannel(new ChannelID(id.toLong()));
+        if (channel != null) {
+          channel.close();
+        }
       }
     }
   }
