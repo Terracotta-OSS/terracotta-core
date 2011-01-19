@@ -11,7 +11,7 @@ import com.tc.util.State;
 public class NullL2IndexStateManager implements L2IndexStateManager {
 
   public boolean addL2(NodeID nodeID, State currentState) {
-    return false;
+    return true;
   }
 
   public void close(IndexSyncContext mosc) {
