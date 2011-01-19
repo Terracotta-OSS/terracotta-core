@@ -30,6 +30,9 @@ public class TCPropertiesConstsTest extends TCTestCase {
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_PATH);
     exemptedProperties.add(TCPropertiesConsts.PRODUCTKEY_RESOURCE_PATH);
 
+    exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_THRESHOLD);
+    exemptedProperties.add(TCPropertiesConsts.L2_CACHEMANAGER_CRITICALTHRESHOLD);
+
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_SKIP_JVMARG_CHECK);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_CONCURRENCY);
     exemptedProperties.add(TCPropertiesConsts.L2_OFFHEAP_OBJECT_CACHE_INITIAL_DATASIZE);
