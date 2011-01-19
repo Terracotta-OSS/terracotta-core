@@ -135,7 +135,7 @@ public class LongGCLoggerTest extends TCTestCase {
 
   private void register(boolean offheapEnabled) {
     TCThreadGroup thrdGrp = new TCThreadGroup(new ThrowableHandler(TCLogging.getLogger(LongGCLoggerTest.class)));
-    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, offheapEnabled);
+    TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(1L, 2, true, thrdGrp, !offheapEnabled);
     LongGCLogger logger = new TestLongGCLogger(1);
     tcMemManager.registerForMemoryEvents(logger);
   }
