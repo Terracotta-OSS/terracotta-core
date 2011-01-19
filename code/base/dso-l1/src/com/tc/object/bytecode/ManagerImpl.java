@@ -944,11 +944,11 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
-                                         Set<String> attributeSet, List<NVPair> sortAttributes,
+                                         boolean includeValues, Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults) {
     waitForAllCurrentTransactionsToComplete();
-    return searchRequestManager.query(cachename, queryStack, includeKeys, attributeSet, sortAttributes, aggregators,
-                                      maxResults);
+    return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
+                                      aggregators, maxResults);
   }
 
   public NVPair createNVPair(String name, Object value) {

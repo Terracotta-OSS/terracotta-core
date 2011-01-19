@@ -39,12 +39,14 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private final static byte STACK_OPERATION_MARKER = 7;
   private final static byte STACK_NVPAIR_MARKER    = 8;
   private final static byte MAX_RESULTS            = 9;
+  private final static byte INCLUDE_VALUES         = 10;
 
   private SearchRequestID   requestID;
   private GroupID           groupIDFrom;
   private String            cachename;
   private LinkedList        queryStack;
   private boolean           includeKeys;
+  private boolean           includeValues;
   private Set<String>       attributes;
   private List<NVPair>      sortAttributes;
   private List<NVPair>      aggregators;
@@ -61,7 +63,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   }
 
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupID,
-                                          final String cacheName, final LinkedList stack, boolean keys,
+                                          final String cacheName, final LinkedList stack, boolean keys, boolean values,
                                           Set<String> attributeSet, List<NVPair> sortAttributesMap,
                                           List<NVPair> attributeAggregators, int max) {
     this.requestID = searchRequestID;
@@ -69,6 +71,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.cachename = cacheName;
     this.queryStack = stack;
     this.includeKeys = keys;
+    this.includeValues = values;
     this.attributes = attributeSet;
     this.sortAttributes = sortAttributesMap;
     this.aggregators = attributeAggregators;
@@ -83,6 +86,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
     putNVPair(CACHENAME, this.cachename);
     putNVPair(INCLUDE_KEYS, this.includeKeys);
+    putNVPair(INCLUDE_VALUES, this.includeValues);
     putNVPair(MAX_RESULTS, this.maxResults);
     putNVPair(ATTRIBUTES, this.attributes.size());
     for (final String attribute : this.attributes) {
@@ -132,6 +136,10 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
       case INCLUDE_KEYS:
         this.includeKeys = getBooleanValue();
+        return true;
+
+      case INCLUDE_VALUES:
+        this.includeValues = getBooleanValue();
         return true;
 
       case MAX_RESULTS:
@@ -253,6 +261,13 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    */
   public boolean includeKeys() {
     return this.includeKeys;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public boolean includeValues() {
+    return this.includeValues;
   }
 
   /**

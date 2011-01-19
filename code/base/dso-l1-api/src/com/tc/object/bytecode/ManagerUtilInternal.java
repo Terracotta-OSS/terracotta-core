@@ -33,10 +33,10 @@ public class ManagerUtilInternal {
   }
 
   public static SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
-                                                Set<String> attributeSet, List<NVPair> sortAttributes,
-                                                List<NVPair> aggregators, int maxResults) {
-    return getInternalManager().executeQuery(cachename, queryStack, includeKeys, attributeSet, sortAttributes,
-                                             aggregators, maxResults);
+                                                boolean includeValues, Set<String> attributeSet,
+                                                List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
+    return getInternalManager().executeQuery(cachename, queryStack, includeKeys, includeValues, attributeSet,
+                                             sortAttributes, aggregators, maxResults);
   }
 
   public static NVPair createNVPair(String name, Object value) {

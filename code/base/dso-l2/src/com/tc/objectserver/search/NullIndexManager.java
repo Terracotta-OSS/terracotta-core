@@ -15,8 +15,9 @@ import java.util.Set;
 
 public class NullIndexManager implements IndexManager {
 
-  public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                                  List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
+  public SearchResult searchIndex(String name, LinkedList queryStack, boolean includeKeys, boolean includeValues,
+                                  Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
+                                  int maxResults) {
     return null;
   }
 

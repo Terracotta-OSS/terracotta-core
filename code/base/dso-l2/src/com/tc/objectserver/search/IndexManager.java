@@ -27,7 +27,7 @@ public interface IndexManager {
 
   void clear(String indexName, MetaDataProcessingContext metaDataContext) throws IndexException;
 
-  public SearchResult searchIndex(String indexName, LinkedList queryStack, boolean includeKeys,
+  public SearchResult searchIndex(String indexName, LinkedList queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) throws IndexException;
 

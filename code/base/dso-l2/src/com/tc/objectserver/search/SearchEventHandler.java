@@ -53,9 +53,9 @@ public class SearchEventHandler extends AbstractEventHandler {
 
       SearchResult searchResult;
       try {
-        searchResult = this.indexManager.searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(),
-                                                     sqc.getAttributeSet(), sqc.getSortAttributes(),
-                                                     sqc.getAggregators(), sqc.getMaxResults());
+        searchResult = this.indexManager
+            .searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(), sqc.includeValues(),
+                         sqc.getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators(), sqc.getMaxResults());
         this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(),
                                                 searchResult.getAggregatorResults());
       } catch (IndexException e) {

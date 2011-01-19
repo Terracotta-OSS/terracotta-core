@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * The class represents a query request from the client. the cachename is to identify the index and the query string is
- * our client side query in string form.
+ * The class represents a query request from the client. the cachename is to identify the index
  * 
  * @author Nabib El-Rahman
  */
@@ -45,6 +44,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @param cacheName
    * @param queryStack
    * @param keys
+   * @param values
    * @param attributeSet
    * @param sortAttributeMap
    * @param aggregators
@@ -52,8 +52,9 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    */
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
                                           final String cacheName, final LinkedList queryStack, final boolean keys,
-                                          final Set<String> attributeSet, final List<NVPair> sortAttributesMap,
-                                          final List<NVPair> aggregators, int maxResults);
+                                          final boolean values, final Set<String> attributeSet,
+                                          final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
+                                          int maxResults);
 
   /**
    * Name of cache to query against.
@@ -94,6 +95,13 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @return boolean
    */
   public boolean includeKeys();
+
+  /**
+   * Result should include values
+   * 
+   * @return boolean
+   */
+  public boolean includeValues();
 
   /**
    * Return maximum results size. return integer

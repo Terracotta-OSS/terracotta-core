@@ -25,20 +25,23 @@ public class SearchQueryContext implements SearchEventContext {
   private final String          cacheName;
   private final LinkedList      queryStack;
   private final boolean         includeKeys;
+  private final boolean         includeValues;
   private final Set<String>     attributeSet;
   private final List<NVPair>    sortAttributes;
   private final List<NVPair>    aggregators;
   private final int             maxResults;
 
   public SearchQueryContext(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cacheName,
-                            LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
-                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
+                            LinkedList queryStack, boolean includeKeys, boolean includeValues,
+                            Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
+                            int maxResults) {
     this.clientID = clientID;
     this.requestID = requestID;
     this.groupIDFrom = groupIDFrom;
     this.cacheName = cacheName;
     this.queryStack = queryStack;
     this.includeKeys = includeKeys;
+    this.includeValues = includeValues;
     this.attributeSet = attributeSet;
     this.sortAttributes = sortAttributes;
     this.aggregators = aggregators;
@@ -95,6 +98,15 @@ public class SearchQueryContext implements SearchEventContext {
    */
   public boolean includeKeys() {
     return includeKeys;
+  }
+
+  /**
+   * Result set should include values
+   * 
+   * @return boolean true if should return values
+   */
+  public boolean includeValues() {
+    return includeValues;
   }
 
   /**

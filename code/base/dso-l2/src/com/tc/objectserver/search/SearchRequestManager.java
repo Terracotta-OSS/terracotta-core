@@ -30,13 +30,14 @@ public interface SearchRequestManager {
    * @param cachename
    * @param queryStack
    * @param includeKeys
+   * @param includeValues
    * @param attributeSet
    * @param sortAttributes
    * @param aggregators
    * @param maxResults
    */
   public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
-                           LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                           LinkedList queryStack, boolean includeKeys, boolean includeValues, Set<String> attributeSet,
                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults);
 
   /**

@@ -16,7 +16,7 @@ import java.util.Set;
 public class NullSearchRequestManager implements SearchRequestManager {
 
   public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
-                           LinkedList queryStack, boolean includeKeys, Set<String> attributeSet,
+                           LinkedList queryStack, boolean includeKeys, boolean includeValues, Set<String> attributeSet,
                            List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
     // Do nothing
   }
