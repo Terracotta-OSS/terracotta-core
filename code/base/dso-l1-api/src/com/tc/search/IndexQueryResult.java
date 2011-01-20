@@ -4,6 +4,7 @@
 package com.tc.search;
 
 import com.tc.io.TCSerializable;
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
 
 import java.util.List;
@@ -21,6 +22,13 @@ public interface IndexQueryResult extends TCSerializable {
    * @return key
    */
   public String getKey();
+
+  /**
+   * Entry value.
+   * 
+   * @return value
+   */
+  public ObjectID getValue();
 
   /**
    * Entry attributes.

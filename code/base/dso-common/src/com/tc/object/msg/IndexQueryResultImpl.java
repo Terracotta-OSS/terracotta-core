@@ -5,6 +5,7 @@ package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
@@ -19,13 +20,15 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
   private String       key;
   private List<NVPair> attributes;
   private List<NVPair> sortAttributes;
+  private ObjectID     valueOID = ObjectID.NULL_ID;
 
   public IndexQueryResultImpl() {
     // do nothing.
   }
 
-  public IndexQueryResultImpl(String key, List<NVPair> attributes, List<NVPair> sortAttributes) {
+  public IndexQueryResultImpl(String key, ObjectID valueOID, List<NVPair> attributes, List<NVPair> sortAttributes) {
     this.key = key;
+    this.valueOID = valueOID;
     this.attributes = attributes;
     this.sortAttributes = sortAttributes;
   }
@@ -35,6 +38,10 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
    */
   public String getKey() {
     return this.key;
+  }
+
+  public ObjectID getValue() {
+    return valueOID;
   }
 
   /**
@@ -58,6 +65,7 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
   public Object deserializeFrom(TCByteBufferInput input) throws IOException {
     this.key = input.readString();
+    this.valueOID = new ObjectID(input.readLong());
     int size = input.readInt();
 
     this.attributes = size > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
@@ -79,6 +87,7 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
   public void serializeTo(TCByteBufferOutput output) {
     output.writeString(this.key);
+    output.writeLong(this.valueOID.toLong());
     output.writeInt(this.attributes.size());
     for (NVPair pair : this.attributes) {
       pair.serializeTo(output);
