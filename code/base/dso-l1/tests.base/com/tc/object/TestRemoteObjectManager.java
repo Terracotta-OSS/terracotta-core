@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.exception.ImplementMe;
 import com.tc.exception.TCObjectNotFoundException;
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
@@ -110,7 +111,7 @@ public class TestRemoteObjectManager implements RemoteObjectManager {
     }
   }
 
-  public void clear() {
+  public void clear(GroupID gid) {
     throw new ImplementMe();
   }
 

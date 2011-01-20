@@ -75,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -208,14 +208,18 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
   public synchronized void initializeHandshake(final NodeID thisNode, final NodeID remoteNode,
                                                final ClientHandshakeMessage handshakeMessage) {
     assertPaused("Attempt to initiateHandshake while not PAUSED");
-    this.state = STARTING;
-    addAllObjectIDs(handshakeMessage.getObjectIDs());
+    changeStateToStarting();
+    addAllObjectIDs(handshakeMessage.getObjectIDs(), remoteNode);
 
     // Ignore objects reaped before handshaking otherwise those won't be in the list sent to L2 at handshaking.
     // Leave an inconsistent state between L1 and L2. Reaped object is in L1 removeObjects but L2 doesn't aware
     // and send objects over. This can happen when L2 restarted and other L1 makes object requests before this
     // L1's first object request to L2.
-    this.remoteObjectManager.clear();
+    this.remoteObjectManager.clear((GroupID) remoteNode);
+  }
+
+  protected void changeStateToStarting() {
+    this.state = STARTING;
   }
 
   private void waitUntilRunning() {
@@ -596,7 +600,7 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     return basicLookupByID(id);
   }
 
-  synchronized Set addAllObjectIDs(final Set oids) {
+  protected synchronized Set addAllObjectIDs(final Set oids, final NodeID remoteNode) {
     return this.objectStore.addAllObjectIDs(oids);
   }
 

@@ -131,7 +131,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     // XXX:: We are clearing unmaterialized DNAs and removed objects here because on connect we are going to send
     // the list of objects present in this L1 from Client Object Manager anyways. We can't be clearing the removed
     // object IDs in unpause(), then you get MNK-835
-    clear();
+    clear(GroupID.ALL_GROUPS);
     notifyAll();
   }
 
@@ -150,7 +150,7 @@ public class RemoteObjectManagerImpl implements RemoteObjectManager, PrettyPrint
     notifyAll();
   }
 
-  public synchronized void clear() {
+  public synchronized void clear(GroupID gid) {
     this.lru.clear();
     this.dnaCache.clear();
     this.removeObjects.clear();

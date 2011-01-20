@@ -4,6 +4,7 @@
  */
 package com.tc.object;
 
+import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
@@ -34,7 +35,7 @@ public interface RemoteObjectManager extends ClientHandshakeCallback, PrettyPrin
 
   public void removed(ObjectID id);
 
-  public void clear();
+  public void clear(GroupID gid);
 
   public boolean isInDNACache(ObjectID id);
 

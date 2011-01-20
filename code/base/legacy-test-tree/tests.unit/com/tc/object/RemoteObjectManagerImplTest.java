@@ -99,7 +99,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     final DNA dna = this.manager.retrieve(new ObjectID(0));
     assertNotNull(dna);
     assertEquals(dnaCollectionCount - 1, this.manager.getDNACacheSize());
-    this.manager.clear();
+    this.manager.clear(GroupID.ALL_GROUPS);
     assertEquals(0, this.manager.getDNACacheSize());
   }
 
@@ -122,7 +122,7 @@ public class RemoteObjectManagerImplTest extends TCTestCase {
     this.manager.clearAllUnrequestedDNABatches();
     assertEquals(0, this.manager.getDNACacheSize());
 
-    this.manager.clear();
+    this.manager.clear(GroupID.ALL_GROUPS);
 
     for (int i = 0; i < dnaCollectionCount; i++) {
       dnas = new ArrayList();
