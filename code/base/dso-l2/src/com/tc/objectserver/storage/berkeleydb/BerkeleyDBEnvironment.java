@@ -12,6 +12,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Durability;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.EnvironmentStats;
@@ -19,6 +20,8 @@ import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.StatsConfig;
 import com.sleepycat.je.Transaction;
+import com.sleepycat.je.Durability.ReplicaAckPolicy;
+import com.sleepycat.je.Durability.SyncPolicy;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -96,8 +99,9 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     this.ecfg.setTransactional(true);
     this.ecfg.setAllowCreate(true);
     this.ecfg.setReadOnly(false);
-    // this.ecfg.setTxnWriteNoSync(!paranoid);
-    this.ecfg.setTxnNoSync(!paranoid);
+    if (!paranoid) {
+      this.ecfg.setDurability(new Durability(SyncPolicy.NO_SYNC, SyncPolicy.NO_SYNC, ReplicaAckPolicy.NONE));
+    }
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
     this.dbcfg.setTransactional(true);
@@ -418,7 +422,11 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     if (!OperationStatus.SUCCESS.equals(stat)) throw new TCDatabaseException("Unexpected operation status "
                                                                              + "trying to unset clean flag: " + stat);
     try {
-      tx.commitSync();
+      if (isParanoidMode()) {
+        tx.commitSync();
+      } else {
+        tx.commit();
+      }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
     }
@@ -594,8 +602,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public MutableSequence getSequence(PersistenceTransactionProvider ptxp, TCLogger log, String sequenceID,
                                      int startValue) {
-    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue,
-                                  (Database) databasesByName.get(GLOBAL_SEQUENCE_DATABASE));
+    return new BerkeleyDBSequence(ptxp, log, sequenceID, startValue, (Database) databasesByName
+        .get(GLOBAL_SEQUENCE_DATABASE));
   }
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {

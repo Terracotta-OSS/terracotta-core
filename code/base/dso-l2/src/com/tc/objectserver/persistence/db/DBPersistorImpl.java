@@ -78,7 +78,7 @@ public class DBPersistorImpl implements Persistor {
                                                                     this.sleepycatCollectionFactory, serializer);
     this.managedObjectPersistor = new ManagedObjectPersistorImpl(logger, serializationAdapterFactory, env, env
         .getSequence(this.persistenceTransactionProvider, logger, DBSequenceKeys.OBJECTID_SEQUENCE_NAME, 1000), env
-        .getRootDatabase(), this.persistenceTransactionProvider, this.sleepycatCollectionsPersistor, env
+        .getRootDatabase(), env.getPersistenceTransactionProvider(), this.sleepycatCollectionsPersistor, env
         .isParanoidMode(), objectStatsRecorder);
   }
 
