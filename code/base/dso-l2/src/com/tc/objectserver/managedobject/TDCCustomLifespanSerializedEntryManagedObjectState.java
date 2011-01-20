@@ -4,9 +4,9 @@
 package com.tc.objectserver.managedobject;
 
 import com.tc.object.ObjectID;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -28,8 +28,8 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
   }
 
   @Override
-  public boolean canEvict(final int ttiSeconds, final int ttlSeconds) {
-    return canEvictNow(this.customTti, this.customTtl);
+  public int expiresIn(int now, int ttiSeconds, int ttlSeconds) {
+    return computeExpiresIn(now, this.customTti, this.customTtl);
   }
 
   @Override
@@ -93,8 +93,7 @@ public class TDCCustomLifespanSerializedEntryManagedObjectState extends TDCSeria
 
   static TDCSerializedEntryManagedObjectState readFrom(final ObjectInput in) throws IOException {
     final TDCCustomLifespanSerializedEntryManagedObjectState state = new TDCCustomLifespanSerializedEntryManagedObjectState(
-                                                                                                                            in
-                                                                                                                                .readLong());
+                                                                                                                            in.readLong());
     state.readFromInternal(in);
     return state;
   }

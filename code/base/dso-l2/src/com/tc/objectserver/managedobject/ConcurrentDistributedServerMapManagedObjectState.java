@@ -262,13 +262,14 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     final int chance = count > size ? 100 : Math.max(10, (count / size) * 100);
     for (final Iterator i = this.references.entrySet().iterator(); samples.size() < count && i.hasNext();) {
       final Entry e = (Entry) i.next();
-      if (ignoreList.contains(e.getValue())) {
+      Object value = e.getValue();
+      if (ignoreList.contains(value)) {
         continue;
       }
       if (r.nextInt(100) < chance) {
-        samples.put(e.getKey(), e.getValue());
+        samples.put(e.getKey(), value);
       } else {
-        ignored.put(e.getKey(), e.getValue());
+        ignored.put(e.getKey(), value);
       }
     }
     if (samples.size() < count) {

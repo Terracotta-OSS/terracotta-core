@@ -7,10 +7,10 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
 import com.tc.objectserver.mgmt.PhysicalManagedObjectFacade;
@@ -45,15 +45,20 @@ public class TDCSerializedEntryManagedObjectState extends AbstractManagedObjectS
     this.classID = classID;
   }
 
-  public boolean canEvict(final int ttiSeconds, final int ttlSeconds) {
-    return canEvictNow(ttiSeconds, ttlSeconds);
+  public int expiresIn(int now, int ttiSeconds, int ttlSeconds) {
+    return computeExpiresIn(now, ttiSeconds, ttlSeconds);
   }
 
-  protected boolean canEvictNow(final int ttiSeconds, final int ttlSeconds) {
-    final int now = (int) (System.currentTimeMillis() / 1000);
+  protected int computeExpiresIn(int now, int ttiSeconds, int ttlSeconds) {
+    if (ttiSeconds <= 0 && ttlSeconds <= 0) {
+      // This is eternal. Also most likely the lastAccessedTime is not updated from tim-ehcache. We return a number that
+      // is proportionate to its age or access time
+      int lastTime = Math.max(createTime, lastAccessedTime);
+      return Integer.MAX_VALUE - (now > lastTime ? now - lastTime : 0);
+    }
     final int expiresAtTTI = ttiSeconds <= 0 ? Integer.MAX_VALUE : this.lastAccessedTime + ttiSeconds;
     final int expiresAtTTL = ttlSeconds <= 0 ? Integer.MAX_VALUE : this.createTime + ttlSeconds;
-    return now >= Math.min(expiresAtTTI, expiresAtTTL);
+    return Math.min(expiresAtTTI, expiresAtTTL) - now;
   }
 
   @Override
