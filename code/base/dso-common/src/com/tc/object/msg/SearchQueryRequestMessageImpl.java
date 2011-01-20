@@ -178,13 +178,11 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
       case STACK_OPERATION_MARKER:
         StackOperations operation = StackOperations.valueOf(getStringValue());
-        System.out.println("[stackMarker] = " + operation);
         queryStack.addFirst(operation);
         return true;
 
       case STACK_NVPAIR_MARKER:
         NVPair pair = AbstractNVPair.deserializeInstance(inputStream);
-        System.out.println("[stackPair] = " + pair);
         queryStack.addFirst(pair);
         return true;
 
