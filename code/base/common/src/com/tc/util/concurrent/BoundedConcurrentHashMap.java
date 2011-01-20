@@ -49,22 +49,22 @@ public class BoundedConcurrentHashMap<K, V> extends ConcurrentHashMap<K, V> {
     }
 
     @Override
-    protected void prePutCheck() {
+    protected void prePut() {
       blockIfNecessary();
     }
 
     @Override
-    protected void postRemoveCheck() {
+    protected void postRemove() {
       int countBefore = this.count + 1;
-      unblockIfNecessary(countBefore, false);
+      unblockIfNecessary(countBefore);
     }
 
     @Override
-    protected void postClearCheck(int countBefore) {
-      unblockIfNecessary(countBefore, true);
+    protected void postClear(int countBefore) {
+      unblockIfNecessary(countBefore);
     }
 
-    public void blockIfNecessary() {
+    private void blockIfNecessary() {
       boolean isInterrupted = false;
       try {
         while (count > segmentSizeLimit) {
@@ -81,15 +81,10 @@ public class BoundedConcurrentHashMap<K, V> extends ConcurrentHashMap<K, V> {
       }
     }
 
-    public void unblockIfNecessary(int countBefore, boolean all) {
+    private void unblockIfNecessary(int countBefore) {
       if (countBefore > segmentSizeLimit) {
-        if (all) {
-          fullCondition.signalAll();
-        } else {
-          fullCondition.signal();
-        }
+        fullCondition.signalAll();
       }
     }
-
   }
 }

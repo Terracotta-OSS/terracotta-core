@@ -390,7 +390,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
     HashEntry<K, V> put(K key, int hash, V value, boolean onlyIfAbsent) {
       lock();
       try {
-        prePutCheck();
+        prePut();
         int c = count;
         if (c++ > threshold) // ensure capacity
         rehash();
@@ -419,15 +419,15 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
       }
     }
 
-    protected void prePutCheck() {
+    protected void prePut() {
       //
     }
 
-    protected void postRemoveCheck() {
+    protected void postRemove() {
       //
     }
 
-    protected void postClearCheck(int countBefore) {
+    protected void postClear(int countBefore) {
       //
     }
 
@@ -517,7 +517,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
         }
 
         if (oldEntry != null) {
-          postRemoveCheck();
+          postRemove();
         }
         return oldEntry;
       } finally {
@@ -533,7 +533,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V> implements Concur
           for (int i = 0; i < tab.length; i++)
             tab[i] = null;
           ++modCount;
-          postClearCheck(count);
+          postClear(count);
           count = 0; // write-volatile
         } finally {
           unlock();
