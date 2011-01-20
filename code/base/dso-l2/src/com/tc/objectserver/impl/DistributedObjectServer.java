@@ -1107,7 +1107,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                           this.objectManager, this.clientStateManager,
                                                                           getGcStatsEventPublisher(),
                                                                           getStatisticsAgentSubSystem(),
-                                                                          dgcSequenceProvider);
+                                                                          dgcSequenceProvider, this.transactionManager);
     gc.addListener(new GCStatisticsAgentSubSystemEventListener(getStatisticsAgentSubSystem()));
     this.objectManager.setGarbageCollector(gc);
     if (objectManagerConfig.startGCThread()) {

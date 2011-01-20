@@ -108,7 +108,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                                  final ClientStateManager clientStateManger,
                                                  final GCStatsEventPublisher gcEventListener,
                                                  final StatisticsAgentSubSystem statsAgentSubSystem,
-                                                 final DGCSequenceProvider dgcSequenceProvider) {
+                                                 final DGCSequenceProvider dgcSequenceProvider,
+                                                 final ServerTransactionManager serverTransactionManager) {
     final MarkAndSweepGarbageCollector gc = new MarkAndSweepGarbageCollector(objectManagerConfig, objectMgr,
                                                                              stateManager, gcPublisher,
                                                                              dgcSequenceProvider);
