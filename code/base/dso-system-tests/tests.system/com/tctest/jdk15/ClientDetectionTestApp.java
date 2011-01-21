@@ -76,8 +76,9 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     client2.attemptShutdown();
     client3.attemptShutdown();
     
-    Thread.sleep(3000);
+    Thread.sleep(30000);
     assertClientPresent(getDSOClientMBeans(), 1);
+    Thread.sleep(30000);
   }
 
   private DSOClientMBean[] getDSOClientMBeans() {
