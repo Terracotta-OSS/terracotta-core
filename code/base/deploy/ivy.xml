@@ -14,7 +14,7 @@
       <exclude module="gnujaxp" org="gnujaxp"/>
       <exclude module="junit" org="junit"/>
     </dependency>    
-    <dependency name="jmxremote_optional" rev="1.0.1_04" org="javax.management"/>
+    <dependency name="jmxremote_optional-tc" rev="1.0.0-SNAPSHOT" org="org.terracotta"/>
     <dependency name="jmxremote" rev="1.0.1_04" org="javax.management"/>
     <dependency name="treemap" rev="2.5.1" org="treemap"/>
     <dependency name="jline" rev="0.9.94" org="jline">
