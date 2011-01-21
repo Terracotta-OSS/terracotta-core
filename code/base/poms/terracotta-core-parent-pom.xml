@@ -73,8 +73,8 @@
       <artifactId>jmxremote</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax.management</groupId>
-      <artifactId>jmxremote_optional</artifactId>
+      <groupId>org.terracotta</groupId>
+      <artifactId>jmxremote_optional-tc</artifactId>
     </dependency>
     <dependency>
       <groupId>com.google.code.guice</groupId>
