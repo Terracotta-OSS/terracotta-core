@@ -54,7 +54,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
                                           final String cacheName, final LinkedList queryStack, final boolean keys,
                                           final boolean values, final Set<String> attributeSet,
                                           final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
-                                          int maxResults);
+                                          int maxResults, int batchSize, boolean prefetchFirstBatch);
 
   /**
    * Name of cache to query against.
@@ -108,4 +108,13 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    */
   public int getMaxResults();
 
+  /**
+   * Return the desired result set batch size
+   */
+  public int getBatchSize();
+
+  /**
+   * Return true if the server should start prefetch for the first batch
+   */
+  public boolean isPrefetchFirstBatch();
 }

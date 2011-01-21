@@ -7,12 +7,14 @@ import java.util.List;
 
 public interface SearchQueryResults {
 
-  public List<IndexQueryResult> getResults();
+  List<IndexQueryResult> getResults();
 
-  public List getAggregatorResults();
+  List getAggregatorResults();
 
-  public boolean isError();
+  boolean isError();
 
-  public String getErrorMessage();
+  String getErrorMessage();
+
+  boolean isFirstBatchPrefetched();
 
 }

@@ -35,10 +35,13 @@ public interface SearchRequestManager {
    * @param sortAttributes
    * @param aggregators
    * @param maxResults
+   * @param batchSize
+   * @param prefetchFirstBatch
    */
   public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
                            LinkedList queryStack, boolean includeKeys, boolean includeValues, Set<String> attributeSet,
-                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults);
+                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults, int batchSize,
+                           boolean prefetchFirstBatch);
 
   /**
    * Query response.
@@ -48,7 +51,7 @@ public interface SearchRequestManager {
    * @param aggregatorResults
    */
   public void queryResponse(SearchQueryContext queriedContext, List<IndexQueryResult> results,
-                            List<NVPair> aggregatorResults);
+                            List<NVPair> aggregatorResults, int batchSize, boolean prefetchFirstBatch);
 
   /**
    * Query error response

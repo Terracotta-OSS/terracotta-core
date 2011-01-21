@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Context holding search queury search information.
+ * Context holding search query search information.
  * 
  * @author Nabib El-Rahman
  */
@@ -30,11 +30,13 @@ public class SearchQueryContext implements SearchEventContext {
   private final List<NVPair>    sortAttributes;
   private final List<NVPair>    aggregators;
   private final int             maxResults;
+  private final int             batchSize;
+  private final boolean         prefetchFirstBatch;
 
   public SearchQueryContext(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cacheName,
                             LinkedList queryStack, boolean includeKeys, boolean includeValues,
                             Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
-                            int maxResults) {
+                            int maxResults, int batchSize, boolean prefetchFirstBatch) {
     this.clientID = clientID;
     this.requestID = requestID;
     this.groupIDFrom = groupIDFrom;
@@ -46,6 +48,8 @@ public class SearchQueryContext implements SearchEventContext {
     this.sortAttributes = sortAttributes;
     this.aggregators = aggregators;
     this.maxResults = maxResults;
+    this.batchSize = batchSize;
+    this.prefetchFirstBatch = prefetchFirstBatch;
   }
 
   /**
@@ -150,6 +154,20 @@ public class SearchQueryContext implements SearchEventContext {
    */
   public Object getKey() {
     return clientID;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getBatchSize() {
+    return batchSize;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public boolean isPrefetchFirstBatch() {
+    return prefetchFirstBatch;
   }
 
 }

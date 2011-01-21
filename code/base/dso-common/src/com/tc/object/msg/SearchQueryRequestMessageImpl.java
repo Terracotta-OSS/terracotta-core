@@ -40,6 +40,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private final static byte STACK_NVPAIR_MARKER    = 8;
   private final static byte MAX_RESULTS            = 9;
   private final static byte INCLUDE_VALUES         = 10;
+  private final static byte BATCH_SIZE             = 11;
+  private final static byte PREFETCH_FIRST_BATCH   = 12;
 
   private SearchRequestID   requestID;
   private GroupID           groupIDFrom;
@@ -51,6 +53,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   private List<NVPair>      sortAttributes;
   private List<NVPair>      aggregators;
   private int               maxResults;
+  private int               batchSize;
+  private boolean           prefetchFirstBatch;
 
   public SearchQueryRequestMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                        MessageChannel channel, TCMessageType type) {
@@ -65,7 +69,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupID,
                                           final String cacheName, final LinkedList stack, boolean keys, boolean values,
                                           Set<String> attributeSet, List<NVPair> sortAttributesMap,
-                                          List<NVPair> attributeAggregators, int max) {
+                                          List<NVPair> attributeAggregators, int max, int batch, boolean prefetchFirst) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.cachename = cacheName;
@@ -76,6 +80,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     this.sortAttributes = sortAttributesMap;
     this.aggregators = attributeAggregators;
     this.maxResults = max;
+    this.batchSize = batch;
+    this.prefetchFirstBatch = prefetchFirst;
   }
 
   @Override
@@ -88,6 +94,9 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     putNVPair(INCLUDE_KEYS, this.includeKeys);
     putNVPair(INCLUDE_VALUES, this.includeValues);
     putNVPair(MAX_RESULTS, this.maxResults);
+    putNVPair(BATCH_SIZE, this.batchSize);
+    putNVPair(PREFETCH_FIRST_BATCH, this.prefetchFirstBatch);
+
     putNVPair(ATTRIBUTES, this.attributes.size());
     for (final String attribute : this.attributes) {
       outStream.writeString(attribute);
@@ -144,6 +153,14 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
       case MAX_RESULTS:
         this.maxResults = getIntValue();
+        return true;
+
+      case BATCH_SIZE:
+        this.batchSize = getIntValue();
+        return true;
+
+      case PREFETCH_FIRST_BATCH:
+        this.prefetchFirstBatch = getBooleanValue();
         return true;
 
       case ATTRIBUTES:
@@ -238,6 +255,20 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
    */
   public Set<String> getAttributes() {
     return this.attributes;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public int getBatchSize() {
+    return batchSize;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public boolean isPrefetchFirstBatch() {
+    return prefetchFirstBatch;
   }
 
   /**

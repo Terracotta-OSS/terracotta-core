@@ -17,12 +17,13 @@ public class NullSearchRequestManager implements SearchRequestManager {
 
   public void queryRequest(ClientID clientID, SearchRequestID requestID, GroupID groupIDFrom, String cachename,
                            LinkedList queryStack, boolean includeKeys, boolean includeValues, Set<String> attributeSet,
-                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults) {
+                           List<NVPair> sortAttributes, List<NVPair> aggregators, int maxResults, int batchSize,
+                           boolean prefetchFirstBatch) {
     // Do nothing
   }
 
   public void queryResponse(SearchQueryContext queriedContext, List<IndexQueryResult> results,
-                            List<NVPair> aggregatorResults) {
+                            List<NVPair> aggregatorResults, int batchSize, boolean prefetchFirstBatch) {
     // Do nothing
   }
 

@@ -28,7 +28,8 @@ public class SearchRequestMessageHandler extends AbstractEventHandler {
       this.searchRequestManager.queryRequest((ClientID) msg.getClientID(), msg.getRequestID(), msg.getGroupIDFrom(),
                                              msg.getCachename(), msg.getQueryStack(), msg.includeKeys(),
                                              msg.includeValues(), msg.getAttributes(), msg.getSortAttributes(),
-                                             msg.getAggregators(), msg.getMaxResults());
+                                             msg.getAggregators(), msg.getMaxResults(), msg.getBatchSize(),
+                                             msg.isPrefetchFirstBatch());
 
     } else {
       throw new AssertionError("Unknown context " + context);

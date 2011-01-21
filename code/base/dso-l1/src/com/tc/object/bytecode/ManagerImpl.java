@@ -945,10 +945,10 @@ public class ManagerImpl implements ManagerInternal {
 
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
                                          boolean includeValues, Set<String> attributeSet, List<NVPair> sortAttributes,
-                                         List<NVPair> aggregators, int maxResults) {
+                                         List<NVPair> aggregators, int maxResults, int batchSize) {
     waitForAllCurrentTransactionsToComplete();
     return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
-                                      aggregators, maxResults);
+                                      aggregators, maxResults, batchSize);
   }
 
   public NVPair createNVPair(String name, Object value) {
