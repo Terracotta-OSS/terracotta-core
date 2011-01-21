@@ -13,8 +13,8 @@ import java.awt.Toolkit;
 import java.util.prefs.Preferences;
 
 public class AdminClientFrame extends XFrame implements AdminClientController {
-  private IAdminClientContext adminClientContext;
-  private AdminClientPanel    mainPanel;
+  private final IAdminClientContext adminClientContext;
+  private final AdminClientPanel    mainPanel;
 
   public AdminClientFrame(IAdminClientContext adminClientContext) {
     super();
@@ -24,7 +24,7 @@ public class AdminClientFrame extends XFrame implements AdminClientController {
     setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/com/tc/admin/icons/logo_small.png")));
 
     getContentPane().setLayout(new BorderLayout());
-    mainPanel = new AdminClientPanel(adminClientContext);
+    mainPanel = createAdminClientPanel(adminClientContext);
     getContentPane().add(mainPanel, BorderLayout.CENTER);
 
     XMenuBar menuBar;
@@ -33,6 +33,10 @@ public class AdminClientFrame extends XFrame implements AdminClientController {
 
     setTitle(adminClientContext.getMessage("title"));
     setDefaultCloseOperation(EXIT_ON_CLOSE);
+  }
+
+  protected AdminClientPanel createAdminClientPanel(IAdminClientContext context) {
+    return new AdminClientPanel(context);
   }
 
   @Override
@@ -57,7 +61,7 @@ public class AdminClientFrame extends XFrame implements AdminClientController {
   public void expandAll(XTreeNode node) {
     mainPanel.expandAll(node);
   }
-  
+
   public boolean isSelected(XTreeNode node) {
     return mainPanel.isSelected(node);
   }
@@ -70,10 +74,12 @@ public class AdminClientFrame extends XFrame implements AdminClientController {
     return mainPanel.testServerMatch(node);
   }
 
+  @Override
   protected Preferences getPreferences() {
     return adminClientContext.getPrefs().node("AdminClientFrame");
   }
 
+  @Override
   protected void storePreferences() {
     adminClientContext.storePrefs();
   }

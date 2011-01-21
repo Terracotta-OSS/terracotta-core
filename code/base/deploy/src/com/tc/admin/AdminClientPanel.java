@@ -88,13 +88,13 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JPopupMenu.Separator;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.JPopupMenu.Separator;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -1236,14 +1236,11 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
    * frame. This assume the user is running the console from a kit and that the tim-svt was installed using the tim-get
    * script.
    */
-  private ClassLoader getSVTClassLoader() {
+  protected ClassLoader getSVTClassLoader() {
     if (svtClassLoader == null) {
       String tcInstallRoot = System.getProperty("tc.install-root");
       if (tcInstallRoot != null) {
-        String timSvtPath = new StringBuilder(tcInstallRoot).append(File.separator).append("platform")
-            .append(File.separator).append("modules").append(File.separator).append("org").append(File.separator)
-            .append("terracotta").append(File.separator).append("modules").append(File.separator).append("tim-svt")
-            .toString();
+        String timSvtPath = getSVTDirectory(tcInstallRoot);
         File timSvtRoot = new File(timSvtPath);
         if (timSvtRoot.exists()) {
           File[] versions = timSvtRoot.listFiles();
@@ -1260,7 +1257,7 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
           if (vma.length > 0) {
             Arrays.sort(vma);
             File newestDir = vma[vma.length - 1].versionDir;
-            File newest = new File(newestDir, "tim-svt-" + newestDir.getName() + ".jar");
+            File newest = new File(newestDir, getTimSvtName() + "-" + newestDir.getName() + ".jar");
             try {
               URL[] source = { newest.toURL() };
               svtClassLoader = URLClassLoader.newInstance(source, getClass().getClassLoader());
@@ -1275,7 +1272,19 @@ public class AdminClientPanel extends XContainer implements AdminClientControlle
     return svtClassLoader;
   }
 
-  private Class getSVTFrameType() throws ClassNotFoundException {
+  protected String getSVTDirectory(String tcInstallRoot) {
+    String timSvtPath = new StringBuilder(tcInstallRoot).append(File.separator).append("platform")
+        .append(File.separator).append("modules").append(File.separator).append("org").append(File.separator)
+        .append("terracotta").append(File.separator).append("modules").append(File.separator).append(getTimSvtName())
+        .toString();
+    return timSvtPath;
+  }
+
+  protected String getTimSvtName() {
+    return "tim-svt";
+  }
+
+  protected Class getSVTFrameType() throws ClassNotFoundException {
     ClassLoader cl = getSVTClassLoader();
     if (cl != null) {
       return cl.loadClass(SNAPSHOT_VISUALIZER_TYPE);

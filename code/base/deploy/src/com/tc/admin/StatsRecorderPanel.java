@@ -1101,6 +1101,12 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
     return progressDialog;
   }
 
+  protected AdminClientPanel getAdminClientPanel() {
+    AdminClientPanel topPanel = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
+                                                                                     StatsRecorderPanel.this);
+    return topPanel;
+  }
+
   class ViewStatsSessionsHandler implements ActionListener, PropertyChangeListener {
     private JFrame        svtFrame;
     private Method        retrieveMethod;
@@ -1109,8 +1115,7 @@ public class StatsRecorderPanel extends XContainer implements ClientConnectionLi
 
     public void actionPerformed(ActionEvent ae) {
       if (svtFrame == null) {
-        AdminClientPanel topPanel = (AdminClientPanel) SwingUtilities.getAncestorOfClass(AdminClientPanel.class,
-                                                                                         StatsRecorderPanel.this);
+        AdminClientPanel topPanel = getAdminClientPanel();
         if ((svtFrame = topPanel.getSVTFrame()) != null) {
           svtFrame.addPropertyChangeListener("newStore", this);
         } else {

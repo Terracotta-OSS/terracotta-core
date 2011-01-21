@@ -9,7 +9,7 @@ import com.tc.admin.common.ApplicationContext;
 import com.tc.admin.common.LAFHelper;
 
 public class AdminClient extends AbstractApplication {
-  private IAdminClientContext context;
+  protected IAdminClientContext context;
 
   public AdminClient() {
     super();
@@ -20,12 +20,13 @@ public class AdminClient extends AbstractApplication {
     return context;
   }
 
+  @Override
   public void start() {
     AdminClientFrame frame = new AdminClientFrame(context);
     frame.setVisible(true);
   }
 
-  public static final void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception {
     if (System.getProperty("swing.defaultlaf") == null) {
       args = LAFHelper.parseLAFArgs(args);
     }

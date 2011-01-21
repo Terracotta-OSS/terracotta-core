@@ -47,7 +47,7 @@ public class AdminClientContext implements IAdminClientContext, Thread.UncaughtE
 
   public AdminClientContext(AdminClient client) {
     this.client = client;
-    this.bundleHelper = new ResourceBundleHelper(client.getClass());
+    this.bundleHelper = new ResourceBundleHelper(client);
     this.prefs = client.loadPrefs();
     this.optionMap = new LinkedHashMap<String, IOption>();
     Thread.setDefaultUncaughtExceptionHandler(this);
