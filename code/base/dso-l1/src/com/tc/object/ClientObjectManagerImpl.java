@@ -75,8 +75,8 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -409,6 +409,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
    * @param id Object identifier
    */
   public void preFetchObject(final ObjectID id) {
+    if (id.isNull()) return;
+
     synchronized (this) {
       if (basicHasLocal(id) || getObjectLatchState(id) != null) { return; }
       // We are temporarily marking lookup in progress so that no other thread sneaks in under us and does a lookup
@@ -968,8 +970,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
 
         for (final Method method : entry.getValue()) {
           try {
-            executeMethod(target, method, "postCreate method (" + method.getName() + ") failed on object of "
-                                          + target.getClass());
+            executeMethod(target, method,
+                          "postCreate method (" + method.getName() + ") failed on object of " + target.getClass());
           } catch (final Throwable t) {
             if (exception == null) {
               exception = t;
@@ -1075,8 +1077,8 @@ public class ClientObjectManagerImpl implements ClientObjectManager, ClientHands
     TCObject obj = null;
 
     if ((obj = basicLookup(pojo)) == null) {
-      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo, pojo
-          .getClass(), true);
+      obj = this.factory.getNewInstance(nextObjectID(this.txManager.getCurrentTransaction(), pojo, gid), pojo,
+                                        pojo.getClass(), true);
       this.txManager.createObject(obj);
       basicAddLocal(obj, false);
       if (this.runtimeLogger.getNewManagedObjectDebug()) {
