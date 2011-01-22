@@ -399,7 +399,7 @@
 
   <xs:complexType name="dso-server-data">
     <xs:all>
-      <xs:element name="client-reconnect-window" type="positive-int" minOccurs="0" maxOccurs="1" default="120" />
+      <xs:element name="client-reconnect-window" type="non-negative-int" minOccurs="0" maxOccurs="1" default="120" />
       <xs:element name="persistence" type="persistence" minOccurs="0" maxOccurs="1"/>
       <xs:element name="garbage-collection" type="garbage-collection" minOccurs="0" maxOccurs="1" />
     </xs:all>
