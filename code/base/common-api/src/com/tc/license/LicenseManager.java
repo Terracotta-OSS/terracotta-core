@@ -4,7 +4,6 @@
 package com.tc.license;
 
 import static org.terracotta.license.LicenseConstants.CAPABILITY_AUTHENTICATION;
-import static org.terracotta.license.LicenseConstants.CAPABILITY_DCV2;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_OPERATOR_CONSOLE;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_ROOTS;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SEARCH;
@@ -117,10 +116,6 @@ public class LicenseManager {
 
   public static void verifyServerStripingCapability() {
     verifyCapability(CAPABILITY_SERVER_STRIPING);
-  }
-
-  public static void verifyDCV2Capability() {
-    verifyCapability(CAPABILITY_DCV2);
   }
 
   public static void verifyRootCapability() {
