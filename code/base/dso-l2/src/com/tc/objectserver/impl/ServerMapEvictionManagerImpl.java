@@ -32,8 +32,8 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrinter;
 import com.tc.util.ObjectIDSet;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -62,33 +61,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
 
-  private static final boolean                EVICTOR_LOGGING               = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
-  private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
+  private static final TCLogger               logger                          = TCLogging
+                                                                                  .getLogger(ServerMapEvictionManagerImpl.class);
 
-  private static final TCLogger               logger                        = TCLogging
-                                                                                .getLogger(ServerMapEvictionManagerImpl.class);
+  private static final boolean                EVICTOR_LOGGING                 = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_EVICTOR_LOGGING_ENABLED);
+  private static final boolean                ELEMENT_BASED_TTI_TTL_ENABLED   = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERELEMENT_TTI_TTL_ENABLED);
+  private static final boolean                EVICT_UNEXPIRED_ENTRIES_ENABLED = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_EVICT_UNEXPIRED_ENTRIES_ENABLED);
 
-  private final static boolean                PERIODIC_EVICTOR_ENABLED      = TCPropertiesImpl
-                                                                                .getProperties()
-                                                                                .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
+  private final static boolean                PERIODIC_EVICTOR_ENABLED        = TCPropertiesImpl
+                                                                                  .getProperties()
+                                                                                  .getBoolean(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_PERIODICEVICTION_ENABLED);
 
   // 15 Minutes
-  public static final long                    DEFAULT_SLEEP_TIME            = 15 * 60000;
+  public static final long                    DEFAULT_SLEEP_TIME              = 15 * 60000;
 
   private final ObjectManager                 objectManager;
   private final ManagedObjectStore            objectStore;
   private final ClientStateManager            clientStateManager;
   private final ServerTransactionFactory      serverTransactionFactory;
   private final long                          evictionSleepTime;
-  private final Set<ObjectID>                 currentlyEvicting             = Collections
-                                                                                .synchronizedSet(new HashSet());
-  private final AtomicBoolean                 isStarted                     = new AtomicBoolean(false);
-  private final Timer                         evictor                       = new Timer("Server Map Periodic Evictor",
-                                                                                        true);
+  private final Set<ObjectID>                 currentlyEvicting               = Collections
+                                                                                  .synchronizedSet(new HashSet());
+  private final AtomicBoolean                 isStarted                       = new AtomicBoolean(false);
+  private final Timer                         evictor                         = new Timer(
+                                                                                          "Server Map Periodic Evictor",
+                                                                                          true);
 
   private Sink                                evictorSink;
   private Sink                                evictionBroadcastSink;
@@ -235,8 +238,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final int currentSize = ev.getSize();
     if (targetMaxTotalCount <= 0 || currentSize <= targetMaxTotalCount) {
       if (EVICTOR_LOGGING) {
-        logger.info("Server Map Eviction  : Eviction not required for " + oid + "; currentSize: " + currentSize
-                    + " Vs targetMaxTotalCout: " + targetMaxTotalCount);
+        logger.info("Server Map Eviction  : Eviction not required for " + oid + " [" + cacheName + "]; currentSize: "
+                    + currentSize + " Vs targetMaxTotalCount: " + targetMaxTotalCount);
       }
       if (periodicEvictor) {
         evictionStats.evictionNotRequired(oid, ev, targetMaxTotalCount, currentSize);
@@ -245,7 +248,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
     final int overshoot = currentSize - targetMaxTotalCount;
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Trying to evict : " + oid + " overshoot : " + overshoot
+      logger.info("Server Map Eviction  : Trying to evict : " + oid + " [" + cacheName + "] overshoot : " + overshoot
                   + " : current Size : " + currentSize + " : target max : " + targetMaxTotalCount);
     }
 
@@ -255,8 +258,8 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     final Map samples = ev.getRandomSamples(requested, faultedInClients);
 
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " : Random Samples : "
-                  + samples.size() + " overshoot : " + overshoot);
+      logger.info("Server Map Eviction  : Got Random samples to evict : " + oid + " [" + cacheName
+                  + "] : Random Samples : " + samples.size() + " overshoot : " + overshoot);
     }
     if (periodicEvictor) {
       evictionStats.evictionRequested(oid, ev, targetMaxTotalCount, overshoot, samples.size());
@@ -277,13 +280,9 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   public void evict(final ObjectID oid, final Map samples, final int targetMaxTotalCount, final int ttiSeconds,
                     final int ttlSeconds, final int overshoot, final String className, final String loaderDesc,
                     final String cacheName) {
-    final HashMap candidates = new HashMap();
-    final TreeMap likelyCandidates = new TreeMap(new Comparator() {
-      public int compare(Object o1, Object o2) {
-        return ((ExpiryKey) o1).expiresIn() - ((ExpiryKey) o2).expiresIn();
-      }
-    });
-    int alive = 0;
+    final HashMap candidates = new HashMap(samples.size());
+    final ArrayList likelyCandidates = new ArrayList(samples.size());
+    int expired = 0;
     final int now = (int) (System.currentTimeMillis() / 1000);
     for (final Iterator iterator = samples.entrySet().iterator(); candidates.size() < overshoot && iterator.hasNext();) {
       final Entry e = (Entry) iterator.next();
@@ -291,24 +290,27 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       if (expiresIn <= 0) {
         // Element already expired
         candidates.put(e.getKey(), e.getValue());
-      } else {
-        if (EVICTOR_LOGGING && ++alive % 1000 == 0) {
-          logger.info("Server Map Eviction : " + oid + " : Can't Evict " + alive + " Candidates so far : "
-                      + candidates.size() + " Samples : " + samples.size());
-        }
-        likelyCandidates.put(new ExpiryKey(expiresIn, e.getKey()), e.getValue());
+        expired++;
+      } else if (EVICT_UNEXPIRED_ENTRIES_ENABLED) {
+        likelyCandidates.add(new ExpiryKey(expiresIn, e));
       }
     }
     if (candidates.size() < overshoot) {
+      Collections.sort(likelyCandidates); // Is this costly ?
       int lastExpiresIn = Integer.MIN_VALUE;
-      for (final Iterator i = likelyCandidates.entrySet().iterator(); candidates.size() < overshoot && i.hasNext();) {
-        final Entry entry = (Entry) i.next();
-        ExpiryKey ek = (ExpiryKey) entry.getKey();
+      for (final Iterator i = likelyCandidates.iterator(); candidates.size() < overshoot && i.hasNext();) {
+        ExpiryKey ek = (ExpiryKey) i.next();
         if (lastExpiresIn > ek.expiresIn()) { throw new AssertionError("Likely candidates is not sorted correctly : "
                                                                        + likelyCandidates); }
         lastExpiresIn = ek.expiresIn();
-        candidates.put(ek.getKey(), entry.getValue());
+        Entry e = ek.getEntry();
+        candidates.put(e.getKey(), e.getValue());
       }
+    }
+    if (EVICTOR_LOGGING) {
+      logger.info("Server Map Eviction : " + oid + " [" + cacheName + "] : Evicting " + candidates.size()
+                  + " of which expired or eternal : " + expired + " alive : " + (candidates.size() - expired)
+                  + " Samples : " + samples.size());
     }
     if (candidates.size() > 0) {
       evictFrom(oid, Collections.unmodifiableMap(candidates), className, loaderDesc, cacheName);
@@ -340,7 +342,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
   private void evictFrom(final ObjectID oid, final Map candidates, final String className, final String loaderDesc,
                          final String cacheName) {
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Evicting " + oid + " Candidates : " + candidates.size());
+      logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
     }
     final NodeID localNodeID = this.groupManager.getLocalNodeID();
     final ObjectStringSerializer serializer = new ObjectStringSerializer();
@@ -355,7 +357,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     this.transactionBatchManager.processTransactions(batchContext);
 
     if (EVICTOR_LOGGING) {
-      logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid);
+      logger.info("Server Map Eviction  : Evicted " + candidates.size() + " from " + oid + " [" + cacheName + "]");
     }
   }
 
@@ -407,22 +409,26 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
     }
   }
 
-  private static final class ExpiryKey {
+  private static final class ExpiryKey implements Comparable {
 
-    private final int    expiresIn;
-    private final Object key;
+    private final int   expiresIn;
+    private final Entry e;
 
-    public ExpiryKey(int expiresIn, Object key) {
+    public ExpiryKey(int expiresIn, Entry e) {
       this.expiresIn = expiresIn;
-      this.key = key;
+      this.e = e;
     }
 
     public int expiresIn() {
       return expiresIn;
     }
 
-    public Object getKey() {
-      return key;
+    public Entry getEntry() {
+      return e;
+    }
+
+    public int compareTo(Object o) {
+      return expiresIn - ((ExpiryKey) o).expiresIn;
     }
 
   }
