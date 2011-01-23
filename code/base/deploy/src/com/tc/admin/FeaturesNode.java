@@ -174,9 +174,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
   private void testRemoveFromParent() {
     if (getChildCount() == 0) {
-      noTearDown = true;
-      clusterNode.removeChild(this);
-      noTearDown = false;
+      removeFromClusterNode();
     }
   }
 
@@ -200,12 +198,22 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         acp.activeFeatureAdded(featureNode.getName());
       }
     } else if (isNodeChild(featureNode)) {
-      removeChild(featureNode);
+      removeFeatureNode(featureNode);
       if (acp != null) {
         acp.activeFeatureRemoved(featureNode.getName());
       }
       testRemoveFromParent();
     }
+  }
+
+  /**
+   * We don't want the featureNode to get torn down by the tree because the feature loader is still present, it's just
+   * that the presentation said it wasn't ready.
+   */
+  private void removeFeatureNode(FeatureNode featureNode) {
+    featureNode.setTearDown(false);
+    removeChild(featureNode);
+    featureNode.setTearDown(true);
   }
 
   protected boolean testRegisterFeature(ObjectName on) {
@@ -257,17 +265,21 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     if (featureNode != null) {
       if (isNodeChild(featureNode)) {
         removeChild(featureNode);
-        if (acp != null) {
-          acp.activeFeatureRemoved(featureNode.getName());
-        }
+      }
+      if (acp != null) {
+        acp.activeFeatureRemoved(featureNode.getName());
       }
       featureNode.tearDown();
     }
     if (getParent() != null && getChildCount() == 0) {
-      noTearDown = true;
-      clusterNode.removeChild(this);
-      noTearDown = false;
+      removeFromClusterNode();
     }
+  }
+
+  private void removeFromClusterNode() {
+    setTearDown(false);
+    clusterNode.removeChild(this);
+    setTearDown(true);
   }
 
   public void handleNotification(Notification notification, Object handback) {
@@ -328,17 +340,17 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
     }
   }
 
-  /**
-   * Generally a node being removed is to be torn down but this node needs to come and go dependent on whether or not it
-   * has any children.
-   */
-  private boolean             noTearDown = false;
+  private volatile boolean tearDown = false;
 
-  private final AtomicBoolean tornDown   = new AtomicBoolean(false);
+  public void setTearDown(boolean tearDown) {
+    this.tearDown = tearDown;
+  }
+
+  private final AtomicBoolean tornDown = new AtomicBoolean(false);
 
   @Override
   public void tearDown() {
-    if (noTearDown) { return; }
+    if (!tearDown) { return; }
 
     if (!tornDown.compareAndSet(false, true)) { return; }
 

@@ -354,7 +354,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       testAddLogListener();
       filterReadySet();
     } catch (Exception e) {
-      /* Connection probably dropped */
+      e.printStackTrace();
     }
   }
 
@@ -365,17 +365,17 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       oldConnected = isConnected();
       this.connected = connected;
     }
-    firePropertyChange(PROP_CONNECTED, !connected, connected);
     if (connected == true && oldConnected == false) {
       connectionEstablished();
     }
+    firePropertyChange(PROP_CONNECTED, !connected, connected);
     if (oldConnected == true && connected == false) {
       setReady(false);
       handleDisconnect();
     }
   }
 
-  public boolean isConnected() {
+  public synchronized boolean isConnected() {
     return connected;
   }
 
@@ -964,7 +964,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     firePropertyChange(PROP_READY, oldReady, ready);
   }
 
-  public boolean isReady() {
+  public synchronized boolean isReady() {
     return ready;
   }
 
@@ -994,7 +994,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       synchronized (this) {
         theReadySet.remove(beanName);
       }
-      setReady(theReadySet.isEmpty());
+      boolean isReady = theReadySet.isEmpty();
+      setReady(isReady);
     }
   }
 
@@ -1216,8 +1217,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       }
     } else if ("jmx.attribute.change".equals(type)) {
       AttributeChangeNotification acn = (AttributeChangeNotification) notification;
-      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(), acn
-          .getNewValue());
+      PropertyChangeEvent pce = new PropertyChangeEvent(this, acn.getAttributeName(), acn.getOldValue(),
+                                                        acn.getNewValue());
       propertyChangeSupport.firePropertyChange(pce);
     }
   }

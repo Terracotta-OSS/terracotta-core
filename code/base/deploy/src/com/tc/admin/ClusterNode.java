@@ -690,6 +690,7 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       adminClientContext.getAdminClientController().select(this);
 
       if (featuresNode != null && featuresNode.getParent() == null) {
+        featuresNode.setTearDown(true);
         featuresNode.tearDown();
       }
       featuresNode = null;
@@ -746,6 +747,11 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
     if (connectDialog != null) {
       connectDialog.tearDown();
     }
+    if (featuresNode != null && featuresNode.getParent() == null) {
+      featuresNode.setTearDown(true);
+      featuresNode.tearDown();
+    }
+
     getClusterModel().tearDown();
 
     super.tearDown();

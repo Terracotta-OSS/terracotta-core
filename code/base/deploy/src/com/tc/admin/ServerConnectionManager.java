@@ -4,9 +4,6 @@
  */
 package com.tc.admin;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
 import com.tc.config.schema.L2Info;
 import com.tc.management.JMXConnectorProxy;
 import com.tc.management.beans.L2MBeanNames;
@@ -55,7 +52,7 @@ public class ServerConnectionManager implements NotificationListener {
 
   private static final Map<String, String[]> credentialsMap                  = new HashMap<String, String[]>();
 
-  private static final int                   DEFAULT_CONNECT_MONITOR_PERIOD  = 1000;
+  private static final int                   DEFAULT_CONNECT_MONITOR_PERIOD  = 2000;
   private static final int                   CONNECT_MONITOR_PERIOD          = Integer
                                                                                  .getInteger("ServerConnectionManager.connectMonitorPeriodMillis",
                                                                                              DEFAULT_CONNECT_MONITOR_PERIOD);
@@ -65,7 +62,7 @@ public class ServerConnectionManager implements NotificationListener {
                                                                                  .getInteger("ServerConnectionManager.connectTimeoutSeconds",
                                                                                              DEFAULT_CONNECT_TIMEOUT_SECONDS);
 
-  private static final Object                connectTestLock                 = new Object();
+  private final Object                       connectTestLock                 = new Object();
 
   static {
     if (!Boolean.getBoolean("javax.management.remote.debug")) {
@@ -274,24 +271,37 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   private void startConnect() {
-    if (serverHelper == null) return;
+    if (serverHelper == null) { return; }
     try {
       cancelConnectThread();
       initConnector();
-      connectThread = new ConnectThread();
-      connectThread.start();
+      ConnectThread ct = new ConnectThread();
+      setConnectThread(ct);
+      ct.start();
     } catch (Exception e) {
       setConnectionException(e);
     }
   }
 
+  private synchronized void setConnectThread(ConnectThread connectThread) {
+    this.connectThread = connectThread;
+  }
+
+  private synchronized ConnectThread getConnectThread() {
+    return connectThread;
+  }
+
   private void cancelConnectThread() {
-    if (connectThread != null && connectThread.isAlive()) {
-      try {
-        connectThread.cancel();
-        connectThread = null;
-      } catch (Exception ignore) {/**/
+    ConnectThread ct = getConnectThread();
+    if (ct != null && ct.isAlive()) {
+      ct.cancel();
+      while (ct.isAlive()) {
+        try {
+          ct.join();
+        } catch (Exception ignore) {/**/
+        }
       }
+      setConnectThread(null);
     }
   }
 
@@ -345,17 +355,17 @@ public class ServerConnectionManager implements NotificationListener {
 
     @Override
     public void run() {
-      while (!cancel && !connected) {
+      while (!isCancelled() && !connected) {
         try {
           boolean isConnected = testIsConnected();
-          if (!cancel) {
+          if (!isCancelled()) {
             setConnected(isConnected);
           }
           if (isConnected) { return; }
         } catch (TimeoutException te) {
-          if (cancel) { return; }
+          if (isCancelled()) { return; }
         } catch (Exception e) {
-          if (cancel) {
+          if (isCancelled()) {
             return;
           } else {
             setConnectionException(e);
@@ -363,6 +373,7 @@ public class ServerConnectionManager implements NotificationListener {
         }
 
         try {
+          if (isCancelled()) { return; }
           sleep(1000);
         } catch (InterruptedException ie) {
           // We may interrupt the connect thread when a new host or port comes in
@@ -373,8 +384,13 @@ public class ServerConnectionManager implements NotificationListener {
       }
     }
 
-    void cancel() {
+    synchronized boolean isCancelled() {
+      return cancel;
+    }
+
+    synchronized void cancel() {
       cancel = true;
+      interrupt();
     }
   }
 
@@ -392,11 +408,12 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public synchronized InetAddress getInetAddress() throws UnknownHostException {
-    return l2Info.getInetAddress();
+    return l2Info != null ? l2Info.getInetAddress() : null;
   }
 
   public synchronized String getCanonicalHostName() throws UnknownHostException {
-    return getInetAddress().getCanonicalHostName();
+    InetAddress result = getInetAddress();
+    return result != null ? result.getCanonicalHostName() : "?";
   }
 
   public synchronized String getHostAddress() throws UnknownHostException {
@@ -404,14 +421,14 @@ public class ServerConnectionManager implements NotificationListener {
   }
 
   public synchronized int getJMXPortNumber() {
-    return l2Info.jmxPort();
+    return l2Info != null ? l2Info.jmxPort() : -1;
   }
 
-  private synchronized void _setConnected(boolean isConnected) {
+  private void _setConnected(boolean isConnected) {
     this.connected = isConnected;
   }
 
-  public synchronized boolean isConnected() {
+  public boolean isConnected() {
     return connected;
   }
 
@@ -505,16 +522,18 @@ public class ServerConnectionManager implements NotificationListener {
               }
             }
           });
-          Boolean result = future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-          if (!result.booleanValue()) {
+          boolean result = future.get(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS).booleanValue();
+          if (!result) {
             cancelConnectionMonitor();
             setConnectionException(new IOException("Connection timeout"));
             setConnected(false);
+            return;
           }
         } catch (Exception e) {
           cancelConnectionMonitor();
           setConnectionException(new IOException("Connection timeout"));
           setConnected(false);
+          return;
         }
       }
     }
@@ -522,9 +541,9 @@ public class ServerConnectionManager implements NotificationListener {
 
   synchronized void cancelConnectionMonitor() {
     if (connectMonitorTimer != null) {
-      connectMonitorTimer.cancel();
       connectMonitorAction.cancel();
       connectMonitorAction = null;
+      connectMonitorTimer.cancel();
       connectMonitorTimer = null;
     }
   }
@@ -654,23 +673,5 @@ public class ServerConnectionManager implements NotificationListener {
       connectListener = null;
       connectThread = null;
     }
-  }
-
-  @Override
-  public int hashCode() {
-    return new HashCodeBuilder().append(getJMXPortNumber()).append(safeGetHostName()).toHashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof ServerConnectionManager)) return false;
-
-    ServerConnectionManager other = (ServerConnectionManager) o;
-    String otherHostname = other.safeGetHostName();
-    int otherJMXPort = other.getJMXPortNumber();
-    String hostname = safeGetHostName();
-    int jmxPort = getJMXPortNumber();
-
-    return otherJMXPort == jmxPort && StringUtils.equals(otherHostname, hostname);
   }
 }

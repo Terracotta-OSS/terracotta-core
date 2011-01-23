@@ -84,8 +84,16 @@ public class FeatureNode extends ComponentNode implements PropertyChangeListener
 
   private final AtomicBoolean tornDown = new AtomicBoolean(false);
 
+  private volatile boolean    tearDown = true;
+
+  public void setTearDown(boolean tearDown) {
+    this.tearDown = tearDown;
+  }
+
   @Override
   public void tearDown() {
+    if (!tearDown) { return; }
+
     if (!tornDown.compareAndSet(false, true)) { return; }
 
     if (featurePanel != null) {

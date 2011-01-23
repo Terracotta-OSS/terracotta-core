@@ -68,7 +68,6 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     connectServer = createConnectServer(host, jmxPort);
     displayLabel = connectServer.toString();
     propertyChangeSupport = new PropertyChangeSupport(this);
-    connectServerListener = new ConnectServerListener();
     activeCoordinatorListener = new ActiveCoordinatorListener();
     serverGroupListener = new ServerGroupListener();
     serverStateListenerDelegate = new ServerStateListenerDelegate();
@@ -85,6 +84,9 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   public void startConnectListener() {
+    synchronized (this) {
+      connectServerListener = new ConnectServerListener();
+    }
     connectServer.addPropertyChangeListener(connectServerListener);
     if (autoConnect) {
       connectServer.setAutoConnect(autoConnect);
@@ -93,8 +95,23 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
 
   protected void stopConnectListener() {
     connectServer.removePropertyChangeListener(connectServerListener);
+    synchronized (this) {
+      connectServerListener = null;
+    }
     connectServer.setAutoConnect(false);
     connectServer.disconnect();
+  }
+
+  private void stopConnectListenerLater() {
+    executor.submit(new Runnable() {
+      public void run() {
+        stopConnectListener();
+      }
+    });
+  }
+
+  private synchronized boolean haveConnectServerListener() {
+    return connectServerListener != null;
   }
 
   protected IServer createConnectServer(String host, int jmxPort) {
@@ -123,7 +140,9 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
       this.autoConnect = autoConnect;
     }
     firePropertyChange(PROP_AUTO_CONNECT, oldAutoConnect, autoConnect);
-    connectServer.setAutoConnect(autoConnect);
+    if (haveConnectServerListener()) {
+      connectServer.setAutoConnect(autoConnect);
+    }
   }
 
   public String[] getConnectionCredentials() {
@@ -778,7 +797,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
             }
             group.connect();
           }
-          stopConnectListener();
+          stopConnectListenerLater();
           setConnected(true);
         }
       }
