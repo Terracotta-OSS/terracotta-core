@@ -6,8 +6,8 @@ package com.tc.object.msg;
 import com.tc.net.GroupID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
-import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
+import com.tc.search.aggregator.Aggregator;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * @param aggregatorResults
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
-                                        List<IndexQueryResult> results, List<NVPair> aggregatorResults);
+                                        List<IndexQueryResult> results, List<Aggregator> aggregators);
 
   /**
    * Initialize error response
@@ -56,7 +56,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
   /**
    * @return List<NVPair> aggregator results.
    */
-  public List<NVPair> getAggregatorResults();
+  public List<Aggregator> getAggregators();
 
   public String getErrorMessage();
 

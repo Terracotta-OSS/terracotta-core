@@ -12,10 +12,10 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.SearchRequestID;
-import com.tc.object.metadata.AbstractNVPair;
-import com.tc.object.metadata.NVPair;
 import com.tc.object.session.SessionID;
 import com.tc.search.IndexQueryResult;
+import com.tc.search.aggregator.AbstractAggregator;
+import com.tc.search.aggregator.Aggregator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private SearchRequestID        requestID;
   private GroupID                groupIDFrom;
   private List<IndexQueryResult> results;
-  private List<NVPair>           aggregatorResults;
+  private List<Aggregator>       aggregators;
   private String                 errorMessage;
   private boolean                isError;
 
@@ -55,12 +55,12 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    * {@inheritDoc}
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
-                                        List<IndexQueryResult> searchResults, List<NVPair> aggregators) {
+                                        List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList) {
     this.isError = false;
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
-    this.aggregatorResults = aggregators;
+    this.aggregators = aggregatorList;
   }
 
   /**
@@ -108,8 +108,8 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   /**
    * {@inheritDoc}
    */
-  public List<NVPair> getAggregatorResults() {
-    return aggregatorResults;
+  public List<Aggregator> getAggregators() {
+    return aggregators;
   }
 
   @Override
@@ -127,10 +127,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
       }
     }
 
-    if (aggregatorResults != null) {
-      putNVPair(AGGREGATOR_RESULTS_SIZE, this.aggregatorResults.size());
+    if (aggregators != null) {
+      putNVPair(AGGREGATOR_RESULTS_SIZE, this.aggregators.size());
 
-      for (NVPair result : this.aggregatorResults) {
+      for (Aggregator result : this.aggregators) {
         result.serializeTo(outStream);
       }
     }
@@ -167,10 +167,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
       case AGGREGATOR_RESULTS_SIZE:
         int aggregatorSize = getIntValue();
-        this.aggregatorResults = new ArrayList(aggregatorSize);
+        this.aggregators = new ArrayList(aggregatorSize);
         while (aggregatorSize-- > 0) {
-          NVPair pair = AbstractNVPair.deserializeInstance(input);
-          this.aggregatorResults.add(pair);
+          Aggregator aggregator = AbstractAggregator.deserializeInstance(input);
+          this.aggregators.add(aggregator);
         }
         return true;
       case ERROR_MESSAGE:

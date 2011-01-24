@@ -660,6 +660,36 @@ public abstract class AbstractNVPair implements NVPair {
     }
   }
 
+  public static NVPair createNVPair(String name, Object value, ValueType type) {
+    if (ValueType.ENUM.equals(type)) { return enumPairFromString(name, (String) value); }
+    if (ValueType.CHAR.equals(type)) { return new AbstractNVPair.CharNVPair(name, (char) ((Integer) value).intValue()); }
+
+    return AbstractNVPair.createNVPair(name, value);
+  }
+
+  public static EnumNVPair enumPairFromString(String name, String enumString) {
+    String className = enumString.substring(0, enumString.length() - 10);
+    int ordinal = Integer.parseInt(enumString.substring(enumString.length() - 10));
+    return new EnumNVPair(name, className, ordinal);
+  }
+
+  public static String enumStorageString(EnumNVPair enumPair) {
+    return enumStorageString(enumPair.getClassName(), enumPair.getOrdinal());
+  }
+
+  private static String enumStorageString(String className, int ordinal) {
+    StringBuilder sb = new StringBuilder(className.length() + 10);
+    sb.append(className);
+
+    String ordinalString = String.valueOf(ordinal);
+    for (int i = ordinalString.length(); i < 10; i++) {
+      sb.append('0');
+    }
+
+    sb.append(ordinalString);
+    return sb.toString();
+  }
+
   public static NVPair createNVPair(String attributeName, Object value) {
     if (value == null) { return new NullNVPair(attributeName); }
 

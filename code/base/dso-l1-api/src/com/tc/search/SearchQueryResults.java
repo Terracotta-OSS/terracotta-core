@@ -9,7 +9,7 @@ public interface SearchQueryResults {
 
   List<IndexQueryResult> getResults();
 
-  List getAggregatorResults();
+  List<Object> getAggregatorResults();
 
   boolean isError();
 

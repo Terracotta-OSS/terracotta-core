@@ -8,6 +8,7 @@ import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
+import com.tc.search.aggregator.Aggregator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -51,7 +52,7 @@ public interface SearchRequestManager {
    * @param aggregatorResults
    */
   public void queryResponse(SearchQueryContext queriedContext, List<IndexQueryResult> results,
-                            List<NVPair> aggregatorResults, int batchSize, boolean prefetchFirstBatch);
+                            List<Aggregator> aggregators, int batchSize, boolean prefetchFirstBatch);
 
   /**
    * Query error response
