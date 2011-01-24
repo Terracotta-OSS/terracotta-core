@@ -36,9 +36,38 @@ public interface TCObjectServerMap<L> extends TCObject {
    * 
    * @param map ServerTCMap
    * @param key Key Object
-   * @param value Object in the mapping
    */
   public void doLogicalRemoveUnlocked(final TCServerMap map, final Object key);
+
+  /**
+   * Does a logic remove and mark as removed in the local cache if present only if there exist a mapping of key to
+   * value. The cached item is not associated to a lock.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param value Object in the mapping
+   */
+  public void doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value);
+
+  /**
+   * Does a logic putIfAbsent. The cached item is not associated to a lock. The check about the presence of an existing
+   * mapping is not done here and is expected to be done outside elsewhere.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param value Object in the mapping
+   */
+  public void doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
+
+  /**
+   * Does a logic replace. The cached item is not associated to a lock.
+   * 
+   * @param map ServerTCMap
+   * @param key Key Object
+   * @param value Object in the mapping
+   */
+  public void doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current,
+                                       final Object newValue);
 
   /**
    * Does a logical put and updates the local cache

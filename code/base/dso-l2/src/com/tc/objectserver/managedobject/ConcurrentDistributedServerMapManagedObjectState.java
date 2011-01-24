@@ -155,9 +155,11 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
   protected void applyMethod(final ObjectID objectID, final ApplyTransactionInfo applyInfo, final int method,
                              final Object[] params) {
     if (method == SerializationUtil.REMOVE_IF_VALUE_EQUAL) {
-      // This is currently used by evictor, in future we may support all of ConcurrentMap operations at the server
-      // directly
-      applyRemoveIfValueEqual(params);
+      applyRemoveIfValueEqual(applyInfo, params);
+    } else if (method == SerializationUtil.PUT_IF_ABSENT) {
+      applyPutIfAbsent(applyInfo, params);
+    } else if (method == SerializationUtil.REPLACE_IF_VALUE_EQUAL) {
+      applyReplaceIfValueEqual(applyInfo, params);
     } else if (method == SerializationUtil.EVICTION_COMPLETED) {
       evictionCompleted();
     } else if (method != SerializationUtil.CLEAR_LOCAL_CACHE) {
@@ -179,12 +181,43 @@ public class ConcurrentDistributedServerMapManagedObjectState extends Concurrent
     }
   }
 
-  private void applyRemoveIfValueEqual(final Object[] params) {
+  private void applyRemoveIfValueEqual(ApplyTransactionInfo applyInfo, final Object[] params) {
     final Object key = getKey(params);
     final Object value = getValue(params);
     final Object valueInMap = this.references.get(key);
     if (value.equals(valueInMap)) {
       this.references.remove(key);
+      if (valueInMap instanceof ObjectID) {
+        invalidateIfNeeded(applyInfo, (ObjectID) valueInMap);
+      }
+    }
+  }
+
+  private void applyReplaceIfValueEqual(ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = params[0];
+    final Object current = params[1];
+    final Object newValue = params[2];
+    final Object valueInMap = this.references.get(key);
+    if (current.equals(valueInMap)) {
+      this.references.put(key, newValue);
+      if (valueInMap instanceof ObjectID) {
+        invalidateIfNeeded(applyInfo, (ObjectID) valueInMap);
+      }
+    } else if (newValue instanceof ObjectID) {
+      // Invalidate the newValue so that the VM that initiated this call can remove it from the local cache.
+      invalidateIfNeeded(applyInfo, (ObjectID) newValue);
+    }
+  }
+
+  private void applyPutIfAbsent(ApplyTransactionInfo applyInfo, Object[] params) {
+    final Object key = getKey(params);
+    final Object value = getValue(params);
+    final Object valueInMap = this.references.get(key);
+    if (valueInMap == null) {
+      this.references.put(key, value);
+    } else if (value instanceof ObjectID) {
+      // Invalidate the value so that the VM that initiated this call can remove it from the local cache.
+      invalidateIfNeeded(applyInfo, (ObjectID) value);
     }
   }
 
