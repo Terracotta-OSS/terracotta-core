@@ -20,7 +20,8 @@ public class TCClassTest extends BaseDSOTestCase {
     final ClientObjectManager objectManager = new TestClientObjectManager();
     final ClassProvider classProvider = new MockClassProvider();
     final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    final TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
+    final TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding, null,
+                                                               null);
     final TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TCClassTest.class, null,
                                          MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false,
                                          true, null, null);
@@ -54,7 +55,8 @@ public class TCClassTest extends BaseDSOTestCase {
     final ClientObjectManager objectManager = new TestClientObjectManager();
     final ClassProvider classProvider = new MockClassProvider();
     final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
-    final TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding);
+    final TCClassFactory classFactory = new TCClassFactoryImpl(fieldFactory, config, classProvider, encoding, null,
+                                                               null);
 
     final TCClass tcc1 = new TCClassImpl(fieldFactory, classFactory, objectManager, TestSuperclass1.class, null,
                                          MockClassProvider.MOCK_LOADER, null, false, false, false, null, null, false,

@@ -17,6 +17,7 @@ import com.tc.object.applicator.FileApplicator;
 import com.tc.object.applicator.LiteralTypesApplicator;
 import com.tc.object.applicator.PhysicalApplicator;
 import com.tc.object.applicator.ProxyApplicator;
+import com.tc.object.bytecode.Manager;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.object.dna.api.DNAEncoding;
@@ -33,23 +34,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class TCClassFactoryImpl implements TCClassFactory {
-  private static final boolean                   IS_IBM                    = Vm.isIBM();
+  private static final boolean                     IS_IBM                    = Vm.isIBM();
 
-  private static Class[]                         APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class,
-      TCLogger.class                                                      };
+  private static Class[]                           APPLICATOR_CSTR_SIGNATURE = new Class[] { DNAEncoding.class,
+      TCLogger.class                                                        };
 
   protected final ConcurrentMap<Class<?>, TCClass> classes                   = new ConcurrentHashMap<Class<?>, TCClass>();
   protected final TCFieldFactory                   fieldFactory;
   protected final DSOClientConfigHelper            config;
   protected final ClassProvider                    classProvider;
   protected final DNAEncoding                      encoding;
+  private final RemoteServerMapManager             remoteServerMapManager;
+  private final Manager                            manager;
 
   public TCClassFactoryImpl(final TCFieldFactory fieldFactory, final DSOClientConfigHelper config,
-                            final ClassProvider classProvider, final DNAEncoding dnaEncoding) {
+                            final ClassProvider classProvider, final DNAEncoding dnaEncoding, Manager manager,
+                            RemoteServerMapManager remoteServerMapManager) {
     this.fieldFactory = fieldFactory;
     this.config = config;
     this.classProvider = classProvider;
     this.encoding = dnaEncoding;
+    this.manager = manager;
+    this.remoteServerMapManager = remoteServerMapManager;
   }
 
   public TCClass getOrCreate(final Class clazz, final ClientObjectManager objectManager) {
@@ -66,17 +72,32 @@ public class TCClassFactoryImpl implements TCClassFactory {
   }
 
   protected TCClass createTCClass(final Class clazz, final ClientObjectManager objectManager,
-                                final LoaderDescription loaderDesc, final String className, final ClassInfo classInfo) {
+                                  final LoaderDescription loaderDesc, final String className, final ClassInfo classInfo) {
     TCClass rv;
-    rv = new TCClassImpl(this.fieldFactory, this, objectManager, this.config.getTCPeerClass(clazz),
-                         getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, this.config
-                             .getLogicalExtendingClassName(className), this.config.isLogical(className), this.config
-                             .isCallConstructorOnLoad(classInfo), this.config.hasOnLoadInjection(classInfo),
-                         this.config.getOnLoadScriptIfDefined(classInfo), this.config
-                             .getOnLoadMethodIfDefined(classInfo), this.config.isUseNonDefaultConstructor(clazz),
-                         this.config.useResolveLockWhenClearing(clazz), this.config
-                             .getPostCreateMethodIfDefined(className), this.config
-                             .getPreCreateMethodIfDefined(className));
+    if (className.equals(TCClassFactory.CDSM_DSO_CLASSNAME)) {
+      rv = new ServerMapTCClassImpl(this.manager, this.remoteServerMapManager, this.fieldFactory, this, objectManager,
+                                    this.config.getTCPeerClass(clazz),
+                                    getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, this.config
+                                        .getLogicalExtendingClassName(className), this.config.isLogical(className),
+                                    this.config.isCallConstructorOnLoad(classInfo), this.config
+                                        .hasOnLoadInjection(classInfo),
+                                    this.config.getOnLoadScriptIfDefined(classInfo), this.config
+                                        .getOnLoadMethodIfDefined(classInfo), this.config
+                                        .isUseNonDefaultConstructor(clazz), this.config
+                                        .useResolveLockWhenClearing(clazz), this.config
+                                        .getPostCreateMethodIfDefined(className), this.config
+                                        .getPreCreateMethodIfDefined(className));
+    } else {
+      rv = new TCClassImpl(this.fieldFactory, this, objectManager, this.config.getTCPeerClass(clazz),
+                           getLogicalSuperClassWithDefaultConstructor(clazz), loaderDesc, this.config
+                               .getLogicalExtendingClassName(className), this.config.isLogical(className), this.config
+                               .isCallConstructorOnLoad(classInfo), this.config.hasOnLoadInjection(classInfo),
+                           this.config.getOnLoadScriptIfDefined(classInfo), this.config
+                               .getOnLoadMethodIfDefined(classInfo), this.config.isUseNonDefaultConstructor(clazz),
+                           this.config.useResolveLockWhenClearing(clazz), this.config
+                               .getPostCreateMethodIfDefined(className), this.config
+                               .getPreCreateMethodIfDefined(className));
+    }
     return rv;
   }
 
