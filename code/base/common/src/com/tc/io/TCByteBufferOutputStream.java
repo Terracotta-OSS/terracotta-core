@@ -462,7 +462,7 @@ public final class TCByteBufferOutputStream extends OutputStream implements TCBy
      * @throws IOException
      */
     public void copyTo(TCByteBufferOutput dest, int offset, int length) {
-      if (length < 0) { throw new IllegalArgumentException(); }
+      if (length < 0) { throw new IllegalArgumentException("length: " + length); }
 
       if (this.absolutePosition + offset + length > getBytesWritten()) {
         //
