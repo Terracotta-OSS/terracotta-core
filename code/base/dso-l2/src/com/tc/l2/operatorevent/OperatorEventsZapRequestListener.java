@@ -51,6 +51,9 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
     String localServerName = this.nodeNameToServerName.get(((ServerID) node1).getName());
     String remoteServerName = this.nodeNameToServerName.get(((ServerID) node2).getName());
 
+    localServerName = localServerName == null ? "NOT_FOUND" : localServerName;
+    remoteServerName = remoteServerName == null ? "NOT_FOUND" : remoteServerName;
+
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createZapRequestReceivedEvent(new Object[] {
         localServerName, remoteServerName }));
   }
