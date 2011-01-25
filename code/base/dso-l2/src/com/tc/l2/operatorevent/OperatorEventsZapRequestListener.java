@@ -28,11 +28,10 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
 
   private void initializeServerNameMap(L2ConfigurationSetupManager configSetupManager) {
     String[] serverNames = configSetupManager.allCurrentlyKnownServers();
-    for (int i = 0; i < serverNames.length; i++) {
+    for (String serverName : serverNames) {
       try {
-        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverNames[i]);
-        this.nodeNameToServerName.put(l2Config.host() + ":" + l2Config.dsoPort().getIntValue(),
-                                      serverNames[i]);
+        L2DSOConfig l2Config = configSetupManager.dsoL2ConfigFor(serverName);
+        this.nodeNameToServerName.put(l2Config.host() + ":" + l2Config.dsoPort().getIntValue(), serverName);
       } catch (ConfigurationSetupException e) {
         throw new RuntimeException(e);
       }
@@ -42,9 +41,6 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
 
   public void fireBackOffEvent(NodeID winnerNode) {
     Assert.assertTrue(winnerNode instanceof ServerID);
-    String remoteServerName = this.nodeNameToServerName.get(((ServerID) winnerNode).getName());
-
-    Assert.assertNotNull(remoteServerName);
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
         .createZapRequestAcceptedEvent(new Object[] { winnerNode }));
   }
@@ -55,8 +51,6 @@ public class OperatorEventsZapRequestListener implements ZapEventListener {
     String localServerName = this.nodeNameToServerName.get(((ServerID) node1).getName());
     String remoteServerName = this.nodeNameToServerName.get(((ServerID) node2).getName());
 
-    Assert.assertNotNull(localServerName);
-    Assert.assertNotNull(remoteServerName);
     operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createZapRequestReceivedEvent(new Object[] {
         localServerName, remoteServerName }));
   }
