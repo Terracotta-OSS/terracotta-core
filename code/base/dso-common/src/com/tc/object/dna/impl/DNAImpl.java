@@ -356,7 +356,6 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
 
     public MetaDataDescriptorInternal next() {
       try {
-        input.readByte(); // consume type byte
         int length = input.readInt();
 
         Mark start = input.mark();

@@ -205,6 +205,84 @@ public class DNAImplTest extends TestCase {
     }
   }
 
+  public void testMetaDataFoldNotFirstTxn() throws Exception {
+    TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+
+    final ObjectID id = new ObjectID(1);
+    final String type = getClass().getName();
+
+    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ClassProvider classProvider = new MockClassProvider();
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAWriterInternal dnaWriter = createDNAWriter(out, id, type, serializer, encoding, false);
+    final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
+
+    dnaWriter.addPhysicalAction(action1.getFieldName(), action1.getObject());
+    assertTrue(dnaWriter.isContiguous());
+    dnaWriter.markSectionEnd();
+
+    // simulate folding with a meta data (but without having a meta data in the first txn)
+    DNAWriterInternal appender = (DNAWriterInternal) dnaWriter.createAppender();
+    assertTrue(dnaWriter.isContiguous());
+    appender.addPhysicalAction(action1.getFieldName(), action1.getObject());
+    MetaDataDescriptorInternal md = new MetaDataDescriptorImpl("cat");
+    md.add("foo", "bar");
+    appender.addMetaData(md);
+    appender.markSectionEnd();
+
+    // collapse this folded DNA into contiguous buffer
+    dnaWriter.finalizeHeader();
+    out = new TCByteBufferOutputStream();
+    dnaWriter.copyTo(out);
+
+    final TCByteBufferInputStream in = new TCByteBufferInputStream(out.toArray());
+    this.dna = createDNAImpl(serializer);
+    assertSame(this.dna, this.dna.deserializeFrom(in));
+    assertEquals(0, in.available());
+    final DNACursor cursor = this.dna.getCursor();
+    int count = 0;
+    while (cursor.next(encoding)) {
+      count++;
+      switch (count) {
+        case 1:
+          compareAction(action1, cursor.getPhysicalAction());
+          break;
+        case 2:
+          compareAction(action1, cursor.getPhysicalAction());
+          break;
+        default:
+          fail("count got to " + count);
+      }
+    }
+
+    if (count != 2) { throw new AssertionError("not enough action seen: " + count); }
+
+    assertEquals(id, this.dna.getObjectID());
+
+    assertEquals(ObjectID.NULL_ID, this.dna.getParentObjectID());
+
+    Assert.assertEquals(false, this.dna.isDelta());
+
+    // verify meta data
+    count = 0;
+    MetaDataReader metaReader = dna.getMetaDataReader();
+    for (MetaDataDescriptorInternal meta : metaReader) {
+      count++;
+      switch (count) {
+        case 1: {
+          verifyMetaData(md, meta);
+          break;
+        }
+        default: {
+          throw new AssertionError(count);
+        }
+      }
+    }
+
+    assertEquals(1, count);
+
+  }
+
   private void verifyMetaData(MetaDataDescriptorInternal expect, MetaDataDescriptorInternal actual) {
     assertEquals(expect.getCategory(), actual.getCategory());
     assertEquals(expect.numberOfNvPairs(), actual.numberOfNvPairs());

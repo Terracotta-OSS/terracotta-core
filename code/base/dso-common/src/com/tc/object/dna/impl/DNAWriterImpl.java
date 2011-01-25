@@ -31,6 +31,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
   private final List<Appender>           appenders      = new ArrayList<Appender>(5);
 
   private byte                           flags          = 0;
+  private int                            metaDataLength = UNINITIALIZED;
   private int                            firstLength    = UNINITIALIZED;
   private int                            totalLength    = UNINITIALIZED;
   private int                            lastStreamPos  = UNINITIALIZED;
@@ -180,16 +181,32 @@ public class DNAWriterImpl implements DNAWriterInternal {
   }
 
   public void addMetaData(MetaDataDescriptorInternal md) {
+    addMetaData(md, false);
+  }
+
+  protected void addMetaData(MetaDataDescriptorInternal md, boolean fromAppender) {
     if (!hasMetaData) {
-      metaDataOffset = output.getBytesWritten() - headerMark.getPosition();
       hasMetaData = true;
+
+      if (!fromAppender) {
+        metaDataOffset = output.getBytesWritten() - headerMark.getPosition();
+      }
     }
 
-    output.writeByte(BaseDNAEncodingImpl.META_DATA_ACTION_TYPE);
     Mark lengthMark = output.mark();
     output.writeInt(-1);
     md.serializeTo(output);
-    lengthMark.write(Conversion.int2Bytes(output.getBytesWritten() - lengthMark.getPosition()));
+
+    int length = output.getBytesWritten() - lengthMark.getPosition();
+    lengthMark.write(Conversion.int2Bytes(length));
+
+    if (!fromAppender) {
+      if (metaDataLength == UNINITIALIZED) {
+        metaDataLength = length;
+      } else {
+        metaDataLength += length;
+      }
+    }
   }
 
   public void finalizeHeader() {
@@ -202,7 +219,10 @@ public class DNAWriterImpl implements DNAWriterInternal {
     Conversion.writeInt(totalLength, lengths, 0);
     Conversion.writeInt(actionCount, lengths, 4);
 
-    int totalMetaDataLength = hasMetaData ? (firstLength - metaDataOffset) : 0;
+    int totalMetaDataLength = 0;
+    if (hasMetaData && (metaDataLength != UNINITIALIZED)) {
+      totalMetaDataLength = metaDataLength;
+    }
     for (Appender a : appenders) {
       if (a.metaDataOffset != UNINITIALIZED) {
         totalMetaDataLength += (a.appendSectionLength - a.metaDataOffset);
@@ -241,16 +261,17 @@ public class DNAWriterImpl implements DNAWriterInternal {
 
   public void copyTo(TCByteBufferOutput dest) {
     if (hasMetaData) {
-
-      headerMark.copyTo(dest, 0, metaDataOffset);
+      headerMark.copyTo(dest, 0, metaDataOffset == UNINITIALIZED ? firstLength : metaDataOffset);
 
       // copy all appender actions
       for (Appender appender : appenders) {
         appender.copyActionsTo(dest);
       }
 
-      // copy this metadata
-      headerMark.copyTo(dest, metaDataOffset, firstLength - metaDataOffset);
+      // copy this metadata (if present)
+      if (this.metaDataLength != UNINITIALIZED) {
+        headerMark.copyTo(dest, metaDataOffset, metaDataLength);
+      }
 
       // copy all appender metadata
       for (Appender appender : appenders) {
@@ -333,7 +354,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
       if (metaDataOffset == UNINITIALIZED) {
         metaDataOffset = output.getBytesWritten() - startMark.getPosition();
       }
-      parent.addMetaData(md);
+      parent.addMetaData(md, true);
     }
 
     public int getActionCount() {
