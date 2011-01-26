@@ -218,8 +218,15 @@ public class ServerClientHandshakeManager {
             .getChannelID())));
       }
 
-      this.consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
-                              + this.existingUnconnectedClients.size() + " clients to connect. ");
+      if (reconnectTimeout <= 0) {
+        this.consoleLogger.info("Reconnect window not opened as timeout is " + this.reconnectTimeout + " ms.");
+        notifyTimeout();
+        return;
+      } else {
+        this.consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+                                + this.existingUnconnectedClients.size() + " clients to connect. ");
+      }
+
       if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
         this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
       } else {
