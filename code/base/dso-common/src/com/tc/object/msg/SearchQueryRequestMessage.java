@@ -4,8 +4,8 @@
 package com.tc.object.msg;
 
 import com.tc.async.api.MultiThreadedEventContext;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.object.SearchRequestID;
 import com.tc.object.metadata.NVPair;
@@ -24,7 +24,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
   /**
    * ClientID
    */
-  public NodeID getClientID();
+  public ClientID getClientID();
 
   /**
    * Search Identifier. return SearchRequestID requestID
@@ -61,7 +61,7 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * 
    * @return String string.
    */
-  public String getCachename();
+  public String getCacheName();
 
   /**
    * Query stack to search

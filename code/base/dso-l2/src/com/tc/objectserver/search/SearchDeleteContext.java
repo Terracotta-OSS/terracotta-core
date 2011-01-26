@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.object.tx.ServerTransactionID;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 /**
@@ -15,9 +15,8 @@ public class SearchDeleteContext extends BaseSearchEventContext {
 
   private final Object cacheKey;
 
-  public SearchDeleteContext(ServerTransactionID transactionID, String name, Object cacheKey,
-                             MetaDataProcessingContext metaDataContext) {
-    super(transactionID, name, metaDataContext);
+  public SearchDeleteContext(ObjectID cdsmOid, String name, Object cacheKey, MetaDataProcessingContext metaDataContext) {
+    super(cdsmOid, name, metaDataContext);
     this.cacheKey = cacheKey;
   }
 

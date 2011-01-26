@@ -84,9 +84,11 @@ public class DNAImplTest extends TestCase {
     final PhysicalAction action5 = new PhysicalAction("class.field4", new ObjectID(5), true);
 
     MetaDataDescriptorInternal md = new MetaDataDescriptorImpl("cat1");
+    md.setObjectID(id);
     md.add("name1", 42);
 
     MetaDataDescriptorInternal md2 = new MetaDataDescriptorImpl("cat2");
+    md2.setObjectID(id);
     md2.add("name2", true);
     md2.add("name3", "sdfsdfsdf".getBytes());
     md2.add("name4", (byte) 4);
@@ -226,6 +228,7 @@ public class DNAImplTest extends TestCase {
     assertTrue(dnaWriter.isContiguous());
     appender.addPhysicalAction(action1.getFieldName(), action1.getObject());
     MetaDataDescriptorInternal md = new MetaDataDescriptorImpl("cat");
+    md.setObjectID(id);
     md.add("foo", "bar");
     appender.addMetaData(md);
     appender.markSectionEnd();

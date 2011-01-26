@@ -145,8 +145,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new NullL2IndexStateManager();
   }
 
-  public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink searchEventSink,
-                                                         Sink managedObjectRequestSink) {
+  public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink) {
     return new NullSearchRequestManager();
   }
 

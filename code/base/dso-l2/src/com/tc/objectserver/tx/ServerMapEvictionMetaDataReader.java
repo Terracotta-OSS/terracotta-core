@@ -20,12 +20,14 @@ import java.util.NoSuchElementException;
 
 public class ServerMapEvictionMetaDataReader implements MetaDataReader {
 
-  private final String cacheName;
-  private final Map    candidates;
+  private final String   cacheName;
+  private final Map      candidates;
+  private final ObjectID oid;
 
-  public ServerMapEvictionMetaDataReader(String cacheName, Map candidates) {
+  public ServerMapEvictionMetaDataReader(ObjectID oid, String cacheName, Map candidates) {
     this.cacheName = cacheName;
     this.candidates = candidates;
+    this.oid = oid;
   }
 
   public Iterator<MetaDataDescriptorInternal> iterator() {
@@ -143,6 +145,14 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       // 1 (number of removes)
       // 2 for each remove (key, value)
       return 2 + 1 + (candidates.size() * 2);
+    }
+
+    public ObjectID getObjectId() {
+      return oid;
+    }
+
+    public void setObjectID(ObjectID id) {
+      throw new AssertionError();
     }
 
     private class RemoveMetaDataIterator implements Iterator<NVPair> {

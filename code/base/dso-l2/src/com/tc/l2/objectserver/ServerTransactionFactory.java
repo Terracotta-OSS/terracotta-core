@@ -65,12 +65,12 @@ public class ServerTransactionFactory {
                                                                                              loaderDesc, candidates)),
                                      serializer, Collections.EMPTY_MAP, TxnType.NORMAL, Collections.EMPTY_LIST,
                                      NULL_DMI_DESCRIPTOR,
-                                     new MetaDataReader[] { createEvictionMetaDataFor(cacheName, candidates) }, 1,
+                                     new MetaDataReader[] { createEvictionMetaDataFor(oid, cacheName, candidates) }, 1,
                                      EMPTY_HIGH_WATER_MARK);
   }
 
-  private MetaDataReader createEvictionMetaDataFor(String cacheName, Map candidates) {
-    return new ServerMapEvictionMetaDataReader(cacheName, candidates);
+  private MetaDataReader createEvictionMetaDataFor(ObjectID oid, String cacheName, Map candidates) {
+    return new ServerMapEvictionMetaDataReader(oid, cacheName, candidates);
   }
 
   private DNA createServerMapEvictionDNAFor(final ObjectID oid, final String className, final String loaderDesc,

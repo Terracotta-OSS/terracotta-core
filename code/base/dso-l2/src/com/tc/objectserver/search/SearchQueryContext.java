@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.async.api.EventContext;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.object.SearchRequestID;
@@ -17,7 +18,7 @@ import java.util.Set;
  * 
  * @author Nabib El-Rahman
  */
-public class SearchQueryContext implements SearchEventContext {
+public class SearchQueryContext implements EventContext {
 
   private final ClientID        clientID;
   private final SearchRequestID requestID;

@@ -6,18 +6,15 @@ package com.tc.objectserver.search;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
-import com.tc.async.api.MultiThreadedEventContext;
-import com.tc.net.ClientID;
 import com.tc.object.msg.SearchQueryRequestMessage;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 
 /**
- * All search request are processed through this handler. Every context should implement
- * {@link MultiThreadedEventContext} so that order can be maintained per client.
+ * All search queries are processed through this handler.
  * 
  * @author Nabib El-Rahman
  */
-public class SearchRequestMessageHandler extends AbstractEventHandler {
+public class SearchQueryRequestMessageHandler extends AbstractEventHandler {
 
   private SearchRequestManager searchRequestManager;
 
@@ -25,12 +22,7 @@ public class SearchRequestMessageHandler extends AbstractEventHandler {
   public void handleEvent(EventContext context) {
     if (context instanceof SearchQueryRequestMessage) {
       SearchQueryRequestMessage msg = (SearchQueryRequestMessage) context;
-      this.searchRequestManager.queryRequest((ClientID) msg.getClientID(), msg.getRequestID(), msg.getGroupIDFrom(),
-                                             msg.getCachename(), msg.getQueryStack(), msg.includeKeys(),
-                                             msg.includeValues(), msg.getAttributes(), msg.getSortAttributes(),
-                                             msg.getAggregators(), msg.getMaxResults(), msg.getBatchSize(),
-                                             msg.isPrefetchFirstBatch());
-
+      this.searchRequestManager.queryRequest(msg);
     } else {
       throw new AssertionError("Unknown context " + context);
     }

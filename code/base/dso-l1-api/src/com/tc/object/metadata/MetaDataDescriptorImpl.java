@@ -31,14 +31,16 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
 
   private final String                        category;
   private final List<NVPair>                  metaDatas;
+  private ObjectID                            oid;
 
   public MetaDataDescriptorImpl(String category) {
-    this(category, new ArrayList<NVPair>());
+    this(category, new ArrayList<NVPair>(), ObjectID.NULL_ID);
   }
 
-  private MetaDataDescriptorImpl(String category, List<NVPair> metaDatas) {
+  private MetaDataDescriptorImpl(String category, List<NVPair> metaDatas, ObjectID oid) {
     this.category = category;
     this.metaDatas = metaDatas;
+    this.oid = oid;
   }
 
   public Iterator<NVPair> getMetaDatas() {
@@ -53,20 +55,33 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     return this.category;
   }
 
+  public ObjectID getObjectId() {
+    return oid;
+  }
+
+  public void setObjectID(ObjectID id) {
+    this.oid = id;
+  }
+
   public Object deserializeFrom(TCByteBufferInput in) throws IOException {
     final String cat = in.readString();
+    final ObjectID id = new ObjectID(in.readLong());
+
     final int size = in.readInt();
     List<NVPair> data = new ArrayList<NVPair>(size);
-
     for (int i = 0; i < size; i++) {
       data.add(AbstractNVPair.deserializeInstance(in));
     }
 
-    return new MetaDataDescriptorImpl(cat, data);
+    return new MetaDataDescriptorImpl(cat, data, id);
   }
 
   public void serializeTo(TCByteBufferOutput out) {
     out.writeString(category);
+
+    if (oid.isNull()) { throw new AssertionError("OID never set"); }
+    out.writeLong(oid.toLong());
+
     out.writeInt(metaDatas.size());
     for (NVPair nvpair : metaDatas) {
       nvpair.serializeTo(out);

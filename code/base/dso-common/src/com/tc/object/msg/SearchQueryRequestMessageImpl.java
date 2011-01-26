@@ -6,8 +6,8 @@ package com.tc.object.msg;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
+import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
@@ -31,7 +31,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
   private final static byte SEARCH_REQUEST_ID      = 0;
   private final static byte GROUP_ID_FROM          = 1;
-  private final static byte CACHENAME              = 2;
+  private final static byte CACHE_NAME             = 2;
   private final static byte INCLUDE_KEYS           = 3;
   private final static byte ATTRIBUTES             = 4;
   private final static byte SORT_ATTRIBUTES        = 5;
@@ -45,7 +45,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
   private SearchRequestID   requestID;
   private GroupID           groupIDFrom;
-  private String            cachename;
+  private String            cacheName;
   private LinkedList        queryStack;
   private boolean           includeKeys;
   private boolean           includeValues;
@@ -66,13 +66,13 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupID,
-                                          final String cacheName, final LinkedList stack, boolean keys, boolean values,
-                                          Set<String> attributeSet, List<NVPair> sortAttributesMap,
-                                          List<NVPair> attributeAggregators, int max, int batch, boolean prefetchFirst) {
+  public void initialSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
+                                          LinkedList stack, boolean keys, boolean values, Set<String> attributeSet,
+                                          List<NVPair> sortAttributesMap, List<NVPair> attributeAggregators, int max,
+                                          int batch, boolean prefetchFirst) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
-    this.cachename = cacheName;
+    this.cacheName = cache;
     this.queryStack = stack;
     this.includeKeys = keys;
     this.includeValues = values;
@@ -90,7 +90,7 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
 
     putNVPair(SEARCH_REQUEST_ID, this.requestID.toLong());
     putNVPair(GROUP_ID_FROM, this.groupIDFrom.toInt());
-    putNVPair(CACHENAME, this.cachename);
+    putNVPair(CACHE_NAME, this.cacheName);
     putNVPair(INCLUDE_KEYS, this.includeKeys);
     putNVPair(INCLUDE_VALUES, this.includeValues);
     putNVPair(MAX_RESULTS, this.maxResults);
@@ -139,8 +139,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
         this.groupIDFrom = new GroupID(getIntValue());
         return true;
 
-      case CACHENAME:
-        this.cachename = getStringValue();
+      case CACHE_NAME:
+        this.cacheName = getStringValue();
         return true;
 
       case INCLUDE_KEYS:
@@ -211,8 +211,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
-  public String getCachename() {
-    return this.cachename;
+  public String getCacheName() {
+    return this.cacheName;
   }
 
   /**
@@ -246,8 +246,8 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
   /**
    * {@inheritDoc}
    */
-  public NodeID getClientID() {
-    return getSourceNodeID();
+  public ClientID getClientID() {
+    return (ClientID) getSourceNodeID();
   }
 
   /**

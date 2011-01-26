@@ -180,6 +180,8 @@ public interface TCPropertiesConsts {
   public static final String   L2_SEDA_MANAGEDOBJECTREQUESTSTAGE_THREADS                       = "l2.seda.managedobjectrequeststage.threads";
   public static final String   L2_SEDA_STAGE_SINK_CAPACITY                                     = "l2.seda.stage.sink.capacity";
   public static final String   L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE                       = "l2.seda.evictionprocessorstage.sink.capacity";
+  public static final String   L2_SEDA_SEARCH_THREADS                                          = "l2.seda.search.threads";
+  public static final String   L2_SEDA_QUERY_THREADS                                           = "l2.seda.query.threads";
 
   /*********************************************************************************************************************
    * <code>

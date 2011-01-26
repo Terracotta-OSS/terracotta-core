@@ -678,6 +678,7 @@ public class ClientTransactionManagerImpl implements ClientTransactionManager, P
   }
 
   public void addMetaDataDescriptor(final TCObject tco, final MetaDataDescriptorInternal md) {
+    md.setObjectID(tco.getObjectID());
     getTransaction().addMetaDataDescriptor(tco, md);
   }
 

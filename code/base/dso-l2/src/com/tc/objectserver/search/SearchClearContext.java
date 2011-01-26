@@ -3,7 +3,7 @@
  */
 package com.tc.objectserver.search;
 
-import com.tc.object.tx.ServerTransactionID;
+import com.tc.object.ObjectID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 /**
@@ -13,8 +13,8 @@ import com.tc.objectserver.metadata.MetaDataProcessingContext;
  */
 public class SearchClearContext extends BaseSearchEventContext {
 
-  public SearchClearContext(ServerTransactionID transactionID, String name, MetaDataProcessingContext metaDataContext) {
-    super(transactionID, name, metaDataContext);
+  public SearchClearContext(ObjectID cdsmOid, String name, MetaDataProcessingContext metaDataContext) {
+    super(cdsmOid, name, metaDataContext);
   }
 
 }

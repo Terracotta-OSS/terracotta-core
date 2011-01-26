@@ -20,8 +20,7 @@ import java.io.IOException;
  */
 public class SearchEventHandler extends AbstractEventHandler {
 
-  private IndexManager         indexManager;
-  private SearchRequestManager searchRequestManager;
+  private IndexManager indexManager;
 
   /**
    * {@inheritDoc}
@@ -47,20 +46,6 @@ public class SearchEventHandler extends AbstractEventHandler {
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
-      }
-    } else if (context instanceof SearchQueryContext) {
-      SearchQueryContext sqc = (SearchQueryContext) context;
-
-      SearchResult searchResult;
-      try {
-        searchResult = this.indexManager
-            .searchIndex(sqc.getCacheName(), sqc.getQueryStack(), sqc.includeKeys(), sqc.includeValues(),
-                         sqc.getAttributeSet(), sqc.getSortAttributes(), sqc.getAggregators(), sqc.getMaxResults());
-        this.searchRequestManager.queryResponse(sqc, searchResult.getQueryResults(), searchResult.getAggregators(),
-                                                sqc.getBatchSize(), sqc.isPrefetchFirstBatch());
-      } catch (IndexException e) {
-        // XXX: log something?
-        this.searchRequestManager.queryErrorResponse(sqc, e.getMessage());
       }
     } else if (context instanceof SearchClearContext) {
       SearchClearContext scc = (SearchClearContext) context;
@@ -89,7 +74,6 @@ public class SearchEventHandler extends AbstractEventHandler {
     super.initialize(context);
     ServerConfigurationContext serverContext = (ServerConfigurationContext) context;
     this.indexManager = serverContext.getIndexManager();
-    this.searchRequestManager = serverContext.getSearchRequestManager();
   }
 
 }

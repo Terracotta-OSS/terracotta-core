@@ -230,7 +230,7 @@ import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
 import com.tc.objectserver.search.SearchRequestManager;
-import com.tc.objectserver.search.SearchRequestMessageHandler;
+import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
@@ -828,12 +828,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createStage(ServerConfigurationContext.SYNC_WRITE_TXN_RECVD_STAGE,
                      new SyncWriteTransactionReceivedHandler(channelManager), 4, maxStageSize);
 
-    final Stage searchEventStage = stageManager.createStage(ServerConfigurationContext.SEARCH_EVENT_STAGE,
-                                                            new SearchEventHandler(), 1, maxStageSize);
+    int searchThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_SEARCH_THREADS);
 
+    final Stage searchEventStage = stageManager.createStage(ServerConfigurationContext.SEARCH_EVENT_STAGE,
+                                                            new SearchEventHandler(), searchThreads, maxStageSize);
+
+    int queryThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_QUERY_THREADS);
     final Stage searchQueryRequestStage = stageManager
-        .createStage(ServerConfigurationContext.SEARCH_QUERY_REQUEST_STAGE, new SearchRequestMessageHandler(), 1,
-                     maxStageSize);
+        .createStage(ServerConfigurationContext.SEARCH_QUERY_REQUEST_STAGE, new SearchQueryRequestMessageHandler(),
+                     queryThreads, maxStageSize);
 
     final Sink searchEventSink = searchEventStage.getSink();
 
@@ -991,8 +994,9 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
                      maxStageSize);
 
-    this.searchRequestManager = this.serverBuilder.createSearchRequestManager(channelManager, searchEventSink,
+    this.searchRequestManager = this.serverBuilder.createSearchRequestManager(channelManager,
                                                                               objectRequestStage.getSink());
+    toInit.add(this.searchRequestManager);
 
     this.serverMapRequestManager = this.serverBuilder
         .createServerMapRequestManager(this.objectManager, channelManager, respondToServerTCMapStage.getSink(),

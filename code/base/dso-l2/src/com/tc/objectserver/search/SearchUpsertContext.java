@@ -3,8 +3,8 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
-import com.tc.object.tx.ServerTransactionID;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
 import java.util.List;
@@ -20,9 +20,9 @@ public class SearchUpsertContext extends BaseSearchEventContext {
   private final Object       cacheKey;
   private final Object       cacheValue;
 
-  public SearchUpsertContext(ServerTransactionID transactionID, String name, Object cacheKey, Object cacheValue,
+  public SearchUpsertContext(ObjectID cdsmOid, String name, Object cacheKey, Object cacheValue,
                              List<NVPair> attributes, MetaDataProcessingContext metaDataContext) {
-    super(transactionID, name, metaDataContext);
+    super(cdsmOid, name, metaDataContext);
     this.cacheKey = cacheKey;
     this.cacheValue = cacheValue;
     this.attributes = attributes;
