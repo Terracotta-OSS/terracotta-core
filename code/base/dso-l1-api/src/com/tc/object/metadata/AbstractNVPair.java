@@ -530,6 +530,44 @@ public abstract class AbstractNVPair implements NVPair {
     }
   }
 
+  public static class SqlDateNVPair extends AbstractNVPair {
+    private final java.sql.Date value;
+
+    public SqlDateNVPair(String name, java.sql.Date value) {
+      super(name);
+      this.value = value;
+    }
+
+    public java.sql.Date getValue() {
+      return value;
+    }
+
+    public Object getObjectValue() {
+      return value;
+    }
+
+    @Override
+    public String valueAsString() {
+      return value.toString();
+    }
+
+    @Override
+    public ValueType getType() {
+      return ValueType.SQL_DATE;
+    }
+
+    @Override
+    boolean basicEquals(NVPair obj) {
+      if (obj instanceof SqlDateNVPair) { return value.equals(((SqlDateNVPair) obj).value); }
+      return false;
+    }
+
+    @Override
+    public NVPair cloneWithNewName(String newName) {
+      return new SqlDateNVPair(newName, value);
+    }
+  }
+
   public static class EnumNVPair extends AbstractNVPair {
 
     private final String className;
@@ -713,6 +751,9 @@ public abstract class AbstractNVPair implements NVPair {
       return new StringNVPair(attributeName, (String) value);
     } else if (value instanceof byte[]) {
       return new ByteArrayNVPair(attributeName, (byte[]) value);
+    } else if (value instanceof java.sql.Date) {
+      // this one must come before regular java.util.Date
+      return new SqlDateNVPair(attributeName, (java.sql.Date) value);
     } else if (value instanceof Date) {
       return new DateNVPair(attributeName, (Date) value);
     } else if (value instanceof ObjectID) {

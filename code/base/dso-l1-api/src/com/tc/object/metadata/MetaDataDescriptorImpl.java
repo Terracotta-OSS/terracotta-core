@@ -145,6 +145,10 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     metaDatas.add(new AbstractNVPair.DateNVPair(name, value));
   }
 
+  public void add(String name, java.sql.Date value) {
+    metaDatas.add(new AbstractNVPair.SqlDateNVPair(name, value));
+  }
+
   public void add(String name, ObjectID value) {
     metaDatas.add(new AbstractNVPair.ObjectIdNVPair(name, value));
   }
@@ -200,6 +204,10 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
           add(name, (Date) value);
           break;
         }
+        case SQL_DATE: {
+          add(name, (java.sql.Date) value);
+          break;
+        }
         case BYTE_ARRAY: {
           add(name, ((byte[]) value));
           break;
@@ -245,6 +253,7 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     map.put(Long.class, ValueType.LONG);
     map.put(String.class, ValueType.STRING);
     map.put(Date.class, ValueType.DATE);
+    map.put(java.sql.Date.class, ValueType.SQL_DATE);
     map.put(byte[].class, ValueType.BYTE_ARRAY);
     map.put(ObjectID.class, ValueType.OBJECT_ID);
 

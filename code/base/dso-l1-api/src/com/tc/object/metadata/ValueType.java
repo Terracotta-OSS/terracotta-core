@@ -19,6 +19,7 @@ import com.tc.object.metadata.AbstractNVPair.LongNVPair;
 import com.tc.object.metadata.AbstractNVPair.NullNVPair;
 import com.tc.object.metadata.AbstractNVPair.ObjectIdNVPair;
 import com.tc.object.metadata.AbstractNVPair.ShortNVPair;
+import com.tc.object.metadata.AbstractNVPair.SqlDateNVPair;
 import com.tc.object.metadata.AbstractNVPair.StringNVPair;
 
 import java.io.IOException;
@@ -166,6 +167,18 @@ public enum ValueType {
     @Override
     void serializeTo(NVPair nvPair, TCByteBufferOutput out) {
       out.writeLong(((DateNVPair) nvPair).getValue().getTime());
+    }
+  },
+
+  SQL_DATE {
+    @Override
+    NVPair deserializeFrom(String name, TCByteBufferInput in) throws IOException {
+      return new SqlDateNVPair(name, new java.sql.Date(in.readLong()));
+    }
+
+    @Override
+    void serializeTo(NVPair nvPair, TCByteBufferOutput out) {
+      out.writeLong(((SqlDateNVPair) nvPair).getValue().getTime());
     }
   },
 

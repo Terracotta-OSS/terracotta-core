@@ -32,6 +32,8 @@ public interface MetaDataDescriptor {
 
   void add(String name, Date value);
 
+  void add(String name, java.sql.Date value);
+
   void add(String name, Enum value);
 
   void add(String name, String value);

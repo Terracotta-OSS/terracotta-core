@@ -88,6 +88,10 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       throw new UnsupportedOperationException();
     }
 
+    public void add(String name, java.sql.Date value) {
+      throw new UnsupportedOperationException();
+    }
+
     public void add(String name, Enum value) {
       throw new UnsupportedOperationException();
     }
