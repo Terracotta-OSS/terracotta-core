@@ -23,7 +23,7 @@ public interface IndexManager {
   void remove(String indexName, Object key, MetaDataProcessingContext metaDataContext) throws IndexException;
 
   void upsert(String indexName, Object key, Object value, List<NVPair> attributes,
-              MetaDataProcessingContext metaDataContext) throws IndexException;
+              MetaDataProcessingContext metaDataContext, boolean onlyIfAbsent) throws IndexException;
 
   void clear(String indexName, MetaDataProcessingContext metaDataContext) throws IndexException;
 

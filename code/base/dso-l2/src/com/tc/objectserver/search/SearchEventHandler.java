@@ -34,7 +34,7 @@ public class SearchEventHandler extends AbstractEventHandler {
 
       try {
         this.indexManager.upsert(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
-                                 suc.getMetaDataProcessingContext());
+                                 suc.getMetaDataProcessingContext(), suc.isPutIfAbsent());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

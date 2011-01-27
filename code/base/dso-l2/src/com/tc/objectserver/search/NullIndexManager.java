@@ -30,7 +30,7 @@ public class NullIndexManager implements IndexManager {
   }
 
   public void upsert(String indexName, Object key, Object value, List<NVPair> attributes,
-                     MetaDataProcessingContext metaDataContext) {
+                     MetaDataProcessingContext metaDataContext, boolean onlyIfAbsent) {
     //
   }
 
