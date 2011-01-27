@@ -42,7 +42,6 @@ import com.tc.objectserver.l1.api.TestClientStateManager.AddReferenceContext;
 import com.tc.objectserver.tx.TestServerTransactionManager;
 import com.tc.objectserver.tx.TestTransactionBatchManager;
 import com.tc.test.TCTestCase;
-import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 import com.tc.util.SequenceValidator;
 import com.tc.util.TestTimer;
@@ -77,7 +76,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
   private static long                  MEDIUM_RECONNECT_TIMEOUT  = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL;
   private static long                  LONG_RECONNECT_TIMEOUT    = ServerClientHandshakeManager.RECONNECT_WARN_INTERVAL * 2;
   private static long                  DEFAULT_RECONNECT_TIMEOUT = SHORT_RECONNECT_TIMEOUT;
-  private static long                  NO_RECONNECT_TIMEOUT      = 0;
 
   @Override
   public void setUp() {
@@ -186,6 +184,10 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
     final ClientID clientID1 = new ClientID(100);
     final ClientID clientID2 = new ClientID(101);
     final ClientID clientID3 = new ClientID(102);
+
+    // channelManager.channelIDs.add(channelID1);
+    // channelManager.channelIDs.add(channelID2);
+    // channelManager.channelIDs.add(channelID3);
 
     this.existingUnconnectedClients.add(clientID1);
     this.existingUnconnectedClients.add(clientID2);
@@ -321,59 +323,6 @@ public class ServerClientHandshakeManagerTest extends TCTestCase {
       final TestClientHandshakeAckMessage ack = (TestClientHandshakeAckMessage) new ArrayList(acks).get(0);
       assertNotNull(ack.sendQueue.poll(1));
     }
-  }
-
-  public void testNoReconnectWindow() throws Exception {
-    final ClientID clientID1 = new ClientID(100);
-    final ClientID clientID2 = new ClientID(101);
-
-    this.existingUnconnectedClients.add(clientID1);
-    this.existingUnconnectedClients.add(clientID2);
-
-    initHandshakeManager(NO_RECONNECT_TIMEOUT);
-
-    TestClientHandshakeMessage handshake = newClientHandshakeMessage(clientID1);
-    final ArrayList sequenceIDs = new ArrayList();
-    final SequenceID minSequenceID = new SequenceID(10);
-    sequenceIDs.add(minSequenceID);
-    handshake.transactionSequenceIDs = sequenceIDs;
-    handshake.clientObjectIds.add(new ObjectID(200));
-    handshake.clientObjectIds.add(new ObjectID(20002));
-    handshake.validateObjectIds.add(new ObjectID(20002));
-
-    final List<ClientServerExchangeLockContext> lockContexts = new LinkedList();
-    lockContexts.add(new ClientServerExchangeLockContext(new StringLockID("my lock"), clientID1, new ThreadID(10001),
-                                                         State.HOLDER_WRITE));
-    lockContexts.add(new ClientServerExchangeLockContext(new StringLockID("my other lock)"), clientID1,
-                                                         new ThreadID(10002), State.HOLDER_READ));
-    final ClientServerExchangeLockContext waitContext = new ClientServerExchangeLockContext(
-                                                                                            new StringLockID("d;alkjd"),
-                                                                                            clientID1,
-                                                                                            new ThreadID(101),
-                                                                                            State.WAITER, -1);
-    lockContexts.add(waitContext);
-    handshake.lockContexts.addAll(lockContexts);
-
-    handshake.isChangeListener = true;
-
-    assertFalse(this.sequenceValidator.isNext(handshake.getSourceNodeID(), new SequenceID(minSequenceID.toLong())));
-    assertEquals(2, this.existingUnconnectedClients.size());
-    assertTrue(this.hm.isStarted());
-    assertFalse(this.hm.isStarting());
-
-    // reset sequence validator
-    this.sequenceValidator.remove(handshake.getSourceNodeID());
-
-    // connect the first client
-    this.channelManager.clientIDs.add(handshake.clientID);
-
-    try {
-      this.hm.notifyClientConnect(handshake);
-      Assert.fail("Suppose to get ClientHandshakeException");
-    } catch (ClientHandshakeException che) {
-      System.err.println("XXX Got the expected exception : " + che);
-    }
-
   }
 
   private int getCountFor(final TestClientHandshakeMessage handshake, final Type type) {
