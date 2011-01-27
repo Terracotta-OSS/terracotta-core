@@ -93,10 +93,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
                                                   MutableBeanRepository tcPropertiesRepository,
-                                                  ApplicationsRepository applicationsRepository)
+                                                  ApplicationsRepository applicationsRepository, boolean isClient)
       throws ConfigurationSetupException {
     loadConfigAndSetIntoRepositories(l1BeanRepository, l2sBeanRepository, systemBeanRepository, tcPropertiesRepository,
-                                     applicationsRepository);
+                                     applicationsRepository, isClient);
     logCopyOfConfig();
   }
 
@@ -104,7 +104,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
                                                   MutableBeanRepository tcPropertiesRepository,
-                                                  ApplicationsRepository applicationsRepository)
+                                                  ApplicationsRepository applicationsRepository, boolean isClient)
       throws ConfigurationSetupException {
     Assert.assertNotNull(l1BeanRepository);
     Assert.assertNotNull(l2sBeanRepository);
@@ -117,7 +117,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                                                                   l2sBeanRepository,
                                                                                   systemBeanRepository,
                                                                                   tcPropertiesRepository,
-                                                                                  applicationsRepository);
+                                                                                  applicationsRepository, isClient);
     baseConfigLoadedFromTrustedSource = baseConfigDataSourceStream.isTrustedSource();
     baseConfigDescription = baseConfigDataSourceStream.getDescription();
 
@@ -210,14 +210,14 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                                            MutableBeanRepository l2sBeanRepository,
                                                            MutableBeanRepository systemBeanRepository,
                                                            MutableBeanRepository tcPropertiesRepository,
-                                                           ApplicationsRepository applicationsRepository)
-      throws ConfigurationSetupException {
+                                                           ApplicationsRepository applicationsRepository,
+                                                           boolean isClient) throws ConfigurationSetupException {
     long startTime = System.currentTimeMillis();
     ConfigDataSourceStream configDataSourceStream = getConfigDataSourceStrean(sources, startTime, "base configuration");
     if (configDataSourceStream.getSourceInputStream() == null) configurationFetchFailed(sources, startTime);
     loadConfigurationData(configDataSourceStream.getSourceInputStream(), configDataSourceStream.isTrustedSource(),
                           configDataSourceStream.getDescription(), l1BeanRepository, l2sBeanRepository,
-                          systemBeanRepository, tcPropertiesRepository, applicationsRepository);
+                          systemBeanRepository, tcPropertiesRepository, applicationsRepository, isClient);
     consoleLogger.info("Successfully loaded " + configDataSourceStream.getDescription() + ".");
     return configDataSourceStream;
   }
@@ -398,10 +398,11 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                      MutableBeanRepository serversBeanRepository,
                                      MutableBeanRepository systemBeanRepository,
                                      MutableBeanRepository tcPropertiesRepository,
-                                     ApplicationsRepository applicationsRepository) throws ConfigurationSetupException {
+                                     ApplicationsRepository applicationsRepository, boolean isClient)
+      throws ConfigurationSetupException {
     try {
 
-      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip);
+      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip, isClient);
       Assert.assertNotNull(configDocument);
       updateTcConfigFull(configDocument, descrip);
       setClientBean(clientBeanRepository, configDocument.getTcConfig(), descrip);
@@ -419,7 +420,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
                                            MutableBeanRepository serversBeanRepository)
       throws ConfigurationSetupException {
     try {
-      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip);
+      TcConfigDocument configDocument = getConfigFromSourceStream(in, trustedSource, descrip, false);
       Assert.assertNotNull(configDocument);
       setServerBean(serversBeanRepository, configDocument.getTcConfig(), descrip);
     } catch (XmlException xmle) {
@@ -456,8 +457,8 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
     }
   }
 
-  private TcConfigDocument getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip)
-      throws ConfigurationSetupException {
+  private TcConfigDocument getConfigFromSourceStream(InputStream in, boolean trustedSource, String descrip,
+                                                     boolean isClient) throws ConfigurationSetupException {
     TcConfigDocument tcConfigDoc;
     try {
       ByteArrayOutputStream dataCopy = new ByteArrayOutputStream();
@@ -492,7 +493,10 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       TcConfig config = tcConfigDoc.getTcConfig();
       SystemConfigObject.initializeSystem(config, this.defaultValueProvider);
       L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
-      L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
+      // initialize client only while parsing for client
+      if (isClient) {
+        L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
+      }
       DSOApplicationConfigObject.initializeApplication(config, this.defaultValueProvider);
     } catch (IOException ioe) {
       throw new ConfigurationSetupException("We were unable to read configuration data from the " + descrip + ": "

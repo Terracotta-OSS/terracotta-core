@@ -14,12 +14,12 @@ import com.tc.config.TcProperty;
 import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
-import com.tc.config.schema.ConfigTCProperties;
-import com.tc.config.schema.ConfigTCPropertiesFromObject;
-import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.CommonL2ConfigObject;
+import com.tc.config.schema.ConfigTCProperties;
+import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SystemConfig;
 import com.tc.config.schema.SystemConfigObject;
 import com.tc.config.schema.UpdateCheckConfig;
@@ -74,20 +74,20 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map                         l2ConfigData;
-  private final HaConfigSchema                 haConfig;
+  private final HaConfigSchema              haConfig;
   private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
   private final L2ConfigData                myConfigData;
   private final ConfigTCProperties          configTCProperties;
   private final Set<InetAddress>            localInetAddresses;
 
-  private SystemConfig                   systemConfig;
+  private SystemConfig                      systemConfig;
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
-                                                DefaultValueProvider defaultValueProvider,
-                                                XmlObjectComparator xmlObjectComparator,
-                                                IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+                                         DefaultValueProvider defaultValueProvider,
+                                         XmlObjectComparator xmlObjectComparator,
+                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
     super(configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
@@ -100,7 +100,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     this.localInetAddresses = getAllLocalInetAddresses();
 
     // this sets the beans in each repository
-    runConfigurationCreator();
+    runConfigurationCreator(false);
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
 
@@ -323,8 +323,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     private final String              name;
     private final ChildBeanRepository beanRepository;
 
-    private final CommonL2Config   commonL2Config;
-    private final L2DSOConfig      dsoL2Config;
+    private final CommonL2Config      commonL2Config;
+    private final L2DSOConfig         dsoL2Config;
 
     public L2ConfigData(String name) throws ConfigurationSetupException {
       this.name = name;

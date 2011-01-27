@@ -53,9 +53,9 @@ public class BaseConfigurationSetupManager {
   private final Map                               springApplicationConfigs;
 
   public BaseConfigurationSetupManager(ConfigurationCreator configurationCreator,
-                                          DefaultValueProvider defaultValueProvider,
-                                          XmlObjectComparator xmlObjectComparator,
-                                          IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+                                       DefaultValueProvider defaultValueProvider,
+                                       XmlObjectComparator xmlObjectComparator,
+                                       IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
     Assert.assertNotNull(configurationCreator);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
@@ -104,10 +104,10 @@ public class BaseConfigurationSetupManager {
     return this.configurationCreator;
   }
 
-  protected final void runConfigurationCreator() throws ConfigurationSetupException {
+  protected final void runConfigurationCreator(boolean isClient) throws ConfigurationSetupException {
     this.configurationCreator.createConfigurationIntoRepositories(clientBeanRepository, serversBeanRepository,
                                                                   systemBeanRepository, tcPropertiesRepository,
-                                                                  applicationsRepository);
+                                                                  applicationsRepository, isClient);
   }
 
   public String[] applicationNames() {

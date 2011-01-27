@@ -21,7 +21,7 @@ public interface ConfigurationCreator {
                                            MutableBeanRepository l2sBeanRepository,
                                            MutableBeanRepository systemBeanRepository,
                                            MutableBeanRepository tcPropertiesRepository,
-                                           ApplicationsRepository applicationsRepository)
+                                           ApplicationsRepository applicationsRepository, boolean isClient)
       throws ConfigurationSetupException;
 
   /**

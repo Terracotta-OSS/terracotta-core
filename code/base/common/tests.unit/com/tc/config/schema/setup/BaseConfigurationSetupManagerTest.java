@@ -65,7 +65,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -108,7 +108,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -153,7 +153,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -201,7 +201,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -249,7 +249,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -308,7 +308,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -343,7 +343,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -372,7 +372,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -398,7 +398,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -418,7 +418,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -455,7 +455,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -497,7 +497,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -541,7 +541,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     writeConfigFile(config);
 
     try {
-      initializeAndGetBaseTVSConfigSetupManager();
+      initializeAndGetBaseTVSConfigSetupManager(false);
       Assert.fail("parsing should fail since maxDataSize was missing");
 
     } catch (ConfigurationSetupException e) {
@@ -571,7 +571,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -591,7 +591,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -640,7 +640,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -713,7 +713,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -755,7 +755,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
@@ -779,13 +779,29 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
 
     Assert.assertTrue(servers.isSetUpdateCheck());
     Assert.assertEquals(false, servers.getUpdateCheck().getEnabled());
     Assert.assertEquals(14, servers.getUpdateCheck().getPeriodDays());
+  }
+  
+  public void testClientNotInitialized() throws Exception{
+    this.tcConfig = getTempFile("default-config.xml");
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "</tc:tc-config>";
+
+    writeConfigFile(config);
+    
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
+
+    Client client = (Client) configSetupMgr.clientBeanRepository().bean();
+    Assert.assertNull(client);
+    
+    configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
+    client = (Client) configSetupMgr.clientBeanRepository().bean();
+    Assert.assertNotNull(client);
   }
 
   public void testDefaultClientLogDirectory() throws IOException, ConfigurationSetupException {
@@ -794,7 +810,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals(new File(ParameterSubstituter.substitute("logs-%i")).getAbsolutePath(), client.getLogs());
@@ -810,7 +826,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("/abc/xyz/tra", client.getLogs());
@@ -826,7 +842,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals(ParameterSubstituter.substitute("%i"), client.getLogs());
@@ -843,7 +859,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("node123", client.getLogs());
@@ -855,7 +871,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertTrue(client.isSetDso());
@@ -874,7 +890,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertTrue(client.isSetDso());
@@ -887,7 +903,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertTrue(client.isSetDso());
@@ -973,7 +989,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertTrue(client.isSetDso());
@@ -1067,7 +1083,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertTrue(client.isSetDso());
@@ -1131,7 +1147,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
         .bean();
@@ -1150,7 +1166,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     com.terracottatech.config.System system = (com.terracottatech.config.System) configSetupMgr.systemBeanRepository()
         .bean();
@@ -1165,7 +1181,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
     for (Iterator i = configSetupMgr.applicationsRepository().applicationNames(); i.hasNext();) {
       Application application = (Application) configSetupMgr.applicationsRepository().repositoryFor((String) i.next())
           .bean();
@@ -1186,7 +1202,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
     writeConfigFile(config);
 
-    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager();
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
     for (Iterator i = configSetupMgr.applicationsRepository().applicationNames(); i.hasNext();) {
       Application application = (Application) configSetupMgr.applicationsRepository().repositoryFor((String) i.next())
           .bean();
@@ -1195,7 +1211,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     }
   }
 
-  private BaseConfigurationSetupManager initializeAndGetBaseTVSConfigSetupManager()
+  private BaseConfigurationSetupManager initializeAndGetBaseTVSConfigSetupManager(boolean isClient)
       throws ConfigurationSetupException {
     String[] args = new String[] { "-f", tcConfig.getAbsolutePath() };
 
@@ -1227,7 +1243,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
                                                                                            new SchemaDefaultValueProvider(),
                                                                                            new StandardXmlObjectComparator(),
                                                                                            new FatalIllegalConfigurationChangeHandler());
-    configSetupMgr.runConfigurationCreator();
+    configSetupMgr.runConfigurationCreator(isClient);
 
     return configSetupMgr;
   }

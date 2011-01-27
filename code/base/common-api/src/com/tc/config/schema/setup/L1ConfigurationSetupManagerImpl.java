@@ -7,13 +7,13 @@ package com.tc.config.schema.setup;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.TcProperty;
+import com.tc.config.schema.CommonL1Config;
+import com.tc.config.schema.CommonL1ConfigObject;
 import com.tc.config.schema.ConfigTCProperties;
 import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.L2ConfigForL1;
 import com.tc.config.schema.L2ConfigForL1Object;
-import com.tc.config.schema.CommonL1Config;
-import com.tc.config.schema.CommonL1ConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
@@ -37,33 +37,33 @@ import java.util.Map;
  */
 public class L1ConfigurationSetupManagerImpl extends BaseConfigurationSetupManager implements
     L1ConfigurationSetupManager {
-  private final CommonL1Config  commonL1Config;
-  private final L1DSOConfig     dsoL1Config;
+  private final CommonL1Config     commonL1Config;
+  private final L1DSOConfig        dsoL1Config;
   private final ConfigTCProperties configTCProperties;
   private final boolean            loadedFromTrustedSource;
 
   public L1ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator,
-                                                DefaultValueProvider defaultValueProvider,
-                                                XmlObjectComparator xmlObjectComparator,
-                                                IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+                                         DefaultValueProvider defaultValueProvider,
+                                         XmlObjectComparator xmlObjectComparator,
+                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
     super(configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
     Assert.assertNotNull(configurationCreator);
 
-    runConfigurationCreator();
+    runConfigurationCreator(true);
     loadedFromTrustedSource = configurationCreator().loadedFromTrustedSource();
 
     commonL1Config = new CommonL1ConfigObject(createContext(clientBeanRepository(), null));
     configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     dsoL1Config = new L1DSOConfigObject(createContext(new ChildBeanRepository(clientBeanRepository(),
-                                                                                 DsoClientData.class,
-                                                                                 new ChildBeanFetcher() {
-                                                                                   public XmlObject getChild(
-                                                                                                             XmlObject parent) {
-                                                                                     return ((Client) parent).getDso();
-                                                                                   }
-                                                                                 }), null));
+                                                                              DsoClientData.class,
+                                                                              new ChildBeanFetcher() {
+                                                                                public XmlObject getChild(
+                                                                                                          XmlObject parent) {
+                                                                                  return ((Client) parent).getDso();
+                                                                                }
+                                                                              }), null));
 
     overwriteTcPropertiesFromConfig();
   }

@@ -35,10 +35,10 @@ public class TestConfigurationCreator extends StandardXMLFileConfigurationCreato
                                                   MutableBeanRepository l2sBeanRepository,
                                                   MutableBeanRepository systemBeanRepository,
                                                   MutableBeanRepository tcPropertiesRepository,
-                                                  ApplicationsRepository applicationsRepository)
+                                                  ApplicationsRepository applicationsRepository, boolean isClient)
       throws ConfigurationSetupException {
     loadConfigAndSetIntoRepositories(l1BeanRepository, l2sBeanRepository, systemBeanRepository, tcPropertiesRepository,
-                                     applicationsRepository);
+                                     applicationsRepository, isClient);
   }
 
   @Override
