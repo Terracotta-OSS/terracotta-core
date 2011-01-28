@@ -14,7 +14,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache
     artifactId: colorcache
     classifier: distribution
-    version: 3.5.0-SNAPSHOT
+    version: 3.6.0-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/colorcache
     explode: true
@@ -25,7 +25,7 @@ artifacts:
     groupId: org.terracotta.samples.ehcache.hibernate
     artifactId: events
     classifier: distribution
-    version: 3.5.0-SNAPSHOT
+    version: 3.6.0-SNAPSHOT
     type: tar.gz
     destination: ehcache/samples/hibernate
     explode: true

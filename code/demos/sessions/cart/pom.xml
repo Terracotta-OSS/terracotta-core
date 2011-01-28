@@ -6,7 +6,7 @@
 
   <groupId>org.terracotta.samples.sessions</groupId>
   <artifactId>cart</artifactId>
-  <version>3.5.0-SNAPSHOT</version>
+  <version>3.6.0-SNAPSHOT</version>
   <name>Cart</name>
   <packaging>war</packaging>
 
