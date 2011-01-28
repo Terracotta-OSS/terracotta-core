@@ -132,18 +132,16 @@ public class TransactionSequencer {
       this.transactionSizeCounter.increment(0, numTransactionsDelta);
     }
 
-    if (!txn.isConcurrent()) {
-      TransactionID txnID;
-      if (folded) {
-        // merge locks if folded
-        txnID = foldInfo.getFoldedTransactionID();
-      } else {
-        // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
-        txnID = txn.getTransactionID();
-      }
-      if (txnID.isNull()) { throw new AssertionError("Transaction id is null"); }
-      this.lockAccounting.add(txnID, txn.getAllLockIDs());
+    TransactionID txnID;
+    if (folded) {
+      // merge locks if folded
+      txnID = foldInfo.getFoldedTransactionID();
+    } else {
+      // It is important to add the lock accounting before exposing the current batch to be sent (ie. put() below)
+      txnID = txn.getTransactionID();
     }
+    if (txnID.isNull()) { throw new AssertionError("Transaction id is null"); }
+    this.lockAccounting.add(txnID, txn.getAllLockIDs());
 
     if (this.currentBatch.byteSize() > MAX_BYTE_SIZE_FOR_BATCH) {
       put(this.currentBatch);
