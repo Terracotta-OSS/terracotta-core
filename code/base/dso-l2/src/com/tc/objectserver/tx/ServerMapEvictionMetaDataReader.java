@@ -116,6 +116,10 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       throw new UnsupportedOperationException();
     }
 
+    public void set(String name, Object newValue) {
+      throw new UnsupportedOperationException();
+    }
+
     public String getCategory() {
       return "SEARCH";
     }

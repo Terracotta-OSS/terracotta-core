@@ -13,10 +13,12 @@ import com.tc.util.ClassUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -73,7 +75,7 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
       data.add(AbstractNVPair.deserializeInstance(in));
     }
 
-    return new MetaDataDescriptorImpl(cat, data, id);
+    return new MetaDataDescriptorImpl(cat, Collections.unmodifiableList(data), id);
   }
 
   public void serializeTo(TCByteBufferOutput out) {
@@ -155,6 +157,16 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
 
   public void addNull(String name) {
     metaDatas.add(new AbstractNVPair.NullNVPair(name));
+  }
+
+  public void set(String name, Object value) {
+    for (ListIterator<NVPair> iter = metaDatas.listIterator(); iter.hasNext();) {
+      NVPair nvPair = iter.next();
+
+      if (nvPair.getName().equals(name)) {
+        iter.set(nvPair.cloneWithNewValue(value));
+      }
+    }
   }
 
   public void add(String name, Object value) {

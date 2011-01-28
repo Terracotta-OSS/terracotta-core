@@ -17,6 +17,8 @@ public interface NVPair extends TCSerializable, Serializable {
 
   NVPair cloneWithNewName(String newName);
 
+  NVPair cloneWithNewValue(Object newValue);
+
   // XXX: remove this from the interface?
   String valueAsString();
 }

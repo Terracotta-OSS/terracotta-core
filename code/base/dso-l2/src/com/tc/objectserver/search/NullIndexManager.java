@@ -22,7 +22,7 @@ public class NullIndexManager implements IndexManager {
   }
 
   public void shutdown() {
-    // no nothing
+    //
   }
 
   public void remove(String indexName, Object key, MetaDataProcessingContext metaDataContext) {
@@ -48,6 +48,11 @@ public class NullIndexManager implements IndexManager {
 
   public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove,
                                  MetaDataProcessingContext metaDataContext) {
+    //
+  }
+
+  public void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
+                      MetaDataProcessingContext metaDataContext) {
     //
   }
 

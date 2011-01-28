@@ -64,6 +64,15 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
+    } else if (context instanceof SearchReplaceContext) {
+      SearchReplaceContext src = (SearchReplaceContext) context;
+      try {
+        this.indexManager.replace(src.getCacheName(), src.getCacheKey(), src.getCacheValue(), src.getPreviousValue(),
+                                  src.getAttributes(), src.getMetaDataProcessingContext());
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
     } else {
       throw new AssertionError("Unknown context: " + context);
     }

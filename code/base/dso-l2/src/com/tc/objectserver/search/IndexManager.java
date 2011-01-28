@@ -14,9 +14,6 @@ import java.util.Set;
 
 public interface IndexManager {
 
-  /**
-   * This method is used by the server side evictor
-   */
   void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, MetaDataProcessingContext metaDataContext)
       throws IndexException;
 
@@ -36,4 +33,7 @@ public interface IndexManager {
   void release();
 
   void shutdown();
+
+  void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
+               MetaDataProcessingContext metaDataContext) throws IndexException;
 }
