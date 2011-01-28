@@ -106,9 +106,13 @@ module BundledComponents
     end
   end
 
-  def add_module_packages(component, destdir=libpath(component))
+  def add_module_packages(component, destdir=nil)
     (component[:module_packages] || []).each do |module_package|
       module_package.keys.each do |name|
+        if module_package[name]['install_directory'].nil? && destdir.nil?
+          puts "Skipping module package #{name} since it's not part of the kit"
+          next
+        end
         runtime_classes_dir = FilePath.new(@build_results.artifacts_classes_directory, @flavor.downcase, name)
         start_from_scratch = false
         if !runtime_classes_dir.exist?
