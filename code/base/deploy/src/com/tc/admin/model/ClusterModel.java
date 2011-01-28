@@ -115,7 +115,11 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   protected IServer createConnectServer(String host, int jmxPort) {
-    return new Server(this, host, jmxPort, false);
+    return new Server(this, host, jmxPort, false) {
+      @Override
+      protected void connectionEstablished() {/**/
+      }
+    };
   }
 
   public IServer getConnectServer() {
@@ -633,11 +637,11 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     });
   }
 
-  public synchronized Future<String> takeThreadDump(IClusterNode node) {
+  public Future<String> takeThreadDump(IClusterNode node) {
     return threadDumpFuture(executor, node, System.currentTimeMillis());
   }
 
-  public synchronized Map<IClusterNode, Future<String>> takeThreadDump() {
+  public Map<IClusterNode, Future<String>> takeThreadDump() {
     IServer activeCoord = getActiveCoordinator();
 
     if (activeCoord != null) {
@@ -659,11 +663,11 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     return Collections.emptyMap();
   }
 
-  public synchronized Future<String> takeClusterDump(IClusterNode node) {
+  public Future<String> takeClusterDump(IClusterNode node) {
     return clusterDumpFuture(executor, node);
   }
 
-  public synchronized Map<IClusterNode, Future<String>> takeClusterDump() {
+  public Map<IClusterNode, Future<String>> takeClusterDump() {
     IServer activeCoord = getActiveCoordinator();
 
     if (activeCoord != null) {
@@ -797,8 +801,8 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
             }
             group.connect();
           }
-          stopConnectListenerLater();
           setConnected(true);
+          stopConnectListenerLater();
         }
       }
     }

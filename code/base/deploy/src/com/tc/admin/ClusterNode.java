@@ -499,6 +499,9 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
         nodeStructureChanged();
         controller.expand(this);
         controller.expand(topologyNode);
+        if (featuresNode.getParent() != null) {
+          controller.expand(featuresNode);
+        }
       }
     } catch (Throwable t) {
       adminClientContext.log(t);

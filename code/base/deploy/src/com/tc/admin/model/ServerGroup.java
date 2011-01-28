@@ -100,6 +100,7 @@ public class ServerGroup implements IServerGroup {
   private void setActiveServer(IServer theActiveServer) {
     IServer oldActiveServer = getActiveServer();
     if (oldActiveServer != null) {
+      if (oldActiveServer == theActiveServer) { return; }
       if (oldActiveServer.isActive()) {
         oldActiveServer.splitbrain();
         theActiveServer.splitbrain();
@@ -147,10 +148,12 @@ public class ServerGroup implements IServerGroup {
 
   public void connect() {
     for (IServer member : getMembers()) {
+      member.addPropertyChangeListener(serverPropertyChangeListener);
+    }
+    for (IServer member : getMembers()) {
       if (member.isActive()) {
         setActiveServer(member);
       }
-      member.addPropertyChangeListener(serverPropertyChangeListener);
     }
   }
 

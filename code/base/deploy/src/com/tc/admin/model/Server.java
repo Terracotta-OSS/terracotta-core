@@ -344,7 +344,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  private void connectionEstablished() {
+  protected void connectionEstablished() {
     Set<ObjectName> theReadySet = getReadySet();
     if (theReadySet == null) { return; }
 
@@ -365,10 +365,10 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       oldConnected = isConnected();
       this.connected = connected;
     }
+    firePropertyChange(PROP_CONNECTED, !connected, connected);
     if (connected == true && oldConnected == false) {
       connectionEstablished();
     }
-    firePropertyChange(PROP_CONNECTED, !connected, connected);
     if (oldConnected == true && connected == false) {
       setReady(false);
       handleDisconnect();
@@ -994,8 +994,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       synchronized (this) {
         theReadySet.remove(beanName);
       }
-      boolean isReady = theReadySet.isEmpty();
-      setReady(isReady);
+      setReady(theReadySet.isEmpty());
     }
   }
 

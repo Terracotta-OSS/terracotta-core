@@ -184,7 +184,6 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
 
     if (featureNode.isPresentationReady()) {
       testAddToParent();
-      adminClientContext.getAdminClientController().expand(this);
       int i = 0;
       for (Enumeration<FeatureNode> ce = children(); ce.hasMoreElements();) {
         if (featureNode.getLabel().compareTo(ce.nextElement().getLabel()) < 0) {
@@ -193,7 +192,7 @@ public class FeaturesNode extends ComponentNode implements NotificationListener,
         i++;
       }
       insertChild(featureNode, i);
-      adminClientContext.getAdminClientController().expand(featureNode);
+      adminClientContext.getAdminClientController().expand(this);
       if (acp != null) {
         acp.activeFeatureAdded(featureNode.getName());
       }
