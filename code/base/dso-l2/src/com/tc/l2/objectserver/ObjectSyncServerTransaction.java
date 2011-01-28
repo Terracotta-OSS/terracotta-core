@@ -26,14 +26,16 @@ import java.util.Map;
 
 public class ObjectSyncServerTransaction implements ServerTransaction {
 
-  private static final long[]       EMPTY_LONG_ARRAY = new long[0];
+  private static final long[]           EMPTY_LONG_ARRAY             = new long[0];
 
-  private final TransactionID       txnID;
-  private final ObjectIDSet         oids;
-  private final List                changes;
-  private final ServerTransactionID serverTxnID;
-  private final Map                 rootsMap;
-  private final NodeID              serverID;
+  private static final MetaDataReader[] EMPTY_META_DATA_READER_ARRAY = new MetaDataReader[] {};
+
+  private final TransactionID           txnID;
+  private final ObjectIDSet             oids;
+  private final List                    changes;
+  private final ServerTransactionID     serverTxnID;
+  private final Map                     rootsMap;
+  private final NodeID                  serverID;
 
   public ObjectSyncServerTransaction(final ServerTransactionID serverTransactionID, final ObjectIDSet oids,
                                      final int dnaCount, final List changes, final Map rootsMap, final NodeID serverID) {
@@ -72,11 +74,9 @@ public class ObjectSyncServerTransaction implements ServerTransaction {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * TODO SEARCH: COME BACK TO THIS
-   */
   public MetaDataReader[] getMetaDataReaders() {
-    return new MetaDataReader[] {};
+    // meta data is not stored in the object state so there is nothing to provide here on the object sync.
+    return EMPTY_META_DATA_READER_ARRAY;
   }
 
   public LockID[] getLockIDs() {
