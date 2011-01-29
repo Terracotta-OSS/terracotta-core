@@ -17,7 +17,7 @@ echo Go to: http://localhost:9081/Cart
 echo off
 
 call bin\start-jetty.bat 9082
-echo Go to: http://localhost:9081/Cart
+echo Go to: http://localhost:9082/Cart
 echo off
 
 endlocal

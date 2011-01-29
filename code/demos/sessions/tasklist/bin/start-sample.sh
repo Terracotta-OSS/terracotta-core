@@ -27,6 +27,6 @@ echo
 sleep 3
 
 $root/bin/start-jetty.sh 9082
-echo "Go to: http://localhost:9081/DepartmentTaskList"
+echo "Go to: http://localhost:9082/DepartmentTaskList"
 echo
  
