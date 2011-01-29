@@ -229,8 +229,8 @@ import com.tc.objectserver.persistence.db.TempSwapDBPersistorImpl;
 import com.tc.objectserver.persistence.inmemory.TransactionStoreImpl;
 import com.tc.objectserver.search.IndexHACoordinator;
 import com.tc.objectserver.search.SearchEventHandler;
-import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.search.SearchQueryRequestMessageHandler;
+import com.tc.objectserver.search.SearchRequestManager;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
@@ -831,12 +831,12 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     int searchThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_SEARCH_THREADS);
 
     final Stage searchEventStage = stageManager.createStage(ServerConfigurationContext.SEARCH_EVENT_STAGE,
-                                                            new SearchEventHandler(), searchThreads, maxStageSize);
+                                                            new SearchEventHandler(), searchThreads, 1, maxStageSize);
 
     int queryThreads = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_QUERY_THREADS);
     final Stage searchQueryRequestStage = stageManager
         .createStage(ServerConfigurationContext.SEARCH_QUERY_REQUEST_STAGE, new SearchQueryRequestMessageHandler(),
-                     queryThreads, maxStageSize);
+                     queryThreads, 1, maxStageSize);
 
     final Sink searchEventSink = searchEventStage.getSink();
 
