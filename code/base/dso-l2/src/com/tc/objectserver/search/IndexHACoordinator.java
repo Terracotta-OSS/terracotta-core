@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public interface IndexHACoordinator extends IndexManager, StateChangeListener {
 
-  public void applyTempJournalsAndSwitch() throws IOException;
+  public void applyTempJournals() throws IOException;
 
   public void applyIndexSync(String indexName, String fileName, byte[] fileData);
 
