@@ -9,6 +9,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.TransparencyClassSpec;
 import com.tc.simulator.app.ApplicationConfig;
 import com.tc.simulator.listener.ListenerProvider;
+import com.tc.util.concurrent.ThreadUtil;
 import com.tc.util.runtime.Os;
 import com.tctest.runner.AbstractErrorCatchingTransparentApp;
 
@@ -211,6 +212,7 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
               removeCount++;
             }
           }
+          ThreadUtil.reallySleep(100);
 
           if (removeCount % 100 == 0) {
             log("remove count = " + removeCount);
