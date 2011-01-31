@@ -16,7 +16,7 @@ This document is part of the Terracotta download for supported UNIX/Linux
 platforms and Microsoft Windows. For the latest supported platforms, 
 including JVMs and application servers, see the list of certified Terracotta 
 platforms at 
-http://www.terracotta.org/kit/reflector?kitID=3.5.0&pageID=PlatformSupport.
+http://www.terracotta.org/kit/reflector?kitID=default&pageID=PlatformSupport
 
 
 General Considerations
