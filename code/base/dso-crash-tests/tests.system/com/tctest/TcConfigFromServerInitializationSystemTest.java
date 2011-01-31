@@ -55,11 +55,11 @@ public class TcConfigFromServerInitializationSystemTest extends BaseDSOTestCase 
   public void testFailover() throws Exception {
     ExtraL1ProcessControl client1 = createClient(0, 2);
     client1.start();
-    ThreadUtil.reallySleep(5000);
+    ThreadUtil.reallySleep(30000);
 
     ExtraL1ProcessControl client2 = createClient(0, 2);
     client2.start();
-    ThreadUtil.reallySleep(5000);
+    ThreadUtil.reallySleep(30000);
     File workingDirectory = new File(TcConfigFromServerInitializationSystemTest.class.getSimpleName() + File.separator
                                      + "l1client0");
     System.out.println("XXXX " + workingDirectory.getAbsolutePath());
