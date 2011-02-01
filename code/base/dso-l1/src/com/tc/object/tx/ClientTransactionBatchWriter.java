@@ -555,6 +555,11 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
         if (isNew) {
           tco.dehydrate(writer);
           tco.setNotNew();
+
+          if (buffer.hasMetaData()) {
+            // DEV-5320
+            logger.error("not sending meta data attached to \"new\" object of type " + tco.getTCClass().getName());
+          }
         } else {
           buffer.writeTo(writer);
         }

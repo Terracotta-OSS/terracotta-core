@@ -29,4 +29,6 @@ public interface TCChangeBuffer {
 
   public void addMetaDataDescriptor(MetaDataDescriptorInternal md);
 
+  public boolean hasMetaData();
+
 }

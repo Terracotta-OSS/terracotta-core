@@ -179,4 +179,8 @@ public class TCChangeBufferImpl implements TCChangeBuffer {
     metaData.add(md);
   }
 
+  public boolean hasMetaData() {
+    return !metaData.isEmpty();
+  }
+
 }
