@@ -96,7 +96,7 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>jmxremote_optional-tc</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.beanshell</groupId>
@@ -197,7 +197,7 @@
       <dependency>
         <groupId>org.terracotta.license</groupId>
         <artifactId>terracotta-license</artifactId>
-        <version>1.0.1-SNAPSHOT</version>
+        <version>1.0.1</version>
       </dependency>      
       
 
