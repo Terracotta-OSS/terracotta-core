@@ -65,6 +65,8 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
 
     // wait for completion of daemon threads launched by getAllObjectIDs() & getAllMapsObjectIDs()
     this.managedObjectPersistor.snapshotObjectIDs();
+    this.managedObjectPersistor.snapshotEvictableObjectIDs();
+    this.managedObjectPersistor.snapshotMapTypeObjectIDs();
   }
 
   private BerkeleyDBEnvironment newDBEnvironment() throws Exception {
