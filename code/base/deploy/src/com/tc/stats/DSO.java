@@ -583,16 +583,31 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     }
   }
 
-  public void setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) {
+  private static Exception newPlainException(Exception e) {
+    String type = e.getClass().getName();
+    if (type.startsWith("java.") || type.startsWith("javax.")) {
+      return e;
+    } else {
+      RuntimeException result = new RuntimeException(e.getMessage());
+      result.setStackTrace(e.getStackTrace());
+      return result;
+    }
+  }
+
+  public Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) {
+    Map<ObjectName, Exception> result = new HashMap<ObjectName, Exception>();
     Iterator<ObjectName> onIter = onSet.iterator();
     Attribute attribute = new Attribute(attrName, attrValue);
+    ObjectName on;
     while (onIter.hasNext()) {
+      on = onIter.next();
       try {
-        mbeanServer.setAttribute(onIter.next(), attribute);
+        mbeanServer.setAttribute(on, attribute);
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        result.put(on, newPlainException(e));
       }
     }
+    return result;
   }
 
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,

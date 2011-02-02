@@ -236,4 +236,12 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public boolean isEnterprise() {
     return false;
   }
+
+  public String getTCProperties() {
+    return null;
+  }
+
+  public String[] getProcessArguments() {
+    return null;
+  }
 }

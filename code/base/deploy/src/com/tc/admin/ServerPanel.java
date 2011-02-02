@@ -16,6 +16,8 @@ import com.tc.admin.common.XScrollPane;
 import com.tc.admin.common.XTabbedPane;
 import com.tc.admin.common.XTextArea;
 import com.tc.admin.model.IServer;
+import com.tc.management.beans.L2MBeanNames;
+import com.tc.util.StringUtil;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
@@ -26,10 +28,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import javax.management.ObjectName;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -43,6 +50,8 @@ public class ServerPanel extends XContainer {
   private XContainer         restartInfoItem;
   private PropertyTable      propertyTable;
   private XTextArea          environmentTextArea;
+  private XTextArea          tcPropertiesTextArea;
+  private XTextArea          processArgumentsTextArea;
   private XTextArea          configTextArea;
   private ServerLoggingPanel loggingPanel;
 
@@ -100,6 +109,24 @@ public class ServerPanel extends XContainer {
     envPanel.add(new XScrollPane(environmentTextArea));
     envPanel.add(new SearchPanel(appContext, environmentTextArea), BorderLayout.SOUTH);
     tabbedPane.addTab(appContext.getString("node.environment"), envPanel);
+
+    /** TCProperies **/
+    XContainer tcPropsPanel = new XContainer(new BorderLayout());
+    tcPropertiesTextArea = new XTextArea();
+    tcPropertiesTextArea.setEditable(false);
+    tcPropertiesTextArea.setFont((Font) appContext.getObject("textarea.font"));
+    tcPropsPanel.add(new XScrollPane(tcPropertiesTextArea));
+    tcPropsPanel.add(new SearchPanel(appContext, tcPropertiesTextArea), BorderLayout.SOUTH);
+    tabbedPane.addTab(appContext.getString("node.tcProperties"), tcPropsPanel);
+
+    /** Process Arguments **/
+    XContainer argsPanel = new XContainer(new BorderLayout());
+    processArgumentsTextArea = new XTextArea();
+    processArgumentsTextArea.setEditable(false);
+    processArgumentsTextArea.setFont((Font) appContext.getObject("textarea.font"));
+    argsPanel.add(new XScrollPane(processArgumentsTextArea));
+    argsPanel.add(new SearchPanel(appContext, processArgumentsTextArea), BorderLayout.SOUTH);
+    tabbedPane.addTab(appContext.getString("node.processArguments"), argsPanel);
 
     /** Config **/
     XContainer configPanel = new XContainer(new BorderLayout());
@@ -205,15 +232,24 @@ public class ServerPanel extends XContainer {
   }
 
   private static class ServerState {
-    private final Date   fStartDate;
-    private final Date   fActivateDate;
-    private final String fEnvironment;
-    private final String fConfig;
+    private final Date     fStartDate;
+    private final Date     fActivateDate;
+    private final String   fEnvironment;
+    private final String   fTCProperties;
+    private final String[] fProcessArguments;
+    private final String   fConfig;
 
-    ServerState(Date startDate, Date activateDate, String environment, String config) {
+    ServerState() {
+      this(new Date(), new Date(), "", "", new String[] {}, "");
+    }
+
+    ServerState(Date startDate, Date activateDate, String environment, String tcProperties, String[] processArguments,
+                String config) {
       fStartDate = startDate;
       fActivateDate = activateDate;
       fEnvironment = environment;
+      fTCProperties = tcProperties;
+      fProcessArguments = processArguments;
       fConfig = config;
 
     }
@@ -230,10 +266,35 @@ public class ServerPanel extends XContainer {
       return fEnvironment;
     }
 
+    String getTCProperties() {
+      return fTCProperties;
+    }
+
+    String[] getProcessArguments() {
+      return fProcessArguments;
+    }
+
     String getConfig() {
       return fConfig;
     }
 
+    private static long safeGetLong(Map<String, Object> values, String key) {
+      Object val = values.get(key);
+      if (val instanceof Long) { return ((Long) val).longValue(); }
+      return 0;
+    }
+
+    private static String safeGetString(Map<String, Object> values, String key) {
+      Object val = values.get(key);
+      if (val != null) { return val.toString(); }
+      return "";
+    }
+
+    private static String[] safeGetStringArray(Map<String, Object> values, String key) {
+      Object val = values.get(key);
+      if (val != null && val.getClass().isArray() && val.getClass().getComponentType() == String.class) { return (String[]) val; }
+      return new String[] {};
+    }
   }
 
   /**
@@ -245,12 +306,23 @@ public class ServerPanel extends XContainer {
         public ServerState call() throws Exception {
           IServer theServer = getServer();
           if (theServer == null) throw new IllegalStateException("not connected");
-          Date startDate = new Date(theServer.getStartTime());
-          Date activateDate = new Date(theServer.getActivateTime());
-          String environment = theServer.getEnvironment();
-          String config = theServer.getConfig();
-
-          return new ServerState(startDate, activateDate, environment, config);
+          Map<ObjectName, Set<String>> request = new HashMap<ObjectName, Set<String>>();
+          request.put(L2MBeanNames.TC_SERVER_INFO,
+                      new HashSet(Arrays.asList(new String[] { "StartTime", "ActivateTime", "Environment",
+                          "TCProperties", "ProcessArguments", "Config" })));
+          Map<ObjectName, Map<String, Object>> result = theServer.getAttributeMap(request);
+          Map<String, Object> values = result.get(L2MBeanNames.TC_SERVER_INFO);
+          if (values != null) {
+            Date startDate = new Date(ServerState.safeGetLong(values, "StartTime"));
+            Date activateDate = new Date(ServerState.safeGetLong(values, "ActivateTime"));
+            String environment = ServerState.safeGetString(values, "Environment");
+            String tcProps = ServerState.safeGetString(values, "TCProperties");
+            String[] args = ServerState.safeGetStringArray(values, "ProcessArguments");
+            String config = ServerState.safeGetString(values, "Config");
+            return new ServerState(startDate, activateDate, environment, tcProps, args, config);
+          } else {
+            return new ServerState();
+          }
         }
       }, 5, TimeUnit.SECONDS);
     }
@@ -271,6 +343,8 @@ public class ServerPanel extends XContainer {
           ServerState serverState = getResult();
           showInfoContent();
           environmentTextArea.setText(serverState.getEnvironment());
+          tcPropertiesTextArea.setText(serverState.getTCProperties());
+          processArgumentsTextArea.setText(StringUtil.toString(serverState.getProcessArguments(), "\n", null, null));
           configTextArea.setText(serverState.getConfig());
           if (loggingPanel != null) {
             loggingPanel.setupLoggingControls();
@@ -427,7 +501,7 @@ public class ServerPanel extends XContainer {
     IServer theServer = getServer();
     if (theServer == null) return;
     statusView.setText(text);
-    statusView.setIndicator(ServerHelper.getHelper().getServerStatusColor(theServer));
+    ServerHelper.getHelper().setStatusView(theServer, statusView);
     statusView.revalidate();
     statusView.repaint();
   }
@@ -490,6 +564,8 @@ public class ServerPanel extends XContainer {
     statusView = null;
     tabbedPane = null;
     environmentTextArea = null;
+    tcPropertiesTextArea = null;
+    processArgumentsTextArea = null;
     configTextArea = null;
     loggingPanel = null;
   }

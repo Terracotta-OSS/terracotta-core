@@ -56,12 +56,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDefaults1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    + "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -98,13 +94,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDefaults2() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<dso-port>8513</dso-port>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<dso-port>8513</dso-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -143,13 +134,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDefaults3() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<dso-port bind=\"1.2.3.4\">8513</dso-port>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -189,14 +175,9 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDefaults4() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<dso-port bind=\"1.2.3.4\">8513</dso-port>" 
-                    +     "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    +     "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" 
-                    +   "</server>" 
-                    + "</servers>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -232,19 +213,12 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDefaults5() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<dso-port bind=\"1.2.3.4\">8513</dso-port>" 
-                    +     "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    +     "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" 
-                    +   "</server>"
-                    +   "<server host=\"testHost2\" name=\"server2\" bind=\"4.5.6.7\">"
-                    +     "<dso-port bind=\"1.2.3.4\">8513</dso-port>" 
-                    +     "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
-                    +     "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" 
-                    +   "</server>" 
-                    + "</servers>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>"
+                    + "<server host=\"testHost2\" name=\"server2\" bind=\"4.5.6.7\">"
+                    + "<dso-port bind=\"1.2.3.4\">8513</dso-port>" + "<jmx-port bind=\"4.3.2.1\">9513</jmx-port>"
+                    + "<l2-group-port bind=\"5.6.7.8\">7513</l2-group-port>" + "</server>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -299,12 +273,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDiretctoryDefaults() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    + " </server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + " </server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -329,17 +299,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerDiretctoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<data>abc/xyz/123</data>" 
-                    +     "<logs>xyz/abc/451</logs>"
-                    +     "<data-backup>/qrt/opt/pqr</data-backup>" 
-                    +     "<statistics>/opq/pqr/123/or</statistics>"
-                    +     "<index>/rta/try/456</index>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<data>abc/xyz/123</data>" + "<logs>xyz/abc/451</logs>"
+                    + "<data-backup>/qrt/opt/pqr</data-backup>" + "<statistics>/opq/pqr/123/or</statistics>"
+                    + "<index>/rta/try/456</index>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -350,8 +313,10 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "abc/xyz/123").getAbsolutePath(), server.getData());
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + "xyz/abc/451").getAbsolutePath(), server.getLogs());
+    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
+                                 + "abc/xyz/123").getAbsolutePath(), server.getData());
+    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
+                                 + "xyz/abc/451").getAbsolutePath(), server.getLogs());
     Assert.assertEquals("/qrt/opt/pqr", server.getDataBackup());
     Assert.assertEquals("/opq/pqr/123/or", server.getStatistics());
     Assert.assertEquals("/rta/try/456", server.getIndex());
@@ -359,16 +324,9 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testServerSubsitutedDirtctoryPaths() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +     "<data>%h</data>" 
-                    +     "<logs>%i</logs>" 
-                    +     "<data-backup>%H</data-backup>"
-                    +     "<statistics>%n</statistics>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "<data>%h</data>" + "<logs>%i</logs>" + "<data-backup>%H</data-backup>"
+                    + "<statistics>%n</statistics>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -379,22 +337,18 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(1, servers.getServerArray().length);
     Server server = servers.getServerArray(0);
 
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + InetAddress.getLocalHost().getHostName())
-    .getAbsolutePath(), server.getData());
-    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator + InetAddress.getLocalHost().getHostAddress())
-    .getAbsolutePath(), server.getLogs());
+    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
+                                 + InetAddress.getLocalHost().getHostName()).getAbsolutePath(), server.getData());
+    Assert.assertEquals(new File(BaseConfigurationSetupManagerTest.class.getSimpleName() + File.separator
+                                 + InetAddress.getLocalHost().getHostAddress()).getAbsolutePath(), server.getLogs());
     Assert.assertEquals(System.getProperty("user.home"), server.getDataBackup());
     Assert.assertEquals(System.getProperty("user.name"), server.getStatistics());
   }
 
   public void testDefaultDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -435,23 +389,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>" 
-                    +     "<dso>"
-                    +       "<persistence>" 
-                    +         "<mode>permanent-store</mode>" 
-                    +       "</persistence>"
-                    +       "<client-reconnect-window>9876</client-reconnect-window>" 
-                    +       "<garbage-collection>"
-                    +         "<enabled>false</enabled>" 
-                    +         "<verbose>true</verbose>" 
-                    +         "<interval>1234</interval>"
-                    +         "</garbage-collection>" 
-                    +     "</dso>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
+                    + "<persistence>" + "<mode>permanent-store</mode>" + "</persistence>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
+                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
+                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -473,27 +415,12 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testOffHeap1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>" 
-                    +     "<dso>"
-                    +       "<persistence>" 
-                    +         "<mode>permanent-store</mode>" 
-                    +         "<offheap>" 
-                    +           "<enabled>true</enabled>"
-                    +           "<maxDataSize>5628m</maxDataSize>" 
-                    +         "</offheap>" 
-                    +       "</persistence>"
-                    +       "<client-reconnect-window>9876</client-reconnect-window>" 
-                    +       "<garbage-collection>"
-                    +         "<enabled>false</enabled>" 
-                    +         "<verbose>true</verbose>" 
-                    +         "<interval>1234</interval>"
-                    +       "</garbage-collection>" 
-                    +     "</dso>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
+                    + "<persistence>" + "<mode>permanent-store</mode>" + "<offheap>" + "<enabled>true</enabled>"
+                    + "<maxDataSize>5628m</maxDataSize>" + "</offheap>" + "</persistence>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
+                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
+                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -517,25 +444,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testOffHeap2() throws IOException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>" 
-                    +     "<dso>"
-                    +       "<persistence>" 
-                    +         "<mode>permanent-store</mode>" 
-                    +         "<offheap>" 
-                    +           "<enabled>true</enabled>"
-                    +         "</offheap>" 
-                    +       "</persistence>" 
-                    +       "<client-reconnect-window>9876</client-reconnect-window>"
-                    +       "<garbage-collection>" 
-                    +         "<enabled>false</enabled>" 
-                    +         "<verbose>true</verbose>"
-                    +         "<interval>1234</interval>" 
-                    +       "</garbage-collection>" 
-                    +     "</dso>" 
-                    +   "</server>" 
-                    + "</servers>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
+                    + "<persistence>" + "<mode>permanent-store</mode>" + "<offheap>" + "<enabled>true</enabled>"
+                    + "</offheap>" + "</persistence>" + "<client-reconnect-window>9876</client-reconnect-window>"
+                    + "<garbage-collection>" + "<enabled>false</enabled>" + "<verbose>true</verbose>"
+                    + "<interval>1234</interval>" + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -551,23 +464,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>" 
-                    +     "<dso>"
-                    +       "<persistence>" 
-                    +         "<mode>permanent-store</mode>" 
-                    +       "</persistence>"
-                    +       "<client-reconnect-window>9876</client-reconnect-window>" 
-                    +       "<garbage-collection>"
-                    +         "<enabled>false</enabled>" 
-                    +         "<verbose>true</verbose>" 
-                    +         "<interval>1234</interval>"
-                    +       "</garbage-collection>" 
-                    +     "</dso>" 
-                    +   "</server>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>" + "<dso>"
+                    + "<persistence>" + "<mode>permanent-store</mode>" + "</persistence>"
+                    + "<client-reconnect-window>9876</client-reconnect-window>" + "<garbage-collection>"
+                    + "<enabled>false</enabled>" + "<verbose>true</verbose>" + "<interval>1234</interval>"
+                    + "</garbage-collection>" + "</dso>" + "</server>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -615,27 +516,15 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testMirrorGroupWithDefaultHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>"
-                    +   "<server host=\"eng01\" name=\"server1\"></server>"
-                    +   "<server host=\"eng02\" name=\"server2\"></server>"
-                    +   "<server host=\"eng03\" name=\"server3\"></server>"
-                    +   "<server host=\"eng04\" name=\"server4\"></server>" 
-                    +   "<mirror-groups>"
-                    +     "<mirror-group group-name=\"group1\">" 
-                    +     "<members>" 
-                    +       "<member>server1</member>"
-                    +       "<member>server2</member>" 
-                    +     "</members>" 
-                    +   "</mirror-group>"
-                    +   "<mirror-group group-name=\"group2\">" 
-                    +     "<members>" 
-                    +       "<member>server3</member>"
-                    +       "<member>server4</member>" 
-                    +     "</members>" 
-                    +   "</mirror-group>" 
-                    +   "</mirror-groups>" 
-                    + "</servers>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
+                    + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>"
+                    + "<server host=\"eng03\" name=\"server3\"></server>"
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
+                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
+                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
+                    + "<member>server4</member>" + "</members>" + "</mirror-group>" + "</mirror-groups>" + "</servers>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -679,37 +568,18 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testMirrorGroupWithGivenHa() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>"
-                    +   "<server host=\"eng01\" name=\"server1\"></server>"
-                    +   "<server host=\"eng02\" name=\"server2\"></server>"
-                    +   "<server host=\"eng03\" name=\"server3\"></server>"
-                    +   "<server host=\"eng04\" name=\"server4\"></server>" 
-                    +   "<mirror-groups>"
-                    +     "<mirror-group group-name=\"group1\">" 
-                    +       "<members>" 
-                    +         "<member>server1</member>"
-                    +         "<member>server2</member>" 
-                    +       "</members>" 
-                    +     "</mirror-group>"
-                    +     "<mirror-group group-name=\"group2\">" 
-                    +       "<members>" 
-                    +         "<member>server3</member>"
-                    +         "<member>server4</member>" 
-                    +       "</members>" 
-                    +       "<ha>" 
-                    +         "<mode>networked-active-passive</mode>"
-                    +           "<networked-active-passive>" 
-                    +             "<election-time>15</election-time>"
-                    +           "</networked-active-passive>" 
-                    +       "</ha>" 
-                    +       "</mirror-group>" 
-                    +     "</mirror-groups>" 
-                    +   "<ha>"
-                    +     "<mode>disk-based-active-passive</mode>" 
-                    +   "</ha>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>"
+                    + "<server host=\"eng01\" name=\"server1\"></server>"
+                    + "<server host=\"eng02\" name=\"server2\"></server>"
+                    + "<server host=\"eng03\" name=\"server3\"></server>"
+                    + "<server host=\"eng04\" name=\"server4\"></server>" + "<mirror-groups>"
+                    + "<mirror-group group-name=\"group1\">" + "<members>" + "<member>server1</member>"
+                    + "<member>server2</member>" + "</members>" + "</mirror-group>"
+                    + "<mirror-group group-name=\"group2\">" + "<members>" + "<member>server3</member>"
+                    + "<member>server4</member>" + "</members>" + "<ha>" + "<mode>networked-active-passive</mode>"
+                    + "<networked-active-passive>" + "<election-time>15</election-time>"
+                    + "</networked-active-passive>" + "</ha>" + "</mirror-group>" + "</mirror-groups>" + "<ha>"
+                    + "<mode>disk-based-active-passive</mode>" + "</ha>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -766,16 +636,9 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testUpdateCheck() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<servers>" 
-                    +   "<server>"
-                    +   "</server>" 
-                    +   "<update-check>" 
-                    +     "<enabled>false</enabled>" 
-                    +     "<period-days>14</period-days>"
-                    +   "</update-check>" 
-                    + "</servers>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<servers>" + "<server>"
+                    + "</server>" + "<update-check>" + "<enabled>false</enabled>" + "<period-days>14</period-days>"
+                    + "</update-check>" + "</servers>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -787,18 +650,18 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(false, servers.getUpdateCheck().getEnabled());
     Assert.assertEquals(14, servers.getUpdateCheck().getPeriodDays());
   }
-  
-  public void testClientNotInitialized() throws Exception{
+
+  public void testClientNotInitialized() throws Exception {
     this.tcConfig = getTempFile("default-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "</tc:tc-config>";
 
     writeConfigFile(config);
-    
+
     BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
 
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertNull(client);
-    
+
     configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(true);
     client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertNotNull(client);
@@ -818,11 +681,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testClientLogDirectory() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>"
-                    +   "<logs>/abc/xyz/tra</logs>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>"
+                    + "<logs>/abc/xyz/tra</logs>" + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -831,14 +691,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Client client = (Client) configSetupMgr.clientBeanRepository().bean();
     Assert.assertEquals("/abc/xyz/tra", client.getLogs());
   }
-  
+
   public void testClientLogDirectory1() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>"
-                    +   "<logs>%i</logs>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>" + "<logs>%i</logs>"
+                    + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -848,14 +705,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(ParameterSubstituter.substitute("%i"), client.getLogs());
   }
 
-  public void testTcNodeNameClientLogDirectory() throws Exception{
+  public void testTcNodeNameClientLogDirectory() throws Exception {
     this.tcConfig = getTempFile("default-config.xml");
     System.setProperty("tc.nodeName", "node123");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>"
-                    +   "<logs>%(tc.nodeName)</logs>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>"
+                    + "<logs>%(tc.nodeName)</logs>" + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -880,13 +734,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testFaultCount() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>" 
-                    +   "<dso>"
-                    +     "<fault-count>1234</fault-count>" 
-                    +   "</dso>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>" + "<dso>"
+                    + "<fault-count>1234</fault-count>" + "</dso>" + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -963,29 +812,14 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testClientDso() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>" 
-                    +   "<dso>"
-                    +     "<fault-count>1234</fault-count>" 
-                    +     "<debugging>" 
-                    +       "<instrumentation-logging>"
-                    +         "<class>true</class>" 
-                    +         "<locks>true</locks>" 
-                    +         "<roots>true</roots>"
-                    +       "</instrumentation-logging>" 
-                    +       "<runtime-logging>"
-                    +         "<non-portable-dump>false</non-portable-dump>" 
-                    +         "<lock-debug>true</lock-debug>"
-                    +         "<new-object-debug>true</new-object-debug>" 
-                    +       "</runtime-logging>" 
-                    +       "<runtime-output-options>"
-                    +         "<caller>true</caller>" 
-                    +         "<full-stack>true</full-stack>" 
-                    +       "</runtime-output-options>"
-                    +     "</debugging>" 
-                    +   "</dso>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>" + "<dso>"
+                    + "<fault-count>1234</fault-count>" + "<debugging>" + "<instrumentation-logging>"
+                    + "<class>true</class>" + "<locks>true</locks>" + "<roots>true</roots>"
+                    + "</instrumentation-logging>" + "<runtime-logging>"
+                    + "<non-portable-dump>false</non-portable-dump>" + "<lock-debug>true</lock-debug>"
+                    + "<new-object-debug>true</new-object-debug>" + "</runtime-logging>" + "<runtime-output-options>"
+                    + "<caller>true</caller>" + "<full-stack>true</full-stack>" + "</runtime-output-options>"
+                    + "</debugging>" + "</dso>" + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -1049,37 +883,19 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testClientDsoOverridden() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<clients>" 
-                    +   "<dso>"
-                    +     "<fault-count>1234</fault-count>" 
-                    +     "<debugging>" 
-                    +       "<instrumentation-logging>"
-                    +         "<class>true</class>" 
-                    +         "<hierarchy>false</hierarchy>"
-                    +         "<distributed-methods>true</distributed-methods>" 
-                    +         "<transient-root>false</transient-root>"
-                    +         "<locks>true</locks>" 
-                    +         "<roots>true</roots>" 
-                    +       "</instrumentation-logging>"
-                    +       "<runtime-logging>" 
-                    +         "<non-portable-dump>false</non-portable-dump>"
-                    +         "<lock-debug>true</lock-debug>" 
-                    +         "<field-change-debug>true</field-change-debug>"
-                    +         "<wait-notify-debug>true</wait-notify-debug>"
-                    +         "<distributed-method-debug>true</distributed-method-debug>"
-                    +         "<new-object-debug>true</new-object-debug>" 
-                    +         "<named-loader-debug>true</named-loader-debug>"
-                    +       "</runtime-logging>" 
-                    +       "<runtime-output-options>" 
-                    +         "<auto-lock-details>true</auto-lock-details>"
-                    +         "<caller>true</caller>" 
-                    +         "<full-stack>true</full-stack>" 
-                    +       "</runtime-output-options>"
-                    +     "</debugging>" 
-                    +   "</dso>" 
-                    + "</clients>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<clients>" + "<dso>"
+                    + "<fault-count>1234</fault-count>" + "<debugging>" + "<instrumentation-logging>"
+                    + "<class>true</class>" + "<hierarchy>false</hierarchy>"
+                    + "<distributed-methods>true</distributed-methods>" + "<transient-root>false</transient-root>"
+                    + "<locks>true</locks>" + "<roots>true</roots>" + "</instrumentation-logging>"
+                    + "<runtime-logging>" + "<non-portable-dump>false</non-portable-dump>"
+                    + "<lock-debug>true</lock-debug>" + "<field-change-debug>true</field-change-debug>"
+                    + "<wait-notify-debug>true</wait-notify-debug>"
+                    + "<distributed-method-debug>true</distributed-method-debug>"
+                    + "<new-object-debug>true</new-object-debug>" + "<named-loader-debug>true</named-loader-debug>"
+                    + "</runtime-logging>" + "<runtime-output-options>" + "<auto-lock-details>true</auto-lock-details>"
+                    + "<caller>true</caller>" + "<full-stack>true</full-stack>" + "</runtime-output-options>"
+                    + "</debugging>" + "</dso>" + "</clients>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -1158,11 +974,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testSystemConfigModel() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<system>"
-                    +   "<configuration-model>production</configuration-model>" 
-                    + "</system>" 
-                    + "</tc:tc-config>";
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<system>"
+                    + "<configuration-model>production</configuration-model>" + "</system>" + "</tc:tc-config>";
 
     writeConfigFile(config);
 
@@ -1192,12 +1005,8 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
 
   public void testApplication() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("default-config.xml");
-    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" 
-                    + "<application>" 
-                    + "<dso>"
-                    +   "<dso-reflection-enabled>false</dso-reflection-enabled>" 
-                    + "</dso>" 
-                    + "</application>"
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" + "<application>" + "<dso>"
+                    + "<dso-reflection-enabled>false</dso-reflection-enabled>" + "</dso>" + "</application>"
                     + "</tc:tc-config>";
 
     writeConfigFile(config);
@@ -1239,10 +1048,11 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
                                                                                         new TerracottaDomainConfigurationDocumentBeanFactory());
 
     BaseConfigurationSetupManager configSetupMgr = new BaseConfigurationSetupManager(
-                                                                                           configurationCreator,
-                                                                                           new SchemaDefaultValueProvider(),
-                                                                                           new StandardXmlObjectComparator(),
-                                                                                           new FatalIllegalConfigurationChangeHandler());
+                                                                                     args,
+                                                                                     configurationCreator,
+                                                                                     new SchemaDefaultValueProvider(),
+                                                                                     new StandardXmlObjectComparator(),
+                                                                                     new FatalIllegalConfigurationChangeHandler());
     configSetupMgr.runConfigurationCreator(isClient);
 
     return configSetupMgr;

@@ -46,6 +46,10 @@ public interface IClusterNode extends IClusterModelElement, ILiveObjectCountProv
 
   String getEnvironment();
 
+  String getTCProperties();
+
+  String[] getProcessArguments();
+
   String getConfig();
 
   long getTransactionRate();

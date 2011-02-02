@@ -457,6 +457,14 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     return getL1InfoBean().getEnvironment();
   }
 
+  public String getTCProperties() {
+    return getL1InfoBean().getTCProperties();
+  }
+
+  public String[] getProcessArguments() {
+    return getL1InfoBean().getProcessArguments();
+  }
+
   public Map getL1Statistics() {
     return getL1InfoBean().getStatistics();
   }
@@ -501,5 +509,4 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   public void setVerboseGC(boolean verboseGC) {
     getL1InfoBean().setVerboseGC(verboseGC);
   }
-
 }

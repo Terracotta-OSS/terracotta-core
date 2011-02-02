@@ -14,6 +14,8 @@ public interface TCClient extends TCDumper, LockInfoDumpHandler {
   public void startBeanShell(int port);
 
   public void reloadConfiguration() throws ConfigurationSetupException;
-  
+
   public void addServerConfigurationChangedListeners(ClusterTopologyChangedListener listener);
+
+  public String[] processArguments();
 }

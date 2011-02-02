@@ -133,7 +133,7 @@ public class ServerNode extends ClusterElementNode {
 
     @Override
     public void setValue(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean focused) {
-      statusView.setIndicator(ServerHelper.getHelper().getServerStatusColor(server));
+      ServerHelper.getHelper().setStatusView(server, statusView);
       statusView.setText(value.toString());
     }
   }

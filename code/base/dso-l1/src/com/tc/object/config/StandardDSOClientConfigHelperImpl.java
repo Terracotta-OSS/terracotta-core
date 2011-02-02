@@ -2169,4 +2169,7 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return configSetupManager;
   }
 
+  public String[] processArguments() {
+    return configSetupManager.processArguments();
+  }
 }

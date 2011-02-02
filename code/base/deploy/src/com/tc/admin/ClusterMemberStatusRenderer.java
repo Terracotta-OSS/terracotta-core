@@ -13,7 +13,7 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 
 public class ClusterMemberStatusRenderer extends AbstractTableCellRenderer {
-  private StatusView statusView;
+  private final StatusView statusView;
 
   ClusterMemberStatusRenderer(ApplicationContext appContext) {
     super();
@@ -32,7 +32,7 @@ public class ClusterMemberStatusRenderer extends AbstractTableCellRenderer {
     ClusterMemberTableModel clusterMemberTableModel = (ClusterMemberTableModel) table.getModel();
     IServer server = clusterMemberTableModel.getClusterMemberAt(row);
 
-    statusView.getIndicator().setBackground(ServerHelper.getHelper().getServerStatusColor(server));
+    ServerHelper.getHelper().setStatusView(server, statusView);
     statusView.getLabel().setText(server.getName());
   }
 }

@@ -37,6 +37,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                                   .getPackage().getName().replace('.', '/') + "/"
                                                               + DEFAULT_CONFIG_PATH;
 
+  private final String[]          args;
   private final String            defaultL2Identifier;
   private final ConfigurationSpec configurationSpec;
 
@@ -45,28 +46,34 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   }
 
   public StandardConfigurationSetupManagerFactory(ConfigMode configMode,
-                                                     IllegalConfigurationChangeHandler illegalChangeHandler)
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
     this((String[]) null, configMode, illegalChangeHandler);
   }
 
   public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
-                                                     IllegalConfigurationChangeHandler illegalChangeHandler)
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
-    this(parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler);
+    this(args, parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler);
   }
 
   public StandardConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
-                                                     IllegalConfigurationChangeHandler illegalChangeHandler)
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler)
       throws ConfigurationSetupException {
-    this(commandLine, configMode, illegalChangeHandler, System
+    this((String[]) null, commandLine, configMode, illegalChangeHandler);
+  }
+
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode,
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler)
+      throws ConfigurationSetupException {
+    this(args, commandLine, configMode, illegalChangeHandler, System
         .getProperty(ConfigurationSetupManagerFactory.CONFIG_FILE_PROPERTY_NAME));
   }
 
   public StandardConfigurationSetupManagerFactory(String[] args, ConfigMode configMode,
-                                                     IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                     String configSpec) throws ConfigurationSetupException {
-    this(parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler, configSpec);
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
+                                                  String configSpec) throws ConfigurationSetupException {
+    this(args, parseDefaultCommandLine(args, configMode), configMode, illegalChangeHandler, configSpec);
   }
 
   private static CommandLine parseDefaultCommandLine(String[] args, ConfigMode configMode)
@@ -84,9 +91,9 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     }
   }
 
-  public StandardConfigurationSetupManagerFactory(CommandLine commandLine, ConfigMode configMode,
-                                                     IllegalConfigurationChangeHandler illegalChangeHandler,
-                                                     String configSpec) throws ConfigurationSetupException {
+  public StandardConfigurationSetupManagerFactory(String[] args, CommandLine commandLine, ConfigMode configMode,
+                                                  IllegalConfigurationChangeHandler illegalChangeHandler,
+                                                  String configSpec) throws ConfigurationSetupException {
     super(illegalChangeHandler);
     String effectiveConfigSpec = getEffectiveConfigSpec(configSpec, commandLine, configMode);
     String cwdAsString = System.getProperty("user.dir");
@@ -96,9 +103,12 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                                                       + (cwdAsString == null ? "null"
                                                                                           : "'" + cwdAsString + "'")
                                                                                       + ".)"); }
-    this.configurationSpec = new ConfigurationSpec(effectiveConfigSpec, System
-        .getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME), configMode,
-                                                   new File(cwdAsString));
+    this.args = args;
+    this.configurationSpec = new ConfigurationSpec(
+                                                   effectiveConfigSpec,
+                                                   System
+                                                       .getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
+                                                   configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
   }
 
@@ -169,9 +179,9 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                                                         this.beanFactory);
 
     L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
-                                                                                             this.defaultValueProvider,
-                                                                                             this.xmlObjectComparator,
-                                                                                             this.illegalChangeHandler);
+                                                                                   this.defaultValueProvider,
+                                                                                   this.xmlObjectComparator,
+                                                                                   this.illegalChangeHandler);
 
     return setupManager;
   }
@@ -181,9 +191,9 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                                                         this.beanFactory);
 
     L1ConfigurationSetupManager setupManager = new L1ConfigurationSetupManagerImpl(configurationCreator,
-                                                                                             this.defaultValueProvider,
-                                                                                             this.xmlObjectComparator,
-                                                                                             this.illegalChangeHandler);
+                                                                                   this.defaultValueProvider,
+                                                                                   this.xmlObjectComparator,
+                                                                                   this.illegalChangeHandler);
 
     return setupManager;
   }
@@ -195,7 +205,11 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     ConfigurationCreator configurationCreator;
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory);
 
-    return new L2ConfigurationSetupManagerImpl(configurationCreator, l2Name, this.defaultValueProvider,
-                                                      this.xmlObjectComparator, this.illegalChangeHandler);
+    return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, this.defaultValueProvider,
+                                               this.xmlObjectComparator, this.illegalChangeHandler);
+  }
+
+  public String[] getArguments() {
+    return args;
   }
 }

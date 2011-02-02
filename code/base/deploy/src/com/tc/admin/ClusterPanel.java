@@ -423,7 +423,7 @@ public class ClusterPanel extends XContainer implements HyperlinkListener {
 
   void setStatusLabel(String msg) {
     statusView.setText(msg);
-    statusView.setIndicator(clusterNode.getServerStatusColor());
+    ServerHelper.getHelper().setStatusView(clusterNode.getActiveCoordinator(), statusView);
     statusView.setVisible(true);
     statusView.revalidate();
     statusView.paintImmediately(0, 0, statusView.getWidth(), statusView.getHeight());

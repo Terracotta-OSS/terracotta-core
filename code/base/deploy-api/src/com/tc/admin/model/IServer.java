@@ -183,7 +183,7 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   void setAttribute(ObjectName on, String attrName, Object attrValue) throws Exception;
 
-  void setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) throws Exception;
+  Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) throws Exception;
 
   Object getAttribute(ObjectName on, String attrName) throws Exception;
 
@@ -268,5 +268,4 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
   boolean getCommitDebug();
 
   void setCommitDebug(boolean commitDebug);
-
 }

@@ -20,6 +20,8 @@ import java.io.InputStream;
  * Knows how to set up configuration for L2.
  */
 public interface L2ConfigurationSetupManager {
+  String[] processArguments();
+
   CommonL2Config commonl2Config();
 
   SystemConfig systemConfig();
@@ -52,5 +54,6 @@ public interface L2ConfigurationSetupManager {
 
   L2DSOConfig dsoL2ConfigFor(String name) throws ConfigurationSetupException;
 
-  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator) throws ConfigurationSetupException;
+  TopologyReloadStatus reloadConfiguration(ServerConnectionValidator serverConnectionValidator)
+      throws ConfigurationSetupException;
 }

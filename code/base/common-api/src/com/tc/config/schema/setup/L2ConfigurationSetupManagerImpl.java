@@ -89,7 +89,16 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                          XmlObjectComparator xmlObjectComparator,
                                          IllegalConfigurationChangeHandler illegalConfigChangeHandler)
       throws ConfigurationSetupException {
-    super(configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
+    this((String[]) null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
+         illegalConfigChangeHandler);
+  }
+
+  public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator,
+                                         String thisL2Identifier, DefaultValueProvider defaultValueProvider,
+                                         XmlObjectComparator xmlObjectComparator,
+                                         IllegalConfigurationChangeHandler illegalConfigChangeHandler)
+      throws ConfigurationSetupException {
+    super(args, configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);

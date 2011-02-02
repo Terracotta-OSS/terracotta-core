@@ -23,9 +23,9 @@ import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
 import com.tc.config.Directories;
 import com.tc.config.schema.ActiveServerGroupConfig;
-import com.tc.config.schema.L2Info;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.HaConfigSchema;
+import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.messaging.http.ConfigServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
@@ -83,35 +83,35 @@ import javax.management.NotCompliantMBeanException;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
-  public static final String                   VERSION_SERVLET_PATH                         = "/version";
-  public static final String                   CONFIG_SERVLET_PATH                          = "/config";
-  public static final String                   GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
-  public static final String                   STATISTICS_GATHERER_SERVLET_PREFIX           = "/statistics-gatherer";
-  public static final String                   STATISTICS_GATHERER_SERVLET_PATH             = STATISTICS_GATHERER_SERVLET_PREFIX
-                                                                                              + "/*";
-  public static final String                   L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH = "/l1reconnectproperties";
+  public static final String                VERSION_SERVLET_PATH                         = "/version";
+  public static final String                CONFIG_SERVLET_PATH                          = "/config";
+  public static final String                GROUP_INFO_SERVLET_PATH                      = "/groupinfo";
+  public static final String                STATISTICS_GATHERER_SERVLET_PREFIX           = "/statistics-gatherer";
+  public static final String                STATISTICS_GATHERER_SERVLET_PATH             = STATISTICS_GATHERER_SERVLET_PREFIX
+                                                                                           + "/*";
+  public static final String                L1_RECONNECT_PROPERTIES_FROML2_SERVELET_PATH = "/l1reconnectproperties";
 
-  public static final String                   HTTP_AUTHENTICATION_ROLE_STATISTICS          = "statistics";
+  public static final String                HTTP_AUTHENTICATION_ROLE_STATISTICS          = "statistics";
 
-  private static final TCLogger                logger                                       = TCLogging
-                                                                                                .getLogger(TCServer.class);
-  private static final TCLogger                consoleLogger                                = CustomerLogging
-                                                                                                .getConsoleLogger();
+  private static final TCLogger             logger                                       = TCLogging
+                                                                                             .getLogger(TCServer.class);
+  private static final TCLogger             consoleLogger                                = CustomerLogging
+                                                                                             .getConsoleLogger();
 
-  private volatile long                        startTime                                    = -1;
-  private volatile long                        activateTime                                 = -1;
+  private volatile long                     startTime                                    = -1;
+  private volatile long                     activateTime                                 = -1;
 
-  protected DistributedObjectServer            dsoServer;
-  private Server                               httpServer;
-  private TerracottaConnector                  terracottaConnector;
-  private StatisticsGathererSubSystem          statisticsGathererSubSystem;
+  protected DistributedObjectServer         dsoServer;
+  private Server                            httpServer;
+  private TerracottaConnector               terracottaConnector;
+  private StatisticsGathererSubSystem       statisticsGathererSubSystem;
 
-  private final Object                         stateLock                                    = new Object();
-  private final L2State                        state                                        = new L2State();
+  private final Object                      stateLock                                    = new Object();
+  private final L2State                     state                                        = new L2State();
 
   private final L2ConfigurationSetupManager configurationSetupManager;
-  protected final ConnectionPolicy             connectionPolicy;
-  private boolean                              shutdown                                     = false;
+  protected final ConnectionPolicy          connectionPolicy;
+  private boolean                           shutdown                                     = false;
 
   /**
    * This should only be used for tests.
@@ -686,5 +686,9 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   public void reloadConfiguration() throws ConfigurationSetupException {
     dsoServer.reloadConfiguration();
+  }
+
+  public String[] processArguments() {
+    return configurationSetupManager.processArguments();
   }
 }

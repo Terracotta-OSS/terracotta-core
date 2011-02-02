@@ -8,11 +8,13 @@ import com.tc.handler.LockInfoDumpHandler;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.beans.l1.L1InfoMBean;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.ProductInfo;
+import com.tc.util.StringUtil;
 import com.tc.util.runtime.LockInfoByThreadID;
 import com.tc.util.runtime.LockInfoByThreadIDImpl;
 import com.tc.util.runtime.ThreadDumpUtil;
@@ -22,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -140,10 +141,23 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
   }
 
   public String getEnvironment() {
+    return format(System.getProperties());
+  }
+
+  public String getTCProperties() {
+    Properties props = TCPropertiesImpl.getProperties().addAllPropertiesTo(new Properties());
+    String keyPrefix = /* TCPropertiesImpl.SYSTEM_PROP_PREFIX */null;
+    return format(props, keyPrefix);
+  }
+
+  private String format(Properties properties) {
+    return format(properties, null);
+  }
+
+  private String format(Properties properties, String keyPrefix) {
     StringBuffer sb = new StringBuffer();
-    Properties env = System.getProperties();
-    Enumeration keys = env.propertyNames();
-    ArrayList l = new ArrayList();
+    Enumeration keys = properties.propertyNames();
+    ArrayList<String> l = new ArrayList<String>();
 
     while (keys.hasMoreElements()) {
       Object o = keys.nextElement();
@@ -153,32 +167,44 @@ public class L1Info extends AbstractTerracottaMBean implements L1InfoMBean {
       }
     }
 
-    String[] props = (String[]) l.toArray(new String[0]);
+    String[] props = l.toArray(new String[l.size()]);
     Arrays.sort(props);
     l.clear();
     l.addAll(Arrays.asList(props));
 
     int maxKeyLen = 0;
-    Iterator iter = l.iterator();
-    while (iter.hasNext()) {
-      String key = (String) iter.next();
+    for (String key : l) {
       maxKeyLen = Math.max(key.length(), maxKeyLen);
     }
 
-    iter = l.iterator();
-    while (iter.hasNext()) {
-      String key = (String) iter.next();
+    for (String key : l) {
+      if (keyPrefix != null) {
+        sb.append(keyPrefix);
+      }
       sb.append(key);
       sb.append(":");
       int spaceLen = maxKeyLen - key.length() + 1;
       for (int i = 0; i < spaceLen; i++) {
         sb.append(" ");
       }
-      sb.append(env.getProperty(key));
+      sb.append(properties.getProperty(key));
       sb.append("\n");
     }
 
     return sb.toString();
+  }
+
+  public String[] getProcessArguments() {
+    String[] args = client.processArguments();
+    List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (args == null) {
+      return inputArgs.toArray(new String[inputArgs.size()]);
+    } else {
+      List<String> l = new ArrayList<String>();
+      l.add(StringUtil.toString(args, " ", null, null));
+      l.addAll(inputArgs);
+      return l.toArray(new String[l.size()]);
+    }
   }
 
   public String getConfig() {

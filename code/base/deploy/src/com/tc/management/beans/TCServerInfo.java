@@ -15,6 +15,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.runtime.JVMMemoryManager;
 import com.tc.runtime.TCRuntime;
 import com.tc.server.TCServer;
@@ -22,6 +23,7 @@ import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.util.ProductInfo;
 import com.tc.util.State;
+import com.tc.util.StringUtil;
 import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.util.ArrayList;
@@ -308,9 +310,22 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   public String getEnvironment() {
+    return format(System.getProperties());
+  }
+
+  public String getTCProperties() {
+    Properties props = TCPropertiesImpl.getProperties().addAllPropertiesTo(new Properties());
+    String keyPrefix = /* TCPropertiesImpl.SYSTEM_PROP_PREFIX */null;
+    return format(props, keyPrefix);
+  }
+
+  private String format(Properties properties) {
+    return format(properties, null);
+  }
+
+  private String format(Properties properties, String keyPrefix) {
     StringBuffer sb = new StringBuffer();
-    Properties env = System.getProperties();
-    Enumeration keys = env.propertyNames();
+    Enumeration keys = properties.propertyNames();
     ArrayList<String> l = new ArrayList<String>();
 
     while (keys.hasMoreElements()) {
@@ -321,7 +336,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
       }
     }
 
-    String[] props = l.toArray(new String[0]);
+    String[] props = l.toArray(new String[l.size()]);
     Arrays.sort(props);
     l.clear();
     l.addAll(Arrays.asList(props));
@@ -332,17 +347,33 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     }
 
     for (String key : l) {
+      if (keyPrefix != null) {
+        sb.append(keyPrefix);
+      }
       sb.append(key);
       sb.append(":");
       int spaceLen = maxKeyLen - key.length() + 1;
       for (int i = 0; i < spaceLen; i++) {
         sb.append(" ");
       }
-      sb.append(env.getProperty(key));
+      sb.append(properties.getProperty(key));
       sb.append("\n");
     }
 
     return sb.toString();
+  }
+
+  public String[] getProcessArguments() {
+    String[] args = server.processArguments();
+    List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    if (args == null) {
+      return inputArgs.toArray(new String[inputArgs.size()]);
+    } else {
+      List<String> l = new ArrayList<String>();
+      l.add(StringUtil.toString(args, " ", null, null));
+      l.addAll(inputArgs);
+      return l.toArray(new String[l.size()]);
+    }
   }
 
   public String getPersistenceMode() {

@@ -41,6 +41,8 @@ import java.util.Map;
 public interface DSOClientConfigHelper extends DSOApplicationConfig, DSOMBeanConfig {
   boolean hasBootJar();
 
+  String[] processArguments();
+
   String rawConfigText();
 
   String[] getMissingRootDeclarations(ClassInfo classInfo);

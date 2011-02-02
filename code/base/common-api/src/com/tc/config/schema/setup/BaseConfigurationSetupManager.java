@@ -38,6 +38,7 @@ import java.util.Set;
  * A base class for all TVS configuration setup managers.
  */
 public class BaseConfigurationSetupManager {
+  private final String[]                          args;
   private final ConfigurationCreator              configurationCreator;
   private final MutableBeanRepository             clientBeanRepository;
   private final MutableBeanRepository             serversBeanRepository;
@@ -56,11 +57,20 @@ public class BaseConfigurationSetupManager {
                                        DefaultValueProvider defaultValueProvider,
                                        XmlObjectComparator xmlObjectComparator,
                                        IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
+    this((String[]) null, configurationCreator, defaultValueProvider, xmlObjectComparator,
+         illegalConfigurationChangeHandler);
+  }
+
+  public BaseConfigurationSetupManager(String[] args, ConfigurationCreator configurationCreator,
+                                       DefaultValueProvider defaultValueProvider,
+                                       XmlObjectComparator xmlObjectComparator,
+                                       IllegalConfigurationChangeHandler illegalConfigurationChangeHandler) {
     Assert.assertNotNull(configurationCreator);
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
     Assert.assertNotNull(illegalConfigurationChangeHandler);
 
+    this.args = args;
     this.configurationCreator = configurationCreator;
     this.systemBeanRepository = new StandardBeanRepository(System.class);
     this.clientBeanRepository = new StandardBeanRepository(Client.class);
@@ -74,6 +84,10 @@ public class BaseConfigurationSetupManager {
 
     this.dsoApplicationConfigs = new HashMap();
     this.springApplicationConfigs = new HashMap();
+  }
+
+  public String[] processArguments() {
+    return args;
   }
 
   protected final MutableBeanRepository clientBeanRepository() {
@@ -138,12 +152,15 @@ public class BaseConfigurationSetupManager {
   }
 
   protected DSOApplicationConfig createNewDSOApplicationConfig(String applicationName) {
-    return new DSOApplicationConfigObject(createContext(new ChildBeanRepository(this.applicationsRepository
-        .repositoryFor(applicationName), DsoApplication.class, new ChildBeanFetcher() {
-      public XmlObject getChild(XmlObject parent) {
-        return ((Application) parent).getDso();
-      }
-    }), null));
+    return new DSOApplicationConfigObject(
+                                          createContext(new ChildBeanRepository(this.applicationsRepository
+                                                            .repositoryFor(applicationName), DsoApplication.class,
+                                                                                new ChildBeanFetcher() {
+                                                                                  public XmlObject getChild(XmlObject parent) {
+                                                                                    return ((Application) parent)
+                                                                                        .getDso();
+                                                                                  }
+                                                                                }), null));
   }
 
 }

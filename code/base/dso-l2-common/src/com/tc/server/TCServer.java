@@ -9,6 +9,8 @@ import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 
 public interface TCServer {
+  String[] processArguments();
+
   void start() throws Exception;
 
   void stop();

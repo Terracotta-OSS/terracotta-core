@@ -514,4 +514,8 @@ public class FakeDSOClientConfigHelper implements StandardDSOClientConfigHelper,
   public L1ConfigurationSetupManager reloadServersConfiguration() {
     return null;
   }
+
+  public String[] processArguments() {
+    return null;
+  }
 }

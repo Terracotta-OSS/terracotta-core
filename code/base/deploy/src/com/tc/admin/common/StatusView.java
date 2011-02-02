@@ -7,16 +7,21 @@ package com.tc.admin.common;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JFrame;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 public class StatusView extends XContainer {
-  protected XLabel label;
-  protected XLabel indicator;
+  protected XLabel               label;
+  protected XLabel               indicator;
+
+  private static final Dimension SIZE                 = new Dimension(12, 12);
+  private static final Color     DEFAULT_INDICATOR_FG = Color.black;
 
   public StatusView() {
     super(new GridBagLayout());
@@ -28,9 +33,13 @@ public class StatusView extends XContainer {
 
     indicator = new XLabel();
     indicator.setOpaque(true);
+    indicator.setHorizontalAlignment(SwingConstants.CENTER);
+    indicator.setVerticalAlignment(SwingConstants.CENTER);
+    indicator.setFont(new Font("Serif", Font.BOLD, 10));
+    indicator.setForeground(DEFAULT_INDICATOR_FG);
     indicator.setBorder(LineBorder.createBlackLineBorder());
-    indicator.setMinimumSize(new Dimension(10, 10));
-    indicator.setPreferredSize(new Dimension(10, 10));
+    indicator.setMinimumSize(SIZE);
+    indicator.setPreferredSize(SIZE);
     add(indicator, gbc);
     gbc.gridx++;
 
@@ -60,11 +69,18 @@ public class StatusView extends XContainer {
     paintImmediately(0, 0, getWidth(), getHeight());
   }
 
-  public void setIndicator(Color color) {
-    indicator.setBackground(color);
-    indicator.setOpaque(true);
-    indicator.setMinimumSize(new Dimension(10, 10));
-    indicator.setPreferredSize(new Dimension(10, 10));
+  public void setIndicator(Color bg) {
+    setIndicator(bg, "");
+  }
+
+  public void setIndicator(Color bg, String text) {
+    setIndicator(bg, DEFAULT_INDICATOR_FG, text);
+  }
+
+  public void setIndicator(Color bg, Color fg, String text) {
+    indicator.setBackground(bg);
+    indicator.setForeground(fg);
+    indicator.setText(text);
     revalidate();
     paintImmediately(0, 0, getWidth(), getHeight());
   }
@@ -90,35 +106,35 @@ public class StatusView extends XContainer {
 
     cp.add(sv = new StatusView(), gbc);
     sv.setText("Starting or disk-based standby");
-    sv.setIndicator(Color.yellow);
+    sv.setIndicator(Color.yellow, "S");
     sv.setBackground(Color.white);
     sv.setOpaque(true);
     gbc.gridy++;
 
     cp.add(sv = new StatusView(), gbc);
     sv.setText("Initializing (network-based only)");
-    sv.setIndicator(Color.orange);
+    sv.setIndicator(Color.orange, "I");
     sv.setBackground(Color.white);
     sv.setOpaque(true);
     gbc.gridy++;
 
     cp.add(sv = new StatusView(), gbc);
-    sv.setText("Network-based standby");
-    sv.setIndicator(Color.cyan);
+    sv.setText("Passive-standby (network-based only)");
+    sv.setIndicator(Color.cyan, "P");
     sv.setBackground(Color.white);
     sv.setOpaque(true);
     gbc.gridy++;
 
     cp.add(sv = new StatusView(), gbc);
-    sv.setText("Active server");
-    sv.setIndicator(Color.green);
+    sv.setText("Active-coordinator server");
+    sv.setIndicator(Color.green, "A");
     sv.setBackground(Color.white);
     sv.setOpaque(true);
     gbc.gridy++;
 
     cp.add(sv = new StatusView(), gbc);
     sv.setText("Unreachable");
-    sv.setIndicator(Color.red);
+    sv.setIndicator(Color.red, Color.white, "E");
     sv.setBackground(Color.white);
     sv.setOpaque(true);
     gbc.gridy++;
