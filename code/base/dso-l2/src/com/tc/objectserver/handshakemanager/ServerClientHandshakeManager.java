@@ -218,8 +218,13 @@ public class ServerClientHandshakeManager {
             .getChannelID())));
       }
 
-      this.consoleLogger.info("Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
-                              + this.existingUnconnectedClients.size() + " clients to connect. ");
+      String message = "Starting reconnect window: " + this.reconnectTimeout + " ms. Waiting for "
+                       + this.existingUnconnectedClients.size() + " clients to connect.";
+      if (this.existingUnconnectedClients.size() <= 10) {
+        message += " Unconnected Clients - " + this.existingUnconnectedClients;
+      }
+      this.consoleLogger.info(message);
+
       if (this.reconnectTimeout < RECONNECT_WARN_INTERVAL) {
         this.timer.schedule(this.reconnectTimerTask, this.reconnectTimeout);
       } else {
@@ -234,6 +239,10 @@ public class ServerClientHandshakeManager {
 
   synchronized int getUnconnectedClientsSize() {
     return this.existingUnconnectedClients.size();
+  }
+
+  synchronized Set getUnconnectedClients() {
+    return this.existingUnconnectedClients;
   }
 
   /**
@@ -261,9 +270,14 @@ public class ServerClientHandshakeManager {
     public void run() {
       this.timeToWait -= RECONNECT_WARN_INTERVAL;
       if (this.timeToWait > 0 && this.handshakeManager.getUnconnectedClientsSize() > 0) {
-        this.handshakeManager.consoleLogger.info("Reconnect window active.  Waiting for "
-                                                 + this.handshakeManager.getUnconnectedClientsSize()
-                                                 + " clients to connect. " + this.timeToWait + " ms remaining.");
+
+        String message = "Reconnect window active.  Waiting for " + this.handshakeManager.getUnconnectedClientsSize()
+                         + " clients to connect. " + this.timeToWait + " ms remaining.";
+        if (this.handshakeManager.getUnconnectedClientsSize() <= 10) {
+          message += " Unconnected Clients - " + this.handshakeManager.getUnconnectedClients();
+        }
+        this.handshakeManager.consoleLogger.info(message);
+
         if (this.timeToWait < RECONNECT_WARN_INTERVAL) {
           cancel();
           final ReconnectTimerTask task = new ReconnectTimerTask(this.handshakeManager, this.timer);
