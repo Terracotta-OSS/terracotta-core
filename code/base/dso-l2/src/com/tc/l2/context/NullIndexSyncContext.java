@@ -32,5 +32,13 @@ public class NullIndexSyncContext implements IndexSyncContext {
   public long getSequenceID() {
     return 0;
   }
-  //
+
+  public int getTotalFilesSynced() {
+    return 0;
+  }
+
+  public int getTotalFilesToSync() {
+    return 0;
+  }
+
 }

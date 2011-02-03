@@ -21,4 +21,8 @@ public interface IndexSyncContext extends OrderedEventContext {
 
   public boolean hasMore();
 
+  public int getTotalFilesToSync();
+
+  public int getTotalFilesSynced();
+
 }

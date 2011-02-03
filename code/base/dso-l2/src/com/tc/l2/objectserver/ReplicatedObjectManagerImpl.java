@@ -300,7 +300,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       final Set knownIDs = this.objectManager.getAllObjectIDs();
       this.rTxnManager.init(knownIDs);
       logger.info("Send response to Active's query : known id lists = " + knownIDs.size() + " isCleanDB: "
-                  + this.isCleanDB);
+                  + this.isCleanDB + " currentState " + clusterMsg.getCurrentState());
       this.groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
           .createObjectListSyncResponseMessage(clusterMsg, this.stateManager.getCurrentState(), knownIDs,
                                                this.isCleanDB));

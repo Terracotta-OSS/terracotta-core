@@ -114,19 +114,18 @@ public class L2IndexSyncSendHandler extends AbstractEventHandler {
 
   private static class SyncLogger {
 
-    public void logSynced(final IndexSyncContext mosc) {
-      // final int current = mosc.getTotalObjectsSynced();
-      // final int last = current - mosc.getLookupIDs().size();
-      // final int totalObjectsToSync = mosc.getTotalObjectsToSync();
-      // final int lastPercent = (last * 100) / totalObjectsToSync;
-      // final int currentPercent = (current * 100) / totalObjectsToSync;
-      //
-      // if (currentPercent > lastPercent) {
-      // logger.info("Sent " + current + " (" + currentPercent + "%) objects out of " + mosc.getTotalObjectsToSync()
-      // + " to " + mosc.getNodeID()
-      // + (mosc.getRootsMap().size() == 0 ? "" : " roots = " + mosc.getRootsMap().size()));
-      // }
-      // }
+    public void logSynced(final IndexSyncContext isc) {
+      final int current = isc.getTotalFilesSynced();
+      final int last = current - 1;
+      final int totalObjectsToSync = isc.getTotalFilesToSync();
+      final int lastPercent = (last * 100) / totalObjectsToSync;
+      final int currentPercent = (current * 100) / totalObjectsToSync;
+
+      if (currentPercent > lastPercent) {
+        logger.info("Sent " + current + " (" + currentPercent + "%) objects out of " + isc.getTotalFilesToSync()
+                    + " to " + isc.getNodeID());
+      }
+
     }
   }
 
