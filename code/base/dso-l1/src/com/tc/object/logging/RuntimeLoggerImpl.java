@@ -21,28 +21,28 @@ import com.tc.statistics.util.StatsPrinter;
 import com.tc.statistics.util.StatsRecorder;
 
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RuntimeLoggerImpl implements RuntimeLogger {
-  private final TCLogger logger;
+  private final TCLogger             logger;
+  private final StatsRecorderManager statsRecorderManager = new StatsRecorderManager();
 
-  private boolean        lockDebug;
-  private boolean        fieldChangeDebug;
-  private boolean        arrayChangeDebug;
-  private boolean        newManagedObjectDebug;
-  private boolean        distributedMethodDebug;
-  private boolean        nonPortableDump;
-  private boolean        waitNotifyDebug;
+  private boolean                    lockDebug;
+  private boolean                    fieldChangeDebug;
+  private boolean                    arrayChangeDebug;
+  private boolean                    newManagedObjectDebug;
+  private boolean                    distributedMethodDebug;
+  private boolean                    nonPortableDump;
+  private boolean                    waitNotifyDebug;
 
-  private boolean        fullStack;
-  private boolean        autoLockDetails;
+  private boolean                    fullStack;
+  private boolean                    autoLockDetails;
 
-  private boolean        flushDebug;
-  private StatsRecorder  flushStatsRecorder;
+  private final String               flushDebugStats      = "flushStats";
+  private final String               faultDebugStats      = "faultStats";
 
-  private boolean        faultDebug;
-  private StatsRecorder  faultStatsRecorder;
-
-  private boolean namedLoaderDebug;
+  private boolean                    namedLoaderDebug;
 
   public RuntimeLoggerImpl(DSOClientConfigHelper configHelper) {
     this.logger = CustomerLogging.getDSORuntimeLogger();
@@ -150,41 +150,28 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   public void setFlushDebug(boolean flushDebug) {
-    this.flushDebug = flushDebug;
-    if (flushStatsRecorder != null) {
-      flushStatsRecorder.finish();
-    }
-    if (flushDebug) {
-      flushStatsRecorder = new StatsPrinter(new MessageFormat("ManagedObjects flushed in the Last {0} ms"),
-                                            new MessageFormat(" {0} instances"), true);
-    } else {
-      flushStatsRecorder = new NullStatsRecorder();
-    }
+    this.statsRecorderManager.getAndSetStatsRecorder(this.flushDebugStats, flushDebug,
+                                                     new MessageFormat("ManagedObjects flushed in the Last {0} ms"),
+                                                     new MessageFormat(" {0} instances"), true);
   }
 
   public boolean getFlushDebug() {
-    return this.flushDebug;
+    return this.statsRecorderManager.isDebugEnabled(this.flushDebugStats);
   }
 
   public void updateFlushStats(String type) {
+    StatsRecorder flushStatsRecorder = this.statsRecorderManager.get(this.flushDebugStats);
     flushStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
   public void setFaultDebug(boolean faultDebug) {
-    this.faultDebug = faultDebug;
-    if (faultStatsRecorder != null) {
-      faultStatsRecorder.finish();
-    }
-    if (faultDebug) {
-      faultStatsRecorder = new StatsPrinter(new MessageFormat("ManagedObjects faulted in the Last {0} ms"),
-                                            new MessageFormat(" {0} instances"), true);
-    } else {
-      faultStatsRecorder = new NullStatsRecorder();
-    }
+    this.statsRecorderManager.getAndSetStatsRecorder(this.flushDebugStats, faultDebug,
+                                                     new MessageFormat("ManagedObjects faulted in the Last {0} ms"),
+                                                     new MessageFormat(" {0} instances"), true);
   }
 
   public boolean getFaultDebug() {
-    return this.faultDebug;
+    return this.statsRecorderManager.isDebugEnabled(this.faultDebugStats);
   }
 
   public void setNamedLoaderDebug(boolean value) {
@@ -196,6 +183,7 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
   }
 
   public void updateFaultStats(String type) {
+    StatsRecorder faultStatsRecorder = this.statsRecorderManager.get(this.faultDebugStats);
     faultStatsRecorder.updateStats(type, StatsRecorder.SINGLE_INCR);
   }
 
@@ -205,10 +193,10 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     if (autoLockDetails && (lock instanceof DsoLockID || lock instanceof DsoLiteralLockID)) {
       message.append("\n  AUTOLOCK DETAILS NOT CURRENTLY SUPPORTED: ");
     }
-    
+
     appendCall(message);
     logger.info(message);
-    
+
   }
 
   private void appendCall(StringBuffer message) {
@@ -321,4 +309,48 @@ public class RuntimeLoggerImpl implements RuntimeLogger {
     appendCall(message);
     logger.info(message);
   }
+
+  public void shutdown() {
+    this.statsRecorderManager.shutdown();
+  }
+
+  private static class StatsRecorderManager {
+    private final Map<String, StatsRecorder> recorders    = new HashMap<String, StatsRecorder>();
+    private final StatsRecorder              nullRecorder = new NullStatsRecorder();
+
+    public synchronized StatsRecorder getAndSetStatsRecorder(String name, boolean isDebug, MessageFormat header,
+                                                             MessageFormat formatLine, boolean printTotal) {
+      StatsRecorder recorder = get(name);
+      recorder.finish();
+      recorder = isDebug ? createStatsPrinter(header, formatLine, printTotal) : this.nullRecorder;
+      recorders.put(name, recorder);
+      return recorder;
+    }
+
+    public synchronized StatsRecorder get(String name) {
+      StatsRecorder recorder = recorders.get(name);
+      if (recorder == null) {
+        recorder = this.nullRecorder;
+        recorders.put(name, recorder);
+      }
+      return recorder;
+    }
+
+    public synchronized boolean isDebugEnabled(String name) {
+      return get(name) != this.nullRecorder;
+    }
+
+    private StatsRecorder createStatsPrinter(MessageFormat header, MessageFormat formatLine, boolean printTotal) {
+      StatsRecorder statsRecorder = new StatsPrinter(header, formatLine, printTotal);
+      return statsRecorder;
+    }
+
+    public synchronized void shutdown() {
+      for (StatsRecorder recorder : recorders.values()) {
+        recorder.finish();
+      }
+      recorders.clear();
+    }
+  }
+
 }

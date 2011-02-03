@@ -60,6 +60,8 @@ public interface RuntimeLogger {
   boolean getNamedLoaderDebug();
   void setNamedLoaderDebug(boolean value);
 
+  void shutdown();
+
   // /////////////////////////////
   // log methods
   // /////////////////////////////

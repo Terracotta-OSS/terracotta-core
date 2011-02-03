@@ -284,6 +284,7 @@ public class ManagerImpl implements ManagerInternal {
   }
 
   private void shutdown(final boolean fromShutdownHook) {
+    this.runtimeLogger.shutdown();
     if (this.shutdownManager != null) {
       try {
         // XXX: This "fromShutdownHook" flag should be removed. It's only here temporarily to make shutdown behave

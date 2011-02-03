@@ -193,7 +193,7 @@ public class StatsPrinter implements StatsRecorder, Runnable {
   }
 
   private static class Aggregator implements Runnable {
-    private List       printers     = new ArrayList();
+    private final List printers     = new ArrayList();
     public static long timeInterval = TCPropertiesImpl.getProperties()
                                         .getLong(TCPropertiesConsts.STATS_PRINTER_INTERVAL);
     private Thread     thread;
@@ -209,8 +209,11 @@ public class StatsPrinter implements StatsRecorder, Runnable {
 
     public void run() {
       while (true) {
-        ThreadUtil.reallySleep(timeInterval);
-        if (printers.size() == 0) return;
+        if (printers.size() == 0) {
+          return;
+        } else {
+          ThreadUtil.reallySleep(timeInterval);
+        }
         Iterator iter = printers.iterator();
         while (iter.hasNext()) {
           StatsPrinter printer = (StatsPrinter) iter.next();

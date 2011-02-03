@@ -168,4 +168,8 @@ public class NullRuntimeLogger implements RuntimeLogger {
     /**/
   }
 
+  public void shutdown() {
+    return;
+  }
+
 }
