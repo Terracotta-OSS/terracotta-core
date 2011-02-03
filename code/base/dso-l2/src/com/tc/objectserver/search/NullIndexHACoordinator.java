@@ -16,7 +16,7 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
   }
 
   @SuppressWarnings("unused")
-  public void applyTempJournals() throws IOException {
+  public void applyTempJournalsAndSwitch() throws IOException {
     //
   }
 
