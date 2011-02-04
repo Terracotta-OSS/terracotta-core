@@ -25,9 +25,9 @@ import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Persistence;
 import com.terracottatech.config.PersistenceMode;
-import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
+import com.terracottatech.config.PersistenceMode.Enum;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 
 import java.io.File;
@@ -278,7 +278,8 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       String substitutedString = ParameterSubstituter.substitute(defaultValue.getStringValue());
       server.setStatistics(new File(directoryLoadedFrom, substitutedString).getAbsolutePath());
     } else {
-      server.setStatistics(ParameterSubstituter.substitute(server.getStatistics()));
+      server
+          .setStatistics(getAbsolutePath(ParameterSubstituter.substitute(server.getStatistics()), directoryLoadedFrom));
     }
   }
 
