@@ -8,7 +8,9 @@ package com.tc.objectserver.storage.api;
  * This class is responsible for creating PersistentTransaction.
  */
 public interface PersistenceTransactionProvider {
-  public PersistenceTransaction newTransaction();
+  public PersistenceTransaction getOrCreateNewTransaction();
+
+  public PersistenceTransaction createNewTransaction();
 
   public PersistenceTransaction nullTransaction();
 }

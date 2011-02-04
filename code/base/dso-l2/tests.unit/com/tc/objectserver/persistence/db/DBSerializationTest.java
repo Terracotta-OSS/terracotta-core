@@ -100,7 +100,7 @@ public class DBSerializationTest extends TCTestCase {
     File dbHome = newDBHome();
     initDB(dbHome);
 
-    final PersistenceTransaction ptx = this.ptp.newTransaction();
+    final PersistenceTransaction ptx = this.ptp.getOrCreateNewTransaction();
 
     final String rootOne = "rootName";
     final ObjectID rootID = newObjectID();

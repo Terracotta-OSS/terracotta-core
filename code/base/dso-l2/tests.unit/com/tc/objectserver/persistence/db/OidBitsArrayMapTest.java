@@ -12,8 +12,7 @@ import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.LockMode;
 import com.sleepycat.je.OperationStatus;
 import com.tc.object.ObjectID;
-import com.tc.objectserver.persistence.db.OidBitsArrayMapDiskStoreImpl;
-import com.tc.objectserver.persistence.db.TCDatabaseException;
+import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBTCBytesBytesDatabase;
@@ -43,6 +42,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
     //
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     boolean paranoid = true;
@@ -52,6 +52,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
     oidDB = ((BerkeleyDBTCBytesBytesDatabase) oidTcBytesBytesDB).getDatabase();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     env.close();
     super.tearDown();
@@ -134,7 +135,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
   public void testReadWriteDB() throws Exception {
     List<ObjectID> idList = populateObjectIDList();
 
-    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                         new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
@@ -146,7 +148,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
     verifyObjectIDInList(idList, oids);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB);
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                            new NullPersistenceTransactionProvider());
     loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
 
@@ -173,7 +176,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
     int auxDB = 1;
     List<ObjectID> idList = populateObjectIDList();
 
-    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB,
+                                                                         new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
@@ -185,7 +189,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
     verifyObjectIDInList(idList, oids);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB,
+                                                                            new NullPersistenceTransactionProvider());
     loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
 
@@ -216,8 +221,10 @@ public class OidBitsArrayMapTest extends TCTestCase {
       if ((i % 3) == 0) auxList.add(idList.get(i));
     }
 
-    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB);
-    OidBitsArrayMapDiskStoreImpl oidAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                         new NullPersistenceTransactionProvider());
+    OidBitsArrayMapDiskStoreImpl oidAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB,
+                                                                           new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);
@@ -235,10 +242,12 @@ public class OidBitsArrayMapTest extends TCTestCase {
     verifyObjectIDInList(auxList, oidAux);
 
     // load to a new OidBitsArrayMap
-    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB);
+    OidBitsArrayMapDiskStoreImpl secOids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB,
+                                                                            new NullPersistenceTransactionProvider());
     loadAllFromDisk(secOids);
     verifyObjectIDInList(idList, secOids);
-    OidBitsArrayMapDiskStoreImpl secAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl secAux = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB,
+                                                                           new NullPersistenceTransactionProvider());
     loadAllFromDisk(secAux);
     verifyObjectIDInList(auxList, secAux);
 
@@ -278,7 +287,8 @@ public class OidBitsArrayMapTest extends TCTestCase {
     Set<Long> indexSet = new HashSet<Long>();
     Map<Long, OidLongArray> map = new HashMap<Long, OidLongArray>();
 
-    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB);
+    OidBitsArrayMapDiskStoreImpl oids = new OidBitsArrayMapDiskStoreImpl(LongPerDiskUnit, oidTcBytesBytesDB, auxDB,
+                                                                         new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
       oids.getAndSet(id);

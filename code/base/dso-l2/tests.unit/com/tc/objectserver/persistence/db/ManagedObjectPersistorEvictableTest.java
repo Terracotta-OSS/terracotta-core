@@ -212,7 +212,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     // publish CDSM data
     final HashSet<ManagedObject> newObjects = createCDSMObjects(15050);
     final HashSet<ManagedObject> objects = addToObjectStore(new HashSet<ManagedObject>(), newObjects);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -234,7 +234,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     this.testSleepycatCollectionsPersistor.setCounter(0);
-    ptx = this.persistenceTransactionProvider.newTransaction();
+    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       this.managedObjectPersistor.deleteAllObjects(toDelete);
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
@@ -277,7 +277,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     globalEvictableObjects.addAll(newEvitcable);
     newObjects.addAll(newObjects2);
     newObjects.addAll(newEvitcable);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, newObjects);
     } finally {
@@ -313,7 +313,7 @@ public class ManagedObjectPersistorEvictableTest extends TCTestCase {
     }
 
     // this.testSleepycatCollectionsPersistor.setCounter(0);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       this.managedObjectPersistor.deleteAllObjects(toDelete);
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);

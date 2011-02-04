@@ -88,19 +88,19 @@ public class DBCollectionsTest extends TCTestCase {
     addToMap(localMap);
     equals(localMap, sMap);
 
-    PersistenceTransaction tx = this.ptp.newTransaction();
+    PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
     this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     final MapManagedObjectState state2 = (MapManagedObjectState) ManagedObjectStateFactory.getInstance()
         .createState(new ObjectID(2), ObjectID.NULL_ID, "java.util.HashMap", "System.loader", new TestDNACursor());
     TCPersistableMap sMap2 = (TCPersistableMap) state2.getPersistentCollection();
     tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -109,13 +109,13 @@ public class DBCollectionsTest extends TCTestCase {
     addMoreMaps(state1);
 
     System.err.println(" Loading map again ....");
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
 
     System.err.println(" Loading different map ....");
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     final TCPersistableMap sMap3 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap3);
@@ -124,12 +124,12 @@ public class DBCollectionsTest extends TCTestCase {
     addToMap(localMap, 2);
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -138,12 +138,12 @@ public class DBCollectionsTest extends TCTestCase {
     addAndRemoveFromMap(localMap);
     Assert.assertEquals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
@@ -152,33 +152,33 @@ public class DBCollectionsTest extends TCTestCase {
     addRemoveClearFromMap(localMap);
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     this.collectionsPersistor.saveCollections(tx, state1);
     tx.commit();
     equals(localMap, sMap);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(localMap, sMap2);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     SortedSet<ObjectID> idsToDelete = new TreeSet<ObjectID>();
     idsToDelete.add(id);
     Assert.assertEquals(40, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
     tx.commit();
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     sMap2.clear();
     tx.commit();
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     sMap2 = (TCPersistableMap) state1.getPersistentCollection();
     tx.commit();
     equals(new HashMap(), sMap2);
 
-    tx = this.ptp.newTransaction();
+    tx = this.ptp.getOrCreateNewTransaction();
     Assert.assertEquals(0, this.collectionsPersistor.deleteAllCollections(ptp, idsToDelete, idsToDelete));
     tx.commit();
 
@@ -255,7 +255,7 @@ public class DBCollectionsTest extends TCTestCase {
       final ObjectID id = new ObjectID(j);
       final TCPersistableMap sMap = (TCPersistableMap) this.collectionsFactory.createPersistentMap(id);
       addToMap(sMap);
-      final PersistenceTransaction tx = this.ptp.newTransaction();
+      final PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
       this.collectionsPersistor.saveCollections(tx, state);
       tx.commit();
     }

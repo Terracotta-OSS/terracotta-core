@@ -10,10 +10,6 @@ import com.tc.object.TestDNACursor;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.managedobject.MapManagedObjectState;
 import com.tc.objectserver.managedobject.NullManagedObjectChangeListenerProvider;
-import com.tc.objectserver.persistence.db.CustomSerializationAdapterFactory;
-import com.tc.objectserver.persistence.db.TCCollectionsPersistor;
-import com.tc.objectserver.persistence.db.TCPersistableMap;
-import com.tc.objectserver.persistence.db.DBPersistorImpl;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
@@ -30,10 +26,10 @@ import java.util.TreeSet;
 
 public class DBCollectionsDeleteTest extends TCTestCase {
 
-  private DBPersistorImpl             persistor;
+  private DBPersistorImpl                persistor;
   private PersistenceTransactionProvider ptp;
   private DBEnvironment                  env;
-  private TCCollectionsPersistor  collectionsPersistor;
+  private TCCollectionsPersistor         collectionsPersistor;
   private static int                     dbHomeCounter = 0;
   private static File                    tempDirectory;
 
@@ -88,12 +84,12 @@ public class DBCollectionsDeleteTest extends TCTestCase {
       int entries = rand.nextInt(200000);
       System.out.println("XXX added entries:" + entries);
       addToMap(sMap, entries);
-      Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count());
+      Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(null));
       totalEntries += entries;
-      PersistenceTransaction tx = this.ptp.newTransaction();
+      PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
       this.collectionsPersistor.saveCollections(tx, state);
       tx.commit();
-      Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count());
+      Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(null));
       deleteIds.add(id);
     }
 
@@ -102,7 +98,7 @@ public class DBCollectionsDeleteTest extends TCTestCase {
     long objectsDeleted = this.collectionsPersistor.deleteAllCollections(ptp, deleteIds, deleteIds);
     System.out.println("time taken to delete " + (System.currentTimeMillis() - start) + "ms");
     Assert.assertEquals(totalEntries, objectsDeleted);
-    Assert.assertEquals(0, this.env.getMapsDatabase().count());
+    Assert.assertEquals(0, this.env.getMapsDatabase().count(null));
 
   }
 

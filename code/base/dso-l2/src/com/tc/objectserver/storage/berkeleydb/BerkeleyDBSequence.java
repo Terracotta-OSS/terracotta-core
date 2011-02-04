@@ -55,7 +55,7 @@ class BerkeleyDBSequence extends AbstractBerkeleyDatabase implements MutableSequ
   }
 
   private String getOrCreateUID(String sequenceID, PersistenceTransactionProvider ptxp) {
-    PersistenceTransaction tx = ptxp.newTransaction();
+    PersistenceTransaction tx = ptxp.getOrCreateNewTransaction();
 
     String newuid;
     try {

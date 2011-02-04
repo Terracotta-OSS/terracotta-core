@@ -136,7 +136,7 @@ public class BerkeleyDBTCMapsDatabase extends BerkeleyDBTCBytesBytesDatabase imp
     return true;
   }
 
-  public long count() {
+  public long count(PersistenceTransaction tx) {
     return this.db.count();
   }
 

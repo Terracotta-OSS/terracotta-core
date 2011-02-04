@@ -49,13 +49,13 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray(objectId);
     byte[] value = getRandomlyFilledByteArray(objectId);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     int written = database.put(tx, objectId, key, value, serializer);
     tx.commit();
 
     Assert.assertTrue(written > 0);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId, map, serializer);
     int count = 0;
@@ -68,13 +68,13 @@ public class TCMapsDatabaseTest extends TCTestCase {
 
     Assert.assertEquals(1, count);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     written = database.delete(tx, objectId, key, serializer);
     tx.commit();
 
     Assert.assertTrue(written > 0);
 
-    Assert.assertEquals(0, database.count());
+    Assert.assertEquals(0, database.count(ptp.getOrCreateNewTransaction()));
   }
 
   public void testDeleteCollections() throws Exception {
@@ -88,20 +88,20 @@ public class TCMapsDatabaseTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2);
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     database.put(tx, objectId1, key1, value1, serializer);
     database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    Assert.assertEquals(2, database.count());
+    Assert.assertEquals(2, database.count(ptp.getOrCreateNewTransaction()));
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     database.deleteCollection(objectId1, tx);
     tx.commit();
 
-    Assert.assertEquals(1, database.count());
+    Assert.assertEquals(1, database.count(ptp.getOrCreateNewTransaction()));
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId2, map, serializer);
     int count = 0;

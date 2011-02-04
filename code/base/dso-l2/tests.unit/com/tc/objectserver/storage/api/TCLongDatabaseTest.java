@@ -44,14 +44,14 @@ public class TCLongDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
       Status status = database.put(keys[i], tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     Set<Long> keysTemp = database.getAllKeys(tx);
     TreeSet<Long> keysFetched = new TreeSet<Long>();
     keysFetched.addAll(keysTemp);
@@ -72,7 +72,7 @@ public class TCLongDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
       Status status = database.put(keys[i], tx);
       tx.commit();
 
@@ -80,7 +80,7 @@ public class TCLongDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
       Assert.assertTrue(database.contains(keys[i], tx));
       tx.commit();
     }
@@ -93,26 +93,26 @@ public class TCLongDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
       Status status = database.put(keys[i], tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     Set<Long> keysTemp = database.getAllKeys(tx);
     Assert.assertEquals(keys.length, keysTemp.size());
 
     for (int i = 0; i < keys.length; i++) {
-      tx = ptp.newTransaction();
+      tx = ptp.getOrCreateNewTransaction();
       Status status = database.delete(keys[i], tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     keysTemp = database.getAllKeys(tx);
     Assert.assertEquals(0, keysTemp.size());
   }

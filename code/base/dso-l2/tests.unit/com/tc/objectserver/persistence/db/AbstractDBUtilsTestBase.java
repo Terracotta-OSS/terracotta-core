@@ -87,7 +87,7 @@ public abstract class AbstractDBUtilsTestBase extends TCTestCase {
     final PersistenceTransactionProvider persistenceTransactionProvider = sleepycatPersistor
         .getPersistenceTransactionProvider();
     final ManagedObjectPersistor mop = sleepycatPersistor.getManagedObjectPersistor();
-    final PersistenceTransaction ptx = persistenceTransactionProvider.newTransaction();
+    final PersistenceTransaction ptx = persistenceTransactionProvider.getOrCreateNewTransaction();
 
     final String rootOne = "rootName";
     final ObjectID rootID = newObjectID();

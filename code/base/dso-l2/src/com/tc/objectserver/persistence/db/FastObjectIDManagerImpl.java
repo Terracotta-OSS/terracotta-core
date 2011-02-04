@@ -191,16 +191,17 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
     synchronized (objectIDUpdateLock) {
       if (stoppedFlag.isStopped()) return isAllFlushed;
       final OidBitsArrayMapDiskStoreImpl oidStoreMap = new OidBitsArrayMapDiskStoreImpl(this.longsPerDiskEntry,
-                                                                                        this.objectOidStoreDB);
+                                                                                        this.objectOidStoreDB, ptp);
       final OidBitsArrayMapDiskStoreImpl mapOidStoreMap = new OidBitsArrayMapDiskStoreImpl(this.longsPerStateEntry,
-                                                                                           this.mapsOidStoreDB);
+                                                                                           this.mapsOidStoreDB, ptp);
 
       final OidBitsArrayMapDiskStoreImpl evictableOidStoreMap = new OidBitsArrayMapDiskStoreImpl(
                                                                                                  this.longsPerStateEntry,
-                                                                                                 this.evictableOidStoreDB);
+                                                                                                 this.evictableOidStoreDB,
+                                                                                                 ptp);
       PersistenceTransaction tx = null;
       try {
-        tx = ptp.newTransaction();
+        tx = ptp.getOrCreateNewTransaction();
         TCDatabaseCursor<byte[], byte[]> cursor = oidStoreLogDB.openCursorUpdatable(tx);
         int changes = 0;
         try {
@@ -266,7 +267,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
         tx.commit();
         logger.debug("Checkpoint updated " + changes + " objectIDs");
       } catch (final TCDatabaseException e) {
-        logger.error("Error ojectID checkpoint: " + e);
+        logger.error("Error ojectID checkpoint: ", e);
         abortOnError(tx);
         throw new TCRuntimeException(e);
       }
@@ -369,7 +370,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
       }
 
       final ObjectIDSet tmp = new ObjectIDSet();
-      final PersistenceTransaction tx = FastObjectIDManagerImpl.this.ptp.newTransaction();
+      final PersistenceTransaction tx = FastObjectIDManagerImpl.this.ptp.getOrCreateNewTransaction();
       TCDatabaseCursor<byte[], byte[]> cursor = null;
       try {
         cursor = oidDB.openCursor(tx);

@@ -72,7 +72,7 @@ public class TCCollectionsPersistor extends DBPersistorBase {
   public long deleteAllCollections(final PersistenceTransactionProvider ptp, final SortedSet<ObjectID> oids,
                                    final SortedSet<ObjectID> extantMapTypeOidSet) throws TCDatabaseException {
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     long totalEntriesDeleted = 0;
     int mapEntriesDeleted = 0;
     int accumulatedDeletes = 0;
@@ -91,7 +91,7 @@ public class TCCollectionsPersistor extends DBPersistorBase {
           if (accumulatedDeletes >= DELETE_BATCH_SIZE) {
             tx.commit();
             accumulatedDeletes = 0;
-            tx = ptp.newTransaction();
+            tx = ptp.getOrCreateNewTransaction();
           } else {
             break;
           }

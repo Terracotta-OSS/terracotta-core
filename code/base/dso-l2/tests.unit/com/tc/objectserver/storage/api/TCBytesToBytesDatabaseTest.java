@@ -42,13 +42,13 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray();
     byte[] value = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     byte[] valueReturned = database.get(key, tx);
     tx.commit();
 
@@ -59,20 +59,20 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray();
     byte[] value1 = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     Status status = database.putNoOverwrite(tx, key, value1);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
     byte[] value2 = getRandomlyFilledByteArray();
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     status = database.putNoOverwrite(tx, key, value2);
     tx.commit();
 
     Assert.assertEquals(Status.NOT_SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     byte[] valueReturned = database.get(key, tx);
     tx.commit();
 
@@ -83,25 +83,25 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
     byte[] key = getRandomlyFilledByteArray();
     byte[] value = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     byte[] valueReturned = database.get(key, tx);
     tx.commit();
 
     Assert.assertTrue(Arrays.equals(value, valueReturned));
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     status = database.delete(key, tx);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.newTransaction();
+    tx = ptp.getOrCreateNewTransaction();
     valueReturned = database.get(key, tx);
     tx.commit();
 

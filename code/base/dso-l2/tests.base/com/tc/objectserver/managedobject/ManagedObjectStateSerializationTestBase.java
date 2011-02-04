@@ -90,7 +90,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
     dna.typeName = className;
     mo.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), new NullObjectInstanceMonitor(), false);
 
-    final PersistenceTransaction txn = this.ptp.newTransaction();
+    final PersistenceTransaction txn = this.ptp.getOrCreateNewTransaction();
     this.managedObjectPersistor.saveObject(txn, mo);
     txn.commit();
 

@@ -39,4 +39,8 @@ public class BerkeleyDBPersistenceTransaction implements PersistenceTransaction 
       tx.abort();
     }
   }
+
+  public void close() {
+    // NO OP
+  }
 }

@@ -32,4 +32,8 @@ public final class TestPersistenceTransaction implements PersistenceTransaction 
     return null;
   }
 
+  public void close() {
+    //
+  }
+
 }

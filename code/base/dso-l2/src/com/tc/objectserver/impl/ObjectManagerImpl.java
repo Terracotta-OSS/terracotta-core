@@ -882,7 +882,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
   }
 
   private PersistenceTransaction newTransaction() {
-    return this.persistenceTransactionProvider.newTransaction();
+    return this.persistenceTransactionProvider.getOrCreateNewTransaction();
   }
 
   public GarbageCollector getGarbageCollector() {

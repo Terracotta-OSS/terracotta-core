@@ -15,11 +15,15 @@ public class NullPersistenceTransactionProvider implements PersistenceTransactio
     return null;
   }
 
-  public PersistenceTransaction newTransaction() {
+  public PersistenceTransaction getOrCreateNewTransaction() {
     return NULL_TRANSACTION;
   }
 
   public PersistenceTransaction nullTransaction() {
+    return NULL_TRANSACTION;
+  }
+
+  public PersistenceTransaction createNewTransaction() {
     return NULL_TRANSACTION;
   }
 
@@ -34,6 +38,10 @@ public class NullPersistenceTransactionProvider implements PersistenceTransactio
 
     public Object getTransaction() {
       return null;
+    }
+
+    public void close() {
+      //
     }
   }
 

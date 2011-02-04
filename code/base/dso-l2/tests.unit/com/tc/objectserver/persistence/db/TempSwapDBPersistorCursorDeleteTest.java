@@ -45,7 +45,7 @@ public class TempSwapDBPersistorCursorDeleteTest extends TCTestCase {
     final TCPersistableMap sMap = (TCPersistableMap) state.getPersistentCollection();
     int entries = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_OBJECTMANAGER_DELETEBATCHSIZE) - 1;
     addToMap(sMap, entries);
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     persistor.getCollectionsPersistor().saveCollections(tx, state);
     tx.commit();
 

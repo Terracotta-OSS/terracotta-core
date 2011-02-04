@@ -29,7 +29,7 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
   public String get(String key) {
     if (key == null) { throw new NullPointerException(); }
 
-    PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
+    PersistenceTransaction tx = persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
       entry.setKey(key);
@@ -53,7 +53,7 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
   public void put(String key, String value) {
     if (key == null || value == null) { throw new NullPointerException(); }
 
-    PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
+    PersistenceTransaction tx = persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       Status status = this.database.put(key, value, tx);
 
@@ -70,7 +70,7 @@ public class TCMapStore extends DBPersistorBase implements PersistentMapStore {
   public boolean remove(String key) {
     if (key == null) { throw new NullPointerException(); }
 
-    PersistenceTransaction tx = persistenceTransactionProvider.newTransaction();
+    PersistenceTransaction tx = persistenceTransactionProvider.getOrCreateNewTransaction();
     try {
       Status status = this.database.delete(key, tx);
       tx.commit();

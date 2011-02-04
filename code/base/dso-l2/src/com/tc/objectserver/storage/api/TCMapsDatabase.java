@@ -17,7 +17,7 @@ public interface TCMapsDatabase {
    * @throws IOException
    */
   public int put(PersistenceTransaction tx, long id, Object key, Object value, TCCollectionsSerializer serializer)
-  throws TCDatabaseException, IOException;
+      throws TCDatabaseException, IOException;
 
   /**
    * Deletes a key from the map whose object id is passed in as the parameter
@@ -25,7 +25,7 @@ public interface TCMapsDatabase {
    * @throws IOException
    */
   public int delete(PersistenceTransaction tx, long id, Object key, TCCollectionsSerializer serializer)
-  throws TCDatabaseException, IOException;
+      throws TCDatabaseException, IOException;
 
   /**
    * Deletes an entire collection
@@ -43,12 +43,12 @@ public interface TCMapsDatabase {
   public int deleteCollectionBatched(long id, PersistenceTransaction tx, int maxDeleteBatchSize);
 
   public void loadMap(PersistenceTransaction tx, long id, Map map, TCCollectionsSerializer serializer)
-  throws TCDatabaseException;
+      throws TCDatabaseException;
 
   /**
    * Return the number of entries in the database. Used in tests.
    */
-  public long count();
+  public long count(PersistenceTransaction tx);
 
   /**
    * Returns a factory that is used to create a map that is backed by this DB

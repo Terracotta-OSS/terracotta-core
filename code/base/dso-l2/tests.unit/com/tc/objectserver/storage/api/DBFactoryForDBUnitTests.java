@@ -5,7 +5,7 @@ package com.tc.objectserver.storage.api;
 
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.management.beans.object.ServerDBBackupMBean;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
+import com.tc.objectserver.storage.derby.DerbyDBFactory;
 import com.tc.stats.counter.CounterManagerImpl;
 import com.tc.stats.counter.sampled.SampledCounter;
 import com.tc.stats.counter.sampled.SampledCounterConfig;
@@ -21,7 +21,8 @@ public class DBFactoryForDBUnitTests implements DBFactory {
   private final SampledCounter faultFromDisk;
 
   public DBFactoryForDBUnitTests(final Properties prop) {
-    dbFactory = new BerkeleyDBFactory(prop);
+    // dbFactory = new BerkeleyDBFactory(prop);
+    dbFactory = new DerbyDBFactory(prop);
     CounterManagerImpl sampledCounterManager = new CounterManagerImpl();
     final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     faultFromDisk = (SampledCounter) sampledCounterManager.createCounter(sampledCounterConfig);

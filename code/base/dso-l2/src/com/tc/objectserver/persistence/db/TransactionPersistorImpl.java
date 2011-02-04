@@ -36,7 +36,7 @@ class TransactionPersistorImpl extends DBPersistorBase implements TransactionPer
     PersistenceTransaction tx = null;
     try {
       Collection rv = new HashSet();
-      tx = ptp.newTransaction();
+      tx = ptp.getOrCreateNewTransaction();
       cursor = this.db.openCursor(tx);
       while (cursor.hasNext()) {
         TCDatabaseEntry<byte[], byte[]> entry = cursor.next();

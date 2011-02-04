@@ -46,7 +46,7 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.newTransaction();
+      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
       Status status = database.put(keys[i], values[i], tx);
       tx.commit();
 
@@ -54,7 +54,7 @@ public class TCLongToStringDatabaseTest extends TCTestCase {
     }
 
     TLongObjectHashMap map = new TLongObjectHashMap();
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     map = database.loadMappingsInto(map, tx);
 
     Assert.assertEquals(keys.length, map.size());

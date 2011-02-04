@@ -8,6 +8,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
+import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 import com.tc.objectserver.storage.api.TCBytesToBytesDatabase;
 import com.tc.objectserver.storage.api.TCDatabaseReturnConstants.Status;
 import com.tc.util.Conversion;
@@ -21,25 +22,29 @@ import java.util.TreeMap;
 
 public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements OidBitsArrayMap {
 
-  private static final TCLogger        logger = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
+  private static final TCLogger                logger = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
 
-  private final TCBytesToBytesDatabase oidDB;
-  private final int                    auxKey;
+  private final TCBytesToBytesDatabase         oidDB;
+  private final int                            auxKey;
+  private final PersistenceTransactionProvider ptp;
 
   /*
    * Compressed bits array for ObjectIDs, backed up by a database. If null database, then only in-memory representation.
    */
-  public OidBitsArrayMapDiskStoreImpl(int longsPerDiskUnit, TCBytesToBytesDatabase oidDB) {
-    this(longsPerDiskUnit, oidDB, 0);
+  public OidBitsArrayMapDiskStoreImpl(int longsPerDiskUnit, TCBytesToBytesDatabase oidDB,
+                                      PersistenceTransactionProvider ptp) {
+    this(longsPerDiskUnit, oidDB, 0, ptp);
   }
 
   /*
    * auxKey: (main key + auxKey) to store different data entry to same db.
    */
-  public OidBitsArrayMapDiskStoreImpl(int longsPerDiskUnit, TCBytesToBytesDatabase oidDB, int auxKey) {
+  public OidBitsArrayMapDiskStoreImpl(int longsPerDiskUnit, TCBytesToBytesDatabase oidDB, int auxKey,
+                                      PersistenceTransactionProvider ptp) {
     super(longsPerDiskUnit);
     this.oidDB = oidDB;
     this.auxKey = auxKey;
+    this.ptp = ptp;
   }
 
   @Override
@@ -47,7 +52,8 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     OidLongArray longAry = null;
     try {
       if (oidDB != null) {
-        longAry = readDiskEntry(null, oid);
+        PersistenceTransaction tx = ptp.createNewTransaction();
+        longAry = readDiskEntry(tx, oid);
       }
     } catch (TCDatabaseException e) {
       logger.error("Reading object ID " + oid + ":" + e.getMessage());
@@ -68,6 +74,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     } finally {
       if (txn != null) {
         txn.commit();
+        txn.close();
       }
     }
   }

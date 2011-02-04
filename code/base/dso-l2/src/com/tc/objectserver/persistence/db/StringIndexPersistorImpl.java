@@ -27,14 +27,14 @@ public final class StringIndexPersistorImpl extends DBPersistorBase implements S
 
   public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target) {
     if (initialized.set(true)) throw new AssertionError("Attempt to use more than once.");
-    PersistenceTransaction tx = ptp.newTransaction();
+    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
     return stringIndexDatabase.loadMappingsInto(target, tx);
   }
 
   public void saveMapping(long index, String string) {
     PersistenceTransaction tx = null;
     try {
-      tx = ptp.newTransaction();
+      tx = ptp.getOrCreateNewTransaction();
       stringIndexDatabase.put(index, string, tx);
       tx.commit();
     } catch (Throwable t) {

@@ -14,7 +14,6 @@ import com.tc.objectserver.persistence.inmemory.InMemoryClassPersistor;
 import com.tc.objectserver.persistence.inmemory.InMemoryClientStatePersistor;
 import com.tc.objectserver.persistence.inmemory.InMemoryPersistentMapStore;
 import com.tc.objectserver.persistence.inmemory.InMemorySequenceProvider;
-import com.tc.objectserver.persistence.inmemory.NullPersistenceTransactionProvider;
 import com.tc.objectserver.persistence.inmemory.NullStringIndexPersistor;
 import com.tc.objectserver.persistence.inmemory.NullTransactionPersistor;
 import com.tc.objectserver.storage.api.DBEnvironment;
@@ -37,7 +36,7 @@ public class TempSwapDBPersistorImpl extends DBPersistorImpl {
 
   @Override
   protected PersistenceTransactionProvider createPersistenceTransactionProvider(final DBEnvironment dbenv) {
-    return new NullPersistenceTransactionProvider();
+    return dbenv.getTempSwapPersistenceTransactionProvider();
   }
 
   @Override

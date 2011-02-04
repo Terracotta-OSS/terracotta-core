@@ -18,6 +18,7 @@ public class TCCollectionsSerializerImpl implements TCCollectionsSerializer {
   private final BasicSerializer                   serializer;
 
   private final ThreadLocal<OutputStreamWrappers> td = new ThreadLocal<OutputStreamWrappers>() {
+                                                       @Override
                                                        protected OutputStreamWrappers initialValue() {
                                                          return new OutputStreamWrappers();
                                                        }
@@ -40,8 +41,9 @@ public class TCCollectionsSerializerImpl implements TCCollectionsSerializer {
   }
 
   public byte[] serialize(final long id, final Object o) throws IOException {
-    TCObjectOutputStream oo = this.td.get().getTCObjectOutputStream();
-    ByteArrayOutputStream bao = this.td.get().getByteArrayOutputStream();
+    OutputStreamWrappers outputStreamWrappers = this.td.get();
+    TCObjectOutputStream oo = outputStreamWrappers.getTCObjectOutputStream();
+    ByteArrayOutputStream bao = outputStreamWrappers.getByteArrayOutputStream();
 
     oo.writeLong(id);
     this.serializer.serializeTo(o, oo);
