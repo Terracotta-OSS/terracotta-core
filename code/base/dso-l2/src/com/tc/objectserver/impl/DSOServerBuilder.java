@@ -10,6 +10,8 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.L2IndexStateManager;
+import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.DumpHandlerStore;
@@ -84,6 +86,12 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   L2IndexStateManager createL2IndexStateManager(IndexHACoordinator indexHACoordinator,
                                                 ServerTransactionManager transactionManager);
 
+  L2ObjectStateManager createL2ObjectStateManager(ObjectManager objectManager,
+                                                  ServerTransactionManager transactionManager);
+
+  L2PassiveSyncStateManager createL2PassiveSyncStateManager(L2IndexStateManager l2IndexStateManager,
+                                                            L2ObjectStateManager l2ObjectStateManager);
+
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
 
@@ -139,8 +147,11 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
 
   L2Coordinator createL2HACoordinator(TCLogger consoleLogger, DistributedObjectServer server,
                                       StageManager stageManager, GroupManager groupCommsManager,
-                                      PersistentMapStore persistentMapStore, L2IndexStateManager l2IndexStateManager,
-                                      ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
+                                      PersistentMapStore persistentMapStore,
+                                      L2PassiveSyncStateManager l2PassiveSyncStateManager,
+                                      L2ObjectStateManager l2ObjectStateManager,
+                                      L2IndexStateManager l2IndexStateManager, ObjectManager objectManager,
+                                      IndexHACoordinator indexHACoordinator,
                                       ServerTransactionManager transactionManager, ServerGlobalTransactionManager gtxm,
                                       WeightGeneratorFactory weightGeneratorFactory,
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,

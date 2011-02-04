@@ -58,8 +58,8 @@ public class L2IndexSyncSendHandler extends AbstractEventHandler {
     try {
       File syncFile = context.syncFile();
       byte[] fileBytes = getBytesFromFile(syncFile);
-      final IndexSyncMessage msg = IndexSyncMessageFactory.createIndexSyncMessage(context.getCacheName(), syncFile
-          .getName(), fileBytes.length, fileBytes, context.getSequenceID());
+      final IndexSyncMessage msg = IndexSyncMessageFactory.createIndexSyncMessage(context.getCachename(), context
+          .getFilename(), fileBytes.length, fileBytes, context.getSequenceID());
       this.groupManager.sendTo(context.getNodeID(), msg);
       this.syncLogger.logSynced(context);
       this.l2IndexStateManager.close(context);

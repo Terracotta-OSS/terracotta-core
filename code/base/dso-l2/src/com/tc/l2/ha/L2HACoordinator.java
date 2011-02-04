@@ -37,7 +37,7 @@ import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
 import com.tc.l2.objectserver.L2IndexStateManager;
 import com.tc.l2.objectserver.L2ObjectStateManager;
-import com.tc.l2.objectserver.L2ObjectStateManagerImpl;
+import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedObjectManagerImpl;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
@@ -90,9 +90,8 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   private final GroupID                                   thisGroupID;
 
   private StateManager                                    stateManager;
-  private ReplicatedObjectManager                         rObjectManager;
+  private ReplicatedObjectManagerImpl                     rObjectManager;
   private ReplicatedTransactionManager                    rTxnManager;
-  private L2ObjectStateManager                            l2ObjectStateManager;
   private ReplicatedClusterStateManager                   rClusterStateMgr;
   private final StateSyncManager                          stateSyncManager;
 
@@ -101,11 +100,15 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
 
   private final L2ConfigurationSetupManager               configSetupManager;
   private final CopyOnWriteArrayList<StateChangeListener> listeners = new CopyOnWriteArrayList<StateChangeListener>();
+  private final L2PassiveSyncStateManager                 l2PassiveSyncStateManager;
 
   public L2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                          final StageManager stageManager, final GroupManager groupCommsManager,
                          final PersistentMapStore persistentStateStore, final ObjectManager objectManager,
-                         final IndexHACoordinator indexHACoordinator, final L2IndexStateManager l2IndexStateManager,
+                         final IndexHACoordinator indexHACoordinator,
+                         final L2PassiveSyncStateManager l2PassiveSyncStateManager,
+                         final L2ObjectStateManager l2ObjectStateManager,
+                         final L2IndexStateManager l2IndexStateManager,
                          final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
                          final WeightGeneratorFactory weightGeneratorFactory,
                          final L2ConfigurationSetupManager configurationSetupManager, final MessageRecycler recycler,
@@ -118,17 +121,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.thisGroupID = thisGroupID;
     this.configSetupManager = configurationSetupManager;
     this.stateSyncManager = stateSyncManager;
+    this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
 
-    init(stageManager, persistentStateStore, l2IndexStateManager, objectManager, indexHACoordinator,
-         transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager, serverTransactionFactory,
-         dgcSequenceProvider);
+    init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
+         indexHACoordinator, transactionManager, gtxm, weightGeneratorFactory, recycler, stripeIDStateManager,
+         serverTransactionFactory, dgcSequenceProvider);
   }
 
   private void init(final StageManager stageManager, final PersistentMapStore persistentStateStore,
-                    L2IndexStateManager l2IndexStateManager, final ObjectManager objectManager,
-                    IndexHACoordinator indexHACoordinator, final ServerTransactionManager transactionManager,
-                    final ServerGlobalTransactionManager gtxm, final WeightGeneratorFactory weightGeneratorFactory,
-                    final MessageRecycler recycler, final StripeIDStateManager stripeIDStateManager,
+                    L2ObjectStateManager l2ObjectStateManager, L2IndexStateManager l2IndexStateManager,
+                    final ObjectManager objectManager, IndexHACoordinator indexHACoordinator,
+                    final ServerTransactionManager transactionManager, final ServerGlobalTransactionManager gtxm,
+                    final WeightGeneratorFactory weightGeneratorFactory, final MessageRecycler recycler,
+                    final StripeIDStateManager stripeIDStateManager,
                     final ServerTransactionFactory serverTransactionFactory, DGCSequenceProvider dgcSequenceProvider) {
 
     final boolean isCleanDB = isCleanDB(persistentStateStore);
@@ -147,7 +152,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                              createWeightGeneratorFactoryForStateManager(gtxm));
     this.stateManager.registerForStateChangeEvents(this);
 
-    this.l2ObjectStateManager = new L2ObjectStateManagerImpl(objectManager, transactionManager);
     this.sequenceGenerator = new SequenceGenerator(this);
     this.indexSequenceGenerator = new SequenceGenerator();
 
@@ -158,19 +162,19 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     zapProcessor.addZapEventListener(new OperatorEventsZapRequestListener(this.configSetupManager));
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
-    final Sink objectsSyncRequestSink = stageManager
-        .createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
-                     new L2ObjectSyncRequestHandler(this.l2ObjectStateManager), 1, MAX_STAGE_SIZE).getSink();
+    final Sink objectsSyncRequestSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
+                                                                 new L2ObjectSyncRequestHandler(l2ObjectStateManager),
+                                                                 1, MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(serverTransactionFactory), 1,
                                                           MAX_STAGE_SIZE).getSink();
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE,
                              new L2ObjectSyncDehydrateHandler(this.sequenceGenerator), 1, MAX_STAGE_SIZE);
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
-                             new L2ObjectSyncSendHandler(this.l2ObjectStateManager, serverTransactionFactory), 1,
+                             new L2ObjectSyncSendHandler(l2ObjectStateManager, serverTransactionFactory), 1,
                              MAX_STAGE_SIZE);
     stageManager.createStage(ServerConfigurationContext.TRANSACTION_RELAY_STAGE,
-                             new TransactionRelayHandler(this.l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
+                             new TransactionRelayHandler(l2ObjectStateManager, this.sequenceGenerator, gtxm), 1,
                              MAX_STAGE_SIZE);
     final Sink ackProcessingSink = stageManager
         .createStage(ServerConfigurationContext.SERVER_TRANSACTION_ACK_PROCESSING_STAGE,
@@ -207,11 +211,13 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
                                                             transactionManager, gtxm, recycler);
 
     this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager, this.stateSyncManager,
-                                                          this.l2ObjectStateManager, l2IndexStateManager,
-                                                          this.rTxnManager, objectManager, transactionManager,
-                                                          objectsSyncRequestSink, indexSyncRequestSink,
-                                                          this.sequenceGenerator, this.indexSequenceGenerator,
-                                                          isCleanDB);
+                                                          this.l2PassiveSyncStateManager, this.rTxnManager,
+                                                          objectManager, transactionManager, objectsSyncRequestSink,
+                                                          indexSyncRequestSink, this.sequenceGenerator,
+                                                          this.indexSequenceGenerator, isCleanDB);
+
+    l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
+    l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);
 
     this.stateSyncManager.setStateManager(stateManager);
 
@@ -374,7 +380,7 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
   public PrettyPrinter prettyPrint(final PrettyPrinter out) {
     final StringBuilder strBuilder = new StringBuilder();
     strBuilder.append(L2HACoordinator.class.getSimpleName() + " [ ");
-    strBuilder.append(this.thisGroupID).append(" ").append(this.l2ObjectStateManager);
+    strBuilder.append(this.thisGroupID).append(" ").append(this.l2PassiveSyncStateManager);
     strBuilder.append(" ]");
     out.indent().print(strBuilder.toString()).flush();
     out.indent().print("ReplicatedClusterStateMgr").visit(this.rClusterStateMgr).flush();

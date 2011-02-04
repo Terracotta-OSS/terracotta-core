@@ -13,6 +13,10 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.ha.L2HACoordinator;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.objectserver.L2IndexStateManager;
+import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.L2ObjectStateManagerImpl;
+import com.tc.l2.objectserver.L2PassiveSyncStateManager;
+import com.tc.l2.objectserver.L2PassiveSyncStateManagerImpl;
 import com.tc.l2.objectserver.NullL2IndexStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
@@ -145,6 +149,16 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     return new NullL2IndexStateManager();
   }
 
+  public L2ObjectStateManager createL2ObjectStateManager(ObjectManager objectManager,
+                                                         ServerTransactionManager transactionManager) {
+    return new L2ObjectStateManagerImpl(objectManager, transactionManager);
+  }
+
+  public L2PassiveSyncStateManager createL2PassiveSyncStateManager(L2IndexStateManager l2IndexStateManager,
+                                                                   L2ObjectStateManager l2ObjectStateManager) {
+    return new L2PassiveSyncStateManagerImpl(l2IndexStateManager, l2ObjectStateManager);
+  }
+
   public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink) {
     return new NullSearchRequestManager();
   }
@@ -170,7 +184,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(
+                                                                     StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -232,6 +247,8 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   public L2Coordinator createL2HACoordinator(final TCLogger consoleLogger, final DistributedObjectServer server,
                                              final StageManager stageManager, final GroupManager groupCommsManager,
                                              final PersistentMapStore persistentMapStore,
+                                             final L2PassiveSyncStateManager l2PassiveSyncStateManager,
+                                             final L2ObjectStateManager l2ObjectStateManager,
                                              final L2IndexStateManager l2IndexStateManager,
                                              final ObjectManager objectManager,
                                              final IndexHACoordinator indexHACoordinator,
@@ -245,9 +262,10 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final DGCSequenceProvider dgcSequenceProvider,
                                              final StateSyncManager stateSyncManager) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
-                               objectManager, indexHACoordinator, l2IndexStateManager, transactionManager, gtxm,
-                               weightGeneratorFactory, configurationSetupManager, recycler, this.thisGroupID,
-                               stripeStateManager, serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
+                               objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
+                               l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
+                               configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
+                               serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

@@ -40,6 +40,8 @@ import com.tc.l2.ha.StripeIDStateManagerImpl;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.ha.ZapNodeProcessorWeightGeneratorFactory;
 import com.tc.l2.objectserver.L2IndexStateManager;
+import com.tc.l2.objectserver.L2ObjectStateManager;
+import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
@@ -1154,9 +1156,16 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       L2IndexStateManager l2IndexStateManager = this.serverBuilder.createL2IndexStateManager(this.indexHACoordinator,
                                                                                              this.transactionManager);
 
+      L2ObjectStateManager l2ObjectStateManager = this.serverBuilder.createL2ObjectStateManager(objectManager,
+                                                                                                transactionManager);
+
+      L2PassiveSyncStateManager l2PassiveSyncStateManager = this.serverBuilder
+          .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager);
+
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                     this.groupCommManager, this.persistor
                                                                         .getPersistentStateStore(),
+                                                                    l2PassiveSyncStateManager, l2ObjectStateManager,
                                                                     l2IndexStateManager, this.objectManager,
                                                                     this.indexHACoordinator, this.transactionManager,
                                                                     gtxm, weightGeneratorFactory,

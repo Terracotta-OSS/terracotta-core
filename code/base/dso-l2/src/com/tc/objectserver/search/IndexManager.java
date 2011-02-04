@@ -6,7 +6,6 @@ package com.tc.objectserver.search;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
-import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,7 @@ public interface IndexManager {
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) throws IndexException;
 
-  public Map<String, List<File>> getFilesToSync();
+  public Map<String, List<IndexFile>> getFilesToSync();
 
   void release();
 

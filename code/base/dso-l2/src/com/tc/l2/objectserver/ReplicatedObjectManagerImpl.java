@@ -58,8 +58,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final GroupManager                 groupManager;
   private final StateManager                 stateManager;
   private final StateSyncManager             stateSyncManager;
-  private final L2ObjectStateManager         l2ObjectStateManager;
-  private final L2IndexStateManager          l2IndexStateManager;
   private final ReplicatedTransactionManager rTxnManager;
   private final ServerTransactionManager     transactionManager;
   private final Sink                         objectsSyncRequestSink;
@@ -72,8 +70,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
                                      final StateSyncManager stateSyncManager,
-                                     final L2ObjectStateManager l2ObjectStateManager,
-                                     final L2IndexStateManager l2IndexStateManager,
+                                     final L2PassiveSyncStateManager l2PassiveSyncStateManager,
                                      final ReplicatedTransactionManager txnManager, final ObjectManager objectManager,
                                      final ServerTransactionManager transactionManager,
                                      final Sink objectsSyncRequestSink, final Sink indexSyncRequestSink,
@@ -87,17 +84,13 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.transactionManager = transactionManager;
     this.objectsSyncRequestSink = objectsSyncRequestSink;
     this.indexSyncRequestSink = indexSyncRequestSink;
-    this.l2ObjectStateManager = l2ObjectStateManager;
-    this.l2IndexStateManager = l2IndexStateManager;
     this.sequenceGenerator = sequenceGenerator;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(this.gcMonitor);
-    l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this);
-    l2IndexStateManager.registerForL2IndexStateChangeEvents(this);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
     this.isCleanDB = isCleanDB;
-    this.passiveSyncStateManager = new L2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager);
+    this.passiveSyncStateManager = l2PassiveSyncStateManager;
   }
 
   /**
@@ -140,8 +133,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   public void clear(final NodeID nodeID) {
-    this.l2ObjectStateManager.removeL2(nodeID);
-    this.l2IndexStateManager.removeL2(nodeID);
+    this.passiveSyncStateManager.removeL2(nodeID);
     this.gcMonitor.clear(nodeID);
   }
 
@@ -318,7 +310,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   public boolean relayTransactions() {
-    return this.l2ObjectStateManager.getL2Count() > 0;
+    return this.passiveSyncStateManager.getL2Count() > 0;
   }
 
   private static final SyncingPassiveValue ADDED = new SyncingPassiveValue();

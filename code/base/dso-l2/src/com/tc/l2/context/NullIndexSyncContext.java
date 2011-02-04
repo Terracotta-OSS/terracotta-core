@@ -9,7 +9,11 @@ import java.io.File;
 
 public class NullIndexSyncContext implements IndexSyncContext {
 
-  public String getCacheName() {
+  public String getCachename() {
+    return "";
+  }
+
+  public String getFilename() {
     return "";
   }
 

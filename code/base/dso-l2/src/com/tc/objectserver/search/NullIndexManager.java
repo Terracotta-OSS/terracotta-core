@@ -6,7 +6,6 @@ package com.tc.objectserver.search;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,7 +37,7 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public Map<String, List<File>> getFilesToSync() {
+  public Map<String, List<IndexFile>> getFilesToSync() {
     return Collections.emptyMap();
   }
 
