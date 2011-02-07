@@ -36,7 +36,7 @@ public class TempSwapDBPersistorImpl extends DBPersistorImpl {
 
   @Override
   protected PersistenceTransactionProvider createPersistenceTransactionProvider(final DBEnvironment dbenv) {
-    return dbenv.getTempSwapPersistenceTransactionProvider();
+    return dbenv.getNullPersistenceTransactionProvider();
   }
 
   @Override

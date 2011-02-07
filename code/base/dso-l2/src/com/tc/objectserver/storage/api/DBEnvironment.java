@@ -77,7 +77,7 @@ public interface DBEnvironment {
   /**
    * Returns the persistence transaction provider which can be used to create new transactions.
    */
-  public abstract PersistenceTransactionProvider getTempSwapPersistenceTransactionProvider();
+  public abstract PersistenceTransactionProvider getNullPersistenceTransactionProvider();
 
   /**
    * Returns the Object Database to be used by Persistor classes.

@@ -625,7 +625,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     return OffheapStats.NULL_OFFHEAP_STATS;
   }
 
-  public PersistenceTransactionProvider getTempSwapPersistenceTransactionProvider() {
+  public PersistenceTransactionProvider getNullPersistenceTransactionProvider() {
     return new NullPersistenceTransactionProvider();
   }
 }
