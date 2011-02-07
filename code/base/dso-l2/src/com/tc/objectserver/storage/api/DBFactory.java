@@ -17,7 +17,8 @@ import javax.management.NotCompliantMBeanException;
  */
 public interface DBFactory {
 
-  DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk) throws IOException;
+  DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk, boolean offheapEnabled)
+      throws IOException;
 
   ServerDBBackupMBean getServerDBBackupMBean(final L2ConfigurationSetupManager configurationSetupManager)
       throws NotCompliantMBeanException;

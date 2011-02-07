@@ -30,7 +30,7 @@ public class TCLongDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null);
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
@@ -43,9 +43,9 @@ public class TCLongDatabaseTest extends TCTestCase {
       keys[i] = i;
     }
 
-    for (int i = 0; i < keys.length; i++) {
+    for (long key : keys) {
       PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
-      Status status = database.put(keys[i], tx);
+      Status status = database.put(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
@@ -71,17 +71,17 @@ public class TCLongDatabaseTest extends TCTestCase {
       keys[i] = i;
     }
 
-    for (int i = 0; i < keys.length; i++) {
+    for (long key : keys) {
       PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
-      Status status = database.put(keys[i], tx);
+      Status status = database.put(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    for (int i = 0; i < keys.length; i++) {
+    for (long key : keys) {
       PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
-      Assert.assertTrue(database.contains(keys[i], tx));
+      Assert.assertTrue(database.contains(key, tx));
       tx.commit();
     }
   }
@@ -92,9 +92,9 @@ public class TCLongDatabaseTest extends TCTestCase {
       keys[i] = i;
     }
 
-    for (int i = 0; i < keys.length; i++) {
+    for (long key : keys) {
       PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
-      Status status = database.put(keys[i], tx);
+      Status status = database.put(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
@@ -104,9 +104,9 @@ public class TCLongDatabaseTest extends TCTestCase {
     Set<Long> keysTemp = database.getAllKeys(tx);
     Assert.assertEquals(keys.length, keysTemp.size());
 
-    for (int i = 0; i < keys.length; i++) {
+    for (long key : keys) {
       tx = ptp.getOrCreateNewTransaction();
-      Status status = database.delete(keys[i], tx);
+      Status status = database.delete(key, tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);

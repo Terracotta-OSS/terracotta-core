@@ -7,6 +7,7 @@ import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
+import com.tc.properties.TCProperties;
 import com.tc.stats.counter.sampled.SampledCounter;
 
 import java.io.File;
@@ -16,12 +17,12 @@ import java.util.Properties;
 public class DerbyDBFactory implements DBFactory {
   private final Properties properties;
 
-  public DerbyDBFactory(final Properties properties) {
-    this.properties = properties;
+  public DerbyDBFactory(final TCProperties l2Properties) {
+    this.properties = l2Properties.getPropertiesFor("derbydb").addAllPropertiesTo(new Properties());
   }
 
-  public DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk)
-      throws IOException {
+  public DBEnvironment createEnvironment(boolean paranoid, File envHome, SampledCounter l2FaultFromDisk,
+                                         boolean offheapEnabled) throws IOException {
     return new DerbyDBEnvironment(paranoid, envHome, properties, l2FaultFromDisk);
   }
 

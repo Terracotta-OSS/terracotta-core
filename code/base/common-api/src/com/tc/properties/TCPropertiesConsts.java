@@ -208,7 +208,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_BERKELEYDB_JE_CLEANER_DETAIL_MAXMEMORY_PERCENTAGE            = "l2.berkeleydb.je.cleaner.detailMaxMemoryPercentage";
   public static final String   L2_BERKELEYDB_JE_CLEANER_LOOKAHEAD_CACHESIZE                    = "l2.berkeleydb.je.cleaner.lookAheadCacheSize";
   public static final String   L2_BERKELEYDB_JE_CLEANER_MINAGE                                 = "l2.berkeleydb.je.cleaner.minAge";
-  public static final String   L2_DERBY_ENABLED                                                = "l2.derby.enabled";
+  public static final String   L2_DB_FACTORY_NAME                                              = "l2.db.factory.name";
 
   /*********************************************************************************************************************
    * <code>

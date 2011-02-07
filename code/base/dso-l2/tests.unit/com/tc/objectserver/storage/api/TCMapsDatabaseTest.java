@@ -35,7 +35,7 @@ public class TCMapsDatabaseTest extends TCTestCase {
     this.dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     this.dbHome.mkdir();
 
-    this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome, null);
+    this.dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, this.dbHome, null, false);
     this.dbenv.open();
 
     this.ptp = this.dbenv.getPersistenceTransactionProvider();

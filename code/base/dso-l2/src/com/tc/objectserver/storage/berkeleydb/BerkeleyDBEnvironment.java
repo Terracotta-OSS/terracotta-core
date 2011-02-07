@@ -87,12 +87,20 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   private final SRAForBerkeleyDB     sraBerkeleyDB;
 
   public BerkeleyDBEnvironment(boolean paranoid, File envHome) throws IOException {
-    this(paranoid, envHome, new Properties(), SampledCounter.NULL_SAMPLED_COUNTER);
+    this(paranoid, envHome, new Properties(), SampledCounter.NULL_SAMPLED_COUNTER, false);
   }
 
-  public BerkeleyDBEnvironment(boolean paranoid, File envHome, Properties jeProperties, SampledCounter l2FaultFrmDisk)
-      throws IOException {
+  public BerkeleyDBEnvironment(boolean paranoid, File envHome, Properties jeProperties, SampledCounter l2FaultFrmDisk,
+                               boolean offheapEnabled) throws IOException {
     this(new HashMap(), new LinkedList(), paranoid, envHome, l2FaultFrmDisk);
+
+    if (!isParanoidMode() && offheapEnabled) {
+      final Integer newBDBMemPercentage = Integer.parseInt(jeProperties.getProperty("je.maxMemoryPercent")) / 3;
+      jeProperties.setProperty("je.maxMemoryPercent", newBDBMemPercentage.toString());
+      logger.info("Since running OffHeap in temp-swap mode, setting je.maxMemoryPercent to "
+                  + newBDBMemPercentage.toString());
+    }
+
     this.ecfg = new EnvironmentConfig(jeProperties);
     this.ecfg.setTransactional(true);
     this.ecfg.setAllowCreate(true);

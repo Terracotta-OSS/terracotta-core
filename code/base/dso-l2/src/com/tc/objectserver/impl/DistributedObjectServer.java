@@ -239,8 +239,6 @@ import com.tc.objectserver.storage.api.DBEnvironment;
 import com.tc.objectserver.storage.api.DBFactory;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
-import com.tc.objectserver.storage.berkeleydb.BerkeleyDBFactory;
-import com.tc.objectserver.storage.derby.DerbyDBFactory;
 import com.tc.objectserver.tx.CommitTransactionMessageRecycler;
 import com.tc.objectserver.tx.ServerTransactionManagerConfig;
 import com.tc.objectserver.tx.ServerTransactionManagerImpl;
@@ -324,12 +322,12 @@ import com.terracottatech.config.PersistenceMode;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 
@@ -521,25 +519,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final Offheap offHeapConfig = l2DSOConfig.offHeapConfig();
 
-    final DBFactory dbFactory;
-    boolean isDerby = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_DERBY_ENABLED);
-    if (!isDerby) {
-      final Properties bdbProperties = this.l2Properties.getPropertiesFor("berkeleydb")
-          .addAllPropertiesTo(new Properties());
-      dbFactory = new BerkeleyDBFactory(bdbProperties);
-
-      // for temp-swap under offheap mode, bdb memory requirement is less
-      if (!persistent && offHeapConfig.getEnabled()) {
-        final Integer newBDBMemPercentage = Integer.parseInt(bdbProperties.getProperty("je.maxMemoryPercent")) / 3;
-        bdbProperties.setProperty("je.maxMemoryPercent", newBDBMemPercentage.toString());
-        logger.info("Since running OffHeap in temp-swap mode, setting je.maxMemoryPercent to "
-                    + newBDBMemPercentage.toString());
-      }
-    } else {
-      final Properties derbyProperties = this.l2Properties.getPropertiesFor("derbydb")
-          .addAllPropertiesTo(new Properties());
-      dbFactory = new DerbyDBFactory(derbyProperties);
-    }
+    final DBFactory dbFactory = getDBFactory();
 
     // start the JMX server
     try {
@@ -603,7 +583,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.dbenv = this.serverBuilder.createDBEnvironment(persistent, dbhome, l2DSOConfig, this, stageManager,
                                                         l2FaultFromDisk, l2FaultFromOffheap, l2FlushFromOffheap,
-                                                        dbFactory);
+                                                        dbFactory, offHeapConfig.getEnabled());
     final SerializationAdapterFactory serializationAdapterFactory = new CustomSerializationAdapterFactory();
 
     sraForDbEnv = this.dbenv.getSRAs();
@@ -1234,6 +1214,20 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startL1Listener();
     }
     setLoggerOnExit();
+  }
+
+  private DBFactory getDBFactory() {
+    String factoryName = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.L2_DB_FACTORY_NAME);
+    DBFactory dbFactory = null;
+    try {
+      Class dbClass = Class.forName(factoryName);
+      Constructor<DBFactory> constructor = dbClass.getConstructor(TCProperties.class);
+      dbFactory = constructor.newInstance(this.l2Properties);
+    } catch (Exception e) {
+      consoleLogger.warn("Unable to create db class:" + factoryName, e);
+      System.exit(1);
+    }
+    return dbFactory;
   }
 
   protected StateSyncManager createStateSyncManager(IndexHACoordinator coordinator) {

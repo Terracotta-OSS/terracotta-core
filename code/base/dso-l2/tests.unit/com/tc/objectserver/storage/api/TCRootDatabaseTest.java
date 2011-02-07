@@ -36,7 +36,7 @@ public class TCRootDatabaseTest extends TCTestCase {
     dbHome = new File(dataPath.getAbsolutePath(), L2DSOConfig.OBJECTDB_DIRNAME);
     dbHome.mkdir();
 
-    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null);
+    dbenv = new DBFactoryForDBUnitTests(new Properties()).createEnvironment(true, dbHome, null, false);
     dbenv.open();
 
     ptp = dbenv.getPersistenceTransactionProvider();
@@ -98,8 +98,8 @@ public class TCRootDatabaseTest extends TCTestCase {
     Assert.assertEquals(keys.length, rootNames.size());
     for (byte[] byteValue : rootNames) {
       boolean found = false;
-      for (int i = 0; i < keys.length; i++) {
-        if (Arrays.equals(byteValue, keys[i])) {
+      for (byte[] key : keys) {
+        if (Arrays.equals(byteValue, key)) {
           found = true;
         }
       }

@@ -291,9 +291,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            final DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                            final SampledCounter l2FaultFromDisk,
                                            final SampledCounter l2FaultFromOffheap,
-                                           final SampledCounter l2FlushFromOffheap, final DBFactory factory)
-      throws IOException {
-    return factory.createEnvironment(persistent, dbhome, l2FaultFromDisk);
+                                           final SampledCounter l2FlushFromOffheap, final DBFactory factory,
+                                           final boolean offheapEnabled) throws IOException {
+    return factory.createEnvironment(persistent, dbhome, l2FaultFromDisk, offheapEnabled);
   }
 
   public LongGCLogger createLongGCLogger(long gcTimeOut) {

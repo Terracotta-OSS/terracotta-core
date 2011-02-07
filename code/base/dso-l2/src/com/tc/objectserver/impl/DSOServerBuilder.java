@@ -174,8 +174,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
   DBEnvironment createDBEnvironment(final boolean persistent, final File dbhome, final L2DSOConfig l2DSOCofig,
                                     DumpHandlerStore dumpHandlerStore, final StageManager stageManager,
                                     SampledCounter l2FaultFromDisk, SampledCounter l2FaultFromOffheap,
-                                    SampledCounter l2FlushFromOffheap, DBFactory factory) throws IOException,
-      TCDatabaseException;
+                                    SampledCounter l2FlushFromOffheap, DBFactory factory, boolean offheapEnabled)
+      throws IOException, TCDatabaseException;
 
   LongGCLogger createLongGCLogger(long gcTimeOut);
 }
