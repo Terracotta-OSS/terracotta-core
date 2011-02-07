@@ -34,8 +34,4 @@ public final class BerkeleyDBPersistenceTransactionProvider implements Persisten
   private Transaction newNativeTransaction() throws DatabaseException {
     return this.env.beginTransaction(null, null);
   }
-
-  public PersistenceTransaction createNewTransaction() {
-    return getOrCreateNewTransaction();
-  }
 }

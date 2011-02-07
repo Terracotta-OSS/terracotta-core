@@ -35,17 +35,6 @@ class DerbyDBPersistenceTransaction implements PersistenceTransaction {
     }
   }
 
-  /**
-   * This is done to return the connection to the connection pool
-   */
-  public void close() {
-    try {
-      connection.close();
-    } catch (SQLException e) {
-      throw new DBException(e);
-    }
-  }
-
   public Object getProperty(Object key) {
     return properties.get(key);
   }

@@ -10,7 +10,5 @@ package com.tc.objectserver.storage.api;
 public interface PersistenceTransactionProvider {
   public PersistenceTransaction getOrCreateNewTransaction();
 
-  public PersistenceTransaction createNewTransaction();
-
   public PersistenceTransaction nullTransaction();
 }

@@ -13,7 +13,5 @@ public interface PersistenceTransaction {
 
   public void commit();
 
-  public void close();
-
   public void abort();
 }

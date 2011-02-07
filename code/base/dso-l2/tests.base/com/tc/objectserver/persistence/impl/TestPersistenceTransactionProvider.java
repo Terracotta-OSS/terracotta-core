@@ -33,9 +33,4 @@ public final class TestPersistenceTransactionProvider implements PersistenceTran
     }
     return TestPersistenceTransaction.NULL_TRANSACTION;
   }
-
-  public PersistenceTransaction createNewTransaction() {
-    return getOrCreateNewTransaction();
-  }
-
 }
