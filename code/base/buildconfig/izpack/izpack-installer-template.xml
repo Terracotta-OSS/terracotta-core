@@ -36,10 +36,9 @@
    </variables>
 
    <resources>
-      <res id="Installer.image.0" src="../izpack/Products.png" />
-      <res id="Installer.image.2" src="../izpack/Training-and-Services.png" />
-      <res id="Installer.image.4" src="../izpack/Console.png" />
-      <res id="Installer.image.6" src="../izpack/Start.png" />
+      <% installer_images.each_with_index do |img, i| %>
+         <res id="Installer.image.<%=i%>" src="../izpack/<%=img%>" />
+      <% end %>
       <res id="Heading.image" src="../izpack/logo_rgb_padded.png"/>
       <res id="LicencePanel.licence" src="<%= license_file %>" />
       <res id="InfoPanel.info" src="README.txt" />

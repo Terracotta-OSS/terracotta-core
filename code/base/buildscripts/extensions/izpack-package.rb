@@ -43,6 +43,13 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 #     scripts.collect! { |entry| FilePath.new(entry).relative_path_from(srcdir) }
 
     license_file = enterprise? ? 'TERRACOTTA-TRIAL-LICENSE.txt' : 'LICENSE.txt'
+    installer_images = if enterprise?
+      %w[enterprise-1.jpg enterprise-2.jpg enterprise-3.jpg enterprise-4.jpg
+         enterprise-5.jpg enterprise-6.jpg enterprise-6.jpg]
+    else
+      %w[opensource-1.jpg opensource-2.jpg opensource-3.jpg opensource-4.jpg
+         opensource-5.jpg opensource-5.jpg opensource-5.jpg]
+    end
 
     template = ERB.new(template, 0, "%<>").result(binding)
     config   = File.join(izpack_dir.to_s, 'installer.xml')
