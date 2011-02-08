@@ -559,7 +559,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     StatisticRetrievalAction[] sraForDbEnv = null;
 
     this.sampledCounterManager = new CounterManagerImpl();
-    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, false, 0L);
+    final SampledCounterConfig sampledCounterConfig = new SampledCounterConfig(1, 300, true, 0L);
     final SampledCounter l2FaultFromDisk = (SampledCounter) this.sampledCounterManager
         .createCounter(sampledCounterConfig);
     final SampledCounter l2FaultFromOffheap = (SampledCounter) this.sampledCounterManager
