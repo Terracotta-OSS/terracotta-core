@@ -39,7 +39,7 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
 
   public synchronized boolean containsClient(ChannelID id) {
     try {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
       boolean status = db.contains(id.toLong(), tx);
       tx.commit();
       return status;
@@ -51,7 +51,7 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
   public synchronized Set loadClientIDs() {
     Set set = new HashSet();
     try {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
       Set<Long> tempSet = db.getAllKeys(tx);
       for (Long l : tempSet) {
         set.add(new ChannelID(l));
@@ -73,7 +73,7 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
 
   private void basicSave(long clientID) {
     try {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
       Status status = db.put(clientID, tx);
       if (status != Status.SUCCESS) {
         tx.abort();
@@ -87,7 +87,7 @@ class ClientStatePersistorImpl extends DBPersistorBase implements ClientStatePer
 
   public synchronized void deleteClientState(ChannelID id) {
     try {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
 
       Status status = db.delete(id.toLong(), tx);
       if (Status.NOT_FOUND.equals(status)) {

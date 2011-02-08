@@ -52,7 +52,7 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     OidLongArray longAry = null;
     try {
       if (oidDB != null) {
-        PersistenceTransaction tx = ptp.nullTransaction();
+        PersistenceTransaction tx = ptp.newTransaction();
         longAry = readDiskEntry(tx, oid);
       }
     } catch (TCDatabaseException e) {

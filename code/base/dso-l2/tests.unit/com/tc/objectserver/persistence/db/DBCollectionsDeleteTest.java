@@ -86,7 +86,7 @@ public class DBCollectionsDeleteTest extends TCTestCase {
       addToMap(sMap, entries);
       Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(null));
       totalEntries += entries;
-      PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = this.ptp.newTransaction();
       this.collectionsPersistor.saveCollections(tx, state);
       tx.commit();
       Assert.assertEquals(totalEntries, this.env.getMapsDatabase().count(null));

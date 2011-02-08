@@ -917,7 +917,7 @@ public class ObjectManagerTest extends TCTestCase {
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(1), new ApplyTransactionInfo(), imo,
                                                        false);
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
 
     ManagedObject lookedUpViaLookup = this.objectManager.getObjectByID(id);
@@ -925,7 +925,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertEquals(lookedUpViaLookup.getObjectReferences(),
                  lookedUpViaLookupObjectsForCreateIfNecessary.getObjectReferences());
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookup);
 
     // now do another lookup, change, and commit cycle
@@ -943,7 +943,7 @@ public class ObjectManagerTest extends TCTestCase {
     lookedUpViaLookupObjectsForCreateIfNecessary.apply(dna, new TransactionID(2), new ApplyTransactionInfo(), imo,
                                                        false);
     // lookedUpViaLookupObjectsForCreateIfNecessary.commit();
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, lookedUpViaLookupObjectsForCreateIfNecessary);
 
     lookedUpViaLookup = this.objectManager.getObjectByID(id);
@@ -1041,7 +1041,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ObjectInstanceMonitor imo = new ObjectInstanceMonitorImpl();
     mo.apply(new TestPhysicalDNA(new ObjectID(1)), new TransactionID(1), new ApplyTransactionInfo(), imo, false);
 
-    final PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    final PersistenceTransaction tx = ptp.newTransaction();
     this.objectManager.releaseAndCommit(tx, mo);
     if (!paranoid) {
       // Object manager doesn't commit if in non-paranoid mode.
@@ -1562,7 +1562,7 @@ public class ObjectManagerTest extends TCTestCase {
      */
 
     // Now check back Object 1
-    PersistenceTransaction dbtxn = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction dbtxn = ptp.newTransaction();
     this.objectManager.releaseAllAndCommit(dbtxn, ctc1.getObjects());
 
     // Lookup context should have been fired
@@ -1602,7 +1602,7 @@ public class ObjectManagerTest extends TCTestCase {
     this.txObjectManager.recallCheckedoutObject(roc);
 
     // Check in Object 2 to make the GC go to paused state
-    dbtxn = ptp.getOrCreateNewTransaction();
+    dbtxn = ptp.newTransaction();
     this.objectManager.releaseAllAndCommit(dbtxn, ctc2.getObjects());
 
     cb.await();
@@ -1645,7 +1645,7 @@ public class ObjectManagerTest extends TCTestCase {
     assertTrue(objects.size() == 3);
 
     // Now check back the objects
-    dbtxn = ptp.getOrCreateNewTransaction();
+    dbtxn = ptp.newTransaction();
     this.objectManager.releaseAllAndCommit(dbtxn, ctc3.getObjects());
 
     assertEquals(0, this.objectManager.getCheckedOutCount());

@@ -26,7 +26,7 @@ class ClassPersistorImpl extends DBPersistorBase implements ClassPersistor {
   public void storeClass(int clazzId, byte[] clazzBytes) {
     PersistenceTransaction tx = null;
     try {
-      tx = ptxp.getOrCreateNewTransaction();
+      tx = ptxp.newTransaction();
       Status status = this.classDB.put(clazzId, clazzBytes, tx);
       tx.commit();
 
@@ -44,7 +44,7 @@ class ClassPersistorImpl extends DBPersistorBase implements ClassPersistor {
   public byte[] retrieveClass(int clazzId) {
     PersistenceTransaction tx = null;
     try {
-      tx = ptxp.getOrCreateNewTransaction();
+      tx = ptxp.newTransaction();
       byte[] val = this.classDB.get(clazzId, tx);
       tx.commit();
       if (val == null) {
@@ -60,7 +60,7 @@ class ClassPersistorImpl extends DBPersistorBase implements ClassPersistor {
   }
 
   public Map retrieveAllClasses() {
-    PersistenceTransaction tx = ptxp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptxp.newTransaction();
     return this.classDB.getAll(tx);
   }
 }

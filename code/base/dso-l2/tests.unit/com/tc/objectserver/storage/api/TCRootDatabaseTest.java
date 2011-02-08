@@ -47,12 +47,12 @@ public class TCRootDatabaseTest extends TCTestCase {
     long objectId = 1;
     byte[] key = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.put(key, objectId, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     long objectIdFetched = database.getIdFromName(key, tx);
     tx.commit();
 
@@ -66,20 +66,20 @@ public class TCRootDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
       Status status = database.put(keys[i], i, tx);
       tx.commit();
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Set<ObjectID> rootIds = database.getRootIds(tx);
     Assert.assertEquals(keys.length, rootIds.size());
     for (int i = 0; i < keys.length; i++) {
       Assert.assertTrue(rootIds.contains(new ObjectID(i)));
     }
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     Map<byte[], Long> rootNamesToIds = database.getRootNamesToId(tx);
     Assert.assertEquals(keys.length, rootNamesToIds.size());
     for (Entry<byte[], Long> entry : rootNamesToIds.entrySet()) {
@@ -93,7 +93,7 @@ public class TCRootDatabaseTest extends TCTestCase {
       Assert.assertTrue(found);
     }
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     List<byte[]> rootNames = database.getRootNames(tx);
     Assert.assertEquals(keys.length, rootNames.size());
     for (byte[] byteValue : rootNames) {

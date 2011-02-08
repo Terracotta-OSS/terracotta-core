@@ -39,12 +39,12 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     String key = "String-key";
     String value = "String-value";
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
     status = database.get(entry.setKey(key), tx);
     tx.commit();
@@ -57,12 +57,12 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     String key = "String-key";
     String value = "String-value";
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     TCDatabaseEntry<String, String> entry = new TCDatabaseEntry<String, String>();
     status = database.get(entry.setKey(key), tx);
     tx.commit();
@@ -70,12 +70,12 @@ public class TCStringToStringDatabaseTest extends TCTestCase {
     Assert.assertEquals(Status.SUCCESS, status);
     Assert.assertEquals(value, entry.getValue());
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     status = database.delete(key, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     status = database.delete(key, tx);
     tx.commit();
     Assert.assertEquals(Status.NOT_FOUND, status);

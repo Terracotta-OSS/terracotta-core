@@ -201,7 +201,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
                                                                                                  ptp);
       PersistenceTransaction tx = null;
       try {
-        tx = ptp.getOrCreateNewTransaction();
+        tx = ptp.newTransaction();
         TCDatabaseCursor<byte[], byte[]> cursor = oidStoreLogDB.openCursorUpdatable(tx);
         int changes = 0;
         try {
@@ -370,7 +370,7 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
       }
 
       final ObjectIDSet tmp = new ObjectIDSet();
-      final PersistenceTransaction tx = FastObjectIDManagerImpl.this.ptp.getOrCreateNewTransaction();
+      final PersistenceTransaction tx = FastObjectIDManagerImpl.this.ptp.newTransaction();
       TCDatabaseCursor<byte[], byte[]> cursor = null;
       try {
         cursor = oidDB.openCursor(tx);

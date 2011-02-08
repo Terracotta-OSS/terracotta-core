@@ -43,24 +43,24 @@ public class TCObjectDatabaseTest extends TCTestCase {
     byte[] value1 = getRandomlyFilledByteArray();
     byte[] value2 = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.insert(objectId1, value1, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     byte[] valueFetched = database.get(objectId1, tx);
     tx.commit();
     Assert.assertTrue(Arrays.equals(value1, valueFetched));
 
     value1 = getRandomlyFilledByteArray();
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     status = database.update(objectId1, value2, tx);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     valueFetched = database.get(objectId1, tx);
     tx.commit();
     Assert.assertTrue(Arrays.equals(value2, valueFetched));
@@ -70,17 +70,17 @@ public class TCObjectDatabaseTest extends TCTestCase {
     long objectId1 = 1;
     byte[] value1 = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.insert(objectId1, value1, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     status = database.delete(objectId1, tx);
     tx.commit();
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     status = database.delete(objectId1, tx);
     tx.commit();
     Assert.assertEquals(Status.NOT_FOUND, status);

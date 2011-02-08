@@ -3,42 +3,21 @@
  */
 package com.tc.objectserver.storage.derby;
 
-import com.tc.objectserver.persistence.db.DBException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 
-import java.sql.Connection;
-
 class DerbyPersistenceTransactionProvider implements PersistenceTransactionProvider {
-  protected final DerbyDBEnvironment                derbyDBEnv;
-  protected final PersistenceTransaction            nullTxn;
-
-  private final ThreadLocal<PersistenceTransaction> threadLocalTxn = new ThreadLocal<PersistenceTransaction>() {
-                                                                     @Override
-                                                                     protected PersistenceTransaction initialValue() {
-                                                                       return createNewTransaction();
-                                                                     }
-                                                                   };
+  private final DerbyConnectionPool derbyConnectionPool;
 
   public DerbyPersistenceTransactionProvider(DerbyDBEnvironment derbyDBEnv) {
-    this.derbyDBEnv = derbyDBEnv;
-    nullTxn = createNewTransaction();
+    this.derbyConnectionPool = new DerbyConnectionPool(derbyDBEnv);
   }
 
-  public PersistenceTransaction getOrCreateNewTransaction() {
-    return threadLocalTxn.get();
+  public PersistenceTransaction newTransaction() {
+    return derbyConnectionPool.getTransaction();
   }
 
-  private PersistenceTransaction createNewTransaction() {
-    try {
-      Connection connection = derbyDBEnv.createConnection();
-      return new DerbyDBPersistenceTransaction(connection);
-    } catch (Exception e) {
-      throw new DBException(e);
-    }
-  }
-
-  public PersistenceTransaction nullTransaction() {
-    return nullTxn;
+  public static interface ConnectionCommitListener {
+    void transactionCommitted(DerbyDBPersistenceTransaction derbyTxn);
   }
 }

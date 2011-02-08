@@ -37,13 +37,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
 
   public void shutdownNode(NodeID nodeID) {
     this.sequenceValidator.remove(nodeID);
-    PersistenceTransaction tx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownNode(tx, nodeID);
     tx.commit();
   }
 
   public void shutdownAllClientsExcept(Set cids) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.shutdownAllClientsExcept(tx, cids);
     tx.commit();
   }
@@ -54,13 +54,13 @@ public class ServerGlobalTransactionManagerImpl implements ServerGlobalTransacti
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(ServerTransactionID sid) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, sid);
     tx.commit();
   }
 
   public void clearCommitedTransactionsBelowLowWaterMark(GlobalTransactionID lowGlobalTransactionIDWatermark) {
-    PersistenceTransaction tx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.persistenceTransactionProvider.newTransaction();
     transactionStore.clearCommitedTransactionsBelowLowWaterMark(tx, lowGlobalTransactionIDWatermark);
     tx.commit();
   }

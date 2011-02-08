@@ -12,23 +12,18 @@ import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.api.PersistenceTransactionProvider;
 
 public final class BerkeleyDBPersistenceTransactionProvider implements PersistenceTransactionProvider {
-  private static final PersistenceTransaction NULL_TRANSACTION = new BerkeleyDBPersistenceTransaction(null);
-  private final Environment                   env;
+  private final Environment env;
 
   public BerkeleyDBPersistenceTransactionProvider(Environment env) {
     this.env = env;
   }
 
-  public PersistenceTransaction getOrCreateNewTransaction() {
+  public PersistenceTransaction newTransaction() {
     try {
       return new BerkeleyDBPersistenceTransaction(newNativeTransaction());
     } catch (Exception e) {
       throw new DBException(e);
     }
-  }
-
-  public PersistenceTransaction nullTransaction() {
-    return NULL_TRANSACTION;
   }
 
   private Transaction newNativeTransaction() throws DatabaseException {

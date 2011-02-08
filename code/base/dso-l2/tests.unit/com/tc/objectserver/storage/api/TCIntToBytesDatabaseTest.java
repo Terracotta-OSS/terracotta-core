@@ -44,13 +44,13 @@ public class TCIntToBytesDatabaseTest extends TCTestCase {
     int key = random.nextInt(100);
     byte[] value = getRandomlyFilledByteArray();
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Status status = database.put(key, value, tx);
     tx.commit();
 
     Assert.assertEquals(Status.SUCCESS, status);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     byte[] valueReturned = database.get(key, tx);
     tx.commit();
 
@@ -66,14 +66,14 @@ public class TCIntToBytesDatabaseTest extends TCTestCase {
     }
 
     for (int i = 0; i < keys.length; i++) {
-      PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = ptp.newTransaction();
       Status status = database.put(keys[i], values[i], tx);
       tx.commit();
 
       Assert.assertEquals(Status.SUCCESS, status);
     }
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     Map<Integer, byte[]> keyValuesFetched = database.getAll(tx);
 
     Assert.assertEquals(keys.length, keyValuesFetched.size());

@@ -51,14 +51,14 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2);
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     database.put(tx, objectId1, key1, value1, serializer);
     database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    Assert.assertEquals(2, database.count(ptp.getOrCreateNewTransaction()));
+    Assert.assertEquals(2, database.count(ptp.newTransaction()));
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId1, map, serializer);
     tx.commit();
@@ -83,14 +83,14 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     byte[] key2 = getRandomlyFilledByteArray(objectId2);
     byte[] value2 = getRandomlyFilledByteArray(objectId2);
 
-    PersistenceTransaction tx = ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = ptp.newTransaction();
     database.put(tx, objectId1, key1, value1, serializer);
     database.put(tx, objectId2, key2, value2, serializer);
     tx.commit();
 
-    Assert.assertEquals(2, database.count(ptp.getOrCreateNewTransaction()));
+    Assert.assertEquals(2, database.count(ptp.newTransaction()));
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId1, map, serializer);
     for (Entry<byte[], byte[]> entry : map.entrySet()) {
@@ -99,14 +99,14 @@ public class TCMapsDatabaseCursorTest extends TCTestCase {
     }
     tx.commit();
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     int countDeleted = database.deleteCollectionBatched(objectId1, tx, 1);
     tx.commit();
 
-    Assert.assertEquals(1, database.count(ptp.getOrCreateNewTransaction()));
+    Assert.assertEquals(1, database.count(ptp.newTransaction()));
     Assert.assertEquals(1, countDeleted);
 
-    tx = ptp.getOrCreateNewTransaction();
+    tx = ptp.newTransaction();
     map = new HashMap<byte[], byte[]>();
     database.loadMap(tx, objectId2, map, serializer);
     for (Entry<byte[], byte[]> entry : map.entrySet()) {

@@ -177,7 +177,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data
     final Collection objects = createRandomObjects(15050, false);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -203,7 +203,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data
     final Collection objects = createRandomObjects(15050, false);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -221,7 +221,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       i.remove();
     }
 
-    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
       this.managedObjectPersistor.deleteAllObjects(toDelete);
@@ -241,7 +241,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data
     final Collection objects = createRandomObjects(20, false);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -253,7 +253,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       final ManagedObject mo = (ManagedObject) i.next();
       objectIds.add(mo.getID());
     }
-    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(objectIds);
       this.managedObjectPersistor.deleteAllObjects(objectIds);
@@ -278,7 +278,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data
     final Collection objects = createRandomObjects(15050, false);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -292,7 +292,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       final ManagedObject mo = (ManagedObject) i.next();
       objectIds.add(mo.getID());
     }
-    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(objectIds);
       this.managedObjectPersistor.deleteAllObjects(objectIds);
@@ -312,7 +312,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data with persistentCollectionMap
     final Collection objects = createRandomObjects(15050, true);
-    final PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    final PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -339,7 +339,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data with persistentCollectionMap
     final Collection objects = createRandomObjects(15050, true);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -357,7 +357,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       i.remove();
     }
     this.testSleepycatCollectionsPersistor.setCounter(0);
-    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(toDelete);
       this.managedObjectPersistor.deleteAllObjects(toDelete);
@@ -381,7 +381,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
 
     // publish data
     final Collection objects = createRandomObjects(15050, true);
-    PersistenceTransaction ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    PersistenceTransaction ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.saveAllObjects(ptx, objects);
     } finally {
@@ -396,7 +396,7 @@ public class ManagedObjectPersistorImplTest extends TCTestCase {
       objectIds.add(mo.getID());
     }
     this.testSleepycatCollectionsPersistor.setCounter(0);
-    ptx = this.persistenceTransactionProvider.getOrCreateNewTransaction();
+    ptx = this.persistenceTransactionProvider.newTransaction();
     try {
       this.managedObjectPersistor.removeAllObjectIDs(objectIds);
       this.managedObjectPersistor.deleteAllObjects(objectIds);

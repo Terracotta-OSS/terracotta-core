@@ -86,7 +86,7 @@ public class TransactionPersistorTest extends TCTestCase {
         try {
           Collection gdts = tpl.loadAllGlobalTransactionDescriptors();
           assertEquals(0, gdts.size());
-          PersistenceTransaction pt = persistenceTransactionProvider.getOrCreateNewTransaction();
+          PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
           tpl.saveGlobalTransactionDescriptor(pt, gtd);
           System.err.println("T1 : save done.");
           cb.barrier();
@@ -105,7 +105,7 @@ public class TransactionPersistorTest extends TCTestCase {
       @Override
       public void run() {
         try {
-          PersistenceTransaction pt = persistenceTransactionProvider.getOrCreateNewTransaction();
+          PersistenceTransaction pt = persistenceTransactionProvider.newTransaction();
           SortedSet ss = new TreeSet();
           ss.add(gtd.getServerTransactionID());
           cb.barrier();

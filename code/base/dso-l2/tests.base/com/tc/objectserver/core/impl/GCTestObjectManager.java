@@ -127,7 +127,7 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
   }
 
   public void releaseAllReadOnly(Collection objects) {
-    releaseAllAndCommit(transactionProvider.nullTransaction(), objects);
+    releaseAllAndCommit(transactionProvider.newTransaction(), objects);
   }
 
   public int getCheckedOutCount() {
@@ -189,8 +189,8 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
     long start = System.currentTimeMillis();
 
     SortedSet<ObjectID> ids = resultContext.getGCedObjectIDs();
-    for (Iterator i = ids.iterator(); i.hasNext();) {
-      ObjectID objectID = (ObjectID) i.next();
+    for (Object element : ids) {
+      ObjectID objectID = (ObjectID) element;
       managed.remove(objectID);
       swappedToDisk.remove(objectID);
     }

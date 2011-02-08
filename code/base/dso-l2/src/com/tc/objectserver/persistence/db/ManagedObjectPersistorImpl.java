@@ -208,7 +208,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
     if (name == null) { throw new AssertionError("Attempt to retrieve a null root name"); }
     try {
       byte[] rootNameInByte = setStringData(name);
-      final PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+      final PersistenceTransaction tx = this.ptp.newTransaction();
 
       ObjectID oid = new ObjectID(this.rootDB.getIdFromName(rootNameInByte, tx));
       tx.commit();
@@ -219,7 +219,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
   }
 
   public Set loadRoots() {
-    PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.ptp.newTransaction();
     return rootDB.getRootIds(tx);
   }
 
@@ -252,7 +252,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
 
   public Set loadRootNames() {
     final Set rv = new HashSet();
-    PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+    PersistenceTransaction tx = this.ptp.newTransaction();
 
     List<byte[]> rootNamesInBytes = rootDB.getRootNames(tx);
     try {
@@ -269,7 +269,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
   public Map loadRootNamesToIDs() {
     final Map rv = new HashMap();
     try {
-      PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+      PersistenceTransaction tx = this.ptp.newTransaction();
       Map<byte[], Long> mapFromDB = rootDB.getRootNamesToId(tx);
 
       for (Entry<byte[], Long> entry : mapFromDB.entrySet()) {
@@ -285,7 +285,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
 
   public ManagedObject loadObjectByID(final ObjectID id) {
     validateID(id);
-    final PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+    final PersistenceTransaction tx = this.ptp.newTransaction();
     try {
       byte[] value = this.objectDB.get(id.toLong(), tx);
       if (value != null) {
@@ -469,7 +469,7 @@ public final class ManagedObjectPersistorImpl extends DBPersistorBase implements
     final Iterator<ObjectID> iterator = sortedGarbage.iterator();
     while (iterator.hasNext()) {
       final long start = System.currentTimeMillis();
-      final PersistenceTransaction tx = this.ptp.getOrCreateNewTransaction();
+      final PersistenceTransaction tx = this.ptp.newTransaction();
       final SortedSet<ObjectID> split = new TreeSet<ObjectID>();
       for (int i = 0; i < DELETE_BATCH_SIZE && iterator.hasNext(); i++) {
         final ObjectID oid = iterator.next();
