@@ -136,18 +136,22 @@ public class TCBytesToBytesDatabaseTest extends TCTestCase {
 
     tx = ptp.newTransaction();
     TCDatabaseCursor<byte[], byte[]> cursor = database.openCursorUpdatable(tx);
+    int count = 0;
     while (cursor.hasNext()) {
       cursor.next();
       // get
-      PersistenceTransaction tx1 = ptp.newTransaction();
-      bytesToBytesDatabase.get(key1, tx1);
-      tx1.commit();
+      bytesToBytesDatabase.get(key1, tx);
       cursor.delete();
+      count++;
     }
+    cursor.close();
     tx.commit();
 
+    tx = ptp.newTransaction();
     cursor = database.openCursorUpdatable(tx);
     Assert.assertFalse(cursor.hasNext());
+    cursor.close();
+    tx.commit();
   }
 
   private byte[] getRandomlyFilledByteArray() {

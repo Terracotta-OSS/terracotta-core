@@ -5,14 +5,14 @@
 package com.tc.util;
 
 import com.tc.object.ObjectID;
-import com.tc.util.OidLongArray;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 public interface OidBitsArrayMap {
-  
+
   public boolean contains(ObjectID id);
 
-  public OidLongArray getAndSet(ObjectID id);
+  public OidLongArray getAndSet(ObjectID id, PersistenceTransaction tx);
 
-  public OidLongArray getAndClr(ObjectID id);
+  public OidLongArray getAndClr(ObjectID id, PersistenceTransaction tx);
 
 }

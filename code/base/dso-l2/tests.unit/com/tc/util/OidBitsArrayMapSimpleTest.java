@@ -20,9 +20,9 @@ public class OidBitsArrayMapSimpleTest extends TCTestCase {
     for (ObjectID oid : testOids) {
       System.out.println("XXX Testing ObjectID " + oid.toLong());
       Assert.assertFalse(oids.contains(oid));
-      oids.getAndSet(oid);
+      oids.getAndSet(oid, null);
       Assert.assertTrue(oids.contains(oid));
-      oids.getAndClr(oid);
+      oids.getAndClr(oid, null);
       Assert.assertFalse(oids.contains(oid));
     }
   }
@@ -39,19 +39,19 @@ public class OidBitsArrayMapSimpleTest extends TCTestCase {
 
     for (ObjectID oid : positiveOids) {
       System.out.println("XXX Add ObjectID " + oid.toLong());
-      oids.getAndSet(oid);
+      oids.getAndSet(oid, null);
     }
 
     for (ObjectID oid : negativeOids) {
       Assert.assertFalse("Shall not contain " + oid.toLong(), oids.contains(oid));
       System.out.println("XXX Add ObjectID " + oid.toLong());
-      oids.getAndSet(oid);
+      oids.getAndSet(oid, null);
     }
 
     for (ObjectID oid : negativeOids) {
       Assert.assertTrue("Shall contain " + oid.toLong(), oids.contains(oid));
       System.out.println("XXX Remove ObjectID " + oid.toLong());
-      oids.getAndClr(oid);
+      oids.getAndClr(oid, null);
       Assert.assertFalse("Shall not contain " + oid.toLong(), oids.contains(oid));
     }
 
@@ -91,12 +91,12 @@ public class OidBitsArrayMapSimpleTest extends TCTestCase {
     oid = new ObjectID(1);
     base = oids.oidIndex(oid.toLong());
     Assert.assertTrue("Expected " + oid.toLong() + " but got " + base, base.equals(0L));
-    
+
     System.out.println("XXX Test -1");
     oid = new ObjectID(-1);
     base = oids.oidIndex(oid.toLong());
     Assert.assertTrue("Expected " + oid.toLong() + " but got " + base, base.equals(-512L));
-    
+
     System.out.println("XXX Test -512");
     oid = new ObjectID(-512);
     base = oids.oidIndex(oid.toLong());
@@ -106,7 +106,7 @@ public class OidBitsArrayMapSimpleTest extends TCTestCase {
     oid = new ObjectID(-513);
     base = oids.oidIndex(oid.toLong());
     Assert.assertTrue("Expected " + oid.toLong() + " but got " + base, base.equals(-1024L));
-    
+
     System.out.println("XXX Test -1024");
     oid = new ObjectID(-1024);
     base = oids.oidIndex(oid.toLong());

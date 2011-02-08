@@ -4,6 +4,7 @@
 package com.tc.util;
 
 import com.tc.object.ObjectID;
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,16 +37,16 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return map.get(oidIndex(oid));
   }
 
-  private OidLongArray getOrLoadBitsArray(long oid) {
+  private OidLongArray getOrLoadBitsArray(long oid, PersistenceTransaction tx) {
     Long mapIndex = oidIndex(oid);
     OidLongArray longAry;
     longAry = map.get(mapIndex);
-    if (longAry == null) longAry = loadArray(oid, longsPerDiskUnit, mapIndex.longValue());
+    if (longAry == null) longAry = loadArray(oid, longsPerDiskUnit, mapIndex.longValue(), tx);
     map.put(mapIndex, longAry);
     return longAry;
   }
 
-  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex) {
+  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex, PersistenceTransaction tx) {
     return new OidLongArray(lPerDiskUnit, mapIndex);
   }
 
@@ -53,8 +54,8 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (int) (Math.abs(oid) % bitsLength);
   }
 
-  private OidLongArray getAndModify(long oid, boolean doSet) {
-    OidLongArray longAry = getOrLoadBitsArray(oid);
+  private OidLongArray getAndModify(long oid, boolean doSet, PersistenceTransaction tx) {
+    OidLongArray longAry = getOrLoadBitsArray(oid, tx);
     int oidInArray = arrayOffset(oid);
     if (doSet) {
       longAry.setBit(oidInArray);
@@ -64,12 +65,12 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
     return (longAry);
   }
 
-  public OidLongArray getAndSet(ObjectID id) {
-    return (getAndModify(id.toLong(), true));
+  public OidLongArray getAndSet(ObjectID id, PersistenceTransaction tx) {
+    return (getAndModify(id.toLong(), true, tx));
   }
 
-  public OidLongArray getAndClr(ObjectID id) {
-    return (getAndModify(id.toLong(), false));
+  public OidLongArray getAndClr(ObjectID id, PersistenceTransaction tx) {
+    return (getAndModify(id.toLong(), false, tx));
   }
 
   public boolean contains(ObjectID id) {
@@ -83,6 +84,7 @@ public class OidBitsArrayMapImpl implements OidBitsArrayMap {
   }
 
   // for testing
+  @Override
   public String toString() {
     StringBuffer buf = new StringBuffer();
     for (Map.Entry<Long, OidLongArray> entry : map.entrySet()) {

@@ -22,11 +22,10 @@ import java.util.TreeMap;
 
 public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements OidBitsArrayMap {
 
-  private static final TCLogger                logger = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
+  private static final TCLogger        logger = TCLogging.getTestingLogger(FastObjectIDManagerImpl.class);
 
-  private final TCBytesToBytesDatabase         oidDB;
-  private final int                            auxKey;
-  private final PersistenceTransactionProvider ptp;
+  private final TCBytesToBytesDatabase oidDB;
+  private final int                    auxKey;
 
   /*
    * Compressed bits array for ObjectIDs, backed up by a database. If null database, then only in-memory representation.
@@ -44,22 +43,20 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
     super(longsPerDiskUnit);
     this.oidDB = oidDB;
     this.auxKey = auxKey;
-    this.ptp = ptp;
   }
 
   @Override
-  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex) {
+  protected OidLongArray loadArray(long oid, int lPerDiskUnit, long mapIndex, PersistenceTransaction tx) {
     OidLongArray longAry = null;
     try {
       if (oidDB != null) {
-        PersistenceTransaction tx = ptp.newTransaction();
         longAry = readDiskEntry(tx, oid);
       }
     } catch (TCDatabaseException e) {
       logger.error("Reading object ID " + oid + ":" + e.getMessage());
       throw new TCRuntimeException(e);
     }
-    if (longAry == null) longAry = super.loadArray(oid, lPerDiskUnit, mapIndex);
+    if (longAry == null) longAry = super.loadArray(oid, lPerDiskUnit, mapIndex, tx);
     return longAry;
   }
 
@@ -71,10 +68,6 @@ public class OidBitsArrayMapDiskStoreImpl extends OidBitsArrayMapImpl implements
       return null;
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
-    } finally {
-      if (txn != null) {
-        txn.commit();
-      }
     }
   }
 

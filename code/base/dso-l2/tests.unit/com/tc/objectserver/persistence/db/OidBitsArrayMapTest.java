@@ -139,7 +139,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
                                                                          new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
-      oids.getAndSet(id);
+      oids.getAndSet(id, null);
     }
 
     // write and read back
@@ -155,7 +155,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
 
     // remove all one by one
     for (ObjectID id : idList) {
-      secOids.getAndClr(id);
+      secOids.getAndClr(id, null);
     }
 
     // verify
@@ -180,7 +180,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
                                                                          new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
-      oids.getAndSet(id);
+      oids.getAndSet(id, null);
     }
 
     // write and read back
@@ -196,7 +196,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
 
     // remove all one by one
     for (ObjectID id : idList) {
-      secOids.getAndClr(id);
+      secOids.getAndClr(id, null);
     }
 
     // verify
@@ -227,10 +227,10 @@ public class OidBitsArrayMapTest extends TCTestCase {
                                                                            new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
-      oids.getAndSet(id);
+      oids.getAndSet(id, null);
     }
     for (ObjectID id : auxList) {
-      oidAux.getAndSet(id);
+      oidAux.getAndSet(id, null);
     }
 
     // write and read back
@@ -253,10 +253,10 @@ public class OidBitsArrayMapTest extends TCTestCase {
 
     // remove all one by one
     for (ObjectID id : idList) {
-      secOids.getAndClr(id);
+      secOids.getAndClr(id, null);
     }
     for (ObjectID id : auxList) {
-      secAux.getAndClr(id);
+      secAux.getAndClr(id, null);
     }
 
     // verify
@@ -291,7 +291,7 @@ public class OidBitsArrayMapTest extends TCTestCase {
                                                                          new NullPersistenceTransactionProvider());
 
     for (ObjectID id : idList) {
-      oids.getAndSet(id);
+      oids.getAndSet(id, null);
       Assert.assertTrue(oids.contains(id));
       indexSet.add(oids.oidIndex(id));
     }

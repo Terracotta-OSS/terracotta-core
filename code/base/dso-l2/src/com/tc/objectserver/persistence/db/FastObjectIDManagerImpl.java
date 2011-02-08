@@ -223,20 +223,20 @@ public final class FastObjectIDManagerImpl extends DBPersistorBase implements Ob
               final ObjectID objectID = new ObjectID(Conversion.bytes2Long(oids, offset));
               final byte idByte = oids[offset + OidLongArray.BYTES_PER_LONG];
               if (isAddOper) {
-                oidStoreMap.getAndSet(objectID);
+                oidStoreMap.getAndSet(objectID, tx);
                 if ((idByte & this.PERSISTABLE_COLLECTION) == this.PERSISTABLE_COLLECTION) {
-                  mapOidStoreMap.getAndSet(objectID);
+                  mapOidStoreMap.getAndSet(objectID, tx);
                 }
                 if ((idByte & this.EVICTABLE_OBJECT) == this.EVICTABLE_OBJECT) {
-                  evictableOidStoreMap.getAndSet(objectID);
+                  evictableOidStoreMap.getAndSet(objectID, tx);
                 }
               } else {
-                oidStoreMap.getAndClr(objectID);
+                oidStoreMap.getAndClr(objectID, tx);
                 if ((idByte & this.PERSISTABLE_COLLECTION) == this.PERSISTABLE_COLLECTION) {
-                  mapOidStoreMap.getAndClr(objectID);
+                  mapOidStoreMap.getAndClr(objectID, tx);
                 }
                 if ((idByte & this.EVICTABLE_OBJECT) == this.EVICTABLE_OBJECT) {
-                  evictableOidStoreMap.getAndClr(objectID);
+                  evictableOidStoreMap.getAndClr(objectID, tx);
                 }
               }
 
