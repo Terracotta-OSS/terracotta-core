@@ -75,7 +75,7 @@ public class ProxyWeavingStrategy implements WeavingStrategy {
 
       // ------------------------------------------------
       // update the class info with new ITDs
-      classInfo = AsmClassInfo.newClassInfo(context.getCurrentBytecode(), loader);
+      classInfo = AsmClassInfo.newClassInfo(className, context.getCurrentBytecode(), loader);
 
       // ------------------------------------------------
       // -- Phase 2 -- advice

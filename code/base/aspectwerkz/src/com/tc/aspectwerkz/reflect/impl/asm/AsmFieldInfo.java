@@ -41,28 +41,6 @@ public class AsmFieldInfo extends AsmMemberInfo implements FieldInfo {
   }
 
   /**
-   * Returns the field info for the field specified.
-   *
-   * @param fieldName
-   * @param fieldDesc
-   * @param bytecode
-   * @param loader
-   * @return the field info
-   */
-  public static FieldInfo getFieldInfo(final String fieldName,
-                                       final String fieldDesc,
-                                       final byte[] bytecode,
-                                       final ClassLoader loader) {
-    String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
-    AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
-    ClassInfo classInfo = repository.getClassInfo(className);
-    if (classInfo == null) {
-      classInfo = AsmClassInfo.getClassInfo(bytecode, loader);
-    }
-    return classInfo.getField(AsmHelper.calculateFieldHash(fieldName, fieldDesc));
-  }
-
-  /**
    * Returns the signature for the element.
    *
    * @return the signature for the element

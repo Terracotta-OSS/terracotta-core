@@ -7,7 +7,6 @@ package com.tc.aspectwerkz.reflect.impl.asm;
 import com.tc.asm.Type;
 import com.tc.aspectwerkz.reflect.ClassInfo;
 import com.tc.aspectwerkz.reflect.MethodInfo;
-import com.tc.aspectwerkz.transform.inlining.AsmHelper;
 import com.tc.backport175.bytecode.AnnotationElement;
 
 /**
@@ -70,26 +69,6 @@ public class AsmMethodInfo extends AsmMemberInfo implements MethodInfo {
     }
     // TODO how to do exceptions?
     m_exceptionTypeNames = new String[] {};
-  }
-
-  /**
-   * Returns the method info for the method specified.
-   *
-   * @param methodName
-   * @param methodDesc
-   * @param bytecode
-   * @param loader
-   * @return the method info
-   */
-  public static MethodInfo getMethodInfo(final String methodName, final String methodDesc, final byte[] bytecode,
-                                         final ClassLoader loader) {
-    String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
-    AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
-    ClassInfo classInfo = repository.getClassInfo(className);
-    if (classInfo == null) {
-      classInfo = AsmClassInfo.getClassInfo(bytecode, loader);
-    }
-    return classInfo.getMethod(AsmHelper.calculateMethodHash(methodName, methodDesc));
   }
 
   /**

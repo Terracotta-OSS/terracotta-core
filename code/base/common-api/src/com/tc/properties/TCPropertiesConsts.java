@@ -865,4 +865,6 @@ public interface TCPropertiesConsts {
   // for tests
   public static final String   L2_OFFHEAP_SKIP_JVMARG_CHECK                                    = "l2.offHeapCache.skip.jvmarg.check";
 
+  public static final String   AW_ASMCLASSINFO_IGNORE_ERRORS                                   = "aw.asmclassinfo.ignore.errors";
+
 }

@@ -56,26 +56,6 @@ public class AsmConstructorInfo extends AsmMemberInfo implements ConstructorInfo
     }
 
     /**
-     * Returns the constructor info for the constructor specified.
-     *
-     * @param constructorDesc
-     * @param bytecode
-     * @param loader
-     * @return the constructor info
-     */
-    public static ConstructorInfo getConstructorInfo(final String constructorDesc,
-                                                     final byte[] bytecode,
-                                                     final ClassLoader loader) {
-        String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
-        AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
-        ClassInfo classInfo = repository.getClassInfo(className);
-        if (classInfo == null) {
-            classInfo = AsmClassInfo.getClassInfo(bytecode, loader);
-        }
-        return classInfo.getConstructor(AsmHelper.calculateConstructorHash(constructorDesc));
-    }
-
-    /**
      * Returns the signature for the element.
      *
      * @return the signature for the element

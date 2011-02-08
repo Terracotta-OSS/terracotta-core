@@ -1984,7 +1984,7 @@ public class BootJarTool {
 
     data = cw.toByteArray();
 
-    AsmClassInfo.getClassInfo(data, this.systemLoader);
+    AsmClassInfo.getClassInfo(classNameDotsReplaced, data, this.systemLoader);
 
     return data;
   }
@@ -2078,7 +2078,7 @@ public class BootJarTool {
     // adapts the class on the fly
     final ClassReader cr = new ClassReader(data);
     final ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
-    final ClassInfo classInfo = AsmClassInfo.getClassInfo(data, this.tcLoader);
+    final ClassInfo classInfo = AsmClassInfo.getClassInfo(name, data, this.tcLoader);
     final ClassVisitor cv = this.configHelper.createClassAdapterFor(cw, classInfo, this.instrumentationLogger,
                                                                     getClass().getClassLoader(), true);
     cr.accept(cv, ClassReader.SKIP_FRAMES);

@@ -4,6 +4,8 @@
  */
 package com.tc.aspectwerkz.reflect.impl.asm;
 
+import org.apache.commons.io.IOUtils;
+
 import com.tc.asm.ClassReader;
 import com.tc.asm.FieldVisitor;
 import com.tc.asm.Label;
@@ -24,6 +26,8 @@ import com.tc.aspectwerkz.transform.inlining.AsmNullAdapter;
 import com.tc.aspectwerkz.util.ContextClassLoader;
 import com.tc.backport175.bytecode.AnnotationElement;
 import com.tc.backport175.bytecode.AnnotationReader;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,19 +35,25 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * Implementation of the ClassInfo interface utilizing the ASM bytecode library for the info retriaval. <p/> Annotations
- * are lazily gathered, unless required to visit them at the same time as we visit methods and fields. <p/> This
- * implementation guarantees that the method, fields and constructors can be retrieved in the same order as they were in
- * the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM compiler)
+ * Implementation of the ClassInfo interface utilizing the ASM bytecode library for the info retriaval.
+ * <p/>
+ * Annotations are lazily gathered, unless required to visit them at the same time as we visit methods and fields.
+ * <p/>
+ * This implementation guarantees that the method, fields and constructors can be retrieved in the same order as they
+ * were in the bytecode (it can depends of the compiler and might not be the order of the source code - f.e. IBM
+ * compiler)
  * 
  * @author <a href="mailto:jboner@codehaus.org">Jonas Bonér </a>
  * @author <a href="mailto:alex@gnilux.com">Alexandre Vasseur </a>
  */
 public class AsmClassInfo implements ClassInfo {
+
+  private static final List<String>    IGNORE_ERRORS             = getIgnoreErrors();
 
   protected final static String[]      EMPTY_STRING_ARRAY        = new String[0];
 
@@ -182,26 +192,6 @@ public class AsmClassInfo implements ClassInfo {
   }
 
   /**
-   * Creates a new ClassInfo instance.
-   * 
-   * @param resourceStream
-   * @param loader
-   */
-  AsmClassInfo(final InputStream resourceStream, final ClassLoader loader) {
-    if (resourceStream == null) { throw new IllegalArgumentException("resource stream can not be null"); }
-    m_loaderRef = new WeakReference(loader);
-    m_classInfoRepository = AsmClassInfoRepository.getRepository(loader);
-    try {
-      ClassReader cr = new ClassReader(resourceStream);
-      ClassInfoClassAdapter visitor = new ClassInfoClassAdapter();
-      cr.accept(visitor, ClassReader.SKIP_FRAMES);
-    } catch (Throwable t) {
-      t.printStackTrace();
-    }
-    m_classInfoRepository.addClassInfo(this);
-  }
-
-  /**
    * Create a ClassInfo based on a component type and a given dimension Due to java.lang.reflect. behavior, the
    * ClassInfo is almost empty. It is not an interface, only subclass of java.lang.Object, no methods, fields, or
    * constructor, no annotation.
@@ -234,11 +224,10 @@ public class AsmClassInfo implements ClassInfo {
    * @param loader
    * @return the class info
    */
-  public static ClassInfo newClassInfo(final byte[] bytecode, final ClassLoader loader) {
-    final String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
+  public static ClassInfo newClassInfo(String className, final byte[] bytecode, final ClassLoader loader) {
     AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
     repository.removeClassInfo(className);
-    return new AsmClassInfo(bytecode, loader);
+    return constructAsmClassInfo(className, bytecode, loader);
   }
 
   /**
@@ -261,23 +250,6 @@ public class AsmClassInfo implements ClassInfo {
   /**
    * Returns the class info for a specific class.
    * 
-   * @param bytecode
-   * @param loader
-   * @return the class info
-   */
-  public static ClassInfo getClassInfo(final byte[] bytecode, final ClassLoader loader) {
-    final String className = AsmClassInfo.retrieveClassNameFromBytecode(bytecode);
-    AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
-    ClassInfo classInfo = repository.getClassInfo(className);
-    if (classInfo == null) {
-      classInfo = new AsmClassInfo(bytecode, loader);
-    }
-    return classInfo;
-  }
-
-  /**
-   * Returns the class info for a specific class.
-   * 
    * @param className
    * @param bytecode
    * @param loader
@@ -287,9 +259,22 @@ public class AsmClassInfo implements ClassInfo {
     AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
     ClassInfo classInfo = repository.getClassInfo(className.replace('.', '/'));
     if (classInfo == null) {
-      classInfo = new AsmClassInfo(bytecode, loader);
+      classInfo = constructAsmClassInfo(className, bytecode, loader);
     }
     return classInfo;
+  }
+
+  private static ClassInfo constructAsmClassInfo(String className, byte[] bytecode, ClassLoader loader) {
+    try {
+      return new AsmClassInfo(bytecode, loader);
+    } catch (Throwable t) {
+      if (isIgnoreError(className)) { return new NullClassInfo(className, loader); }
+
+      if (t instanceof Error) { throw (Error) t; }
+      if (t instanceof RuntimeException) { throw (RuntimeException) t; }
+
+      throw new RuntimeException(t);
+    }
   }
 
   /**
@@ -300,18 +285,19 @@ public class AsmClassInfo implements ClassInfo {
    * @return the class info
    */
   public static ClassInfo getClassInfo(final String name, final InputStream stream, final ClassLoader loader) {
+    byte[] b;
     try {
-      ClassReader cr = new ClassReader(stream);
-      final String className = cr.getClassName().replace('/', '.');
-      AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
-      ClassInfo classInfo = repository.getClassInfo(className);
-      if (classInfo == null) {
-        classInfo = new AsmClassInfo(cr.b, loader);
-      }
-      return classInfo;
+      b = IOUtils.toByteArray(stream);
     } catch (IOException e) {
       throw new WrappedRuntimeException("Can't get ClassInfo for " + name, e);
     }
+
+    AsmClassInfoRepository repository = AsmClassInfoRepository.getRepository(loader);
+    ClassInfo classInfo = repository.getClassInfo(name);
+    if (classInfo == null) {
+      classInfo = constructAsmClassInfo(name, b, loader);
+    }
+    return classInfo;
   }
 
   /**
@@ -321,17 +307,6 @@ public class AsmClassInfo implements ClassInfo {
    */
   public static void markDirty(final String className, final ClassLoader loader) {
     AsmClassInfoRepository.getRepository(loader).removeClassInfo(className);
-  }
-
-  /**
-   * Retrieves the class name from the bytecode of a class.
-   * 
-   * @param bytecode
-   * @return the class name
-   */
-  public static String retrieveClassNameFromBytecode(final byte[] bytecode) {
-    ClassReader cr = new ClassReader(bytecode);
-    return cr.getClassName().replace('/', '.');
   }
 
   /**
@@ -963,4 +938,38 @@ public class AsmClassInfo implements ClassInfo {
     }
     return m_annotationReader;
   }
+
+  static List<String> getIgnoreErrors() {
+    return getIgnoreErrors(TCPropertiesImpl.getProperties()
+        .getProperty(TCPropertiesConsts.AW_ASMCLASSINFO_IGNORE_ERRORS));
+  }
+
+  static List<String> getIgnoreErrors(String csv) {
+    if (csv == null) { return Collections.EMPTY_LIST; }
+
+    csv = csv.replaceAll("\\s", "");
+
+    List<String> rv = new ArrayList<String>();
+    for (String s : csv.split(",")) {
+      if (s != null && s.length() > 0) {
+        rv.add(s);
+      }
+    }
+
+    return rv;
+  }
+
+  static boolean isIgnoreError(String className) {
+    return isIgnoreError(IGNORE_ERRORS, className);
+  }
+  
+  static boolean isIgnoreError(List<String> toIgnore, String className) {
+    className = className.replace('/', '.');
+    for (String ignore : toIgnore) {
+      if (className.startsWith(ignore)) { return true; }
+    }
+
+    return false;
+  }
+
 }

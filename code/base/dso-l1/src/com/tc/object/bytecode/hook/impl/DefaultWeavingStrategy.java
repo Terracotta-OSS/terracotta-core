@@ -237,7 +237,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
             context.setCurrentBytecode(cw.toByteArray());
 
             // update the classInfo
-            classInfo = AsmClassInfo.newClassInfo(context.getCurrentBytecode(), loader);
+            classInfo = AsmClassInfo.newClassInfo(className, context.getCurrentBytecode(), loader);
 
           } catch (IOException e) {
             throw new ClassNotFoundException("Error reading bytes for " + replacementResource, e);
@@ -267,8 +267,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
         // note: for staticinitialization we do an exact match right there
         boolean filterForStaticinitialization = !classInfo.hasStaticInitializer()
-                                                || classFilterFor(
-                                                                  definitions,
+                                                || classFilterFor(definitions,
                                                                   new ExpressionContext[] { new ExpressionContext(
                                                                                                                   PointcutType.STATIC_INITIALIZATION,
                                                                                                                   classInfo
@@ -286,8 +285,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
         if (!filterForCall) {
           newInvocationsByCallerMemberHash = new HashMap();
           crLookahead
-              .accept(
-                      new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(
+              .accept(new ConstructorCallVisitor.LookaheadNewDupInvokeSpecialInstructionClassAdapter(
                                                                                                      newInvocationsByCallerMemberHash),
                       ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         }
@@ -320,7 +318,7 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
 
         // ------------------------------------------------
         // update the class info with new ITDs
-        classInfo = AsmClassInfo.newClassInfo(context.getCurrentBytecode(), loader);
+        classInfo = AsmClassInfo.newClassInfo(className, context.getCurrentBytecode(), loader);
 
         // ------------------------------------------------
         // -- Phase 2 -- advice
