@@ -36,18 +36,18 @@ import javax.management.NotificationListener;
 import javax.management.ObjectName;
 
 public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp implements NotificationListener {
-  public static final String    CONFIG_FILE     = "config-file";
-  public static final String    PORT_NUMBER     = "port-number";
-  public static final String    HOST_NAME       = "host-name";
-  public static final String    JMX_PORT        = "jmx-port";
+  public static final String      CONFIG_FILE  = "config-file";
+  public static final String      PORT_NUMBER  = "port-number";
+  public static final String      HOST_NAME    = "host-name";
+  public static final String      JMX_PORT     = "jmx-port";
 
-  private ApplicationConfig     appConfig;
-  private JMXConnectorProxy     jmxc;
-  private MBeanServerConnection mbsc;
-  private DSOMBean              dsoMBean;
+  private final ApplicationConfig appConfig;
+  private JMXConnectorProxy       jmxc;
+  private MBeanServerConnection   mbsc;
+  private DSOMBean                dsoMBean;
 
-  private CyclicBarrier         barrier4;
-  private Set                   channelIdSet = new HashSet();
+  private final CyclicBarrier     barrier4;
+  private final Set               channelIdSet = new HashSet();
 
   public ClientDetectionTestApp(String appId, ApplicationConfig cfg, ListenerProvider listenerProvider) {
     super(appId, cfg, listenerProvider);
@@ -56,13 +56,14 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     barrier4 = new CyclicBarrier(4);
   }
 
+  @Override
   protected void runTest() throws Throwable {
     jmxc = new JMXConnectorProxy("localhost", Integer.valueOf(appConfig.getAttribute(JMX_PORT)));
     mbsc = jmxc.getMBeanServerConnection();
     dsoMBean = (DSOMBean) MBeanServerInvocationHandler.newProxyInstance(mbsc, L2MBeanNames.DSO, DSOMBean.class, false);
     getCurrentChannelIds();
     mbsc.addNotificationListener(L2MBeanNames.DSO, this, null, null);
-    
+
     System.out.println("@@@@@@@ I'm online.... id = " + ManagerUtil.getClientID());
 
     ExtraL1ProcessControl client1 = spawnNewClient(1);
@@ -70,15 +71,19 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     ExtraL1ProcessControl client3 = spawnNewClient(3);
 
     barrier4.await();
-    assertClientPresent(getDSOClientMBeans(), 4);
+    while (getClientsConnected(getDSOClientMBeans()) != 4) {
+      ThreadUtil.reallySleep(10000);
+    }
     barrier4.await();
     client1.attemptShutdown();
     client2.attemptShutdown();
     client3.attemptShutdown();
-    
+
     Thread.sleep(30000);
-    assertClientPresent(getDSOClientMBeans(), 1);
-    Thread.sleep(30000);
+    System.out.println("3 Clients killed");
+    while (getClientsConnected(getDSOClientMBeans()) != 1) {
+      ThreadUtil.reallySleep(10000);
+    }
   }
 
   private DSOClientMBean[] getDSOClientMBeans() {
@@ -96,18 +101,15 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       channelIdSet.add(String.valueOf(c.getChannelID().toLong()));
     }
   }
-  
-  private void assertClientPresent(DSOClientMBean[] clientMBeans, int expectedCount) throws Exception {
-    ThreadUtil.reallySleep(5000);
-    System.out.println("assertClientPresent: expectedCount = " + expectedCount);
+
+  private int getClientsConnected(DSOClientMBean[] clientMBeans) throws Exception {
     Set set = new HashSet<String>();
     for (DSOClientMBean bean : clientMBeans) {
       System.out.println("got channel Id from dso bean: " + bean.getChannelID().toLong());
       set.add(bean.getChannelID().toString() + bean.getRemoteAddress());
     }
-    System.out.println(set);
-    Assert.assertEquals(expectedCount, clientMBeans.length);
-    Assert.assertEquals(expectedCount, set.size());
+    System.out.println("ClientPresent: " + set);
+    return set.size();
   }
 
   private ExtraL1ProcessControl spawnNewClient(int id) throws Exception {
@@ -118,8 +120,9 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
     FileUtils.forceMkdir(workingDir);
 
     List jvmArgs = new ArrayList();
-    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class, configFile
-        .getAbsolutePath(), Collections.EMPTY_LIST, workingDir, jvmArgs);
+    ExtraL1ProcessControl client = new ExtraL1ProcessControl(hostName, port, L1Client.class,
+                                                             configFile.getAbsolutePath(), Collections.EMPTY_LIST,
+                                                             workingDir, jvmArgs);
     client.start();
 
     client.mergeSTDERR();
@@ -159,10 +162,9 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       String source = notification.getSource().toString();
       int index = source.lastIndexOf('=');
       String channelId = source.substring(index + 1);
-      
+
       System.out.println(">>>>> notification of channelId: " + channelId);
-      Assert.assertFalse("duplicate clients notification found", 
-                        channelIdSet.contains(channelId));
+      Assert.assertFalse("duplicate clients notification found", channelIdSet.contains(channelId));
       channelIdSet.add(channelId);
     }
 
