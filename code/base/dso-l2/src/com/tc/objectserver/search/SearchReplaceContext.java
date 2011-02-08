@@ -16,9 +16,9 @@ public class SearchReplaceContext extends BaseSearchEventContext {
   private final Object       cacheValue;
   private final Object       prevValue;
 
-  public SearchReplaceContext(ObjectID cdsmOid, String name, Object cacheKey, Object cacheValue, Object prevValue,
+  public SearchReplaceContext(ObjectID segmentOid, String name, Object cacheKey, Object cacheValue, Object prevValue,
                               List<NVPair> attributes, MetaDataProcessingContext context) {
-    super(cdsmOid, name, context);
+    super(segmentOid, name, context);
     this.cacheKey = cacheKey;
     this.cacheValue = cacheValue;
     this.prevValue = prevValue;

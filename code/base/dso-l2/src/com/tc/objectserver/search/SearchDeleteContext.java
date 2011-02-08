@@ -15,8 +15,9 @@ public class SearchDeleteContext extends BaseSearchEventContext {
 
   private final Object cacheKey;
 
-  public SearchDeleteContext(ObjectID cdsmOid, String name, Object cacheKey, MetaDataProcessingContext metaDataContext) {
-    super(cdsmOid, name, metaDataContext);
+  public SearchDeleteContext(ObjectID segmentOid, String name, Object cacheKey,
+                             MetaDataProcessingContext metaDataContext) {
+    super(segmentOid, name, metaDataContext);
     this.cacheKey = cacheKey;
   }
 

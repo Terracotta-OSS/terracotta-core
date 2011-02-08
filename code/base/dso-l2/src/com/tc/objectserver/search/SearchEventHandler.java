@@ -34,7 +34,7 @@ public class SearchEventHandler extends AbstractEventHandler {
 
       try {
         this.indexManager.upsert(suc.getCacheName(), suc.getCacheKey(), suc.getCacheValue(), suc.getAttributes(),
-                                 suc.getMetaDataProcessingContext(), suc.isPutIfAbsent());
+                                 suc.isPutIfAbsent(), suc.getSegmentOid(), suc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -42,7 +42,8 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchDeleteContext) {
       SearchDeleteContext sdc = (SearchDeleteContext) context;
       try {
-        this.indexManager.remove(sdc.getCacheName(), sdc.getCacheKey(), sdc.getMetaDataProcessingContext());
+        this.indexManager.remove(sdc.getCacheName(), sdc.getCacheKey(), sdc.getSegmentOid(),
+                                 sdc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -50,7 +51,7 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchClearContext) {
       SearchClearContext scc = (SearchClearContext) context;
       try {
-        this.indexManager.clear(scc.getCacheName(), scc.getMetaDataProcessingContext());
+        this.indexManager.clear(scc.getCacheName(), scc.getSegmentOid(), scc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
@@ -58,7 +59,7 @@ public class SearchEventHandler extends AbstractEventHandler {
     } else if (context instanceof SearchEvictionRemoveContext) {
       SearchEvictionRemoveContext serc = (SearchEvictionRemoveContext) context;
       try {
-        this.indexManager.removeIfValueEqual(serc.getCacheName(), serc.getRemoves(),
+        this.indexManager.removeIfValueEqual(serc.getCacheName(), serc.getRemoves(), serc.getSegmentOid(),
                                              serc.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
@@ -68,7 +69,7 @@ public class SearchEventHandler extends AbstractEventHandler {
       SearchReplaceContext src = (SearchReplaceContext) context;
       try {
         this.indexManager.replace(src.getCacheName(), src.getCacheKey(), src.getCacheValue(), src.getPreviousValue(),
-                                  src.getAttributes(), src.getMetaDataProcessingContext());
+                                  src.getAttributes(), src.getSegmentOid(), src.getMetaDataProcessingContext());
       } catch (IndexException e) {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);

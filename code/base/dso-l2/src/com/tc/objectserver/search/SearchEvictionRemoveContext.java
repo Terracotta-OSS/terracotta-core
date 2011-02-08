@@ -12,9 +12,9 @@ public class SearchEvictionRemoveContext extends BaseSearchEventContext {
 
   private final Map<Object, Object> toRemove;
 
-  public SearchEvictionRemoveContext(ObjectID cdsmOid, String cacheName, Map<Object, Object> toRemove,
+  public SearchEvictionRemoveContext(ObjectID segmentOid, String cacheName, Map<Object, Object> toRemove,
                                      MetaDataProcessingContext context) {
-    super(cdsmOid, cacheName, context);
+    super(segmentOid, cacheName, context);
     this.toRemove = toRemove;
   }
 

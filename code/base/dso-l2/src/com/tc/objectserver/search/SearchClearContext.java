@@ -13,8 +13,8 @@ import com.tc.objectserver.metadata.MetaDataProcessingContext;
  */
 public class SearchClearContext extends BaseSearchEventContext {
 
-  public SearchClearContext(ObjectID cdsmOid, String name, MetaDataProcessingContext metaDataContext) {
-    super(cdsmOid, name, metaDataContext);
+  public SearchClearContext(ObjectID segmentOid, String name, MetaDataProcessingContext metaDataContext) {
+    super(segmentOid, name, metaDataContext);
   }
 
 }

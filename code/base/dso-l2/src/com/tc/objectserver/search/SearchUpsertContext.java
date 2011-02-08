@@ -21,9 +21,9 @@ public class SearchUpsertContext extends BaseSearchEventContext {
   private final Object       cacheValue;
   private final boolean      putIfAbsent;
 
-  public SearchUpsertContext(ObjectID cdsmOid, String name, Object cacheKey, Object cacheValue,
+  public SearchUpsertContext(ObjectID segmentOid, String name, Object cacheKey, Object cacheValue,
                              List<NVPair> attributes, MetaDataProcessingContext metaDataContext, boolean putIfAbsent) {
-    super(cdsmOid, name, metaDataContext);
+    super(segmentOid, name, metaDataContext);
     this.cacheKey = cacheKey;
     this.cacheValue = cacheValue;
     this.attributes = attributes;

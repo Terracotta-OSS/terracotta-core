@@ -11,16 +11,16 @@ class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventCo
 
   private final MetaDataProcessingContext metaDataContext;
   private final String                    cacheName;
-  private final ObjectID                  cdsmOid;
+  private final ObjectID                  segmentOid;
 
-  public BaseSearchEventContext(ObjectID cdsmOid, String cacheName, MetaDataProcessingContext metaDataContext) {
-    this.cdsmOid = cdsmOid;
+  public BaseSearchEventContext(ObjectID segmentOid, String cacheName, MetaDataProcessingContext metaDataContext) {
+    this.segmentOid = segmentOid;
     this.cacheName = cacheName;
     this.metaDataContext = metaDataContext;
   }
 
   public final Object getKey() {
-    return cdsmOid;
+    return segmentOid;
   }
 
   public MetaDataProcessingContext getMetaDataProcessingContext() {
@@ -31,4 +31,7 @@ class BaseSearchEventContext implements SearchEventContext, MultiThreadedEventCo
     return cacheName;
   }
 
+  public ObjectID getSegmentOid() {
+    return segmentOid;
+  }
 }

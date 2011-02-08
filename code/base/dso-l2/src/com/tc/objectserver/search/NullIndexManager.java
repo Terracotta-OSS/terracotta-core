@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.search;
 
+import com.tc.object.ObjectID;
 import com.tc.object.metadata.NVPair;
 import com.tc.objectserver.metadata.MetaDataProcessingContext;
 
@@ -24,16 +25,16 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void remove(String indexName, Object key, MetaDataProcessingContext metaDataContext) {
+  public void remove(String indexName, Object key, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void upsert(String indexName, Object key, Object value, List<NVPair> attributes,
-                     MetaDataProcessingContext metaDataContext, boolean onlyIfAbsent) {
+  public void upsert(String indexName, Object key, Object value, List<NVPair> attributes, boolean onlyIfAbsent,
+                     ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
-  public void clear(String indexName, MetaDataProcessingContext metaDataContext) {
+  public void clear(String indexName, ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
@@ -45,13 +46,13 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove,
+  public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, ObjectID segmentOid,
                                  MetaDataProcessingContext metaDataContext) {
     //
   }
 
   public void replace(String indexName, Object key, Object value, Object previousValue, List<NVPair> attributes,
-                      MetaDataProcessingContext metaDataContext) {
+                      ObjectID segmentOid, MetaDataProcessingContext metaDataContext) {
     //
   }
 
