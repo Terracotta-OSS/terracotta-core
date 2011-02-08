@@ -10,7 +10,7 @@ Manual Installation
 
 Instructions for obtaining the current version of the plugin can be
 from the openTerracotta Eclipse update site can be found at
-http://www.terracotta.org/kit/reflector?kitID=3.4&pageID=EclipsePluginQuickStart
+http://www.terracotta.org/kit/reflector?kitID=3.6.0&pageID=EclipsePluginQuickStart
 
 Nightly builds of the plugin are available at
 http://www.terracotta.org/kit/reflector?kitID=default&pageID=DownloadTerracotta
