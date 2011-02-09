@@ -4,13 +4,15 @@
  */
 package com.tc.util;
 
-import com.tc.util.AATreeSet.AANode;
+import com.tc.util.AATreeSet.Node;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import junit.framework.TestCase;
@@ -18,14 +20,13 @@ import junit.framework.TestCase;
 public class AATreeSetTest extends TestCase {
 
   public void testRandom() {
-    List longs = populateRandomLongs(new ArrayList(), 1000);
+    List<Long> longs = populateRandomLongs(new ArrayList(), 1000);
 
-    TreeSet treeSet = new TreeSet();
-    AATreeSet aatree = new AATreeSet();
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    SortedSet<Long> aatree = new AATreeSet<Long>();
 
-    for (Iterator i = longs.iterator(); i.hasNext();) {
-      Long l = (Long) i.next();
-      boolean aaInsert = aatree.insert(l);
+    for (Long l : longs) {
+      boolean aaInsert = aatree.add(l);
       boolean tsInsert = treeSet.add(l);
       assertEquals(tsInsert, aaInsert);
     }
@@ -45,64 +46,65 @@ public class AATreeSetTest extends TestCase {
   }
 
   public void testBasic() {
-
-    AATreeSet t = new AATreeSet();
-    t.insert(new Long(25));
-    t.insert(new Long(10));
-    t.insert(new Long(1));
-    t.insert(new Long(4));
-    t.insert(new Long(15));
-    t.insert(new Long(8));
-    t.insert(new Long(11));
-    t.insert(new Long(10));
-    t.insert(new Long(9));
-    t.insert(new Long(13));
-    t.insert(new Long(2));
-    t.insert(new Long(23));
-    t.insert(new Long(35));
-    t.insert(new Long(33));
-    t.insert(new Long(17));
-    t.insert(new Long(29));
-    t.insert(new Long(19));
+    Set<Long> t = new AATreeSet<Long>();
+    t.add(new Long(25));
+    t.add(new Long(10));
+    t.add(new Long(1));
+    t.add(new Long(4));
+    t.add(new Long(15));
+    t.add(new Long(8));
+    t.add(new Long(11));
+    t.add(new Long(10));
+    t.add(new Long(9));
+    t.add(new Long(13));
+    t.add(new Long(2));
+    t.add(new Long(23));
+    t.add(new Long(35));
+    t.add(new Long(33));
+    t.add(new Long(17));
+    t.add(new Long(29));
+    t.add(new Long(19));
 
     checkAATreeIteratorElements(t.iterator());
   }
 
-  private void checkAATreeIteratorElements(Iterator i) {
-    Comparable prev = new Long(Integer.MIN_VALUE);
+  private static void checkAATreeIteratorElements(Iterator<? extends Comparable> i) {
+    Comparable prev = null;
     while (i.hasNext()) {
-      Comparable curr = ((Comparable) i.next());
+      Comparable curr = i.next();
       // assert that iteration gives sorted result, since aatree behaves like a set, duplicates are eliminated and hence
       // we don't have to check for equality.
-      Assert.eval(curr.compareTo(prev) > 0);
+      if (prev != null) {
+        assertTrue("previous:" + prev + " current:" + curr, curr.compareTo(prev) > 0);
+      }
       prev = curr;
     }
 
   }
 
   public void testVeryBasic() {
-    AATreeSet aaTree = new AATreeSet();
-    boolean inserted = aaTree.insert(new Integer(10));
+    AATreeSet<Integer> aaTree = new AATreeSet<Integer>();
+    boolean inserted = aaTree.add(new Integer(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
 
-    inserted = aaTree.insert(new Integer(10));
+    inserted = aaTree.add(new Integer(10));
     assertFalse(inserted);
     assertEquals(1, aaTree.size());
 
-    Comparable deleted = aaTree.remove(new Integer(100));
-    assertNull(deleted);
+    assertFalse(aaTree.remove(new Integer(100)));
     assertEquals(1, aaTree.size());
 
-    deleted = aaTree.remove(new Integer(10));
+    Integer deleted = aaTree.removeAndReturn(new Integer(10));
     assertNotNull(deleted);
+    assertEquals(10, deleted.intValue());
     assertEquals(0, aaTree.size());
 
-    deleted = aaTree.remove(new Integer(10));
+    deleted = aaTree.removeAndReturn(new Integer(10));
     assertNull(deleted);
     assertEquals(0, aaTree.size());
 
-    inserted = aaTree.insert(new Integer(10));
+    inserted = aaTree.add(new Integer(10));
     assertTrue(inserted);
     assertEquals(1, aaTree.size());
 
@@ -113,133 +115,59 @@ public class AATreeSetTest extends TestCase {
 
   // Test program; should print min and max and nothing else
   public void testMinMax() {
-    AATreeSet t = new AATreeSet();
+    AATreeSet<Integer> t = new AATreeSet();
     final int NUMS = 400000;
-    final int GAP = 307;
+    final int GAP = 1;
 
-    t.insert(new Integer(NUMS * 2));
-    t.insert(new Integer(NUMS * 3));
+    t.add(new Integer(NUMS * 2));
+    t.add(new Integer(NUMS * 3));
     int size = 2;
     for (int i = GAP; i != 0; i = (i + GAP) % NUMS) {
-      t.insert(new Integer(i));
+      t.add(new Integer(i));
       size++;
     }
-    System.out.println("Inserts complete");
     assertEquals(size, t.size());
 
-    t.remove(t.findMax());
+    assertTrue(t.remove(t.last()));
     for (int i = 1; i < NUMS; i += 2) {
-      t.remove(new Integer(i));
+      assertTrue("remove(" + i + ")", t.remove(new Integer(i)));
     }
-    t.remove(t.findMax());
-    System.out.println("Removes complete");
+    assertTrue(t.remove(t.last()));
 
-    if (((Integer) (t.findMin())).intValue() != 2 || ((Integer) (t.findMax())).intValue() != NUMS - 2) { throw new AssertionError(
-                                                                                                                                  "FindMin or FindMax error!"); }
+    assertEquals("first()", 2, t.first().intValue());
+    assertEquals("last()", NUMS - 2, t.last().intValue());
 
     for (int i = 2; i < NUMS; i += 2) {
-      if (((Integer) t.find(new Integer(i))).intValue() != i) { throw new AssertionError("Error: find fails for " + i); }
+      assertEquals("find(" + i + ")", Integer.valueOf(i), t.find(Integer.valueOf(i)));
     }
 
     for (int i = 1; i < NUMS; i += 2) {
-      if (t.find(new Integer(i)) != null) { throw new AssertionError("Error: Found deleted item " + i); }
+      assertEquals("find(" + i + ")", null, t.find(Integer.valueOf(i)));
     }
-  }
-
-  /* Not really testing anything, what ever */
-  public void testDump() {
-    AATreeSet t = new AATreeSet();
-    System.out.println("Inserted = " + t.insert(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(4)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(10)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(2)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(9)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(11)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(3)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(5)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(7)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(12)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Inserted = " + t.insert(new Integer(3)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-
-    System.out.println("Deleted = " + t.remove(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(10)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(12)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(6)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(8)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
-    System.out.println("Deleted = " + t.remove(new Integer(1)));
-    System.out.println("Tree is       : " + t.dump());
-    System.out.println("From Iterator : " + dumpUsingIterator(t));
   }
 
   public void testTailSetIteratorForRandomAATree() {
     System.err.println("TreeSet Creation");
-    List longs = populateRandomLongs(new ArrayList(), 10001);
-    TreeSet treeSet = new TreeSet();
-    AATreeSet aatree = new AATreeSet();
+    List<Long> longs = populateRandomLongs(new ArrayList(), 10001);
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    SortedSet<Long> aatree = new AATreeSet<Long>();
 
-    for (Iterator i = longs.iterator(); i.hasNext();) {
-      Long l = (Long) i.next();
-      boolean aaInsert = aatree.insert(l);
+    for (Long l : longs) {
+      boolean aaInsert = aatree.add(l);
       boolean tsInsert = treeSet.add(l);
       assertEquals(tsInsert, aaInsert);
     }
 
-    System.out.println("XXX AAtree : " + aatree.dump());
     assertEquals(treeSet.size(), aatree.size());
 
-    System.err.println("TailSets from TreeSet");
     for (int i = 0; i < 501; i++) {
       SecureRandom sr = new SecureRandom();
       long seed = sr.nextLong();
       Random r = new Random(seed);
       Long tailSetKey = new Long(r.nextLong());
       System.err.println("Seed for random : " + seed + ". tailSetKey = " + tailSetKey);
-      Iterator tsIterator = (treeSet.tailSet(tailSetKey)).iterator();
-      Iterator aaIterator = aatree.tailSetIterator(tailSetKey);
+      Iterator<Long> tsIterator = treeSet.tailSet(tailSetKey).iterator();
+      Iterator<Long> aaIterator = aatree.tailSet(tailSetKey).iterator();
       compareIterators(tsIterator, aaIterator);
     }
   }
@@ -269,15 +197,13 @@ public class AATreeSetTest extends TestCase {
     longList.add(new Long(29));
     longList.add(new Long(19));
 
-    AATreeSet aaTreeSet = new AATreeSet();
-    TreeSet treeSet = new TreeSet();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
+    TreeSet<Long> treeSet = new TreeSet<Long>();
     for (int i = 0; i < longList.size(); i++) {
       Long insertItem = (Long) longList.get(i);
-      aaTreeSet.insert(insertItem);
+      aaTreeSet.add(insertItem);
       treeSet.add(insertItem);
     }
-
-    System.out.println("XXX " + aaTreeSet.dump());
 
     // Exact match
     checkTailSets(treeSet, aaTreeSet, new Long(15));
@@ -313,12 +239,9 @@ public class AATreeSetTest extends TestCase {
     checkTailSets(treeSet, aaTreeSet, new Long(11));
   }
 
-  private void checkTailSets(TreeSet treeSet, AATreeSet aaTreeSet, Long tailKey) {
-    System.out.println("XXX TailSetKey : " + tailKey);
-    System.out.println("XXX __ TreeSet : " + dumpUsingIterator((treeSet.tailSet(tailKey)).iterator()));
-    System.out.println("XXX AA TreeSet : " + dumpUsingIterator(aaTreeSet.tailSetIterator(tailKey)));
-    Iterator tsIterator = (treeSet.tailSet(tailKey)).iterator();
-    Iterator aaIterator = aaTreeSet.tailSetIterator(tailKey);
+  private void checkTailSets(TreeSet<Long> treeSet, AATreeSet<Long> aaTreeSet, Long tailKey) {
+    Iterator<Long> tsIterator = treeSet.tailSet(tailKey).iterator();
+    Iterator<Long> aaIterator = aaTreeSet.tailSet(tailKey).iterator();
     compareIterators(tsIterator, aaIterator);
   }
 
@@ -330,58 +253,36 @@ public class AATreeSetTest extends TestCase {
     assertFalse(aaIterator.hasNext());
   }
 
-  private static String dumpUsingIterator(AATreeSet t) {
-    StringBuffer sb = new StringBuffer();
-    for (Iterator i = t.iterator(); i.hasNext();) {
-      sb.append(i.next());
-      if (i.hasNext()) {
-        sb.append(',');
-      }
-    }
-    return sb.toString();
-  }
-
-  private static String dumpUsingIterator(Iterator i) {
-    StringBuffer sb = new StringBuffer();
-    while (i.hasNext()) {
-      sb.append(i.next());
-      if (i.hasNext()) {
-        sb.append(',');
-      }
-    }
-    return sb.toString();
-  }
-
-  private List populateRandomLongs(ArrayList arrayList, int count) {
+  private List<Long> populateRandomLongs(List<Long> list, int count) {
     SecureRandom sr = new SecureRandom();
     long seed = sr.nextLong();
     System.err.println("Seed for random : " + seed);
     Random r = new Random(seed);
     for (int i = 0; i < count; i++) {
-      arrayList.add(new Long(r.nextLong()));
+      list.add(new Long(r.nextLong()));
     }
-    return arrayList;
+    return list;
   }
 
   public void testRemove() {
-    AATreeSet aaTree = new AATreeSet();
-    assertTrue(aaTree.insert(new MyInt(5)));
-    assertTrue(aaTree.insert(new MyInt(10)));
-    assertTrue(aaTree.insert(new MyInt(1)));
-    assertTrue(aaTree.insert(new MyInt(7)));
-    assertTrue(aaTree.insert(new MyInt(12)));
-    assertTrue(aaTree.insert(new MyInt(11)));
+    AATreeSet<MyInt> aaTree = new AATreeSet<MyInt>();
+    assertTrue(aaTree.add(new MyInt(5)));
+    assertTrue(aaTree.add(new MyInt(10)));
+    assertTrue(aaTree.add(new MyInt(1)));
+    assertTrue(aaTree.add(new MyInt(7)));
+    assertTrue(aaTree.add(new MyInt(12)));
+    assertTrue(aaTree.add(new MyInt(11)));
 
-    MyInt ten = (MyInt) aaTree.remove(new MyInt(10));
+    MyInt ten = aaTree.removeAndReturn(new MyInt(10));
     assertEquals(new MyInt(10), ten);
 
-    MyInt five = (MyInt) aaTree.remove(new MyInt(5));
+    MyInt five = aaTree.removeAndReturn(new MyInt(5));
     assertEquals(new MyInt(5), five);
 
-    MyInt none = (MyInt) aaTree.remove(new MyInt(13));
+    MyInt none = aaTree.removeAndReturn(new MyInt(13));
     assertNull(none);
 
-    MyInt eleven = (MyInt) aaTree.remove(new MyInt(11));
+    MyInt eleven = aaTree.removeAndReturn(new MyInt(11));
     assertEquals(new MyInt(11), eleven);
 
     assertEquals(3, aaTree.size());
@@ -397,13 +298,13 @@ public class AATreeSetTest extends TestCase {
     aaTree.remove(seven);
 
     assertEquals(1, aaTree.size());
-    MyInt twelve = (MyInt) aaTree.remove(new MyInt(12));
+    MyInt twelve = aaTree.removeAndReturn(new MyInt(12));
     assertEquals(new MyInt(12), twelve);
 
     assertTrue(aaTree.isEmpty());
   }
 
-  private class MyInt extends AANode implements Comparable {
+  private class MyInt extends AATreeSet.AbstractTreeNode<MyInt> implements Comparable<MyInt> {
 
     private int i;
 
@@ -411,21 +312,8 @@ public class AATreeSetTest extends TestCase {
       this.i = i;
     }
 
-    public int compareTo(Object o) {
-      return this.i - ((MyInt) o).i;
-    }
-
-    @Override
-    protected void swap(AANode element) {
-      MyInt other = ((MyInt) element);
-      int temp = this.i;
-      this.i = other.i;
-      other.i = temp;
-    }
-
-    @Override
-    protected Comparable getElement() {
-      return this;
+    public int compareTo(MyInt o) {
+      return this.i - o.i;
     }
 
     @Override
@@ -442,6 +330,17 @@ public class AATreeSetTest extends TestCase {
     @Override
     public String toString() {
       return "MyInt[" + this.i + "]";
+    }
+
+    public void swapPayload(Node<MyInt> node) {
+      MyInt myInt = (MyInt) node;
+      int temp = myInt.i;
+      myInt.i = this.i;
+      this.i = temp;
+    }
+
+    public MyInt getPayload() {
+      return this;
     }
 
   }

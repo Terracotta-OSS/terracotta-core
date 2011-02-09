@@ -6,7 +6,8 @@ package com.tc.util;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
-import com.tc.util.AATreeSet.AANode;
+import com.tc.util.AATreeSet.AbstractTreeNode;
+import com.tc.util.AATreeSet.Node;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       // fast way to clone
       this.size = other.size();
       for (final Iterator i = other.ranges.iterator(); i.hasNext();) {
-        this.ranges.insert((BitSet) ((BitSet) i.next()).clone());
+        this.ranges.add((BitSet) ((BitSet) i.next()).clone());
       }
       return;
     } else {
@@ -82,7 +83,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     for (; i.hasNext();) {
       final BitSet cloned = (BitSet) ((BitSet) i.next()).clone();
       this.size += cloned.size();
-      boolean added = this.ranges.insert(cloned);
+      boolean added = this.ranges.add(cloned);
       if (!added) { throw new AssertionError("cloned : " + cloned + " is not added to this set : " + this); }
     }
   }
@@ -118,7 +119,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
     // Step 2: Add a new range for just this number.
     final long nextRange = 1L << nextRangeMaskbit;
     final BitSet newRange = new BitSet(start, nextRange);
-    final boolean isAdded = this.ranges.insert(newRange);
+    final boolean isAdded = this.ranges.add(newRange);
     if (isAdded) {
       this.size++;
       this.modCount++;
@@ -184,7 +185,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       final long start = in.readLong();
       final long nextRanges = in.readLong();
       final BitSet r = new BitSet(start, nextRanges);
-      this.ranges.insert(r);
+      this.ranges.add(r);
       _size -= r.size();
     }
     return this;
@@ -208,14 +209,14 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
   @Override
   public ObjectID first() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet min = (BitSet) this.ranges.findMin();
+    final BitSet min = (BitSet) this.ranges.first();
     return new ObjectID(min.first());
   }
 
   @Override
   public ObjectID last() {
     if (this.size == 0) { throw new NoSuchElementException(); }
-    final BitSet max = (BitSet) this.ranges.findMax();
+    final BitSet max = (BitSet) this.ranges.last();
     return new ObjectID(max.last());
   }
 
@@ -312,7 +313,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
         // if all the elements got removed because of this removal then remove the node
         // and create tailset iterator
         BitSetObjectIDSet.this.ranges.remove(this.current);
-        this.nodes = BitSetObjectIDSet.this.ranges.tailSetIterator(new BitSet(calculateStart(oid), 0));
+        this.nodes = BitSetObjectIDSet.this.ranges.tailSet(new BitSet(calculateStart(oid), 0)).iterator();
         // this.nodes = BitSetObjectIDSet.this.ranges.tailSetIterator(this.next);
         this.idx = 0;
         this.current = (BitSet) (this.nodes.hasNext() ? this.nodes.next() : null);
@@ -334,7 +335,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
   /**
    * Ranges store the elements stored in the tree. The range is inclusive.
    */
-  public static class BitSet extends AANode implements Cloneable, Comparable {
+  public static class BitSet extends AbstractTreeNode<BitSet> implements Cloneable, Comparable<BitSet> {
     private long            start;
     private long            nextLongs  = 0;
     public static final int RANGE_SIZE = 64;
@@ -394,8 +395,8 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       return new BitSet(this.start, this.nextLongs);
     }
 
-    public int compareTo(final Object o) {
-      final BitSet other = (BitSet) o;
+    public int compareTo(final BitSet o) {
+      final BitSet other = o;
       if (this.start < other.start) {
         return -1;
       } else if (this.start == other.start) {
@@ -405,8 +406,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       }
     }
 
-    @Override
-    protected void swap(final AANode other) {
+    public void swapPayload(final Node<BitSet> other) {
       if (other instanceof BitSet) {
         final BitSet r = (BitSet) other;
         long temp = this.start;
@@ -420,8 +420,7 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       }
     }
 
-    @Override
-    protected Comparable getElement() {
+    public BitSet getPayload() {
       return this;
     }
 
@@ -434,7 +433,6 @@ final class BitSetObjectIDSet extends ObjectIDSetBase {
       if (this.nextLongs == 0) { throw new NoSuchElementException(); }
       return this.start + BitSet.RANGE_SIZE - 1 - Long.numberOfLeadingZeros(this.nextLongs);
     }
-
   }
 
 }

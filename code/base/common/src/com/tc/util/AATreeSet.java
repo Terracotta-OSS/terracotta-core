@@ -1,445 +1,609 @@
-/*
+/**
  * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
  * notice. All rights reserved.
  */
+
 package com.tc.util;
 
+import java.util.AbstractSet;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.SortedSet;
+import java.util.Stack;
 
-/**
- * Implements an AA-tree. AA tree provides all the advantages of a Red Black Tree while keeping the implementation
- * simple. For more details on AA tree, check out http://user.it.uu.se/~arnea/abs/simp.html and
- * http://en.wikipedia.org/wiki/AA_tree This source code is taken from
- * http://www.cs.fiu.edu/~weiss/dsaa_java/Code/DataStructures/ and modified slightly.
- * <p>
- * This tree implementation behaves like a set, it doesn't allow duplicate nodes.
- * <p>
- * Note:: "matching" is based on the compareTo method. This class is *NOT* thread safe. Synchronize externally if you
- * want it to be thread safe.
- * <p>
- * There are memory optimizations done to this which allows users to extend AANode and implement a couple of methods
- * themselves thus saving an extra object plus a reference for every node in this tree. But if you do so, then you
- * either can't have different types of elements in the same AATreeSet or should handle copying one over other.
- * 
- * @author Mark Allen Weiss
- */
-public class AATreeSet {
+public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements SortedSet<T> {
 
-  private AANode              root;
-  private AANode              deletedNode;
-  private AANode              lastNode;
-  private Comparable          deletedElement;
-  private boolean             inserted;
-  private int                 size = 0;
+  private Node<T> root = terminal();
 
-  private static final AANode nullNode;
+  private int     size = 0;
+  private boolean mutated;
 
-  static // static initializer for nullNode
-  {
-    nullNode = new AANodeWrapper(null);
-    nullNode.left = nullNode.right = nullNode;
-    nullNode.level = 0;
-  }
+  private Node<T> item = terminal(), heir = terminal();
+  private T       removed;
 
-  /**
-   * Construct the tree.
-   */
-  public AATreeSet() {
-    this.root = nullNode;
-  }
-
-  public int size() {
-    return this.size;
-  }
-
-  /**
-   * Insert into the tree.
-   * 
-   * @param x the item to insert.
-   * @return true if the item was inserted, false if was already present
-   * @throws DuplicateItemException if x is already present.
-   */
-  public boolean insert(Comparable x) {
-    this.inserted = true;
-    this.root = insert(x, this.root);
-    if (this.inserted) {
-      this.size++;
-    }
-    return this.inserted;
-  }
-
-  /**
-   * Remove from the tree.
-   * 
-   * @param x the item to remove.
-   * @throws ItemNotFoundException if x is not found.
-   */
-  public Comparable remove(Comparable x) {
-    this.deletedNode = nullNode;
-    this.root = remove(x, this.root);
-    Comparable d = this.deletedElement;
-    // deletedElement is set to null to free the reference,
-    // deletedNode is not freed as it will endup pointing to a valid node.
-    this.deletedElement = null;
-    if (d != null) {
-      this.size--;
-    }
-    return d;
-  }
-
-  /**
-   * Find the smallest item in the tree.
-   * 
-   * @return the smallest item or null if empty.
-   */
-  public Comparable findMin() {
-    if (isEmpty()) { return null; }
-
-    AANode ptr = this.root;
-
-    while (ptr.left != nullNode) {
-      ptr = ptr.left;
-    }
-
-    return ptr.getElement();
-  }
-
-  /**
-   * Find the largest item in the tree.
-   * 
-   * @return the largest item or null if empty.
-   */
-  public Comparable findMax() {
-    if (isEmpty()) { return null; }
-
-    AANode ptr = this.root;
-
-    while (ptr.right != nullNode) {
-      ptr = ptr.right;
-    }
-
-    return ptr.getElement();
-  }
-
-  /**
-   * Find an item in the tree.
-   * 
-   * @param x the item to search for.
-   * @return the matching item of null if not found.
-   */
-
-  public Comparable find(Comparable x) {
-    AANode current = this.root;
-
-    while (current != nullNode) {
-      int res = x.compareTo(current.getElement());
-      if (res < 0) {
-        current = current.left;
-      } else if (res > 0) {
-        current = current.right;
-      } else {
-        return current.getElement();
+  @Override
+  public boolean add(T o) {
+    try {
+      root = insert(root, o);
+      if (mutated) {
+        size++;
       }
+      return mutated;
+    } finally {
+      mutated = false;
     }
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    try {
+      root = remove(root, (T) o);
+      if (mutated) {
+        size--;
+      }
+      return mutated;
+    } finally {
+      heir = terminal();
+      item = terminal();
+      mutated = false;
+      removed = null;
+    }
+  }
+
+  public T removeAndReturn(Object o) {
+    try {
+      root = remove(root, (T) o);
+      if (mutated) {
+        size--;
+      }
+      return removed;
+    } finally {
+      heir = terminal();
+      item = terminal();
+      mutated = false;
+      removed = null;
+    }
+  }
+
+  @Override
+  public void clear() {
+    root = terminal();
+    size = 0;
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return new TreeIterator();
+  }
+
+  @Override
+  public int size() {
+    return size;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return root == terminal();
+  }
+
+  public Comparator<? super T> comparator() {
     return null;
   }
 
-  /**
-   * Make the tree logically empty.
-   */
-  public void clear() {
-    this.root = nullNode;
-    this.size = 0;
+  public SortedSet<T> subSet(T fromElement, T toElement) {
+    return new SubSet(fromElement, toElement);
   }
 
-  /**
-   * Test if the tree is logically empty.
-   * 
-   * @return true if empty, false otherwise.
-   */
-  public boolean isEmpty() {
-    return this.root == nullNode;
+  public SortedSet<T> headSet(T toElement) {
+    return new SubSet(null, toElement);
   }
 
-  public Iterator iterator() {
-    return new AATreeSetIterator();
+  public SortedSet<T> tailSet(T fromElement) {
+    return new SubSet(fromElement, null);
   }
 
-  /**
-   * Returns an iterator for the tail set greater than or equal to comparable
-   */
-  public Iterator tailSetIterator(Comparable c) {
-    return new AATreeSetIterator(c);
-  }
-
-  /**
-   * Internal method to insert into a subtree.
-   * 
-   * @param x the item to insert.
-   * @param t the node that roots the tree.
-   * @return the new root.
-   * @throws DuplicateItemException if x is already present.
-   */
-  private AANode insert(Comparable x, AANode t) {
-    if (t == nullNode) {
-      t = createOrGetAANode(x);
-    } else if (x.compareTo(t.getElement()) < 0) {
-      t.left = insert(x, t.left);
-    } else if (x.compareTo(t.getElement()) > 0) {
-      t.right = insert(x, t.right);
-    } else {
-      // XXX:: Not throwing DuplicateItemException as we may want to insert elements without doing a lookup.
-      // throw new RuntimeException("DuplicateItemExpection:" + x.toString());
-      this.inserted = false;
-      return t;
+  public T first() {
+    Node<T> leftMost = root;
+    while (leftMost.getLeft() != terminal()) {
+      leftMost = leftMost.getLeft();
     }
-
-    t = skew(t);
-    t = split(t);
-    return t;
+    return leftMost.getPayload();
   }
 
-  /**
-   * This method is here to save us some memory while working with AATreeSet by not creating internal AANodes object if
-   * the inserted nodes extends AANodes.
-   */
-  protected AANode createOrGetAANode(Comparable x) {
-    if (x instanceof AANode) {
-      return (AANode) x;
-    } else {
-      return new AANodeWrapper(x);
+  public T last() {
+    Node<T> rightMost = root;
+    while (rightMost.getRight() != terminal()) {
+      rightMost = rightMost.getRight();
     }
+    return rightMost.getPayload();
   }
 
-  /**
-   * Internal method to remove from a subtree.
-   * 
-   * @param x the item to remove.
-   * @param t the node that roots the tree.
-   * @return the new root.
-   */
-  private AANode remove(Comparable x, AANode t) {
-    if (t != nullNode) {
-      // Step 1: Search down the tree and set lastNode and deletedNode
-      this.lastNode = t;
-      if (x.compareTo(t.getElement()) < 0) {
-        t.left = remove(x, t.left);
+  public T find(Object probe) {
+    return find(root, (T) probe).getPayload();
+  }
+
+  private static final Node<?> TERMINAL = new TerminalNode();
+
+  private Node<T> terminal() {
+    return (Node<T>) TERMINAL;
+  }
+
+  protected final Node<T> getRoot() {
+    return root;
+  }
+
+  private Node<T> find(Node<T> top, T probe) {
+    if (top == terminal()) {
+      return top;
+    } else {
+      int direction = top.compareTo(probe);
+      if (direction > 0) {
+        return find(top.getLeft(), probe);
+      } else if (direction < 0) {
+        return find(top.getRight(), probe);
       } else {
-        this.deletedNode = t;
-        t.right = remove(x, t.right);
+        return top;
+      }
+    }
+  }
+
+  private Node<T> insert(Node<T> top, T data) {
+    if (top == terminal()) {
+      mutated = true;
+      return createNode(data);
+    } else {
+      int direction = top.compareTo(data);
+      if (direction > 0) {
+        top.setLeft(insert(top.getLeft(), data));
+      } else if (direction < 0) {
+        top.setRight(insert(top.getRight(), data));
+      } else {
+        return top;
+      }
+      top = skew(top);
+      top = split(top);
+      return top;
+    }
+  }
+
+  private Node<T> createNode(T data) {
+    if (data instanceof Node<?>) {
+      return (Node<T>) data;
+    } else {
+      return new TreeNode<T>(data);
+    }
+  }
+
+  private Node<T> remove(Node<T> top, T data) {
+    if (top != terminal()) {
+      int direction = top.compareTo(data);
+
+      heir = top;
+      if (direction > 0) {
+        top.setLeft(remove(top.getLeft(), data));
+      } else {
+        item = top;
+        top.setRight(remove(top.getRight(), data));
       }
 
-      // Step 2: If at the bottom of the tree and
-      // x is present, we remove it
-      if (t == this.lastNode) {
-        if (this.deletedNode == nullNode || x.compareTo(this.deletedNode.getElement()) != 0) {
-          // XXX:: Modified to not throw ItemNotFoundException as we want to be able to remove elements without doing a
-          // lookup.
-          // throw new RuntimeException("ItemNotFoundException : " + x.toString());
+      if (top == heir) {
+        if (item != terminal() && item.compareTo(data) == 0) {
+          mutated = true;
+          item.swapPayload(top);
+          removed = top.getPayload();
+          top = top.getRight();
+        }
+      } else {
+        if (top.getLeft().getLevel() < top.getLevel() - 1 || top.getRight().getLevel() < top.getLevel() - 1) {
+          if (top.getRight().getLevel() > top.decrementLevel()) {
+            top.getRight().setLevel(top.getLevel());
+          }
+
+          top = skew(top);
+          top.setRight(skew(top.getRight()));
+          top.getRight().setRight(skew(top.getRight().getRight()));
+          top = split(top);
+          top.setRight(split(top.getRight()));
+        }
+      }
+    }
+    return top;
+  }
+
+  private static <T> Node<T> skew(Node<T> top) {
+    if (top.getLeft().getLevel() == top.getLevel() && top.getLevel() != 0) {
+      Node<T> save = top.getLeft();
+      top.setLeft(save.getRight());
+      save.setRight(top);
+      top = save;
+    }
+
+    return top;
+  }
+
+  private static <T> Node<T> split(Node<T> top) {
+    if (top.getRight().getRight().getLevel() == top.getLevel() && top.getLevel() != 0) {
+      Node<T> save = top.getRight();
+      top.setRight(save.getLeft());
+      save.setLeft(top);
+      top = save;
+      top.incrementLevel();
+    }
+
+    return top;
+  }
+
+  public static interface Node<E> {
+
+    public int compareTo(E data);
+
+    public void setLeft(Node<E> node);
+
+    public void setRight(Node<E> node);
+
+    public Node<E> getLeft();
+
+    public Node<E> getRight();
+
+    public int getLevel();
+
+    public void setLevel(int value);
+
+    public int decrementLevel();
+
+    public int incrementLevel();
+
+    public void swapPayload(Node<E> with);
+
+    public E getPayload();
+  }
+
+  public static abstract class AbstractTreeNode<E> implements Node<E> {
+
+    private Node<E> left;
+    private Node<E> right;
+    private int     level;
+
+    public AbstractTreeNode() {
+      this(1);
+    }
+
+    private AbstractTreeNode(int level) {
+      this.left = (Node<E>) TERMINAL;
+      this.right = (Node<E>) TERMINAL;
+      this.level = level;
+    }
+
+    public void setLeft(Node<E> node) {
+      left = node;
+    }
+
+    public void setRight(Node<E> node) {
+      right = node;
+    }
+
+    public Node<E> getLeft() {
+      return left;
+    }
+
+    public Node<E> getRight() {
+      return right;
+    }
+
+    public int getLevel() {
+      return level;
+    }
+
+    public void setLevel(int value) {
+      level = value;
+    }
+
+    public int decrementLevel() {
+      return --level;
+    }
+
+    public int incrementLevel() {
+      return ++level;
+    }
+  }
+
+  private static final class TreeNode<E extends Comparable> extends AbstractTreeNode<E> {
+
+    private E payload;
+
+    public TreeNode(E payload) {
+      super();
+      this.payload = payload;
+    }
+
+    public int compareTo(E data) {
+      return payload.compareTo(data);
+    }
+
+    public void swapPayload(Node<E> node) {
+      if (node instanceof TreeNode<?>) {
+        TreeNode<E> treeNode = (TreeNode<E>) node;
+        E temp = treeNode.payload;
+        treeNode.payload = this.payload;
+        this.payload = temp;
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    public E getPayload() {
+      return payload;
+    }
+  }
+
+  private static final class TerminalNode<E> extends AbstractTreeNode<E> {
+
+    TerminalNode() {
+      super(0);
+      super.setLeft(this);
+      super.setRight(this);
+    }
+
+    public int compareTo(E data) {
+      return 0;
+    }
+
+    @Override
+    public void setLeft(Node<E> right) {
+      if (right != this) { throw new AssertionError(); }
+    }
+
+    @Override
+    public void setRight(Node<E> left) {
+      if (left != this) { throw new AssertionError(); }
+    }
+
+    @Override
+    public void setLevel(int value) {
+      throw new AssertionError();
+    }
+
+    @Override
+    public int decrementLevel() {
+      throw new AssertionError();
+    }
+
+    @Override
+    public int incrementLevel() {
+      throw new AssertionError();
+    }
+
+    public void swapPayload(Node<E> payload) {
+      throw new AssertionError();
+    }
+
+    public E getPayload() {
+      return null;
+    }
+  }
+
+  class SubSet extends AbstractSet<T> implements SortedSet<T> {
+
+    private final T start;
+    private final T end;
+
+    SubSet(T start, T end) {
+      this.start = start;
+      this.end = end;
+    }
+
+    @Override
+    public boolean add(T o) {
+      if (inRange(o)) {
+        return AATreeSet.this.add(o);
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    @Override
+    public boolean remove(Object o) {
+      if (inRange((T) o)) {
+        return remove(o);
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public void clear() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+      return new SubTreeIterator(start, end);
+    }
+
+    @Override
+    public int size() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return !iterator().hasNext();
+    }
+
+    public Comparator<? super T> comparator() {
+      return null;
+    }
+
+    public SortedSet<T> subSet(T fromElement, T toElement) {
+      if (inRangeInclusive(fromElement) && inRangeInclusive(toElement)) {
+        return new SubSet(fromElement, toElement);
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    public SortedSet<T> headSet(T toElement) {
+      if (inRangeInclusive(toElement)) {
+        return new SubSet(start, toElement);
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    public SortedSet<T> tailSet(T fromElement) {
+      if (inRangeInclusive(fromElement)) {
+        return new SubSet(fromElement, end);
+      } else {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    public T first() {
+      if (start == null) {
+        return AATreeSet.this.first();
+      } else {
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    public T last() {
+      if (end == null) {
+        return AATreeSet.this.last();
+      } else {
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    private boolean inRange(T value) {
+      return (start == null || start.compareTo(value) <= 0) && (end == null || end.compareTo(value) > 0);
+    }
+
+    private boolean inRangeInclusive(T value) {
+      return (start == null || start.compareTo(value) <= 0) && (end == null || end.compareTo(value) >= 0);
+    }
+  }
+
+  class TreeIterator implements Iterator<T> {
+
+    private final java.util.Stack<Node<T>> path = new Stack<Node<T>>();
+    protected Node<T>                      next;
+
+    TreeIterator() {
+      path.push(terminal());
+      Node<T> leftMost = root;
+      while (leftMost.getLeft() != terminal()) {
+        path.push(leftMost);
+        leftMost = leftMost.getLeft();
+      }
+      next = leftMost;
+    }
+
+    TreeIterator(T start) {
+      path.push(terminal());
+      Node<T> current = root;
+      while (true) {
+        int direction = current.compareTo(start);
+        if (direction > 0) {
+          if (current.getLeft() == terminal()) {
+            next = current;
+            break;
+          } else {
+            path.push(current);
+            current = current.getLeft();
+          }
+        } else if (direction < 0) {
+          if (current.getRight() == terminal()) {
+            next = path.pop();
+            break;
+          } else {
+            current = current.getRight();
+          }
         } else {
-          this.deletedNode.swap(t);
-          this.deletedElement = t.getElement();
-          t = t.right;
-        }
-      }
-
-      // Step 3: Otherwise, we are not at the bottom; re-balance
-      else if (t.left.level < t.level - 1 || t.right.level < t.level - 1) {
-        if (t.right.level > --t.level) {
-          t.right.level = t.level;
-        }
-        t = skew(t);
-        t.right = skew(t.right);
-        t.right.right = skew(t.right.right);
-        t = split(t);
-        t.right = split(t.right);
-      }
-    }
-    return t;
-  }
-
-  /**
-   * Skew primitive for AA-trees.
-   * 
-   * @param t the node that roots the tree.
-   * @return the new root after the rotation.
-   */
-  private static AANode skew(AANode t) {
-    if (t.left.level == t.level) {
-      t = rotateWithLeftChild(t);
-    }
-    return t;
-  }
-
-  /**
-   * Split primitive for AA-trees.
-   * 
-   * @param t the node that roots the tree.
-   * @return the new root after the rotation.
-   */
-  private static AANode split(AANode t) {
-    if (t.right.right.level == t.level) {
-      t = rotateWithRightChild(t);
-      t.level++;
-    }
-    return t;
-  }
-
-  /**
-   * Rotate binary tree node with left child.
-   */
-  private static AANode rotateWithLeftChild(AANode k2) {
-    AANode k1 = k2.left;
-    k2.left = k1.right;
-    k1.right = k2;
-    return k1;
-  }
-
-  /**
-   * Rotate binary tree node with right child.
-   */
-  private static AANode rotateWithRightChild(AANode k1) {
-    AANode k2 = k1.right;
-    k1.right = k2.left;
-    k2.left = k1;
-    return k2;
-  }
-
-  public String dump() {
-    return "AATree = { " + this.root.dump() + " }";
-  }
-
-  /**
-   * This class is used when the elements in the tree is not extending AANode, either because they dont care for the
-   * memory that they will be saving or because they can't. (like Numbers and other classes that already extends
-   * something else)
-   */
-  private static final class AANodeWrapper extends AANode {
-
-    Comparable element; // The data in the node
-
-    public AANodeWrapper(Comparable theElement) {
-      this.element = theElement;
-    }
-
-    @Override
-    public String toString() {
-      return "AANodeWrapper@" + System.identityHashCode(this) + "{" + this.element + "}";
-    }
-
-    @Override
-    public Comparable getElement() {
-      return this.element;
-    }
-
-    @Override
-    protected void swap(AANode other) {
-      AANodeWrapper otherWapper = (AANodeWrapper) other;
-      Comparable otherElement = otherWapper.element;
-      otherWapper.element = this.element;
-      this.element = otherElement;
-    }
-  }
-
-  /**
-   * This is public coz anyone who cares about saving memory (like in ObjectIDSet) can just extend this class and save
-   * one object (plus a reference) per entry thus saving about 24 bytes per entry.
-   */
-  public static abstract class AANode {
-
-    AANode left; // Left child
-    AANode right; // Right child
-    int    level; // Level
-
-    AANode() {
-      this.left = this.right = nullNode;
-      this.level = 1;
-    }
-
-    // XXX:: for debugging - costly operation
-    public String dump() {
-      String ds = String.valueOf(this.getElement());
-      if (this.left != nullNode) {
-        ds = ds + "," + this.left.dump();
-      }
-      if (this.right != nullNode) {
-        ds = ds + "," + this.right.dump();
-      }
-      return ds;
-    }
-
-    protected abstract Comparable getElement();
-
-    protected abstract void swap(AANode element);
-
-  }
-
-  /*
-   * This class is slightly inefficient in that it uses a stack internally to store state. But it is needed so that we
-   * don't have to store parent references.
-   */
-  private class AATreeSetIterator implements Iterator {
-
-    AANode next = AATreeSet.this.root;
-    // Contains elements while traversing
-    Stack  s    = new Stack();
-
-    public AATreeSetIterator() {
-      //
-    }
-
-    /**
-     * creates an iterator for the tail set greater than or equal to c
-     */
-    public AATreeSetIterator(Comparable c) {
-      int result = 0;
-      while (this.next != nullNode) {
-        result = c.compareTo(this.next.getElement());
-        if (result < 0) {
-          this.s.push(this.next);
-          this.next = this.next.left;
-        } else if (result == 0) {
-
-          // We are suppose to retain a Tree { elements >= c} . So, put a
-          // "take diversion board" in the left subtree. We need to push the next
-          // element here, so that iterator.next can pop and start traversing
-          // from the right child
-          this.s.push(this.next);
-          this.next = nullNode;
+          next = current;
           break;
-        } else if (result > 0) {
-          this.next = this.next.right;
         }
       }
-
-      // next (which has already been pushed to the stack) points to Tree Node
-      // which is next greater element or null
     }
 
     public boolean hasNext() {
-      if (this.next == nullNode && this.s.size() == 0) { return false; }
-      return true;
+      return next != terminal();
     }
 
-    public Object next() {
-      if (this.next == nullNode && this.s.size() == 0) { throw new NoSuchElementException(); }
+    public T next() {
+      Node<T> current = next;
+      advance();
+      return current.getPayload();
+    }
 
-      while (true) {
-        if (this.next != nullNode) {
-          this.s.push(this.next);
-          this.next = this.next.left;
-        } else {
-          AANode current = (AANode) this.s.pop();
-          this.next = current.right;
-          return current.getElement();
+    private void advance() {
+      Node<T> successor = next.getRight();
+      if (successor != terminal()) {
+        while (successor.getLeft() != terminal()) {
+          path.push(successor);
+          successor = successor.getLeft();
         }
+        next = successor;
+      } else {
+        next = path.pop();
       }
     }
 
-    // This is a little tricky, the tree might re-balance itself.
     public void remove() {
       throw new UnsupportedOperationException();
     }
+
+  }
+
+  class SubTreeIterator extends TreeIterator {
+    private final Node<T> terminalNode;
+
+    public SubTreeIterator(T start, T end) {
+      super(start);
+      if (end != null) {
+        java.util.Stack<Node<T>> path = new Stack<Node<T>>();
+        path.push(terminal());
+        Node<T> current = root;
+        while (true) {
+          int direction = current.compareTo(start);
+          if (direction > 0) {
+            if (current.getLeft() == terminal()) {
+              terminalNode = current;
+              break;
+            } else {
+              path.push(current);
+              current = current.getLeft();
+            }
+          } else if (direction < 0) {
+            if (current.getRight() == terminal()) {
+              terminalNode = path.pop();
+              break;
+            } else {
+              current = current.getRight();
+            }
+          } else {
+            terminalNode = current;
+            break;
+          }
+        }
+      } else {
+        terminalNode = terminal();
+      }
+    }
+
+    @Override
+    public boolean hasNext() {
+      return super.hasNext() && next != terminalNode;
+    }
+
+    @Override
+    public T next() {
+      if (next == terminalNode) {
+        throw new NoSuchElementException();
+      } else {
+        return super.next();
+      }
+    }
+
   }
 }
