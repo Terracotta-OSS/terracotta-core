@@ -14,7 +14,7 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
   public GCLoggerEventPublisher(GCLogger logger) {
     gcLogger = logger;
   }
-  
+
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
     gcLogger.log_start(info.getGarbageCollectionID(), info.isFullGC());
@@ -64,18 +64,16 @@ public class GCLoggerEventPublisher extends GarbageCollectorEventListenerAdapter
   public void garbageCollectorDelete(GarbageCollectionInfo info) {
     gcLogger.log_deleteStart(info.getGarbageCollectionID(), info.getCandidateGarbageCount());
   }
-  
+
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getElapsedTime());
+    gcLogger.log_complete(info.getGarbageCollectionID(), info.getActualGarbageCount(), info.getDeleteStageTime(), info
+        .getElapsedTime());
   }
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
     gcLogger.log_canceled(info.getGarbageCollectionID());
   }
-
-  
-  
 
 }

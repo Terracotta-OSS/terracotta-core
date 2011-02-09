@@ -31,9 +31,9 @@ public class GarbageDisposeHandler extends AbstractEventHandler {
     final GarbageCollectionInfo gcInfo = gcResult.getGCInfo();
 
     this.publisher.fireGCDeleteEvent(gcInfo);
-    final long start = System.currentTimeMillis();
     final SortedSet<ObjectID> sortedGarbage = gcResult.getGCedObjectIDs();
     gcInfo.setActualGarbageCount(sortedGarbage.size());
+    final long start = System.currentTimeMillis();
     this.objectStore.removeAllObjectsByIDNow(sortedGarbage);
 
     final long elapsed = System.currentTimeMillis() - start;

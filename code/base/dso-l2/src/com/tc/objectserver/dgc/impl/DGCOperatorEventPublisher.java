@@ -13,17 +13,19 @@ public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdap
 
   @Override
   public void garbageCollectorStart(GarbageCollectionInfo info) {
-    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCStartedEvent());
+    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory
+        .createDGCStartedEvent(info.getIteration()));
   }
 
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
-    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCFinishedEvent(new Object[] {
-        info.getBeginObjectCount(), info.getActualGarbageCount(), info.getElapsedTime(), info.getEndObjectCount() }));
+    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCFinishedEvent(info
+        .getIteration(), info.getBeginObjectCount(), info.getElapsedTime(), info.getEndObjectCount()));
   }
 
   @Override
   public void garbageCollectorCanceled(GarbageCollectionInfo info) {
-    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCCanceledEvent());
+    this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCCanceledEvent(info
+        .getIteration()));
   }
 }

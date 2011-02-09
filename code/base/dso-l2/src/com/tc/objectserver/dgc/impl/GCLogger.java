@@ -86,9 +86,10 @@ public class GCLogger {
     }
   }
 
-  public void log_complete(GarbageCollectionID id, long deleteGarbageSize, long elapsed) {
+  public void log_complete(GarbageCollectionID id, long deleteGarbageSize, long deleteStageTime, long totalElapsedTime) {
     if (verboseGC()) {
-      logGC(id, "delete completed : removed " + deleteGarbageSize + " objects in " + elapsed + " ms.");
+      logGC(id, "delete completed : removed " + deleteGarbageSize + " objects in " + deleteStageTime
+                + " ms. Total elapsed time: " + totalElapsedTime);
     }
   }
 
