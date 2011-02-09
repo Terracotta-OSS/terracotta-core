@@ -29,6 +29,7 @@ import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.objectserver.storage.berkeleydb.BerkeleyDBEnvironment;
 import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
+import com.tc.util.runtime.ThreadDumpUtil;
 
 import java.io.File;
 
@@ -78,7 +79,12 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    this.env.close();
+    try {
+      this.env.close();
+    } catch (Exception e) {
+      System.err.println("Closing failed, printing stack trace...");
+      System.err.println(ThreadDumpUtil.getThreadDump());
+    }
     ManagedObjectStateFactory.disableSingleton(false);
   }
 
@@ -102,7 +108,7 @@ public class ManagedObjectStateSerializationTestBase extends TCTestCase {
   }
 
   protected void serializationValidation(final ManagedObjectState state, final DNACursor dnaCursor, final byte type)
-  throws Exception {
+      throws Exception {
     final ManagedObject loaded = this.managedObjectPersistor.loadObjectByID(this.objectID);
     final TestDNAWriter dnaWriter = dehydrate(loaded.getManagedObjectState());
     validate(dnaCursor, dnaWriter);
