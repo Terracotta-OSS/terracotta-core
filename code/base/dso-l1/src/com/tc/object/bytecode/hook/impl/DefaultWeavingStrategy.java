@@ -423,10 +423,12 @@ public class DefaultWeavingStrategy implements WeavingStrategy {
     }
   }
 
-  private static boolean needsClassLoaderInstrumentation(final ClassInfo classInfo) {
+  private boolean needsClassLoaderInstrumentation(final ClassInfo classInfo) {
+    if (m_configHelper.isNeverAdaptable(classInfo)) { return false; }
+
     for (ClassInfo c = classInfo; c != null; c = c.getSuperclass()) {
       if ("java.lang.ClassLoader".equals(c.getName())) {
-        // found ClassLoader in the heirarchy of subclasses, now check for a definition of loadClass in this class
+        // found ClassLoader in the hierarchy of subclasses, now check for a definition of loadClass in this class
         for (MethodInfo m : classInfo.getMethods()) {
           if ("loadClass".equals(m.getName()) && "(Ljava/lang/String;)Ljava/lang/Class;".equals(m.getSignature())) { return true; }
         }
