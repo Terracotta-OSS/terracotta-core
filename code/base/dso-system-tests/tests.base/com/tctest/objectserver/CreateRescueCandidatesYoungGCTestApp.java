@@ -157,10 +157,11 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
           synchronized (root) {
             root.add(rootNode);
           }
-          if (objectCount % 100 == 0) {
+          if (objectCount % 10 == 0) {
             log("Object count id = " + objectCount);
           }
           objectCount++;
+          ThreadUtil.reallySleep(5);
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -212,9 +213,9 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
               removeCount++;
             }
           }
-          ThreadUtil.reallySleep(100);
+          ThreadUtil.reallySleep(5);
 
-          if (removeCount % 100 == 0) {
+          if (removeCount % 10 == 0) {
             log("remove count = " + removeCount);
           }
 
@@ -274,8 +275,9 @@ public class CreateRescueCandidatesYoungGCTestApp extends AbstractErrorCatchingT
 
             }
           }
+          ThreadUtil.reallySleep(5);
 
-          if (displacedCount % 100 == 0) {
+          if (displacedCount % 10 == 0) {
             log("displaced count = " + displacedCount);
           }
         }
