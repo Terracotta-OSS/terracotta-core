@@ -4,6 +4,7 @@
  */
 package com.tc.util;
 
+import com.tc.text.Banner;
 import com.tc.util.AATreeSet.Node;
 
 import java.security.SecureRandom;
@@ -302,6 +303,44 @@ public class AATreeSetTest extends TestCase {
     assertEquals(new MyInt(12), twelve);
 
     assertTrue(aaTree.isEmpty());
+  }
+
+  public void testTreeBalance() {
+    SortedSet<Long> treeSet = new TreeSet<Long>();
+    AATreeSet<Long> aaTreeSet = new AATreeSet<Long>();
+
+    long seed = System.nanoTime();
+    Banner.infoBanner("Tree Balance Test Seed Is " + seed);
+    Random rndm = new Random(seed);
+    for (int i = 0; i < 10000; i++) {
+      if (rndm.nextFloat() < 0.25 && !treeSet.isEmpty()) {
+        Iterator<Long> it = treeSet.iterator();
+        Long l = it.next();
+        for (int position = rndm.nextInt(treeSet.size()); position > 0; --position) {
+          l = it.next();
+        }
+        boolean aaRemove = aaTreeSet.remove(l);
+        boolean tsRemove = treeSet.remove(l);
+        assertEquals(tsRemove, aaRemove);
+      } else {
+        Long l = rndm.nextLong();
+        boolean aaInsert = aaTreeSet.add(l);
+        boolean tsInsert = treeSet.add(l);
+        assertEquals(tsInsert, aaInsert);
+      }
+      assertEquals(treeSet.size(), aaTreeSet.size());
+      aaTreeSet.validateTreeStructure();
+    }
+
+    Iterator tsIterator = treeSet.iterator();
+    Iterator aaIterator = aaTreeSet.iterator();
+
+    while (tsIterator.hasNext() && aaIterator.hasNext()) {
+      assertEquals(tsIterator.next(), aaIterator.next());
+    }
+
+    assertFalse(tsIterator.hasNext());
+    assertFalse(aaIterator.hasNext());
   }
 
   private class MyInt extends AATreeSet.AbstractTreeNode<MyInt> implements Comparable<MyInt> {

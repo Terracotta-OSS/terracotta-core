@@ -335,6 +335,14 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     public E getPayload() {
       return payload;
     }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("TreeNode ");
+      sb.append("level:").append(getLevel());
+      sb.append(" payload:" + getPayload());
+      return sb.toString();
+    }
   }
 
   private static final class TerminalNode<E> extends AbstractTreeNode<E> {
@@ -605,5 +613,43 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
       }
     }
 
+  }
+
+  /**
+   * Validates that this is a correctly balanced AA Tree.
+   * <p>
+   * Rules for an AA Tree:
+   * <ol>
+   * <li>Every path contains the same number of pseudo-nodes.</li>
+   * <li>A left child may not have the same level as its parent.</li>
+   * <li>Two right children with the same level as the parent are not allowed.</li>
+   * </ol>
+   */
+  public void validateTreeStructure() {
+    validateNode(root);
+  }
+
+  private static void validateNode(Node<?> node) {
+    if (node == TERMINAL) { return; }
+
+    Node<?> left = node.getLeft();
+    Node<?> right = node.getRight();
+    Node<?> rightRight = right.getRight();
+
+    if (left.getLevel() == node.getLevel()) {
+      throw new AssertionError(node + " has the same level as it's left child: " + left);
+    } else if (node.getLevel() == right.getLevel() && right.getLevel() == rightRight.getLevel()) {
+      throw new AssertionError(node + " has the two successive right children with the same level: " + right + ", "
+                               + rightRight);
+    } else if (left == TERMINAL && right == TERMINAL && node.getLevel() != 1) {
+      throw new AssertionError(node + " is a leaf node but has an invalid level");
+    } else if (left != TERMINAL && left.getLevel() != node.getLevel() - 1) {
+      throw new AssertionError(node + " has a left child with an invalid level: " + left);
+    } else if (right != TERMINAL && right.getLevel() != node.getLevel() && right.getLevel() != node.getLevel() - 1) {
+      throw new AssertionError(node + " has a right child with an invalid level: " + right);
+    } else {
+      validateNode(left);
+      validateNode(right);
+    }
   }
 }
