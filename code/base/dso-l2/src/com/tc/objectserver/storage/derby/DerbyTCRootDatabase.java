@@ -22,9 +22,24 @@ import java.util.Map;
 import java.util.Set;
 
 class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatabase {
+  private final String rootNamesQuery;
+  private final String getQuery;
+  private final String rootNamesToIDQuery;
+  private final String insertQuery;
+  private final String rootIDsQuery;
+  private final String updateQuery;
+  private final String idFromNameQuery;
+
   public DerbyTCRootDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    rootIDsQuery = "SELECT " + VALUE + " FROM " + tableName;
+    rootNamesQuery = "SELECT " + KEY + " FROM " + tableName;
+    rootNamesToIDQuery = "SELECT " + KEY + ", " + VALUE + " FROM " + tableName;
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
+    idFromNameQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }
 
   @Override
@@ -37,11 +52,10 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
 
   public long get(byte[] rootName, PersistenceTransaction tx) {
     ResultSet rs = null;
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE "
+      // + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setBytes(1, rootName);
       rs = psSelect.executeQuery();
 
@@ -58,10 +72,10 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
   public Set<ObjectID> getRootIds(PersistenceTransaction tx) {
     ResultSet rs = null;
     Set<ObjectID> set = new HashSet<ObjectID>();
-    Connection connection = pt2nt(tx);
 
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName);
+      // "SELECT " + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, rootIDsQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -71,22 +85,17 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     } catch (SQLException e) {
       throw new DBException("Could not retrieve root ids", e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        // ignore
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
   }
 
   public List<byte[]> getRootNames(PersistenceTransaction tx) {
     ResultSet rs = null;
     ArrayList<byte[]> list = new ArrayList<byte[]>();
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + " FROM " + tableName);
+      // "SELECT " + KEY + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, rootNamesQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -96,22 +105,17 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     } catch (SQLException e) {
       throw new DBException("Could not retrieve root ids", e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        // ignore
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
   }
 
   public Map<byte[], Long> getRootNamesToId(PersistenceTransaction tx) {
     ResultSet rs = null;
     Map<byte[], Long> map = new HashMap<byte[], Long>();
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + ", " + VALUE + " FROM " + tableName);
+      // "SELECT " + KEY + ", " + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, rootNamesToIDQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -121,12 +125,8 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
     } catch (SQLException e) {
       throw new DBException("Could not retrieve root map", e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        // ignore
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
   }
 
@@ -139,11 +139,9 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
   }
 
   private Status insert(byte[] rootName, long id, PersistenceTransaction tx) {
-    PreparedStatement psPut;
-    Connection connection = pt2nt(tx);
-
     try {
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setBytes(1, rootName);
       psPut.setLong(2, id);
       psPut.executeUpdate();
@@ -155,11 +153,10 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
   }
 
   private Status update(byte[] rootName, long id, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + tableName + " SET " + VALUE + " = ? "
-                                                               + " WHERE " + KEY + " = ?");
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
+      // + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setLong(1, id);
       psUpdate.setBytes(2, rootName);
       psUpdate.executeUpdate();
@@ -171,11 +168,10 @@ class DerbyTCRootDatabase extends AbstractDerbyTCDatabase implements TCRootDatab
 
   public long getIdFromName(byte[] rootName, PersistenceTransaction tx) {
     ResultSet rs = null;
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE "
+      // + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, idFromNameQuery);
       psSelect.setBytes(1, rootName);
       rs = psSelect.executeQuery();
 

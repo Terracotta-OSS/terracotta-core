@@ -17,10 +17,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCLongToStringDatabase {
+  private final String loadMappingsIntoQuery;
+  private final String getQuery;
+  private final String insertQuery;
 
   public DerbyTCLongToStringDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    loadMappingsIntoQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName;
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
   }
 
   @Override
@@ -33,10 +39,9 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
 
   public TLongObjectHashMap loadMappingsInto(TLongObjectHashMap target, PersistenceTransaction tx) {
     ResultSet rs = null;
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + "," + VALUE + " FROM " + tableName);
+      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, loadMappingsIntoQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -46,12 +51,8 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
     } catch (SQLException e) {
       throw new DBException(e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        // Ignore
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
   }
 
@@ -61,11 +62,9 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
   }
 
   private Status insert(long id, String b, PersistenceTransaction tx) {
-    PreparedStatement psPut;
-    Connection connection = pt2nt(tx);
-
     try {
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      PreparedStatement psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, id);
       psPut.setString(2, b);
       psPut.executeUpdate();
@@ -77,11 +76,10 @@ class DerbyTCLongToStringDatabase extends AbstractDerbyTCDatabase implements TCL
 
   private byte[] get(long id, PersistenceTransaction tx) {
     ResultSet rs = null;
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE "
+      // + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setLong(1, id);
       rs = psSelect.executeQuery();
 

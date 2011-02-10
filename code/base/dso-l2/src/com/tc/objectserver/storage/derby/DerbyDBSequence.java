@@ -3,6 +3,7 @@
  */
 package com.tc.objectserver.storage.derby;
 
+import com.tc.objectserver.storage.api.PersistenceTransaction;
 import com.tc.util.UUID;
 import com.tc.util.sequence.MutableSequence;
 
@@ -22,6 +23,21 @@ class DerbyDBSequence implements MutableSequence {
   private final String                              uid;
   private final DerbyPersistenceTransactionProvider ptxp;
 
+  private final String                              setUidQuery    = "SELECT " + SEQUENCE_UID + " FROM "
+                                                                     + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
+                                                                     + " = ?";
+  private final String                              setNextQuery   = "UPDATE " + SEQUENCE_TABLE + " SET "
+                                                                     + SEQUENCE_VALUE + " = ? " + " WHERE "
+                                                                     + SEUQENCE_NAME + " = ?";
+  private final String                              currentQuery   = "SELECT " + SEQUENCE_VALUE + " FROM "
+                                                                     + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
+                                                                     + " = ?";
+  private final String                              insertQuery    = "INSERT INTO " + SEQUENCE_TABLE
+                                                                     + " VALUES (?, ?, ?)";
+  private final String                              existsQuery    = "SELECT " + SEQUENCE_VALUE + " FROM "
+                                                                     + SEQUENCE_TABLE + " WHERE " + SEUQENCE_NAME
+                                                                     + " = ?";
+
   /**
    * Assuming connection is already open and sequence table has already been created.
    */
@@ -37,16 +53,15 @@ class DerbyDBSequence implements MutableSequence {
 
   private String setUID() throws SQLException {
     ResultSet rs = null;
-    Connection connection = AbstractDerbyTCDatabase.pt2nt(ptxp.newTransaction());
-    PreparedStatement psSelect = connection.prepareStatement("SELECT " + SEQUENCE_UID + " FROM " + SEQUENCE_TABLE
-                                                             + " WHERE " + SEUQENCE_NAME + " = ?");
+    PersistenceTransaction txn = ptxp.newTransaction();
+    PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, setUidQuery);
     psSelect.setString(1, entryName);
     rs = psSelect.executeQuery();
 
     if (rs.next()) {
       String seqID = rs.getString(SEQUENCE_UID);
       rs.close();
-      connection.commit();
+      txn.commit();
       return seqID;
     }
 
@@ -69,14 +84,13 @@ class DerbyDBSequence implements MutableSequence {
     if (current > next) { throw new AssertionError("Current = " + current + " Next = " + next); }
 
     try {
-      Connection connection = AbstractDerbyTCDatabase.pt2nt(ptxp.newTransaction());
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + SEQUENCE_TABLE + " SET " + SEQUENCE_VALUE
-                                                               + " = ? " + " WHERE " + SEUQENCE_NAME + " = ?");
+      PersistenceTransaction txn = ptxp.newTransaction();
+      PreparedStatement psUpdate = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, setNextQuery);
       psUpdate.setLong(1, next);
       psUpdate.setString(2, entryName);
       psUpdate.executeUpdate();
 
-      connection.commit();
+      txn.commit();
     } catch (SQLException e) {
       throw new RuntimeException(e);
     }
@@ -86,9 +100,8 @@ class DerbyDBSequence implements MutableSequence {
     ResultSet rs = null;
     PreparedStatement psSelect;
     try {
-      Connection connection = AbstractDerbyTCDatabase.pt2nt(ptxp.newTransaction());
-      psSelect = connection.prepareStatement("SELECT " + SEQUENCE_VALUE + " FROM " + SEQUENCE_TABLE + " WHERE "
-                                             + SEUQENCE_NAME + " = ?");
+      PersistenceTransaction txn = ptxp.newTransaction();
+      psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, currentQuery);
       psSelect.setString(1, entryName);
       rs = psSelect.executeQuery();
 
@@ -96,7 +109,7 @@ class DerbyDBSequence implements MutableSequence {
 
       long current = rs.getLong(1);
       rs.close();
-      connection.commit();
+      txn.commit();
       return current;
     } catch (SQLException e) {
       throw new RuntimeException(e);
@@ -110,33 +123,30 @@ class DerbyDBSequence implements MutableSequence {
   public void createSequenceIfNeccesary(int startVal) throws SQLException {
     if (exists()) { return; }
 
-    Connection connection = AbstractDerbyTCDatabase.pt2nt(ptxp.newTransaction());
-
-    PreparedStatement psPut = connection.prepareStatement("INSERT INTO " + SEQUENCE_TABLE + " VALUES (?, ?, ?)");
+    PersistenceTransaction txn = ptxp.newTransaction();
+    PreparedStatement psPut = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, insertQuery);
     psPut.setString(1, entryName);
     psPut.setLong(2, startVal);
     psPut.setString(3, UUID.getUUID().toString());
 
     psPut.executeUpdate();
     psPut.close();
-    connection.commit();
+    txn.commit();
   }
 
   private boolean exists() throws SQLException {
     ResultSet rs = null;
-    Connection connection = AbstractDerbyTCDatabase.pt2nt(ptxp.newTransaction());
-
-    PreparedStatement psSelect = connection.prepareStatement("SELECT " + SEQUENCE_VALUE + " FROM " + SEQUENCE_TABLE
-                                                             + " WHERE " + SEUQENCE_NAME + " = ?");
+    PersistenceTransaction txn = ptxp.newTransaction();
+    PreparedStatement psSelect = AbstractDerbyTCDatabase.getOrCreatePreparedStatement(txn, existsQuery);
     psSelect.setString(1, entryName);
     rs = psSelect.executeQuery();
 
     if (!rs.next()) {
       rs.close();
-      connection.commit();
+      txn.commit();
       return false;
     }
-    connection.commit();
+    txn.commit();
     return true;
   }
 

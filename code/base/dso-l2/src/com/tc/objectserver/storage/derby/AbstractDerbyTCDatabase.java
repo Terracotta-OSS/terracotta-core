@@ -9,6 +9,7 @@ import com.tc.objectserver.persistence.db.TCDatabaseException;
 import com.tc.objectserver.storage.api.PersistenceTransaction;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -35,14 +36,21 @@ abstract class AbstractDerbyTCDatabase {
     }
   }
 
-  static Connection pt2nt(PersistenceTransaction tx) {
-    Object o = (tx != null) ? tx.getTransaction() : null;
-    if (o != null) {
-      if (!(o instanceof Connection)) { throw new AssertionError("Invalid transaction from " + tx + ": " + o); }
-      return (Connection) o;
-    } else {
-      return null;
-    }
+  static PreparedStatement getOrCreatePreparedStatement(PersistenceTransaction tx, String query) throws SQLException {
+    Object o = tx.getTransaction();
+    if (!(o instanceof DerbyDBPersistenceTransaction)) { throw new AssertionError("Invalid transaction from " + tx
+                                                                                  + ": " + o); }
+    DerbyDBPersistenceTransaction dbPersistenceTransaction = (DerbyDBPersistenceTransaction) o;
+    return dbPersistenceTransaction.getOrCreatePrepartedStatement(query);
+  }
+
+  static PreparedStatement getOrCreatePreparedStatement(PersistenceTransaction tx, String query, int resultSetType,
+                                                        int resultSetConcurrency) throws SQLException {
+    Object o = tx.getTransaction();
+    if (!(o instanceof DerbyDBPersistenceTransaction)) { throw new AssertionError("Invalid transaction from " + tx
+                                                                                  + ": " + o); }
+    DerbyDBPersistenceTransaction dbPersistenceTransaction = (DerbyDBPersistenceTransaction) o;
+    return dbPersistenceTransaction.getOrCreatePrepartedStatement(query, resultSetType, resultSetConcurrency);
   }
 
   protected void closeResultSet(ResultSet rs) {

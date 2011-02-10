@@ -17,9 +17,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToBytesDatabase {
+  private final String deleteQuery;
+  private final String getQuery;
+  private final String openCursorQuery;
+  private final String updateQuery;
+  private final String insertQuery;
+
   public DerbyTCBytesToBlobDB(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    openCursorQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName;
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
   }
 
   @Override
@@ -31,10 +42,9 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
   }
 
   public Status delete(byte[] key, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("DELETE FROM " + tableName + " WHERE " + KEY + " = ?");
+      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setBytes(1, key);
       psUpdate.executeUpdate();
       return Status.SUCCESS;
@@ -44,12 +54,10 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
   }
 
   public byte[] get(byte[] key, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     ResultSet rs = null;
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setBytes(1, key);
       rs = psSelect.executeQuery();
 
@@ -65,10 +73,10 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
 
   public TCDatabaseCursor<byte[], byte[]> openCursorUpdatable(PersistenceTransaction tx) {
     try {
-      Connection connection = pt2nt(tx);
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + "," + VALUE + " FROM " + tableName,
-                                                               ResultSet.TYPE_SCROLL_INSENSITIVE,
-                                                               ResultSet.CONCUR_UPDATABLE);
+      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName, ResultSet.TYPE_SCROLL_INSENSITIVE,
+      // ResultSet.CONCUR_UPDATABLE
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, openCursorQuery, ResultSet.TYPE_SCROLL_INSENSITIVE,
+                                                                ResultSet.CONCUR_UPDATABLE);
       return new DerbyTCBytesBytesCursor(psSelect.executeQuery());
     } catch (SQLException e) {
       throw new DBException(e);
@@ -77,8 +85,8 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
 
   public TCDatabaseCursor<byte[], byte[]> openCursor(PersistenceTransaction tx) {
     try {
-      Connection connection = pt2nt(tx);
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + "," + VALUE + " FROM " + tableName);
+      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, openCursorQuery);
       return new DerbyTCBytesBytesCursor(psSelect.executeQuery());
     } catch (SQLException e) {
       throw new DBException(e);
@@ -95,9 +103,8 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
 
   private Status update(byte[] key, byte[] val, PersistenceTransaction tx) {
     try {
-      Connection connection = pt2nt(tx);
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + tableName + " SET " + VALUE + " = ? "
-                                                               + " WHERE " + KEY + " = ?");
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, val);
       psUpdate.setBytes(2, key);
       psUpdate.executeUpdate();
@@ -110,8 +117,8 @@ class DerbyTCBytesToBlobDB extends AbstractDerbyTCDatabase implements TCBytesToB
   private Status insert(byte[] key, byte[] val, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
-      Connection connection = pt2nt(tx);
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setBytes(1, key);
       psPut.setBytes(2, val);
       psPut.executeUpdate();

@@ -16,10 +16,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements TCStringToStringDatabase {
+  private final String deleteQuery;
+  private final String getQuery;
+  private final String insertQuery;
+  private final String updateQuery;
 
   public DerbyTCStringToStringDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
   }
 
   @Override
@@ -36,10 +44,9 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
     Status status = get(entry, tx);
     if (status != Status.SUCCESS) { return status; }
 
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("DELETE FROM " + tableName + " WHERE " + KEY + " = ?");
+      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setString(1, key);
       psUpdate.executeUpdate();
       return Status.SUCCESS;
@@ -50,11 +57,10 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
 
   public Status get(TCDatabaseEntry<String, String> entry, PersistenceTransaction tx) {
     ResultSet rs = null;
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE "
+      // + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setString(1, entry.getKey());
       rs = psSelect.executeQuery();
 
@@ -83,10 +89,9 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
 
   private Status update(String key, String value, PersistenceTransaction tx) {
     try {
-      Connection connection = pt2nt(tx);
-
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + tableName + " SET " + VALUE + " = ? "
-                                                               + " WHERE " + KEY + " = ?");
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
+      // + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setString(1, value);
       psUpdate.setString(2, key);
       if (psUpdate.executeUpdate() > 0) {
@@ -102,9 +107,8 @@ class DerbyTCStringToStringDatabase extends AbstractDerbyTCDatabase implements T
   private Status insert(String key, String value, PersistenceTransaction tx) {
     PreparedStatement psPut;
     try {
-      Connection connection = pt2nt(tx);
-
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setString(1, key);
       psPut.setString(2, value);
       if (psPut.executeUpdate() > 0) {

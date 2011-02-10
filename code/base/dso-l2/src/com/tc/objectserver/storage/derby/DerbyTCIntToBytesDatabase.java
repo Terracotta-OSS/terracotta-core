@@ -17,10 +17,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCIntToBytesDatabase {
+  private final String getQuery;
+  private final String getAllQuery;
+  private final String updateQuery;
+  private final String insertQuery;
 
   public DerbyTCIntToBytesDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    getAllQuery = "SELECT " + KEY + "," + VALUE + " FROM " + tableName;
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
   }
 
   @Override
@@ -32,12 +40,10 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
   }
 
   public byte[] get(int id, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     ResultSet rs = null;
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setInt(1, id);
       rs = psSelect.executeQuery();
 
@@ -52,12 +58,11 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
   }
 
   public Map<Integer, byte[]> getAll(PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     ResultSet rs = null;
     Map<Integer, byte[]> map = new HashMap<Integer, byte[]>();
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + "," + VALUE + " FROM " + tableName);
+      // "SELECT " + KEY + "," + VALUE + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getAllQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -67,12 +72,8 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
     } catch (SQLException e) {
       throw new DBException(e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        // Ignore
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
   }
 
@@ -85,11 +86,10 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
   }
 
   private Status update(int id, byte[] b, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + tableName + " SET " + VALUE + " = ? "
-                                                               + " WHERE " + KEY + " = ?");
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
+      // + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, b);
       psUpdate.setInt(2, id);
       psUpdate.executeUpdate();
@@ -100,11 +100,10 @@ class DerbyTCIntToBytesDatabase extends AbstractDerbyTCDatabase implements TCInt
   }
 
   private Status insert(int id, byte[] b, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     PreparedStatement psPut;
     try {
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setInt(1, id);
       psPut.setBytes(2, b);
       psPut.executeUpdate();

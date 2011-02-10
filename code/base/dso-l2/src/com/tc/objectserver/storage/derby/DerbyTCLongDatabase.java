@@ -17,10 +17,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatabase {
+  private final String containsQuery;
+  private final String deleteQuery;
+  private final String getAllQuery;
+  private final String insertQuery;
 
   public DerbyTCLongDatabase(String tableName, Connection connection, QueryProvider queryProvider)
       throws TCDatabaseException {
     super(tableName, connection, queryProvider);
+    containsQuery = "SELECT " + KEY + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+    getAllQuery = "SELECT " + KEY + " FROM " + tableName;
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?)";
   }
 
   @Override
@@ -32,12 +40,11 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
   }
 
   public boolean contains(long key, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     ResultSet rs = null;
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + " FROM " + tableName + " WHERE " + KEY
-                                                               + " = ?");
+      // "SELECT " + KEY + " FROM " + tableName + " WHERE " + KEY
+      // + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, containsQuery);
       psSelect.setLong(1, key);
       rs = psSelect.executeQuery();
 
@@ -52,10 +59,9 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
 
   public Status delete(long key, PersistenceTransaction tx) {
     if (!contains(key, tx)) { return Status.NOT_FOUND; }
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("DELETE FROM " + tableName + " WHERE " + KEY + " = ?");
+      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setLong(1, key);
       psUpdate.executeUpdate();
       return Status.SUCCESS;
@@ -67,9 +73,9 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
   public Set<Long> getAllKeys(PersistenceTransaction tx) {
     ResultSet rs = null;
     Set<Long> set = new HashSet<Long>();
-    Connection connection = pt2nt(tx);
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + " FROM " + tableName);
+      // "SELECT " + KEY + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getAllQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -79,11 +85,7 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
     } catch (SQLException e) {
       throw new DBException(e);
     } finally {
-      try {
-        connection.commit();
-      } catch (SQLException e) {
-        // Ignore
-      }
+      tx.commit();
     }
   }
 
@@ -97,9 +99,9 @@ class DerbyTCLongDatabase extends AbstractDerbyTCDatabase implements TCLongDatab
 
   private Status insert(long key, PersistenceTransaction tx) {
     PreparedStatement psPut;
-    Connection connection = pt2nt(tx);
     try {
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?)");
+      // "INSERT INTO " + tableName + " VALUES (?)"
+      psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, key);
       psPut.executeUpdate();
     } catch (SQLException e) {

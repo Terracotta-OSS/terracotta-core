@@ -24,10 +24,21 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
   private static final TCLogger logger     = TCLogging.getLogger(DerbyTCObjectDatabase.class);
   private final SampledCounter  l2FaultFromDisk;
 
+  private final String          deleteQuery;
+  private final String          getQuery;
+  private final String          updateQuery;
+  private final String          insertQuery;
+  private final String          getAllObjectIDsQuery;
+
   public DerbyTCObjectDatabase(String tableName, Connection connection, QueryProvider queryProvider,
                                SampledCounter l2FaultFromDisk) throws TCDatabaseException {
     super(tableName, connection, queryProvider);
     this.l2FaultFromDisk = l2FaultFromDisk;
+    deleteQuery = "DELETE FROM " + tableName + " WHERE " + KEY + " = ?";
+    getQuery = "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?";
+    getAllObjectIDsQuery = "SELECT " + KEY + " FROM " + tableName;
+    updateQuery = "UPDATE " + tableName + " SET " + VALUE + " = ? " + " WHERE " + KEY + " = ?";
+    insertQuery = "INSERT INTO " + tableName + " VALUES (?, ?)";
   }
 
   @Override
@@ -43,9 +54,8 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
 
   public Status delete(long id, PersistenceTransaction tx) {
     try {
-      Connection connection = pt2nt(tx);
-
-      PreparedStatement psUpdate = connection.prepareStatement("DELETE FROM " + tableName + " WHERE " + KEY + " = ?");
+      // "DELETE FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, deleteQuery);
       psUpdate.setLong(1, id);
       if (psUpdate.executeUpdate() > 0) {
         return Status.SUCCESS;
@@ -60,10 +70,8 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
   public byte[] get(long id, PersistenceTransaction tx) {
     ResultSet rs = null;
     try {
-      Connection connection = pt2nt(tx);
-
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + VALUE + " FROM " + tableName + " WHERE "
-                                                               + KEY + " = ?");
+      // "SELECT " + VALUE + " FROM " + tableName + " WHERE " + KEY + " = ?"
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getQuery);
       psSelect.setLong(1, id);
       rs = psSelect.executeQuery();
 
@@ -81,10 +89,9 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
   public ObjectIDSet getAllObjectIds(PersistenceTransaction tx) {
     ResultSet rs = null;
     ObjectIDSet set = new ObjectIDSet();
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psSelect = connection.prepareStatement("SELECT " + KEY + " FROM " + tableName);
+      // "SELECT " + KEY + " FROM " + tableName
+      PreparedStatement psSelect = getOrCreatePreparedStatement(tx, getAllObjectIDsQuery);
       rs = psSelect.executeQuery();
 
       while (rs.next()) {
@@ -94,22 +101,17 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
     } catch (Throwable e) {
       logger.error("Error Reading Object IDs", e);
     } finally {
-      try {
-        closeResultSet(rs);
-        connection.commit();
-      } catch (SQLException e) {
-        e.printStackTrace();
-      }
+      closeResultSet(rs);
+      tx.commit();
     }
     return null;
   }
 
   public Status update(long id, byte[] b, PersistenceTransaction tx) {
-    Connection connection = pt2nt(tx);
-
     try {
-      PreparedStatement psUpdate = connection.prepareStatement("UPDATE " + tableName + " SET " + VALUE + " = ? "
-                                                               + " WHERE " + KEY + " = ?");
+      // "UPDATE " + tableName + " SET " + VALUE + " = ? "
+      // + " WHERE " + KEY + " = ?"
+      PreparedStatement psUpdate = getOrCreatePreparedStatement(tx, updateQuery);
       psUpdate.setBytes(1, b);
       psUpdate.setLong(2, id);
       psUpdate.executeUpdate();
@@ -121,9 +123,9 @@ class DerbyTCObjectDatabase extends AbstractDerbyTCDatabase implements TCObjectD
 
   public Status insert(long id, byte[] b, PersistenceTransaction tx) {
     PreparedStatement psPut;
-    Connection connection = pt2nt(tx);
     try {
-      psPut = connection.prepareStatement("INSERT INTO " + tableName + " VALUES (?, ?)");
+      // "INSERT INTO " + tableName + " VALUES (?, ?)"
+      psPut = getOrCreatePreparedStatement(tx, insertQuery);
       psPut.setLong(1, id);
       psPut.setBytes(2, b);
       psPut.executeUpdate();
