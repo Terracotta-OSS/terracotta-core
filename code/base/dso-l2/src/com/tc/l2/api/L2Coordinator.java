@@ -6,12 +6,13 @@ package com.tc.l2.api;
 
 import com.tc.l2.objectserver.ReplicatedObjectManager;
 import com.tc.l2.objectserver.ReplicatedTransactionManager;
+import com.tc.l2.state.StateChangeListener;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.text.PrettyPrintable;
 
-public interface L2Coordinator extends PrettyPrintable {
+public interface L2Coordinator extends StateChangeListener, PrettyPrintable {
 
   public void start();
 

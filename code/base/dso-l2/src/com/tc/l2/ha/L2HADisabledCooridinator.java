@@ -6,6 +6,7 @@ package com.tc.l2.ha;
 
 import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.api.ReplicatedClusterStateManager;
+import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.objectserver.NonReplicatedObjectManager;
 import com.tc.l2.objectserver.NonReplicatedTransactionManager;
 import com.tc.l2.objectserver.ReplicatedObjectManager;
@@ -74,6 +75,10 @@ public class L2HADisabledCooridinator implements L2Coordinator, PrettyPrintable 
 
   public StateSyncManager getStateSyncManager() {
     return stateSyncManager;
+  }
+
+  public void l2StateChanged(StateChangedEvent sce) {
+    //
   }
 
 }

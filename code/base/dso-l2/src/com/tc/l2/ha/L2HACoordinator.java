@@ -79,8 +79,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class L2HACoordinator implements L2Coordinator, StateChangeListener, GroupEventsListener,
-    SequenceGeneratorListener, PrettyPrintable {
+public class L2HACoordinator implements L2Coordinator, GroupEventsListener, SequenceGeneratorListener, PrettyPrintable {
 
   private static final TCLogger                           logger    = TCLogging.getLogger(L2HACoordinator.class);
 
@@ -150,8 +149,6 @@ public class L2HACoordinator implements L2Coordinator, StateChangeListener, Grou
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(this.configSetupManager.haConfig()),
                                              createWeightGeneratorFactoryForStateManager(gtxm));
-    this.stateManager.registerForStateChangeEvents(this);
-
     this.sequenceGenerator = new SequenceGenerator(this);
     this.indexSequenceGenerator = new SequenceGenerator();
 

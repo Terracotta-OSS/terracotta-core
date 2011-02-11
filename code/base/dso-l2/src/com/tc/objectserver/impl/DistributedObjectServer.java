@@ -1155,6 +1155,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     createStateSyncManager(this.indexHACoordinator));
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
+      this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);
 
       dgcSequenceProvider.registerSequecePublisher(this.l2Coordinator.getReplicatedClusterStateManager());
     } else {
