@@ -75,11 +75,6 @@ public interface DBEnvironment {
   public abstract PersistenceTransactionProvider getPersistenceTransactionProvider();
 
   /**
-   * Returns the persistence transaction provider which can be used to create new transactions.
-   */
-  public abstract PersistenceTransactionProvider getNullPersistenceTransactionProvider();
-
-  /**
    * Returns the Object Database to be used by Persistor classes.
    */
   public abstract TCObjectDatabase getObjectDatabase() throws TCDatabaseException;

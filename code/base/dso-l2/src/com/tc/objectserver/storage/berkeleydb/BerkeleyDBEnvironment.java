@@ -12,6 +12,7 @@ import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.Durability;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.EnvironmentStats;
@@ -102,17 +103,15 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     }
 
     this.ecfg = new EnvironmentConfig(jeProperties);
-    this.ecfg.setTransactional(true);
+    this.ecfg.setTransactional(paranoid);
     this.ecfg.setAllowCreate(true);
     this.ecfg.setReadOnly(false);
-    this.ecfg.setTxnNoSync(!paranoid);
-    // if (!paranoid) {
-    // this.ecfg.setDurability(new Durability(SyncPolicy.NO_SYNC, SyncPolicy.NO_SYNC, ReplicaAckPolicy.NONE));
-    // }
+    if (!paranoid) {
+      this.ecfg.setDurability(Durability.COMMIT_WRITE_NO_SYNC);
+    }
     this.dbcfg = new DatabaseConfig();
     this.dbcfg.setAllowCreate(true);
-    this.dbcfg.setTransactional(true);
-
+    this.dbcfg.setTransactional(paranoid);
     logger.info("Env config = " + this.ecfg + " DB Config = " + this.dbcfg + " JE Properties = " + jeProperties);
   }
 
@@ -408,7 +407,9 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     OperationStatus stat;
     try {
       stat = controlDB.get(tx, CLEAN_FLAG_KEY, value, LockMode.DEFAULT);
-      tx.commit();
+      if (tx != null) {
+        tx.commit();
+      }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
     }
@@ -429,10 +430,8 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     if (!OperationStatus.SUCCESS.equals(stat)) throw new TCDatabaseException("Unexpected operation status "
                                                                              + "trying to unset clean flag: " + stat);
     try {
-      if (isParanoidMode()) {
+      if (tx != null) {
         tx.commitSync();
-      } else {
-        tx.commit();
       }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
@@ -440,6 +439,7 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
   }
 
   private Transaction newTransaction() throws TCDatabaseException {
+    if (!paranoid) { return null; }
     try {
       Transaction tx = env.beginTransaction(null, null);
       return tx;
@@ -461,7 +461,9 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     if (!OperationStatus.SUCCESS.equals(stat)) throw new TCDatabaseException("Unexpected operation status "
                                                                              + "trying to set clean flag: " + stat);
     try {
-      tx.commitSync();
+      if (tx != null) {
+        tx.commitSync();
+      }
     } catch (Exception e) {
       throw new TCDatabaseException(e.getMessage());
     }
@@ -615,7 +617,11 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
 
   public PersistenceTransactionProvider getPersistenceTransactionProvider() {
     try {
-      return new BerkeleyDBPersistenceTransactionProvider(getEnvironment());
+      if (paranoid) {
+        return new BerkeleyDBPersistenceTransactionProvider(getEnvironment());
+      } else {
+        return new NullPersistenceTransactionProvider();
+      }
     } catch (TCDatabaseException e) {
       throw new DBException(e);
     }
@@ -625,7 +631,4 @@ public class BerkeleyDBEnvironment implements DBEnvironment {
     return OffheapStats.NULL_OFFHEAP_STATS;
   }
 
-  public PersistenceTransactionProvider getNullPersistenceTransactionProvider() {
-    return new NullPersistenceTransactionProvider();
-  }
 }
