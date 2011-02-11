@@ -25,6 +25,7 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
@@ -66,11 +67,13 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
   private static final long         SERVER_PING_INTERVAL = 3000;
   private static final long         SERVER_PING_IDLE     = 3000;
 
+  @Override
   protected void tearDown() throws Exception {
     proxy.stop();
     super.tearDown();
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -89,21 +92,23 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
     TCConnectionManager serverConnMgr = new MyConnectionManager(serverSocketConnects);
 
     serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
-                                                new PlainNetworkStackHarnessFactory(), serverConnMgr,
-                                                new NullConnectionPolicy(), 0, serverHC,
-                                                new TransportHandshakeErrorNullHandler());
+                                                new TCMessageRouterImpl(), new PlainNetworkStackHarnessFactory(),
+                                                serverConnMgr, new NullConnectionPolicy(), 0, serverHC,
+                                                new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
+                                                Collections.EMPTY_MAP);
     String host = "localhost";
 
-    NetworkListener listener = serverComms
-        .createListener(new NullSessionManager(), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, listenPort), true,
-                        new DefaultConnectionIdFactory());
-    listener.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    listener.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
+    serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    (serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
       public void putMessage(TCMessage message) {
         logger.info("server recv: " + message.getMessageType().getTypeName());
         serverRecvCount.increment();
       }
     });
+
+    NetworkListener listener = serverComms
+        .createListener(new NullSessionManager(), new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, listenPort), true,
+                        new DefaultConnectionIdFactory());
 
     listener.start(Collections.EMPTY_SET);
 
@@ -112,8 +117,8 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
                                                                                                                      host,
                                                                                                                      proxyPort) });
 
+    clientComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel = clientComms.createClientChannel(new NullSessionManager(), -1, host, proxyPort, 30000, addrProvider);
-    channel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     channel.open();
   }
 
@@ -148,7 +153,7 @@ public class ConnectionHealthCheckReverseCallbackTest extends TCTestCase {
 
   private static class MyConnectionManager implements TCConnectionManager {
     private final TCConnectionManagerImpl delegate;
-    private final WaitableInt              connects;
+    private final WaitableInt             connects;
 
     MyConnectionManager(WaitableInt serverSocketConnects) {
       this.delegate = new TCConnectionManagerImpl();

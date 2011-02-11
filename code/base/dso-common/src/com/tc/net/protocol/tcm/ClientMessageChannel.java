@@ -4,19 +4,7 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
-
 public interface ClientMessageChannel extends MessageChannel {
-
-  public void addClassMapping(TCMessageType type, Class msgClass);
-
-  public void addClassMapping(TCMessageType type, GeneratedMessageFactory messageFactory);
-
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink);
-
-  public void routeMessageType(TCMessageType type, TCMessageSink sink);
-
-  public void unrouteMessageType(TCMessageType type);
 
   public int getConnectCount();
 

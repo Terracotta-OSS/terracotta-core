@@ -18,6 +18,7 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
@@ -27,12 +28,17 @@ import com.tc.test.TCTestCase;
 import com.tc.util.SequenceGenerator;
 import com.tc.util.concurrent.ThreadUtil;
 
+import java.util.Collections;
 import java.util.HashSet;
 
 public class ConnectionHealthCheckerTest extends TCTestCase {
 
   CommunicationsManager serverComms;
   CommunicationsManager clientComms;
+
+  TCMessageRouterImpl   serverMessageRouter;
+  TCMessageRouterImpl   clientMessageRouter;
+
   NetworkListener       serverLsnr;
   TCLogger              logger = TCLogging.getLogger(ConnectionHealthCheckerImpl.class);
 
@@ -43,43 +49,59 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
     logger.setLevel(LogLevelImpl.DEBUG);
 
+    serverMessageRouter = new TCMessageRouterImpl();
+    clientMessageRouter = new TCMessageRouterImpl();
+
     if (serverHCConf != null) {
-      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
-                                                  networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf);
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), serverHCConf,
+                                                  Collections.EMPTY_MAP, Collections.EMPTY_MAP);
     } else {
-      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(),
-                                                  networkStackHarnessFactory, new NullConnectionPolicy());
+      serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", new NullMessageMonitor(), serverMessageRouter,
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(),
+                                                  new DisabledHealthCheckerConfigImpl(), Collections.EMPTY_MAP,
+                                                  Collections.EMPTY_MAP);
     }
 
     if (clientHCConf != null) {
-      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
-                                                  networkStackHarnessFactory, new NullConnectionPolicy(), clientHCConf);
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(), clientMessageRouter,
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(), clientHCConf,
+                                                  Collections.EMPTY_MAP, Collections.EMPTY_MAP);
     } else {
-      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(),
-                                                  networkStackHarnessFactory, new NullConnectionPolicy());
+      clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", new NullMessageMonitor(), clientMessageRouter,
+                                                  networkStackHarnessFactory, new NullConnectionPolicy(),
+                                                  new DisabledHealthCheckerConfigImpl(), Collections.EMPTY_MAP,
+                                                  Collections.EMPTY_MAP);
 
     }
 
+    serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
+                                                                                  new TCMessageSink() {
+
+                                                                                    public void putMessage(TCMessage message)
+                                                                                        throws UnsupportedMessageTypeException {
+
+                                                                                      PingMessage pingMsg = (PingMessage) message;
+                                                                                      try {
+                                                                                        pingMsg.hydrate();
+                                                                                        System.out
+                                                                                            .println("Server RECEIVE - PING seq no "
+                                                                                                     + pingMsg
+                                                                                                         .getSequence());
+                                                                                      } catch (Exception e) {
+                                                                                        System.out
+                                                                                            .println("Server Exception during PingMessage hydrate:");
+                                                                                        e.printStackTrace();
+                                                                                      }
+
+                                                                                      PingMessage pingRplyMsg = pingMsg
+                                                                                          .createResponse();
+                                                                                      pingRplyMsg.send();
+                                                                                    }
+                                                                                  });
     serverLsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(0), false,
                                             new DefaultConnectionIdFactory());
-    serverLsnr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    serverLsnr.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
-
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-
-        PingMessage pingMsg = (PingMessage) message;
-        try {
-          pingMsg.hydrate();
-          System.out.println("Server RECEIVE - PING seq no " + pingMsg.getSequence());
-        } catch (Exception e) {
-          System.out.println("Server Exception during PingMessage hydrate:");
-          e.printStackTrace();
-        }
-
-        PingMessage pingRplyMsg = pingMsg.createResponse();
-        pingRplyMsg.send();
-      }
-    });
 
     serverLsnr.start(new HashSet());
   }
@@ -90,9 +112,30 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
 
   ClientMessageChannel createClientMsgCh(CommunicationsManager clientCommsMgr) {
 
-    ClientMessageChannel clientMsgCh = (clientCommsMgr == null ? clientComms : clientCommsMgr)
-        .createClientChannel(
-                             new NullSessionManager(),
+    CommunicationsManager commsMgr = (clientCommsMgr == null ? clientComms : clientCommsMgr);
+    commsMgr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    ((CommunicationsManagerImpl) commsMgr).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
+                                                                               new TCMessageSink() {
+
+                                                                                 public void putMessage(TCMessage message)
+                                                                                     throws UnsupportedMessageTypeException {
+                                                                                   PingMessage pingMsg = (PingMessage) message;
+                                                                                   try {
+                                                                                     pingMsg.hydrate();
+                                                                                     System.out
+                                                                                         .println(" Client RECEIVE - PING seq no "
+                                                                                                  + pingMsg
+                                                                                                      .getSequence());
+                                                                                   } catch (Exception e) {
+                                                                                     System.out
+                                                                                         .println("Client Exception during PingMessage hydrate:");
+                                                                                     e.printStackTrace();
+                                                                                   }
+                                                                                 }
+                                                                               });
+
+    ClientMessageChannel clientMsgCh = commsMgr
+        .createClientChannel(new NullSessionManager(),
                              0,
                              TCSocketAddress.LOOPBACK_IP,
                              serverLsnr.getBindPort(),
@@ -101,20 +144,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
                                                            new ConnectionInfo[] { new ConnectionInfo("localhost",
                                                                                                      serverLsnr
                                                                                                          .getBindPort()) }));
-    clientMsgCh.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    clientMsgCh.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
 
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-        PingMessage pingMsg = (PingMessage) message;
-        try {
-          pingMsg.hydrate();
-          System.out.println(" Client RECEIVE - PING seq no " + pingMsg.getSequence());
-        } catch (Exception e) {
-          System.out.println("Client Exception during PingMessage hydrate:");
-          e.printStackTrace();
-        }
-      }
-    });
     return clientMsgCh;
   }
 
@@ -343,6 +373,7 @@ public class ConnectionHealthCheckerTest extends TCTestCase {
     if (clientComms != null) clientComms.shutdown();
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     logger.setLevel(LogLevelImpl.INFO);

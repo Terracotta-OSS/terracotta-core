@@ -35,10 +35,13 @@ import com.tc.net.protocol.tcm.ChannelManagerEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
@@ -73,6 +76,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -185,6 +189,47 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   }
 
   private void init(TCSocketAddress socketAddress) {
+
+    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
+
+    createTCGroupManagerStages();
+    final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory();
+
+    final TCMessageRouter messageRouter = new TCMessageRouterImpl();
+    initMessageRouter(messageRouter);
+
+    final Map<TCMessageType, Class> messageTypeClassMapping = new HashMap<TCMessageType, Class>();
+    initMessageTypeClassMapping(messageTypeClassMapping);
+
+    final Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new HashMap<TCMessageType, GeneratedMessageFactory>();
+    initMessageTypeFactoryMapping(messageTypeFactoryMapping);
+
+    communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
+                                                          new NullMessageMonitor(), messageRouter,
+                                                          networkStackHarnessFactory, this.connectionPolicy,
+                                                          L2Utils.getOptimalCommWorkerThreads(),
+                                                          new HealthCheckerConfigImpl(l2Properties
+                                                              .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
+                                                          thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
+                                                          messageTypeClassMapping, messageTypeFactoryMapping);
+
+    groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
+                                                         new DefaultConnectionIdFactory(), httpSink);
+    // Listen to channel creation/removal
+    groupListener.getChannelManager().addEventListener(this);
+
+    registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
+  }
+
+  private NetworkStackHarnessFactory getNetworkStackHarnessFactory() {
+    if (isUseOOOLayer) {
+      return new OOONetworkStackHarnessFactory(new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(), l2ReconnectConfig);
+    } else {
+      return new PlainNetworkStackHarnessFactory();
+    }
+  }
+
+  private void createTCGroupManagerStages() {
     int maxStageSize = 5000;
     hydrateStage = stageManager.createStage(ServerConfigurationContext.GROUP_HYDRATE_MESSAGE_STAGE,
                                             new HydrateHandler(), 1, maxStageSize);
@@ -194,37 +239,23 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                      new TCGroupHandshakeMessageHandler(this), 1, maxStageSize);
     discoveryStage = stageManager.createStage(ServerConfigurationContext.GROUP_DISCOVERY_STAGE,
                                               new TCGroupMemberDiscoveryHandler(this), 4, maxStageSize);
+  }
 
-    final NetworkStackHarnessFactory networkStackHarnessFactory;
-    if (isUseOOOLayer) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     l2ReconnectConfig);
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
+  private Map<TCMessageType, Class> initMessageTypeClassMapping(final Map<TCMessageType, Class> messageTypeClassMapping) {
+    messageTypeClassMapping.put(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
+    messageTypeClassMapping.put(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
+    return messageTypeClassMapping;
+  }
 
-    l2Properties = TCPropertiesImpl.getProperties().getPropertiesFor("l2");
-    communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_GROUPS,
-                                                          new NullMessageMonitor(), networkStackHarnessFactory,
-                                                          this.connectionPolicy, L2Utils.getOptimalCommWorkerThreads(),
-                                                          new HealthCheckerConfigImpl(l2Properties
-                                                              .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
-                                                          thisNodeID, new TransportHandshakeErrorHandlerForGroupComm());
+  private Map<TCMessageType, Class> initMessageTypeFactoryMapping(final Map<TCMessageType, GeneratedMessageFactory> messageTypeClassMapping) {
+    return Collections.EMPTY_MAP;
+  }
 
-    groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
-                                                         new DefaultConnectionIdFactory(), httpSink);
-    // Listen to channel creation/removal
-    groupListener.getChannelManager().addEventListener(this);
-
-    groupListener.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
-    groupListener.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
+  private void initMessageRouter(TCMessageRouter messageRouter) {
+    messageRouter.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
                                    hydrateStage.getSink());
-    groupListener.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
-    groupListener.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
+    messageRouter.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
                                    hydrateStage.getSink());
-
-    registerForMessages(GroupZapNodeMessage.class, new ZapNodeRequestRouter());
   }
 
   /*
@@ -488,15 +519,12 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
         return new SimpleSequence();
       }
     });
+
+    communicationsManager.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
+    communicationsManager.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
+
     ClientMessageChannel channel = communicationsManager.createClientChannel(sessionProvider, 0, null, -1, 10000,
                                                                              addrProvider);
-
-    channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
-    channel.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, receiveGroupMessageStage.getSink(),
-                             hydrateStage.getSink());
-    channel.addClassMapping(TCMessageType.GROUP_HANDSHAKE_MESSAGE, TCGroupHandshakeMessage.class);
-    channel.routeMessageType(TCMessageType.GROUP_HANDSHAKE_MESSAGE, handshakeMessageStage.getSink(),
-                             hydrateStage.getSink());
 
     channel.addListener(listener);
     channel.open();

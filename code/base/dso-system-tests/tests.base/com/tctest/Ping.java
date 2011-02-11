@@ -15,12 +15,17 @@ import com.tc.net.protocol.tcm.CommunicationsManager;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessage;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.UnsupportedMessageTypeException;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.object.session.NullSessionManager;
+
+import java.util.Collections;
 
 /**
  * TODO: document me!
@@ -29,9 +34,9 @@ import com.tc.object.session.NullSessionManager;
  */
 public class Ping implements TCMessageSink {
 
-  private String      hostname;
-  private int         port;
-  private LinkedQueue queue = new LinkedQueue();
+  private String            hostname;
+  private int               port;
+  private final LinkedQueue queue = new LinkedQueue();
 
   Ping(String args[]) {
     switch (args.length) {
@@ -64,16 +69,19 @@ public class Ping implements TCMessageSink {
   }
 
   public void ping() throws Exception {
+    TCMessageRouter messageRouter = new TCMessageRouterImpl();
     CommunicationsManager comms = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
-                                                                new PlainNetworkStackHarnessFactory(),
-                                                                new NullConnectionPolicy(), 0);
+                                                                messageRouter, new PlainNetworkStackHarnessFactory(),
+                                                                new NullConnectionPolicy(),
+                                                                new DisabledHealthCheckerConfigImpl(),
+                                                                Collections.EMPTY_MAP, Collections.EMPTY_MAP);
 
     ClientMessageChannel channel = null;
     try {
       channel = comms.createClientChannel(new NullSessionManager(), 0, this.hostname, this.port, 3000,
                                           new ConnectionAddressProvider(new ConnectionInfo[0]));
       channel.open();
-      channel.routeMessageType(TCMessageType.PING_MESSAGE, this);
+      messageRouter.routeMessageType(TCMessageType.PING_MESSAGE, this);
       for (int i = 0; i < 400; i++) {
         PingMessage pingMsg = (PingMessage) channel.createMessage(TCMessageType.PING_MESSAGE);
 
@@ -90,7 +98,7 @@ public class Ping implements TCMessageSink {
       }
     } finally {
       if (channel != null) {
-        channel.unrouteMessageType(TCMessageType.PING_MESSAGE);
+        messageRouter.unrouteMessageType(TCMessageType.PING_MESSAGE);
       }
       comms.shutdown();
     }

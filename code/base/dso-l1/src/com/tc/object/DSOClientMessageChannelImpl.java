@@ -4,7 +4,6 @@
  */
 package com.tc.object;
 
-import com.tc.async.api.Sink;
 import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.management.lock.stats.LockStatisticsResponseMessage;
 import com.tc.net.CommStackMismatchException;
@@ -13,7 +12,6 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.AcknowledgeTransactionMessage;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
@@ -67,25 +65,12 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
     this.clientIDProvider = new ClientIDProviderImpl(theChannel.getChannelIDProvider());
   }
 
-  public void addClassMapping(final TCMessageType messageType, final Class messageClass) {
-    this.channel.addClassMapping(messageType, messageClass);
-  }
-
-  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
-    this.channel.addClassMapping(type, messageFactory);
-
-  }
-
   public ClientIDProvider getClientIDProvider() {
     return this.clientIDProvider;
   }
 
   public void addListener(final ChannelEventListener listener) {
     this.channel.addListener(listener);
-  }
-
-  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
-    this.channel.routeMessageType(messageType, destSink, hydrateSink);
   }
 
   public ClientMessageChannel channel() {

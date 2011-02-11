@@ -4,15 +4,12 @@
  */
 package com.tc.object.net;
 
-import com.tc.async.api.Sink;
 import com.tc.management.lock.stats.LockStatisticsReponseMessageFactory;
 import com.tc.net.CommStackMismatchException;
 import com.tc.net.GroupID;
 import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.GeneratedMessageFactory;
-import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.ClientIDProvider;
 import com.tc.object.msg.AcknowledgeTransactionMessageFactory;
 import com.tc.object.msg.ClientHandshakeMessageFactory;
@@ -36,15 +33,9 @@ import java.net.UnknownHostException;
 
 public interface DSOClientMessageChannel {
 
-  public void addClassMapping(TCMessageType messageType, Class messageClass);
-
-  public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory);
-
   public ClientIDProvider getClientIDProvider();
 
   public void addListener(ChannelEventListener listener);
-
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink);
 
   public void open() throws MaxConnectionsExceededException, TCTimeoutException, UnknownHostException, IOException,
       CommStackMismatchException;

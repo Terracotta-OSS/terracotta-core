@@ -61,8 +61,8 @@ import com.tc.management.beans.L2State;
 import com.tc.management.beans.LockStatisticsMonitor;
 import com.tc.management.beans.TCDumper;
 import com.tc.management.beans.TCServerInfoMBean;
-import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.beans.object.ObjectManagementMonitor.ObjectIdsFetcher;
+import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.management.lock.stats.L2LockStatisticsManagerImpl;
 import com.tc.management.lock.stats.LockStatisticsMessage;
 import com.tc.management.lock.stats.LockStatisticsResponseMessageImpl;
@@ -90,6 +90,8 @@ import com.tc.net.protocol.tcm.HydrateHandler;
 import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionIDFactory;
 import com.tc.net.protocol.transport.ConnectionPolicy;
@@ -327,6 +329,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
@@ -674,13 +677,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(TCPropertiesImpl.getProperties(), logger);
 
+    final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     this.communicationsManager = new CommunicationsManagerImpl(CommunicationsManager.COMMSMGR_SERVER, mm,
-                                                               networkStackHarnessFactory, this.connectionPolicy,
-                                                               commWorkerThreadCount,
+                                                               messageRouter, networkStackHarnessFactory,
+                                                               this.connectionPolicy, commWorkerThreadCount,
                                                                new HealthCheckerConfigImpl(this.l2Properties
                                                                    .getPropertiesFor("healthcheck.l1"), "DSO Server"),
                                                                this.thisServerNodeID,
-                                                               new TransportHandshakeErrorNullHandler());
+                                                               new TransportHandshakeErrorNullHandler(),
+                                                               getMessageTypeClassMappings(), Collections.EMPTY_MAP);
 
     final DSOApplicationEvents appEvents;
     try {
@@ -750,8 +755,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     final TCProperties cacheManagerProperties = this.l2Properties.getPropertiesFor("cachemanager");
     final CacheConfig cacheConfig = new CacheConfigImpl(cacheManagerProperties, persistent, offHeapConfig.getEnabled());
-    final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(), cacheConfig
-        .getLeastCount(), cacheConfig.isOnlyOldGenMonitored(), this.threadGroup, !offHeapConfig.getEnabled());
+    final TCMemoryManagerImpl tcMemManager = new TCMemoryManagerImpl(cacheConfig.getSleepInterval(),
+                                                                     cacheConfig.getLeastCount(),
+                                                                     cacheConfig.isOnlyOldGenMonitored(),
+                                                                     this.threadGroup, !offHeapConfig.getEnabled());
     final long timeOut = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.LOGGING_LONG_GC_THRESHOLD);
     final LongGCLogger gcLogger = this.serverBuilder.createLongGCLogger(timeOut);
     tcMemManager.registerForMemoryEvents(gcLogger);
@@ -787,8 +794,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(this.stripeIDStateManager));
 
     final ProductInfo pInfo = ProductInfo.getInstance();
-    final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.haConfig.getThisGroupID(), this.l1Listener
-        .getChannelManager(), this.communicationsManager.getConnectionManager(), pInfo.version(),
+    final DSOChannelManager channelManager = new DSOChannelManagerImpl(this.haConfig.getThisGroupID(),
+                                                                       this.l1Listener.getChannelManager(),
+                                                                       this.communicationsManager
+                                                                           .getConnectionManager(), pInfo.version(),
                                                                        this.stripeIDStateManager);
     channelManager.addEventListener(cteh);
     channelManager.addEventListener(this.connectionIdFactory);
@@ -983,8 +992,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
         .createStage(ServerConfigurationContext.SERVER_MAP_RESPOND_STAGE, new RespondToServerMapRequestHandler(), 8,
                      maxStageSize);
 
-    this.searchRequestManager = this.serverBuilder.createSearchRequestManager(channelManager, objectRequestStage
-        .getSink());
+    this.searchRequestManager = this.serverBuilder.createSearchRequestManager(channelManager,
+                                                                              objectRequestStage.getSink());
     toInit.add(this.searchRequestManager);
 
     this.serverMapRequestManager = this.serverBuilder
@@ -1009,8 +1018,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                              new ServerMapEvictionHandler(this.serverMapEvictor), 8, TCPropertiesImpl.getProperties()
                                  .getInt(TCPropertiesConsts.L2_SEDA_EVICTION_PROCESSORSTAGE_SINK_SIZE));
     stageManager.createStage(ServerConfigurationContext.SERVER_MAP_CAPACITY_EVICTION_STAGE,
-                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor), this.l2Properties
-                                 .getInt("servermap.capacityEvictor.threads", 1), maxStageSize);
+                             new ServerMapCapacityEvictionHandler(this.serverMapEvictor),
+                             this.l2Properties.getInt("servermap.capacityEvictor.threads", 1), maxStageSize);
 
     this.objectRequestManager = this.serverBuilder.createObjectRequestManager(this.objectManager, channelManager,
                                                                               this.clientStateManager,
@@ -1055,9 +1064,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     final Stage clusterMetaDataStage = stageManager.createStage(ServerConfigurationContext.CLUSTER_METADATA_STAGE,
                                                                 new ServerClusterMetaDataHandler(), 1, maxStageSize);
 
-    initClassMappings();
-    initRouteMessages(processTx, rootRequest, requestLock, objectRequestStage, oidRequest, transactionAck,
-                      clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
+    initRouteMessages(messageRouter, processTx, rootRequest, requestLock, objectRequestStage, oidRequest,
+                      transactionAck, clientHandshake, txnLwmStage, jmxEventsStage, jmxRemoteTunnelStage,
                       clientLockStatisticsRespondStage, clusterMetaDataStage, serverMapRequestStage,
                       searchQueryRequestStage);
 
@@ -1076,12 +1084,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                  this.lockManager,
                                                                                                  this.serverMapEvictor,
                                                                                                  stageManager
-                                                                                                     .getStage(
-                                                                                                               ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
+                                                                                                     .getStage(ServerConfigurationContext.RESPOND_TO_LOCK_REQUEST_STAGE)
                                                                                                      .getSink(),
                                                                                                  stageManager
-                                                                                                     .getStage(
-                                                                                                               ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
+                                                                                                     .getStage(ServerConfigurationContext.OBJECT_ID_BATCH_REQUEST_STAGE)
                                                                                                      .getSink(),
                                                                                                  new Timer(
                                                                                                            "Reconnect timer",
@@ -1114,8 +1120,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       st.setDaemon(true);
       gc.setState(st);
     }
-    this.l2Management.findObjectManagementMonitorMBean().registerGCController(
-                                                                              new GCComptrollerImpl(this.objectManager
+    this.l2Management.findObjectManagementMonitorMBean().registerGCController(new GCComptrollerImpl(this.objectManager
                                                                                   .getGarbageCollector()));
     this.l2Management.findObjectManagementMonitorMBean().registerObjectIdFetcher(new ObjectIdsFetcher() {
       public Set getAllObjectIds() {
@@ -1143,8 +1148,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
           .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager);
 
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
-                                                                    this.groupCommManager, this.persistor
-                                                                        .getPersistentStateStore(),
+                                                                    this.groupCommManager,
+                                                                    this.persistor.getPersistentStateStore(),
                                                                     l2PassiveSyncStateManager, l2ObjectStateManager,
                                                                     l2IndexStateManager, this.objectManager,
                                                                     this.indexHACoordinator, this.transactionManager,
@@ -1174,9 +1179,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                        transactionBatchManager, gtxm,
                                                                        clientHandshakeManager, clusterMetaDataManager,
                                                                        serverStats, this.connectionIdFactory,
-                                                                       maxStageSize, this.l1Listener
-                                                                           .getChannelManager(), this, metaDataManager,
-                                                                       indexHACoordinator, searchRequestManager);
+                                                                       maxStageSize,
+                                                                       this.l1Listener.getChannelManager(), this,
+                                                                       metaDataManager, indexHACoordinator,
+                                                                       searchRequestManager);
     toInit.add(this.serverBuilder);
 
     stageManager.startAll(this.context, toInit);
@@ -1194,8 +1200,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       startBeanShell(this.l2Properties.getInt("beanshell.port"));
     }
 
-    final ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(this.objectManager, this.objectManager
-        .getObjectStore());
+    final ObjectStatsManager objStatsManager = new ObjectStatsManagerImpl(this.objectManager,
+                                                                          this.objectManager.getObjectStore());
     // Start lock statistics manager.
     lockStatsManager.start(channelManager, serverStats, objStatsManager);
     if (lockStatsManager.isLockStatisticsEnabled()) {
@@ -1251,120 +1257,115 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     throw new UnsupportedOperationException();
   }
 
-  protected void initRouteMessages(final Stage processTx, final Stage rootRequest, final Stage requestLock,
-                                   final Stage objectRequestStage, final Stage oidRequest, final Stage transactionAck,
-                                   final Stage clientHandshake, final Stage txnLwmStage, final Stage jmxEventsStage,
-                                   final Stage jmxRemoteTunnelStage, final Stage clientLockStatisticsRespondStage,
-                                   final Stage clusterMetaDataStage, final Stage serverMapRequestStage,
-                                   final Stage searchQueryRequestStage) {
+  protected void initRouteMessages(TCMessageRouter messageRouter, final Stage processTx, final Stage rootRequest,
+                                   final Stage requestLock, final Stage objectRequestStage, final Stage oidRequest,
+                                   final Stage transactionAck, final Stage clientHandshake, final Stage txnLwmStage,
+                                   final Stage jmxEventsStage, final Stage jmxRemoteTunnelStage,
+                                   final Stage clientLockStatisticsRespondStage, final Stage clusterMetaDataStage,
+                                   final Stage serverMapRequestStage, final Stage searchQueryRequestStage) {
     final Sink hydrateSink = this.hydrateStage.getSink();
-    this.l1Listener.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.REQUEST_ROOT_MESSAGE, rootRequest.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, objectRequestStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, oidRequest.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE,
-                                     jmxRemoteTunnelStage.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, jmxRemoteTunnelStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, clientLockStatisticsRespondStage
-        .getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE, txnLwmStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, clusterMetaDataStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener
-        .routeMessageType(TCMessageType.NODES_WITH_KEYS_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
-                                     hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE, serverMapRequestStage
-        .getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE, serverMapRequestStage
-        .getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE, serverMapRequestStage
-        .getSink(), hydrateSink);
-    this.l1Listener.routeMessageType(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
-                                     hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.COMMIT_TRANSACTION_MESSAGE, processTx.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LOCK_REQUEST_MESSAGE, requestLock.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.REQUEST_ROOT_MESSAGE, rootRequest.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, objectRequestStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, oidRequest.getSink(), hydrateSink);
+    messageRouter
+        .routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionAck.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, clientHandshake.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.JMX_MESSAGE, jmxEventsStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLIENT_JMX_READY_MESSAGE, jmxRemoteTunnelStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE,
+                                   clientLockStatisticsRespondStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE, txnLwmStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, clusterMetaDataStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODES_WITH_KEYS_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, clusterMetaDataStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODE_META_DATA_MESSAGE, clusterMetaDataStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE, serverMapRequestStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE,
+                                   serverMapRequestStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                   serverMapRequestStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, searchQueryRequestStage.getSink(),
+                                   hydrateSink);
 
   }
 
-  protected void initClassMappings() {
-    this.l1Listener.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
-                                    BatchTransactionAcknowledgeMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE,
-                                    LockStatisticsResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
-    this.l1Listener
-        .addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
-                                    RequestManagedObjectResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, ObjectsNotFoundMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
-                                    ObjectIDBatchRequestResponseMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE,
-                                    AcknowledgeTransactionMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE,
-                                    ClientHandshakeRefusedMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
-    this.l1Listener.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
-                                    CompletedTransactionLowWaterMarkMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
-                                    NodesWithObjectsResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE,
-                                    NodesWithKeysResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE,
-                                    KeysForOrphanedValuesMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
-                                    KeysForOrphanedValuesResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE,
-                                    NodeMetaDataResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
-                                    SyncWriteTransactionReceivedMessage.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE,
-                                    GetAllSizeServerMapRequestMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
-                                    GetAllSizeServerMapResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
-                                    GetAllKeysServerMapRequestMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
-                                    GetAllKeysServerMapResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
-                                    GetValueServerMapRequestMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
-                                    GetValueServerMapResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
-                                    ObjectNotFoundServerMapResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
-    this.l1Listener.addClassMapping(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
-                                    ServerMapEvictionBroadcastMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, SearchQueryRequestMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, SearchQueryResponseMessageImpl.class);
-    this.l1Listener.addClassMapping(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
+  private HashMap<TCMessageType, Class> getMessageTypeClassMappings() {
+    HashMap<TCMessageType, Class> messageTypeClassMapping = new HashMap<TCMessageType, Class>();
+    messageTypeClassMapping.put(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
+                                BatchTransactionAcknowledgeMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
+    messageTypeClassMapping
+        .put(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
+                                RequestManagedObjectResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, ObjectsNotFoundMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
+                                ObjectIDBatchRequestResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
+    messageTypeClassMapping
+        .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.JMX_MESSAGE, JMXMessage.class);
+    messageTypeClassMapping.put(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
+    messageTypeClassMapping.put(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
+                                CompletedTransactionLowWaterMarkMessage.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
+                                NodesWithObjectsResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
+                                KeysForOrphanedValuesResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, NodeMetaDataResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
+                                SyncWriteTransactionReceivedMessage.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE,
+                                GetAllSizeServerMapRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
+                                GetAllSizeServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                GetAllKeysServerMapRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
+                                GetAllKeysServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
+                                GetValueServerMapRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
+                                GetValueServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
+                                ObjectNotFoundServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
+    messageTypeClassMapping.put(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
+                                ServerMapEvictionBroadcastMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, SearchQueryRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, SearchQueryResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
+    return messageTypeClassMapping;
   }
 
   protected TCLogger getLogger() {
@@ -1391,11 +1392,6 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     return this.l1Listener.getChannelManager();
   }
 
-  // for testing purpose only
-  public void addClassMapping(final TCMessageType type, final Class msgClass) {
-    this.l1Listener.addClassMapping(type, msgClass);
-  }
-
   private void setLoggerOnExit() {
     CommonShutDownHook.addShutdownHook(new Runnable() {
       public void run() {
@@ -1404,8 +1400,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     });
   }
 
-  private void populateStatisticsRetrievalRegistry(
-                                                   final DSOGlobalServerStats serverStats,
+  private void populateStatisticsRetrievalRegistry(final DSOGlobalServerStats serverStats,
                                                    final StageManager stageManager,
                                                    final MessageMonitor messageMonitor,
                                                    final ServerTransactionManagerImpl txnManager,
@@ -1714,5 +1709,10 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   public boolean isAlive(final String name) {
     throw new UnsupportedOperationException();
+  }
+
+  // for tests only
+  public CommunicationsManager getCommunicationsManager() {
+    return communicationsManager;
   }
 }

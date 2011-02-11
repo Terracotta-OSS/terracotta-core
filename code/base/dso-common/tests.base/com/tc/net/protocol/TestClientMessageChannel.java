@@ -4,7 +4,6 @@
  */
 package com.tc.net.protocol;
 
-import com.tc.async.api.Sink;
 import com.tc.exception.ImplementMe;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
@@ -15,11 +14,9 @@ import com.tc.net.protocol.tcm.ChannelEventListener;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.net.protocol.tcm.ChannelIDProvider;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
-import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageFactory;
 import com.tc.net.protocol.tcm.TCMessageRouter;
-import com.tc.net.protocol.tcm.TCMessageSink;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.session.SessionProvider;
 
@@ -49,11 +46,6 @@ public class TestClientMessageChannel implements ClientMessageChannel {
     this.initConnect = false;
   }
 
-  public void addClassMapping(final TCMessageType type, final Class msgClass) {
-    throw new ImplementMe();
-
-  }
-
   public ChannelIDProvider getChannelIDProvider() {
     throw new ImplementMe();
   }
@@ -64,16 +56,6 @@ public class TestClientMessageChannel implements ClientMessageChannel {
 
   public int getConnectCount() {
     throw new ImplementMe();
-  }
-
-  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
-    throw new ImplementMe();
-
-  }
-
-  public void routeMessageType(final TCMessageType type, final TCMessageSink sink) {
-    throw new ImplementMe();
-
   }
 
   public void unrouteMessageType(final TCMessageType type) {
@@ -154,10 +136,6 @@ public class TestClientMessageChannel implements ClientMessageChannel {
   }
 
   public void setLocalNodeID(final NodeID source) {
-    throw new ImplementMe();
-  }
-
-  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
     throw new ImplementMe();
   }
 

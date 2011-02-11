@@ -1,10 +1,12 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.net.protocol.tcm;
 
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
+import com.tc.async.api.Sink;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 
@@ -14,8 +16,8 @@ import java.util.Map;
  * @author orion
  */
 public class TCMessageRouterImpl implements TCMessageRouter {
-  private static final TCLogger logger                   = TCLogging.getLogger(TCMessageRouter.class);
-  private final Map             routesByType             = new ConcurrentReaderHashMap();
+  private static final TCLogger logger       = TCLogging.getLogger(TCMessageRouter.class);
+  private final Map             routesByType = new ConcurrentReaderHashMap();
   private final TCMessageSink   defaultRoute;
 
   public TCMessageRouterImpl() {
@@ -54,6 +56,10 @@ public class TCMessageRouterImpl implements TCMessageRouter {
   public void routeMessageType(TCMessageType type, TCMessageSink sink) {
     if (null == sink) { throw new IllegalArgumentException("Sink cannot be null"); }
     routesByType.put(type, sink);
+  }
+
+  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
+    routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
   }
 
   public void unrouteMessageType(TCMessageType type) {

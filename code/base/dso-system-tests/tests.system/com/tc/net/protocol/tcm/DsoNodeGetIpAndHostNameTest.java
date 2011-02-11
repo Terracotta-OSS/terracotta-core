@@ -63,19 +63,21 @@ public class DsoNodeGetIpAndHostNameTest extends BaseDSOTestCase {
       dsoCluster2 = (DsoClusterImpl) mgr2.getDsoCluster();
 
       try {
-        ClientMessageChannel clientChannel = client1.getChannel().channel();
+        ClientMessageChannelImpl clientChannel = (ClientMessageChannelImpl) client1.getChannel().channel();
         ServerMessageChannelImpl serverChannel = (ServerMessageChannelImpl) server.getDSOServer().getChannelManager()
             .getChannel(clientChannel.getChannelID());
 
         // setup server to send ping message
-        server.getDSOServer().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+        serverChannel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
         PingMessageSink serverSink = new PingMessageSink();
-        serverChannel.routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
+        ((CommunicationsManagerImpl) server.getDSOServer().getCommunicationsManager()).getMessageRouter()
+            .routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
 
         // set up client to receive ping message
         clientChannel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
         PingMessageSink clientSink = new PingMessageSink();
-        clientChannel.routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
+        ((CommunicationsManagerImpl) client1.getCommunicationsManager()).getMessageRouter()
+            .routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
 
         // server ping client
         TCMessage msg = serverChannel.createMessage(TCMessageType.PING_MESSAGE);

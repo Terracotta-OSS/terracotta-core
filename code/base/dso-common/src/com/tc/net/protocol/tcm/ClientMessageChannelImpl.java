@@ -28,7 +28,6 @@ import java.net.UnknownHostException;
 
 public class ClientMessageChannelImpl extends AbstractMessageChannel implements ClientMessageChannel {
   private static final TCLogger       logger           = TCLogging.getLogger(ClientMessageChannel.class);
-  private final TCMessageFactory      msgFactory;
   private int                         connectAttemptCount;
   private int                         connectCount;
   private ChannelID                   channelID;
@@ -39,7 +38,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   protected ClientMessageChannelImpl(final TCMessageFactory msgFactory, final TCMessageRouter router,
                                      final SessionProvider sessionProvider, final NodeID remoteNodeID) {
     super(router, logger, msgFactory, remoteNodeID);
-    this.msgFactory = msgFactory;
     this.cidProvider = new ChannelIDProviderImpl();
     this.sessionProvider = sessionProvider;
     this.sessionProvider.initProvider(remoteNodeID);
@@ -61,14 +59,6 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
       this.channelSessionID = this.sessionProvider.getSessionID(getRemoteNodeID());
       return id;
     }
-  }
-
-  public void addClassMapping(final TCMessageType type, final Class msgClass) {
-    this.msgFactory.addClassMapping(type, msgClass);
-  }
-
-  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
-    this.msgFactory.addClassMapping(type, messageFactory);
   }
 
   public ChannelID getChannelID() {

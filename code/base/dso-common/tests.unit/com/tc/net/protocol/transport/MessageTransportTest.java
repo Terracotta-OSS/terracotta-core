@@ -18,6 +18,7 @@ import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.object.session.NullSessionManager;
 import com.tc.test.TCTestCase;
 import com.tc.util.TCAssertionError;
@@ -68,10 +69,11 @@ public class MessageTransportTest extends TCTestCase {
     clientConnection.localAddress = new TCSocketAddress("localhost", 0);
     connManager = new MockConnectionManager();
     connManager.setConnection(clientConnection);
-    commsManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(),
+    commsManager = new CommunicationsManagerImpl("TestCommsMgr", new NullMessageMonitor(), new TCMessageRouterImpl(),
                                                  new PlainNetworkStackHarnessFactory(), connManager,
                                                  new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
-                                                 new TransportHandshakeErrorNullHandler());
+                                                 new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
+                                                 Collections.EMPTY_MAP);
     lsnr = commsManager.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                        new DefaultConnectionIdFactory());
     lsnr.start(Collections.EMPTY_SET);

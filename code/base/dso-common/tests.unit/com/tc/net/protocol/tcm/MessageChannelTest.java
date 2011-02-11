@@ -15,6 +15,7 @@ import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.PlainNetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.msgs.PingMessage;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
+import com.tc.net.protocol.transport.DisabledHealthCheckerConfigImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.WireProtocolMessage;
 import com.tc.net.protocol.transport.WireProtocolMessageSink;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -51,6 +53,8 @@ public class MessageChannelTest extends TCTestCase {
   NetworkListener              lsnr;
   CommunicationsManager        clientComms;
   CommunicationsManager        serverComms;
+  TCMessageRouter              clientMessageRouter;
+  TCMessageRouter              serverMessageRouter;
   ClientMessageChannel         clientChannel;
   MessageSendAndReceiveWatcher clientWatcher;
   MessageSendAndReceiveWatcher serverWatcher;
@@ -83,11 +87,18 @@ public class MessageChannelTest extends TCTestCase {
     clientWatcher = new MessageSendAndReceiveWatcher();
     serverWatcher = new MessageSendAndReceiveWatcher();
 
+    clientMessageRouter = new TCMessageRouterImpl();
+    serverMessageRouter = new TCMessageRouterImpl();
     MessageMonitor mm = new NullMessageMonitor();
-    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientStackHarnessFactory,
-                                                new NullConnectionPolicy(), 0);
-    serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverStackHarnessFactory,
-                                                new NullConnectionPolicy(), 0);
+    clientComms = new CommunicationsManagerImpl("TestCommMgr-client", mm, clientMessageRouter,
+                                                clientStackHarnessFactory, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), Collections.EMPTY_MAP,
+                                                Collections.EMPTY_MAP);
+
+    serverComms = new CommunicationsManagerImpl("TestCommMgr-server", mm, serverMessageRouter,
+                                                serverStackHarnessFactory, new NullConnectionPolicy(),
+                                                new DisabledHealthCheckerConfigImpl(), Collections.EMPTY_MAP,
+                                                Collections.EMPTY_MAP);
 
     initListener(clientWatcher, serverWatcher, dumbServerSink);
     this.clientChannel = createClientMessageChannel(maxReconnectTries);
@@ -101,6 +112,29 @@ public class MessageChannelTest extends TCTestCase {
       lsnr.stop(WAIT);
     }
 
+    serverComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
+                                                                                  new TCMessageSink() {
+                                                                                    public void putMessage(TCMessage message)
+                                                                                        throws UnsupportedMessageTypeException {
+                                                                                      // System.out.println(message);
+
+                                                                                      PingMessage ping = (PingMessage) message;
+                                                                                      try {
+                                                                                        message.hydrate();
+                                                                                      } catch (Exception e) {
+                                                                                        setError(e);
+                                                                                      }
+                                                                                      myClientSenderWatcher
+                                                                                          .addMessageReceived(ping);
+
+                                                                                      PingMessage pong = ping
+                                                                                          .createResponse();
+                                                                                      pong.send();
+                                                                                      myServerSenderWatcher
+                                                                                          .addMessageSent(pong);
+                                                                                    }
+                                                                                  });
     if (dumbServerSink) {
       lsnr = serverComms.createListener(new NullSessionManager(), new TCSocketAddress(port), false,
                                         new DefaultConnectionIdFactory(), new WireProtocolMessageSink() {
@@ -118,28 +152,11 @@ public class MessageChannelTest extends TCTestCase {
                                         new DefaultConnectionIdFactory());
     }
 
-    lsnr.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    lsnr.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-        // System.out.println(message);
-
-        PingMessage ping = (PingMessage) message;
-        try {
-          message.hydrate();
-        } catch (Exception e) {
-          setError(e);
-        }
-        myClientSenderWatcher.addMessageReceived(ping);
-
-        PingMessage pong = ping.createResponse();
-        pong.send();
-        myServerSenderWatcher.addMessageSent(pong);
-      }
-    });
     lsnr.start(new HashSet());
     this.port = lsnr.getBindPort();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
 
@@ -182,6 +199,7 @@ public class MessageChannelTest extends TCTestCase {
     setUp(-1, false, true);
 
     Thread t = new Thread() {
+      @Override
       public void run() {
         ThreadUtil.reallySleep(WAIT / 2);
         serverComms.getConnectionManager().shutdown();
@@ -224,16 +242,19 @@ public class MessageChannelTest extends TCTestCase {
                                                                        new PlainNetworkStackHarnessFactory(),
                                                                        new NullConnectionPolicy(), 0);
 
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, true, serverComms1);
     NetworkListener lsnr1 = getListener(clientWatcher, serverWatcher, true, serverComms1);
+
+    addCommsMappingAndRouting(clientWatcher, serverWatcher, false, serverComms2);
     NetworkListener lsnr2 = getListener(clientWatcher, serverWatcher, false, serverComms2);
 
     CommunicationsManager clComms = new CommunicationsManagerImpl("TestCommMgr-client", mm,
                                                                   new PlainNetworkStackHarnessFactory(),
                                                                   new NullConnectionPolicy(), 0);
 
+    this.setUpClientReceiveSink();
     this.clientChannel = createClientMessageChannel(clComms, -1, lsnr1.getBindPort(), new ConnectionInfo[] {
         new ConnectionInfo("localhost", lsnr1.getBindPort()), new ConnectionInfo("localhost", lsnr2.getBindPort()) });
-    this.setUpClientReceiveSink();
 
     try {
       clientChannel.open();
@@ -265,26 +286,36 @@ public class MessageChannelTest extends TCTestCase {
                                        new DefaultConnectionIdFactory());
     }
 
-    rv.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
-    rv.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-        // System.out.println(message);
-
-        PingMessage ping = (PingMessage) message;
-        try {
-          message.hydrate();
-        } catch (Exception e) {
-          setError(e);
-        }
-        clientWatcher2.addMessageReceived(ping);
-
-        PingMessage pong = ping.createResponse();
-        pong.send();
-        serverWatcher2.addMessageSent(pong);
-      }
-    });
     rv.start(new HashSet());
     return rv;
+  }
+
+  private void addCommsMappingAndRouting(final MessageSendAndReceiveWatcher clientWatcher2,
+                                         final MessageSendAndReceiveWatcher serverWatcher2, boolean dumbServerSink,
+                                         CommunicationsManager serverComms1) {
+    serverComms1.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    ((CommunicationsManagerImpl) serverComms1).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
+                                                                                   new TCMessageSink() {
+                                                                                     public void putMessage(TCMessage message)
+                                                                                         throws UnsupportedMessageTypeException {
+                                                                                       // System.out.println(message);
+
+                                                                                       PingMessage ping = (PingMessage) message;
+                                                                                       try {
+                                                                                         message.hydrate();
+                                                                                       } catch (Exception e) {
+                                                                                         setError(e);
+                                                                                       }
+                                                                                       clientWatcher2
+                                                                                           .addMessageReceived(ping);
+
+                                                                                       PingMessage pong = ping
+                                                                                           .createResponse();
+                                                                                       pong.send();
+                                                                                       serverWatcher2
+                                                                                           .addMessageSent(pong);
+                                                                                     }
+                                                                                   });
   }
 
   public void testAutomaticReconnect() throws Exception {
@@ -505,10 +536,10 @@ public class MessageChannelTest extends TCTestCase {
 
   private ClientMessageChannel createClientMessageChannel(CommunicationsManager clComms, int maxReconnectTries,
                                                           int lsnrPort, final ConnectionInfo[] connInfo) {
+    clComms.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     ClientMessageChannel ch = clComms.createClientChannel(new NullSessionManager(), maxReconnectTries,
                                                           TCSocketAddress.LOOPBACK_IP, lsnrPort, WAIT,
                                                           new ConnectionAddressProvider(connInfo));
-    ch.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     return ch;
   }
 
@@ -529,6 +560,7 @@ public class MessageChannelTest extends TCTestCase {
       if (i == closeCount) {
         // close down the connection in a seperate thread to increase the timing randomness
         thread = new Thread("Connection closer thread") {
+          @Override
           public void run() {
             try {
               if (serverClose) {
@@ -575,19 +607,23 @@ public class MessageChannelTest extends TCTestCase {
 
   private void setUpClientReceiveSink() {
     final MessageSendAndReceiveWatcher myServerSenderWatcher = this.serverWatcher;
-    clientChannel.routeMessageType(TCMessageType.PING_MESSAGE, new TCMessageSink() {
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-        try {
-          PingMessage ping = (PingMessage) message;
-          ping.hydrate();
-          // System.out.println("CLIENT RECEIVE: " + ping.getSequence());
-        } catch (Exception e) {
-          setError(e);
-        }
-        PingMessage ping = (PingMessage) message;
-        myServerSenderWatcher.addMessageReceived(ping);
-      }
-    });
+    ((CommunicationsManagerImpl) clientComms).getMessageRouter().routeMessageType(TCMessageType.PING_MESSAGE,
+                                                                                  new TCMessageSink() {
+                                                                                    public void putMessage(TCMessage message)
+                                                                                        throws UnsupportedMessageTypeException {
+                                                                                      try {
+                                                                                        PingMessage ping = (PingMessage) message;
+                                                                                        ping.hydrate();
+                                                                                        // System.out.println("CLIENT RECEIVE: "
+                                                                                        // + ping.getSequence());
+                                                                                      } catch (Exception e) {
+                                                                                        setError(e);
+                                                                                      }
+                                                                                      PingMessage ping = (PingMessage) message;
+                                                                                      myServerSenderWatcher
+                                                                                          .addMessageReceived(ping);
+                                                                                    }
+                                                                                  });
   }
 
   private void setError(Throwable t) {
@@ -601,8 +637,8 @@ public class MessageChannelTest extends TCTestCase {
 
   public static class MessageSendAndReceiveWatcher {
 
-    private TLongHashSet sentSequences     = new TLongHashSet();
-    private TLongHashSet receivedSequences = new TLongHashSet();
+    private final TLongHashSet sentSequences     = new TLongHashSet();
+    private final TLongHashSet receivedSequences = new TLongHashSet();
 
     public synchronized void addMessageSent(PingMessage sent) {
       sentSequences.add(sent.getSequence());

@@ -20,6 +20,7 @@ import com.tc.net.protocol.tcm.CommunicationsManagerImpl;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.net.protocol.tcm.NetworkListener;
 import com.tc.net.protocol.tcm.NullMessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.transport.ClientConnectionEstablisher;
 import com.tc.net.protocol.transport.DefaultConnectionIdFactory;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -82,8 +83,10 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   }
 
   public void testConnectionEstablisherThreadExit() throws Exception {
+
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
                                                                          new NullMessageMonitor(),
+                                                                         new TCMessageRouterImpl(),
                                                                          getNetworkStackHarnessFactory(false),
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -91,7 +94,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                              .getPropertiesFor("l2.healthcheck.l2"),
                                                                                                      "Test Server"),
                                                                          new ServerID(),
-                                                                         new TransportHandshakeErrorNullHandler());
+                                                                         new TransportHandshakeErrorNullHandler(),
+                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);
@@ -142,6 +146,7 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
   public void testConnectionEstablisherThreadExitAfterOOO() throws Exception {
     CommunicationsManager serverCommsMgr = new CommunicationsManagerImpl("TestCommsMgr-Server",
                                                                          new NullMessageMonitor(),
+                                                                         new TCMessageRouterImpl(),
                                                                          getNetworkStackHarnessFactory(true),
                                                                          new NullConnectionPolicy(), 3,
                                                                          new HealthCheckerConfigImpl(TCPropertiesImpl
@@ -149,7 +154,8 @@ public class NoReconnectThreadTest extends TCTestCase implements ChannelEventLis
                                                                              .getPropertiesFor("l2.healthcheck.l2"),
                                                                                                      "Test Server"),
                                                                          new ServerID(),
-                                                                         new TransportHandshakeErrorNullHandler());
+                                                                         new TransportHandshakeErrorNullHandler(),
+                                                                         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
     NetworkListener listener = serverCommsMgr.createListener(new NullSessionManager(), new TCSocketAddress(0), true,
                                                              new DefaultConnectionIdFactory());
     listener.start(Collections.EMPTY_SET);

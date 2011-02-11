@@ -65,7 +65,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
     final int jmxPort = pc.chooseRandomPort();
 
     final TCServerImpl server = (TCServerImpl) startupServer(dsoPort, jmxPort);
-    server.getDSOServer().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    server.getDSOServer().getCommunicationsManager().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
 
     configFactory().addServerToL1Config("127.0.0.1", dsoPort, jmxPort);
     L1ConfigurationSetupManager manager = super.createL1ConfigManager();
@@ -86,7 +86,7 @@ public class ClientShutdownTest extends BaseDSOTestCase {
     // wait until client handshake is complete...
     waitUntilUnpaused(client);
 
-    ClientMessageChannel clientChannel = client.getChannel().channel();
+    ClientMessageChannelImpl clientChannel = (ClientMessageChannelImpl) client.getChannel().channel();
     clientChannel.addListener(chLsnr);
 
     ServerMessageChannelImpl serverChannel = (ServerMessageChannelImpl) server.getDSOServer().getChannelManager()
@@ -94,12 +94,19 @@ public class ClientShutdownTest extends BaseDSOTestCase {
 
     // setup server to send ping message
     PingMessageSink serverSink = new PingMessageSink();
-    serverChannel.routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
+    try {
+      ((AbstractMessageChannel) serverChannel).addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+    } catch (IllegalStateException ise) {
+      // might have been already added. these hacks are just for tests.
+    }
+    ((CommunicationsManagerImpl) server.getDSOServer().getCommunicationsManager()).getMessageRouter()
+        .routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
 
     // set up client to receive ping message
     clientChannel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
     PingMessageSink clientSink = new PingMessageSink();
-    clientChannel.routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
+    ((CommunicationsManagerImpl) client.getCommunicationsManager()).getMessageRouter()
+        .routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
 
     // server ping client
     TCMessage msg = serverChannel.createMessage(TCMessageType.PING_MESSAGE);
@@ -180,16 +187,17 @@ public class ClientShutdownTest extends BaseDSOTestCase {
                                                                  new TCThreadGroup(new ThrowableHandler(TCLogging
                                                                      .getLogger(DistributedObjectClient.class))),
                                                                  new MockClassProvider(),
-                                                                 preparedComponentsFromL2Connection, NullManager
-                                                                     .getInstance(),
+                                                                 preparedComponentsFromL2Connection,
+                                                                 NullManager.getInstance(),
                                                                  new StatisticsAgentSubSystemImpl(),
                                                                  new DsoClusterImpl(), new NullRuntimeLogger());
     client.start();
     return client;
   }
 
-  protected final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                          .getLogger(DistributedObjectServer.class)));
+  protected final TCThreadGroup group = new TCThreadGroup(
+                                                          new ThrowableHandler(TCLogging
+                                                              .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
     private final int dsoPort;

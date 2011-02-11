@@ -53,19 +53,21 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         // wait until client handshake is complete...
         waitUntilUnpaused(client);
 
-        ClientMessageChannel clientChannel = client.getChannel().channel();
+        ClientMessageChannelImpl clientChannel = (ClientMessageChannelImpl) client.getChannel().channel();
         ServerMessageChannelImpl serverChannel = (ServerMessageChannelImpl) server.getDSOServer().getChannelManager()
             .getChannel(clientChannel.getChannelID());
 
         // setup server to send ping message
-        server.getDSOServer().addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
+        serverChannel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
         PingMessageSink serverSink = new PingMessageSink();
-        serverChannel.routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
+        ((CommunicationsManagerImpl) server.getDSOServer().getCommunicationsManager()).getMessageRouter()
+            .routeMessageType(TCMessageType.PING_MESSAGE, serverSink);
 
         // set up client to receive ping message
         clientChannel.addClassMapping(TCMessageType.PING_MESSAGE, PingMessage.class);
         PingMessageSink clientSink = new PingMessageSink();
-        clientChannel.routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
+        ((CommunicationsManagerImpl) client.getCommunicationsManager()).getMessageRouter()
+            .routeMessageType(TCMessageType.PING_MESSAGE, clientSink);
 
         // server ping client
         TCMessage msg = serverChannel.createMessage(TCMessageType.PING_MESSAGE);
@@ -90,7 +92,7 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
         Assert.assertTrue(server.getDSOServer().getServerNodeID().equals(pingReceived.getDestinationNodeID()));
 
         // two transport disconnect events to client.
-        ClientMessageChannelImpl cmci = (ClientMessageChannelImpl) clientChannel;
+        ClientMessageChannelImpl cmci = clientChannel;
         ClientMessageTransport cmt;
         if (cmci.getSendLayer() instanceof ClientMessageTransport) {
           cmt = (ClientMessageTransport) cmci.getSendLayer();
@@ -175,8 +177,9 @@ public class TwoDisconnectEventsTest extends BaseDSOTestCase {
     return client;
   }
 
-  protected final TCThreadGroup group = new TCThreadGroup(new ThrowableHandler(TCLogging
-                                          .getLogger(DistributedObjectServer.class)));
+  protected final TCThreadGroup group = new TCThreadGroup(
+                                                          new ThrowableHandler(TCLogging
+                                                              .getLogger(DistributedObjectServer.class)));
 
   protected class StartAction implements StartupHelper.StartupAction {
     private final int dsoPort;

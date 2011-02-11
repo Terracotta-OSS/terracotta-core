@@ -7,7 +7,6 @@ package com.tc.net.protocol.tcm;
 import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArraySet;
 
-import com.tc.async.api.Sink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.logging.TCLogger;
 import com.tc.net.ClientID;
@@ -106,23 +105,8 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
     return rv;
   }
 
-  public void routeMessageType(TCMessageType messageType, TCMessageSink dest) {
-    router.routeMessageType(messageType, dest);
-  }
-
-  public void unrouteMessageType(TCMessageType messageType) {
-    router.unrouteMessageType(messageType);
-  }
-
   public abstract NetworkStackID open() throws MaxConnectionsExceededException, TCTimeoutException,
       UnknownHostException, IOException, CommStackMismatchException;
-
-  /**
-   * Routes a TCMessage to a sink. The hydrate sink will do the hydrate() work
-   */
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink) {
-    routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
-  }
 
   private void fireChannelOpenedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_OPENED_EVENT, AbstractMessageChannel.this));
@@ -130,6 +114,14 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
 
   private void fireChannelClosedEvent() {
     fireEvent(new ChannelEventImpl(ChannelEventType.CHANNEL_CLOSED_EVENT, AbstractMessageChannel.this));
+  }
+
+  public void addClassMapping(final TCMessageType type, final Class msgClass) {
+    this.msgFactory.addClassMapping(type, msgClass);
+  }
+
+  public void addClassMapping(final TCMessageType type, final GeneratedMessageFactory messageFactory) {
+    this.msgFactory.addClassMapping(type, messageFactory);
   }
 
   void channelOpened() {

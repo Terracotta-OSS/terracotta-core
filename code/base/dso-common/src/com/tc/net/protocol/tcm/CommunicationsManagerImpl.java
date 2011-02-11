@@ -45,13 +45,17 @@ import com.tc.net.protocol.transport.WireProtocolMessageSink;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.session.SessionProvider;
 import com.tc.util.Assert;
+import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.concurrent.SetOnceFlag;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -61,25 +65,29 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author teck
  */
 public class CommunicationsManagerImpl implements CommunicationsManager {
-  private static final TCLogger                  logger               = TCLogging
-                                                                          .getLogger(CommunicationsManager.class);
+  private static final TCLogger                                             logger                    = TCLogging
+                                                                                                          .getLogger(CommunicationsManager.class);
 
-  private final SetOnceFlag                      shutdown             = new SetOnceFlag();
-  private final Set                              listeners            = new HashSet();
-  private final ReentrantLock                    licenseLock          = new ReentrantLock();
-  private final TCConnectionManager              connectionManager;
-  private final boolean                          privateConnMgr;
-  private final NetworkStackHarnessFactory       stackHarnessFactory;
-  private final TransportHandshakeMessageFactory transportMessageFactory;
-  private final MessageMonitor                   monitor;
-  private final HealthCheckerConfig              healthCheckerConfig;
-  private final ConnectionPolicy                 connectionPolicy;
-  private ConnectionHealthChecker                connectionHealthChecker;
-  private ServerID                               serverID             = ServerID.NULL_ID;
-  private int                                    callbackPort         = TransportHandshakeMessage.NO_CALLBACK_PORT;
-  private NetworkListener                        callbackportListener = null;
-  private final TransportHandshakeErrorHandler   handshakeErrHandler;
-  private final String                           commsMgrName;
+  private final SetOnceFlag                                                 shutdown                  = new SetOnceFlag();
+  private final Set                                                         listeners                 = new HashSet();
+  private final ReentrantLock                                               licenseLock               = new ReentrantLock();
+  private final TCConnectionManager                                         connectionManager;
+  private final boolean                                                     privateConnMgr;
+  private final NetworkStackHarnessFactory                                  stackHarnessFactory;
+  private final TransportHandshakeMessageFactory                            transportMessageFactory;
+  private final MessageMonitor                                              monitor;
+  private final TCMessageRouter                                             messageRouter;
+  private final HealthCheckerConfig                                         healthCheckerConfig;
+  private final ConnectionPolicy                                            connectionPolicy;
+  protected final ConcurrentHashMap<TCMessageType, Class>                   messageTypeClassMapping   = new ConcurrentHashMap<TCMessageType, Class>();
+  protected final ConcurrentHashMap<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new ConcurrentHashMap<TCMessageType, GeneratedMessageFactory>();
+
+  private ConnectionHealthChecker                                           connectionHealthChecker;
+  private ServerID                                                          serverID                  = ServerID.NULL_ID;
+  private int                                                               callbackPort              = TransportHandshakeMessage.NO_CALLBACK_PORT;
+  private NetworkListener                                                   callbackportListener      = null;
+  private final TransportHandshakeErrorHandler                              handshakeErrHandler;
+  private final String                                                      commsMgrName;
 
   /**
    * Create a communications manager. This implies that one or more network handling threads will be started on your
@@ -87,30 +95,43 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    */
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, new DisabledHealthCheckerConfigImpl(),
-         new TransportHandshakeErrorHandlerForL1());
+    this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy, 0,
+         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(), Collections.EMPTY_MAP,
+         Collections.EMPTY_MAP);
+
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    int workerCommCount) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount,
-         new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1());
+    this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, null, connectionPolicy,
+         workerCommCount, new DisabledHealthCheckerConfigImpl(), new TransportHandshakeErrorHandlerForL1(),
+         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
   }
 
   public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    HealthCheckerConfig config) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, 0, config,
-         new TransportHandshakeErrorHandlerForL1());
+    this(commsMgrName, monitor, new TCMessageRouterImpl(), stackHarnessFactory, connectionPolicy, config,
+         Collections.EMPTY_MAP, Collections.EMPTY_MAP);
   }
 
-  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
+                                   NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
+                                   HealthCheckerConfig config, Map<TCMessageType, Class> messageTypeClassMapping,
+                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
+    this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, 0, config,
+         new TransportHandshakeErrorHandlerForL1(), messageTypeClassMapping, messageTypeFactoryMapping);
+  }
+
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
                                    NetworkStackHarnessFactory stackHarnessFactory, ConnectionPolicy connectionPolicy,
                                    int workerCommCount, HealthCheckerConfig config, ServerID serverID,
-                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler) {
-    this(commsMgrName, monitor, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
-         transportHandshakeErrorHandler);
+                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler,
+                                   Map<TCMessageType, Class> messageTypeClassMapping,
+                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
+    this(commsMgrName, monitor, messageRouter, stackHarnessFactory, null, connectionPolicy, workerCommCount, config,
+         transportHandshakeErrorHandler, messageTypeClassMapping, messageTypeFactoryMapping);
     this.serverID = serverID;
   }
 
@@ -121,19 +142,24 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
    * @param connMgr the connection manager to use
    * @param serverDescriptors
    */
-  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor,
+  public CommunicationsManagerImpl(String commsMgrName, MessageMonitor monitor, TCMessageRouter messageRouter,
                                    NetworkStackHarnessFactory stackHarnessFactory, TCConnectionManager connMgr,
                                    ConnectionPolicy connectionPolicy, int workerCommCount,
                                    HealthCheckerConfig healthCheckerConf,
-                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler) {
+                                   TransportHandshakeErrorHandler transportHandshakeErrorHandler,
+                                   Map<TCMessageType, Class> messageTypeClassMapping,
+                                   Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping) {
     this.commsMgrName = commsMgrName;
     this.monitor = monitor;
+    this.messageRouter = messageRouter;
     this.transportMessageFactory = new TransportMessageFactoryImpl();
     this.connectionPolicy = connectionPolicy;
     this.stackHarnessFactory = stackHarnessFactory;
     this.healthCheckerConfig = healthCheckerConf;
     this.handshakeErrHandler = transportHandshakeErrorHandler;
-    privateConnMgr = (connMgr == null);
+    this.privateConnMgr = (connMgr == null);
+    this.messageTypeClassMapping.putAll(messageTypeClassMapping);
+    this.messageTypeFactoryMapping.putAll(messageTypeFactoryMapping);
 
     Assert.assertNotNull(commsMgrName);
     if (null == connMgr) {
@@ -177,11 +203,18 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
   }
 
+  public void addClassMapping(TCMessageType messageType, Class messageClass) {
+    messageTypeClassMapping.put(messageType, messageClass);
+  }
+
+  public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory) {
+    messageTypeFactoryMapping.put(messageType, generatedMessageFactory);
+  }
+
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider) {
-    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, null,
-                               null, null);
+    return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider, null, null);
 
   }
 
@@ -190,19 +223,32 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
                                                   ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory) {
     return createClientChannel(sessionProvider, maxReconnectTries, hostname, port, timeout, addressProvider,
-                               transportFactory, null, null);
+                               transportFactory, null);
   }
 
   public ClientMessageChannel createClientChannel(final SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
                                                   MessageTransportFactory transportFactory,
-                                                  TCMessageFactory messageFactory, TCMessageRouter router) {
+                                                  TCMessageFactory messageFactory) {
 
-    TCMessageFactory msgFactory = (messageFactory != null) ? messageFactory : new TCMessageFactoryImpl(sessionProvider,
-                                                                                                       monitor);
-    TCMessageRouter msgRouter = (router != null) ? router : new TCMessageRouterImpl();
-    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, msgRouter, sessionProvider,
+    final TCMessageFactory msgFactory;
+
+    if (messageFactory == null) {
+      msgFactory = new TCMessageFactoryImpl(sessionProvider, monitor);
+      for (Entry<TCMessageType, Class> entry : this.messageTypeClassMapping.entrySet()) {
+        msgFactory.addClassMapping(entry.getKey(), entry.getValue());
+      }
+
+      for (Entry<TCMessageType, GeneratedMessageFactory> entry : this.messageTypeFactoryMapping.entrySet()) {
+        msgFactory.addClassMapping(entry.getKey(), entry.getValue());
+      }
+
+    } else {
+      msgFactory = messageFactory;
+    }
+
+    ClientMessageChannelImpl rv = new ClientMessageChannelImpl(msgFactory, this.messageRouter, sessionProvider,
                                                                new GroupID(addressProvider.getGroupId()));
     if (transportFactory == null) transportFactory = new MessageTransportFactoryImpl(transportMessageFactory,
                                                                                      connectionHealthChecker,
@@ -257,11 +303,19 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
     // The idea here is that someday we might want to pass in a custom channel factory. The reason you might want to do
     // that is so that you can control the actual class of the channels created off this listener
-    final TCMessageRouter msgRouter = new TCMessageRouterImpl();
     final TCMessageFactory msgFactory = new TCMessageFactoryImpl(sessionProvider, monitor);
+
+    for (Entry<TCMessageType, Class> entry : this.messageTypeClassMapping.entrySet()) {
+      msgFactory.addClassMapping(entry.getKey(), entry.getValue());
+    }
+
+    for (Entry<TCMessageType, GeneratedMessageFactory> entry : this.messageTypeFactoryMapping.entrySet()) {
+      msgFactory.addClassMapping(entry.getKey(), entry.getValue());
+    }
+
     final ServerMessageChannelFactory channelFactory = new ServerMessageChannelFactory() {
       public MessageChannelInternal createNewChannel(ChannelID id) {
-        return new ServerMessageChannelImpl(id, msgRouter, msgFactory, serverID);
+        return new ServerMessageChannelImpl(id, messageRouter, msgFactory, serverID);
       }
     };
 
@@ -273,8 +327,8 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
     }
 
     final ChannelManagerImpl channelManager = new ChannelManagerImpl(transportDisconnectRemovesChannel, channelFactory);
-    return new NetworkListenerImpl(addr, this, channelManager, msgFactory, msgRouter, reuseAddr, connectionIdFactory,
-                                   httpSink, wireProtoMsgSnk);
+    return new NetworkListenerImpl(addr, this, channelManager, msgFactory, messageRouter, reuseAddr,
+                                   connectionIdFactory, httpSink, wireProtoMsgSnk);
   }
 
   TCListener createCommsListener(TCSocketAddress addr, final ServerMessageChannelFactory channelFactory,
@@ -340,11 +394,12 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
       throw new TCRuntimeException("Cannot create InetAddress instance for " + TCSocketAddress.WILDCARD_IP);
     }
     AddressChecker addressChecker = new AddressChecker();
-    if (!addressChecker.isLegalBindAddress(bindAddr)) { throw new TCRuntimeException("Invalid bind address ["
-                                                                                     + bindAddr
-                                                                                     + "]. Local addresses are "
-                                                                                     + addressChecker
-                                                                                         .getAllLocalAddresses()); }
+    if (!addressChecker.isLegalBindAddress(bindAddr)) { throw new TCRuntimeException(
+                                                                                     "Invalid bind address ["
+                                                                                         + bindAddr
+                                                                                         + "]. Local addresses are "
+                                                                                         + addressChecker
+                                                                                             .getAllLocalAddresses()); }
 
     TCSocketAddress address = new TCSocketAddress(bindAddr, bindPort);
     NetworkListener callbackPortListener = createListener(new NullSessionManager(), address, true,
@@ -389,6 +444,10 @@ public class CommunicationsManagerImpl implements CommunicationsManager {
 
   public NetworkListener getCallbackPortListener() {
     return this.callbackportListener;
+  }
+
+  public TCMessageRouter getMessageRouter() {
+    return this.messageRouter;
   }
 
 }

@@ -51,6 +51,7 @@ import com.tc.objectserver.dgc.api.GarbageCollectionInfo;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.UUID;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,30 +66,34 @@ import junit.framework.TestCase;
  */
 public class TCGroupMessageWrapperTest extends TestCase {
 
-  private final static String               LOCALHOST      = "localhost";
-  MessageMonitor                            monitor        = new NullMessageMonitor();
-  final NullSessionManager                  sessionManager = new NullSessionManager();
-  final TCMessageFactory                    msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
-  final TCMessageRouter                     msgRouter      = new TCMessageRouterImpl();
-  private CommunicationsManager             clientComms;
-  private CommunicationsManager             serverComms;
-  private ChannelManager                    channelManager;
-  private LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
-  private long                              timeout        = 1000;
-  private TimeUnit                          unit           = TimeUnit.MILLISECONDS;
+  private final static String                     LOCALHOST      = "localhost";
+  MessageMonitor                                  monitor        = new NullMessageMonitor();
+  final NullSessionManager                        sessionManager = new NullSessionManager();
+  final TCMessageFactory                          msgFactory     = new TCMessageFactoryImpl(sessionManager, monitor);
+  final TCMessageRouter                           msgRouter      = new TCMessageRouterImpl();
+  private CommunicationsManager                   clientComms;
+  private CommunicationsManager                   serverComms;
+  private ChannelManager                          channelManager;
+  private final LinkedBlockingQueue<GroupMessage> queue          = new LinkedBlockingQueue(10);
+  private final long                              timeout        = 1000;
+  private final TimeUnit                          unit           = TimeUnit.MILLISECONDS;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
-    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new PlainNetworkStackHarnessFactory(),
-                                                null, new NullConnectionPolicy(), 0,
-                                                new DisabledHealthCheckerConfigImpl(),
-                                                new TransportHandshakeErrorNullHandler());
-    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new PlainNetworkStackHarnessFactory(),
-                                                null, new NullConnectionPolicy(), 0,
-                                                new DisabledHealthCheckerConfigImpl(),
-                                                new TransportHandshakeErrorNullHandler());
+    clientComms = new CommunicationsManagerImpl("TestCommsMgr-Client", monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), null,
+                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+                                                new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
+                                                Collections.EMPTY_MAP);
+    serverComms = new CommunicationsManagerImpl("TestCommsMgr-Server", monitor, new TCMessageRouterImpl(),
+                                                new PlainNetworkStackHarnessFactory(), null,
+                                                new NullConnectionPolicy(), 0, new DisabledHealthCheckerConfigImpl(),
+                                                new TransportHandshakeErrorNullHandler(), Collections.EMPTY_MAP,
+                                                Collections.EMPTY_MAP);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     try {
@@ -111,21 +116,24 @@ public class TCGroupMessageWrapperTest extends TestCase {
   }
 
   private NetworkListener initServer() throws Exception {
+    serverComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
+    ((CommunicationsManagerImpl) serverComms).getMessageRouter().routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE,
+                                                                                  new TCMessageSink() {
+                                                                                    public void putMessage(TCMessage message)
+                                                                                        throws UnsupportedMessageTypeException {
+                                                                                      try {
+                                                                                        TCGroupMessageWrapper mesg = (TCGroupMessageWrapper) message;
+                                                                                        mesg.hydrate();
+                                                                                        queue.offer(mesg.getGroupMessage(),
+                                                                                                    timeout, unit);
+                                                                                      } catch (Exception e) {
+                                                                                        throw new RuntimeException(e);
+                                                                                      }
+                                                                                    }
+                                                                                  });
     NetworkListener lsnr = serverComms.createListener(sessionManager,
                                                       new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 0), true,
                                                       new DefaultConnectionIdFactory());
-    lsnr.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
-    lsnr.routeMessageType(TCMessageType.GROUP_WRAPPER_MESSAGE, new TCMessageSink() {
-      public void putMessage(TCMessage message) throws UnsupportedMessageTypeException {
-        try {
-          TCGroupMessageWrapper mesg = (TCGroupMessageWrapper) message;
-          mesg.hydrate();
-          queue.offer(mesg.getGroupMessage(), timeout, unit);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
 
     lsnr.start(new HashSet());
     return (lsnr);
@@ -133,11 +141,15 @@ public class TCGroupMessageWrapperTest extends TestCase {
 
   private ClientMessageChannel openChannel(NetworkListener lsnr) throws Exception {
     ClientMessageChannel channel;
+    clientComms.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel = clientComms
-        .createClientChannel(sessionManager, 0, TCSocketAddress.LOOPBACK_IP, lsnr.getBindPort(), 3000,
+        .createClientChannel(sessionManager,
+                             0,
+                             TCSocketAddress.LOOPBACK_IP,
+                             lsnr.getBindPort(),
+                             3000,
                              new ConnectionAddressProvider(new ConnectionInfo[] { new ConnectionInfo(LOCALHOST, lsnr
                                  .getBindPort()) }));
-    channel.addClassMapping(TCMessageType.GROUP_WRAPPER_MESSAGE, TCGroupMessageWrapper.class);
     channel.open();
 
     assertTrue(channel.isConnected());

@@ -54,6 +54,8 @@ import com.tc.net.protocol.tcm.MessageMonitor;
 import com.tc.net.protocol.tcm.MessageMonitorImpl;
 import com.tc.net.protocol.tcm.TCMessage;
 import com.tc.net.protocol.tcm.TCMessageHeader;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageRouterImpl;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.HealthCheckerConfigClientImpl;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
@@ -208,7 +210,9 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -383,9 +387,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     }
   }
 
-  public synchronized void start() {
-
-    // Check config topology
+  private void validateGroupConfigOrExit() {
     final boolean toCheckTopology = TCPropertiesImpl.getProperties()
         .getBoolean(TCPropertiesConsts.L1_L2_CONFIG_VALIDATION_ENABLED);
     if (toCheckTopology) {
@@ -396,6 +398,32 @@ public class DistributedObjectClient extends SEDA implements TCClient {
         System.exit(1);
       }
     }
+  }
+
+  private ReconnectConfig getReconnectPropertiesFromServerOrExit() {
+    ReconnectConfig reconnectConfig = null;
+    try {
+      reconnectConfig = this.config.getL1ReconnectProperties();
+    } catch (ConfigurationSetupException e) {
+      CONSOLE_LOGGER.error(e.getMessage());
+      System.exit(1);
+    }
+    return reconnectConfig;
+  }
+
+  private NetworkStackHarnessFactory getNetworkStackHarnessFactory(boolean useOOOLayer,
+                                                                   ReconnectConfig l1ReconnectConfig) {
+    if (useOOOLayer) {
+      return new OOONetworkStackHarnessFactory(new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(), l1ReconnectConfig);
+    } else {
+      return new PlainNetworkStackHarnessFactory();
+    }
+
+  }
+
+  public synchronized void start() {
+
+    validateGroupConfigOrExit();
 
     final TCProperties tcProperties = TCPropertiesImpl.getProperties();
     this.l1Properties = tcProperties.getPropertiesFor("l1");
@@ -411,43 +439,27 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.threadGroup.addCallbackOnExitDefaultHandler(new ThreadDumpHandler(this));
     final StageManager stageManager = getStageManager();
-
     this.dumpHandler.registerForDump(new CallbackDumpAdapter(stageManager));
 
-    // stageManager.turnTracingOn();
-
-    // //////////////////////////////////
-    // create NetworkStackHarnessFactory
-    ReconnectConfig l1ReconnectConfig = null;
-    try {
-      l1ReconnectConfig = this.config.getL1ReconnectProperties();
-    } catch (ConfigurationSetupException e) {
-      CONSOLE_LOGGER.error(e.getMessage());
-      System.exit(1);
-    }
+    final ReconnectConfig l1ReconnectConfig = getReconnectPropertiesFromServerOrExit();
 
     final boolean useOOOLayer = l1ReconnectConfig.getReconnectEnabled();
-    final NetworkStackHarnessFactory networkStackHarnessFactory;
-    if (useOOOLayer) {
-      networkStackHarnessFactory = new OOONetworkStackHarnessFactory(
-                                                                     new OnceAndOnlyOnceProtocolNetworkLayerFactoryImpl(),
-                                                                     l1ReconnectConfig);
-    } else {
-      networkStackHarnessFactory = new PlainNetworkStackHarnessFactory();
-    }
-    // //////////////////////////////////
+    final NetworkStackHarnessFactory networkStackHarnessFactory = getNetworkStackHarnessFactory(useOOOLayer,
+                                                                                                l1ReconnectConfig);
 
     this.counterManager = new CounterManagerImpl();
-
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
-
+    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(this.classProvider);
+    final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     this.communicationsManager = this.dsoClientBuilder
         .createCommunicationsManager(mm,
+                                     messageRouter,
                                      networkStackHarnessFactory,
                                      new NullConnectionPolicy(),
                                      this.connectionComponents.createConnectionInfoConfigItemByGroup().length,
                                      new HealthCheckerConfigClientImpl(this.l1Properties
-                                         .getPropertiesFor("healthcheck.l2"), "DSO Client"));
+                                         .getPropertiesFor("healthcheck.l2"), "DSO Client"),
+                                     getMessageTypeClassMapping(), getMessageTypeFactoryMApping(encoding));
 
     DSO_LOGGER.debug("Created CommunicationsManager.");
 
@@ -484,7 +496,6 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     final ClientTransactionFactory txFactory = new ClientTransactionFactoryImpl(this.runtimeLogger);
 
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(this.classProvider);
     final SampledRateCounterConfig sampledRateCounterConfig = new SampledRateCounterConfig(1, 300, true);
     final SampledRateCounter transactionSizeCounter = (SampledRateCounter) this.counterManager
         .createCounter(sampledRateCounterConfig);
@@ -735,181 +746,27 @@ public class DistributedObjectClient extends SEDA implements TCClient {
                                                                          this.clusterMetaDataManager);
     stageManager.startAll(cc, Collections.EMPTY_LIST);
 
-    this.channel.addClassMapping(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
-                                 BatchTransactionAcknowledgeMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
-    this.channel.addClassMapping(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE,
-                                 LockStatisticsResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
-    this.channel.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
-                                 RequestManagedObjectResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, ObjectsNotFoundMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
-    this.channel.addClassMapping(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
-                                 ObjectIDBatchRequestResponseMessage.class);
-    this.channel
-        .addClassMapping(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE,
-                                 ClientHandshakeRefusedMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.JMX_MESSAGE, JMXMessage.class);
-    this.channel.addClassMapping(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
-    this.channel.addClassMapping(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
-    this.channel.addClassMapping(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
-    this.channel.addClassMapping(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
-                                 CompletedTransactionLowWaterMarkMessage.class);
-    this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
-    this.channel
-        .addClassMapping(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
-                                 NodesWithObjectsResponseMessageImpl.class);
-    this.channel
-        .addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
-                                 KeysForOrphanedValuesResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, NodeMetaDataResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
-                                 SyncWriteTransactionReceivedMessage.class);
-    this.channel.addClassMapping(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE,
-                                 GetAllSizeServerMapRequestMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
-                                 GetAllSizeServerMapResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, SearchQueryRequestMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, SearchQueryResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
-                                 GetValueServerMapRequestMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
-                                 ObjectNotFoundServerMapResponseMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
-    // Special handling to get the applicator encoding
-                                 new GeneratedMessageFactory() {
+    initChannelMessageRouter(messageRouter, hydrateStage, lockResponse, lockStatisticsEnableDisableStage,
+                             receiveRootID, receiveObject, receiveTransaction, oidRequestResponse, transactionResponse,
+                             batchTxnAckStage, pauseStage, jmxRemoteTunnelStage, clusterMembershipEventStage,
+                             clusterMetaDataStage, syncWriteBatchRecvdHandler, receiveServerMapStage,
+                             receiveServerMapEvictionBroadcastStage, receiveSearchQueryStage, receiveInvalidationStage);
 
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageHeader msgHeader,
-                                                                  final TCByteBuffer[] data) {
-                                     return new GetValueServerMapResponseMessageImpl(sid, monitor, mChannel, msgHeader,
-                                                                                     data, encoding);
-                                   }
+    openChannelOrExit(serverHost, serverPort, maxConnectRetries);
+    waitForHandshake();
 
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final TCByteBufferOutputStream output,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageType type) {
-                                     throw new AssertionError(
-                                                              GetValueServerMapRequestMessageImpl.class.getName()
-                                                                  + " shouldn't be created using this constructor at the client.");
-                                   }
-                                 });
-    this.channel.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
-                                 GetAllKeysServerMapRequestMessageImpl.class);
-    this.channel.addClassMapping(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
-    // Special handling to get the applicator encoding
-                                 new GeneratedMessageFactory() {
+    // register for memory events for operator console register for it after the handshake happens see MNK-1684
+    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
 
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageHeader msgHeader,
-                                                                  final TCByteBuffer[] data) {
-                                     return new GetAllKeysServerMapResponseMessageImpl(sid, monitor, mChannel,
-                                                                                       msgHeader, data, encoding);
-                                   }
+    if (this.statisticsAgentSubSystem.isActive()) {
+      this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
+                                                                  + this.channel.channel().getChannelID().toLong());
+    }
 
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final TCByteBufferOutputStream output,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageType type) {
-                                     throw new AssertionError(
-                                                              GetAllKeysServerMapRequestMessageImpl.class.getName()
-                                                                  + " shouldn't be created using this constructor at the client.");
-                                   }
-                                 });
-    this.channel.addClassMapping(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
-    // Special handling to get the applicator encoding
-                                 new GeneratedMessageFactory() {
+    setLoggerOnExit();
+  }
 
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageHeader msgHeader,
-                                                                  final TCByteBuffer[] data) {
-                                     return new ServerMapEvictionBroadcastMessageImpl(sid, monitor, mChannel,
-                                                                                      msgHeader, data, encoding);
-                                   }
-
-                                   public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
-                                                                  final TCByteBufferOutputStream output,
-                                                                  final MessageChannel mChannel,
-                                                                  final TCMessageType type) {
-                                     throw new AssertionError(
-                                                              ServerMapEvictionBroadcastMessageImpl.class.getName()
-                                                                  + " shouldn't be created using this constructor at the client.");
-                                   }
-                                 });
-    this.channel.addClassMapping(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
-    this.channel.addClassMapping(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
-
-    DSO_LOGGER.debug("Added class mappings.");
-
-    final Sink hydrateSink = hydrateStage.getSink();
-    this.channel.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.LOCK_STAT_MESSAGE, lockStatisticsEnableDisableStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.LOCK_RECALL_MESSAGE, lockResponse.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, receiveRootID.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE, receiveObject.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, receiveObject.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, receiveTransaction.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE, oidRequestResponse.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionResponse.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, batchTxnAckStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE,
-                                  clusterMembershipEventStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
-                                  clusterMetaDataStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
-                                  syncWriteBatchRecvdHandler.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE, receiveServerMapStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
-                                  receiveServerMapStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
-                                  receiveServerMapStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
-                                  receiveServerMapStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
-                                  receiveServerMapEvictionBroadcastStage.getSink(), hydrateSink);
-    this.channel.routeMessageType(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, receiveSearchQueryStage.getSink(),
-                                  hydrateSink);
-    this.channel.routeMessageType(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, receiveInvalidationStage.getSink(),
-                                  hydrateSink);
-
+  private void openChannelOrExit(final String serverHost, final int serverPort, final int maxConnectRetries) {
     int i = 0;
     while (maxConnectRetries <= 0 || i < maxConnectRetries) {
       try {
@@ -944,23 +801,208 @@ public class DistributedObjectClient extends SEDA implements TCClient {
       System.exit(-1);
     }
 
-    this.clientHandshakeManager.waitForHandshake();
+  }
 
+  private void waitForHandshake() {
+    this.clientHandshakeManager.waitForHandshake();
     final TCSocketAddress remoteAddress = this.channel.channel().getRemoteAddress();
     final String infoMsg = "Connection successfully established to server at " + remoteAddress;
     CONSOLE_LOGGER.info(infoMsg);
     DSO_LOGGER.info(infoMsg);
+  }
 
-    // register for memory events for operator console
-    // register for it after the handshake happens see MNK-1684
-    this.tcMemManager.registerForMemoryEvents(new MemoryOperatorEventListener(cacheConfig.getUsedCriticalThreshold()));
+  private Map<TCMessageType, GeneratedMessageFactory> getMessageTypeFactoryMApping(final DNAEncoding encoding) {
+    final Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping = new HashMap<TCMessageType, GeneratedMessageFactory>();
 
-    if (this.statisticsAgentSubSystem.isActive()) {
-      this.statisticsAgentSubSystem.setDefaultAgentDifferentiator(DEFAULT_AGENT_DIFFERENTIATOR_PREFIX
-                                                                  + this.channel.channel().getChannelID().toLong());
-    }
+    messageTypeFactoryMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
+    // Special handling to get the applicator encoding
+                                  new GeneratedMessageFactory() {
 
-    setLoggerOnExit();
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageHeader msgHeader,
+                                                                   final TCByteBuffer[] data) {
+                                      return new GetValueServerMapResponseMessageImpl(sid, monitor, mChannel,
+                                                                                      msgHeader, data, encoding);
+                                    }
+
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final TCByteBufferOutputStream output,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageType type) {
+                                      throw new AssertionError(
+                                                               GetValueServerMapRequestMessageImpl.class.getName()
+                                                                   + " shouldn't be created using this constructor at the client.");
+                                    }
+                                  });
+    messageTypeFactoryMapping.put(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
+    // Special handling to get the applicator encoding
+                                  new GeneratedMessageFactory() {
+
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageHeader msgHeader,
+                                                                   final TCByteBuffer[] data) {
+                                      return new GetAllKeysServerMapResponseMessageImpl(sid, monitor, mChannel,
+                                                                                        msgHeader, data, encoding);
+                                    }
+
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final TCByteBufferOutputStream output,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageType type) {
+                                      throw new AssertionError(
+                                                               GetAllKeysServerMapRequestMessageImpl.class.getName()
+                                                                   + " shouldn't be created using this constructor at the client.");
+                                    }
+                                  });
+    messageTypeFactoryMapping.put(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
+    // Special handling to get the applicator encoding
+                                  new GeneratedMessageFactory() {
+
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageHeader msgHeader,
+                                                                   final TCByteBuffer[] data) {
+                                      return new ServerMapEvictionBroadcastMessageImpl(sid, monitor, mChannel,
+                                                                                       msgHeader, data, encoding);
+                                    }
+
+                                    public TCMessage createMessage(final SessionID sid, final MessageMonitor monitor,
+                                                                   final TCByteBufferOutputStream output,
+                                                                   final MessageChannel mChannel,
+                                                                   final TCMessageType type) {
+                                      throw new AssertionError(
+                                                               ServerMapEvictionBroadcastMessageImpl.class.getName()
+                                                                   + " shouldn't be created using this constructor at the client.");
+                                    }
+                                  });
+
+    return messageTypeFactoryMapping;
+  }
+
+  private Map<TCMessageType, Class> getMessageTypeClassMapping() {
+    final Map<TCMessageType, Class> messageTypeClassMapping = new HashMap<TCMessageType, Class>();
+
+    messageTypeClassMapping.put(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE,
+                                BatchTransactionAcknowledgeMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_ROOT_MESSAGE, RequestRootMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_REQUEST_MESSAGE, LockRequestMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_RESPONSE_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_RECALL_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, LockResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.LOCK_STAT_MESSAGE, LockStatisticsMessage.class);
+    messageTypeClassMapping
+        .put(TCMessageType.LOCK_STATISTICS_RESPONSE_MESSAGE, LockStatisticsResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.COMMIT_TRANSACTION_MESSAGE, CommitTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, RequestRootResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_MANAGED_OBJECT_MESSAGE, RequestManagedObjectMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE,
+                                RequestManagedObjectResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, ObjectsNotFoundMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, BroadcastTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_ID_BATCH_REQUEST_MESSAGE, ObjectIDBatchRequestMessage.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
+                                ObjectIDBatchRequestResponseMessage.class);
+    messageTypeClassMapping.put(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, AcknowledgeTransactionMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_MESSAGE, ClientHandshakeMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, ClientHandshakeAckMessageImpl.class);
+    messageTypeClassMapping
+        .put(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, ClientHandshakeRefusedMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.JMX_MESSAGE, JMXMessage.class);
+    messageTypeClassMapping.put(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, JmxRemoteTunnelMessage.class);
+    messageTypeClassMapping.put(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE, ClusterMembershipMessage.class);
+    messageTypeClassMapping.put(TCMessageType.CLIENT_JMX_READY_MESSAGE, L1JmxReady.class);
+    messageTypeClassMapping.put(TCMessageType.COMPLETED_TRANSACTION_LOWWATERMARK_MESSAGE,
+                                CompletedTransactionLowWaterMarkMessage.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_OBJECTS_MESSAGE, NodesWithObjectsMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_KEYS_MESSAGE, NodesWithKeysMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, NodesWithKeysResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE,
+                                NodesWithObjectsResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.KEYS_FOR_ORPHANED_VALUES_MESSAGE, KeysForOrphanedValuesMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
+                                KeysForOrphanedValuesResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODE_META_DATA_MESSAGE, NodeMetaDataMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, NodeMetaDataResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
+                                SyncWriteTransactionReceivedMessage.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_SIZE_SERVER_MAP_REQUEST_MESSAGE,
+                                GetAllSizeServerMapRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
+                                GetAllSizeServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_REQUEST_MESSAGE, SearchQueryRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, SearchQueryResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.GET_VALUE_SERVER_MAP_REQUEST_MESSAGE,
+                                GetValueServerMapRequestMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
+                                ObjectNotFoundServerMapResponseMessageImpl.class);
+    messageTypeClassMapping.put(TCMessageType.TUNNELED_DOMAINS_CHANGED_MESSAGE, TunneledDomainsChanged.class);
+    messageTypeClassMapping.put(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, InvalidateObjectsMessage.class);
+    messageTypeClassMapping.put(TCMessageType.GET_ALL_KEYS_SERVER_MAP_REQUEST_MESSAGE,
+                                GetAllKeysServerMapRequestMessageImpl.class);
+
+    return messageTypeClassMapping;
+  }
+
+  private void initChannelMessageRouter(TCMessageRouter messageRouter, Stage hydrateStage, Stage lockResponse,
+                                        Stage lockStatisticsEnableDisableStage, Stage receiveRootID,
+                                        Stage receiveObject, Stage receiveTransaction, Stage oidRequestResponse,
+                                        Stage transactionResponse, Stage batchTxnAckStage, Stage pauseStage,
+                                        Stage jmxRemoteTunnelStage, Stage clusterMembershipEventStage,
+                                        Stage clusterMetaDataStage, Stage syncWriteBatchRecvdHandler,
+                                        Stage receiveServerMapStage, Stage receiveServerMapEvictionBroadcastStage,
+                                        Stage receiveSearchQueryStage, Stage receiveInvalidationStage) {
+    final Sink hydrateSink = hydrateStage.getSink();
+    messageRouter.routeMessageType(TCMessageType.LOCK_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LOCK_QUERY_RESPONSE_MESSAGE, lockResponse.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LOCK_STAT_MESSAGE, lockStatisticsEnableDisableStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.LOCK_RECALL_MESSAGE, lockResponse.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.REQUEST_ROOT_RESPONSE_MESSAGE, receiveRootID.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.REQUEST_MANAGED_OBJECT_RESPONSE_MESSAGE, receiveObject.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.OBJECTS_NOT_FOUND_RESPONSE_MESSAGE, receiveObject.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.BROADCAST_TRANSACTION_MESSAGE, receiveTransaction.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.OBJECT_ID_BATCH_REQUEST_RESPONSE_MESSAGE,
+                                   oidRequestResponse.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.ACKNOWLEDGE_TRANSACTION_MESSAGE, transactionResponse.getSink(),
+                                   hydrateSink);
+    messageRouter
+        .routeMessageType(TCMessageType.BATCH_TRANSACTION_ACK_MESSAGE, batchTxnAckStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_ACK_MESSAGE, pauseStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLIENT_HANDSHAKE_REFUSED_MESSAGE, pauseStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.JMXREMOTE_MESSAGE_CONNECTION_MESSAGE, jmxRemoteTunnelStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.CLUSTER_MEMBERSHIP_EVENT_MESSAGE,
+                                   clusterMembershipEventStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODES_WITH_OBJECTS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODES_WITH_KEYS_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.KEYS_FOR_ORPHANED_VALUES_RESPONSE_MESSAGE,
+                                   clusterMetaDataStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.NODE_META_DATA_RESPONSE_MESSAGE, clusterMetaDataStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SYNC_WRITE_TRANSACTION_RECEIVED_MESSAGE,
+                                   syncWriteBatchRecvdHandler.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_VALUE_SERVER_MAP_RESPONSE_MESSAGE,
+                                   receiveServerMapStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_ALL_SIZE_SERVER_MAP_RESPONSE_MESSAGE,
+                                   receiveServerMapStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.GET_ALL_KEYS_SERVER_MAP_RESPONSE_MESSAGE,
+                                   receiveServerMapStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.OBJECT_NOT_FOUND_SERVER_MAP_RESPONSE_MESSAGE,
+                                   receiveServerMapStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.EVICTION_SERVER_MAP_BROADCAST_MESSAGE,
+                                   receiveServerMapEvictionBroadcastStage.getSink(), hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.SEARCH_QUERY_RESPONSE_MESSAGE, receiveSearchQueryStage.getSink(),
+                                   hydrateSink);
+    messageRouter.routeMessageType(TCMessageType.INVALIDATE_OBJECTS_MESSAGE, receiveInvalidationStage.getSink(),
+                                   hydrateSink);
+    DSO_LOGGER.debug("Added message routing types.");
   }
 
   private void setLoggerOnExit() {

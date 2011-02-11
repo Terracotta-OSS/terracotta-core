@@ -18,9 +18,9 @@ import com.tc.object.session.SessionProvider;
  */
 public interface CommunicationsManager {
 
-  String       COMMSMGR_GROUPS      = "L2_L2";
-  String       COMMSMGR_SERVER      = "L2_L1";
-  String       COMMSMGR_CLIENT      = "L1_L2";
+  String COMMSMGR_GROUPS = "L2_L2";
+  String COMMSMGR_SERVER = "L2_L1";
+  String COMMSMGR_CLIENT = "L1_L2";
 
   public TCConnectionManager getConnectionManager();
 
@@ -29,6 +29,10 @@ public interface CommunicationsManager {
   public boolean isInShutdown();
 
   public NetworkListener[] getAllListeners();
+
+  public void addClassMapping(TCMessageType messageType, Class messageClass);
+
+  public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory);
 
   /**
    * Creates a client message channel to the given host/port.
@@ -46,8 +50,7 @@ public interface CommunicationsManager {
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory,
-                                                  TCMessageFactory msgFactory, TCMessageRouter router);
+                                                  MessageTransportFactory transportFactory, TCMessageFactory msgFactory);
 
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, final int maxReconnectTries,
                                                   String hostname, int port, final int timeout,

@@ -4,7 +4,6 @@
  */
 package com.tc.net.protocol.tcm;
 
-import com.tc.async.api.Sink;
 import com.tc.util.TCTimeoutException;
 
 import java.io.IOException;
@@ -17,13 +16,7 @@ public interface NetworkListener {
 
   public void stop(long timeout) throws TCTimeoutException;
 
-  public void routeMessageType(TCMessageType messageType, TCMessageSink sink);
-
-  public void routeMessageType(TCMessageType messageType, Sink destSink, Sink hydrateSink);
-
   public ChannelManager getChannelManager();
-
-  public void addClassMapping(TCMessageType type, Class msgClass);
 
   public InetAddress getBindAddress();
 

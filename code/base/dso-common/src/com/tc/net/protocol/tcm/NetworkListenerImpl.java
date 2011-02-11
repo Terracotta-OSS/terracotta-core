@@ -27,14 +27,12 @@ class NetworkListenerImpl implements NetworkListener {
   private final TCSocketAddress           addr;
   private TCListener                      lsnr;
   private boolean                         started;
-  private final TCMessageFactory          msgFactory;
   private final boolean                   reuseAddr;
   private final ConnectionIDFactory       connectionIdFactory;
   private final Sink                      httpSink;
   private final WireProtocolMessageSink   wireProtoMsgSnk;
 
-  // this cstr is intentionally not public, only the Comms Manager should be
-  // creating them
+  // this constructor is intentionally not public, only the Comms Manager should be creating them
   NetworkListenerImpl(final TCSocketAddress addr, final CommunicationsManagerImpl commsMgr,
                       final ChannelManagerImpl channelManager, final TCMessageFactory msgFactory,
                       final TCMessageRouter router, final boolean reuseAddr,
@@ -47,7 +45,6 @@ class NetworkListenerImpl implements NetworkListener {
     this.httpSink = httpSink;
     this.wireProtoMsgSnk = wireProtoMsgSnk;
     this.started = false;
-    this.msgFactory = msgFactory;
     this.reuseAddr = reuseAddr;
     this.tcmRouter = router;
   }
@@ -84,19 +81,8 @@ class NetworkListenerImpl implements NetworkListener {
     this.tcmRouter.routeMessageType(messageType, sink);
   }
 
-  /**
-   * Routes a TCMessage to a sink. The hydrate sink will do the hydrate() work
-   */
-  public void routeMessageType(final TCMessageType messageType, final Sink destSink, final Sink hydrateSink) {
-    routeMessageType(messageType, new TCMessageSinkToSedaSink(destSink, hydrateSink));
-  }
-
   public ChannelManager getChannelManager() {
     return this.channelManager;
-  }
-
-  public void addClassMapping(final TCMessageType type, final Class msgClass) {
-    this.msgFactory.addClassMapping(type, msgClass);
   }
 
   public synchronized InetAddress getBindAddress() {

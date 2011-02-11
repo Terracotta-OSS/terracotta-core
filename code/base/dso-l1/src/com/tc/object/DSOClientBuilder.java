@@ -14,7 +14,10 @@ import com.tc.management.remote.protocol.terracotta.TunnelingEventHandler;
 import com.tc.net.protocol.NetworkStackHarnessFactory;
 import com.tc.net.protocol.tcm.ClientMessageChannel;
 import com.tc.net.protocol.tcm.CommunicationsManager;
+import com.tc.net.protocol.tcm.GeneratedMessageFactory;
 import com.tc.net.protocol.tcm.MessageMonitor;
+import com.tc.net.protocol.tcm.TCMessageRouter;
+import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.object.bytecode.Manager;
@@ -43,9 +46,9 @@ import com.tc.object.msg.NodesWithObjectsMessageFactory;
 import com.tc.object.net.DSOClientMessageChannel;
 import com.tc.object.session.SessionManager;
 import com.tc.object.session.SessionProvider;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.RemoteTransactionManager;
 import com.tc.object.tx.TransactionIDGenerator;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.runtime.logging.LongGCLogger;
 import com.tc.statistics.StatisticsAgentSubSystem;
 import com.tc.stats.counter.Counter;
@@ -56,6 +59,7 @@ import com.tc.util.sequence.BatchSequence;
 import com.tc.util.sequence.BatchSequenceReceiver;
 
 import java.util.Collection;
+import java.util.Map;
 
 public interface DSOClientBuilder {
 
@@ -65,9 +69,13 @@ public interface DSOClientBuilder {
                                                         int socketConnectTimeout, TCClient client);
 
   CommunicationsManager createCommunicationsManager(final MessageMonitor monitor,
+                                                    TCMessageRouter messageRouter,
                                                     final NetworkStackHarnessFactory stackHarnessFactory,
-                                                    final ConnectionPolicy connectionPolicy, int workerCommThreads,
-                                                    final HealthCheckerConfig hcConfig);
+                                                    final ConnectionPolicy connectionPolicy,
+                                                    int workerCommThreads,
+                                                    final HealthCheckerConfig hcConfig,
+                                                    Map<TCMessageType, Class> messageTypeClassMapping,
+                                                    Map<TCMessageType, GeneratedMessageFactory> messageTypeFactoryMapping);
 
   TunnelingEventHandler createTunnelingEventHandler(final ClientMessageChannel ch, final DSOMBeanConfig config);
 

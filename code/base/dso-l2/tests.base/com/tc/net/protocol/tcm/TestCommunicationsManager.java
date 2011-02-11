@@ -33,8 +33,7 @@ public class TestCommunicationsManager implements CommunicationsManager {
   public ClientMessageChannel createClientChannel(SessionProvider sessionProvider, int maxReconnectTries,
                                                   String hostname, int port, final int timeout,
                                                   ConnectionAddressProvider addressProvider,
-                                                  MessageTransportFactory transportFactory,
-                                                  TCMessageFactory msgFactory, TCMessageRouter router) {
+                                                  MessageTransportFactory transportFactory, TCMessageFactory msgFactory) {
     throw new ImplementMe();
   }
 
@@ -77,6 +76,16 @@ public class TestCommunicationsManager implements CommunicationsManager {
                                         ConnectionIDFactory connectionIdFactory,
                                         WireProtocolMessageSink wireProtoMsgSink) {
     throw new ImplementMe();
+  }
+
+  public void addClassMapping(TCMessageType messageType, Class messageClass) {
+    throw new ImplementMe();
+
+  }
+
+  public void addClassMapping(TCMessageType messageType, GeneratedMessageFactory generatedMessageFactory) {
+    throw new ImplementMe();
+
   }
 
 }
