@@ -713,6 +713,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         final LockAcquireResult result = tryAcquire(remote, thread, level, BLOCKING_LOCK, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
+        } else {
+          unparkSubsequentTryLocks(node);
         }
         if (result.isSuccess()) {
           remove(node);
@@ -753,6 +755,8 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         final LockAcquireResult result = tryAcquire(remote, thread, level, BLOCKING_LOCK, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
+        } else {
+          unparkSubsequentTryLocks(node);
         }
         if (result.isSuccess()) {
           remove(node);
@@ -796,15 +800,18 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         final LockAcquireResult result = tryAcquire(remote, thread, level, timeout, node);
         if (result.isShared()) {
           unparkNextQueuedAcquire(node);
+        } else {
+          unparkSubsequentTryLocks(node);
         }
         if (result.isSuccess()) {
           remove(node);
           return true;
-        } else {
-          if (node.canDelegate() && timeout <= 0) {
-            abortAndRemove(remote, node);
-            return false;
-          }
+        } else if (result.isFailure() && timeout <= 0) {
+          abortAndRemove(remote, node);
+          return false;
+        } else if (node.canDelegate() && timeout <= 0) {
+          abortAndRemove(remote, node);
+          return false;
         }
 
         if (!node.canDelegate()) {
@@ -862,6 +869,23 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
     final PendingLockHold nextAcquire = getNextQueuedAcquire(node);
     if (nextAcquire != null) {
       nextAcquire.unpark();
+    }
+  }
+
+  private void unparkSubsequentTryLocks(final LockStateNode node) {
+    Collection<PendingTryLockHold> pending = new ArrayList<PendingTryLockHold>();
+    synchronized (this) {
+      PendingLockHold a = getNextQueuedAcquire(node);
+      while (a != null) {
+        if (a instanceof PendingTryLockHold) {
+          pending.add((PendingTryLockHold) a);
+        }
+        a = getNextQueuedAcquire(a);
+      }
+    }
+
+    for (PendingTryLockHold a : pending) {
+      a.unpark();
     }
   }
 
