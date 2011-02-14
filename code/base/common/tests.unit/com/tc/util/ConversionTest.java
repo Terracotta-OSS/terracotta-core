@@ -7,7 +7,9 @@ package com.tc.util;
 import com.tc.util.Conversion.MemorySizeUnits;
 import com.tc.util.Conversion.MetricsFormatException;
 
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
+import java.util.Locale;
 
 import junit.framework.TestCase;
 
@@ -192,10 +194,10 @@ public class ConversionTest extends TestCase {
   public void testBytes2Double() {
     double[] testVals = new double[] { Double.MIN_VALUE, -1.1, 0, 1.1, Double.MAX_VALUE };
 
-    for (int i = 0; i < testVals.length; i++) {
-      byte[] convertedBytes = Conversion.double2Bytes(testVals[i]);
+    for (double testVal : testVals) {
+      byte[] convertedBytes = Conversion.double2Bytes(testVal);
       double convertedDouble = Conversion.bytes2Double(convertedBytes);
-      assertTrue(testVals[i] == convertedDouble);
+      assertTrue(testVal == convertedDouble);
     }
   }
 
@@ -205,9 +207,9 @@ public class ConversionTest extends TestCase {
 
   public void testBytes2Float() {
     float[] testVals = new float[] { Float.MIN_VALUE, -1.1f, 0, 1.1f, Float.MAX_VALUE };
-    for (int i = 0; i < testVals.length; i++) {
-      byte[] convertedBytes = Conversion.float2Bytes(testVals[i]);
-      assertTrue(testVals[i] == Conversion.bytes2Float(convertedBytes));
+    for (float testVal : testVals) {
+      byte[] convertedBytes = Conversion.float2Bytes(testVal);
+      assertTrue(testVal == Conversion.bytes2Float(convertedBytes));
     }
   }
 
@@ -217,15 +219,15 @@ public class ConversionTest extends TestCase {
 
   public void testBytes2Int() {
     int[] testVals = new int[] { Integer.MIN_VALUE, -1, 0, 1, Integer.MAX_VALUE };
-    for (int i = 0; i < testVals.length; i++) {
+    for (int testVal : testVals) {
       try {
-        byte[] convertedBytes = Conversion.int2Bytes(testVals[i]);
+        byte[] convertedBytes = Conversion.int2Bytes(testVal);
         int convertedInt = Conversion.bytes2Int(convertedBytes);
-        assertEquals(testVals[i], convertedInt);
+        assertEquals(testVal, convertedInt);
       } catch (RuntimeException e) {
         e.printStackTrace();
-        System.out.println("Failed to convert: " + testVals[i]);
-        fail("Failed to convert: " + testVals[i]);
+        System.out.println("Failed to convert: " + testVal);
+        fail("Failed to convert: " + testVal);
       }
     }
   }
@@ -236,9 +238,9 @@ public class ConversionTest extends TestCase {
 
   public void testBytes2Long() {
     long[] testVals = new long[] { Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE };
-    for (int i = 0; i < testVals.length; i++) {
-      byte[] convertedBytes = Conversion.long2Bytes(testVals[i]);
-      assertTrue(testVals[i] == Conversion.bytes2Long(convertedBytes));
+    for (long testVal : testVals) {
+      byte[] convertedBytes = Conversion.long2Bytes(testVal);
+      assertTrue(testVal == Conversion.bytes2Long(convertedBytes));
     }
   }
 
@@ -248,9 +250,9 @@ public class ConversionTest extends TestCase {
 
   public void testBytes2Short() {
     short[] testVals = new short[] { Short.MIN_VALUE, -1, 0, 1, Short.MIN_VALUE };
-    for (int i = 0; i < testVals.length; i++) {
-      byte[] convertedBytes = Conversion.short2Bytes(testVals[i]);
-      assertTrue(testVals[i] == Conversion.bytes2Short(convertedBytes));
+    for (short testVal : testVals) {
+      byte[] convertedBytes = Conversion.short2Bytes(testVal);
+      assertTrue(testVal == Conversion.bytes2Short(convertedBytes));
     }
   }
 
@@ -298,32 +300,35 @@ public class ConversionTest extends TestCase {
     String[] errStr = { "10 10", " 10 1 ", "10.0ag", " 1 0  m ", "10giga", " 10 mega", "100 100 g", "100.0 ki lo",
         "mega 10 ", "m 10", " k10", "0.75GG", "50M M", "1Kilo" };
 
-    for (int i = 0; i < errStr.length; i++) {
+    for (String element : errStr) {
       try {
-        Conversion.memorySizeAsLongBytes(errStr[i]);
+        Conversion.memorySizeAsLongBytes(element);
         Assert.fail("Shouldn't have come here");
       } catch (MetricsFormatException mfe) {
-        System.out.println("XXX got the expected exception during metrics conversion for " + errStr[i] + ": " + mfe);
+        System.out.println("XXX got the expected exception during metrics conversion for " + element + ": " + mfe);
       }
     }
   }
 
   public void testMemoryBytesAsSize() {
 
+    char dfs = new DecimalFormatSymbols().getDecimalSeparator();
+    System.err.println("XX current locale : " + Locale.getDefault() + "; Decimal Sep: " + dfs);
     try {
-      Assert.assertEquals("1.0k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes()));
-      Assert.assertEquals("1.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes()));
-      Assert.assertEquals("1.0g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes()));
+      Assert.assertEquals("1k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes()));
+      Assert.assertEquals("1m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes()));
+      Assert.assertEquals("1g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes()));
 
-      Assert.assertEquals("4.0k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() * 4));
-      Assert.assertEquals("8.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() * 8));
-      Assert.assertEquals("10.0g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() * 10));
+      Assert.assertEquals("4k", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() * 4));
+      Assert.assertEquals("8m", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() * 8));
+      Assert.assertEquals("10g", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() * 10));
 
       Assert.assertEquals("924b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() - 100));
-      Assert.assertEquals("1024.0m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 100));
+      Assert.assertEquals("1024m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 100));
       Assert.assertEquals("901b", Conversion.memoryBytesAsSize(MemorySizeUnits.KILO.getInBytes() - 123));
-      Assert.assertEquals("1021.71k", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() - 2344));
-      Assert.assertEquals("933.84m", Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 94534540));
+      Assert.assertEquals("1021" + dfs + "71k", Conversion.memoryBytesAsSize(MemorySizeUnits.MEGA.getInBytes() - 2344));
+      Assert.assertEquals("933" + dfs + "84m",
+                          Conversion.memoryBytesAsSize(MemorySizeUnits.GIGA.getInBytes() - 94534540));
     } catch (MetricsFormatException mfe) {
       Assert.fail("failed: " + mfe);
     }

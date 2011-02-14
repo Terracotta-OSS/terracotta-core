@@ -10,6 +10,7 @@ import com.tc.exception.TCRuntimeException;
 
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.regex.Pattern;
 
 /**
@@ -411,20 +412,23 @@ public class Conversion {
     }
   }
 
-  static DecimalFormat twoDForm = new DecimalFormat("#.##");
+  static DecimalFormat twoDForm = new DecimalFormat();
+  static {
+    twoDForm.applyLocalizedPattern("#" + new DecimalFormatSymbols().getDecimalSeparator() + "##");
+  }
 
   public static String memoryBytesAsSize(final long bytes) throws NumberFormatException, MetricsFormatException {
     if (bytes < MemorySizeUnits.KILO.getInBytes()) {
       return bytes + "b";
     } else if (bytes < MemorySizeUnits.MEGA.getInBytes()) {
       double rv = (bytes / (MemorySizeUnits.KILO.getInBytes() * 1.0));
-      return Double.valueOf(twoDForm.format(rv)) + "k";
+      return twoDForm.format(rv) + "k";
     } else if (bytes < MemorySizeUnits.GIGA.getInBytes()) {
       double rv = (bytes / (MemorySizeUnits.MEGA.getInBytes() * 1.0));
-      return Double.valueOf(twoDForm.format(rv)) + "m";
+      return twoDForm.format(rv) + "m";
     } else {
       double rv = (bytes / (MemorySizeUnits.GIGA.getInBytes() * 1.0));
-      return Double.valueOf(twoDForm.format(rv)) + "g";
+      return twoDForm.format(rv) + "g";
     }
   }
 
