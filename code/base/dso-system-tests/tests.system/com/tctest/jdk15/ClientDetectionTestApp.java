@@ -75,9 +75,18 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
       ThreadUtil.reallySleep(10000);
     }
     barrier4.await();
-    client1.attemptShutdown();
-    client2.attemptShutdown();
-    client3.attemptShutdown();
+    System.out.println("Waiting For Client 1 Termination");
+    while (client1.isRunning()) {
+	ThreadUtil.reallySleep(1000);
+    }
+    System.out.println("Waiting For Client 2 Termination");
+    while (client2.isRunning()) {
+	ThreadUtil.reallySleep(1000);
+    }
+    System.out.println("Waiting For Client 3 Termination");
+    while (client3.isRunning()) {
+	ThreadUtil.reallySleep(1000);
+    }
 
     Thread.sleep(30000);
     System.out.println("3 Clients killed");
