@@ -12,6 +12,7 @@ import com.tc.util.runtime.Os;
 import com.tctest.YoungGCTestAndActivePassiveTest;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassiveTest {
   private final long LOW_FREE_MEMORY    = 20 * 1024 * 1024;
@@ -21,7 +22,9 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
   private final int  HIGH_APP_NODES     = 3;
 
   public CreateRescueCandidatesYoungGCTest() {
-    //
+    if (Runtime.getRuntime().availableProcessors() < 2) {
+      disableAllUntil(new Date(Long.MAX_VALUE));
+    }
   }
 
   protected boolean canRunActivePassive() {
@@ -29,6 +32,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
   }
 
   // force to use external process to run normal mode
+  @Override
   protected boolean useExternalProcess() {
     if (isRunNormalMode()) {
       return true;
@@ -37,6 +41,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     }
   }
 
+  @Override
   protected void setExtraJvmArgs(final ArrayList jvmArgs) {
     super.setExtraJvmArgs(jvmArgs);
 
@@ -56,6 +61,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     jvmArgs.add("-XX:+PrintGCTimeStamps");
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
@@ -64,6 +70,7 @@ public class CreateRescueCandidatesYoungGCTest extends YoungGCTestAndActivePassi
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }
 
+  @Override
   protected Class getApplicationClass() {
     return CreateRescueCandidatesYoungGCTestApp.class;
   }
