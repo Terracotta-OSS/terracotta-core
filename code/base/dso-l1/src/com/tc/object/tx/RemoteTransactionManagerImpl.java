@@ -187,7 +187,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
         try {
           int incompleteBatchesCount = 0;
           final LossyTCLogger lossyLogger = new LossyTCLogger(this.logger, 5, LossyTCLoggerType.COUNT_BASED);
-          while ((this.status != STOPPED)
+          while (!this.isShutdown && (this.status != STOPPED)
                  && ((this.ackOnExitTimeout <= 0) || (t0 + this.ackOnExitTimeout) > System.currentTimeMillis())) {
             if (incompleteBatchesCount != this.incompleteBatches.size()) {
               lossyLogger.info("stop(): incompleteBatches.size() = "
