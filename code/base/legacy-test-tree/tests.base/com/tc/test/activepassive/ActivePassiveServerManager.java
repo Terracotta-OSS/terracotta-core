@@ -681,6 +681,10 @@ public class ActivePassiveServerManager extends MultipleServerManager {
     ServerControl server = servers[activeIndex].getServerControl();
     if (!server.isRunning()) { throw new AssertionError("Server[" + servers[activeIndex].getDsoPort()
                                                         + "] is not running as expected!"); }
+
+    if (jmxConnectors[activeIndex] == null) {
+      jmxConnectors[activeIndex] = getJMXConnector(jmxPorts[activeIndex]);
+    }
     MBeanServerConnection mbs = jmxConnectors[activeIndex].getMBeanServerConnection();
     TCServerInfoMBean mbean = (TCServerInfoMBean) MBeanServerInvocationHandler
         .newProxyInstance(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class, true);
