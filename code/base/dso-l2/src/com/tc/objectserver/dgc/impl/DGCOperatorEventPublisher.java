@@ -20,7 +20,8 @@ public class DGCOperatorEventPublisher extends GarbageCollectorEventListenerAdap
   @Override
   public void garbageCollectorCompleted(GarbageCollectionInfo info) {
     this.operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createDGCFinishedEvent(info
-        .getIteration(), info.getBeginObjectCount(), info.getElapsedTime(), info.getEndObjectCount()));
+        .getIteration(), info.getBeginObjectCount(), info.getActualGarbageCount(), info.getElapsedTime(), info
+        .getEndObjectCount()));
   }
 
   @Override

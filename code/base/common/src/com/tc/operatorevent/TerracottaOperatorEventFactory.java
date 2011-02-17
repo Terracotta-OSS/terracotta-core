@@ -57,11 +57,11 @@ public class TerracottaOperatorEventFactory {
         .format(TerracottaOperatorEventResources.getDGCStartedMessage(), new Object[] { gcIteration }), "dgc started");
   }
 
-  public static TerracottaOperatorEvent createDGCFinishedEvent(int gcIteration, long beginObjectCount,
+  public static TerracottaOperatorEvent createDGCFinishedEvent(int gcIteration, long beginObjectCount, long collected,
                                                                long elapsedTime, long endObjectCount) {
     return new TerracottaOperatorEventImpl(EventType.INFO, EventSubsystem.DGC, MessageFormat
         .format(TerracottaOperatorEventResources.getDGCFinishedMessage(), new Object[] { gcIteration, beginObjectCount,
-            elapsedTime, endObjectCount }), "dgc finished");
+            collected, elapsedTime, endObjectCount }), "dgc finished");
   }
 
   public static TerracottaOperatorEvent createDGCCanceledEvent(int gcIteration) {
