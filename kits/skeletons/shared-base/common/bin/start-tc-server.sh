@@ -43,12 +43,15 @@ do
   if test "$?" = "0" ; then break; fi
 done
 
+#rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
+#users may change it accordingly
 start=true
 while "$start"
 do
 ${JAVA_COMMAND} -Xms512m -Xmx512m -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
+   -Dsun.rmi.dgc.server.gcInterval=31536000 \
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/lib/tc.jar" \
    com.tc.server.TCServerMain "$@"
