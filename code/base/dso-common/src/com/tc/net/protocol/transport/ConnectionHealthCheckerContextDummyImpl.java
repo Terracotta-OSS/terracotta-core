@@ -13,19 +13,16 @@ package com.tc.net.protocol.transport;
 public class ConnectionHealthCheckerContextDummyImpl implements ConnectionHealthCheckerContext {
 
   public boolean receiveProbe(HealthCheckerProbeMessage message) {
-    if (message.isPing()) {
-      // keep mum
-      return true;
-    }
-    throw new AssertionError("Dummy HealthChecker");
+    if (message.isPing()) { return true; }
+    throw new AssertionError("Dummy HealthCheckerContext. Unexpected Probe Message received " + message);
   }
 
   public boolean probeIfAlive() {
-    throw new AssertionError("Dummy HealthChecker");
+    throw new AssertionError("Dummy HealthCheckerContext.");
   }
 
   public void refresh() {
-    throw new AssertionError("Dummy HealthChecker");
+    throw new AssertionError("Dummy HealthCheckerContext.");
   }
 
 }

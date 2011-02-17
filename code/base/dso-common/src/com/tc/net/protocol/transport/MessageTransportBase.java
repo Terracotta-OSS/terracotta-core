@@ -43,7 +43,7 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
   private final Object                             attachingNewConnection = new Object();
   private final SynchronizedRef                    connectionCloseEvent   = new SynchronizedRef(null);
   private boolean                                  allowConnectionReplace = false;
-  private volatile ConnectionHealthCheckerContext  healthCheckerContext   = null;
+  private volatile ConnectionHealthCheckerContext  healthCheckerContext   = new ConnectionHealthCheckerContextDummyImpl();
   private int                                      remoteCallbackPort     = TransportHandshakeMessage.NO_CALLBACK_PORT;
 
   protected MessageTransportBase(MessageTransportState initialState,
