@@ -46,8 +46,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
+   * @return true if operation changed the clustered state
    */
-  public void doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value);
+  public boolean doLogicalRemoveUnlocked(final TCServerMap map, final Object key, final Object value);
 
   /**
    * Does a logic putIfAbsent. The cached item is not associated to a lock. The check about the presence of an existing
@@ -56,8 +57,9 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
+   * @return true if operation changed the clustered state
    */
-  public void doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
+  public boolean doLogicalPutIfAbsentUnlocked(final TCServerMap map, final Object key, final Object value);
 
   /**
    * Does a logic replace. The cached item is not associated to a lock.
@@ -65,9 +67,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    * @param map ServerTCMap
    * @param key Key Object
    * @param value Object in the mapping
+   * @return true if operation changed the clustered state
    */
-  public void doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current,
-                                       final Object newValue);
+  public boolean doLogicalReplaceUnlocked(final TCServerMap map, final Object key, final Object current,
+                                          final Object newValue);
 
   /**
    * Does a logical put and updates the local cache

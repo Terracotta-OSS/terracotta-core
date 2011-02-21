@@ -112,12 +112,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
   }
 
-  public void doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
       if (item != null) {
         // Item already present
-        return;
+        return false;
       }
     }
 
@@ -130,14 +130,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         this.cache.addCoherentValueToCache(valueID, key, value);
       }
     }
+
+    return true;
   }
 
-  public void doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
+  public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
       if (item != null && !current.equals(item.getValue())) {
         // Item already present but not equal
-        return;
+        return false;
       }
     }
     ObjectID valueID = invokeLogicalReplace(map, key, current, newValue);
@@ -149,6 +151,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         this.cache.addCoherentValueToCache(valueID, key, newValue);
       }
     }
+
+    return true;
   }
 
   /**
@@ -185,13 +189,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * 
    * @param map ServerTCMap
    * @param key Key Object
+   * @return
    */
-  public void doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
+  public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
       if (item != null && !value.equals(item.getValue())) {
         // Item already present but not equal
-        return;
+        return false;
       }
     }
 
@@ -200,6 +205,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (CACHE_ENABLED) {
       this.cache.clearFromCacheIncoherently(key);
     }
+
+    return true;
   }
 
   /**
