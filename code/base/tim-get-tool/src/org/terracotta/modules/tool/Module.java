@@ -10,6 +10,7 @@ import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.InstallListener.InstallNotification;
 import org.terracotta.modules.tool.commands.ActionLog;
 import org.terracotta.modules.tool.commands.KitTypes;
+import org.terracotta.modules.tool.exception.UnsatisfiedDependencyException;
 import org.w3c.dom.Element;
 
 import com.google.inject.Inject;
@@ -73,7 +74,7 @@ public class Module extends AttributesModule implements Installable {
         // XXX dependencyType eval'd as DependencyType.UNKNOWN
         // it means bad data if we should ever get here - we should just have schema to make
         // sure that the data being read is valid - instead of trying to catch a bad state here
-        throw new IllegalStateException();
+        throw new IllegalStateException("Unknown dependency type in " + this);
       }
     }
 
@@ -197,7 +198,7 @@ public class Module extends AttributesModule implements Installable {
     return downloadPath == null || downloadPath.length() == 0;
   }
 
-  protected List<AbstractModule> manifest() {
+  protected List<AbstractModule> manifest() throws UnsatisfiedDependencyException {
     List<AbstractModule> manifest = new ArrayList<AbstractModule>();
     // manifest, at a minimum, includes this module
     manifest.add(this);
@@ -206,10 +207,8 @@ public class Module extends AttributesModule implements Installable {
         List<Module> possibles = modules.getMatchingQualified(dependency.groupId(), dependency.artifactId(),
                                                               dependency.version());
 
-        if (possibles.isEmpty()) {
-          // XXX bad data happened - maybe we should be more forgiving here
-          throw new IllegalStateException("No qualified listing found for dependency: " + dependency);
-        }
+        if (possibles.isEmpty()) { throw new UnsatisfiedDependencyException("No qualified listing found",
+                                                                            (Reference) dependency); }
 
         List<AbstractModule> depManifest = null;
         for (ListIterator<Module> it = possibles.listIterator(possibles.size()); it.hasPrevious();) {
@@ -222,13 +221,11 @@ public class Module extends AttributesModule implements Installable {
           }
         }
 
-        if (depManifest == null) {
-          // XXX bad data happened - maybe we should be more forgiving here
-          throw new IllegalStateException("No installable listing found for dependency: " + dependency);
-        } else {
-          for (AbstractModule entry : depManifest) {
-            if (!manifest.contains(entry)) manifest.add(entry);
-          }
+        if (depManifest == null) { throw new UnsatisfiedDependencyException("No installable listing found",
+                                                                            (Reference) dependency); }
+
+        for (AbstractModule entry : depManifest) {
+          if (!manifest.contains(entry)) manifest.add(entry);
         }
       } else {
         manifest.add(dependency);
@@ -256,7 +253,7 @@ public class Module extends AttributesModule implements Installable {
     notifyListener(listener, this, InstallNotification.STARTING, StringUtils.EMPTY);
     try {
       manifest = manifest();
-    } catch (IllegalStateException e) {
+    } catch (UnsatisfiedDependencyException e) {
       String message = "Unable to compute manifest for installation: " + e.getMessage();
       handleInstallFailure(e, installOptions, listener, this, InstallNotification.ABORTED, message);
       return;

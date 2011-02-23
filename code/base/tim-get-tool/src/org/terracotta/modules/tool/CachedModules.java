@@ -12,6 +12,7 @@ import org.terracotta.modules.tool.config.Config;
 import org.terracotta.modules.tool.config.ConfigAnnotation;
 import org.terracotta.modules.tool.config.InvalidConfigurationException;
 import org.terracotta.modules.tool.exception.RemoteIndexIOException;
+import org.terracotta.modules.tool.exception.UnsatisfiedDependencyException;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.terracotta.modules.tool.util.DataLoader;
 import org.terracotta.modules.tool.util.DownloadUtil;
@@ -387,7 +388,7 @@ public class CachedModules implements Modules {
       try {
         module.manifest();
         list.add(module);
-      } catch (IllegalStateException e) {
+      } catch (UnsatisfiedDependencyException e) {
         // this module is not available - it's dependencies cannot be satisfied
       }
     }

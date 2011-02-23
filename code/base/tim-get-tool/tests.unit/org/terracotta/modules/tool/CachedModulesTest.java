@@ -6,6 +6,7 @@ package org.terracotta.modules.tool;
 
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.exception.UnsatisfiedDependencyException;
 
 import java.io.File;
 import java.util.List;
@@ -243,7 +244,7 @@ public final class CachedModulesTest extends TestCase {
     assertTrue(module.installPath().getCanonicalPath().endsWith("test"));
   }
 
-  public void testMissingTransitiveDependency() {
+  public void testMissingTransitiveDependency() throws UnsatisfiedDependencyException {
     testConfig.setTcVersion("1.0.0");
     Modules modules = load("/transitive-deps.xml", "1.0.0");
 

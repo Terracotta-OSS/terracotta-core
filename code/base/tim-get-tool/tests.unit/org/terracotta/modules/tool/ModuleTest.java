@@ -19,6 +19,7 @@ import org.mortbay.thread.BoundedThreadPool;
 import org.terracotta.modules.tool.DocumentToAttributes.DependencyType;
 import org.terracotta.modules.tool.commands.ActionLog;
 import org.terracotta.modules.tool.config.Config;
+import org.terracotta.modules.tool.exception.UnsatisfiedDependencyException;
 import org.terracotta.modules.tool.util.ChecksumUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -132,7 +133,7 @@ public final class ModuleTest extends TCTestCase {
     assertFalse(module.isInstalled());
   }
 
-  public void testManifest() throws IOException {
+  public void testManifest() throws IOException, UnsatisfiedDependencyException {
     Modules modules;
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
@@ -176,8 +177,8 @@ public final class ModuleTest extends TCTestCase {
     assertNotNull(module);
     try {
       module.manifest();
-      fail("Should have thrown an IllegalStateException when computing the manifest for an entry with a bad reference.");
-    } catch (IllegalStateException e) {
+      fail("Should have thrown an UnsatisfiedDependencyException when computing the manifest for an entry with a bad reference.");
+    } catch (UnsatisfiedDependencyException e) {
       //
     }
   }

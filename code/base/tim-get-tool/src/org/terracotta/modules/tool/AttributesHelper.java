@@ -19,12 +19,7 @@ class AttributesHelper implements Installable {
   private final URI                 relativeUrlBase;
 
   public AttributesHelper(Map<String, Object> attributes) {
-    this.attributes = attributes;
-    try {
-      this.relativeUrlBase = new URI("/");
-    } catch (URISyntaxException e) {
-      throw new IllegalStateException(e);
-    }
+    this(attributes, URI.create("/"));
   }
 
   public AttributesHelper(Map<String, Object> attributes, URI relativeUrlBase) {
@@ -32,8 +27,7 @@ class AttributesHelper implements Installable {
     this.relativeUrlBase = relativeUrlBase;
   }
 
-  public AttributesHelper(Map<String, Object> attributes, String relativeUrlBase)
-  throws URISyntaxException {
+  public AttributesHelper(Map<String, Object> attributes, String relativeUrlBase) throws URISyntaxException {
     this(attributes, new URI(relativeUrlBase));
   }
 
@@ -60,8 +54,7 @@ class AttributesHelper implements Installable {
       if (StringUtils.isEmpty(value)) {
         if (altvalue != null) {
           return altvalue;
-        }
-        else { 
+        } else {
           return new URL("");
         }
       }
@@ -69,8 +62,7 @@ class AttributesHelper implements Installable {
       URI uri = new URI(value);
       if (uri.isAbsolute()) {
         return uri.toURL();
-      }
-      else {
+      } else {
         return new URI(this.relativeUrlBase + "/" + uri).normalize().toURL();
       }
     } catch (MalformedURLException e) {
@@ -96,7 +88,7 @@ class AttributesHelper implements Installable {
   public URL repoUrl() {
     return getAttrValueAsUrl("repoURL", null);
   }
-  
+
   public File installLocationInRepository(File repositoryRoot) {
     File directory = new File(repositoryRoot, installPath().toString());
     return new File(directory, filename());
