@@ -13,7 +13,6 @@ import org.terracotta.modules.tool.commands.KitTypes;
 import org.w3c.dom.Element;
 
 import com.google.inject.Inject;
-import com.tc.bundles.ToolkitConstants;
 import com.tc.util.version.VersionMatcher;
 
 import java.io.File;
@@ -25,24 +24,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Module extends AttributesModule implements Installable {
 
   private final Modules modules;
-  private final int     toolkitRange;
 
   public Module(Modules modules, Element module, URI relativeUrlBase, int toolkitRange) {
-    this(modules, DocumentToAttributes.transform(module), relativeUrlBase, toolkitRange);
+    this(modules, DocumentToAttributes.transform(module), relativeUrlBase);
   }
 
   @Inject
-  Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase, int toolkitRange) {
+  Module(Modules modules, Map<String, Object> attributes, URI relativeUrlBase) {
     super(attributes, relativeUrlBase);
     this.modules = modules;
-    this.toolkitRange = toolkitRange;
   }
 
   protected Modules owner() {
@@ -207,53 +203,38 @@ public class Module extends AttributesModule implements Installable {
     manifest.add(this);
     for (AbstractModule dependency : dependencies()) {
       if (dependency instanceof Reference) {
-        Module module = modules.get(dependency.groupId(), dependency.artifactId(), dependency.version());
+        List<Module> possibles = modules.getMatchingQualified(dependency.groupId(), dependency.artifactId(),
+                                                              dependency.version());
 
-        if (module == null) {
-          module = adjustToolkitMinorVersion(dependency);
+        if (possibles.isEmpty()) {
+          // XXX bad data happened - maybe we should be more forgiving here
+          throw new IllegalStateException("No qualified listing found for dependency: " + dependency);
+        }
 
-          if (module == null) {
-            // XXX bad data happened - maybe we should be more forgiving here
-            throw new IllegalStateException("No listing found for dependency: " + dependency);
+        List<AbstractModule> depManifest = null;
+        for (ListIterator<Module> it = possibles.listIterator(possibles.size()); it.hasPrevious();) {
+          Module module = it.previous();
+          try {
+            depManifest = module.manifest();
+            break;
+          } catch (IllegalStateException e) {
+            // ignore - try next possible
           }
         }
 
-        // instance of reference located, include entries from its install manifest into the install manifest
-        for (AbstractModule entry : module.manifest()) {
-          if (!manifest.contains(entry)) manifest.add(entry);
+        if (depManifest == null) {
+          // XXX bad data happened - maybe we should be more forgiving here
+          throw new IllegalStateException("No installable listing found for dependency: " + dependency);
+        } else {
+          for (AbstractModule entry : depManifest) {
+            if (!manifest.contains(entry)) manifest.add(entry);
+          }
         }
-        continue;
+      } else {
+        manifest.add(dependency);
       }
-      manifest.add(dependency);
     }
     return manifest;
-  }
-
-  private Module adjustToolkitMinorVersion(AbstractModule dependency) {
-    if (!dependency.groupId().equals(ToolkitConstants.GROUP_ID)) { return null; }
-
-    final String startArtifactId = dependency.artifactId;
-    Pattern verPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?");
-    Matcher matcher = verPattern.matcher(dependency.artifactId());
-    if (!matcher.matches()) {
-      //
-      throw new AssertionError("Toolkit artifact does not match pattern: " + dependency.artifactId());
-    }
-
-    final int major = Integer.valueOf(matcher.group(1));
-    int minor = Integer.valueOf(matcher.group(2));
-    final String startVer = major + "." + minor;
-
-    for (int i = 0; i < toolkitRange; i++) {
-      minor++;
-
-      String nextArtifactId = startArtifactId.replace(startVer, major + "." + minor);
-
-      Module module = modules.get(dependency.groupId(), nextArtifactId, dependency.version());
-      if (module != null) { return module; }
-    }
-
-    return null;
   }
 
   private void notifyListener(InstallListener listener, AbstractModule source, InstallNotification type, String message) {

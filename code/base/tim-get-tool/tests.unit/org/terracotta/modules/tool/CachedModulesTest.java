@@ -27,21 +27,21 @@ public final class CachedModulesTest extends TestCase {
     String tcVersion = "0.0.0";
 
     modules = load(testData, tcVersion);
-    Module module = modules.get("foo.bar", "baz", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<Module> siblings = modules.getSiblings(module.symbolicName());
     assertFalse(siblings.isEmpty());
-    assertEquals(5, siblings.size());
+    assertEquals(4, siblings.size());
     assertTrue(siblings.contains(module));
     for (Module other : siblings) {
       assertEquals(module.symbolicName(), other.symbolicName());
     }
 
-    module = modules.get("foo.bar", "quux", "0.0.5");
+    module = modules.getQualified("foo.bar", "quux", "0.0.5");
     assertNotNull(module);
     siblings = modules.getSiblings(module.symbolicName());
     assertFalse(siblings.isEmpty());
-    assertEquals(5, siblings.size());
+    assertEquals(2, siblings.size());
     assertTrue(siblings.contains(module));
     for (Module other : siblings) {
       assertEquals(module.symbolicName(), other.symbolicName());
@@ -50,7 +50,7 @@ public final class CachedModulesTest extends TestCase {
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
-    module = modules.get("foo.bar", "baz", "0.0.6");
+    module = modules.getQualified("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
     assertFalse(modules.getSiblings(module.symbolicName()).isEmpty());
 
@@ -63,21 +63,21 @@ public final class CachedModulesTest extends TestCase {
     String tcVersion = "0.0.0";
 
     modules = load(testData, tcVersion);
-    Module module = modules.get("foo.bar", "baz", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<Module> siblings = modules.getSiblings(module);
     assertFalse(siblings.isEmpty());
-    assertEquals(4, siblings.size());
+    assertEquals(3, siblings.size());
     for (Module other : siblings) {
       assertFalse(module.equals(other));
       assertTrue(module.isSibling(other));
     }
 
-    module = modules.get("foo.bar", "quux", "0.0.5");
+    module = modules.getQualified("foo.bar", "quux", "0.0.5");
     assertNotNull(module);
     siblings = modules.getSiblings(module);
     assertFalse(siblings.isEmpty());
-    assertEquals(4, siblings.size());
+    assertEquals(1, siblings.size());
     for (Module other : siblings) {
       assertFalse(module.equals(other));
       assertTrue(module.isSibling(other));
@@ -86,7 +86,7 @@ public final class CachedModulesTest extends TestCase {
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
-    module = modules.get("foo.bar", "baz", "0.0.6");
+    module = modules.getQualified("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
     assertTrue(modules.getSiblings(module).isEmpty());
 
@@ -100,15 +100,15 @@ public final class CachedModulesTest extends TestCase {
     String tcVersion = "0.0.0";
 
     modules = load(testData, tcVersion);
-    Module module = modules.get("xxx.xxx", "xxx", "x.x.x");
+    Module module = modules.getQualified("xxx.xxx", "xxx", "1.2.3");
     assertNull(module);
 
-    module = modules.get("foo.bar", "baz", "0.0.0");
+    module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     assertEquals("foo.bar.baz", module.symbolicName());
     assertEquals("0.0.0", module.version());
 
-    module = modules.get("foo.bar", "quux", "0.0.5");
+    module = modules.getQualified("foo.bar", "quux", "0.0.5");
     assertNotNull(module);
     assertEquals("foo.bar.quux", module.symbolicName());
     assertEquals("0.0.5", module.version());
@@ -116,13 +116,13 @@ public final class CachedModulesTest extends TestCase {
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
-    module = modules.get("foo.bar", "baz", "0.0.0");
+    module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNull(module);
 
-    module = modules.get("foo.bar", "quux", "0.0.5");
+    module = modules.getQualified("foo.bar", "quux", "0.0.5");
     assertNull(module);
 
-    module = modules.get("foo.bar", "baz", "0.0.6");
+    module = modules.getQualified("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
     assertEquals("foo.bar.baz", module.symbolicName());
     assertEquals("0.0.6", module.version());
@@ -135,12 +135,12 @@ public final class CachedModulesTest extends TestCase {
     testConfig.setTcVersion(tcVersion);
 
     modules = load(testData, tcVersion);
-    assertTrue(modules.list().isEmpty());
+    assertTrue(modules.listQualified().isEmpty());
 
     tcVersion = "0.0.0";
     testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
     assertEquals(10, list.size());
     for (Module module : list) {
@@ -150,7 +150,7 @@ public final class CachedModulesTest extends TestCase {
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = load(testData, tcVersion);
-    list = modules.list();
+    list = modules.listQualified();
     assertFalse(list.isEmpty());
     assertEquals(1, list.size());
     for (Module module : list) {
@@ -202,7 +202,7 @@ public final class CachedModulesTest extends TestCase {
     module = list.get(1);
     assertEquals("foo.bar.def", module.symbolicName());
     assertEquals("2.0.0", module.version());
-    assertEquals(2, modules.list().size());
+    assertEquals(2, modules.listQualified().size());
 
     modules = load(testData, "3.0.0", "1.0.1");
     list = modules.listLatest();
@@ -214,7 +214,7 @@ public final class CachedModulesTest extends TestCase {
     module = list.get(1);
     assertEquals("foo.bar.def", module.symbolicName());
     assertEquals("2.0.1", module.version());
-    assertEquals(4, modules.list().size());
+    assertEquals(4, modules.listQualified().size());
   }
 
   public void testSidewaysInstallPath() throws Exception {
@@ -241,6 +241,25 @@ public final class CachedModulesTest extends TestCase {
     assertEquals("org.the.tc.library", module.symbolicName());
     assertEquals("2.1.0", module.version());
     assertTrue(module.installPath().getCanonicalPath().endsWith("test"));
+  }
+
+  public void testMissingTransitiveDependency() {
+    testConfig.setTcVersion("1.0.0");
+    Modules modules = load("/transitive-deps.xml", "1.0.0");
+
+    assertEquals(4, modules.listAvailable().size());
+
+    Module m = modules.getAvailable("org.terracotta.modules", "tim-ehcache-2.x", "1.6.0");
+    assertTrue(m.isLatest());
+
+    List<AbstractModule> manifest = m.manifest();
+    assertEquals(2, manifest.size());
+
+    AbstractModule toolkit = manifest.get(1);
+    assertEquals("terracotta-toolkit-1.1", toolkit.artifactId());
+    assertEquals("1.0.1", toolkit.version());
+
+    assertNull(modules.getAvailable("org.terracotta.modules", "tim-ehcache-2.x", "1.6.1"));
   }
 
   private Modules load(String testData, String tcVersion) {

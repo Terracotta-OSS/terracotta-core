@@ -17,10 +17,18 @@ public interface Modules {
    * 
    * @return A list of modules. The list returned is sorted in the ascending-order.
    */
-  List<Module> list();
+  List<Module> listQualified();
 
   /**
-   * Similar to Modules.list() but includes only the latest version of each module.
+   * Retrieve the list of available modules, ie: modules whose tcVersion() attribute matches or is compatible with the
+   * tcVersion() attribute of the instance of this class, and whose transitive dependencies are all available.
+   * 
+   * @return A list of modules. The list returned is sorted in the ascending-order.
+   */
+  List<Module> listAvailable();
+
+  /**
+   * Similar to Modules.listAvailable() but includes only the latest version of each module.
    * 
    * @return A list of modules. The list returned is sorted in the ascending order.
    */
@@ -71,19 +79,41 @@ public interface Modules {
   List<Module> getSiblings(String symbolicName);
 
   /**
-   * Given the groupId, artifactId, and version, locate a module with the same attribute values. The search-space is the
-   * list returned by Modules.list()
+   * Given the groupId, artifactId, and version, locate all modules with the matching attribute values. The search-space
+   * is the list returned by Modules.listQualified()
    * 
    * @param groupId The groupId of the module to get.
    * @param artifactId The artifactId of the module to get
    * @param version The version of the module to get
    * @return A module. Null if no module matches the search fields.
    */
-  Module get(String groupId, String artifactId, String version);
+  List<Module> getMatchingQualified(String groupId, String artifactId, String version);
+
+  /**
+   * Given the groupId, artifactId, and version, locate a module with the same attribute values. The search-space is the
+   * list returned by Modules.listQualified()
+   * 
+   * @param groupId The groupId of the module to get.
+   * @param artifactId The artifactId of the module to get
+   * @param version The version of the module to get
+   * @return A module. Null if no module matches the search fields.
+   */
+  Module getQualified(String groupId, String artifactId, String version);
+
+  /**
+   * Given the groupId, artifactId, and version, locate a module with the same attribute values. The search-space is the
+   * list returned by Modules.listAvailable()
+   * 
+   * @param groupId The groupId of the module to get.
+   * @param artifactId The artifactId of the module to get
+   * @param version The version of the module to get
+   * @return A module. Null if no module matches the search fields.
+   */
+  Module getAvailable(String groupId, String artifactId, String version);
 
   /**
    * Given a list of fields and values to search, locate all modules with the same attribute values. The search-space is
-   * the list returned by Modules.list() - the fields supported is implementation dependent.
+   * the list returned by Modules.listAvailable() - the fields supported is implementation dependent.
    * 
    * @param args The list of fields and values used as arguments for the search.
    * @return A list of modules. The list returned includes the module itself and is sorted in the ascending-order.
@@ -91,10 +121,10 @@ public interface Modules {
   List<Module> find(List<String> args);
 
   /**
-   * Find last version of a module that matches artifactId and groupId
-   * Return null if not found
+   * Find last version of a module that matches artifactId and groupId Return null if not found
    */
   Module findLatest(String artifactId, String groupId);
+
   /**
    * Download a module.
    * 

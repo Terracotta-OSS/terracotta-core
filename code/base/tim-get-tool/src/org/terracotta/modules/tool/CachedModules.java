@@ -25,6 +25,7 @@ import org.xml.sax.SAXException;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.tc.bundles.OSGiToMaven;
+import com.tc.bundles.ToolkitConstants;
 import com.tc.util.version.VersionMatcher;
 import com.tc.util.version.VersionRange;
 
@@ -42,6 +43,8 @@ import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -51,6 +54,7 @@ public class CachedModules implements Modules {
 
   private List<Module>       modules;
   private List<Module>       qualifiedModules;
+  private List<Module>       availableModules;
   private List<Module>       latestModules;
 
   @Inject
@@ -196,8 +200,7 @@ public class CachedModules implements Modules {
       Node node = children.item(i);
       if (node.getNodeType() == Node.ELEMENT_NODE) {
         Element child = (Element) node;
-        Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase(),
-                                   config.getToolkitAdjustmentRange());
+        Module module = new Module(this, DocumentToAttributes.transform(child), relativeUrlBase());
         modules.add(module);
       }
     }
@@ -220,7 +223,7 @@ public class CachedModules implements Modules {
     String version = args.isEmpty() ? null : args.remove(0);
     String groupId = args.isEmpty() ? null : args.remove(0);
 
-    for (Module module : list()) {
+    for (Module module : listAvailable()) {
       // boolean m0 = (artifactId == null) ? true : module.artifactId().equals(artifactId);
       boolean m0 = module.artifactId().equals(artifactId);
       boolean m1 = (version == null) ? true : new VersionRange(version).contains(module.version());
@@ -243,26 +246,89 @@ public class CachedModules implements Modules {
     return null;
   }
 
-  public Module get(String groupId, String artifactId, String version) {
-    Module rv = null;
-    for (Module m : list()) {
-      if (m.groupId().equals(groupId) && m.artifactId().equals(artifactId)) {
-        VersionRange range = new VersionRange(version);
-        if (range.contains(m.version())) {
-          // we don't break here since we want to find the latest version (in the case of a range)
-          rv = m;
+  public List<Module> getMatchingQualified(String groupId, String artifactId, String version) {
+    return getFromList(listQualified(), groupId, artifactId, version);
+  }
+
+  public Module getQualified(String groupId, String artifactId, String version) {
+    List<Module> candidates = getMatchingQualified(groupId, artifactId, version);
+    if (candidates.isEmpty()) {
+      return null;
+    } else {
+      return candidates.get(candidates.size() - 1);
+    }
+  }
+
+  public Module getAvailable(String groupId, String artifactId, String version) {
+    List<Module> candidates = getFromList(listAvailable(), groupId, artifactId, version);
+    if (candidates.isEmpty()) {
+      return null;
+    } else {
+      return candidates.get(candidates.size() - 1);
+    }
+  }
+
+  private static List<Module> getFromList(List<Module> modules, String groupId, String artifactId, String version) {
+    if (ToolkitConstants.GROUP_ID.equals(groupId)
+        && Pattern.matches("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?", artifactId)) {
+      return getToolkitsFromList(modules, groupId, artifactId, version);
+    } else {
+      return getRegularsFromList(modules, groupId, artifactId, version);
+    }
+  }
+
+  private static List<Module> getToolkitsFromList(List<Module> modules, String groupId, String artifactId,
+                                                  String version) {
+    VersionRange range = new VersionRange(version);
+    Pattern versionPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?");
+
+    Matcher targetVersion = versionPattern.matcher(artifactId);
+    if (!targetVersion.matches()) { return getRegularsFromList(modules, groupId, artifactId, version); }
+
+    int targetMajor = Integer.valueOf(targetVersion.group(1));
+    int targetMinor = Integer.valueOf(targetVersion.group(2));
+    String targetEdition = targetVersion.group(3);
+
+    List<Module> list = new ArrayList<Module>();
+    for (Module m : modules) {
+      Matcher candidateVersion = versionPattern.matcher(m.artifactId());
+      if (groupId.equals(m.groupId()) && candidateVersion.matches()) {
+        int candidateMajor = Integer.valueOf(candidateVersion.group(1));
+        int candidateMinor = Integer.valueOf(candidateVersion.group(2));
+        String candidateEdition = candidateVersion.group(3);
+
+        if (((targetEdition != null && targetEdition.equals(candidateEdition)) || candidateEdition == null)
+            && candidateMajor == targetMajor && candidateMinor >= targetMinor && range.contains(m.version())) {
+          list.add(m);
         }
       }
     }
 
-    return rv;
+    Collections.sort(list);
+    return list;
+  }
+
+  private static List<Module> getRegularsFromList(List<Module> modules, String groupId, String artifactId,
+                                                  String version) {
+    VersionRange range = new VersionRange(version);
+    List<Module> list = new ArrayList<Module>();
+    for (Module m : modules) {
+      if (m.groupId().equals(groupId) && m.artifactId().equals(artifactId)) {
+        if (range.contains(m.version())) {
+          list.add(m);
+        }
+      }
+    }
+
+    Collections.sort(list);
+    return list;
   }
 
   public List<Module> getSiblings(Module module) {
     List<Module> list = new ArrayList<Module>();
     if (module == null) return list;
 
-    for (Module other : list()) {
+    for (Module other : listAvailable()) {
       if (module.isSibling(other)) list.add(other);
     }
     Collections.sort(list);
@@ -273,7 +339,7 @@ public class CachedModules implements Modules {
     List<Module> list = new ArrayList<Module>();
     if (StringUtils.isEmpty(symbolicName)) return list;
 
-    for (Module module : list()) {
+    for (Module module : listAvailable()) {
       if (module.symbolicName().equals(symbolicName)) list.add(module);
     }
     Collections.sort(list);
@@ -298,12 +364,12 @@ public class CachedModules implements Modules {
     }
   }
 
-  public List<Module> list() {
+  public List<Module> listQualified() {
     if (qualifiedModules != null) return qualifiedModules;
     loadData();
 
     List<Module> list = new ArrayList<Module>();
-    for (Module module : modules) {
+    for (Module module : listAll()) {
       if (!includeSnapshots && module.version().endsWith("-SNAPSHOT")) continue;
       if (qualify(module)) list.add(module);
     }
@@ -312,11 +378,29 @@ public class CachedModules implements Modules {
     return qualifiedModules;
   }
 
+  public List<Module> listAvailable() {
+    if (availableModules != null) return availableModules;
+    loadData();
+
+    List<Module> list = new ArrayList<Module>();
+    for (Module module : listQualified()) {
+      try {
+        module.manifest();
+        list.add(module);
+      } catch (IllegalStateException e) {
+        // this module is not available - it's dependencies cannot be satisfied
+      }
+    }
+    Collections.sort(list);
+    availableModules = Collections.unmodifiableList(list);
+    return availableModules;
+  }
+
   public List<Module> listLatest() {
     if (latestModules != null) return latestModules;
 
     Map<String, Module> group = new HashMap<String, Module>();
-    for (Module module : list()) {
+    for (Module module : listAvailable()) {
       Module other = group.get(module.symbolicName());
       if (other == null) {
         group.put(module.symbolicName(), module);

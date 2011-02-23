@@ -141,66 +141,67 @@ public class UpdateCommand extends OneOrAllCommand {
     Collection<File> jarfiles = FileUtils.listFiles(repository, new String[] { "jar" }, true);
     for (File jarfile : jarfiles) {
       Map<String, Object> attributes = getModuleAttributes(jarfile);
-      if(attributes != null) {
+      if (attributes != null) {
         modulesToUpdate.add(new Reference(null, attributes));
       }
     }
-    
+
     // Examine all modules that may have been deposited *outside* the repository
-    List<Module> availableModules = modules.list();
-    for(Module availableModule : availableModules) {
+    List<Module> availableModules = modules.listAvailable();
+    for (Module availableModule : availableModules) {
       File installLocation = availableModule.installLocationInRepository(repository);
-      if(installLocation.exists()) {
+      if (installLocation.exists()) {
         Map<String, Object> attributes = getModuleAttributes(installLocation);
-        if(attributes != null) {
+        if (attributes != null) {
           modulesToUpdate.add(new Reference(null, attributes));
-        }        
+        }
       }
     }
 
     return modulesToUpdate;
   }
-  
+
   /**
    * Returns null if jarFile is not a module.
-   * @param jarFile The jar file 
+   * 
+   * @param jarFile The jar file
    * @return A map containing groupId, artifactId, and version attributes OR null
    */
-  private Map<String,Object> getModuleAttributes(File jarFile) {
+  private Map<String, Object> getModuleAttributes(File jarFile) {
     Attributes manifest = readAttributes(jarFile);
-    
+
     if (manifest == null) return null;
 
     String groupId = null;
     String artifactId = null;
     String version = null;
-    
+
     String symbolicName = manifest.getValue(ManifestAttributes.OSGI_SYMBOLIC_NAME.attribute());
-    if(symbolicName != null) {
+    if (symbolicName != null) {
       version = manifest.getValue(ManifestAttributes.OSGI_VERSION.attribute());
       artifactId = OSGiToMaven.artifactIdFromSymbolicName(symbolicName);
       groupId = OSGiToMaven.groupIdFromSymbolicName(symbolicName);
     } else {
       String coordinates = manifest.getValue(ManifestAttributes.TERRACOTTA_COORDINATES.attribute());
-      if(coordinates == null) return null;
-      
+      if (coordinates == null) return null;
+
       String[] parts = coordinates.split(":");
-      if(parts.length != 3) return null;
+      if (parts.length != 3) return null;
       groupId = parts[0];
       artifactId = parts[1];
       version = parts[2];
     }
-    
+
     Map<String, Object> attributes = new HashMap<String, Object>();
     attributes.put("groupId", groupId);
     attributes.put("artifactId", artifactId);
     attributes.put("version", version);
-    
+
     return attributes;
   }
 
   private void printEpilogue(boolean updateConfig) {
-    if(updateConfig) {
+    if (updateConfig) {
       out.println("\nDone. (Make sure to update your tc-config.xml with the new/updated version if necessary)");
     } else {
       out.println("\nDone.");

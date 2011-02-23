@@ -87,7 +87,7 @@ public class HelpCommand extends ModuleOperatorCommand {
 
   private void displayDebugInfo() {
     // call this so the index file can be parsed once
-    modules.list();
+    modules.listAvailable();
 
     out.println("Debug info:");
     out.println("   Index timestamp: " + modules.indexTimeStamp());

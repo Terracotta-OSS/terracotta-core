@@ -61,7 +61,7 @@ public final class ModuleTest extends TCTestCase {
 
     startRepository(port, basedir);
 
-    Module module = modules.get("foo.bar", "baz", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     List<String> installedList = new ArrayList<String>();
     module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT, InstallOption.FAIL_FAST);
@@ -70,7 +70,7 @@ public final class ModuleTest extends TCTestCase {
     assertEquals(1, installedList.size());
     assertTrue(installedList.contains(createModule("foo.bar", "baz", "0.0.0").toString()));
 
-    module = modules.get("foo.bar", "baz", "0.0.1");
+    module = modules.getQualified("foo.bar", "baz", "0.0.1");
     assertNotNull(module);
     installedList = new ArrayList<String>();
     module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT);
@@ -81,7 +81,7 @@ public final class ModuleTest extends TCTestCase {
     assertTrue(installedList.contains(createModule("foo.zoo", "tuus", "0.0.0").toString()));
     assertTrue(installedList.contains(createModule("foo.bar", "zoo", "0.0.0").toString()));
 
-    module = modules.get("foo.bar", "quux", "0.0.0");
+    module = modules.getQualified("foo.bar", "quux", "0.0.0");
     assertNotNull(module);
     installedList = new ArrayList<String>();
     module.install(new Listener(installedList), actionLog);
@@ -95,7 +95,7 @@ public final class ModuleTest extends TCTestCase {
     testConfig.setTcVersion(tcVersion);
     modules = loadModules(datafile, tcVersion);
 
-    module = modules.get("foo.bar", "baz", "0.0.2");
+    module = modules.getQualified("foo.bar", "baz", "0.0.2");
     assertNotNull(module);
     installedList = new ArrayList<String>();
     module.install(new Listener(installedList), actionLog, InstallOption.SKIP_INSPECT);
@@ -108,7 +108,7 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.2";
     testConfig.setTcVersion(tcVersion);
     Modules modules = loadModules("/testData02.xml", tcVersion);
-    Module module = modules.get("foo.bar", "zoo", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "zoo", "0.0.0");
     assertNotNull(module);
 
     FileUtils.deleteDirectory(modules.repository());
@@ -137,18 +137,18 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
 
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
 
     String version = "0.0.0";
-    Module module = modules.get("foo.bar", "baz", version);
+    Module module = modules.getQualified("foo.bar", "baz", version);
     assertNotNull(module);
     List<AbstractModule> manifest = module.manifest();
     assertFalse(manifest.isEmpty());
     assertEquals(1, manifest.size());
 
     version = "0.0.1";
-    module = modules.get("foo.bar", "baz", version);
+    module = modules.getQualified("foo.bar", "baz", version);
     assertNotNull(module);
     manifest = module.manifest();
     assertFalse(manifest.isEmpty());
@@ -169,10 +169,10 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
 
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
 
-    Module module = modules.get("foo.bar", "baz", "0.0.4");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.4");
     assertNotNull(module);
     try {
       module.manifest();
@@ -187,29 +187,29 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.0";
 
     modules = loadModules("/testData02.xml", tcVersion);
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
 
     String version = "0.0.0";
-    Module module = modules.get("foo.bar", "baz", version);
+    Module module = modules.getQualified("foo.bar", "baz", version);
     assertNotNull(module);
 
     List<String> versions = module.versions();
     assertFalse(versions.isEmpty());
-    assertEquals(4, versions.size());
+    assertEquals(3, versions.size());
     assertFalse(versions.contains(version));
 
     assertEquals("0.0.1", versions.get(0));
     assertEquals("0.0.3", versions.get(1));
-    assertEquals("0.0.4", versions.get(2));
+    assertEquals("0.0.7", versions.get(2));
 
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = loadModules("/testData02.xml", tcVersion);
-    list = modules.list();
+    list = modules.listQualified();
     assertFalse(list.isEmpty());
 
-    module = modules.get("foo.bar", "baz", "0.0.6");
+    module = modules.getQualified("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
     assertTrue(module.versions().isEmpty());
   }
@@ -221,11 +221,11 @@ public final class ModuleTest extends TCTestCase {
 
     // API version 1.0.0 -> should pull in 2 versions of 2 modules each
     modules = loadModules("/testData04.xml", tcVersion, apiVersion);
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertEquals(4, list.size());
 
     String version = "2.0.0";
-    Module module = modules.get("foo.bar", "abc", version);
+    Module module = modules.getQualified("foo.bar", "abc", version);
     assertNotNull(module);
     assertEquals("[1.0.0,1.1.0)", module.timApiVersion());
 
@@ -237,10 +237,10 @@ public final class ModuleTest extends TCTestCase {
     // API version 1.1.0 -> should pull in only 2 modules
     apiVersion = "1.1.0";
     modules = loadModules("/testData04.xml", tcVersion, apiVersion);
-    list = modules.list();
+    list = modules.listQualified();
     assertEquals(2, list.size());
 
-    module = modules.get("foo.bar", "abc", "2.1.0");
+    module = modules.getQualified("foo.bar", "abc", "2.1.0");
     assertNotNull(module);
     assertEquals("[1.1.0,1.2.0)", module.timApiVersion());
     versions = module.versions();
@@ -250,7 +250,7 @@ public final class ModuleTest extends TCTestCase {
     apiVersion = "2.0.0";
     testConfig.setTimApiVersion(apiVersion);
     modules = loadModules("/testData04.xml", tcVersion, apiVersion);
-    list = modules.list();
+    list = modules.listQualified();
     assertTrue(list.isEmpty());
   }
 
@@ -259,32 +259,32 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.0";
     modules = loadModules("/testData02.xml", tcVersion);
 
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
 
-    Module module = modules.get("foo.bar", "baz", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
     assertFalse(module.isLatest());
 
-    module = modules.get("foo.bar", "baz", "0.0.7");
+    module = modules.getQualified("foo.bar", "baz", "0.0.7");
     assertNotNull(module);
     assertTrue(module.isLatest());
 
-    module = modules.get("foo.bar", "quux", "0.0.3");
+    module = modules.getQualified("foo.bar", "quux", "0.0.3");
     assertNotNull(module);
     assertFalse(module.isLatest());
 
-    module = modules.get("foo.bar", "quux", "0.0.5");
+    module = modules.getQualified("foo.bar", "quux", "0.0.5");
     assertNotNull(module);
     assertTrue(module.isLatest());
 
     tcVersion = "0.0.1";
     testConfig.setTcVersion(tcVersion);
     modules = loadModules("/testData02.xml", tcVersion);
-    list = modules.list();
+    list = modules.listQualified();
     assertFalse(list.isEmpty());
 
-    module = modules.get("foo.bar", "baz", "0.0.6");
+    module = modules.getQualified("foo.bar", "baz", "0.0.6");
     assertNotNull(module);
     assertTrue(module.isLatest());
   }
@@ -294,20 +294,20 @@ public final class ModuleTest extends TCTestCase {
     String tcVersion = "0.0.0";
 
     modules = loadModules("/testData02.xml", tcVersion);
-    List<Module> list = modules.list();
+    List<Module> list = modules.listQualified();
     assertFalse(list.isEmpty());
 
-    Module module = modules.get("foo.bar", "baz", "0.0.0");
+    Module module = modules.getQualified("foo.bar", "baz", "0.0.0");
     assertNotNull(module);
 
     List<Module> siblings = module.siblings();
     assertFalse(siblings.isEmpty());
-    assertEquals(4, siblings.size());
+    assertEquals(3, siblings.size());
     assertFalse(siblings.contains(module));
 
     assertEquals(createModule("foo.bar", "baz", "0.0.1"), siblings.get(0));
     assertEquals(createModule("foo.bar", "baz", "0.0.3"), siblings.get(1));
-    assertEquals(createModule("foo.bar", "baz", "0.0.4"), siblings.get(2));
+    assertEquals(createModule("foo.bar", "baz", "0.0.7"), siblings.get(2));
   }
 
   public void testLoadFromDocument() throws Exception {
@@ -558,7 +558,7 @@ public final class ModuleTest extends TCTestCase {
     for (String key : Arrays.asList(excludes)) {
       attributes.remove(key);
     }
-    return new Module(null, attributes, testConfig.getRelativeUrlBase(), 100);
+    return new Module(null, attributes, testConfig.getRelativeUrlBase());
   }
 
   @Override

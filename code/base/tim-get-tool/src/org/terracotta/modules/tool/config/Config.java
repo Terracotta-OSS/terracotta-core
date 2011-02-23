@@ -22,20 +22,19 @@ import java.util.Properties;
  */
 public class Config {
 
-  public static final String KEYSPACE                 = "org.terracotta.modules.tool.";
+  public static final String KEYSPACE              = "org.terracotta.modules.tool.";
 
-  public static final String TC_VERSION               = "tcVersion";
-  public static final String TIM_API_VERSION          = "timApiVersion";
-  public static final String RELATIVE_URL_BASE        = "relativeUrlBase";
-  public static final String INCLUDE_SNAPSHOTS        = "includeSnapshots";
-  public static final String PROXY_URL                = "proxyUrl";
-  public static final String PROXY_AUTH               = "proxyAuth";
-  public static final String MODULES_DIR              = "modulesDir";
-  public static final String DATA_FILE_URL            = "dataFileUrl";
-  public static final String CACHE                    = "cache";
-  public static final String DATA_CACHE_EXPIRATION    = "dataCacheExpirationInSeconds";
-  public static final String ENV_TIMGET_PROXY_AUTH    = "TIMGET_PROXY_AUTH";
-  public static final String TOOLKIT_ADJUSTMENT_RANGE = "toolkitAdjustmentRange";
+  public static final String TC_VERSION            = "tcVersion";
+  public static final String TIM_API_VERSION       = "timApiVersion";
+  public static final String RELATIVE_URL_BASE     = "relativeUrlBase";
+  public static final String INCLUDE_SNAPSHOTS     = "includeSnapshots";
+  public static final String PROXY_URL             = "proxyUrl";
+  public static final String PROXY_AUTH            = "proxyAuth";
+  public static final String MODULES_DIR           = "modulesDir";
+  public static final String DATA_FILE_URL         = "dataFileUrl";
+  public static final String CACHE                 = "cache";
+  public static final String DATA_CACHE_EXPIRATION = "dataCacheExpirationInSeconds";
+  public static final String ENV_TIMGET_PROXY_AUTH = "TIMGET_PROXY_AUTH";
 
   private String             tcVersion;
   private String             timApiVersion;
@@ -47,7 +46,6 @@ public class Config {
   private URL                dataFileUrl;
   private File               indexFile;
   private long               dataCacheExpirationInSeconds;
-  private int                toolkitAdjustmentRange;
 
   // We need to declare this no arg contructor so it can be Guice'd
   Config() {
@@ -82,8 +80,6 @@ public class Config {
       // proxy authentication can be obtained from tim-get.properties or environment variable
       this.proxyAuth = getProperty(properties, PROXY_AUTH, System.getenv(ENV_TIMGET_PROXY_AUTH));
     }
-
-    this.setToolkitAdjustmentRange(Integer.parseInt(getProperty(properties, TOOLKIT_ADJUSTMENT_RANGE, "100")));
   }
 
   private static URL createUrl(String urlString, String errorMessage) {
@@ -189,14 +185,6 @@ public class Config {
 
   public boolean isOpenSourceKit() {
     return isEdition(ProductInfo.OPENSOURCE);
-  }
-
-  public void setToolkitAdjustmentRange(int range) {
-    this.toolkitAdjustmentRange = range;
-  }
-
-  public int getToolkitAdjustmentRange() {
-    return toolkitAdjustmentRange;
   }
 
   private boolean isEdition(String edition) {
