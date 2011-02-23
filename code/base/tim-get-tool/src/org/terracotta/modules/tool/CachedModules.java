@@ -4,6 +4,8 @@
  */
 package org.terracotta.modules.tool;
 
+import static com.tc.bundles.ToolkitConstants.TOOLKIT_ARTIFACT_ID_PATTERN;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.terracotta.modules.tool.commands.KitTypes;
@@ -45,7 +47,6 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -270,8 +271,7 @@ public class CachedModules implements Modules {
   }
 
   private static List<Module> getFromList(List<Module> modules, String groupId, String artifactId, String version) {
-    if (ToolkitConstants.GROUP_ID.equals(groupId)
-        && Pattern.matches("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?", artifactId)) {
+    if (ToolkitConstants.GROUP_ID.equals(groupId) && TOOLKIT_ARTIFACT_ID_PATTERN.matcher(artifactId).matches()) {
       return getToolkitsFromList(modules, groupId, artifactId, version);
     } else {
       return getRegularsFromList(modules, groupId, artifactId, version);
@@ -280,19 +280,17 @@ public class CachedModules implements Modules {
 
   private static List<Module> getToolkitsFromList(List<Module> modules, String groupId, String artifactId,
                                                   String version) {
-    VersionRange range = new VersionRange(version);
-    Pattern versionPattern = Pattern.compile("^.*" + ToolkitConstants.API_VERSION_REGEX + "(-ee)?");
-
-    Matcher targetVersion = versionPattern.matcher(artifactId);
+    Matcher targetVersion = TOOLKIT_ARTIFACT_ID_PATTERN.matcher(artifactId);
     if (!targetVersion.matches()) { return getRegularsFromList(modules, groupId, artifactId, version); }
 
     int targetMajor = Integer.valueOf(targetVersion.group(1));
     int targetMinor = Integer.valueOf(targetVersion.group(2));
     String targetEdition = targetVersion.group(3);
 
+    VersionRange range = new VersionRange(version);
     List<Module> list = new ArrayList<Module>();
     for (Module m : modules) {
-      Matcher candidateVersion = versionPattern.matcher(m.artifactId());
+      Matcher candidateVersion = TOOLKIT_ARTIFACT_ID_PATTERN.matcher(m.artifactId());
       if (groupId.equals(m.groupId()) && candidateVersion.matches()) {
         int candidateMajor = Integer.valueOf(candidateVersion.group(1));
         int candidateMinor = Integer.valueOf(candidateVersion.group(2));

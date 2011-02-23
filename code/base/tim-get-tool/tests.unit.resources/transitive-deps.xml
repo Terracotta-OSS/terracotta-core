@@ -25,4 +25,12 @@
   <module artifactId='terracotta-toolkit-1.2' version='1.0.0' groupId='org.terracotta.toolkit'>
     <tc-version>2.0.0</tc-version>
   </module>
+  
+  <module artifactId='terracotta-toolkit-1.2-ee' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+    <tc-kit>enterprise</tc-kit>
+  </module>
+  <module artifactId='not-terracotta-toolkit-1.2' version='1.0.0' groupId='org.terracotta.toolkit'>
+    <tc-version>1.0.0</tc-version>
+  </module>
 </modules>

@@ -248,7 +248,7 @@ public final class CachedModulesTest extends TestCase {
     testConfig.setTcVersion("1.0.0");
     Modules modules = load("/transitive-deps.xml", "1.0.0");
 
-    assertEquals(4, modules.listAvailable().size());
+    assertEquals(5, modules.listAvailable().size());
 
     Module m = modules.getAvailable("org.terracotta.modules", "tim-ehcache-2.x", "1.6.0");
     assertTrue(m.isLatest());
