@@ -137,7 +137,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public boolean doLogicalReplaceUnlocked(TCServerMap map, Object key, Object current, Object newValue) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
-      if (item != null && !current.equals(item.getValue())) {
+      if (item != null && current != item.getValue()) {
         // Item already present but not equal
         return false;
       }
@@ -194,7 +194,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public boolean doLogicalRemoveUnlocked(TCServerMap map, Object key, Object value) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
-      if (item != null && !value.equals(item.getValue())) {
+      if (item != null && value != item.getValue()) {
         // Item already present but not equal
         return false;
       }
