@@ -14,6 +14,7 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
@@ -49,7 +50,7 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
       releaseAllObjects(moObjects);
       return;
     }
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
     for (final Iterator i = moObjects.values().iterator(); i.hasNext();) {
       final ManagedObject m = (ManagedObject) i.next();

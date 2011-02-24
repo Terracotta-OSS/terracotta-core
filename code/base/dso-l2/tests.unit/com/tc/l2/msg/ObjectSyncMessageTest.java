@@ -16,6 +16,7 @@ import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.ObjectIDSet;
@@ -40,7 +41,7 @@ public class ObjectSyncMessageTest extends TestCase {
     rootsMap.put("root2", new ObjectID(2));
     rootsMap.put("root3", new ObjectID(3));
     Sink sink = new MockSink();
-    this.objectStringSerializer = new ObjectStringSerializer();
+    this.objectStringSerializer = new ObjectStringSerializerImpl();
     TCByteBuffer tcbb = TCByteBufferFactory.getInstance(false, 3452);
     this.tcByteBufferArray = new TCByteBuffer[] { tcbb };
     this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, new ObjectIDSet(rootsMap.values()),

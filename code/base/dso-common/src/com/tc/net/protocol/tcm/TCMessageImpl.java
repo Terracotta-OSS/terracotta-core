@@ -11,8 +11,10 @@ import com.tc.io.TCSerializable;
 import com.tc.net.NodeID;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.AbstractTCNetworkMessage;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
+import com.tc.object.metadata.NVPair;
 import com.tc.util.Assert;
 import com.tc.util.concurrent.SetOnceFlag;
 
@@ -37,8 +39,8 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Creates a new TCMessage to write data into (ie. to send to the network)
    */
-  protected TCMessageImpl(final MessageMonitor monitor, final TCByteBufferOutputStream output, final MessageChannel channel,
-                          final TCMessageType type) {
+  protected TCMessageImpl(final MessageMonitor monitor, final TCByteBufferOutputStream output,
+                          final MessageChannel channel, final TCMessageType type) {
     super(new TCMessageHeaderImpl(type), false);
     this.monitor = monitor;
     this.type = type;
@@ -55,11 +57,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
 
   /**
    * Creates a new TCMessage object backed by the given data array (used when messages are read from the network)
-   *
+   * 
    * @param header
    * @param data
    */
-  protected TCMessageImpl(final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header, final TCByteBuffer[] data) {
+  protected TCMessageImpl(final MessageMonitor monitor, final MessageChannel channel, final TCMessageHeader header,
+                          final TCByteBuffer[] data) {
     super(header, data);
     this.monitor = monitor;
     this.type = TCMessageType.getInstance(header.getMessageType());
@@ -186,7 +189,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   /**
    * Subclasses *really* must implement this to set appropriate instance variables with the value of the given name.
    * Return false if the given name is unknown to your message class
-   *
+   * 
    * @param name
    */
   protected boolean hydrateValue(final byte name) throws IOException {
@@ -229,7 +232,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   protected NodeID getNodeIDValue() throws IOException {
     return ((NodeIDSerializer) getObject(new NodeIDSerializer())).getNodeID();
   }
-  
+
   protected LockID getLockIDValue() throws IOException {
     return ((LockIDSerializer) getObject(new LockIDSerializer())).getLockID();
   }
@@ -258,6 +261,12 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     nvCount++;
     out.write(name);
     out.writeBoolean(value);
+  }
+
+  protected void putNVPair(final byte name, final NVPair nvPair, final ObjectStringSerializer serializer) {
+    nvCount++;
+    out.write(name);
+    nvPair.serializeTo(out, serializer);
   }
 
   protected void putNVPair(final byte name, final byte value) {
@@ -313,7 +322,7 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
     out.write(name);
     new NodeIDSerializer(nodeID).serializeTo(out);
   }
-  
+
   protected void putNVPair(final byte name, final LockID lid) {
     nvCount++;
     out.write(name);
@@ -374,11 +383,11 @@ public abstract class TCMessageImpl extends AbstractTCNetworkMessage implements 
   }
 
   public NodeID getSourceNodeID() {
-    return isOutgoing? channel.getLocalNodeID() : channel.getRemoteNodeID();
+    return isOutgoing ? channel.getLocalNodeID() : channel.getRemoteNodeID();
   }
 
   public NodeID getDestinationNodeID() {
-    return isOutgoing? channel.getRemoteNodeID() : channel.getLocalNodeID();
+    return isOutgoing ? channel.getRemoteNodeID() : channel.getLocalNodeID();
   }
 
 }

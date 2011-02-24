@@ -16,6 +16,7 @@ import com.tc.object.ObjectRequestID;
 import com.tc.object.ObjectRequestServerContext;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.msg.ObjectsNotFoundMessage;
 import com.tc.object.msg.RequestManagedObjectResponseMessage;
 import com.tc.object.net.DSOChannelManager;
@@ -46,20 +47,18 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 
 public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
   public static final int           SPLIT_SIZE      = TCPropertiesImpl
                                                         .getProperties()
-                                                        .getInt(
-                                                                TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
+                                                        .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_SPLIT_SIZE);
   public static final boolean       LOGGING_ENABLED = TCPropertiesImpl
                                                         .getProperties()
-                                                        .getBoolean(
-                                                                    TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
+                                                        .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_OBJECT_REQUEST_LOGGING_ENABLED);
 
   private final static TCLogger     logger          = TCLogging.getLogger(ObjectRequestManagerImpl.class);
 
@@ -88,9 +87,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
   }
 
   public void requestObjects(final ObjectRequestServerContext requestContext) {
-    splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(), requestContext
-        .getRequestedObjectIDs(), requestContext.getRequestDepth(), requestContext.isServerInitiated(), requestContext
-        .getRequestingThreadName());
+    splitAndRequestObjects(requestContext.getClientID(), requestContext.getRequestID(),
+                           requestContext.getRequestedObjectIDs(), requestContext.getRequestDepth(),
+                           requestContext.isServerInitiated(), requestContext.getRequestingThreadName());
   }
 
   private void splitAndRequestObjects(final ClientID clientID, final ObjectRequestID requestID,
@@ -118,9 +117,9 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     synchronized (this) {
       if (this.objectRequestCache.add(requestedObject, clientID)) {
-        lookupContext = new LookupContext(clientID, requestID, requestedObject.getLookupIDSet(), requestedObject
-            .getMaxDepth(), requestingThreadName, serverInitiated, this.objectRequestSink,
-                                          this.respondObjectRequestSink);
+        lookupContext = new LookupContext(clientID, requestID, requestedObject.getLookupIDSet(),
+                                          requestedObject.getMaxDepth(), requestingThreadName, serverInitiated,
+                                          this.objectRequestSink, this.respondObjectRequestSink);
       }
     }
     if (lookupContext != null) {
@@ -390,7 +389,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
 
     private Integer                  sendCount  = 0;
     private Integer                  batches    = 0;
-    private ObjectStringSerializer   serializer = new ObjectStringSerializer();
+    private ObjectStringSerializer   serializer = new ObjectStringSerializerImpl();
     private TCByteBufferOutputStream out        = new TCByteBufferOutputStream();
 
     public BatchAndSend(final MessageChannel channel, final long batchID) {
@@ -407,7 +406,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
         responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, this.batches++);
         responseMessage.send();
         this.sendCount = 0;
-        this.serializer = new ObjectStringSerializer();
+        this.serializer = new ObjectStringSerializerImpl();
         this.out = new TCByteBufferOutputStream();
       }
     }
@@ -419,7 +418,7 @@ public class ObjectRequestManagerImpl implements ObjectRequestManager {
         responseMessage.initialize(this.out.toArray(), this.sendCount, this.serializer, this.batchID, 0);
         responseMessage.send();
         this.sendCount = 0;
-        this.serializer = new ObjectStringSerializer();
+        this.serializer = new ObjectStringSerializerImpl();
         this.out = new TCByteBufferOutputStream();
       }
     }

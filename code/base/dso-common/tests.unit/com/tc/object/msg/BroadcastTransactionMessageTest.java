@@ -15,12 +15,13 @@ import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.net.protocol.tcm.TestMessageChannel;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
+import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
-import com.tc.object.locks.ServerLockContext.State;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnType;
@@ -53,7 +54,7 @@ public class BroadcastTransactionMessageTest extends TestCase {
     List changes = new LinkedList();
     // / XXX: TODO: Add changes to test.
 
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     LockID[] lockIDs = new LockID[] { new StringLockID("1") };
     long cid = 10;
     TransactionID txID = new TransactionID(1);

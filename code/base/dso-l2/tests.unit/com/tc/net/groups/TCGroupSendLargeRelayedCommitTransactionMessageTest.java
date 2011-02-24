@@ -21,7 +21,7 @@ import com.tc.net.ClientID;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.protocol.transport.NullConnectionPolicy;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
 import com.tc.object.tx.ServerTransactionID;
@@ -110,7 +110,7 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
         .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setChannelID(new ClientID(channelId));
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
-        .getInstance(false, batchSize) }), new ObjectStringSerializer());
+                                              .getInstance(false, batchSize) }), new ObjectStringSerializerImpl());
 
     serverTransactionIDs = new ArrayList();
     transactions = new ArrayList();
@@ -124,8 +124,8 @@ public class TCGroupSendLargeRelayedCommitTransactionMessageTest extends TCTestC
     RelayedCommitTransactionMessage osm = RelayedCommitTransactionMessageFactory
         .createRelayedCommitTransactionMessage(testCommitTransactionMessage.getSourceNodeID(),
                                                testCommitTransactionMessage.getBatchData(), transactions, 420,
-                                               new GlobalTransactionID(49), testCommitTransactionMessage
-                                                   .getSerializer());
+                                               new GlobalTransactionID(49),
+                                               testCommitTransactionMessage.getSerializer());
     return osm;
   }
 

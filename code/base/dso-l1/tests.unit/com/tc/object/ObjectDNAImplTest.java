@@ -5,7 +5,7 @@
 package com.tc.object;
 
 import com.tc.io.TCByteBufferOutputStream;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectDNAImpl;
@@ -35,7 +35,8 @@ public class ObjectDNAImplTest extends DNAImplTest {
 
   @Override
   protected DNAWriterInternal createDNAWriter(TCByteBufferOutputStream out, ObjectID id, String type,
-                                              ObjectStringSerializer serializer, DNAEncoding encoding, boolean isDelta) {
+                                              ObjectStringSerializer serializer, DNAEncodingInternal encoding,
+                                              boolean isDelta) {
     return new ObjectDNAWriterImpl(out, id, type, serializer, encoding, "loader description", version, isDelta);
   }
 

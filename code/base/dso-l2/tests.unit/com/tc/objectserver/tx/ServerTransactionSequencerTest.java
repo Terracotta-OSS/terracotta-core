@@ -7,7 +7,7 @@ import com.tc.net.ClientID;
 import com.tc.object.ObjectID;
 import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.MetaDataReader;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
 import com.tc.object.tx.TransactionID;
@@ -180,27 +180,31 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
     ServerTransaction txn1 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(1),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
-                                                       this.clientID, createDNAs(1, 1), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                                       this.clientID, createDNAs(1, 1),
+                                                       new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn2 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(2),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
-                                                       this.clientID, createDNAs(2, 2), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                                       this.clientID, createDNAs(2, 2),
+                                                       new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn3 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(3),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
-                                                       this.clientID, createDNAs(2, 3), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                                       this.clientID, createDNAs(2, 3),
+                                                       new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       new MetaDataReader[0], 1, new long[0]);
 
     ServerTransaction txn4 = new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(4),
                                                        new SequenceID(this.sqID++), createLocks(lock, lock++),
-                                                       this.clientID, createDNAs(1, 2), new ObjectStringSerializer(),
-                                                       Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
-                                                       DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                                       this.clientID, createDNAs(1, 2),
+                                                       new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
+                                                       TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
+                                                       new MetaDataReader[0], 1, new long[0]);
 
     txns.add(txn1);
     txns.add(txn2);
@@ -326,8 +330,9 @@ public class ServerTransactionSequencerTest extends TCTestCase {
 
     return new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                      new SequenceID(this.sqID++), createLocks(lockID, lockID), this.clientID,
-                                     new ArrayList(dnas.values()), new ObjectStringSerializer(), Collections.EMPTY_MAP,
-                                     TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
+                                     new ArrayList(dnas.values()), new ObjectStringSerializerImpl(),
+                                     Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
+                                     DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]);
   }
 
   private List getAllTxnsPossible() {
@@ -347,7 +352,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       int e = this.start + j;
       txns.add(new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                          new SequenceID(this.sqID++), createLocks(this.start, e), this.clientID,
-                                         createDNAs(this.start, e), new ObjectStringSerializer(),
+                                         createDNAs(this.start, e), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                          DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
@@ -363,7 +368,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       int e = this.start + j;
       txns.add(new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                          new SequenceID(this.sqID++), createLocks(this.start, e + j), this.clientID,
-                                         createDNAs(this.start, e), new ObjectStringSerializer(),
+                                         createDNAs(this.start, e), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                          DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
@@ -379,7 +384,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       int e = this.start + j;
       txns.add(new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                          new SequenceID(this.sqID++), createLocks(this.start, e), this.clientID,
-                                         createDNAs(this.start, e + j), new ObjectStringSerializer(),
+                                         createDNAs(this.start, e + j), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                          DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;
@@ -395,7 +400,7 @@ public class ServerTransactionSequencerTest extends TCTestCase {
       int e = this.start + j;
       txns.add(new ServerTransactionImpl(new TxnBatchID(this.batchID), new TransactionID(this.txnID++),
                                          new SequenceID(this.sqID++), createLocks(this.start, e + j), this.clientID,
-                                         createDNAs(this.start, e + j), new ObjectStringSerializer(),
+                                         createDNAs(this.start, e + j), new ObjectStringSerializerImpl(),
                                          Collections.EMPTY_MAP, TxnType.NORMAL, new LinkedList(),
                                          DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1, new long[0]));
       this.start = e + 1;

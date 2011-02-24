@@ -35,6 +35,7 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.proxy.TCPProxy;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -88,8 +89,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
       nodes[i] = new Node(LOCALHOST, ports[i], groupPorts[i]);
     }
     for (int i = 0; i < n; ++i) {
-      StageManager stageManager = new StageManagerImpl(new TCThreadGroup(new ThrowableHandler(TCLogging
-          .getLogger(TCGroupManagerImplTest.class))), new QueueFactory());
+      StageManager stageManager = new StageManagerImpl(
+                                                       new TCThreadGroup(new ThrowableHandler(TCLogging
+                                                           .getLogger(TCGroupManagerImplTest.class))),
+                                                       new QueueFactory());
       groups[i] = new TCGroupManagerImpl(new NullConnectionPolicy(), LOCALHOST, ports[i], groupPorts[i], stageManager);
       ConfigurationContext context = new ConfigurationContextImpl(stageManager);
       stageManager.startAll(context, Collections.EMPTY_LIST);
@@ -205,7 +208,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setZapNodeRequestProcessor(proc1);
     groups[1].setZapNodeRequestProcessor(proc2);
-    
+
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -248,11 +251,11 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    
+
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
-    
+
     groups[0].join(nodes[0], nodeStore);
     groups[1].join(nodes[1], nodeStore);
 
@@ -266,10 +269,10 @@ public class TCGroupManagerImplTest extends TCTestCase {
     assertEquals(1, groups[1].size());
     TCGroupMember m0 = getMember(groups[0], 0);
     TCGroupMember m1 = getMember(groups[1], 0);
-    assertTrue("Expected  " + m0.getLocalNodeID() + " but got " + m1.getPeerNodeID(), m0.getLocalNodeID()
-        .equals(m1.getPeerNodeID()));
-    assertTrue("Expected  " + m0.getPeerNodeID() + " but got " + m1.getLocalNodeID(), m0.getPeerNodeID()
-        .equals(m1.getLocalNodeID()));
+    assertTrue("Expected  " + m0.getLocalNodeID() + " but got " + m1.getPeerNodeID(),
+               m0.getLocalNodeID().equals(m1.getPeerNodeID()));
+    assertTrue("Expected  " + m0.getPeerNodeID() + " but got " + m1.getLocalNodeID(),
+               m0.getPeerNodeID().equals(m1.getLocalNodeID()));
 
     tearGroups();
   }
@@ -284,7 +287,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     groups[0].setDiscover(new NullTCGroupMemberDiscovery());
     groups[1].setDiscover(new NullTCGroupMemberDiscovery());
-    
+
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -316,7 +319,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
     }
     int count = 10;
     TCByteBuffer[] serializedDNAs = new TCByteBuffer[] {};
-    ObjectStringSerializer objectSerializer = new ObjectStringSerializer();
+    ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
     Map roots = new HashMap();
     long sID = 10;
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
@@ -454,7 +457,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(L2StateMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
-    
+
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -540,7 +543,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
       groups[i].registerForMessages(TestMessage.class, listeners[i]);
       listenerMap.put(groups[i].getLocalNodeID(), listeners[i]);
     }
-    
+
     Set<Node> nodeSet = new HashSet<Node>();
     Collections.addAll(nodeSet, nodes);
     NodesStore nodeStore = new NodesStoreImpl(nodeSet);
@@ -803,7 +806,7 @@ public class TCGroupManagerImplTest extends TCTestCase {
 
     public NoExceptionLinkedQueue outgoing = new NoExceptionLinkedQueue();
     public NoExceptionLinkedQueue incoming = new NoExceptionLinkedQueue();
-    private final int                   weight   = 0;
+    private final int             weight   = 0;
 
     public boolean acceptOutgoingZapNodeRequest(NodeID nodeID, int type, String reason) {
       outgoing.put(reason);

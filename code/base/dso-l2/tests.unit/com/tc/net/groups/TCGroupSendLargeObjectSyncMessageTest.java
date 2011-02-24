@@ -26,6 +26,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.TestDNACursor;
 import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.objectserver.api.NullObjectInstanceMonitor;
@@ -111,7 +112,7 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
       rootsMap.put("root" + i, new ObjectID(i));
     }
     final Sink sink = new MockSink();
-    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
+    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
     final ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap,
                                                                                            new ObjectIDSet(rootsMap
                                                                                                .values()), true, sink,

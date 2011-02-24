@@ -12,6 +12,7 @@ import com.tc.net.NodeID;
 import com.tc.net.groups.GroupManager;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.objectserver.api.EvictableEntry;
 import com.tc.objectserver.api.EvictableMap;
 import com.tc.objectserver.api.ObjectManager;
@@ -345,7 +346,7 @@ public class ServerMapEvictionManagerImpl implements ServerMapEvictionManager {
       logger.info("Server Map Eviction  : Evicting " + oid + " [" + cacheName + "] Candidates : " + candidates.size());
     }
     final NodeID localNodeID = this.groupManager.getLocalNodeID();
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ServerTransaction txn = this.serverTransactionFactory.createServerMapEvictionTransactionFor(localNodeID, oid,
                                                                                                       className,
                                                                                                       loaderDesc,

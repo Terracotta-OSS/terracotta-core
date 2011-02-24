@@ -12,13 +12,14 @@ import com.tc.object.ObjectID;
 import com.tc.object.SerializationUtil;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.loaders.ClassProvider;
 
 import junit.framework.TestCase;
@@ -26,9 +27,9 @@ import junit.framework.TestCase;
 public class TCChangeBufferTest extends TestCase {
 
   public void testLogicalClassIgnoresPhysicalChanges() throws Exception {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, false, true);
     final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
@@ -70,9 +71,9 @@ public class TCChangeBufferTest extends TestCase {
   }
 
   public void testLastPhysicalChangeWins() throws Exception {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this);
     final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 
@@ -110,9 +111,9 @@ public class TCChangeBufferTest extends TestCase {
   }
 
   public void testLastArrayChangeWins() throws Exception {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final MockTCObject mockTCObject = new MockTCObject(new ObjectID(1), this, true, false);
     final TCChangeBuffer buffer = new TCChangeBufferImpl(mockTCObject);
 

@@ -18,7 +18,7 @@ import com.tc.object.TCClass;
 import com.tc.object.TCObject;
 import com.tc.object.change.TCChangeBuffer;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
@@ -63,7 +63,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private final LinkedHashMap                   transactionData        = new LinkedHashMap();
   private final Map                             foldingKeys            = new HashMap();
   private final ObjectStringSerializer          serializer;
-  private final DNAEncoding                     encoding;
+  private final DNAEncodingInternal             encoding;
   private final List                            batchDataOutputStreams = new ArrayList();
 
   private final boolean                         foldingEnabled;
@@ -77,7 +77,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   private boolean                               containsSyncWriteTxn   = false;
 
   public ClientTransactionBatchWriter(final GroupID groupID, final TxnBatchID batchID,
-                                      final ObjectStringSerializer serializer, final DNAEncoding encoding,
+                                      final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
                                       final CommitTransactionMessageFactory commitTransactionMessageFactory,
                                       final FoldingConfig foldingConfig) {
     this.groupID = groupID;
@@ -262,7 +262,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
   protected TransactionBuffer createTransactionBuffer(final SequenceID sid,
                                                       final TCByteBufferOutputStream newOutputStream,
                                                       final ObjectStringSerializer objectStringserializer,
-                                                      final DNAEncoding dnaEncoding, final TransactionID txnID) {
+                                                      final DNAEncodingInternal dnaEncoding, final TransactionID txnID) {
     return new TransactionBufferImpl(sid, newOutputStream, objectStringserializer, dnaEncoding, txnID);
   }
 
@@ -429,7 +429,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private final SequenceID               sequenceID;
     private final TCByteBufferOutputStream output;
     private final ObjectStringSerializer   serializer;
-    private final DNAEncoding              encoding;
+    private final DNAEncodingInternal      encoding;
     private final Mark                     startMark;
     private final SetOnceFlag              committed            = new SetOnceFlag();
 
@@ -445,7 +445,8 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private Mark                           txnCountMark;
 
     TransactionBufferImpl(final SequenceID sequenceID, final TCByteBufferOutputStream output,
-                          final ObjectStringSerializer serializer, final DNAEncoding encoding, final TransactionID txnID) {
+                          final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
+                          final TransactionID txnID) {
       this.sequenceID = sequenceID;
       this.output = output;
       this.serializer = serializer;

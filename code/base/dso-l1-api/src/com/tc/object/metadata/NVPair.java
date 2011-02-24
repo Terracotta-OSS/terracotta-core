@@ -3,11 +3,12 @@
  */
 package com.tc.object.metadata;
 
-import com.tc.io.TCSerializable;
+import com.tc.io.TCByteBufferOutput;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 
 import java.io.Serializable;
 
-public interface NVPair extends TCSerializable, Serializable {
+public interface NVPair extends Serializable {
 
   String getName();
 
@@ -21,4 +22,6 @@ public interface NVPair extends TCSerializable, Serializable {
 
   // XXX: remove this from the interface?
   String valueAsString();
+
+  void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer);
 }

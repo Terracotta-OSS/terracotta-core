@@ -5,8 +5,8 @@
 package com.tc.object.tx;
 
 import com.tc.net.GroupID;
-import com.tc.object.dna.api.DNAEncoding;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.api.DNAEncodingInternal;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.msg.CommitTransactionMessageFactory;
 import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 
@@ -14,10 +14,10 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
 
   private long                                  batchIDSequence = 0;
   private final CommitTransactionMessageFactory messageFactory;
-  private final DNAEncoding                     encoding;
+  private final DNAEncodingInternal             encoding;
   private final FoldingConfig                   foldingConfig;
 
-  public TransactionBatchWriterFactory(CommitTransactionMessageFactory messageFactory, DNAEncoding encoding,
+  public TransactionBatchWriterFactory(CommitTransactionMessageFactory messageFactory, DNAEncodingInternal encoding,
                                        FoldingConfig foldingConfig) {
     this.messageFactory = messageFactory;
     this.encoding = encoding;
@@ -25,8 +25,8 @@ public class TransactionBatchWriterFactory implements TransactionBatchFactory {
   }
 
   public synchronized ClientTransactionBatch nextBatch(GroupID groupID) {
-    return new ClientTransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence), new ObjectStringSerializer(), encoding,
-                                      messageFactory, foldingConfig);
+    return new ClientTransactionBatchWriter(groupID, new TxnBatchID(++batchIDSequence),
+                                            new ObjectStringSerializerImpl(), encoding, messageFactory, foldingConfig);
   }
 
 }

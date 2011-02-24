@@ -26,6 +26,7 @@ import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.DSOMBeanConfig;
 import com.tc.object.config.MBeanSpec;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.handshakemanager.ClientHandshakeManager;
@@ -123,7 +124,7 @@ public interface DSOClientBuilder {
   ClientLockStatManager createLockStatsManager();
 
   RemoteTransactionManager createRemoteTransactionManager(final ClientIDProvider cidProvider,
-                                                          final DNAEncoding encoding,
+                                                          final DNAEncodingInternal encoding,
                                                           final FoldingConfig foldingConfig,
                                                           final TransactionIDGenerator transactionIDGenerator,
                                                           final SessionManager sessionManager,

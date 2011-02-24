@@ -19,6 +19,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
@@ -64,7 +65,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final String loaderDesc = "System.loader";
     final Map candidates = getCandidatesToEvict();
     final ServerTransactionFactory factory = new ServerTransactionFactory();
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ServerTransaction txn = factory.createServerMapEvictionTransactionFor(sourceNodeID, oid, className,
                                                                                 loaderDesc, candidates, serializer,
                                                                                 "foo");
@@ -91,7 +92,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     final String loaderDesc = "System.loader";
     final Map candidates = getCandidatesToEvict();
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ServerTransactionBatchWriter txnWriter = new ServerTransactionBatchWriter(batchID, serializer);
 
     List<ServerTransaction> serverTransactions = new ArrayList<ServerTransaction>();
@@ -171,7 +172,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
                                                        new SequenceID(this.sqID++), createLocks(this.startIndex,
                                                                                                 endIndex),
                                                        this.sourceNodeID, createDNAs(this.startIndex, endIndex),
-                                                       new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                       new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
                                                        TxnType.NORMAL, new LinkedList(), DmiDescriptor.EMPTY_ARRAY,
                                                        new MetaDataReader[0], 1, new long[0]));
       this.startIndex = endIndex + 1;
@@ -206,7 +207,7 @@ public class ServerTransactionBatchWriterTest extends TestCase {
   private DNA createDNA(ObjectID objectID, boolean isDelta) {
 
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
-    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializer();
+    final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
     final DNAWriter dnaWriter = new DNAWriterImpl(out, objectID, this.getClass().getName(), objectStringSerializer,
                                                   new SerializerDNAEncodingImpl(), "Robo Rajini Class Loader", isDelta);
 

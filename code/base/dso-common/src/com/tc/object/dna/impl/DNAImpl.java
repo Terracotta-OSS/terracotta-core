@@ -14,6 +14,7 @@ import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LiteralAction;
@@ -30,35 +31,35 @@ import java.util.Collections;
 import java.util.Iterator;
 
 public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
-  private static final DNAEncoding     DNA_STORAGE_ENCODING  = new StorageDNAEncodingImpl();
-  public static final MetaDataReader   NULL_META_DATA_READER = new NullMetaDataReader();
+  private static final DNAEncodingInternal DNA_STORAGE_ENCODING  = new StorageDNAEncodingImpl();
+  public static final MetaDataReader       NULL_META_DATA_READER = new NullMetaDataReader();
 
-  private final ObjectStringSerializer serializer;
-  private final boolean                createOutput;
+  private final ObjectStringSerializer     serializer;
+  private final boolean                    createOutput;
 
-  protected TCByteBufferInput          input;
-  protected TCByteBuffer[]             dataOut;
+  protected TCByteBufferInput              input;
+  protected TCByteBuffer[]                 dataOut;
 
-  private int                          actionCount           = 0;
-  private int                          origActionCount;
-  private boolean                      isDelta;
+  private int                              actionCount           = 0;
+  private int                              origActionCount;
+  private boolean                          isDelta;
 
   // Header info; parsed on deserializeFrom()
-  private ObjectID                     id;
-  private ObjectID                     parentID;
-  private String                       typeName;
-  private int                          arrayLength;
-  private String                       loaderDesc;
-  private long                         version;
-  private int                          dnaLength;
-  private int                          metaDataOffset;
+  private ObjectID                         id;
+  private ObjectID                         parentID;
+  private String                           typeName;
+  private int                              arrayLength;
+  private String                           loaderDesc;
+  private long                             version;
+  private int                              dnaLength;
+  private int                              metaDataOffset;
 
   // XXX: cleanup type of this field
-  private Object                       currentAction;
+  private Object                           currentAction;
 
-  private boolean                      wasDeserialized       = false;
+  private boolean                          wasDeserialized       = false;
 
-  private MetaDataReader               metaDataReader        = NULL_META_DATA_READER;
+  private MetaDataReader                   metaDataReader        = NULL_META_DATA_READER;
 
   public DNAImpl(final ObjectStringSerializer serializer, final boolean createOutput) {
     this.serializer = serializer;
@@ -106,9 +107,12 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   }
 
   public boolean next(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+    // yucky cast
+    DNAEncodingInternal encodingInternal = (DNAEncodingInternal) encoding;
+
     final boolean hasNext = this.actionCount > 0;
     if (hasNext) {
-      parseNext(encoding);
+      parseNext(encodingInternal);
       this.actionCount--;
     } else {
       int expect = 0;
@@ -124,7 +128,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     return hasNext;
   }
 
-  private void parseNext(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseNext(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final byte recordType = this.input.readByte();
 
     switch (recordType) {
@@ -156,29 +160,29 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     // unreachable
   }
 
-  private void parseSubArray(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseSubArray(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final int startPos = this.input.readInt();
     final Object subArray = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(subArray, startPos);
   }
 
-  private void parseEntireArray(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseEntireArray(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final Object array = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(array);
   }
 
-  private void parseLiteralValue(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseLiteralValue(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final Object value = encoding.decode(this.input);
     this.currentAction = new LiteralAction(value);
   }
 
-  private void parseArrayElement(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseArrayElement(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final int index = this.input.readInt();
     final Object value = encoding.decode(this.input);
     this.currentAction = new PhysicalAction(index, value, value instanceof ObjectID);
   }
 
-  private void parsePhysical(final DNAEncoding encoding, final boolean isReference) throws IOException,
+  private void parsePhysical(final DNAEncodingInternal encoding, final boolean isReference) throws IOException,
       ClassNotFoundException {
     final String fieldName = this.serializer.readFieldName(this.input);
 
@@ -186,13 +190,13 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     this.currentAction = new PhysicalAction(fieldName, value, value instanceof ObjectID || isReference);
   }
 
-  private void parseLogical(final DNAEncoding encoding) throws IOException, ClassNotFoundException {
+  private void parseLogical(final DNAEncodingInternal encoding) throws IOException, ClassNotFoundException {
     final int method = this.input.readInt();
     final int paramCount = this.input.read();
     if (paramCount < 0) { throw new AssertionError("Invalid param count:" + paramCount); }
     final Object[] params = new Object[paramCount];
     for (int i = 0; i < params.length; i++) {
-      params[i] = encoding.decode(this.input);
+      params[i] = encoding.decode(this.input, serializer);
     }
     this.currentAction = new LogicalAction(method, params);
   }
@@ -308,7 +312,7 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
     if (hasMetaData()) {
       TCByteBufferInput metaDataInput = this.input.duplicate();
       metaDataInput.skip(metaDataOffset - (this.input.getTotalLength() - this.input.available()));
-      this.metaDataReader = new MetaDataReaderImpl(metaDataInput);
+      this.metaDataReader = new MetaDataReaderImpl(metaDataInput, serializer);
     }
 
     return this;
@@ -331,23 +335,27 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
   }
 
   private static class MetaDataReaderImpl implements MetaDataReader {
-    private final TCByteBufferInput input;
+    private final TCByteBufferInput      input;
+    private final ObjectStringSerializer serializer;
 
-    MetaDataReaderImpl(TCByteBufferInput input) {
+    MetaDataReaderImpl(TCByteBufferInput input, ObjectStringSerializer serializer) {
       this.input = input;
+      this.serializer = serializer;
     }
 
     public Iterator<MetaDataDescriptorInternal> iterator() {
-      return new MetaDataIterator(input);
+      return new MetaDataIterator(input, serializer);
     }
   }
 
   private static class MetaDataIterator implements Iterator<MetaDataDescriptorInternal> {
 
-    private final TCByteBufferInput input;
+    private final TCByteBufferInput      input;
+    private final ObjectStringSerializer serializer;
 
-    MetaDataIterator(TCByteBufferInput input) {
+    MetaDataIterator(TCByteBufferInput input, ObjectStringSerializer serializer) {
       this.input = input;
+      this.serializer = serializer;
     }
 
     public boolean hasNext() {
@@ -362,7 +370,8 @@ public class DNAImpl implements DNAInternal, DNACursor, TCSerializable {
         input.skip(length - 4); // length includes the "length" int (thus -4)
         Mark end = input.mark();
 
-        return MetaDataDescriptorImpl.deserializeInstance(new TCByteBufferInputStream(input.toArray(start, end)));
+        return MetaDataDescriptorImpl.deserializeInstance(new TCByteBufferInputStream(input.toArray(start, end)),
+                                                          serializer);
       } catch (IOException e) {
         // XXX: don't like this runtime exception
         throw new RuntimeException(e);

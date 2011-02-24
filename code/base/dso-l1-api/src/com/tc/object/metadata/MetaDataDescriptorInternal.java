@@ -3,12 +3,13 @@
  */
 package com.tc.object.metadata;
 
-import com.tc.io.TCSerializable;
+import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 
 import java.util.Iterator;
 
-public interface MetaDataDescriptorInternal extends MetaDataDescriptor, TCSerializable {
+public interface MetaDataDescriptorInternal extends MetaDataDescriptor {
 
   Iterator<NVPair> getMetaDatas();
 
@@ -17,5 +18,7 @@ public interface MetaDataDescriptorInternal extends MetaDataDescriptor, TCSerial
   ObjectID getObjectId();
 
   void setObjectID(ObjectID id);
+
+  void serializeTo(TCByteBufferOutput output, ObjectStringSerializer serializer);
 
 }

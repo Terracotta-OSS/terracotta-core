@@ -19,6 +19,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
@@ -84,8 +85,8 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
   @Override
   protected void dehydrateValues() {
     putNVPair(TRANSACTION_TYPE_ID, this.transactionType.getType());
-    for (Iterator i = this.lockIDs.iterator(); i.hasNext();) {
-      LockID lockID = (LockID) i.next();
+    for (Object element : this.lockIDs) {
+      LockID lockID = (LockID) element;
       putNVPair(LOCK_ID, lockID);
     }
 
@@ -127,7 +128,7 @@ public class BroadcastTransactionMessageImpl extends DSOMessageBase implements B
         this.changes.add(getObject(new DNAImpl(this.serializer, false)));
         return true;
       case SERIALIZER_ID:
-        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializer());
+        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
         return true;
       case LOCK_ID:
         if (this.lockIDs == null) {

@@ -9,7 +9,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.MetaDataReader;
@@ -17,6 +17,7 @@ import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.loaders.ClassProvider;
 import com.tc.object.metadata.MetaDataDescriptorImpl;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -41,9 +42,9 @@ public class DNAImplTest extends TestCase {
   public void testEmptyMetaDataReader() throws Exception {
     TCByteBufferOutputStream out = new TCByteBufferOutputStream();
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriterInternal dnaWriter = createDNAWriter(out, new ObjectID(1), "foo", serializer, encoding, false);
 
     dnaWriter.addPhysicalAction("sdfsdf", "bar");
@@ -73,9 +74,9 @@ public class DNAImplTest extends TestCase {
     final String type = getClass().getName();
     final int arrayLen = 42;
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriterInternal dnaWriter = createDNAWriter(out, id, type, serializer, encoding, isDelta);
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     final LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
@@ -214,9 +215,9 @@ public class DNAImplTest extends TestCase {
     final ObjectID id = new ObjectID(1);
     final String type = getClass().getName();
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriterInternal dnaWriter = createDNAWriter(out, id, type, serializer, encoding, false);
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
 
@@ -304,8 +305,8 @@ public class DNAImplTest extends TestCase {
   }
 
   protected DNAWriterInternal createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
-                                              final ObjectStringSerializer serializer, final DNAEncoding encoding,
-                                              final boolean isDelta) {
+                                              final ObjectStringSerializer serializer,
+                                              final DNAEncodingInternal encoding, final boolean isDelta) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", isDelta);
   }
 

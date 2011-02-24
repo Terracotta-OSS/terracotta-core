@@ -9,7 +9,7 @@ import com.tc.io.TCByteBufferOutputStream;
 import com.tc.io.TCByteBufferOutputStream.Mark;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -27,7 +27,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
   private final TCByteBufferOutputStream output;
   private final Mark                     headerMark;
   private final ObjectStringSerializer   serializer;
-  private final DNAEncoding              encoding;
+  private final DNAEncodingInternal      encoding;
   private final List<Appender>           appenders      = new ArrayList<Appender>(5);
 
   private byte                           flags          = 0;
@@ -41,13 +41,14 @@ public class DNAWriterImpl implements DNAWriterInternal {
   private int                            metaDataOffset = UNINITIALIZED;
 
   public DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                       ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, boolean isDelta) {
+                       ObjectStringSerializer serializer, DNAEncodingInternal encoding, String loaderDesc,
+                       boolean isDelta) {
     this(output, id, className, serializer, encoding, loaderDesc, DNA.NULL_VERSION, isDelta);
   }
 
   protected DNAWriterImpl(TCByteBufferOutputStream output, ObjectID id, String className,
-                          ObjectStringSerializer serializer, DNAEncoding encoding, String loaderDesc, long version,
-                          boolean isDelta) {
+                          ObjectStringSerializer serializer, DNAEncodingInternal encoding, String loaderDesc,
+                          long version, boolean isDelta) {
     this.output = output;
     this.encoding = encoding;
     this.serializer = serializer;
@@ -106,7 +107,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
     output.writeByte(parameters.length);
 
     for (Object parameter : parameters) {
-      encoding.encode(parameter, output);
+      encoding.encode(parameter, output, serializer);
     }
   }
 
@@ -195,7 +196,7 @@ public class DNAWriterImpl implements DNAWriterInternal {
 
     Mark lengthMark = output.mark();
     output.writeInt(-1);
-    md.serializeTo(output);
+    md.serializeTo(output, serializer);
 
     int length = output.getBytesWritten() - lengthMark.getPosition();
     lengthMark.write(Conversion.int2Bytes(length));

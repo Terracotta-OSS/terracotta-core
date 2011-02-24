@@ -6,6 +6,7 @@ package com.tc.object.metadata;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,26 +55,27 @@ public abstract class AbstractNVPair implements NVPair {
   // XXX: make this non-public when possible
   public abstract String valueAsString();
 
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
-    String readName = in.readString();
+  public Object deserializeFrom(TCByteBufferInput in, ObjectStringSerializer serializer) throws IOException {
+    String readName = serializer.readString(in);
     byte ordinal = in.readByte();
     ValueType type = ALL_TYPES[ordinal];
-    return type.deserializeFrom(readName, in);
+    return type.deserializeFrom(readName, in, serializer);
   }
 
-  public void serializeTo(TCByteBufferOutput out) {
-    out.writeString(getName());
+  public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
+    serializer.writeString(out, getName());
 
     ValueType type = getType();
 
     out.writeByte(type.ordinal());
-    type.serializeTo(this, out);
+    type.serializeTo(this, out, serializer);
   }
 
   public abstract ValueType getType();
 
-  public static AbstractNVPair deserializeInstance(TCByteBufferInput in) throws IOException {
-    return (AbstractNVPair) TEMPLATE.deserializeFrom(in);
+  public static AbstractNVPair deserializeInstance(TCByteBufferInput in, ObjectStringSerializer serializer)
+      throws IOException {
+    return (AbstractNVPair) TEMPLATE.deserializeFrom(in, serializer);
   }
 
   private static class Template extends AbstractNVPair {

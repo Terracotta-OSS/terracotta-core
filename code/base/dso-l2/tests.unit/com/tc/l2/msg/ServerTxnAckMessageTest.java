@@ -13,7 +13,7 @@ import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.groups.AbstractGroupMessage;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
 import com.tc.object.tx.ServerTransactionID;
@@ -42,7 +42,7 @@ public class ServerTxnAckMessageTest extends TestCase {
     TestCommitTransactionMessage testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage(GroupID.NULL_ID);
     testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
-        .getInstance(false, 3452) }), new ObjectStringSerializer());
+                                              .getInstance(false, 3452) }), new ObjectStringSerializerImpl());
     testCommitTransactionMessage.setChannelID(new ClientID(this.channelId));
 
     this.serverTransactionIDs = new HashSet();
@@ -65,8 +65,8 @@ public class ServerTxnAckMessageTest extends TestCase {
     this.relayedCommitTransactionMessage = RelayedCommitTransactionMessageFactory
         .createRelayedCommitTransactionMessage(testCommitTransactionMessage.getSourceNodeID(),
                                                testCommitTransactionMessage.getBatchData(), transactions, 700,
-                                               new GlobalTransactionID(99), testCommitTransactionMessage
-                                                   .getSerializer());
+                                               new GlobalTransactionID(99),
+                                               testCommitTransactionMessage.getSerializer());
     this.relayedCommitTransactionMessage.setMessageOrginator(this.nodeID);
   }
 

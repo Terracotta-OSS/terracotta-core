@@ -68,6 +68,7 @@ import com.tc.object.config.ConnectionInfoConfig;
 import com.tc.object.config.DSOClientConfigHelper;
 import com.tc.object.config.SRASpec;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.event.DmiManager;
 import com.tc.object.event.DmiManagerImpl;
 import com.tc.object.gtx.ClientGlobalTransactionManager;
@@ -449,7 +450,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
     this.counterManager = new CounterManagerImpl();
     final MessageMonitor mm = MessageMonitorImpl.createMonitor(tcProperties, DSO_LOGGER);
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(this.classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(this.classProvider);
     final TCMessageRouter messageRouter = new TCMessageRouterImpl();
     this.communicationsManager = this.dsoClientBuilder
         .createCommunicationsManager(mm,

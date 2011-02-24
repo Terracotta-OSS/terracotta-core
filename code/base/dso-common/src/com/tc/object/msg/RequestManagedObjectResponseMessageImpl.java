@@ -12,6 +12,7 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.impl.ObjectDNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.session.SessionID;
 
 import java.io.IOException;
@@ -22,7 +23,8 @@ import java.util.Collections;
 /**
  * @author steve
  */
-public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase implements RequestManagedObjectResponseMessage {
+public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase implements
+    RequestManagedObjectResponseMessage {
 
   private final static byte      SERIALIZER_ID = 1;
   private final static byte      TOTAL_ID      = 2;
@@ -37,13 +39,14 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
   private TCByteBuffer[]         dnaData;
   private int                    dnaCount;
 
-  public RequestManagedObjectResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
-                                             MessageChannel channel, TCMessageType type) {
+  public RequestManagedObjectResponseMessageImpl(SessionID sessionID, MessageMonitor monitor,
+                                                 TCByteBufferOutputStream out, MessageChannel channel,
+                                                 TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
   }
 
   public RequestManagedObjectResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, MessageChannel channel,
-                                             TCMessageHeader header, TCByteBuffer[] data) {
+                                                 TCMessageHeader header, TCByteBuffer[] data) {
     super(sessionID, monitor, channel, header, data);
   }
 
@@ -75,6 +78,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
     return total;
   }
 
+  @Override
   protected void dehydrateValues() {
     putNVPair(SERIALIZER_ID, serializer);
     putNVPair(BATCH_ID, batchID);
@@ -84,6 +88,7 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
     dnaData = null;
   }
 
+  @Override
   protected boolean hydrateValue(byte name) throws IOException {
     switch (name) {
       case DNA_DATA: {
@@ -103,13 +108,14 @@ public class RequestManagedObjectResponseMessageImpl extends DSOMessageBase impl
         this.total = getIntValue();
         return true;
       case SERIALIZER_ID:
-        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializer());
+        this.serializer = (ObjectStringSerializer) getObject(new ObjectStringSerializerImpl());
         return true;
       default:
         return false;
     }
   }
 
+  @Override
   public void doRecycleOnRead() {
     // TODO :: It is recycled only on write. Not on read.
   }

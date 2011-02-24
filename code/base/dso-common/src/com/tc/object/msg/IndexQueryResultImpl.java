@@ -6,6 +6,8 @@ package com.tc.object.msg;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.NullObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
@@ -17,10 +19,12 @@ import java.util.List;
 
 public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
 
-  private String       key;
-  private List<NVPair> attributes;
-  private List<NVPair> sortAttributes;
-  private ObjectID     valueOID = ObjectID.NULL_ID;
+  private static final ObjectStringSerializer NULL_SERIALIZER = new NullObjectStringSerializer();
+
+  private String                              key;
+  private List<NVPair>                        attributes;
+  private List<NVPair>                        sortAttributes;
+  private ObjectID                            valueOID        = ObjectID.NULL_ID;
 
   public IndexQueryResultImpl() {
     // do nothing.
@@ -71,7 +75,7 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
     this.attributes = size > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
 
     for (int i = 0; i < size; i++) {
-      NVPair pair = AbstractNVPair.deserializeInstance(input);
+      NVPair pair = AbstractNVPair.deserializeInstance(input, NULL_SERIALIZER);
       this.attributes.add(pair);
     }
 
@@ -79,7 +83,7 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
     this.sortAttributes = sortSize > 0 ? new ArrayList<NVPair>() : Collections.EMPTY_LIST;
 
     for (int i = 0; i < sortSize; i++) {
-      NVPair pair = AbstractNVPair.deserializeInstance(input);
+      NVPair pair = AbstractNVPair.deserializeInstance(input, NULL_SERIALIZER);
       this.sortAttributes.add(pair);
     }
     return this;
@@ -90,12 +94,12 @@ public class IndexQueryResultImpl implements IndexQueryResult, Comparable {
     output.writeLong(this.valueOID.toLong());
     output.writeInt(this.attributes.size());
     for (NVPair pair : this.attributes) {
-      pair.serializeTo(output);
+      pair.serializeTo(output, NULL_SERIALIZER);
     }
 
     output.writeInt(this.sortAttributes.size());
     for (NVPair pair : this.sortAttributes) {
-      pair.serializeTo(output);
+      pair.serializeTo(output, NULL_SERIALIZER);
     }
   }
 

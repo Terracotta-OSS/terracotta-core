@@ -6,8 +6,8 @@ package com.tc.object.metadata;
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutput;
-import com.tc.io.TCSerializable;
 import com.tc.object.ObjectID;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.AbstractNVPair.EnumNVPair;
 import com.tc.util.ClassUtils;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * 
  * @author teck
  */
-public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescriptorInternal {
+public class MetaDataDescriptorImpl implements MetaDataDescriptorInternal {
 
   private static final MetaDataDescriptorImpl TEMPLATE    = new MetaDataDescriptorImpl("template");
   public static final MetaDataDescriptor[]    EMPTY_ARRAY = new MetaDataDescriptor[] {};
@@ -65,28 +65,28 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     this.oid = id;
   }
 
-  public Object deserializeFrom(TCByteBufferInput in) throws IOException {
-    final String cat = in.readString();
+  public Object deserializeFrom(TCByteBufferInput in, ObjectStringSerializer serializer) throws IOException {
+    final String cat = serializer.readString(in);
     final ObjectID id = new ObjectID(in.readLong());
 
     final int size = in.readInt();
     List<NVPair> data = new ArrayList<NVPair>(size);
     for (int i = 0; i < size; i++) {
-      data.add(AbstractNVPair.deserializeInstance(in));
+      data.add(AbstractNVPair.deserializeInstance(in, serializer));
     }
 
     return new MetaDataDescriptorImpl(cat, Collections.unmodifiableList(data), id);
   }
 
-  public void serializeTo(TCByteBufferOutput out) {
-    out.writeString(category);
+  public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
+    serializer.writeString(out, category);
 
     if (oid.isNull()) { throw new AssertionError("OID never set"); }
     out.writeLong(oid.toLong());
 
     out.writeInt(metaDatas.size());
     for (NVPair nvpair : metaDatas) {
-      nvpair.serializeTo(out);
+      nvpair.serializeTo(out, serializer);
     }
   }
 
@@ -95,8 +95,9 @@ public class MetaDataDescriptorImpl implements TCSerializable, MetaDataDescripto
     return getClass().getSimpleName() + "(" + category + "): " + metaDatas.toString();
   }
 
-  public static MetaDataDescriptorInternal deserializeInstance(TCByteBufferInputStream in) throws IOException {
-    return (MetaDataDescriptorInternal) TEMPLATE.deserializeFrom(in);
+  public static MetaDataDescriptorInternal deserializeInstance(TCByteBufferInputStream in,
+                                                               ObjectStringSerializer serializer) throws IOException {
+    return (MetaDataDescriptorInternal) TEMPLATE.deserializeFrom(in, serializer);
   }
 
   public void add(String name, boolean value) {

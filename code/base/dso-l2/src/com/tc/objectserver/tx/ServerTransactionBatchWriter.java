@@ -10,6 +10,7 @@ import com.tc.object.dmi.DmiDescriptor;
 import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
@@ -36,10 +37,10 @@ import java.util.Map.Entry;
  */
 public class ServerTransactionBatchWriter {
 
-  private static final DNAEncoding     DNA_STORAGE_ENCODING = new StorageDNAEncodingImpl();
+  private static final DNAEncodingInternal DNA_STORAGE_ENCODING = new StorageDNAEncodingImpl();
 
-  private final ObjectStringSerializer serializer;
-  private final TxnBatchID             batchId;
+  private final ObjectStringSerializer     serializer;
+  private final TxnBatchID                 batchId;
 
   public ServerTransactionBatchWriter(final TxnBatchID batchId, final ObjectStringSerializer serializer) {
     this.batchId = batchId;
@@ -84,8 +85,8 @@ public class ServerTransactionBatchWriter {
 
   private void writeDNA(final TCByteBufferOutputStream out, final DNA dna) throws IOException, ClassNotFoundException {
     final DNAWriter dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
-                                                  DNA_STORAGE_ENCODING, dna.getDefiningLoaderDescription(), dna
-                                                      .isDelta());
+                                                  DNA_STORAGE_ENCODING, dna.getDefiningLoaderDescription(),
+                                                  dna.isDelta());
     writeParentObjectID(dnaWriter, dna.getParentObjectID());
     // It is assumed that if this DNA is shared/accessed by multiple threads (simultaneously or other wise) that the DNA
     // is thread safe and the DNA gives out multiple iteratable cursors or the cursor is resettable

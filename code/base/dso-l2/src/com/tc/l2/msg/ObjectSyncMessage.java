@@ -14,6 +14,7 @@ import com.tc.net.groups.NodeIDSerializer;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectDNAImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.Assert;
@@ -59,7 +60,7 @@ public class ObjectSyncMessage extends AbstractGroupMessage implements OrderedEv
     this.oids.deserializeFrom(in);
     this.dnaCount = in.readInt();
     readRootsMap(in);
-    this.serializer = new ObjectStringSerializer();
+    this.serializer = new ObjectStringSerializerImpl();
     this.serializer.deserializeFrom(in);
     this.dnas = readByteBuffers(in);
     this.sequenceID = in.readLong();

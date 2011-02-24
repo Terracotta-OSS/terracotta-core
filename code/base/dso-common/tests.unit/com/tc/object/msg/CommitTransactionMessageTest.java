@@ -10,6 +10,7 @@ import com.tc.net.protocol.tcm.NullMessageMonitor;
 import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.session.SessionID;
 import com.tc.object.tx.TransactionBatch;
 import com.tc.test.TCTestCase;
@@ -40,13 +41,13 @@ public class CommitTransactionMessageTest extends TCTestCase {
                                                                           new TCByteBufferOutputStream(4, 4096, false),
                                                                           null,
                                                                           TCMessageType.COMMIT_TRANSACTION_MESSAGE);
-      ObjectStringSerializer serializer = new ObjectStringSerializer();
+      ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
       msg.setBatch(batch, serializer);
       msg.dehydrate();
 
       CommitTransactionMessageImpl msg2 = new CommitTransactionMessageImpl(SessionID.NULL_ID, new NullMessageMonitor(),
-                                                                           null, (TCMessageHeader) msg.getHeader(), msg
-                                                                               .getPayload());
+                                                                           null, (TCMessageHeader) msg.getHeader(),
+                                                                           msg.getPayload());
       msg2.hydrate();
 
       TCByteBufferInputStream bbis = new TCByteBufferInputStream(msg2.getBatchData());

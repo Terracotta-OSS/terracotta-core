@@ -14,6 +14,7 @@ import com.tc.net.groups.AbstractGroupMessage;
 import com.tc.net.groups.NodeIDSerializer;
 import com.tc.net.protocol.tcm.TCMessageImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
@@ -73,12 +74,13 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return serializer;
   }
 
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer();
     nodeIDSerializer = (NodeIDSerializer) nodeIDSerializer.deserializeFrom(in);
     this.nodeID = nodeIDSerializer.getNodeID();
-    this.serializer = new ObjectStringSerializer();
+    this.serializer = new ObjectStringSerializerImpl();
     this.serializer.deserializeFrom(in);
     this.sid2gid = readServerTxnIDGlobalTxnIDMapping(in);
     this.sequenceID = in.readLong();
@@ -87,6 +89,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     this.batchData = in.duplicateAndLimit(size).toArray();
   }
 
+  @Override
   public boolean isRecycleOnRead(TCMessageImpl messages) {
     // delay recycling for reusing TCByteBuffers in batchData.
     this.messageWrapper = messages;
@@ -105,6 +108,7 @@ public class RelayedCommitTransactionMessage extends AbstractGroupMessage implem
     return mapping;
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(RELAYED_COMMIT_TXN_MSG_TYPE, getType());
     NodeIDSerializer nodeIDSerializer = new NodeIDSerializer(nodeID);

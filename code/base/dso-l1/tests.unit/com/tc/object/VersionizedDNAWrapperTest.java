@@ -8,13 +8,14 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAWriter;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
 import com.tc.object.dna.impl.DNAImpl;
 import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.loaders.ClassProvider;
 
@@ -31,9 +32,9 @@ public class VersionizedDNAWrapperTest extends TestCase {
     final ObjectID pid = new ObjectID(2);
     final String type = getClass().getName();
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final ClassProvider classProvider = new MockClassProvider();
-    final DNAEncoding encoding = new ApplicatorDNAEncodingImpl(classProvider);
+    final DNAEncodingInternal encoding = new ApplicatorDNAEncodingImpl(classProvider);
     final DNAWriter dnaWriter = createDNAWriter(out, id, type, serializer, encoding, "loader description");
     final PhysicalAction action1 = new PhysicalAction("class.field1", new Integer(1), false);
     final LogicalAction action2 = new LogicalAction(12, new Object[] { "key", "value" });
@@ -92,7 +93,7 @@ public class VersionizedDNAWrapperTest extends TestCase {
   }
 
   protected DNAWriter createDNAWriter(final TCByteBufferOutputStream out, final ObjectID id, final String type,
-                                      final ObjectStringSerializer serializer, final DNAEncoding encoding,
+                                      final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
                                       final String string) {
     return new DNAWriterImpl(out, id, type, serializer, encoding, "loader description", false);
   }

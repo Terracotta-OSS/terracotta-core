@@ -43,6 +43,7 @@ import com.tc.net.protocol.transport.NullConnectionPolicy;
 import com.tc.net.protocol.transport.TransportHandshakeErrorNullHandler;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.session.NullSessionManager;
 import com.tc.object.tx.ServerTransactionID;
@@ -227,7 +228,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
     }
     int count = 10;
     TCByteBuffer[] serializedDNAs = new TCByteBuffer[] {};
-    ObjectStringSerializer objectSerializer = new ObjectStringSerializer();
+    ObjectStringSerializer objectSerializer = new ObjectStringSerializerImpl();
     Map roots = new HashMap();
     long sID = 10;
     ObjectSyncMessage message = new ObjectSyncMessage(ObjectSyncMessage.MANAGED_OBJECT_SYNC_TYPE);
@@ -245,7 +246,7 @@ public class TCGroupMessageWrapperTest extends TestCase {
   public void testRelayedCommitTransactionMessage() throws Exception {
     NodeID nodeID = makeNodeID("test");
     TCByteBuffer[] buffer = new TCByteBuffer[] {};
-    ObjectStringSerializer serializer = new ObjectStringSerializer();
+    ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     Map sid2gid = new HashMap();
     long seqID = 100;
     GlobalTransactionID lowWaterMark = new GlobalTransactionID(200);

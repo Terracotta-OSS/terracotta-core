@@ -30,7 +30,7 @@ import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.dna.impl.VersionizedDNAWrapper;
 import com.tc.object.locks.LockID;
@@ -1426,7 +1426,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ServerTransaction stxn1 = new ServerTransactionImpl(new TxnBatchID(1), new TransactionID(1),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
                                                               new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
                                                               DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
                                                               new long[0]);
@@ -1477,7 +1477,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ServerTransaction stxn2 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
                                                               new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
                                                               DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
                                                               new long[0]);
@@ -1511,7 +1511,7 @@ public class ObjectManagerTest extends TCTestCase {
     final ServerTransaction stxn3 = new ServerTransactionImpl(new TxnBatchID(2), new TransactionID(2),
                                                               new SequenceID(1), new LockID[0], new ClientID(2),
                                                               new ArrayList<DNA>(changes.values()),
-                                                              new ObjectStringSerializer(), Collections.EMPTY_MAP,
+                                                              new ObjectStringSerializerImpl(), Collections.EMPTY_MAP,
                                                               TxnType.NORMAL, new LinkedList(),
                                                               DmiDescriptor.EMPTY_ARRAY, new MetaDataReader[0], 1,
                                                               new long[0]);

@@ -11,7 +11,7 @@ import com.tc.io.TCByteBufferInputStream;
 import com.tc.io.TCByteBufferOutputStream;
 import com.tc.net.ClientID;
 import com.tc.net.GroupID;
-import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.object.msg.TestTransactionBatch;
 import com.tc.object.tx.ServerTransactionID;
@@ -39,7 +39,7 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
     this.testCommitTransactionMessage = (TestCommitTransactionMessage) new TestCommitTransactionMessageFactory()
         .newCommitTransactionMessage(GroupID.NULL_ID);
     this.testCommitTransactionMessage.setBatch(new TestTransactionBatch(new TCByteBuffer[] { TCByteBufferFactory
-        .getInstance(false, 3452) }), new ObjectStringSerializer());
+                                                   .getInstance(false, 3452) }), new ObjectStringSerializerImpl());
     this.testCommitTransactionMessage.setChannelID(this.cid);
 
     this.serverTransactionIDs = new ArrayList();
@@ -80,8 +80,8 @@ public class RelayedCommitTransactionMessageTest extends TestCase {
 
     for (Iterator iter = this.serverTransactionIDs.iterator(); iter.hasNext();) {
       ServerTransactionID serverTransactionID = (ServerTransactionID) iter.next();
-      assertEquals(rctm.getGlobalTransactionIDFor(serverTransactionID), rctm1
-          .getGlobalTransactionIDFor(serverTransactionID));
+      assertEquals(rctm.getGlobalTransactionIDFor(serverTransactionID),
+                   rctm1.getGlobalTransactionIDFor(serverTransactionID));
     }
 
     TCByteBuffer[] tcbb = rctm.getBatchData();

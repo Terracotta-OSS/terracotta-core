@@ -11,6 +11,8 @@ package com.tc.search.aggregator;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.dna.impl.NullObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.ValueType;
 import com.tc.search.AggregatorOperations;
@@ -19,9 +21,11 @@ import java.io.IOException;
 
 public class MinMax extends AbstractAggregator {
 
-  private final boolean min;
+  private static final ObjectStringSerializer NULL_SERIALIZER = new NullObjectStringSerializer();
 
-  private Comparable    result;
+  private final boolean                       min;
+
+  private Comparable                          result;
 
   private MinMax(AggregatorOperations operation, String attributeName, boolean min, ValueType type) {
     super(operation, attributeName, type);
@@ -84,12 +88,12 @@ public class MinMax extends AbstractAggregator {
 
   @Override
   Aggregator deserializeData(TCByteBufferInput input) throws IOException {
-    result = (Comparable) AbstractNVPair.deserializeInstance(input).getObjectValue();
+    result = (Comparable) AbstractNVPair.deserializeInstance(input, NULL_SERIALIZER).getObjectValue();
     return this;
   }
 
   @Override
   void serializeData(TCByteBufferOutput output) {
-    AbstractNVPair.createNVPair(getAttributeName(), result, getType()).serializeTo(output);
+    AbstractNVPair.createNVPair(getAttributeName(), result, getType()).serializeTo(output, NULL_SERIALIZER);
   }
 }

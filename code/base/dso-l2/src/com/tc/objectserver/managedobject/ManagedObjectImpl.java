@@ -9,11 +9,11 @@ import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.DNA;
+import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.api.DNACursor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.api.DNAException;
 import com.tc.object.dna.api.DNAWriter;
-import com.tc.object.dna.api.DNA.DNAType;
 import com.tc.object.dna.impl.ObjectDNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.StorageDNAEncodingImpl;
@@ -43,31 +43,31 @@ import java.util.Set;
  * that need to be serialized make sure you add them to the ManagedObjectSerializer
  */
 public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference, PrettyPrintable {
-  private static final TCLogger        logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
-  private static final DNAEncoding     DNA_STORAGE_ENCODING     = new StorageDNAEncodingImpl();
+  private static final TCLogger            logger                   = TCLogging.getLogger(ManagedObjectImpl.class);
+  private static final DNAEncodingInternal DNA_STORAGE_ENCODING     = new StorageDNAEncodingImpl();
 
-  private final static byte            IS_NEW_OFFSET            = 1;
-  private final static byte            IS_DIRTY_OFFSET          = 2;
-  private final static byte            REFERENCED_OFFSET        = 4;
-  private final static byte            REMOVE_ON_RELEASE_OFFSET = 8;
-  private final static byte            PINNED_OFFSET            = 16;
+  private final static byte                IS_NEW_OFFSET            = 1;
+  private final static byte                IS_DIRTY_OFFSET          = 2;
+  private final static byte                REFERENCED_OFFSET        = 4;
+  private final static byte                REMOVE_ON_RELEASE_OFFSET = 8;
+  private final static byte                PINNED_OFFSET            = 16;
 
-  private final static byte            INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
+  private final static byte                INITIAL_FLAG_VALUE       = IS_DIRTY_OFFSET | IS_NEW_OFFSET;
 
-  private static final long            UNINITIALIZED_VERSION    = -1;
+  private static final long                UNINITIALIZED_VERSION    = -1;
 
-  private final ObjectID               id;
-  private long                         version                  = UNINITIALIZED_VERSION;
-  private transient ManagedObjectState state;
+  private final ObjectID                   id;
+  private long                             version                  = UNINITIALIZED_VERSION;
+  private transient ManagedObjectState     state;
 
   // TODO::Split this flag into two so that concurrency is maintained
-  private volatile transient byte      flags                    = INITIAL_FLAG_VALUE;
+  private volatile transient byte          flags                    = INITIAL_FLAG_VALUE;
 
   // TODO:: Remove Cacheable interface from this Object and remove these two references
-  private transient TLinkable          previous;
-  private transient TLinkable          next;
+  private transient TLinkable              previous;
+  private transient TLinkable              next;
 
-  private transient int                accessed;
+  private transient int                    accessed;
 
   public ManagedObjectImpl(final ObjectID id) {
     Assert.assertNotNull(id);

@@ -14,8 +14,9 @@ import com.tc.object.ObjectID;
 import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.dmi.DmiClassSpec;
 import com.tc.object.dmi.DmiDescriptor;
-import com.tc.object.dna.api.DNAEncoding;
+import com.tc.object.dna.api.DNAEncodingInternal;
 import com.tc.object.dna.impl.ObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.Notify;
 import com.tc.object.locks.NotifyImpl;
@@ -23,17 +24,17 @@ import com.tc.object.locks.StringLockID;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.logging.NullRuntimeLogger;
 import com.tc.object.tx.ClientTransaction;
+import com.tc.object.tx.ClientTransactionBatchWriter;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
+import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.object.tx.ClientTransactionImpl;
 import com.tc.object.tx.TestClientTransaction;
-import com.tc.object.tx.ClientTransactionBatchWriter;
 import com.tc.object.tx.TransactionContext;
 import com.tc.object.tx.TransactionContextImpl;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TransactionIDGenerator;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldedInfo;
-import com.tc.object.tx.ClientTransactionBatchWriter.FoldingConfig;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.core.api.DSOGlobalServerStatsImpl;
 import com.tc.properties.TCProperties;
@@ -60,27 +61,27 @@ import junit.framework.TestCase;
 
 public class TransactionBatchTest extends TestCase {
 
-  private final DNAEncoding                   encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
+  private final DNAEncodingInternal           encoding = new ApplicatorDNAEncodingImpl(new MockClassProvider());
 
-  private ClientTransactionBatchWriter              writer;
+  private ClientTransactionBatchWriter        writer;
   private TestCommitTransactionMessageFactory messageFactory;
 
   @Override
   public void setUp() throws Exception {
     this.messageFactory = new TestCommitTransactionMessageFactory();
-    this.writer = newWriter(new ObjectStringSerializer());
+    this.writer = newWriter(new ObjectStringSerializerImpl());
   }
 
   private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer) {
     return new ClientTransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
-                                      this.messageFactory, FoldingConfig.createFromProperties(TCPropertiesImpl
-                                          .getProperties()));
+                                            this.messageFactory, FoldingConfig.createFromProperties(TCPropertiesImpl
+                                                .getProperties()));
   }
 
   private ClientTransactionBatchWriter newWriter(final ObjectStringSerializer serializer, final boolean foldEnabled,
-                                           final int lockLimit, final int objectLimit) {
+                                                 final int lockLimit, final int objectLimit) {
     return new ClientTransactionBatchWriter(GroupID.NULL_ID, new TxnBatchID(1), serializer, this.encoding,
-                                      this.messageFactory, new FoldingConfig(foldEnabled, objectLimit, lockLimit));
+                                            this.messageFactory, new FoldingConfig(foldEnabled, objectLimit, lockLimit));
   }
 
   public void testGetMinTransaction() throws Exception {
@@ -128,7 +129,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testWriteRead() throws IOException {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     final TestCommitTransactionMessageFactory mf = new TestCommitTransactionMessageFactory();
     final ClientID clientID = new ClientID(69);
     final TxnBatchID batchID = new TxnBatchID(42);
@@ -161,8 +162,8 @@ public class TransactionBatchTest extends TestCase {
     final ClientTransaction txn2 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn2.setTransactionContext(tc);
 
-    this.writer = new ClientTransactionBatchWriter(GroupID.NULL_ID, batchID, serializer, this.encoding, mf, FoldingConfig
-        .createFromProperties(TCPropertiesImpl.getProperties()));
+    this.writer = new ClientTransactionBatchWriter(GroupID.NULL_ID, batchID, serializer, this.encoding, mf,
+                                                   FoldingConfig.createFromProperties(TCPropertiesImpl.getProperties()));
 
     final SequenceGenerator sequenceGenerator = new SequenceGenerator();
     final TransactionIDGenerator tidGenerator = new TransactionIDGenerator();
@@ -227,7 +228,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testSimpleFold() throws IOException {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
 
     this.writer = newWriter(serializer, true, 0, 0);
 
@@ -268,7 +269,7 @@ public class TransactionBatchTest extends TestCase {
 
     // this txn has a common object although not share a common lock with the others -- it should be folded
     final LockID lid2 = new StringLockID("2");
-    
+
     tc = new TransactionContextImpl(lid2, TxnType.NORMAL, TxnType.NORMAL);
     final ClientTransaction txn4 = new ClientTransactionImpl(new NullRuntimeLogger());
     txn4.setTransactionContext(tc);
@@ -329,12 +330,12 @@ public class TransactionBatchTest extends TestCase {
                                      SampledRateCounter transactionSizeCounter) {
     long expectedAvgTxnSize = new TCByteBufferInputStream(actualData).getTotalLength() / actualNumTxns;
     long actualAvgTxnSize = transactionSizeCounter.getMostRecentSample().getCounterValue();
-    
+
     assertEquals(expectedAvgTxnSize, actualAvgTxnSize);
   }
 
   public void testFoldObjectLimit() {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 0, 2);
 
     final LockID lid1 = new StringLockID("1");
@@ -368,7 +369,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testFoldLockLimit() {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 2, 0);
 
     final LockID lid1 = new StringLockID("1");
@@ -402,7 +403,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testFoldDisabled() {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, false, 0, 0);
 
     final LockID lid1 = new StringLockID("1");
@@ -433,7 +434,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testDisallowedFolds() {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 0, 0);
 
     final LockID lid1 = new StringLockID("1");
@@ -487,7 +488,7 @@ public class TransactionBatchTest extends TestCase {
     //
     // txn3 cannot be folded into txn1 because it would put the Obj2 delta before the txn that creates it (txn2)
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 0, 0);
 
     final LockID lid1 = new StringLockID("1");
@@ -533,7 +534,7 @@ public class TransactionBatchTest extends TestCase {
     //
     // txn2 should be folded into txn1 even though it contains a "new" object
 
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 0, 0);
 
     final LockID lid1 = new StringLockID("1");
@@ -566,7 +567,7 @@ public class TransactionBatchTest extends TestCase {
   }
 
   public void testOrdering() {
-    final ObjectStringSerializer serializer = new ObjectStringSerializer();
+    final ObjectStringSerializer serializer = new ObjectStringSerializerImpl();
     this.writer = newWriter(serializer, true, 0, 0);
 
     final LockID lid1 = new StringLockID("1");

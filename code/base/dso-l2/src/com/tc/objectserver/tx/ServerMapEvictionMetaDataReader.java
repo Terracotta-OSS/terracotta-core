@@ -3,10 +3,10 @@
  */
 package com.tc.objectserver.tx;
 
-import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.api.MetaDataReader;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
@@ -124,23 +124,19 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
       return "SEARCH";
     }
 
-    public Object deserializeFrom(TCByteBufferInput arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void serializeTo(TCByteBufferOutput out) {
+    public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
       out.writeString(getCategory());
       out.writeInt(numberOfNvPairs());
-      new AbstractNVPair.StringNVPair("CACHENAME@", cacheName).serializeTo(out);
-      new AbstractNVPair.StringNVPair("COMMAND@", "REMOVE_IF_VALUE_EQUAL").serializeTo(out);
+      new AbstractNVPair.StringNVPair("CACHENAME@", cacheName).serializeTo(out, serializer);
+      new AbstractNVPair.StringNVPair("COMMAND@", "REMOVE_IF_VALUE_EQUAL").serializeTo(out, serializer);
       new AbstractNVPair.IntNVPair("", (numberOfNvPairs() - 3) / 2);
 
       for (Object o : candidates.entrySet()) {
         Entry e = (Entry) o;
 
         // XXX: assumes key/value types of String/ObjectID!
-        new AbstractNVPair.StringNVPair("", ((UTF8ByteDataHolder) e.getKey()).asString()).serializeTo(out);
-        new AbstractNVPair.ObjectIdNVPair("", (ObjectID) e.getValue()).serializeTo(out);
+        new AbstractNVPair.StringNVPair("", ((UTF8ByteDataHolder) e.getKey()).asString()).serializeTo(out, serializer);
+        new AbstractNVPair.ObjectIdNVPair("", (ObjectID) e.getValue()).serializeTo(out, serializer);
       }
     }
 

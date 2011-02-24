@@ -5,6 +5,8 @@ package com.tc.object.msg;
 
 import com.tc.io.TCByteBufferInput;
 import com.tc.io.TCByteBufferOutput;
+import com.tc.object.dna.impl.NullObjectStringSerializer;
+import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.metadata.AbstractNVPair;
 import com.tc.object.metadata.NVPair;
 import com.tc.search.IndexQueryResult;
@@ -20,8 +22,10 @@ import java.util.List;
  */
 public class IndexQueryResultsImpl implements IndexQueryResults {
 
-  private List<IndexQueryResult> queryResults;
-  private List<NVPair>           aggregatorResults;
+  private static final ObjectStringSerializer NULL_SERIALIZER = new NullObjectStringSerializer();
+
+  private List<IndexQueryResult>              queryResults;
+  private List<NVPair>                        aggregatorResults;
 
   public IndexQueryResultsImpl(List<IndexQueryResult> queryResults, List<NVPair> aggregatorResults) {
     this.queryResults = queryResults;
@@ -56,7 +60,7 @@ public class IndexQueryResultsImpl implements IndexQueryResults {
     int aggregatorCount = input.readInt();
     this.aggregatorResults = new ArrayList<NVPair>();
     while (aggregatorCount-- < 0) {
-      NVPair pair = AbstractNVPair.deserializeInstance(input);
+      NVPair pair = AbstractNVPair.deserializeInstance(input, NULL_SERIALIZER);
       this.aggregatorResults.add(pair);
     }
     return this;
@@ -72,7 +76,7 @@ public class IndexQueryResultsImpl implements IndexQueryResults {
     }
     output.writeInt(this.aggregatorResults.size());
     for (NVPair pair : this.aggregatorResults) {
-      pair.serializeTo(output);
+      pair.serializeTo(output, NULL_SERIALIZER);
     }
   }
 
