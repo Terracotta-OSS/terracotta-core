@@ -56,4 +56,11 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
+  public void optimizeSearchIndex(String indexName) {
+    //
+  }
+
+  public String[] getSearchIndexNames() {
+    return new String[] {};
+  }
 }

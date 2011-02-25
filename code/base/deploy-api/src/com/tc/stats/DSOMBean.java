@@ -87,4 +87,7 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
 
   Map<ObjectName, Long> getServerMapGetValueRequestsRate();
 
+  void optimizeSearchIndex(String indexName);
+
+  String[] getSearchIndexNames();
 }

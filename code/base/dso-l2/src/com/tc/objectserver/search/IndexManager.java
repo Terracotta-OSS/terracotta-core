@@ -37,4 +37,8 @@ public interface IndexManager {
   void release();
 
   void shutdown();
+
+  void optimizeSearchIndex(String indexName);
+
+  String[] getSearchIndexNames();
 }

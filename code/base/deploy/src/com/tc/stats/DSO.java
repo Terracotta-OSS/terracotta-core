@@ -27,6 +27,7 @@ import com.tc.objectserver.l1.api.ClientStateManager;
 import com.tc.objectserver.locks.LockMBean;
 import com.tc.objectserver.locks.LockManagerMBean;
 import com.tc.objectserver.mgmt.ManagedObjectFacade;
+import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.storage.api.OffheapStats;
 import com.tc.objectserver.tx.ServerTransactionManagerEventListener;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
@@ -82,6 +83,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
   private final ClientStateManager                     clientStateManager;
   private final TerracottaOperatorEventHistoryProvider operatorEventHistoryProvider;
   private final OffheapStats                           offheapStats;
+  private final IndexManager                           indexManager;
 
   public DSO(final ServerManagementContext managementContext, final ServerConfigurationContext configContext,
              final MBeanServer mbeanServer, final GCStatsEventPublisher gcStatsPublisher,
@@ -100,6 +102,7 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     this.channelMgr = managementContext.getChannelManager();
     this.txnMgr = managementContext.getTransactionManager();
     this.channelStats = managementContext.getChannelStats();
+    this.indexManager = managementContext.getIndexManager();
     this.instanceMonitor = managementContext.getInstanceMonitor();
     this.clientStateManager = configContext.getClientStateManager();
     this.operatorEventHistoryProvider = operatorEventHistoryProvider;
@@ -112,6 +115,14 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
 
     setupRoots();
     setupClients();
+  }
+
+  public void optimizeSearchIndex(String indexName) {
+    indexManager.optimizeSearchIndex(indexName);
+  }
+
+  public String[] getSearchIndexNames() {
+    return indexManager.getSearchIndexNames();
   }
 
   public void reset() {

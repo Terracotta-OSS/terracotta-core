@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.objectserver.core.impl;
 
@@ -10,6 +11,7 @@ import com.tc.objectserver.api.ObjectInstanceMonitorMBean;
 import com.tc.objectserver.api.ObjectManagerMBean;
 import com.tc.objectserver.core.api.DSOGlobalServerStats;
 import com.tc.objectserver.locks.LockManagerMBean;
+import com.tc.objectserver.search.IndexManager;
 import com.tc.objectserver.tx.ServerTransactionManagerMBean;
 
 public class ServerManagementContext {
@@ -22,11 +24,13 @@ public class ServerManagementContext {
   private final LockManagerMBean              lockMgr;
   private final ObjectInstanceMonitorMBean    instanceMonitor;
   private final DSOApplicationEventsMBean     appEvents;
+  private final IndexManager                  indexManager;
 
   public ServerManagementContext(ServerTransactionManagerMBean txnMgr, ObjectManagerMBean objMgr,
                                  LockManagerMBean lockMgr, DSOChannelManagerMBean channelMgr,
                                  DSOGlobalServerStats serverStats, ChannelStats channelStats,
-                                 ObjectInstanceMonitorMBean instanceMonitor, DSOApplicationEventsMBean appEvents) {
+                                 ObjectInstanceMonitorMBean instanceMonitor, DSOApplicationEventsMBean appEvents,
+                                 IndexManager indexManager) {
     this.txnMgr = txnMgr;
     this.objMgr = objMgr;
     this.lockMgr = lockMgr;
@@ -35,6 +39,11 @@ public class ServerManagementContext {
     this.channelStats = channelStats;
     this.instanceMonitor = instanceMonitor;
     this.appEvents = appEvents;
+    this.indexManager = indexManager;
+  }
+
+  public IndexManager getIndexManager() {
+    return indexManager;
   }
 
   public ServerTransactionManagerMBean getTransactionManager() {
