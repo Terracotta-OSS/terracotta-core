@@ -9,6 +9,7 @@ import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
+import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -19,7 +20,6 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
 
   private static final TCLogger    logger = TCLogging.getLogger(L2IndexSyncHandler.class);
 
-  // private Sink sendSink;
   private final IndexHACoordinator indexHACoordinator;
   private StateSyncManager         stateSyncManager;
 
@@ -29,7 +29,9 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
 
   @Override
   public void handleEvent(final EventContext context) {
-    if (context instanceof IndexSyncMessage) {
+    if (context instanceof IndexSyncStartMessage) {
+      doSyncPrepare();
+    } else if (context instanceof IndexSyncMessage) {
       final IndexSyncMessage syncMsg = (IndexSyncMessage) context;
       doSyncIndex(syncMsg);
     } else if (context instanceof IndexSyncCompleteMessage) {
@@ -41,6 +43,10 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
+  }
+
+  private void doSyncPrepare() {
+    this.indexHACoordinator.doSyncPrepare();
   }
 
   private void doSyncIndex(final IndexSyncMessage syncMsg) {

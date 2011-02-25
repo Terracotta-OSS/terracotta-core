@@ -12,6 +12,7 @@ import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessageFactory;
+import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectListSyncMessageFactory;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
@@ -45,9 +46,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 
 public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, GroupMessageListener,
     L2ObjectStateListener, L2IndexStateListener {
@@ -105,13 +106,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       for (final Iterator i = gr.getResponses().iterator(); i.hasNext();) {
         final ObjectListSyncMessage msg = (ObjectListSyncMessage) i.next();
         if (msg.getType() == ObjectListSyncMessage.RESPONSE) {
-          nodeIDSyncingPassives.put(msg.messageFrom(), new SyncingPassiveValue(msg.getObjectIDs(), msg
-              .getCurrentState()));
+          nodeIDSyncingPassives.put(msg.messageFrom(),
+                                    new SyncingPassiveValue(msg.getObjectIDs(), msg.getCurrentState()));
 
         } else {
           logger.error("Received wrong response for ObjectListSyncMessage Request  from " + msg.messageFrom()
                        + " : msg : " + msg);
-          this.groupManager.zapNode(msg.messageFrom(), L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+          this.groupManager.zapNode(msg.messageFrom(),
+                                    L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
                                     "Recd wrong response from : " + msg.messageFrom()
                                         + " for ObjectListSyncMessage Request"
                                         + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
@@ -154,8 +156,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                   + gcMsg);
       return;
     }
-    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(
-                                                                                   new GCResultContext(gcedOids, gcMsg
+    final boolean deleted = this.objectManager.getGarbageCollector().deleteGarbage(new GCResultContext(gcedOids, gcMsg
                                                                                        .getGCInfo()));
     if (deleted) {
       logger.info("Removed " + gcedOids.size() + " objects from passive ObjectManager from last DGC from Active");
@@ -188,9 +189,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private void handleObjectListFailedResponse(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
     final String error = "Received wrong response from " + nodeID + " for Object List Query : " + clusterMsg;
     logger.error(error + " Forcing node to Quit !!");
-    this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR, error
-                                                                                 + L2HAZapNodeRequestProcessor
-                                                                                     .getErrorString(new Throwable()));
+    this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.PROGRAM_ERROR,
+                              error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
   }
 
   private void handleObjectListResponse(final NodeID nodeID, final ObjectListSyncMessage clusterMsg) {
@@ -209,14 +209,14 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                 error + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     } else {
       // DEV-1944 : We don't want newly joined nodes to be syncing the Objects while the active is receiving the resent
-      // transactions.
-      // If we do that there is a race where passive can apply already applied transactions twice. XXX:: 3 passives -
-      // partial sync.
+      // transactions. If we do that there is a race where passive can apply already applied transactions twice.
+      // XXX:: 3 passives - partial sync.
       ReplicatedObjectManagerImpl.this.transactionManager
           .callBackOnResentTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
             public void onCompletion() {
-              ReplicatedObjectManagerImpl.this.gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID, clusterMsg
-                  .getObjectIDs(), clusterMsg.getCurrentState());
+              ReplicatedObjectManagerImpl.this.gcMonitor.add2L2StateManagerWhenGCDisabled(nodeID,
+                                                                                          clusterMsg.getObjectIDs(),
+                                                                                          clusterMsg.getCurrentState());
             }
           });
     }
@@ -247,12 +247,30 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       this.groupManager.sendTo(nodeID, msg);
     } catch (final GroupException e) {
       logger.error("Error Sending Object Sync complete message  to : " + nodeID, e);
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+      this.groupManager.zapNode(nodeID,
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error sending Object Sync complete message "
                                     + L2HAZapNodeRequestProcessor.getErrorString(e));
     } catch (final SequenceGeneratorException e) {
       logger.error("Error Sending Object Sync complete message  to : " + nodeID, e);
     }
+  }
+
+  public void indexSyncStartFor(NodeID nodeID) {
+    try {
+      final IndexSyncStartMessage msg = IndexSyncMessageFactory.createIndexSyncStartMessage(this.indexSequenceGenerator
+          .getNextSequence(nodeID));
+      this.groupManager.sendTo(nodeID, msg);
+    } catch (final GroupException e) {
+      logger.error("Error Sending Index Sync Start message  to : " + nodeID, e);
+      this.groupManager.zapNode(nodeID,
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error sending Index Sync Start message "
+                                    + L2HAZapNodeRequestProcessor.getErrorString(e));
+    } catch (SequenceGeneratorException e) {
+      logger.error("Error Sending Index Sync Start message  to : " + nodeID, e);
+    }
+
   }
 
   public void indexFilesFor(NodeID nodeID, int indexFiles) {
@@ -273,7 +291,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       this.groupManager.sendTo(nodeID, msg);
     } catch (final GroupException e) {
       logger.error("Error Sending Index Sync complete message  to : " + nodeID, e);
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+      this.groupManager.zapNode(nodeID,
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error sending Index Sync complete message "
                                     + L2HAZapNodeRequestProcessor.getErrorString(e));
     } catch (final SequenceGeneratorException e) {
@@ -298,14 +317,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                                this.isCleanDB));
     } else {
       logger.error("Recd. ObjectListRequest when in ACTIVE state from " + nodeID + ". Zapping node ...");
-      this.groupManager.sendTo(nodeID, ObjectListSyncMessageFactory
-          .createObjectListSyncFailedResponseMessage(clusterMsg));
+      this.groupManager.sendTo(nodeID,
+                               ObjectListSyncMessageFactory.createObjectListSyncFailedResponseMessage(clusterMsg));
       // Now ZAP the node
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN, "Recd ObjectListRequest from : "
-                                                                                 + nodeID
-                                                                                 + " while in ACTIVE-COORDINATOR state"
-                                                                                 + L2HAZapNodeRequestProcessor
-                                                                                     .getErrorString(new Throwable()));
+      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.SPLIT_BRAIN,
+                                "Recd ObjectListRequest from : " + nodeID + " while in ACTIVE-COORDINATOR state"
+                                    + L2HAZapNodeRequestProcessor.getErrorString(new Throwable()));
     }
   }
 
@@ -456,6 +473,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
         for (final Iterator i = nodeID2ObjectIDs.entrySet().iterator(); i.hasNext();) {
           final Entry e = (Entry) i.next();
           final NodeID nodeID = (NodeID) e.getKey();
+          // XXX: syncingPassives can contain the node and still not ADDED state as the DGC was not disabled. They
+          // contain syncingPassiveValue. So, you are missing to sync them here.
           if (!this.syncingPassives.containsKey(nodeID)) {
             this.syncingPassives.put(nodeID, ADDED);
           } else {

@@ -3,8 +3,13 @@
  */
 package com.tc.l2.msg;
 
-
 public class IndexSyncMessageFactory {
+
+  public static IndexSyncStartMessage createIndexSyncStartMessage(final long sequenceID) {
+    IndexSyncStartMessage msg = new IndexSyncStartMessage(IndexSyncStartMessage.INDEX_SYNC_START_TYPE);
+    msg.initialize(sequenceID);
+    return msg;
+  }
 
   public static IndexSyncMessage createIndexSyncMessage(String cacheName, String fileName, int length, byte[] fileData,
                                                         long sequenceID) {
@@ -13,9 +18,9 @@ public class IndexSyncMessageFactory {
     return msg;
   }
 
-  public static IndexSyncCompleteMessage createIndexSyncCompleteMessage(long sID) {
+  public static IndexSyncCompleteMessage createIndexSyncCompleteMessage(final long sequenceID) {
     IndexSyncCompleteMessage msg = new IndexSyncCompleteMessage(IndexSyncCompleteMessage.INDEX_SYNC_COMPLETE_TYPE);
-    msg.initialize(sID);
+    msg.initialize(sequenceID);
     return msg;
   }
 

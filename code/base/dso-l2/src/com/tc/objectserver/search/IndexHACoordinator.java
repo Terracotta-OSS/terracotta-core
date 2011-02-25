@@ -13,4 +13,6 @@ public interface IndexHACoordinator extends IndexManager, StateChangeListener {
 
   public void applyIndexSync(String indexName, String fileName, byte[] fileData);
 
+  public void doSyncPrepare();
+
 }

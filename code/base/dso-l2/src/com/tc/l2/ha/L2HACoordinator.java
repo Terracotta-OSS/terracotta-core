@@ -15,6 +15,7 @@ import com.tc.l2.api.ReplicatedClusterStateManager;
 import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.handler.GCResultHandler;
 import com.tc.l2.handler.GroupEventsDispatchHandler;
+import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.handler.L2IndexSyncHandler;
 import com.tc.l2.handler.L2IndexSyncRequestHandler;
 import com.tc.l2.handler.L2IndexSyncSendHandler;
@@ -26,10 +27,10 @@ import com.tc.l2.handler.L2StateChangeHandler;
 import com.tc.l2.handler.L2StateMessageHandler;
 import com.tc.l2.handler.ServerTransactionAckHandler;
 import com.tc.l2.handler.TransactionRelayHandler;
-import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
+import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
@@ -139,8 +140,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final int MAX_STAGE_SIZE = TCPropertiesImpl.getProperties().getInt(TCPropertiesConsts.L2_SEDA_STAGE_SINK_CAPACITY);
 
     final ClusterState clusterState = new ClusterState(persistentStateStore, this.server.getManagedObjectStore(),
-                                                       this.server.getConnectionIdFactory(), gtxm
-                                                           .getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
+                                                       this.server.getConnectionIdFactory(),
+                                                       gtxm.getGlobalTransactionIDSequenceProvider(), this.thisGroupID,
                                                        stripeIDStateManager, dgcSequenceProvider);
     final Sink stateChangeSink = stageManager.createStage(ServerConfigurationContext.L2_STATE_CHANGE_STAGE,
 
@@ -181,15 +182,18 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final Sink gcResultSink = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
                                                        new GCResultHandler(), 1, MAX_STAGE_SIZE).getSink();
 
+    // Right now, Index Sync stages should are single threaded.
+    final short INDEX_SYNC_STAGE_THREADS = 1;
     final Sink indexSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.INDEXES_SYNC_REQUEST_STAGE,
-                     new L2IndexSyncRequestHandler(l2IndexStateManager, this.indexSequenceGenerator), 1,
-                     Integer.MAX_VALUE).getSink();
+                     new L2IndexSyncRequestHandler(l2IndexStateManager, this.indexSequenceGenerator),
+                     INDEX_SYNC_STAGE_THREADS, Integer.MAX_VALUE).getSink();
     final Sink indexSyncSink = stageManager.createStage(ServerConfigurationContext.INDEXES_SYNC_STAGE,
-                                                        new L2IndexSyncHandler(indexHACoordinator), 1,
-                                                        Integer.MAX_VALUE).getSink();
+                                                        new L2IndexSyncHandler(indexHACoordinator),
+                                                        INDEX_SYNC_STAGE_THREADS, Integer.MAX_VALUE).getSink();
     stageManager.createStage(ServerConfigurationContext.INDEXES_SYNC_SEND_STAGE,
-                             new L2IndexSyncSendHandler(l2IndexStateManager), 1, Integer.MAX_VALUE);
+                             new L2IndexSyncSendHandler(l2IndexStateManager), INDEX_SYNC_STAGE_THREADS,
+                             Integer.MAX_VALUE);
 
     this.rClusterStateMgr = new ReplicatedClusterStateManagerImpl(
                                                                   this.groupManager,
@@ -197,8 +201,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                                                                   clusterState,
                                                                   this.server.getConnectionIdFactory(),
                                                                   stageManager
-                                                                      .getStage(
-                                                                                ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE)
+                                                                      .getStage(ServerConfigurationContext.CHANNEL_LIFE_CYCLE_STAGE)
                                                                       .getSink());
 
     final OrderedSink orderedObjectsSyncSink = new OrderedSink(logger, objectsSyncSink);
@@ -220,6 +223,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
+    this.groupManager.routeMessages(IndexSyncStartMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(IndexSyncMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(IndexSyncCompleteMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
@@ -353,7 +357,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
       this.rTxnManager.publishResetRequest(nodeID);
     } catch (final GroupException ge) {
       logger.error("Error publishing reset counter request node : " + nodeID + " Zapping it : ", ge);
-      this.groupManager.zapNode(nodeID, L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+      this.groupManager.zapNode(nodeID,
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
                                 "Error publishing reset counter for " + nodeID
                                     + L2HAZapNodeRequestProcessor.getErrorString(ge));
       throw new SequenceGeneratorException(ge);

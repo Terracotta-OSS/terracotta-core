@@ -25,7 +25,7 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
   }
 
   public void applyIndexSync(String cacheName, String fileName, byte[] data) {
-    //  
+    //
   }
 
   public void nodeJoined(NodeID nodeID) {
@@ -33,6 +33,10 @@ public class NullIndexHACoordinator extends NullIndexManager implements IndexHAC
   }
 
   public void nodeLeft(NodeID nodeID) {
+    //
+  }
+
+  public void doSyncPrepare() {
     //
   }
 
