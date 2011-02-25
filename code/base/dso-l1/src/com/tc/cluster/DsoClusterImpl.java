@@ -15,6 +15,7 @@ import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.util.Assert;
 import com.tcclient.cluster.DsoClusterInternal;
 import com.tcclient.cluster.DsoNode;
@@ -148,15 +149,23 @@ public class DsoClusterImpl implements DsoClusterInternal {
 
     if (map instanceof Manageable) {
       Manageable manageable = (Manageable)map;
-      if (manageable.__tc_isManaged() && manageable instanceof TCMap) {
-        Map<K, Set<NodeID>> rawResult = clusterMetaDataManager.getNodesWithKeys((TCMap)map, keys);
-        for (Map.Entry<K, Set<NodeID>> entry : rawResult.entrySet()) {
-          Set<DsoNode> dsoNodes = new HashSet<DsoNode>(rawResult.entrySet().size(), 1.0f);
-          for (NodeID nodeID : entry.getValue()) {
-            DsoNodeInternal dsoNode = topology.getAndRegisterDsoNode(nodeID);
-            dsoNodes.add(dsoNode);
+      if (manageable.__tc_isManaged()) {
+        Map<K, Set<NodeID>> rawResult = null;
+        if (manageable instanceof TCMap) {
+          rawResult = clusterMetaDataManager.getNodesWithKeys((TCMap)map, keys);
+        } else if (manageable instanceof TCServerMap) {
+          rawResult = clusterMetaDataManager.getNodesWithKeys((TCServerMap)map, keys);
+        }
+
+        if (rawResult != null) {
+          for (Map.Entry<K, Set<NodeID>> entry : rawResult.entrySet()) {
+            Set<DsoNode> dsoNodes = new HashSet<DsoNode>(rawResult.entrySet().size(), 1.0f);
+            for (NodeID nodeID : entry.getValue()) {
+              DsoNodeInternal dsoNode = topology.getAndRegisterDsoNode(nodeID);
+              dsoNodes.add(dsoNode);
+            }
+            result.put(entry.getKey(), dsoNodes);
           }
-          result.put(entry.getKey(), dsoNodes);
         }
       }
     }

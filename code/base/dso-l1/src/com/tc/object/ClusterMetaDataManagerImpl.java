@@ -13,6 +13,7 @@ import com.tc.net.NodeID;
 import com.tc.net.protocol.tcm.ChannelID;
 import com.tc.object.bytecode.Manageable;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -257,7 +258,10 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
     waitUntilRunning();
 
     final ObjectID mapObjectID = ((Manageable) tcMap).__tc_managed().getObjectID();
-    NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
+    return getNodesWithKeys(keys, mapObjectID);
+  }
+
+  private <K> Map<K, Set<NodeID>> getNodesWithKeys(final Collection<? extends K> keys, final ObjectID mapObjectID) {NodesWithKeysMessage message = nwkmFactory.newNodesWithKeysMessage(groupID);
     message.setMapObjectID(mapObjectID);
     message.setKeys((Set<Object>)keys);
     Map<K, Set<NodeID>> result = sendMessageAndWait(threadIDManager.getThreadID(), message);
@@ -267,6 +271,13 @@ public class ClusterMetaDataManagerImpl implements ClusterMetaDataManager {
       }
     }
     return result;
+  }
+
+  public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCServerMap tcMap, final Collection<? extends K> keys) {
+    waitUntilRunning();
+
+    final ObjectID mapObjectID = tcMap.__tc_managed().getObjectID();
+    return getNodesWithKeys(keys, mapObjectID);
   }
 
   private void resendOutstanding() {

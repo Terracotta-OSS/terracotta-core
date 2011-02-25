@@ -9,6 +9,7 @@ import com.tc.net.NodeID;
 import com.tc.object.ClusterMetaDataManager;
 import com.tc.object.ObjectID;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.locks.ThreadID;
 import com.tc.object.msg.ClientHandshakeMessage;
@@ -62,7 +63,11 @@ public class DsoClusterTest extends TCTestCase {
     }
 
     public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCMap tcMap, final Collection<? extends K> keys) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
+    }
+
+    public <K> Map<K, Set<NodeID>> getNodesWithKeys(final TCServerMap tcMap, final Collection<? extends K> keys) {
+      return null;
     }
 
     public void initializeHandshake(NodeID thisNode, NodeID remoteNode, ClientHandshakeMessage handshakeMessage) {

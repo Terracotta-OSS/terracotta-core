@@ -6,6 +6,7 @@ package com.tc.object;
 
 import com.tc.net.NodeID;
 import com.tc.object.bytecode.TCMap;
+import com.tc.object.bytecode.TCServerMap;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.handshakemanager.ClientHandshakeCallback;
 import com.tc.object.locks.ThreadID;
@@ -31,4 +32,6 @@ public interface ClusterMetaDataManager extends ClientHandshakeCallback {
   public void setResponse(ThreadID threadId, Object response);
 
   public <K> Map<K, Set<NodeID>> getNodesWithKeys(TCMap tcMap, Collection<? extends K> keys);
+
+  public <K> Map<K, Set<NodeID>> getNodesWithKeys(TCServerMap tcMap, Collection<? extends K> keys);
 }
