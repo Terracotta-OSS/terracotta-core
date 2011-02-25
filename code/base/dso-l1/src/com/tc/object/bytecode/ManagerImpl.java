@@ -61,6 +61,7 @@ import com.tc.operatorevent.TerracottaOperatorEvent.EventSubsystem;
 import com.tc.operatorevent.TerracottaOperatorEvent.EventType;
 import com.tc.operatorevent.TerracottaOperatorEventImpl;
 import com.tc.properties.TCProperties;
+import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.search.SearchQueryResults;
 import com.tc.statistics.StatisticRetrievalAction;
@@ -85,8 +86,8 @@ import java.util.Set;
 import javax.management.MBeanServer;
 
 public class ManagerImpl implements ManagerInternal {
-  private static final TCLogger                    logger        = TCLogging.getLogger(Manager.class);
-  private final SetOnceFlag                        clientStarted = new SetOnceFlag();
+  private static final TCLogger                    logger              = TCLogging.getLogger(Manager.class);
+  private final SetOnceFlag                        clientStarted       = new SetOnceFlag();
   private final DSOClientConfigHelper              config;
   private final ClassProvider                      classProvider;
   private final boolean                            startClient;
@@ -109,8 +110,12 @@ public class ManagerImpl implements ManagerInternal {
   private DistributedObjectClient                  dso;
   private DmiManager                               methodCallManager;
 
-  private final SerializationUtil                  serializer    = new SerializationUtil();
-  private final MethodDisplayNames                 methodDisplay = new MethodDisplayNames(this.serializer);
+  private final SerializationUtil                  serializer          = new SerializationUtil();
+  private final MethodDisplayNames                 methodDisplay       = new MethodDisplayNames(this.serializer);
+
+  private static final boolean                     QUERY_WAIT_FOR_TXNS = TCPropertiesImpl
+                                                                           .getProperties()
+                                                                           .getBoolean(TCPropertiesConsts.SEARCH_QUERY_WAIT_FOR_TXNS);
 
   public ManagerImpl(final DSOClientConfigHelper config, final PreparedComponentsFromL2Connection connectionComponents) {
     this(true, null, null, null, null, config, connectionComponents, true, null, null, false);
@@ -947,7 +952,9 @@ public class ManagerImpl implements ManagerInternal {
   public SearchQueryResults executeQuery(String cachename, LinkedList queryStack, boolean includeKeys,
                                          boolean includeValues, Set<String> attributeSet, List<NVPair> sortAttributes,
                                          List<NVPair> aggregators, int maxResults, int batchSize) {
-    waitForAllCurrentTransactionsToComplete();
+    if (QUERY_WAIT_FOR_TXNS) {
+      waitForAllCurrentTransactionsToComplete();
+    }
     return searchRequestManager.query(cachename, queryStack, includeKeys, includeValues, attributeSet, sortAttributes,
                                       aggregators, maxResults, batchSize);
   }
