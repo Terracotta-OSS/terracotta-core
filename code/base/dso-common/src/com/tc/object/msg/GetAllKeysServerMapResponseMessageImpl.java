@@ -16,6 +16,7 @@ import com.tc.object.ServerMapRequestType;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.session.SessionID;
+import com.tc.util.Assert;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -25,28 +26,28 @@ import java.util.Set;
 public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase implements
     GetAllKeysServerMapResponseMessage {
 
-  private final static byte        MAP_OBJECT_ID     = 0;
-  private final static byte        REQUEST_ID        = 1;
+  private final static byte        MAP_OBJECT_ID = 0;
+  private final static byte        REQUEST_ID    = 1;
   private final static byte        GET_ALL_KEYS_SIZE = 2;
 
   private ObjectID                 mapID;
   private ServerMapRequestID       requestID;
   private Set                      keys;
 
-  private static final DNAEncoding encoder           = new StorageDNAEncodingImpl();
+  private static final DNAEncoding encoder       = new StorageDNAEncodingImpl();
   // Since ApplicatorDNAEncodingImpl is only available in the client, some tricker to get this reference set.
   private final DNAEncoding        decoder;
 
   public GetAllKeysServerMapResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                                final MessageChannel channel, final TCMessageHeader header,
-                                                final TCByteBuffer[] data, final DNAEncoding decoder) {
+                                                 final MessageChannel channel, final TCMessageHeader header,
+                                                 final TCByteBuffer[] data, final DNAEncoding decoder) {
     super(sessionID, monitor, channel, header, data);
     this.decoder = decoder;
   }
 
   public GetAllKeysServerMapResponseMessageImpl(final SessionID sessionID, final MessageMonitor monitor,
-                                                final TCByteBufferOutputStream out, final MessageChannel channel,
-                                                final TCMessageType type) {
+                                                 final TCByteBufferOutputStream out, final MessageChannel channel,
+                                                 final TCMessageType type) {
     super(sessionID, monitor, out, channel, type);
     this.decoder = null; // shouldn't be used
   }
@@ -69,9 +70,7 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
       encoder.encode(iter.next(), outStream);
       count++;
     }
-    if (this.keys.size() != count) { throw new AssertionError("Error in dehydrating. "
-                                                              + ServerMapResponseMessage.class.getName()
-                                                              + " expected: " + this.keys.size() + " actual: " + count); }
+    Assert.assertEquals(this.keys.size(), count);
   }
 
   @Override
@@ -87,7 +86,7 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
 
       case GET_ALL_KEYS_SIZE:
         int size = getIntValue();
-        this.keys = new HashSet((int) (size * 1.5));
+        this.keys = new HashSet((int)(size * 1.5));
         final TCByteBufferInputStream inputStream = getInputStream();
         while (size-- > 0) {
           try {
@@ -119,5 +118,6 @@ public class GetAllKeysServerMapResponseMessageImpl extends DSOMessageBase imple
   public ServerMapRequestType getRequestType() {
     return ServerMapRequestType.GET_ALL_KEYS;
   }
+  
 
 }
