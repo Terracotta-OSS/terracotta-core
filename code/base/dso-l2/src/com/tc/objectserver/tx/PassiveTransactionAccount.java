@@ -43,10 +43,11 @@ public class PassiveTransactionAccount implements TransactionAccount {
    */
   public boolean applyCommitted(final TransactionID requestID) {
     synchronized (this.txnIDsToState) {
-      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
+      TransactionState state = txnIDsToState.get(tempServerTransactionID);
       state.applyCommitted();
       if (state.isComplete()) {
-        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        this.txnIDsToState.remove(tempServerTransactionID);
         invokeCallBackOnCompleteIfNecessary();
       }
     }
@@ -58,10 +59,11 @@ public class PassiveTransactionAccount implements TransactionAccount {
    */
   public boolean skipApplyAndCommit(final TransactionID requestID) {
     synchronized (this.txnIDsToState) {
-      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
+      TransactionState state = txnIDsToState.get(tempServerTransactionID);
       state.applyAndCommitSkipped();
       if (state.isComplete()) {
-        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        this.txnIDsToState.remove(tempServerTransactionID);
         invokeCallBackOnCompleteIfNecessary();
       }
     }
@@ -141,10 +143,11 @@ public class PassiveTransactionAccount implements TransactionAccount {
    */
   public boolean processMetaDataCompleted(TransactionID requestID) {
     synchronized (this.txnIDsToState) {
-      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      ServerTransactionID tempServerTransactionID = new ServerTransactionID(this.nodeID, requestID);
+      TransactionState state = txnIDsToState.get(tempServerTransactionID);
       state.processMetaDataCompleted();
       if (state.isComplete()) {
-        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        this.txnIDsToState.remove(tempServerTransactionID);
         invokeCallBackOnCompleteIfNecessary();
       }
     }
