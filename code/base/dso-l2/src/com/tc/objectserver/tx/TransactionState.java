@@ -10,6 +10,8 @@ public class TransactionState {
   private static final int             TXN_RELAYED                = 0x04;
   private static final int             PROCESS_METADATA_COMPLETED = 0x08;
 
+  public static final int              PASSIVE_START_STATE        = BROADCAST_COMPLETED | TXN_RELAYED;
+
   private static final int             TXN_PROCESSING_COMPLETE    = (APPLY_COMMITTED | BROADCAST_COMPLETED
                                                                      | TXN_RELAYED | PROCESS_METADATA_COMPLETED);
 
@@ -21,7 +23,7 @@ public class TransactionState {
     this(0x00);
   }
 
-  private TransactionState(final int state) {
+  public TransactionState(final int state) {
     this.state = state;
   }
 

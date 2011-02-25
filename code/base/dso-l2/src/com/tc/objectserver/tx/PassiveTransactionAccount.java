@@ -9,7 +9,8 @@ import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,10 +22,10 @@ import java.util.Set;
  */
 public class PassiveTransactionAccount implements TransactionAccount {
 
-  private final NodeID       nodeID;
-  private final Set          txnIDs = Collections.synchronizedSet(new HashSet());
-  private CallBackOnComplete callback;
-  private boolean            dead   = false;
+  private final NodeID                                     nodeID;
+  private final Map<ServerTransactionID, TransactionState> txnIDsToState = new HashMap<ServerTransactionID, TransactionState>();
+  private CallBackOnComplete                               callback;
+  private boolean                                          dead          = false;
 
   public PassiveTransactionAccount(final NodeID source) {
     this.nodeID = source;
@@ -41,9 +42,13 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * {@inheritDoc}
    */
   public boolean applyCommitted(final TransactionID requestID) {
-    synchronized (this.txnIDs) {
-      this.txnIDs.remove(new ServerTransactionID(this.nodeID, requestID));
-      invokeCallBackOnCompleteIfNecessary();
+    synchronized (this.txnIDsToState) {
+      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      state.applyCommitted();
+      if (state.isComplete()) {
+        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        invokeCallBackOnCompleteIfNecessary();
+      }
     }
     return true;
   }
@@ -52,9 +57,13 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * {@inheritDoc}
    */
   public boolean skipApplyAndCommit(final TransactionID requestID) {
-    synchronized (this.txnIDs) {
-      this.txnIDs.remove(new ServerTransactionID(this.nodeID, requestID));
-      invokeCallBackOnCompleteIfNecessary();
+    synchronized (this.txnIDsToState) {
+      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      state.applyAndCommitSkipped();
+      if (state.isComplete()) {
+        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        invokeCallBackOnCompleteIfNecessary();
+      }
     }
     return true;
   }
@@ -63,8 +72,8 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * {@inheritDoc}
    */
   public void addAllPendingServerTransactionIDsTo(Set<ServerTransactionID> txnsInSystem) {
-    synchronized (txnIDs) {
-      txnsInSystem.addAll(txnIDs);
+    synchronized (txnIDsToState) {
+      txnsInSystem.addAll(txnIDsToState.keySet());
     }
   }
 
@@ -76,14 +85,20 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * {@inheritDoc}
    */
   public void incomingTransactions(Set<ServerTransactionID> serverTxnsIDs) {
-    txnIDs.addAll(serverTxnsIDs);
+    synchronized (txnIDsToState) {
+      for (ServerTransactionID transactionID : serverTxnsIDs) {
+        if (!txnIDsToState.containsKey(transactionID)) {
+          txnIDsToState.put(transactionID, new TransactionState(TransactionState.PASSIVE_START_STATE));
+        }
+      }
+    }
   }
 
   /**
    * {@inheritDoc}
    */
   public void nodeDead(CallBackOnComplete callBack) {
-    synchronized (txnIDs) {
+    synchronized (txnIDsToState) {
       this.callback = callBack;
       this.dead = true;
       invokeCallBackOnCompleteIfNecessary();
@@ -125,7 +140,15 @@ public class PassiveTransactionAccount implements TransactionAccount {
    * @throws AssertionError always, should not be called.
    */
   public boolean processMetaDataCompleted(TransactionID requestID) {
-    throw new AssertionError("Transactions should never be processMetaData with a transaction in Passive Server");
+    synchronized (this.txnIDsToState) {
+      TransactionState state = txnIDsToState.get(new ServerTransactionID(this.nodeID, requestID));
+      state.processMetaDataCompleted();
+      if (state.isComplete()) {
+        this.txnIDsToState.remove(new ServerTransactionID(this.nodeID, requestID));
+        invokeCallBackOnCompleteIfNecessary();
+      }
+    }
+    return true;
   }
 
   /**
@@ -158,11 +181,13 @@ public class PassiveTransactionAccount implements TransactionAccount {
 
   @Override
   public String toString() {
-    return "PassiveTransactionAccount [ " + this.nodeID + " ] = " + this.txnIDs;
+    synchronized (this.txnIDsToState) {
+      return "PassiveTransactionAccount [ " + this.nodeID + " ] = " + this.txnIDsToState;
+    }
   }
 
   private void invokeCallBackOnCompleteIfNecessary() {
-    if (dead && txnIDs.isEmpty()) {
+    if (dead && txnIDsToState.isEmpty()) {
       callback.onComplete(nodeID);
     }
   }
