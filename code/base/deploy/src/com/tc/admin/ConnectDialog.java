@@ -41,7 +41,7 @@ import javax.swing.WindowConstants;
 public final class ConnectDialog extends JDialog implements HierarchyListener {
   private ApplicationContext         appContext;
 
-  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 10000;
+  private static final long          DEFAULT_CONNECT_TIMEOUT_MILLIS = 20000;
   public static final long           CONNECT_TIMEOUT_MILLIS         = Long.getLong("com.tc.admin.connect-timeout",
                                                                                    DEFAULT_CONNECT_TIMEOUT_MILLIS)
                                                                         .longValue();

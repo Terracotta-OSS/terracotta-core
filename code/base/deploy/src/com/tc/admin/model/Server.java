@@ -639,14 +639,32 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return null;
   }
 
-  private void safeRemoveNotificationListener(ObjectName on, NotificationListener listener) {
-    try {
-      ConnectionContext cc = getConnectionContext();
-      if (cc.mbsc != null) {
-        cc.mbsc.removeNotificationListener(on, listener, null, null);
+  private final ConcurrentHashMap<ObjectName, NotificationListenerDelegate> notificationListenerDelegateMap = new ConcurrentHashMap<ObjectName, NotificationListenerDelegate>();
+
+  public class NotificationListenerDelegate implements NotificationListener {
+    List<NotificationListener>           listeners                = new ArrayList<NotificationListener>();
+    private final NotificationListener[] EMPTY_NOTIFICATION_ARRAY = new NotificationListener[0];
+
+    NotificationListenerDelegate(NotificationListener listener) {
+      addNotificationListener(listener);
+    }
+
+    public void handleNotification(Notification notification, Object handback) {
+      for (NotificationListener listener : listeners.toArray(EMPTY_NOTIFICATION_ARRAY)) {
+        listener.handleNotification(notification, handback);
       }
-    } catch (Exception e) {
-      /**/
+    }
+
+    void addNotificationListener(NotificationListener listener) {
+      listeners.add(listener);
+    }
+
+    void removeNotificationListener(NotificationListener listener) {
+      listeners.remove(listener);
+    }
+
+    int getListenerListSize() {
+      return listeners.size();
     }
   }
 
@@ -655,17 +673,37 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
       safeRemoveNotificationListener(on, listener);
-      cc.mbsc.addNotificationListener(on, listener, null, null);
+      NotificationListenerDelegate delegate = notificationListenerDelegateMap.get(on);
+      if (delegate == null) {
+        notificationListenerDelegateMap.put(on, delegate = new NotificationListenerDelegate(listener));
+        cc.mbsc.addNotificationListener(on, delegate, null, null);
+      } else {
+        delegate.addNotificationListener(listener);
+      }
       return true;
     }
     return false;
+  }
+
+  private void safeRemoveNotificationListener(ObjectName on, NotificationListener listener) {
+    try {
+      removeNotificationListener(on, listener);
+    } catch (Exception e) {
+      /**/
+    }
   }
 
   public boolean removeNotificationListener(ObjectName on, NotificationListener listener) throws IOException,
       InstanceNotFoundException, ListenerNotFoundException {
     ConnectionContext cc = getConnectionContext();
     if (cc != null) {
-      cc.mbsc.removeNotificationListener(on, listener, null, null);
+      NotificationListenerDelegate delegate = notificationListenerDelegateMap.get(on);
+      if (delegate != null) {
+        delegate.removeNotificationListener(listener);
+        if (delegate.getListenerListSize() == 0) {
+          cc.mbsc.removeNotificationListener(on, delegate, null, null);
+        }
+      }
       return true;
     }
     return false;
@@ -1967,6 +2005,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (cc != null) {
       cc.setAttribute(on, attrName, attrValue);
     }
+  }
+
+  public Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap) throws Exception {
+    DSOMBean theDsoBean = getDSOBean();
+    if (theDsoBean != null && isConnected()) { return theDsoBean.setAttribute(attrName, attrMap); }
+    return Collections.emptyMap();
   }
 
   public Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue)

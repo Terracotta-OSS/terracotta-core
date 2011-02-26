@@ -179,14 +179,10 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     if (tornDown.get()) { return; }
     IServer theServer = getServer();
     if (theServer != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!tornDown.get()) {
-            handleDSOStats(result);
-            handleSysStats(result);
-          }
-        }
-      });
+      if (!tornDown.get()) {
+        handleDSOStats(result);
+        handleSysStats(result);
+      }
     }
   }
 
@@ -194,97 +190,110 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     IServer theServer = getServer();
     if (theServer != null) {
       tmpDate.setTime(System.currentTimeMillis());
-      Number n;
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-      updateSeries(flushRateSeries, n);
-      if (n != null) {
-        flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, convert(n.longValue())));
-      }
+      final Number flushRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+      final Number faultRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+      final Number txnRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE);
+      final Number onHeapFaultRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
+      final Number onHeapFlushRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
+      final Number offHeapFaultRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
+      final Number offHeapFlushRate = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-      updateSeries(faultRateSeries, n);
-      if (n != null) {
-        faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, convert(n.longValue())));
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          updateSeries(flushRateSeries, flushRate);
+          if (faultRate != null) {
+            flushRateLabel.setText(MessageFormat.format(flushRateLabelFormat, convert(faultRate.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_TRANSACTION_RATE);
-      updateSeries(txnRateSeries, n);
-      if (n != null) {
-        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(faultRateSeries, faultRate);
+          if (faultRate != null) {
+            faultRateLabel.setText(MessageFormat.format(faultRateLabelFormat, convert(faultRate.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
-      updateSeries(onHeapFaultRateSeries, n);
-      if (n != null) {
-        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(txnRateSeries, txnRate);
+          if (txnRate != null) {
+            txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txnRate.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
-      updateSeries(onHeapFlushRateSeries, n);
-      if (n != null) {
-        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(onHeapFaultRateSeries, onHeapFaultRate);
+          if (onHeapFaultRate != null) {
+            onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat,
+                                                              convert(onHeapFaultRate.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
-      updateSeries(offHeapFaultRateSeries, n);
-      if (n != null) {
-        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(onHeapFlushRateSeries, onHeapFlushRate);
+          if (onHeapFlushRate != null) {
+            onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat,
+                                                              convert(onHeapFlushRate.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
-      updateSeries(offHeapFlushRateSeries, n);
-      if (n != null) {
-        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(offHeapFaultRateSeries, offHeapFaultRate);
+          if (offHeapFaultRate != null) {
+            offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat,
+                                                               convert(offHeapFaultRate.longValue())));
+          }
+
+          updateSeries(offHeapFlushRateSeries, offHeapFlushRate);
+          if (offHeapFlushRate != null) {
+            offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat,
+                                                               convert(offHeapFlushRate.longValue())));
+          }
+        }
+      });
     }
   }
 
   private synchronized void handleSysStats(PolledAttributesResult result) {
     IServer theServer = getServer();
     if (theServer != null) {
-      Number n;
+      final Number maxMemory = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY);
+      final Number usedMemory = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY);
+      final Number offHeapMaxMemory = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAX_MEMORY);
+      final Number offHeapMapMemory = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAP_MEMORY);
+      final Number offHeapObjectMemory = (Number) result.getPolledAttribute(theServer,
+                                                                            POLLED_ATTR_OFFHEAP_OBJECT_MEMORY);
+      final StatisticData[] cpuUsageData = (StatisticData[]) result
+          .getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_MAX_MEMORY);
-      updateSeries(onHeapMaxSeries, n);
-      if (n != null) {
-        onHeapMaxLabel.setText(MessageFormat.format(onHeapMaxLabelFormat, convert(n.longValue())));
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          updateSeries(onHeapMaxSeries, maxMemory);
+          if (maxMemory != null) {
+            onHeapMaxLabel.setText(MessageFormat.format(onHeapMaxLabelFormat, convert(maxMemory.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_USED_MEMORY);
-      updateSeries(onHeapUsedSeries, n);
-      if (n != null) {
-        onHeapUsedLabel.setText(MessageFormat.format(onHeapUsedLabelFormat, convert(n.longValue())));
-      }
+          updateSeries(onHeapUsedSeries, usedMemory);
+          if (usedMemory != null) {
+            onHeapUsedLabel.setText(MessageFormat.format(onHeapUsedLabelFormat, convert(usedMemory.longValue())));
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAX_MEMORY);
-      long offHeapMax = 0;
-      if (n != null) {
-        offHeapMax = n.longValue();
-      }
-      offHeapValueAxis.setUpperBound(offHeapMax);
+          long offHeapMax = 0;
+          if (offHeapMaxMemory != null) {
+            offHeapMax = offHeapMaxMemory.longValue();
+          }
+          offHeapValueAxis.setUpperBound(offHeapMax);
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_MAP_MEMORY);
-      updateSeries(offHeapMapUsedSeries, n);
-      long mapOffHeapUsedLong = 0;
-      if (n != null) {
-        mapOffHeapUsedLong = n.longValue();
-      }
+          updateSeries(offHeapMapUsedSeries, offHeapMapMemory);
+          long mapOffHeapUsedLong = 0;
+          if (offHeapMapMemory != null) {
+            mapOffHeapUsedLong = offHeapMapMemory.longValue();
+          }
 
-      n = (Number) result.getPolledAttribute(theServer, POLLED_ATTR_OFFHEAP_OBJECT_MEMORY);
-      updateSeries(offHeapObjectUsedSeries, n);
-      long objectOffHeapUsed = 0;
-      if (n != null) {
-        objectOffHeapUsed = n.longValue();
-      }
+          updateSeries(offHeapObjectUsedSeries, offHeapObjectMemory);
+          long objectOffHeapUsed = 0;
+          if (offHeapObjectMemory != null) {
+            objectOffHeapUsed = offHeapObjectMemory.longValue();
+          }
 
-      offHeapUsageTitle.setTitle(MessageFormat.format(offHeapUsageTitlePattern, convert(offHeapMax),
-                                                      convert(mapOffHeapUsedLong), convert(objectOffHeapUsed)));
+          offHeapUsageTitle.setTitle(MessageFormat.format(offHeapUsageTitlePattern, convert(offHeapMax),
+                                                          convert(mapOffHeapUsedLong), convert(objectOffHeapUsed)));
 
-      if (cpuTimeSeries != null) {
-        StatisticData[] cpuUsageData = (StatisticData[]) result.getPolledAttribute(theServer, POLLED_ATTR_CPU_USAGE);
-        handleCpuUsage(cpuTimeSeries, cpuUsageData);
-      }
+          if (cpuTimeSeries != null) {
+            handleCpuUsage(cpuTimeSeries, cpuUsageData);
+          }
+        }
+      });
     }
   }
 
@@ -415,7 +424,7 @@ public class ServerRuntimeStatsPanel extends BaseRuntimeStatsPanel {
 
   private synchronized void setupCpuSeries(TimeSeries[] cpuTimeSeries) {
     this.cpuTimeSeries = cpuTimeSeries;
-    JFreeChart cpuChart = createChart(cpuTimeSeries);
+    JFreeChart cpuChart = createChart(cpuTimeSeries, cpuTimeSeries.length <= 4);
     XYPlot plot = (XYPlot) cpuChart.getPlot();
     NumberAxis numberAxis = (NumberAxis) plot.getRangeAxis();
     numberAxis.setRange(0.0, 1.0);

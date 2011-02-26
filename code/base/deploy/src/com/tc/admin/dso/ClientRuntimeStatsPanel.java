@@ -154,28 +154,20 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
               Map<String, Object> map = nodeMap != null ? nodeMap.get(theClient.getBeanName()) : null;
               if (map != null) {
                 n = (Number) map.get(POLLED_ATTR_TRANSACTION_RATE);
-                if (n != null) {
-                  if (txn >= 0) {
-                    txn += n.longValue();
-                  }
+                if (n != null && txn >= 0) {
+                  txn += n.longValue();
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FLUSH_RATE);
-                if (n != null) {
-                  if (flush >= 0) {
-                    flush += n.longValue();
-                  }
+                if (n != null && flush >= 0) {
+                  flush += n.longValue();
                 }
                 n = (Number) map.get(POLLED_ATTR_OBJECT_FAULT_RATE);
-                if (n != null) {
-                  if (fault >= 0) {
-                    fault += n.longValue();
-                  }
+                if (n != null && fault >= 0) {
+                  fault += n.longValue();
                 }
                 n = (Number) map.get(POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-                if (n != null) {
-                  if (pendingTxn >= 0) {
-                    pendingTxn += n.longValue();
-                  }
+                if (n != null && pendingTxn >= 0) {
+                  pendingTxn += n.longValue();
                 }
               }
             }

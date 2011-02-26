@@ -621,6 +621,22 @@ public class DSO extends AbstractNotifyingMBean implements DSOMBean {
     return result;
   }
 
+  public Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap) {
+    Map<ObjectName, Exception> result = new HashMap<ObjectName, Exception>();
+    Iterator<ObjectName> onIter = attrMap.keySet().iterator();
+    ObjectName on;
+    while (onIter.hasNext()) {
+      on = onIter.next();
+      try {
+        Attribute attribute = new Attribute(attrName, attrMap.get(on));
+        mbeanServer.setAttribute(on, attribute);
+      } catch (Exception e) {
+        result.put(on, newPlainException(e));
+      }
+    }
+    return result;
+  }
+
   public Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                               TimeUnit unit) {
     Map<ObjectName, Map<String, Object>> result = new HashMap<ObjectName, Map<String, Object>>();

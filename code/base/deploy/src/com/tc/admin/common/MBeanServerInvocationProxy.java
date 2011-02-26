@@ -39,6 +39,7 @@ public class MBeanServerInvocationProxy extends MBeanServerInvocationHandler {
     return interfaceClass.cast(proxy);
   }
 
+  @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     if (reportViolators && SwingUtilities.isEventDispatchThread()) {
       new Exception("MBean invoked in Swing event dispatch thread").printStackTrace();

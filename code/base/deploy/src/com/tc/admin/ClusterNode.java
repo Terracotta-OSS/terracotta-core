@@ -691,9 +691,11 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
       testStopMonitoringTask();
       adminClientContext.getAdminClientController().select(this);
 
-      if (featuresNode != null && featuresNode.getParent() == null) {
+      if (featuresNode != null) {
         featuresNode.setTearDown(true);
-        featuresNode.tearDown();
+        if (featuresNode.getParent() == null) {
+          featuresNode.tearDown();
+        }
       }
       featuresNode = null;
 
@@ -742,12 +744,16 @@ public class ClusterNode extends ClusterElementNode implements ConnectionListene
   @Override
   public void tearDown() {
     testStopMonitoringTask();
+
     if (connectDialog != null) {
       connectDialog.tearDown();
     }
-    if (featuresNode != null && featuresNode.getParent() == null) {
+
+    if (featuresNode != null) {
       featuresNode.setTearDown(true);
-      featuresNode.tearDown();
+      if (featuresNode.getParent() == null) {
+        featuresNode.tearDown();
+      }
     }
 
     getClusterModel().tearDown();

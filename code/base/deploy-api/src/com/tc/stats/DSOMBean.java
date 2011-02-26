@@ -71,6 +71,8 @@ public interface DSOMBean extends DSOStats, OffheapStats, DGCMBean, TerracottaMB
 
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue);
 
+  Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap);
+
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,
                                                        TimeUnit unit);
 

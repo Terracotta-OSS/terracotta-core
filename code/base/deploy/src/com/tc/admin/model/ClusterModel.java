@@ -513,8 +513,8 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
             }
           }
           if (resultObj.size() > 0) {
-            Iterator<PolledAttributeListener> listenerIter = listenerSet.iterator();
-            PolledAttributesResult par = new PolledAttributesResultImpl(resultObj);
+            final Iterator<PolledAttributeListener> listenerIter = listenerSet.iterator();
+            final PolledAttributesResult par = new PolledAttributesResultImpl(resultObj);
             while (listenerIter.hasNext()) {
               listenerIter.next().attributesPolled(par);
             }

@@ -200,11 +200,7 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
   public void attributesPolled(final PolledAttributesResult result) {
     IClusterModel theClusterModel = getClusterModel();
     if (theClusterModel != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          handleDSOStats(result);
-        }
-      });
+      handleDSOStats(result);
     }
   }
 
@@ -235,129 +231,124 @@ public class AggregateServerRuntimeStatsPanel extends BaseRuntimeStatsPanel impl
         IServer theServer = group.getActiveServer();
         if (theServer != null && theServer.isReady()) {
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-          if (n != null) {
-            if (flush >= 0) {
-              flush += n.longValue();
-            }
+          if (n != null && flush >= 0) {
+            flush += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-          if (n != null) {
-            if (fault >= 0) {
-              fault += n.longValue();
-            }
+          if (n != null && fault >= 0) {
+            fault += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_TRANSACTION_RATE);
-          if (n != null) {
-            if (txn >= 0) {
-              txn += n.longValue();
-            }
+          if (n != null && txn >= 0) {
+            txn += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FAULT_RATE);
-          if (n != null) {
-            if (onHeapFaultRate >= 0) {
-              onHeapFaultRate += n.longValue();
-            }
+          if (n != null && onHeapFaultRate >= 0) {
+            onHeapFaultRate += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_ONHEAP_FLUSH_RATE);
-          if (n != null) {
-            if (onHeapFlushRate >= 0) {
-              onHeapFlushRate += n.longValue();
-            }
+          if (n != null && onHeapFlushRate >= 0) {
+            onHeapFlushRate += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FAULT_RATE);
-          if (n != null) {
-            if (offHeapFaultRate >= 0) {
-              offHeapFaultRate += n.longValue();
-            }
+          if (n != null && offHeapFaultRate >= 0) {
+            offHeapFaultRate += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_FLUSH_RATE);
-          if (n != null) {
-            if (offHeapFlushRate >= 0) {
-              offHeapFlushRate += n.longValue();
-            }
+          if (n != null && offHeapFlushRate >= 0) {
+            offHeapFlushRate += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
-          if (n != null) {
-            if (liveObjectCount >= 0) {
-              liveObjectCount += n.longValue();
-            }
+          if (n != null && liveObjectCount >= 0) {
+            liveObjectCount += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_CACHED_OBJECT_COUNT);
-          if (n != null) {
-            if (cachedObjectCount >= 0) {
-              cachedObjectCount += n.longValue();
-            }
+          if (n != null && cachedObjectCount >= 0) {
+            cachedObjectCount += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_OFFHEAP_OBJECT_CACHED_COUNT);
-          if (n != null) {
-            if (offHeapObjectCount >= 0) {
-              offHeapObjectCount += n.longValue();
-            }
+          if (n != null && offHeapObjectCount >= 0) {
+            offHeapObjectCount += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_LOCK_RECALL_RATE);
-          if (n != null) {
-            if (lockRecallRate >= 0) {
-              lockRecallRate += n.longValue();
-            }
+          if (n != null && lockRecallRate >= 0) {
+            lockRecallRate += n.longValue();
           }
           n = (Number) getPolledAttribute(result, theServer, POLLED_ATTR_BROADCAST_RATE);
-          if (n != null) {
-            if (broadcastRate >= 0) {
-              broadcastRate += n.longValue();
-            }
+          if (n != null && broadcastRate >= 0) {
+            broadcastRate += n.longValue();
           }
         }
       }
 
-      {
-        updateSeries(clientFlushRateSeries, Long.valueOf(flush));
-        clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(flush)));
-      }
-      {
-        updateSeries(clientFaultRateSeries, Long.valueOf(fault));
-        clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(fault)));
-      }
-      {
-        updateSeries(txnRateSeries, Long.valueOf(txn));
-        txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(txn)));
-      }
-      {
-        updateSeries(onHeapFaultRateSeries, Long.valueOf(onHeapFaultRate));
-        onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(onHeapFaultRate)));
-      }
-      {
-        updateSeries(onHeapFlushRateSeries, Long.valueOf(onHeapFlushRate));
-        onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(onHeapFlushRate)));
-      }
-      {
-        updateSeries(offHeapFaultRateSeries, Long.valueOf(offHeapFaultRate));
-        offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat, convert(offHeapFaultRate)));
-      }
-      {
-        updateSeries(offHeapFlushRateSeries, Long.valueOf(offHeapFlushRate));
-        offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat, convert(offHeapFlushRate)));
-      }
-      {
-        updateSeries(liveObjectCountSeries, Long.valueOf(liveObjectCount));
-        String cached = convert(cachedObjectCount);
-        String offHeap = offHeapObjectCount != -1 ? convert(offHeapObjectCount) : "n/a";
-        String live = convert(liveObjectCount);
-        objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
-      }
-      {
-        updateSeries(cachedObjectCountSeries, Long.valueOf(cachedObjectCount));
-      }
-      {
-        updateSeries(offHeapObjectCountSeries, Long.valueOf(offHeapObjectCount));
-      }
-      {
-        updateSeries(lockRecallRateSeries, Long.valueOf(lockRecallRate));
-        lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(lockRecallRate)));
-      }
-      {
-        updateSeries(broadcastRateSeries, Long.valueOf(broadcastRate));
-        broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(broadcastRate)));
-      }
+      final long theFlush = flush;
+      final long theFault = fault;
+      final long theTxn = txn;
+      final long theOnHeapFaultRate = onHeapFaultRate;
+      final long theOnHeapFlushRate = onHeapFlushRate;
+      final long theOffHeapFaultRate = offHeapFaultRate;
+      final long theOffHeapFlushRate = offHeapFlushRate;
+      final long theLiveObjectCount = liveObjectCount;
+      final long theCachedObjectCount = cachedObjectCount;
+      final long theOffHeapObjectCount = offHeapObjectCount;
+      final long theLockRecallRate = lockRecallRate;
+      final long theBroadcastRate = broadcastRate;
+
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          {
+            updateSeries(clientFlushRateSeries, Long.valueOf(theFlush));
+            clientFlushRateLabel.setText(MessageFormat.format(clientFlushRateLabelFormat, convert(theFlush)));
+          }
+          {
+            updateSeries(clientFaultRateSeries, Long.valueOf(theFault));
+            clientFaultRateLabel.setText(MessageFormat.format(clientFaultRateLabelFormat, convert(theFault)));
+          }
+          {
+            updateSeries(txnRateSeries, Long.valueOf(theTxn));
+            txnRateLabel.setText(MessageFormat.format(txnRateLabelFormat, convert(theTxn)));
+          }
+          {
+            updateSeries(onHeapFaultRateSeries, Long.valueOf(theOnHeapFaultRate));
+            onHeapFaultRateLabel.setText(MessageFormat.format(onHeapFaultRateLabelFormat, convert(theOnHeapFaultRate)));
+          }
+          {
+            updateSeries(onHeapFlushRateSeries, Long.valueOf(theOnHeapFlushRate));
+            onHeapFlushRateLabel.setText(MessageFormat.format(onHeapFlushRateLabelFormat, convert(theOnHeapFlushRate)));
+          }
+          {
+            updateSeries(offHeapFaultRateSeries, Long.valueOf(theOffHeapFaultRate));
+            offHeapFaultRateLabel.setText(MessageFormat.format(offHeapFaultRateLabelFormat,
+                                                               convert(theOffHeapFaultRate)));
+          }
+          {
+            updateSeries(offHeapFlushRateSeries, Long.valueOf(theOffHeapFlushRate));
+            offHeapFlushRateLabel.setText(MessageFormat.format(offHeapFlushRateLabelFormat,
+                                                               convert(theOffHeapFlushRate)));
+          }
+          {
+            updateSeries(liveObjectCountSeries, Long.valueOf(theLiveObjectCount));
+            String cached = convert(theCachedObjectCount);
+            String offHeap = theOffHeapObjectCount != -1 ? convert(theOffHeapObjectCount) : "n/a";
+            String live = convert(theLiveObjectCount);
+            objectManagerTitle.setTitle(MessageFormat.format(objectManagerTitlePattern, cached, offHeap, live));
+          }
+          {
+            updateSeries(cachedObjectCountSeries, Long.valueOf(theCachedObjectCount));
+          }
+          {
+            updateSeries(offHeapObjectCountSeries, Long.valueOf(theOffHeapObjectCount));
+          }
+          {
+            updateSeries(lockRecallRateSeries, Long.valueOf(theLockRecallRate));
+            lockRecallRateLabel.setText(MessageFormat.format(lockRecallRateLabelFormat, convert(theLockRecallRate)));
+          }
+          {
+            updateSeries(broadcastRateSeries, Long.valueOf(theBroadcastRate));
+            broadcastRateLabel.setText(MessageFormat.format(broadcastRateLabelFormat, convert(theBroadcastRate)));
+          }
+        }
+      });
     }
   }
 

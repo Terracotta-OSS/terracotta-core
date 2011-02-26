@@ -185,6 +185,8 @@ public interface IServer extends IClusterNode, ManagedObjectFacadeProvider {
 
   Map<ObjectName, Exception> setAttribute(Set<ObjectName> onSet, String attrName, Object attrValue) throws Exception;
 
+  Map<ObjectName, Exception> setAttribute(String attrName, Map<ObjectName, Object> attrMap) throws Exception;
+
   Object getAttribute(ObjectName on, String attrName) throws Exception;
 
   Map<ObjectName, Map<String, Object>> getAttributeMap(Map<ObjectName, Set<String>> attributeMap, long timeout,

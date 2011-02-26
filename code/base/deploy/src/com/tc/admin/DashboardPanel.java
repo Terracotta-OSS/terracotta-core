@@ -201,103 +201,131 @@ class DashboardPanel extends BaseRuntimeStatsPanel implements PolledAttributeLis
    */
   @Override
   public void attributesPolled(final PolledAttributesResult result) {
+    if (tornDown.get()) { return; }
+
+    IClusterModel theClusterModel = getClusterModel();
+    if (theClusterModel == null) { return; }
+
+    int liveObjectCount = 0;
+    int txnRate = 0;
+    int lockRecallRate = 0;
+    int broadcastRate = 0;
+    int flushRate = 0;
+    int faultRate = 0;
+    int txnSizeRate = 0;
+    int pendingTxnsCount = 0;
+
+    for (IServerGroup group : clusterModel.getServerGroups()) {
+      IServer activeServer = group.getActiveServer();
+      if (activeServer != null) {
+        Number nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_RATE);
+        if (nodeValue != null && txnRate >= 0) {
+          txnRate += nodeValue.intValue();
+        } else {
+          txnRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
+        if (nodeValue != null && liveObjectCount >= 0) {
+          liveObjectCount += nodeValue.intValue();
+        } else {
+          liveObjectCount = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LOCK_RECALL_RATE);
+        if (nodeValue != null && lockRecallRate >= 0) {
+          lockRecallRate += nodeValue.intValue();
+        } else {
+          lockRecallRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_BROADCAST_RATE);
+        if (nodeValue != null && broadcastRate >= 0) {
+          broadcastRate += nodeValue.intValue();
+        } else {
+          broadcastRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
+        if (nodeValue != null && flushRate >= 0) {
+          flushRate += nodeValue.intValue();
+        } else {
+          flushRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FAULT_RATE);
+        if (nodeValue != null && faultRate >= 0) {
+          faultRate += nodeValue.intValue();
+        } else {
+          faultRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_SIZE_RATE);
+        if (nodeValue != null && txnSizeRate >= 0) {
+          txnSizeRate += nodeValue.intValue();
+        } else {
+          txnSizeRate = -1;
+        }
+        nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
+        if (nodeValue != null && pendingTxnsCount >= 0) {
+          pendingTxnsCount += nodeValue.intValue();
+        } else {
+          pendingTxnsCount = -1;
+        }
+      }
+    }
+
+    double creationRate = -1d;
+    long now = System.currentTimeMillis();
+    if (lastObjectCountTime != -1 && liveObjectCount != -1) {
+      double newObjectsCount = liveObjectCount - lastObjectCount;
+      if (newObjectsCount >= 0) {
+        double timeDiff = now - (double) lastObjectCountTime;
+        creationRate = (newObjectsCount / timeDiff) * 1000;
+      }
+    }
+    if (liveObjectCount >= 0) {
+      lastObjectCount = liveObjectCount;
+    }
+    lastObjectCountTime = now;
+
+    final int theTxnRate = txnRate;
+    final int theLockRecallRate = lockRecallRate;
+    final int theBroadcastRate = broadcastRate;
+    final int theFlushRate = flushRate;
+    final int theFaultRate = faultRate;
+    final int thePendingTxnsCount = pendingTxnsCount;
+    final double theCreationRate = creationRate;
+
+    double tmpTxnRateSize = 0.0;
+    if (txnSizeRate != -1) {
+      IServerGroup[] groups = clusterModel.getServerGroups();
+      if (groups != null && groups.length > 0) {
+        tmpTxnRateSize = (txnSizeRate / groups.length) / 1000d;
+      }
+    }
+    final double theTxnSizeRate = tmpTxnRateSize;
+
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (tornDown.get()) { return; }
-
-        IClusterModel theClusterModel = getClusterModel();
-        if (theClusterModel == null) { return; }
-
-        int liveObjectCount = 0;
-        int txnRate = 0;
-        int lockRecallRate = 0;
-        int broadcastRate = 0;
-        int flushRate = 0;
-        int faultRate = 0;
-        int txnSizeRate = 0;
-        int pendingTxnsCount = 0;
-
-        for (IServerGroup group : clusterModel.getServerGroups()) {
-          IServer activeServer = group.getActiveServer();
-          if (activeServer != null) {
-            Number nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_RATE);
-            if (nodeValue != null) {
-              if (txnRate >= 0) txnRate += nodeValue.intValue();
-            } else {
-              txnRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LIVE_OBJECT_COUNT);
-            if (nodeValue != null) {
-              if (liveObjectCount >= 0) liveObjectCount += nodeValue.intValue();
-            } else {
-              liveObjectCount = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_LOCK_RECALL_RATE);
-            if (nodeValue != null) {
-              if (lockRecallRate >= 0) lockRecallRate += nodeValue.intValue();
-            } else {
-              lockRecallRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_BROADCAST_RATE);
-            if (nodeValue != null) {
-              if (broadcastRate >= 0) broadcastRate += nodeValue.intValue();
-            } else {
-              broadcastRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FLUSH_RATE);
-            if (nodeValue != null) {
-              if (flushRate >= 0) flushRate += nodeValue.intValue();
-            } else {
-              flushRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_OBJECT_FAULT_RATE);
-            if (nodeValue != null) {
-              if (faultRate >= 0) faultRate += nodeValue.intValue();
-            } else {
-              faultRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_TRANSACTION_SIZE_RATE);
-            if (nodeValue != null) {
-              if (txnSizeRate >= 0) txnSizeRate += nodeValue.intValue();
-            } else {
-              txnSizeRate = -1;
-            }
-            nodeValue = (Number) result.getPolledAttribute(activeServer, POLLED_ATTR_PENDING_TRANSACTIONS_COUNT);
-            if (nodeValue != null) {
-              if (pendingTxnsCount >= 0) pendingTxnsCount += nodeValue.intValue();
-            } else {
-              pendingTxnsCount = -1;
-            }
-          }
+        if (theTxnRate != -1) {
+          txnRateDialInfo.setValue(Double.valueOf(theTxnRate));
         }
-
-        double creationRate = -1d;
-        long now = System.currentTimeMillis();
-        if (lastObjectCountTime != -1 && liveObjectCount != -1) {
-          double newObjectsCount = liveObjectCount - lastObjectCount;
-          if (newObjectsCount >= 0) {
-            double timeDiff = now - (double) lastObjectCountTime;
-            creationRate = (newObjectsCount / timeDiff) * 1000;
-          }
+        if (theCreationRate != -1) {
+          creationRateDialInfo.setValue(Double.valueOf(theCreationRate));
         }
-        if (liveObjectCount >= 0) {
-          lastObjectCount = liveObjectCount;
+        if (theBroadcastRate != -1) {
+          broadcastRateDialInfo.setValue(Double.valueOf(theBroadcastRate));
         }
-        lastObjectCountTime = now;
-
-        if (txnRate != -1) txnRateDialInfo.setValue(Double.valueOf(txnRate));
-        if (creationRate != -1) creationRateDialInfo.setValue(Double.valueOf(creationRate));
-        if (broadcastRate != -1) broadcastRateDialInfo.setValue(Double.valueOf(broadcastRate));
-        if (lockRecallRate != -1) lockRecallRateDialInfo.setValue(Double.valueOf(lockRecallRate));
-        if (faultRate != -1) faultRateDialInfo.setValue(Double.valueOf(faultRate));
-        if (flushRate != -1) flushRateDialInfo.setValue(Double.valueOf(flushRate));
-        if (txnSizeRate != -1) {
-          IServerGroup[] groups = clusterModel.getServerGroups();
-          if (groups != null && groups.length > 0) {
-            txnSizeRateDialInfo.setValue(Double.valueOf((txnSizeRate / groups.length) / 1000d));
-          }
+        if (theLockRecallRate != -1) {
+          lockRecallRateDialInfo.setValue(Double.valueOf(theLockRecallRate));
         }
-        if (pendingTxnsCount != -1) pendingTxnsDialInfo.setValue(Integer.valueOf(pendingTxnsCount));
+        if (theFaultRate != -1) {
+          faultRateDialInfo.setValue(Double.valueOf(theFaultRate));
+        }
+        if (theFlushRate != -1) {
+          flushRateDialInfo.setValue(Double.valueOf(theFlushRate));
+        }
+        {
+          txnSizeRateDialInfo.setValue(Double.valueOf(theTxnSizeRate));
+        }
+        if (thePendingTxnsCount != -1) {
+          pendingTxnsDialInfo.setValue(Integer.valueOf(thePendingTxnsCount));
+        }
       }
     });
   }

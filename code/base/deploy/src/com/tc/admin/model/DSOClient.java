@@ -21,6 +21,7 @@ import com.tc.util.ProductInfo;
 
 import java.beans.PropertyChangeEvent;
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
@@ -95,15 +96,21 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     }
   }
 
+  private final Map<ObjectName, ObjectName> tunneledBeanNames = new HashMap<ObjectName, ObjectName>();
+
   public ObjectName getTunneledBeanName(ObjectName on) {
-    try {
-      Hashtable keyPropertyList = new Hashtable(on.getKeyPropertyList());
-      keyPropertyList.put("clients", "Clients");
-      keyPropertyList.put("node", getRemoteAddress().replace(':', '/'));
-      return new ObjectName(on.getDomain(), keyPropertyList);
-    } catch (MalformedObjectNameException mone) {
-      throw new RuntimeException("Creating ObjectName", mone);
+    ObjectName result = tunneledBeanNames.get(on);
+    if (result == null) {
+      try {
+        Hashtable keyPropertyList = new Hashtable(on.getKeyPropertyList());
+        keyPropertyList.put("clients", "Clients");
+        keyPropertyList.put("node", getRemoteAddress().replace(':', '/'));
+        tunneledBeanNames.put(on, result = new ObjectName(on.getDomain(), keyPropertyList));
+      } catch (MalformedObjectNameException mone) {
+        throw new RuntimeException("Creating ObjectName", mone);
+      }
     }
+    return result;
   }
 
   protected void setupTunneledBeans() {
@@ -495,6 +502,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     if (!isReady()) {
       stopListeningForTunneledBeans();
     }
+    tunneledBeanNames.clear();
     super.tearDown();
   }
 
