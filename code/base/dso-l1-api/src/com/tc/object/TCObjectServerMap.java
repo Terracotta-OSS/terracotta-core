@@ -27,9 +27,10 @@ public interface TCObjectServerMap<L> extends TCObject {
    * 
    * @param map ServerTCMap
    * @param key Key Object
+   * @param lockID LockID of lock protecting this key
    * @param value Object in the mapping
    */
-  public void doLogicalRemove(final TCServerMap map, final Object key);
+  public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key);
 
   /**
    * Does a logic remove and mark as removed in the local cache if present. The cached item is not associated to a lock.

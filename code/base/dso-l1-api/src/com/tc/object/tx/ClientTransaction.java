@@ -19,8 +19,6 @@ import java.util.Map;
 /**
  * Hangs on to a grouping of changes to be sent as a batch to the server. Changes are accumulated by the
  * ClientTransactionManager.
- * 
- * @author steve
  */
 public interface ClientTransaction {
 
@@ -230,5 +228,17 @@ public interface ClientTransaction {
    * @return List of notify/notifyAll() calls in this transaction
    */
   public List getNotifies();
+
+  /**
+   * Adds a Transaction Complete Listener which will be called when the Transaction is complete.
+   */
+  public void addTransactionCompleteListener(TransactionCompleteListener l);
+
+  /**
+   * Returns a list of Transaction Complete Listeners that should be called when the Transaction is complete.
+   * 
+   * @return List of TransactionCompleteListeners
+   */
+  public List getTransactionCompleteListeners();
 
 }

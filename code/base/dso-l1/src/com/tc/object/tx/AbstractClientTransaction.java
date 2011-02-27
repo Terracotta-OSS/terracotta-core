@@ -11,6 +11,8 @@ import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -22,6 +24,7 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   private SequenceID         seqID = SequenceID.NULL_ID;
   private TransactionContext transactionContext;
   private boolean            alreadyCommittedFlag;
+  private List               txnCompleteListener;
 
   public void setSequenceID(SequenceID sequenceID) {
     if (!this.seqID.isNull()) {
@@ -124,6 +127,25 @@ abstract class AbstractClientTransaction implements ClientTransaction {
   public void setAlreadyCommitted() {
     alreadyCommittedCheck();
     this.alreadyCommittedFlag = true;
+  }
+
+  /**
+   * Adds a Transaction Complete Listener which will be called when the Transaction is complete.
+   */
+  public void addTransactionCompleteListener(TransactionCompleteListener l) {
+    if (txnCompleteListener == null) {
+      txnCompleteListener = new ArrayList(5);
+    }
+    txnCompleteListener.add(l);
+  }
+
+  /**
+   * Returns a list of Transaction Complete Listeners that should be called when the Transaction is complete.
+   * 
+   * @return List of TransactionCompleteListeners
+   */
+  public List getTransactionCompleteListeners() {
+    return (txnCompleteListener == null ? Collections.EMPTY_LIST : txnCompleteListener);
   }
 
   abstract protected void basicCreate(TCObject object);

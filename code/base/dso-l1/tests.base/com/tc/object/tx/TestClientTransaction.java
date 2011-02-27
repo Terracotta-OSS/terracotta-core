@@ -32,6 +32,7 @@ public class TestClientTransaction implements ClientTransaction {
   public Map           newRoots             = new HashMap();
   public Map           changeBuffers        = new HashMap();
   private final List   notifies             = new ArrayList();
+  private final List   txnListener          = new ArrayList();
 
   public TestClientTransaction() {
     super();
@@ -155,6 +156,14 @@ public class TestClientTransaction implements ClientTransaction {
 
   public TxnType getLockType() {
     return txnType;
+  }
+
+  public void addTransactionCompleteListener(TransactionCompleteListener l) {
+    txnListener.add(l);
+  }
+
+  public List getTransactionCompleteListeners() {
+    return txnListener;
   }
 
 }

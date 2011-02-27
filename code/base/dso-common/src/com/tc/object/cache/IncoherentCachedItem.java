@@ -12,17 +12,13 @@ public class IncoherentCachedItem extends CachedItem {
 
   private static final long SERVERMAP_INCOHERENT_CACHED_ITEMS_RECYCLE_TIME_MILLIS = TCPropertiesImpl
                                                                                       .getProperties()
-                                                                                      .getLong(
-                                                                                               TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
+                                                                                      .getLong(TCPropertiesConsts.EHCACHE_STORAGESTRATEGY_DCV2_LOCALCACHE_INCOHERENT_READ_TIMEOUT);
 
   private final long        lastCoherentTime;
 
-  public IncoherentCachedItem(final CachedItem item) {
-    this(item.getID(), item.getListener(), item.getKey(), item.getValue());
-  }
-
-  public IncoherentCachedItem(final Object id, final DisposeListener listener, final Object key, final Object value) {
-    super(id, listener, key, value);
+  public IncoherentCachedItem(final Object id, final DisposeListener listener, final Object key, final Object value,
+                              boolean waitForAck) {
+    super(id, listener, key, value, waitForAck);
     this.lastCoherentTime = System.nanoTime();
   }
 

@@ -6,8 +6,8 @@ package com.tc.object.tx;
 
 import com.tc.exception.TCNotRunningException;
 import com.tc.logging.LossyTCLogger;
-import com.tc.logging.TCLogger;
 import com.tc.logging.LossyTCLogger.LossyTCLoggerType;
+import com.tc.logging.TCLogger;
 import com.tc.net.GroupID;
 import com.tc.net.NodeID;
 import com.tc.object.locks.LockFlushCallback;
@@ -38,10 +38,10 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Map.Entry;
 
 /**
  * Sends off committed transactions
@@ -52,12 +52,10 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
 
   private static final int                        MAX_OUTSTANDING_BATCHES     = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getInt(
-                                                                                          TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
+                                                                                  .getInt(TCPropertiesConsts.L1_TRANSACTIONMANAGER_MAXOUTSTANDING_BATCHSIZE);
   private static final long                       COMPLETED_ACK_FLUSH_TIMEOUT = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getLong(
-                                                                                           TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
+                                                                                  .getLong(TCPropertiesConsts.L1_TRANSACTIONMANAGER_COMPLETED_ACK_FLUSH_TIMEOUT);
 
   private static final State                      RUNNING                     = new State("RUNNING");
   private static final State                      PAUSED                      = new State("PAUSED");
@@ -449,6 +447,7 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
       if (!container.isNull()) {
         final ClientTransactionBatch containingBatch = (ClientTransactionBatch) this.incompleteBatches.get(container);
         tb = containingBatch.removeTransaction(txID);
+        callBackTxnCompleteListeners(tb.getFoldedTransactionID(), tb.getTransactionCompleteListeners());
         final TxnBatchID completed = this.batchAccounting.acknowledge(txID);
         if (!completed.isNull()) {
           this.incompleteBatches.remove(completed);
@@ -467,6 +466,14 @@ public class RemoteTransactionManagerImpl implements RemoteTransactionManager, P
     }
     fireLockFlushCallbacks(callbacks);
     return tb;
+  }
+
+  private void callBackTxnCompleteListeners(TransactionID txnID,
+                                            List<TransactionCompleteListener> transactionCompleteListeners) {
+    if (transactionCompleteListeners.isEmpty()) return;
+    for (TransactionCompleteListener l : transactionCompleteListeners) {
+      l.transactionComplete(txnID);
+    }
   }
 
   public void waitForAllCurrentTransactionsToComplete() {

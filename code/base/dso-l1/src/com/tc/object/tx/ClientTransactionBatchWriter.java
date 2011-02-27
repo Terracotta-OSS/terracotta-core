@@ -39,6 +39,7 @@ import com.tc.util.concurrent.SetOnceFlag;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -330,6 +331,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     final TransactionBuffer txnBuffer = getOrCreateBuffer(txn, sequenceGenerator, tidGenerator);
 
     this.bytesWritten += txnBuffer.write(txn);
+    txnBuffer.addTransactionCompleteListeners(txn.getTransactionCompleteListeners());
 
     return new FoldedInfo(txnBuffer.getFoldedTransactionID(), txnBuffer.getTxnCount() > 1);
   }
@@ -443,6 +445,7 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
     private int                            txnCount             = 0;
     private Mark                           changesCountMark;
     private Mark                           txnCountMark;
+    private ArrayList                      txnCompleteListers;
 
     TransactionBufferImpl(final SequenceID sequenceID, final TCByteBufferOutputStream output,
                           final ObjectStringSerializer serializer, final DNAEncodingInternal encoding,
@@ -656,6 +659,19 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
     public void recycle() {
       this.output.recycle();
+    }
+
+    public void addTransactionCompleteListeners(List transactionCompleteListeners) {
+      if (!transactionCompleteListeners.isEmpty()) {
+        if (txnCompleteListers == null) {
+          txnCompleteListers = new ArrayList(5);
+        }
+        txnCompleteListers.addAll(transactionCompleteListeners);
+      }
+    }
+
+    public List getTransactionCompleteListeners() {
+      return (txnCompleteListers == null ? Collections.EMPTY_LIST : txnCompleteListers);
     }
   }
 

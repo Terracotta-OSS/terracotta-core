@@ -4,6 +4,8 @@
  */
 package com.tc.object.tx;
 
+import org.mockito.Mockito;
+
 import EDU.oswego.cs.dl.util.concurrent.CyclicBarrier;
 import EDU.oswego.cs.dl.util.concurrent.LinkedQueue;
 import EDU.oswego.cs.dl.util.concurrent.SynchronizedInt;
@@ -558,7 +560,7 @@ public class RemoteTransactionManagerTest extends TestCase {
     }
 
     public TransactionBuffer removeTransaction(TransactionID txID) {
-      return null;
+      return Mockito.mock(TransactionBuffer.class);
     }
 
     public synchronized Collection addTransactionIDsTo(Collection c) {

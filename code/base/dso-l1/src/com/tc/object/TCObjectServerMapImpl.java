@@ -16,6 +16,8 @@ import com.tc.object.cache.IncoherentCachedItem;
 import com.tc.object.locks.LockID;
 import com.tc.object.metadata.MetaDataDescriptor;
 import com.tc.object.metadata.MetaDataDescriptorInternal;
+import com.tc.object.tx.ClientTransaction;
+import com.tc.object.tx.UnlockedSharedObjectException;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 
@@ -85,7 +87,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     invokeLogicalPut(map, key, value);
 
     if (CACHE_ENABLED) {
-      this.cache.addCoherentValueToCache(this.manager.generateLockIdentifier(lockID), key, value);
+      this.cache.addCoherentValueToCache(this.manager.generateLockIdentifier(lockID), key, value, true);
     }
   }
 
@@ -105,9 +107,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     if (CACHE_ENABLED) {
       if (!invalidateOnChange || valueID.isNull()) {
-        this.cache.addIncoherentValueToCache(key, value);
+        this.cache.addIncoherentValueToCache(key, value, true);
       } else {
-        this.cache.addCoherentValueToCache(valueID, key, value);
+        this.cache.addCoherentValueToCache(valueID, key, value, true);
       }
     }
   }
@@ -115,7 +117,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   public boolean doLogicalPutIfAbsentUnlocked(TCServerMap map, Object key, Object value) {
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
-      if (item != null) {
+      if (item != null && item.getValue() != null) {
         // Item already present
         return false;
       }
@@ -125,9 +127,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     if (CACHE_ENABLED) {
       if (!invalidateOnChange || valueID.isNull()) {
-        this.cache.addIncoherentValueToCache(key, value);
+        this.cache.addIncoherentValueToCache(key, value, true);
       } else {
-        this.cache.addCoherentValueToCache(valueID, key, value);
+        this.cache.addCoherentValueToCache(valueID, key, value, true);
       }
     }
 
@@ -138,7 +140,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
       if (item != null && current != item.getValue()) {
-        // Item already present but not equal
+        // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
+        // and coz of DEV-5462
         return false;
       }
     }
@@ -146,9 +149,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     if (CACHE_ENABLED) {
       if (!invalidateOnChange || valueID.isNull()) {
-        this.cache.addIncoherentValueToCache(key, newValue);
+        this.cache.addIncoherentValueToCache(key, newValue, true);
       } else {
-        this.cache.addCoherentValueToCache(valueID, key, newValue);
+        this.cache.addCoherentValueToCache(valueID, key, newValue, true);
       }
     }
 
@@ -162,11 +165,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
    * @param lockID, lock under which this entry is removed
    * @param key Key Object
    */
-  public void doLogicalRemove(final TCServerMap map, final Object key) {
+  public void doLogicalRemove(final TCServerMap map, final L lockID, final Object key) {
     invokeLogicalRemove(map, key);
 
     if (CACHE_ENABLED) {
-      this.cache.clearFromCache(key);
+      this.cache.addCoherentValueToCache(this.manager.generateLockIdentifier(lockID), key, null, true);
     }
   }
 
@@ -180,7 +183,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     invokeLogicalRemove(map, key);
 
     if (CACHE_ENABLED) {
-      this.cache.clearFromCacheIncoherently(key);
+      if (!invalidateOnChange) {
+        this.cache.addIncoherentValueToCache(key, null, true);
+      } else {
+        this.cache.addCoherentValueToCache((ObjectID) null, key, null, true);
+      }
     }
   }
 
@@ -195,7 +202,8 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (CACHE_ENABLED) {
       CachedItem item = getValueUnlockedFromCache(key);
       if (item != null && value != item.getValue()) {
-        // Item already present but not equal
+        // Item already present but not equal. We are doing reference equality coz equals() is called at higher layer
+        // and coz of DEV-5462
         return false;
       }
     }
@@ -203,7 +211,11 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     invokeLogicalRemove(map, key, value);
 
     if (CACHE_ENABLED) {
-      this.cache.clearFromCacheIncoherently(key);
+      if (!invalidateOnChange) {
+        this.cache.addIncoherentValueToCache(key, null, true);
+      } else {
+        this.cache.addCoherentValueToCache((ObjectID) null, key, null, true);
+      }
     }
 
     return true;
@@ -226,7 +238,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     final Object value = getValueForKeyFromServer(map, key);
     if (CACHE_ENABLED) {
-      this.cache.addCoherentValueToCache(this.manager.generateLockIdentifier(lockID), key, value);
+      this.cache.addCoherentValueToCache(this.manager.generateLockIdentifier(lockID), key, value, false);
     }
 
     return value;
@@ -250,12 +262,12 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
 
     if (CACHE_ENABLED) {
       if (invalidateOnChange) {
-        // TODO:: Null values (i.e. cache misses) or literal values are not cached locally
+        // Null values (i.e. cache misses) & literal values are not cached locally
         if (value != null && !LiteralValues.isLiteralInstance(value)) {
-          this.cache.addCoherentValueToCache(objectManager.lookupExistingObjectID(value), key, value);
+          this.cache.addCoherentValueToCache(objectManager.lookupExistingObjectID(value), key, value, false);
         }
       } else {
-        this.cache.addIncoherentValueToCache(key, value);
+        this.cache.addIncoherentValueToCache(key, value, false);
       }
     }
     return value;
@@ -265,7 +277,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     if (invalidateOnChange) {
       return this.cache.getCoherentCachedItem(key);
     } else {
-      return this.cache.getIncoherentCachedItem(key);
+      return this.cache.getCachedItem(key);
     }
   }
 
@@ -468,9 +480,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
   }
 
   public void addMetaData(MetaDataDescriptor mdd) {
-    // XXX: not a nice cast to MetaDataDescriptorInternal here
-    getObjectManager().getTransactionManager().addMetaDataDescriptor(this, (MetaDataDescriptorInternal) mdd);
-
+    this.objectManager.getTransactionManager().addMetaDataDescriptor(this, (MetaDataDescriptorInternal) mdd);
   }
 
   /* Local Cache operations */
@@ -494,14 +504,27 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
      * @param id - LockID that is protecting the item
      * @param key - key of the mapping
      * @param value - value of the mapping
+     * @param b
      */
-    public void addCoherentValueToCache(final LockID id, final Object key, final Object value) {
-      addCoherentValueToCacheInternal(id, key, value);
+    public void addCoherentValueToCache(final LockID id, final Object key, final Object value, boolean isMutate) {
+      addCoherentValueToCacheInternal(id, key, value, isMutate);
     }
 
-    private void addCoherentValueToCacheInternal(Object id, Object key, Object value) {
-      final CachedItem item = new CachedItem(id, this, key, value);
+    private void addCoherentValueToCacheInternal(Object id, Object key, Object value, boolean isMutate) {
+      final CachedItem item = new CachedItem(id, this, key, value, isMutate);
       addToCache(key, item);
+      if (isMutate) {
+        registerForCallbackOnComplete(item);
+      }
+    }
+
+    private void registerForCallbackOnComplete(CachedItem item) {
+      ClientTransaction txn = TCObjectServerMapImpl.this.objectManager.getTransactionManager().getCurrentTransaction();
+      if (txn == null) { throw new UnlockedSharedObjectException(
+                                                                 "Attempt to access a shared object outside the scope of a shared lock.",
+                                                                 Thread.currentThread().getName(), manager
+                                                                     .getClientID()); }
+      txn.addTransactionCompleteListener(item);
     }
 
     /**
@@ -511,13 +534,16 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
      * @param key - key of the mapping
      * @param value - value of the mapping
      */
-    public void addCoherentValueToCache(final ObjectID id, final Object key, final Object value) {
-      addCoherentValueToCacheInternal(id, key, value);
+    public void addCoherentValueToCache(final ObjectID id, final Object key, final Object value, boolean isMutate) {
+      addCoherentValueToCacheInternal(id, key, value, isMutate);
     }
 
-    public void addIncoherentValueToCache(final Object key, final Object value) {
-      final IncoherentCachedItem item = new IncoherentCachedItem(null, this, key, value);
+    public void addIncoherentValueToCache(final Object key, final Object value, boolean isMutate) {
+      final IncoherentCachedItem item = new IncoherentCachedItem(null, this, key, value, isMutate);
       addToCache(key, item);
+      if (isMutate) {
+        registerForCallbackOnComplete(item);
+      }
     }
 
     // TODO::FIXME:: There is a race for puts for same key from same vm - it races between the map.put() and
@@ -609,7 +635,9 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         logEviction(" ... tried to clear: " + toClear + " missed: " + missed + " expired: " + expired + " cleared: "
                     + cleared + " incoherent items removed: " + incoherentItemsRemoved);
       }
-      TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toEvict);
+      if (!toEvict.isEmpty()) {
+        TCObjectServerMapImpl.this.serverMapManager.clearCachedItemsForLocks(toEvict);
+      }
       return cleared;
     }
 
@@ -707,30 +735,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
 
     /**
-     * This call clears the cached entry but doesn't remove the actual mapping. This is done so, so that a subsequent
-     * get for the same key returns null and not the value from the server as its racing to apply. The entry itself is
-     * removed when the lock gets recalled due to various reasons.
-     */
-    public CachedItem clearFromCache(final Object key) {
-      final CachedItem clearedItem = this.map.get(key);
-      if (clearedItem != null) {
-        clearedItem.clear();
-      }
-      return clearedItem;
-    }
-
-    public CachedItem clearFromCacheIncoherently(final Object key) {
-      final CachedItem clearedItem = clearFromCache(key);
-      if (clearedItem != null && !isIncoherent(clearedItem)) {
-        IncoherentCachedItem item = new IncoherentCachedItem(clearedItem);
-        item.clear();
-        this.map.put(key, item);
-        return item;
-      }
-      return clearedItem;
-    }
-
-    /**
      * Returned value may be coherent or incoherent or null
      */
     public CachedItem getCachedItem(final Object key) {
@@ -743,20 +747,6 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         }
       }
       return cachedItem;
-    }
-
-    /**
-     * Returned value is always incoherent or null.
-     */
-    public CachedItem getIncoherentCachedItem(final Object key) {
-      final CachedItem item = getCachedItem(key);
-      if (item == null) { return null; }
-      if (!isIncoherent(item)) {
-        IncoherentCachedItem incoherentCachedItem = new IncoherentCachedItem(item);
-        this.map.put(key, incoherentCachedItem);
-        return incoherentCachedItem;
-      }
-      return item;
     }
 
     /**

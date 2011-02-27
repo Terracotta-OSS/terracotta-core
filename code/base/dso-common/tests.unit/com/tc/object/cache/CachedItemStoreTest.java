@@ -38,20 +38,20 @@ public class CachedItemStoreTest extends TestCase {
     final ArrayList<CachedItem> middleEntriesOfThree = new ArrayList<CachedItem>();
     for (int i = 0; i < 50; i++) {
       final LockID lockID = getLockId(i);
-      CachedItem item = new CachedItem(lockID, this.disposeHandler, getKey(i), getValue(i));
+      CachedItem item = new CachedItem(lockID, this.disposeHandler, getKey(i), getValue(i), false);
       this.parent.put(getKey(i), item);
       this.store.add(lockID, item);
       if (i % 2 == 0) {
         lastEntriesOfTwo.add(item);
-        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 10000), getValue(i + 10000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 10000), getValue(i + 10000), false);
         this.parent.put(getKey(i + 10000), item);
         this.store.add(lockID, item);
       } else if (i % 3 == 0) {
-        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 20000), getValue(i + 20000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 20000), getValue(i + 20000), false);
         middleEntriesOfThree.add(item);
         this.parent.put(getKey(i + 20000), item);
         this.store.add(lockID, item);
-        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 30000), getValue(i + 30000));
+        item = new CachedItem(lockID, this.disposeHandler, getKey(i + 30000), getValue(i + 30000), false);
         this.parent.put(getKey(i + 30000), item);
         this.store.add(lockID, item);
       }
