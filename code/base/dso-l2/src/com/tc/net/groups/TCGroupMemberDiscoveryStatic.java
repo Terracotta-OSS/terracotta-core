@@ -19,12 +19,11 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.TCTimeoutException;
+import com.tc.util.concurrent.ConcurrentHashMap;
 import com.tc.util.concurrent.ThreadUtil;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,8 +39,7 @@ public class TCGroupMemberDiscoveryStatic implements TCGroupMemberDiscovery {
 
   private final AtomicBoolean                      running                 = new AtomicBoolean(false);
   private final AtomicBoolean                      stopAttempt             = new AtomicBoolean(false);
-  private final Map<String, DiscoveryStateMachine> nodeStateMap            = Collections
-                                                                               .synchronizedMap(new HashMap<String, DiscoveryStateMachine>());
+  private final Map<String, DiscoveryStateMachine> nodeStateMap            = new ConcurrentHashMap<String, DiscoveryStateMachine>();
   private final TCGroupManagerImpl                 manager;
   private Node                                     local;
   private Integer                                  joinedNodes             = 0;
