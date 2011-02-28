@@ -250,9 +250,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   public void missingObjectsFor(final NodeID nodeID, final int missingObjects) {
     if (missingObjects == 0) {
       stateSyncManager.objectSyncComplete(nodeID);
-      if (stateSyncManager.isSyncComplete(nodeID)) {
-        this.gcMonitor.syncCompleteFor(nodeID);
-      }
+      moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
       this.objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
     }
