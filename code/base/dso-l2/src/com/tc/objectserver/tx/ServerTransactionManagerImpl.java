@@ -49,8 +49,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -504,9 +504,9 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   public void processingMetaDataCompleted(final NodeID sourceID, final TransactionID txnID) {
-    if (isActive()) {
-      final TransactionAccount ci = getTransactionAccount(sourceID);
-      if (ci != null && ci.processMetaDataCompleted(txnID)) {
+    final TransactionAccount ci = getTransactionAccount(sourceID);
+    if (ci != null && ci.processMetaDataCompleted(txnID)) {
+      if (isActive()) {
         acknowledge(sourceID, txnID);
       }
     }
