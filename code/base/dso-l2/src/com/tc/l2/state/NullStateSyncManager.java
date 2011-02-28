@@ -19,16 +19,16 @@ public class NullStateSyncManager implements StateSyncManager {
     //
   }
 
-  public boolean indexSyncComplete(NodeID nodeID) {
-    return true;
+  public void indexSyncComplete(NodeID nodeID) {
+    //
   }
 
   public boolean isSyncComplete(NodeID nodeID) {
     return true;
   }
 
-  public boolean objectSyncComplete(NodeID nodeID) {
-    return true;
+  public void objectSyncComplete(NodeID nodeID) {
+    //
   }
 
 }

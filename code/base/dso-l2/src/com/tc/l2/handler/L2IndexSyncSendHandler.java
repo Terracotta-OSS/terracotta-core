@@ -11,6 +11,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.IndexSyncContext;
 import com.tc.l2.context.SyncIndexesRequest;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.msg.IndexSyncCompleteAckMessage;
 import com.tc.l2.msg.IndexSyncMessage;
 import com.tc.l2.msg.IndexSyncMessageFactory;
 import com.tc.l2.objectserver.L2IndexStateManager;
@@ -48,8 +49,22 @@ public class L2IndexSyncSendHandler extends AbstractEventHandler {
           this.syncRequestSink.add(new SyncIndexesRequest(isc.getNodeID()));
         }
       }
+    } else if (context instanceof IndexSyncCompleteAckMessage) {
+      sendIndexSyncCompleteAckMessage((IndexSyncCompleteAckMessage) context);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
+    }
+  }
+
+  private void sendIndexSyncCompleteAckMessage(IndexSyncCompleteAckMessage message) {
+    try {
+      this.groupManager.sendTo(message.getDestinatioinNodeID(), message);
+    } catch (final GroupException e) {
+      final String error = "Error sending IndexSyncCompleteAckMessage to " + message.getDestinatioinNodeID()
+                           + ": Caught exception while sending message to ACTIVE";
+      logger.error(error, e);
+      this.groupManager.zapNode(message.getDestinatioinNodeID(), L2HAZapNodeRequestProcessor.COMMUNICATION_ERROR,
+                                "Error sending objects." + L2HAZapNodeRequestProcessor.getErrorString(e));
     }
   }
 
@@ -58,8 +73,10 @@ public class L2IndexSyncSendHandler extends AbstractEventHandler {
     try {
       File syncFile = context.syncFile();
       byte[] fileBytes = getBytesFromFile(syncFile);
-      final IndexSyncMessage msg = IndexSyncMessageFactory.createIndexSyncMessage(context.getCachename(), context
-          .getFilename(), fileBytes.length, fileBytes, context.getSequenceID());
+      final IndexSyncMessage msg = IndexSyncMessageFactory.createIndexSyncMessage(context.getCachename(),
+                                                                                  context.getFilename(),
+                                                                                  fileBytes.length, fileBytes,
+                                                                                  context.getSequenceID());
       this.groupManager.sendTo(context.getNodeID(), msg);
       this.syncLogger.logSynced(context);
       this.l2IndexStateManager.close(context);

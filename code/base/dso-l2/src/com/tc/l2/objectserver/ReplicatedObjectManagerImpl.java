@@ -10,11 +10,13 @@ import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.GCResultMessage;
 import com.tc.l2.msg.GCResultMessageFactory;
+import com.tc.l2.msg.IndexSyncCompleteAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessageFactory;
 import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.msg.ObjectListSyncMessage;
 import com.tc.l2.msg.ObjectListSyncMessageFactory;
+import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.state.StateManager;
@@ -90,6 +92,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     this.gcMonitor = new GCMonitor();
     this.objectManager.getGarbageCollector().addListener(this.gcMonitor);
     this.groupManager.registerForMessages(ObjectListSyncMessage.class, this);
+    this.groupManager.registerForMessages(ObjectSyncCompleteAckMessage.class, this);
+    this.groupManager.registerForMessages(IndexSyncCompleteAckMessage.class, this);
     this.isCleanDB = isCleanDB;
     this.passiveSyncStateManager = l2PassiveSyncStateManager;
   }
@@ -143,9 +147,26 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     if (msg instanceof ObjectListSyncMessage) {
       final ObjectListSyncMessage clusterMsg = (ObjectListSyncMessage) msg;
       handleClusterObjectMessage(fromNode, clusterMsg);
+    } else if (msg instanceof ObjectSyncCompleteAckMessage) {
+      NodeID nodeID = msg.messageFrom();
+      logger.info("Received ObjectSyncCompleteAckMessage from " + nodeID);
+      stateSyncManager.objectSyncComplete(nodeID);
+      moveNodeToPassiveStandByIfPossible(nodeID);
+    } else if (msg instanceof IndexSyncCompleteAckMessage) {
+      NodeID nodeID = msg.messageFrom();
+      logger.info("Received IndexSyncCompleteAckMessage from " + nodeID);
+      stateSyncManager.indexSyncComplete(nodeID);
+      moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
       throw new AssertionError("ReplicatedObjectManagerImpl : Received wrong message type :" + msg.getClass().getName()
                                + " : " + msg);
+    }
+  }
+
+  private void moveNodeToPassiveStandByIfPossible(NodeID nodeID) {
+    if (stateSyncManager.isSyncComplete(nodeID)) {
+      this.gcMonitor.syncCompleteFor(nodeID);
+      this.stateManager.moveNodeToPassiveStandby(nodeID);
     }
   }
 
@@ -228,7 +249,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public void missingObjectsFor(final NodeID nodeID, final int missingObjects) {
     if (missingObjects == 0) {
-      if (stateSyncManager.objectSyncComplete(nodeID)) {
+      stateSyncManager.objectSyncComplete(nodeID);
+      if (stateSyncManager.isSyncComplete(nodeID)) {
         this.gcMonitor.syncCompleteFor(nodeID);
       }
     } else {
@@ -237,11 +259,8 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   public void objectSyncCompleteFor(final NodeID nodeID) {
-
     try {
-      if (stateSyncManager.objectSyncComplete(nodeID)) {
-        this.gcMonitor.syncCompleteFor(nodeID);
-      }
+      logger.info("Object Sync completed for " + nodeID);
       final ObjectSyncCompleteMessage msg = ObjectSyncCompleteMessageFactory
           .createObjectSyncCompleteMessageFor(nodeID, this.sequenceGenerator.getNextSequence(nodeID));
       this.groupManager.sendTo(nodeID, msg);
@@ -258,6 +277,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public void indexSyncStartFor(NodeID nodeID) {
     try {
+      logger.info("Index Sync started for " + nodeID);
       final IndexSyncStartMessage msg = IndexSyncMessageFactory.createIndexSyncStartMessage(this.indexSequenceGenerator
           .getNextSequence(nodeID));
       this.groupManager.sendTo(nodeID, msg);
@@ -283,9 +303,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public void indexSyncCompleteFor(NodeID nodeID) {
     try {
-      if (stateSyncManager.indexSyncComplete(nodeID)) {
-        this.gcMonitor.syncCompleteFor(nodeID);
-      }
+      logger.info("Index Sync completed for " + nodeID);
       final IndexSyncCompleteMessage msg = IndexSyncMessageFactory
           .createIndexSyncCompleteMessage(this.indexSequenceGenerator.getNextSequence(nodeID));
       this.groupManager.sendTo(nodeID, msg);

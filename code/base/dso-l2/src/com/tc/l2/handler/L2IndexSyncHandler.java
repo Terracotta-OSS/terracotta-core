@@ -7,8 +7,11 @@ package com.tc.l2.handler;
 import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
+import com.tc.async.api.Sink;
+import com.tc.l2.msg.IndexSyncCompleteAckMessage;
 import com.tc.l2.msg.IndexSyncCompleteMessage;
 import com.tc.l2.msg.IndexSyncMessage;
+import com.tc.l2.msg.IndexSyncMessageFactory;
 import com.tc.l2.msg.IndexSyncStartMessage;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
@@ -19,9 +22,10 @@ import com.tc.objectserver.search.IndexHACoordinator;
 public class L2IndexSyncHandler extends AbstractEventHandler {
 
   private static final TCLogger    logger = TCLogging.getLogger(L2IndexSyncHandler.class);
-
   private final IndexHACoordinator indexHACoordinator;
+
   private StateSyncManager         stateSyncManager;
+  private Sink                     sendSink;
 
   public L2IndexSyncHandler(final IndexHACoordinator indexHACoordinator) {
     this.indexHACoordinator = indexHACoordinator;
@@ -35,14 +39,19 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
       final IndexSyncMessage syncMsg = (IndexSyncMessage) context;
       doSyncIndex(syncMsg);
     } else if (context instanceof IndexSyncCompleteMessage) {
-      final IndexSyncCompleteMessage msg = (IndexSyncCompleteMessage) context;
-      if (logger.isDebugEnabled()) {
-        logger.debug("Received IndexSyncCompleteMessage Msg from : " + msg.messageFrom() + " msg : " + msg);
-      }
-      stateSyncManager.indexSyncComplete();
+      handleIndexSyncCompleteMessage((IndexSyncCompleteMessage) context);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
+  }
+
+  private void handleIndexSyncCompleteMessage(IndexSyncCompleteMessage context) {
+    final IndexSyncCompleteMessage msg = context;
+    logger.info("Received IndexSyncCompleteMessage Msg from : " + msg.messageFrom());
+    stateSyncManager.indexSyncComplete();
+    IndexSyncCompleteAckMessage ackMessage = IndexSyncMessageFactory.createIndexSyncCompleteAckMessage(msg
+        .messageFrom());
+    this.sendSink.add(ackMessage);
   }
 
   private void doSyncPrepare() {
@@ -58,7 +67,7 @@ public class L2IndexSyncHandler extends AbstractEventHandler {
     super.initialize(context);
     final ServerConfigurationContext oscc = (ServerConfigurationContext) context;
     this.stateSyncManager = oscc.getL2Coordinator().getStateSyncManager();
-
+    this.sendSink = oscc.getStage(ServerConfigurationContext.INDEXES_SYNC_SEND_STAGE).getSink();
   }
 
 }

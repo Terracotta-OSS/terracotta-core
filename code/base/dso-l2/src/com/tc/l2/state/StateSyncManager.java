@@ -11,9 +11,9 @@ public interface StateSyncManager {
 
   void indexSyncComplete();
 
-  boolean objectSyncComplete(NodeID nodeID);
+  void objectSyncComplete(NodeID nodeID);
 
-  boolean indexSyncComplete(NodeID nodeID);
+  void indexSyncComplete(NodeID nodeID);
 
   boolean isSyncComplete(NodeID nodeID);
 

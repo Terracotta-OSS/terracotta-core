@@ -26,17 +26,18 @@ public class ObjectSyncCompleteMessage extends AbstractGroupMessage implements O
     super(type);
     this.sequence = sequence;
   }
-  
+
+  @Override
   protected void basicDeserializeFrom(TCByteBufferInput in) throws IOException {
     Assert.assertEquals(OBJECT_SYNC_COMPLETE, getType());
     this.sequence = in.readLong();
   }
 
+  @Override
   protected void basicSerializeTo(TCByteBufferOutput out) {
     Assert.assertEquals(OBJECT_SYNC_COMPLETE, getType());
     out.writeLong(this.sequence);
   }
-
 
   public long getSequenceID() {
     return this.sequence;

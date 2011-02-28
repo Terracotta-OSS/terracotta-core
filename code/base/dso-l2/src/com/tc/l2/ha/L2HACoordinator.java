@@ -223,9 +223,11 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
+
     this.groupManager.routeMessages(IndexSyncStartMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(IndexSyncMessage.class, orderedIndexSyncSink);
     this.groupManager.routeMessages(IndexSyncCompleteMessage.class, orderedIndexSyncSink);
+
     this.groupManager.routeMessages(RelayedCommitTransactionMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ServerTxnAckMessage.class, ackProcessingSink);
     this.groupManager.routeMessages(L2StateMessage.class, stateMessageSink);

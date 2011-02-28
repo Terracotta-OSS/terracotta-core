@@ -8,7 +8,9 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
+import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.RelayedCommitTransactionMessage;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -33,7 +35,6 @@ import java.util.Set;
 public class L2ObjectSyncHandler extends AbstractEventHandler {
 
   private static final TCLogger          logger = TCLogging.getLogger(L2ObjectSyncHandler.class);
-
   private TransactionBatchReaderFactory  batchReaderFactory;
 
   private Sink                           sendSink;
@@ -57,12 +58,19 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
       processTransactionLowWaterMark(commitMessage.getLowGlobalTransactionIDWatermark());
       ackTransactions(commitMessage, serverTxnIDs);
     } else if (context instanceof ObjectSyncCompleteMessage) {
-      final ObjectSyncCompleteMessage msg = (ObjectSyncCompleteMessage) context;
-      logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
-      stateSyncManager.objectSyncComplete();
+      handleObjectSyncCompleteMessage((ObjectSyncCompleteMessage) context);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
+  }
+
+  private void handleObjectSyncCompleteMessage(ObjectSyncCompleteMessage context) {
+    final ObjectSyncCompleteMessage msg = context;
+    logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
+    stateSyncManager.objectSyncComplete();
+    ObjectSyncCompleteAckMessage processedMessage = ObjectSyncCompleteMessageFactory
+        .createObjectSyncCompleteAckMessage(msg.messageFrom());
+    this.sendSink.add(processedMessage);
   }
 
   private void processTransactionLowWaterMark(final GlobalTransactionID lowGlobalTransactionIDWatermark) {

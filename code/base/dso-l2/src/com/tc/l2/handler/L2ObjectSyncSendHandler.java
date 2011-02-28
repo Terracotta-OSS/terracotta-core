@@ -12,6 +12,7 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
+import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -34,20 +35,16 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
 
   private static final boolean           TXN_ACK_THROTTLING_ENABLED           = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getBoolean(
-                                                                                              TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED);
+                                                                                  .getBoolean(TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_ENABLED);
   private static final int               TOTAL_PENDING_TRANSACTIONS_THRESHOLD = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getInt(
-                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD);
+                                                                                  .getInt(TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_THRESHOLD);
   private static final int               MAX_SLEEP_SECS                       = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getInt(
-                                                                                          TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
+                                                                                  .getInt(TCPropertiesConsts.L2_TRANSACTIONMANAGER_PASSIVE_THROTTLE_MAXSLEEPSECONDS);
   private static final long              TIME_TO_THROTTLE_ON_OBJECT_SEND      = TCPropertiesImpl
                                                                                   .getProperties()
-                                                                                  .getLong(
-                                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
+                                                                                  .getLong(TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME);
 
   private final SyncLogger               syncLogger                           = new SyncLogger();
 
@@ -76,6 +73,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     } else if (context instanceof ServerTxnAckMessage) {
       final ServerTxnAckMessage txnMsg = (ServerTxnAckMessage) context;
       sendAcks(txnMsg);
+    } else if (context instanceof ObjectSyncCompleteAckMessage) {
+      sendObjectSyncCompleteAckMessage((ObjectSyncCompleteAckMessage) context);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
@@ -89,6 +88,20 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
         throw new AssertionError(e);
       }
     }
+  }
+
+  private void sendObjectSyncCompleteAckMessage(ObjectSyncCompleteAckMessage message) {
+    try {
+      this.groupManager.sendTo(message.getDestinationNodeID(), message);
+    } catch (final GroupException e) {
+      final String error = "Error sending ObjectSyncCompleteAckMessage to " + message.getDestinationNodeID()
+                           + " Caught exception while sending message to ACTIVE";
+      logger.error(error, e);
+      this.groupManager.zapNode(message.getDestinationNodeID(),
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
+                                error + L2HAZapNodeRequestProcessor.getErrorString(e));
+    }
+
   }
 
   private void sendAcks(final ServerTxnAckMessage ackMsg) {

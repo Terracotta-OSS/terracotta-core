@@ -3,6 +3,8 @@
  */
 package com.tc.l2.msg;
 
+import com.tc.net.NodeID;
+
 public class IndexSyncMessageFactory {
 
   public static IndexSyncStartMessage createIndexSyncStartMessage(final long sequenceID) {
@@ -22,6 +24,11 @@ public class IndexSyncMessageFactory {
     IndexSyncCompleteMessage msg = new IndexSyncCompleteMessage(IndexSyncCompleteMessage.INDEX_SYNC_COMPLETE_TYPE);
     msg.initialize(sequenceID);
     return msg;
+  }
+
+  public static IndexSyncCompleteAckMessage createIndexSyncCompleteAckMessage(NodeID nodeID) {
+    return new IndexSyncCompleteAckMessage(IndexSyncCompleteAckMessage.INDEX_SYNC_COMPLETE_ACK_TYPE,
+                                                 nodeID);
   }
 
 }
