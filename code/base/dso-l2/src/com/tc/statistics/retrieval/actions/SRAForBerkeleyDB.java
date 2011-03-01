@@ -12,7 +12,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRAForBerkeleyDB implements StatisticRetrievalAction {
-  public final static String          ACTION_NAME = "berkeley db stats";
+  public final static String          ACTION_NAME = "db stats";
 
   private final SRABDBLogging         sraLogging;
   private final SRABDBCache           sraCache;

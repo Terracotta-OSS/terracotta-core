@@ -9,7 +9,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRABDBIO implements StatisticRetrievalAction {
-  public final static String  ACTION_NAME            = "berkeley db io stats";
+  public final static String  ACTION_NAME            = "db io stats";
 
   // IO Stats
   // nRandomReads

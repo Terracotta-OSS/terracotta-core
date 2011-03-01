@@ -9,7 +9,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRABDBCache implements StatisticRetrievalAction {
-  public final static String  ACTION_NAME               = "berkeley db cache stats";
+  public final static String  ACTION_NAME               = "db cache stats";
 
   // Cache stats
   // nNotResident

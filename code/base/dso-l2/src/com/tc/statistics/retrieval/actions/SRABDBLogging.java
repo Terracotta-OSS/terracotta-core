@@ -9,7 +9,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRABDBLogging implements StatisticRetrievalAction {
-  public final static String  ACTION_NAME           = "berkeley db logging stats";
+  public final static String  ACTION_NAME           = "db logging stats";
 
   // Logging stats
   // nFSyncs

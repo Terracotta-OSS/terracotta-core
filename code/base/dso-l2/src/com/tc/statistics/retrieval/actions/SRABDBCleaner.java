@@ -9,7 +9,7 @@ import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
 
 public class SRABDBCleaner implements StatisticRetrievalAction {
-  public final static String  ACTION_NAME       = "berkeley db cleaner stats";
+  public final static String  ACTION_NAME       = "db cleaner stats";
 
   // Cleaner stats
   // cleanerBacklog
