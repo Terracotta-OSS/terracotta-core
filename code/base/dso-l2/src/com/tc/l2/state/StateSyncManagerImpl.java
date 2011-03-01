@@ -16,7 +16,6 @@ public class StateSyncManagerImpl implements StateSyncManager {
 
   protected final Map<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
   protected volatile StateManager        stateManager;
-  protected volatile boolean             objectSyncComplete       = false;
 
   public void setStateManager(StateManager stateManager) {
     this.stateManager = stateManager;
