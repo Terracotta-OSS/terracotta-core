@@ -4,6 +4,7 @@
 package com.tc.object.cache;
 
 import com.tc.cache.ExpirableEntry;
+import com.tc.object.ObjectID;
 import com.tc.object.tx.TransactionCompleteListener;
 import com.tc.object.tx.TransactionID;
 
@@ -18,7 +19,7 @@ public class CachedItem implements TransactionCompleteListener {
   private final DisposeListener                                                 listener;
   /*
    * Could be a LockID or an ObjectID that this CacheItem is mapped to in RemoteServerMapManagerImpl or it could be null
-   * (for remove cases and incoherent items)
+   * for incoherent items
    */
   private final Object                                                          id;
   private final Object                                                          key;
@@ -112,7 +113,7 @@ public class CachedItem implements TransactionCompleteListener {
       final CachedItemState lstate = state;
       success = update(lstate, lstate.acknowledged());
     } while (!success);
-    if (id == null && value == null) {
+    if (id == ObjectID.NULL_ID && value == null) {
       // This is an unlocked remove item, remove from local cache so reads go to the server
       dispose();
     }

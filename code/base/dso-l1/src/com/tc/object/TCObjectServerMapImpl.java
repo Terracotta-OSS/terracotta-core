@@ -186,7 +186,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       if (!invalidateOnChange) {
         this.cache.addIncoherentValueToCache(key, null, true);
       } else {
-        this.cache.addCoherentValueToCache((ObjectID) null, key, null, true);
+        this.cache.addCoherentValueToCache(ObjectID.NULL_ID, key, null, true);
       }
     }
   }
@@ -214,7 +214,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
       if (!invalidateOnChange) {
         this.cache.addIncoherentValueToCache(key, null, true);
       } else {
-        this.cache.addCoherentValueToCache((ObjectID) null, key, null, true);
+        this.cache.addCoherentValueToCache(ObjectID.NULL_ID, key, null, true);
       }
     }
 
@@ -539,7 +539,7 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
     }
 
     public void addIncoherentValueToCache(final Object key, final Object value, boolean isMutate) {
-      final IncoherentCachedItem item = new IncoherentCachedItem(null, this, key, value, isMutate);
+      final IncoherentCachedItem item = new IncoherentCachedItem(this, key, value, isMutate);
       addToCache(key, item);
       if (isMutate) {
         registerForCallbackOnComplete(item);
@@ -555,12 +555,14 @@ public class TCObjectServerMapImpl<L> extends TCObjectLogical implements TCObjec
         currentSize = this.size.incrementAndGet();
       } else {
         currentSize = this.size.get();
-        if (old.getID() != null) {
-          TCObjectServerMapImpl.this.serverMapManager.removeCachedItem(old.getID(), old);
+        Object oldID = old.getID();
+        if (oldID != null && oldID != ObjectID.NULL_ID) {
+          TCObjectServerMapImpl.this.serverMapManager.removeCachedItem(oldID, old);
         }
       }
-      if (item.getID() != null) {
-        TCObjectServerMapImpl.this.serverMapManager.addCachedItem(item.getID(), item);
+      Object itemID = item.getID();
+      if (itemID != null && itemID != ObjectID.NULL_ID) {
+        TCObjectServerMapImpl.this.serverMapManager.addCachedItem(itemID, item);
       }
       initiateEvictionIfNecessary(currentSize);
     }
