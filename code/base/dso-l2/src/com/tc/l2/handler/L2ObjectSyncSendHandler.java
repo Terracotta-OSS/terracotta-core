@@ -12,7 +12,6 @@ import com.tc.l2.api.L2Coordinator;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
-import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncMessage;
 import com.tc.l2.msg.ObjectSyncMessageFactory;
 import com.tc.l2.msg.ServerTxnAckMessage;
@@ -73,8 +72,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
     } else if (context instanceof ServerTxnAckMessage) {
       final ServerTxnAckMessage txnMsg = (ServerTxnAckMessage) context;
       sendAcks(txnMsg);
-    } else if (context instanceof ObjectSyncCompleteAckMessage) {
-      sendObjectSyncCompleteAckMessage((ObjectSyncCompleteAckMessage) context);
     } else {
       throw new AssertionError("Unknown context type : " + context.getClass().getName() + " : " + context);
     }
@@ -88,20 +85,6 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
         throw new AssertionError(e);
       }
     }
-  }
-
-  private void sendObjectSyncCompleteAckMessage(ObjectSyncCompleteAckMessage message) {
-    try {
-      this.groupManager.sendTo(message.getDestinationNodeID(), message);
-    } catch (final GroupException e) {
-      final String error = "Error sending ObjectSyncCompleteAckMessage to " + message.getDestinationNodeID()
-                           + " Caught exception while sending message to ACTIVE";
-      logger.error(error, e);
-      this.groupManager.zapNode(message.getDestinationNodeID(),
-                                L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
-                                error + L2HAZapNodeRequestProcessor.getErrorString(e));
-    }
-
   }
 
   private void sendAcks(final ServerTxnAckMessage ackMsg) {

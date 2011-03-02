@@ -8,6 +8,7 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.ConfigurationContext;
 import com.tc.async.api.EventContext;
 import com.tc.async.api.Sink;
+import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
@@ -21,6 +22,8 @@ import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.groups.AbstractGroupMessage;
+import com.tc.net.groups.GroupException;
+import com.tc.net.groups.GroupManager;
 import com.tc.object.gtx.GlobalTransactionID;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.tx.ServerTransaction;
@@ -40,6 +43,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
   private Sink                           sendSink;
   private ReplicatedTransactionManager   rTxnManager;
   private StateSyncManager               stateSyncManager;
+  private GroupManager                   groupManager;
 
   private final ServerTransactionFactory serverTransactionFactory;
 
@@ -68,9 +72,23 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     final ObjectSyncCompleteMessage msg = context;
     logger.info("Received ObjectSyncComplete Msg from : " + msg.messageFrom() + " msg : " + msg);
     stateSyncManager.objectSyncComplete();
-    ObjectSyncCompleteAckMessage processedMessage = ObjectSyncCompleteMessageFactory
-        .createObjectSyncCompleteAckMessage(msg.messageFrom());
-    this.sendSink.add(processedMessage);
+    ObjectSyncCompleteAckMessage ackMessage = ObjectSyncCompleteMessageFactory.createObjectSyncCompleteAckMessage(msg
+        .messageFrom());
+    sendObjectSyncCompleteAckMessage(ackMessage);
+  }
+
+  private void sendObjectSyncCompleteAckMessage(ObjectSyncCompleteAckMessage message) {
+    try {
+      this.groupManager.sendTo(message.getDestinationNodeID(), message);
+    } catch (final GroupException e) {
+      final String error = "Error sending ObjectSyncCompleteAckMessage to " + message.getDestinationNodeID()
+                           + " Caught exception while sending message to ACTIVE";
+      logger.error(error, e);
+      this.groupManager.zapNode(message.getDestinationNodeID(),
+                                L2HAZapNodeRequestProcessor.COMMUNICATION_TO_ACTIVE_ERROR,
+                                error + L2HAZapNodeRequestProcessor.getErrorString(e));
+    }
+
   }
 
   private void processTransactionLowWaterMark(final GlobalTransactionID lowGlobalTransactionIDWatermark) {
@@ -116,6 +134,7 @@ public class L2ObjectSyncHandler extends AbstractEventHandler {
     this.rTxnManager = oscc.getL2Coordinator().getReplicatedTransactionManager();
     this.stateSyncManager = oscc.getL2Coordinator().getStateSyncManager();
     this.sendSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE).getSink();
+    this.groupManager = oscc.getL2Coordinator().getGroupManager();
   }
 
 }

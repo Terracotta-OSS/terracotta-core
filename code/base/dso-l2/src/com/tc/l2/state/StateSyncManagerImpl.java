@@ -27,7 +27,7 @@ public class StateSyncManagerImpl implements StateSyncManager {
       value = createSyncValue();
       syncMessagesProcessedMap.put(nodeID, value);
     }
-    value.setObjectSyncCompleteMessageProcessed();
+    value.objectSyncCompleteMessageAcked();
   }
 
   public void indexSyncComplete(NodeID nodeID) {
@@ -45,16 +45,16 @@ public class StateSyncManagerImpl implements StateSyncManager {
   public boolean isSyncComplete(NodeID nodeID) {
     SyncValue value = syncMessagesProcessedMap.get(nodeID);
     if (value == null) { return false; }
-    return value.isSyncMesssagesProcessed();
+    return value.isSyncMesssagesAcked();
   }
 
   static interface SyncValue {
 
-    public void setIndexSyncCompleteMessageProcessed();
+    public void indexSyncCompleteMessageAcked();
 
-    public void setObjectSyncCompleteMessageProcessed();
+    public void objectSyncCompleteMessageAcked();
 
-    public boolean isSyncMesssagesProcessed();
+    public boolean isSyncMesssagesAcked();
   }
 
   protected SyncValue createSyncValue() {
@@ -62,15 +62,15 @@ public class StateSyncManagerImpl implements StateSyncManager {
     return new SyncValue() {
       private volatile boolean objectSyncCompleteMessageProcessed = false;
 
-      public void setIndexSyncCompleteMessageProcessed() {
+      public void indexSyncCompleteMessageAcked() {
         // no-op
       }
 
-      public void setObjectSyncCompleteMessageProcessed() {
+      public void objectSyncCompleteMessageAcked() {
         this.objectSyncCompleteMessageProcessed = true;
       }
 
-      public boolean isSyncMesssagesProcessed() {
+      public boolean isSyncMesssagesAcked() {
         return this.objectSyncCompleteMessageProcessed;
       }
 
