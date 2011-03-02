@@ -17,6 +17,4 @@ public interface StateSyncManager {
 
   boolean isSyncComplete(NodeID nodeID);
 
-  void setStateManager(StateManager stateManager);
-
 }

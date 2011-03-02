@@ -15,11 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class StateSyncManagerImpl implements StateSyncManager {
 
   protected final Map<NodeID, SyncValue> syncMessagesProcessedMap = new ConcurrentHashMap<NodeID, SyncValue>();
-  protected volatile StateManager        stateManager;
-
-  public void setStateManager(StateManager stateManager) {
-    this.stateManager = stateManager;
-  }
 
   public void objectSyncComplete(NodeID nodeID) {
     SyncValue value = syncMessagesProcessedMap.get(nodeID);

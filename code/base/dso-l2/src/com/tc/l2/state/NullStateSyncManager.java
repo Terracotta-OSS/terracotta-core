@@ -15,10 +15,6 @@ public class NullStateSyncManager implements StateSyncManager {
     //
   }
 
-  public void setStateManager(StateManager stateManager) {
-    //
-  }
-
   public void indexSyncComplete(NodeID nodeID) {
     //
   }

@@ -219,8 +219,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     l2ObjectStateManager.registerForL2ObjectStateChangeEvents(this.rObjectManager);
     l2IndexStateManager.registerForL2IndexStateChangeEvents(this.rObjectManager);
 
-    this.stateSyncManager.setStateManager(stateManager);
-
     this.groupManager.routeMessages(ObjectSyncMessage.class, orderedObjectsSyncSink);
     this.groupManager.routeMessages(ObjectSyncCompleteMessage.class, orderedObjectsSyncSink);
 
