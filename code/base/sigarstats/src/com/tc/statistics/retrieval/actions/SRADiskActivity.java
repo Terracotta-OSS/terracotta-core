@@ -1,5 +1,6 @@
 /*
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.statistics.retrieval.actions;
 
@@ -10,6 +11,8 @@ import org.hyperic.sigar.SigarException;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -40,11 +43,15 @@ public class SRADiskActivity implements StatisticRetrievalAction {
 
   private final Sigar          sigar;
 
+  private static final boolean SIGAR_ENABLED         = TCPropertiesImpl.getProperties()
+                                                         .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
+
   public SRADiskActivity() {
-    sigar = SigarUtil.newSigar();
+    sigar = SIGAR_ENABLED ? SigarUtil.newSigar() : null;
   }
 
   public StatisticData[] retrieveStatisticData() {
+    if (sigar == null) { return EMPTY_STATISTIC_DATA; }
     try {
       long bytesRead = 0;
       long bytesWrite = 0;
@@ -67,7 +74,7 @@ public class SRADiskActivity implements StatisticRetrievalAction {
       data.add(new StatisticData(ACTION_NAME, ELEMENT_READS, new Long(reads)));
       data.add(new StatisticData(ACTION_NAME, ELEMENT_WRITES, new Long(writes)));
 
-      return (StatisticData[])data.toArray(new StatisticData[data.size()]);
+      return (StatisticData[]) data.toArray(new StatisticData[data.size()]);
 
     } catch (SigarException e) {
       LOGGER.warn("Couldn't retrieve data for statistic '" + ACTION_NAME + "'", e);

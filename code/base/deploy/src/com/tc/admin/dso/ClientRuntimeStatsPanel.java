@@ -328,6 +328,13 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
     cpuPanel.setChart(cpuChart);
     cpuPanel.setDomainZoomable(false);
     cpuPanel.setRangeZoomable(false);
+
+    if (cpuTimeSeries.length == 0) {
+      cpuPanel.setLayout(new BorderLayout());
+      XLabel label = createOverlayLabel();
+      label.setText("Sigar is disabled or missing");
+      cpuPanel.add(label);
+    }
   }
 
   private class CpuPanelWorker extends BasicWorker<TimeSeries[]> {
@@ -349,17 +356,12 @@ public class ClientRuntimeStatsPanel extends BaseRuntimeStatsPanel {
         appContext.log(e);
         setupInstructions();
       } else {
-        TimeSeries[] cpu = getResult();
-        if (cpu.length > 0) {
-          setupCpuSeries(cpu);
-        } else {
-          setupInstructions();
-        }
+        setupCpuSeries(getResult());
       }
     }
   }
 
-  private synchronized void setupInstructions() {
+  private void setupInstructions() {
     setupHypericInstructions(cpuPanel);
   }
 

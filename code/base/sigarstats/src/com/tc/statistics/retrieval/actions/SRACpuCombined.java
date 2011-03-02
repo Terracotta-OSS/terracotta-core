@@ -10,6 +10,8 @@ import org.hyperic.sigar.SigarException;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.statistics.StatisticData;
 import com.tc.statistics.StatisticRetrievalAction;
 import com.tc.statistics.StatisticType;
@@ -29,11 +31,15 @@ public class SRACpuCombined implements StatisticRetrievalAction, SRACpuConstants
 
   private final Sigar          sigar;
 
+  private static final boolean SIGAR_ENABLED  = TCPropertiesImpl.getProperties()
+                                                  .getBoolean(TCPropertiesConsts.SIGAR_ENABLED);
+
   public SRACpuCombined() {
-    sigar = SigarUtil.newSigar();
+    sigar = SIGAR_ENABLED ? SigarUtil.newSigar() : null;
   }
 
   public StatisticData[] retrieveStatisticData() {
+    if (sigar == null) { return EMPTY_STATISTIC_DATA; }
     try {
       NumberFormat format = NumberFormat.getNumberInstance(Locale.US);
       format.setGroupingUsed(false);

@@ -868,4 +868,6 @@ public interface TCPropertiesConsts {
   public static final String   AW_ASMCLASSINFO_IGNORE_ERRORS                                   = "aw.asmclassinfo.ignore.errors";
 
   public static final String   SEARCH_QUERY_WAIT_FOR_TXNS                                      = "search.query.wait.for.txns";
+
+  public static final String   SIGAR_ENABLED                                                   = "sigar.enabled";
 }
