@@ -17,4 +17,6 @@ public interface StateSyncManager {
 
   boolean isSyncComplete(NodeID nodeID);
 
+  public void removeL2(NodeID nodeID);
+
 }

@@ -29,6 +29,10 @@ public class StateSyncManagerImpl implements StateSyncManager {
     // overridden in EE
   }
 
+  public void removeL2(NodeID nodeID) {
+    syncMessagesProcessedMap.remove(nodeID);
+  }
+
   public void objectSyncComplete() {
     // no-op
   }

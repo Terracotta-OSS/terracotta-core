@@ -155,8 +155,9 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   }
 
   public L2PassiveSyncStateManager createL2PassiveSyncStateManager(L2IndexStateManager l2IndexStateManager,
-                                                                   L2ObjectStateManager l2ObjectStateManager) {
-    return new L2PassiveSyncStateManagerImpl(l2IndexStateManager, l2ObjectStateManager);
+                                                                   L2ObjectStateManager l2ObjectStateManager,
+                                                                   StateSyncManager stateSyncManager) {
+    return new L2PassiveSyncStateManagerImpl(l2IndexStateManager, l2ObjectStateManager, stateSyncManager);
   }
 
   public SearchRequestManager createSearchRequestManager(DSOChannelManager channelManager, Sink managedObjectRequestSink) {
@@ -184,8 +185,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                            managedObjectRequestSink);
   }
 
-  public ServerConfigurationContext createServerConfigurationContext(
-                                                                     StageManager stageManager,
+  public ServerConfigurationContext createServerConfigurationContext(StageManager stageManager,
                                                                      ObjectManager objMgr,
                                                                      ObjectRequestManager objRequestMgr,
                                                                      ServerMapRequestManager serverTCMapRequestManager,
@@ -259,13 +259,12 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final MessageRecycler recycler,
                                              final StripeIDStateManager stripeStateManager,
                                              final ServerTransactionFactory serverTransactionFactory,
-                                             final DGCSequenceProvider dgcSequenceProvider,
-                                             final StateSyncManager stateSyncManager) {
+                                             final DGCSequenceProvider dgcSequenceProvider) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, persistentMapStore,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, this.thisGroupID, stripeStateManager,
-                               serverTransactionFactory, dgcSequenceProvider, stateSyncManager);
+                               serverTransactionFactory, dgcSequenceProvider);
   }
 
   public L2Management createL2Management(final TCServerInfoMBean tcServerInfoMBean,

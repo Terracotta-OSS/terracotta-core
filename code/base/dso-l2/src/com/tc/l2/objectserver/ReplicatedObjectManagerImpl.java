@@ -20,7 +20,6 @@ import com.tc.l2.msg.ObjectSyncCompleteAckMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessage;
 import com.tc.l2.msg.ObjectSyncCompleteMessageFactory;
 import com.tc.l2.state.StateManager;
-import com.tc.l2.state.StateSyncManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.NodeID;
@@ -60,7 +59,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final ObjectManager                objectManager;
   private final GroupManager                 groupManager;
   private final StateManager                 stateManager;
-  private final StateSyncManager             stateSyncManager;
   private final ReplicatedTransactionManager rTxnManager;
   private final ServerTransactionManager     transactionManager;
   private final Sink                         objectsSyncRequestSink;
@@ -72,7 +70,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   private final L2PassiveSyncStateManager    passiveSyncStateManager;
 
   public ReplicatedObjectManagerImpl(final GroupManager groupManager, final StateManager stateManager,
-                                     final StateSyncManager stateSyncManager,
                                      final L2PassiveSyncStateManager l2PassiveSyncStateManager,
                                      final ReplicatedTransactionManager txnManager, final ObjectManager objectManager,
                                      final ServerTransactionManager transactionManager,
@@ -81,7 +78,6 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
                                      final SequenceGenerator indexSequenceGenerator, final boolean isCleanDB) {
     this.groupManager = groupManager;
     this.stateManager = stateManager;
-    this.stateSyncManager = stateSyncManager;
     this.rTxnManager = txnManager;
     this.objectManager = objectManager;
     this.transactionManager = transactionManager;
@@ -150,12 +146,12 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
     } else if (msg instanceof ObjectSyncCompleteAckMessage) {
       NodeID nodeID = msg.messageFrom();
       logger.info("Received ObjectSyncCompleteAckMessage from " + nodeID);
-      stateSyncManager.objectSyncComplete(nodeID);
+      this.passiveSyncStateManager.objectSyncComplete(nodeID);
       moveNodeToPassiveStandByIfPossible(nodeID);
     } else if (msg instanceof IndexSyncCompleteAckMessage) {
       NodeID nodeID = msg.messageFrom();
       logger.info("Received IndexSyncCompleteAckMessage from " + nodeID);
-      stateSyncManager.indexSyncComplete(nodeID);
+      this.passiveSyncStateManager.indexSyncComplete(nodeID);
       moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
       throw new AssertionError("ReplicatedObjectManagerImpl : Received wrong message type :" + msg.getClass().getName()
@@ -164,7 +160,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
   }
 
   private void moveNodeToPassiveStandByIfPossible(NodeID nodeID) {
-    if (stateSyncManager.isSyncComplete(nodeID)) {
+    if (this.passiveSyncStateManager.isSyncComplete(nodeID)) {
       this.gcMonitor.syncCompleteFor(nodeID);
       this.stateManager.moveNodeToPassiveStandby(nodeID);
     }
@@ -249,7 +245,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   public void missingObjectsFor(final NodeID nodeID, final int missingObjects) {
     if (missingObjects == 0) {
-      stateSyncManager.objectSyncComplete(nodeID);
+      this.passiveSyncStateManager.objectSyncComplete(nodeID);
       moveNodeToPassiveStandByIfPossible(nodeID);
     } else {
       this.objectsSyncRequestSink.add(new SyncObjectsRequest(nodeID));
@@ -348,7 +344,7 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
 
   private static final SyncingPassiveValue ADDED = new SyncingPassiveValue();
 
-  private final class GCMonitor extends GarbageCollectorEventListenerAdapter {
+  public final class GCMonitor extends GarbageCollectorEventListenerAdapter {
 
     boolean disabled        = false;
     Map     syncingPassives = new HashMap();
@@ -526,6 +522,11 @@ public class ReplicatedObjectManagerImpl implements ReplicatedObjectManager, Gro
       return currentState;
     }
 
+  }
+
+  // strictly for tests
+  public GCMonitor getGCMonitor() {
+    return this.gcMonitor;
   }
 
 }

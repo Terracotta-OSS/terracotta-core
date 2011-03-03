@@ -27,4 +27,8 @@ public class NullStateSyncManager implements StateSyncManager {
     //
   }
 
+  public void removeL2(NodeID nodeID) {
+    //
+  }
+
 }

@@ -1145,7 +1145,8 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                                                 transactionManager);
 
       L2PassiveSyncStateManager l2PassiveSyncStateManager = this.serverBuilder
-          .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager);
+          .createL2PassiveSyncStateManager(l2IndexStateManager, l2ObjectStateManager,
+                                           createStateSyncManager(this.indexHACoordinator));
 
       this.l2Coordinator = this.serverBuilder.createL2HACoordinator(consoleLogger, this, stageManager,
                                                                     this.groupCommManager,
@@ -1156,8 +1157,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                     gtxm, weightGeneratorFactory,
                                                                     this.configSetupManager, recycler,
                                                                     this.stripeIDStateManager,
-                                                                    serverTransactionFactory, dgcSequenceProvider,
-                                                                    createStateSyncManager(this.indexHACoordinator));
+                                                                    serverTransactionFactory, dgcSequenceProvider);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
       this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

@@ -90,7 +90,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                                   ServerTransactionManager transactionManager);
 
   L2PassiveSyncStateManager createL2PassiveSyncStateManager(L2IndexStateManager l2IndexStateManager,
-                                                            L2ObjectStateManager l2ObjectStateManager);
+                                                            L2ObjectStateManager l2ObjectStateManager,
+                                                            StateSyncManager stateSyncManager);
 
   ServerMapRequestManager createServerMapRequestManager(ObjectManager objectMgr, DSOChannelManager channelManager,
                                                         Sink respondToServerTCMapSink, Sink managedObjectRequestSink);
@@ -157,7 +158,7 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       L2ConfigurationSetupManager configurationSetupManager, MessageRecycler recycler,
                                       StripeIDStateManager stripeStateManager,
                                       ServerTransactionFactory serverTransactionFactory,
-                                      DGCSequenceProvider dgcSequenceProvider, StateSyncManager stateSyncManager);
+                                      DGCSequenceProvider dgcSequenceProvider);
 
   L2Management createL2Management(TCServerInfoMBean tcServerInfoMBean, LockStatisticsMonitor lockStatisticsMBean,
                                   StatisticsAgentSubSystemImpl statisticsAgentSubSystem,

@@ -93,7 +93,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private ReplicatedObjectManagerImpl                     rObjectManager;
   private ReplicatedTransactionManager                    rTxnManager;
   private ReplicatedClusterStateManager                   rClusterStateMgr;
-  private final StateSyncManager                          stateSyncManager;
 
   private SequenceGenerator                               sequenceGenerator;
   private SequenceGenerator                               indexSequenceGenerator;
@@ -114,13 +113,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final L2ConfigurationSetupManager configurationSetupManager, final MessageRecycler recycler,
                          final GroupID thisGroupID, final StripeIDStateManager stripeIDStateManager,
                          final ServerTransactionFactory serverTransactionFactory,
-                         DGCSequenceProvider dgcSequenceProvider, StateSyncManager stateSyncManager) {
+                         DGCSequenceProvider dgcSequenceProvider) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
     this.thisGroupID = thisGroupID;
     this.configSetupManager = configurationSetupManager;
-    this.stateSyncManager = stateSyncManager;
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
 
     init(stageManager, persistentStateStore, l2ObjectStateManager, l2IndexStateManager, objectManager,
@@ -210,7 +208,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.rTxnManager = new ReplicatedTransactionManagerImpl(this.groupManager, orderedObjectsSyncSink,
                                                             transactionManager, gtxm, recycler);
 
-    this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager, this.stateSyncManager,
+    this.rObjectManager = new ReplicatedObjectManagerImpl(this.groupManager, this.stateManager,
                                                           this.l2PassiveSyncStateManager, this.rTxnManager,
                                                           objectManager, transactionManager, objectsSyncRequestSink,
                                                           indexSyncRequestSink, this.sequenceGenerator,
@@ -390,6 +388,6 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   }
 
   public StateSyncManager getStateSyncManager() {
-    return stateSyncManager;
+    return this.l2PassiveSyncStateManager;
   }
 }
