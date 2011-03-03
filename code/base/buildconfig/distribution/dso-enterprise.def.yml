@@ -153,3 +153,5 @@ maven_deploy:
     pom: poms/terracotta-l1-ee-pom.xml
     inject: 
       - build/artifacts/enterprise/resources/build-data.txt
+    inject_optional:
+      - build/artifacts/enterprise/resources/patch-data.txt  
