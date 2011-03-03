@@ -13,9 +13,7 @@ import com.tc.l2.context.SyncObjectsRequest;
 import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.tc.net.ClientID;
 import com.tc.net.NodeID;
-import com.tc.objectserver.api.ObjectManager;
 import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -25,12 +23,10 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
   private static final TCLogger      logger                    = TCLogging.getLogger(L2ObjectSyncRequestHandler.class);
   private static final int           L2_OBJECT_SYNC_BATCH_SIZE = TCPropertiesImpl
                                                                    .getProperties()
-                                                                   .getInt(
-                                                                           TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE);
+                                                                   .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE);
 
   private final L2ObjectStateManager l2ObjectStateMgr;
   private Sink                       dehydrateSink;
-  private ObjectManager              objectManager;
 
   public L2ObjectSyncRequestHandler(L2ObjectStateManager objectStateManager) {
     l2ObjectStateMgr = objectStateManager;
@@ -44,26 +40,24 @@ public class L2ObjectSyncRequestHandler extends AbstractEventHandler {
 
   }
 
+  @Override
   public void handleEvent(EventContext context) {
     SyncObjectsRequest request = (SyncObjectsRequest) context;
     doSyncObjectsRequest(request);
   }
 
-  // TODO:: Update stats so that admin console reflects these data
   private void doSyncObjectsRequest(SyncObjectsRequest request) {
     NodeID nodeID = request.getNodeID();
-    ManagedObjectSyncContext lookupContext = l2ObjectStateMgr.getSomeObjectsToSyncContext(nodeID,
-                                                                                          L2_OBJECT_SYNC_BATCH_SIZE,
-                                                                                          dehydrateSink);
-    if (lookupContext != null) {
-      objectManager.lookupObjectsFor(ClientID.NULL_ID, lookupContext);
+    ManagedObjectSyncContext mosc = l2ObjectStateMgr.getSomeObjectsToSyncContext(nodeID, L2_OBJECT_SYNC_BATCH_SIZE);
+    if (mosc != null) {
+      dehydrateSink.add(mosc);
     }
   }
 
+  @Override
   public void initialize(ConfigurationContext context) {
     super.initialize(context);
     ServerConfigurationContext oscc = (ServerConfigurationContext) context;
-    this.objectManager = oscc.getObjectManager();
     this.dehydrateSink = oscc.getStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE).getSink();
   }
 }

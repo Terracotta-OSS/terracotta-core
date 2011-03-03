@@ -20,9 +20,9 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
   public static final String      GC_TEST_KEY         = "gc-test";
 
   private static final int        DEFAULT_NUM_OF_PUT  = 2000;
-  private static final int        DEFAULT_NUM_OF_LOOP = 5;
+  private static final int        DEFAULT_NUM_OF_LOOP = 15;
   private static final int        GC_NUM_OF_PUT       = 1000;
-  private static final int        GC_NUM_OF_LOOP      = 2;
+  private static final int        GC_NUM_OF_LOOP      = 6;
   private static final int        GC_CREATE_NUM       = 5;
   private static final int        MAX_KEY_VALUE       = 1000;
 

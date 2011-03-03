@@ -185,8 +185,8 @@ public class L2ObjectSyncSendHandler extends AbstractEventHandler {
   private static class SyncLogger {
 
     public void logSynced(final ManagedObjectSyncContext mosc) {
-      final int current = mosc.getTotalObjectsSynced();
-      final int last = current - mosc.getLookupIDs().size();
+      final int last = mosc.getTotalObjectsSynced();
+      final int current = last + mosc.getSynchedOids().size();
       final int totalObjectsToSync = mosc.getTotalObjectsToSync();
       final int lastPercent = (last * 100) / totalObjectsToSync;
       final int currentPercent = (current * 100) / totalObjectsToSync;

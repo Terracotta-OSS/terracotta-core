@@ -6,10 +6,8 @@
 package com.tc.net.groups;
 
 import com.tc.async.api.ConfigurationContext;
-import com.tc.async.api.Sink;
 import com.tc.async.api.StageManager;
 import com.tc.async.impl.ConfigurationContextImpl;
-import com.tc.async.impl.MockSink;
 import com.tc.async.impl.StageManagerImpl;
 import com.tc.config.NodesStore;
 import com.tc.config.NodesStoreImpl;
@@ -40,6 +38,7 @@ import com.tc.objectserver.persistence.inmemory.InMemoryPersistor;
 import com.tc.test.TCTestCase;
 import com.tc.util.ObjectIDSet;
 import com.tc.util.PortChooser;
+import com.tc.util.TCCollections;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 import com.tc.util.concurrent.QueueFactory;
 import com.tc.util.concurrent.ThreadUtil;
@@ -111,20 +110,23 @@ public class TCGroupSendLargeObjectSyncMessageTest extends TCTestCase {
     for (long i = 0; i < 10; ++i) {
       rootsMap.put("root" + i, new ObjectID(i));
     }
-    final Sink sink = new MockSink();
     final ObjectStringSerializer objectStringSerializer = new ObjectStringSerializerImpl();
     final ManagedObjectSyncContext managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap,
                                                                                            new ObjectIDSet(rootsMap
-                                                                                               .values()), true, sink,
-                                                                                           100, 10);
+                                                                                               .values()), true, 100,
+                                                                                           10);
     final TCByteBufferOutputStream out = new TCByteBufferOutputStream();
+    ObjectIDSet oidSet = new ObjectIDSet();
     for (long i = 0; i < oidsCount; ++i) {
-      final ManagedObject m = new ManagedObjectImpl(new ObjectID(i));
+      ObjectID oid = new ObjectID(i);
+      oidSet.add(oid);
+      final ManagedObject m = new ManagedObjectImpl(oid);
       m.apply(new TestDNA(new TestDNACursor()), new TransactionID(i), new ApplyTransactionInfo(),
               new NullObjectInstanceMonitor(), true);
       m.toDNA(out, objectStringSerializer, DNAType.L2_SYNC);
     }
-    managedObjectSyncContext.setDehydratedBytes(out.toArray(), (int) oidsCount, objectStringSerializer);
+    managedObjectSyncContext.setDehydratedBytes(oidSet, TCCollections.EMPTY_OBJECT_ID_SET, out.toArray(),
+                                                (int) oidsCount, objectStringSerializer);
     managedObjectSyncContext.setSequenceID(11);
 
     final ObjectSyncMessage osm = ObjectSyncMessageFactory

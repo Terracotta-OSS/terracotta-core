@@ -6,7 +6,6 @@ package com.tc.l2.objectserver;
 
 import EDU.oswego.cs.dl.util.concurrent.CopyOnWriteArrayList;
 
-import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -91,10 +90,10 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     return true;
   }
 
-  public ManagedObjectSyncContext getSomeObjectsToSyncContext(final NodeID nodeID, final int count, final Sink sink) {
+  public ManagedObjectSyncContext getSomeObjectsToSyncContext(final NodeID nodeID, final int count) {
     final L2ObjectStateImpl l2State = (L2ObjectStateImpl) this.nodes.get(nodeID);
     if (l2State != null) {
-      return l2State.getSomeObjectsToSyncContext(count, sink);
+      return l2State.getSomeObjectsToSyncContext(count);
     } else {
       logger.warn("L2 State Object Not found for " + nodeID);
       return null;
@@ -117,7 +116,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
   @Override
   public String toString() {
     StringBuilder strBuilder = new StringBuilder();
-    strBuilder.append(L2ObjectStateManagerImpl.class.getSimpleName()).append(": [ ").append(this.nodes.values()).append("]");
+    strBuilder.append(L2ObjectStateManagerImpl.class.getSimpleName()).append(": [ ").append(this.nodes.values())
+        .append("]");
     return strBuilder.toString();
   }
 
@@ -150,6 +150,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private void close(final ManagedObjectSyncContext mosc) {
       Assert.assertTrue(mosc == this.syncingContext);
       this.syncingContext = null;
+      missingOids.addAll(mosc.getNotSynchedOids());
+      totalObjectsSynced += mosc.getSynchedOids().size();
       if (this.missingOids.isEmpty()) {
         this.state = IN_SYNC_PENDING_NOTIFY;
         L2ObjectStateManagerImpl.this.transactionManager
@@ -161,14 +163,13 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
       }
     }
 
-    private ManagedObjectSyncContext getSomeObjectsToSyncContext(final int count, final Sink sink) {
+    private ManagedObjectSyncContext getSomeObjectsToSyncContext(final int count) {
       Assert.assertTrue(this.state == SYNC_STARTED);
       Assert.assertNull(this.syncingContext);
-      if (isRootsMissing()) { return getMissingRootsSynccontext(sink); }
+      if (isRootsMissing()) { return getMissingRootsSynccontext(); }
       final ObjectIDSet oids = new ObjectIDSet();
       addSomeMissingObjectIDsTo(oids, count);
-      this.totalObjectsSynced += oids.size();
-      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(), sink,
+      this.syncingContext = new ManagedObjectSyncContext(this.nodeID, oids, !this.missingOids.isEmpty(),
                                                          this.totalObjectsToSync, this.totalObjectsSynced);
       return this.syncingContext;
     }
@@ -176,15 +177,11 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private void addSomeMissingObjectIDsTo(final ObjectIDSet oids, int count) {
       for (final Iterator<ObjectID> i = this.missingOids.iterator(); i.hasNext() && --count >= 0;) {
         oids.add(i.next());
-        // XXX:: This has to be commented because even though ObjectIDSet supports remove() now it is slightly slower
-        // than removeAll.
-        // i.remove();
+        i.remove();
       }
-      this.missingOids.removeAll(oids); // @see above comment
-
     }
 
-    private ManagedObjectSyncContext getMissingRootsSynccontext(final Sink sink) {
+    private ManagedObjectSyncContext getMissingRootsSynccontext() {
       final ObjectIDSet oids = new ObjectIDSet();
       // NOTE:: some root IDs might not be present in this mirror group in AA config
       for (final Iterator i = this.missingRoots.values().iterator(); i.hasNext();) {
@@ -197,9 +194,8 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
         // Get some objects anyways
         addSomeMissingObjectIDsTo(oids, this.missingRoots.size());
       }
-      this.totalObjectsSynced += oids.size();
       this.syncingContext = new ManagedObjectSyncContext(this.nodeID, new HashMap(this.missingRoots), oids,
-                                                         !this.missingOids.isEmpty(), sink, this.totalObjectsToSync,
+                                                         !this.missingOids.isEmpty(), this.totalObjectsToSync,
                                                          this.totalObjectsSynced);
       this.missingRoots.clear();
       return this.syncingContext;

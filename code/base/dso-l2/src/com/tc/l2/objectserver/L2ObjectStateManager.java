@@ -4,7 +4,6 @@
  */
 package com.tc.l2.objectserver;
 
-import com.tc.async.api.Sink;
 import com.tc.l2.context.ManagedObjectSyncContext;
 import com.tc.net.NodeID;
 
@@ -23,7 +22,7 @@ public interface L2ObjectStateManager {
 
   public boolean addL2(NodeID nodeID, Set oids);
 
-  public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count, Sink sink);
+  public ManagedObjectSyncContext getSomeObjectsToSyncContext(NodeID nodeID, int count);
 
   public void close(ManagedObjectSyncContext mosc);
 

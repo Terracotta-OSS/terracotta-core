@@ -4,8 +4,6 @@
  */
 package com.tc.l2.msg;
 
-import com.tc.async.api.Sink;
-import com.tc.async.impl.MockSink;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.bytes.TCByteBufferFactory;
 import com.tc.bytes.TCByteBufferTestUtil;
@@ -20,6 +18,7 @@ import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.tx.ServerTransactionID;
 import com.tc.object.tx.TransactionID;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -40,13 +39,13 @@ public class ObjectSyncMessageTest extends TestCase {
     rootsMap.put("root1", new ObjectID(1));
     rootsMap.put("root2", new ObjectID(2));
     rootsMap.put("root3", new ObjectID(3));
-    Sink sink = new MockSink();
     this.objectStringSerializer = new ObjectStringSerializerImpl();
     TCByteBuffer tcbb = TCByteBufferFactory.getInstance(false, 3452);
     this.tcByteBufferArray = new TCByteBuffer[] { tcbb };
-    this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, new ObjectIDSet(rootsMap.values()),
-                                                                 true, sink, 100, 10);
-    this.managedObjectSyncContext.setDehydratedBytes(new TCByteBuffer[] { tcbb }, this.dnaCount,
+    ObjectIDSet oids = new ObjectIDSet(rootsMap.values());
+    this.managedObjectSyncContext = new ManagedObjectSyncContext(nodeID, rootsMap, oids, true, 100, 10);
+    this.managedObjectSyncContext.setDehydratedBytes(oids, TCCollections.EMPTY_OBJECT_ID_SET,
+                                                     new TCByteBuffer[] { tcbb }, this.dnaCount,
                                                      this.objectStringSerializer);
     this.managedObjectSyncContext.setSequenceID(11);
   }

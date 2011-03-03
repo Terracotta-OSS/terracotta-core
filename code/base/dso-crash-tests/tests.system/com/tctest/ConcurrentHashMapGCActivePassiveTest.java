@@ -25,7 +25,7 @@ public class ConcurrentHashMapGCActivePassiveTest extends GCAndActivePassiveTest
   public void setupActivePassiveTest(final ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.CONTINUOUS_ACTIVE_CRASH);
-    setupManager.setServerCrashWaitTimeInSec(40);
+    setupManager.setServerCrashWaitTimeInSec(20);
     setupManager.setServerShareDataMode(MultipleServersSharedDataMode.NETWORK);
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.TEMPORARY_SWAP_ONLY);
   }

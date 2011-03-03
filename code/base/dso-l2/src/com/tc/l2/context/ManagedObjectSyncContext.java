@@ -4,74 +4,60 @@
  */
 package com.tc.l2.context;
 
-import com.tc.async.api.Sink;
+import com.tc.async.api.EventContext;
 import com.tc.bytes.TCByteBuffer;
 import com.tc.net.NodeID;
 import com.tc.object.ObjectID;
 import com.tc.object.dna.impl.ObjectStringSerializer;
-import com.tc.objectserver.api.ObjectManagerLookupResults;
-import com.tc.objectserver.context.ObjectManagerResultsContext;
 import com.tc.util.Assert;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 
 import java.util.Collections;
 import java.util.Map;
 
-public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
+public class ManagedObjectSyncContext implements EventContext {
 
   private final NodeID                nodeID;
-  private final ObjectIDSet           oids;
+  private final ObjectIDSet           requestedOids;
   private final boolean               more;
-  private final Sink                  nextSink;
   private final Map<String, ObjectID> rootsMap;
+  private final int                   totalObjectsToSync;
+  private final int                   totalObjectsSynced;
 
-  private ObjectManagerLookupResults  result;
   private TCByteBuffer[]              dnas;
   private int                         dnaCount;
   private ObjectStringSerializer      serializer;
   private long                        sequenceID;
-  private final int                   totalObjectsToSync;
-  private final int                   totalObjectsSynced;
+  private ObjectIDSet                 syncedOids    = TCCollections.EMPTY_OBJECT_ID_SET;
+  private ObjectIDSet                 notSyncedOids = TCCollections.EMPTY_OBJECT_ID_SET;
 
-  public ManagedObjectSyncContext(NodeID nodeID, ObjectIDSet oids, boolean more, Sink sink, int totalObjectsToSync,
+  public ManagedObjectSyncContext(NodeID nodeID, ObjectIDSet oids, boolean more, int totalObjectsToSync,
                                   int totalObjectsSynced) {
     this.nodeID = nodeID;
-    this.oids = oids;
+    this.requestedOids = oids;
     this.more = more;
-    this.nextSink = sink;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
     this.rootsMap = Collections.emptyMap();
   }
 
   public ManagedObjectSyncContext(NodeID nodeID, Map<String, ObjectID> rootsMap, ObjectIDSet oids, boolean more,
-                                  Sink sink, int totalObjectsToSync, int totalObjectsSynced) {
+                                  int totalObjectsToSync, int totalObjectsSynced) {
     this.nodeID = nodeID;
     this.totalObjectsToSync = totalObjectsToSync;
     this.totalObjectsSynced = totalObjectsSynced;
-    this.oids = oids;
+    this.requestedOids = oids;
     this.more = more;
-    this.nextSink = sink;
     this.rootsMap = rootsMap;
   }
 
-  public void setResults(ObjectManagerLookupResults results) {
-    this.result = results;
-    assertNoMissingObjects(results.getMissingObjectIDs());
-    this.nextSink.add(this);
-  }
-
-  public ObjectIDSet getLookupIDs() {
-    return this.oids;
+  public ObjectIDSet getRequestedObjectIDs() {
+    return this.requestedOids;
   }
 
   public Map getRootsMap() {
     return this.rootsMap;
-  }
-
-  public Map getObjects() {
-    Assert.assertNotNull(this.result);
-    return this.result.getObjects();
   }
 
   public int getTotalObjectsToSync() {
@@ -82,7 +68,10 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return this.totalObjectsSynced;
   }
 
-  public void setDehydratedBytes(TCByteBuffer[] buffers, int count, ObjectStringSerializer os) {
+  public void setDehydratedBytes(ObjectIDSet synced, ObjectIDSet notSynced, TCByteBuffer[] buffers, int count,
+                                 ObjectStringSerializer os) {
+    this.syncedOids = synced;
+    this.notSyncedOids = notSynced;
     this.dnas = buffers;
     this.dnaCount = count;
     this.serializer = os;
@@ -108,7 +97,7 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
   }
 
   public boolean hasMore() {
-    return this.more;
+    return this.more || !notSyncedOids.isEmpty();
   }
 
   public ObjectIDSet getNewObjectIDs() {
@@ -124,19 +113,22 @@ public class ManagedObjectSyncContext implements ObjectManagerResultsContext {
     return this.sequenceID;
   }
 
-  private void assertNoMissingObjects(ObjectIDSet missing) {
-    if (!missing.isEmpty()) { throw new AssertionError("Syncing missing Objects : " + missing + " lookup context is : "
-                                                       + this); }
-  }
-
   @Override
   public String toString() {
-    return "ManagedObjectSyncContext [" + this.nodeID + " , oids = " + this.oids + " ,  rootsMap = " + this.rootsMap
-           + " , more = " + this.more + "]";
+    return "ManagedObjectSyncContext [" + this.nodeID + " , oids = " + this.requestedOids + " ,  rootsMap = "
+           + this.rootsMap + " , more = " + this.more + "]";
   }
 
   public boolean updateStats() {
     return true;
+  }
+
+  public ObjectIDSet getSynchedOids() {
+    return syncedOids;
+  }
+
+  public ObjectIDSet getNotSynchedOids() {
+    return notSyncedOids;
   }
 
 }
