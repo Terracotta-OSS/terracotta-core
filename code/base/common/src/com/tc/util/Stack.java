@@ -1,5 +1,6 @@
 /**
- * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright notice.  All rights reserved.
+ * All content copyright (c) 2003-2008 Terracotta, Inc., except as may otherwise be noted in a separate copyright
+ * notice. All rights reserved.
  */
 package com.tc.util;
 
@@ -10,12 +11,12 @@ import java.util.List;
 
 /*
  * This stack implementation uses ArrayList internally. This is mainly created so that we don't have synchronization
- * overheads that java.util.Stack imposes since it is based on Vector. This class maintains an interface level compatibility
- * with java.util.Stack but doesn't implement all of Vector interfaces.
+ * overheads that java.util.Stack imposes since it is based on Vector. This class maintains an interface level
+ * compatibility with java.util.Stack but doesn't implement all of Vector interfaces.
  */
-public class Stack {
+public class Stack<T> {
 
-  private final List list = new ArrayList();
+  private final List<T> list = new ArrayList<T>();
 
   /**
    * Creates an empty Stack.
@@ -31,7 +32,7 @@ public class Stack {
    * @return the <code>item</code> argument.
    * @see java.util.Vector#addElement
    */
-  public Object push(Object item) {
+  public T push(T item) {
     list.add(item);
     return item;
   }
@@ -42,7 +43,7 @@ public class Stack {
    * @return The object at the top of this stack (the last item of the <tt>Vector</tt> object).
    * @exception EmptyStackException if this stack is empty.
    */
-  public Object pop() {
+  public T pop() {
     int len = size();
 
     if (len == 0) throw new EmptyStackException();
@@ -55,7 +56,7 @@ public class Stack {
    * @return the object at the top of this stack (the last item of the <tt>Vector</tt> object).
    * @exception EmptyStackException if this stack is empty.
    */
-  public Object peek() {
+  public T peek() {
     int len = size();
 
     if (len == 0) throw new EmptyStackException();
@@ -70,7 +71,7 @@ public class Stack {
   public boolean empty() {
     return size() == 0;
   }
-  
+
   /**
    * Size of this Stack
    * 
@@ -83,14 +84,14 @@ public class Stack {
   /**
    * Returns the 1-based position where an object is on this stack. If the object <tt>o</tt> occurs as an item in this
    * stack, this method returns the distance from the top of the stack of the occurrence nearest the top of the stack;
-   * the topmost item on the stack is considered to be at distance <tt>1</tt>. The <tt>equals</tt> method is used
-   * to compare <tt>o</tt> to the items in this stack.
+   * the topmost item on the stack is considered to be at distance <tt>1</tt>. The <tt>equals</tt> method is used to
+   * compare <tt>o</tt> to the items in this stack.
    * 
    * @param o the desired object.
    * @return the 1-based position from the top of the stack where the object is located; the return value
    *         <code>-1</code> indicates that the object is not on the stack.
    */
-  public int search(Object o) {
+  public int search(T o) {
     int i = list.lastIndexOf(o);
 
     if (i >= 0) { return size() - i; }
@@ -99,18 +100,17 @@ public class Stack {
 
   private static final long serialVersionUID = 343422342343423234L;
 
-  
   /* I am not in big favor of having these interfaces */
-  
-  public Object get(int index) {
+
+  public T get(int index) {
     return list.get(index);
   }
 
-  public Object remove(int index) {
+  public T remove(int index) {
     return list.remove(index);
   }
 
-  public Iterator iterator() {
+  public Iterator<T> iterator() {
     return list.iterator();
   }
 
@@ -118,11 +118,11 @@ public class Stack {
     return empty();
   }
 
-  public boolean contains(Object o) {
+  public boolean contains(T o) {
     return list.contains(o);
   }
-  
-  public boolean remove(Object o) {
+
+  public boolean remove(T o) {
     return list.remove(o);
   }
 }

@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
-import java.util.Stack;
 
 public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements SortedSet<T> {
 
@@ -494,8 +493,8 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
 
   class TreeIterator implements Iterator<T> {
 
-    private final java.util.Stack<Node<T>> path = new Stack<Node<T>>();
-    protected Node<T>                      next;
+    private final Stack<Node<T>> path = new Stack<Node<T>>();
+    protected Node<T>            next;
 
     TreeIterator() {
       path.push(terminal());
@@ -569,7 +568,7 @@ public class AATreeSet<T extends Comparable> extends AbstractSet<T> implements S
     public SubTreeIterator(T start, T end) {
       super(start);
       if (end != null) {
-        java.util.Stack<Node<T>> path = new Stack<Node<T>>();
+        Stack<Node<T>> path = new Stack<Node<T>>();
         path.push(terminal());
         Node<T> current = root;
         while (true) {
