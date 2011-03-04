@@ -765,6 +765,8 @@ public abstract class AbstractNVPair implements NVPair {
   }
 
   public static NVPair createNVPair(String name, Object value, ValueType type) {
+    if (value == null) return new NullNVPair(name);
+
     if (ValueType.ENUM.equals(type)) { return enumPairFromString(name, (String) value); }
     if (ValueType.CHAR.equals(type)) { return new AbstractNVPair.CharNVPair(name, (char) ((Integer) value).intValue()); }
 

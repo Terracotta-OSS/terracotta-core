@@ -33,6 +33,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private final static byte      AGGREGATOR_RESULTS_SIZE = 3;
   private final static byte      ERROR_MESSAGE           = 4;
   private final static byte      IS_ERROR                = 5;
+  private final static byte      ANY_CRITERIA_MATCHED    = 6;
 
   private SearchRequestID        requestID;
   private GroupID                groupIDFrom;
@@ -40,6 +41,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
   private List<Aggregator>       aggregators;
   private String                 errorMessage;
   private boolean                isError;
+  private boolean                anyCriteriaMatched;
 
   public SearchQueryResponseMessageImpl(SessionID sessionID, MessageMonitor monitor, TCByteBufferOutputStream out,
                                         MessageChannel channel, TCMessageType type) {
@@ -55,12 +57,14 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
    * {@inheritDoc}
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupID,
-                                        List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList) {
+                                        List<IndexQueryResult> searchResults, List<Aggregator> aggregatorList,
+                                        boolean criteriaMatched) {
     this.isError = false;
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.results = searchResults;
     this.aggregators = aggregatorList;
+    this.anyCriteriaMatched = criteriaMatched;
   }
 
   /**
@@ -82,6 +86,10 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
 
   public boolean isError() {
     return isError;
+  }
+
+  public boolean isAnyCriteriaMatched() {
+    return anyCriteriaMatched;
   }
 
   /**
@@ -140,6 +148,7 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
     }
 
     putNVPair(IS_ERROR, isError);
+    putNVPair(ANY_CRITERIA_MATCHED, anyCriteriaMatched);
   }
 
   @Override
@@ -178,6 +187,9 @@ public class SearchQueryResponseMessageImpl extends DSOMessageBase implements Se
         return true;
       case IS_ERROR:
         this.isError = input.readBoolean();
+        return true;
+      case ANY_CRITERIA_MATCHED:
+        this.anyCriteriaMatched = input.readBoolean();
         return true;
       default:
         return false;

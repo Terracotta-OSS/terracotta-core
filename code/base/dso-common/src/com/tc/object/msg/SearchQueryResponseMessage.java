@@ -33,11 +33,14 @@ public interface SearchQueryResponseMessage extends TCMessage {
    * 
    * @param searchRequestID
    * @param groupIDFrom
+   * @param anyCriteriaMatched
    * @param aggregatorResults
    * @param aggregatorResults
+   * @param anyCriteriaMatched
    */
   public void initSearchResponseMessage(SearchRequestID searchRequestID, GroupID groupIDFrom,
-                                        List<IndexQueryResult> results, List<Aggregator> aggregators);
+                                        List<IndexQueryResult> results, List<Aggregator> aggregators,
+                                        boolean anyCriteriaMatched);
 
   /**
    * Initialize error response
@@ -61,5 +64,7 @@ public interface SearchQueryResponseMessage extends TCMessage {
   public String getErrorMessage();
 
   public boolean isError();
+
+  public boolean isAnyCriteriaMatched();
 
 }

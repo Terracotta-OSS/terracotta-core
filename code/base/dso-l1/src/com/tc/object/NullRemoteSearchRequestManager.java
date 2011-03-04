@@ -47,7 +47,8 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
 
   public void addResponseForQuery(final SessionID sessionID, final SearchRequestID requestID,
                                   final GroupID groupIDFrom, final List<IndexQueryResult> queryResults,
-                                  final List<Aggregator> aggregators, final NodeID nodeID) {
+                                  final List<Aggregator> aggregators, final NodeID nodeID,
+                                  final boolean anyCriteriaMatched) {
     //
   }
 

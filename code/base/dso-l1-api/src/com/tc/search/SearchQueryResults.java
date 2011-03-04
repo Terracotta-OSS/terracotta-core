@@ -17,4 +17,6 @@ public interface SearchQueryResults {
 
   boolean isFirstBatchPrefetched();
 
+  boolean anyCriteriaMatched();
+
 }

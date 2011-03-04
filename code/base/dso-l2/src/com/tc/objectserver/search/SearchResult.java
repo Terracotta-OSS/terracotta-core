@@ -11,14 +11,17 @@ import java.util.List;
 
 public class SearchResult {
 
-  public static final SearchResult     NULL_RESULT = new SearchResult(Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+  public static final SearchResult     NULL_RESULT = new SearchResult(Collections.EMPTY_LIST, Collections.EMPTY_LIST,
+                                                                      false);
 
   private final List<IndexQueryResult> queryResults;
   private final List<Aggregator>       aggregators;
+  private final boolean                anyCriteriaMatch;
 
-  public SearchResult(List<IndexQueryResult> queryResults, List<Aggregator> aggregators) {
+  public SearchResult(List<IndexQueryResult> queryResults, List<Aggregator> aggregators, boolean anyCriteriaMatch) {
     this.queryResults = queryResults;
     this.aggregators = aggregators;
+    this.anyCriteriaMatch = anyCriteriaMatch;
   }
 
   public List<IndexQueryResult> getQueryResults() {
@@ -27,5 +30,9 @@ public class SearchResult {
 
   public List<Aggregator> getAggregators() {
     return aggregators;
+  }
+
+  public boolean isAnyCriteriaMatch() {
+    return anyCriteriaMatch;
   }
 }
