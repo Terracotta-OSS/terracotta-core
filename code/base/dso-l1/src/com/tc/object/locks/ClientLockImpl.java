@@ -4,6 +4,8 @@
 package com.tc.object.locks;
 
 import com.tc.exception.TCLockUpgradeNotSupportedError;
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.locks.LockStateNode.LockHold;
 import com.tc.object.locks.LockStateNode.LockWaiter;
@@ -11,6 +13,7 @@ import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.util.SynchronizedSinglyLinkedList;
+import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +27,7 @@ import java.util.Set;
 import java.util.Stack;
 
 class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> implements ClientLock {
+  private static final TCLogger       LOGGER        = TCLogging.getLogger(ClientLockImpl.class);
 
   private static final Set<LockLevel> WRITE_LEVELS  = EnumSet.of(LockLevel.WRITE, LockLevel.SYNCHRONOUS_WRITE);
   private static final Set<LockLevel> READ_LEVELS   = EnumSet.of(LockLevel.READ);
@@ -188,8 +192,24 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       }
 
       if (flush) {
-        remote.flush(this.lock, this.greediness.getFlushLevel());
-        waiter = releaseAllAndPushWaiter(remote, thread, waitObject, timeout);
+        while (true) {
+          ServerLockLevel flushLevel;
+          synchronized (this) {
+            flushLevel = this.greediness.getFlushLevel();
+          }
+
+          remote.flush(this.lock, flushLevel);
+
+          synchronized (this) {
+            if (flushLevel.equals(this.greediness.getFlushLevel())) {
+              waiter = releaseAllAndPushWaiter(remote, thread, waitObject, timeout);
+              break;
+            } else {
+              LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + flushLevel + " to "
+                          + this.greediness.getFlushLevel() + " during flush operation");
+            }
+          }
+        }
       }
 
       unparkFirstQueuedAcquire();
@@ -539,14 +559,26 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
       }
 
-      remote.flush(this.lock, this.greediness.getFlushLevel());
-
-      synchronized (this) {
-        if (this.greediness.isRecalled() && canRecallNow()) {
-          this.greediness = recallCommit(remote, false);
+      while (true) {
+        ServerLockLevel flushLevel;
+        synchronized (this) {
+          flushLevel = this.greediness.getFlushLevel();
         }
-        node.delegated("Waiting For Recall...");
-        return LockAcquireResult.USED_SERVER;
+
+        remote.flush(this.lock, flushLevel);
+
+        synchronized (this) {
+          if (flushLevel.equals(this.greediness.getFlushLevel())) {
+            if (this.greediness.isRecalled() && canRecallNow()) {
+              this.greediness = recallCommit(remote, false);
+            }
+            node.delegated("Waiting For Recall...");
+            return LockAcquireResult.USED_SERVER;
+          } else {
+            LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + flushLevel + " to "
+                        + this.greediness.getFlushLevel() + " during flush operation");
+          }
+        }
       }
     }
   }
@@ -627,10 +659,25 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
       remote.waitForServerToReceiveTxnsForThisLock(this.lock);
     }
 
-    if (flushOnUnlock(unlock)) {
-      remote.flush(this.lock, this.greediness.getFlushLevel());
+    while (true) {
+      ServerLockLevel flushLevel;
+      synchronized (this) {
+        flushLevel = this.greediness.getFlushLevel();
+      }
+
+      if (flushOnUnlock(unlock)) {
+        remote.flush(this.lock, flushLevel);
+      }
+
+      synchronized (this) {
+        if (flushLevel.equals(this.greediness.getFlushLevel())) {
+          return release(remote, unlock);
+        } else {
+          LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + flushLevel + " to "
+                      + this.greediness.getFlushLevel() + " during flush operation");
+        }
+      }
     }
-    return release(remote, unlock);
   }
 
   private synchronized boolean release(final RemoteLockManager remote, final LockHold unlock) {
@@ -915,23 +962,46 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
 
   private synchronized ClientGreediness doRecall(final RemoteLockManager remote, final boolean batch) {
     if (canRecallNow()) {
-      final LockFlushCallback callback = new LockFlushCallback() {
-        public void transactionsForLockFlushed(final LockID id) {
-          synchronized (ClientLockImpl.this) {
-            if (ClientLockImpl.this.greediness.isRecallInProgress()) {
-              ClientLockImpl.this.greediness = recallCommit(remote, batch);
-            }
-          }
-        }
-      };
-
-      if (remote.asyncFlush(this.lock, callback, this.greediness.getFlushLevel())) {
+      final ServerLockLevel flushLevel = this.greediness.getFlushLevel();
+      final LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
+      if (remote.asyncFlush(this.lock, callback, flushLevel)) {
         return recallCommit(remote, batch);
       } else {
         return this.greediness.recallInProgress();
       }
     } else {
       return this.greediness;
+    }
+  }
+
+  private class RecallCallback implements LockFlushCallback {
+
+    private final RemoteLockManager remote;
+    private final boolean           batch;
+    private final ServerLockLevel   expectedFlushLevel;
+
+    public RecallCallback(RemoteLockManager remote, boolean batch, ServerLockLevel flushLevel) {
+      this.remote = remote;
+      this.batch = batch;
+      this.expectedFlushLevel = flushLevel;
+    }
+
+    public void transactionsForLockFlushed(final LockID id) {
+      synchronized (ClientLockImpl.this) {
+        if (greediness.isRecallInProgress()) {
+          ServerLockLevel flushLevel = greediness.getFlushLevel();
+          if (expectedFlushLevel.equals(flushLevel)) {
+            greediness = recallCommit(remote, batch);
+          } else {
+            LOGGER.info("Retrying flush on " + lock + " as flush level moved from " + expectedFlushLevel + " to "
+                        + flushLevel + " during flush operation");
+            LockFlushCallback callback = new RecallCallback(remote, batch, flushLevel);
+            if (remote.asyncFlush(id, callback, flushLevel)) {
+              greediness = recallCommit(remote, batch);
+            }
+          }
+        }
+      }
     }
   }
 
