@@ -34,7 +34,7 @@ public class PassiveTransactionAccountTest extends TCTestCase {
     Assert.assertTrue(tempServerTxnsIDs.contains(txId2));
 
     // just commit tx 1
-    passiveTransactionAccount.skipApplyAndCommit(txId1.getClientTransactionID());
+    Assert.assertFalse(passiveTransactionAccount.skipApplyAndCommit(txId1.getClientTransactionID()));
 
     tempServerTxnsIDs.clear();
     passiveTransactionAccount.addAllPendingServerTransactionIDsTo(tempServerTxnsIDs);
@@ -43,7 +43,7 @@ public class PassiveTransactionAccountTest extends TCTestCase {
     Assert.assertTrue(tempServerTxnsIDs.contains(txId2));
 
     // process meta data too
-    passiveTransactionAccount.processMetaDataCompleted(txId1.getClientTransactionID());
+    Assert.assertTrue(passiveTransactionAccount.processMetaDataCompleted(txId1.getClientTransactionID()));
 
     tempServerTxnsIDs.clear();
     passiveTransactionAccount.addAllPendingServerTransactionIDsTo(tempServerTxnsIDs);
@@ -66,8 +66,8 @@ public class PassiveTransactionAccountTest extends TCTestCase {
     }
     Assert.assertTrue(error);
 
-    passiveTransactionAccount.processMetaDataCompleted(txId2.getClientTransactionID());
-    passiveTransactionAccount.skipApplyAndCommit(txId2.getClientTransactionID());
+    Assert.assertFalse(passiveTransactionAccount.processMetaDataCompleted(txId2.getClientTransactionID()));
+    Assert.assertTrue(passiveTransactionAccount.skipApplyAndCommit(txId2.getClientTransactionID()));
 
     tempServerTxnsIDs.clear();
     passiveTransactionAccount.addAllPendingServerTransactionIDsTo(tempServerTxnsIDs);

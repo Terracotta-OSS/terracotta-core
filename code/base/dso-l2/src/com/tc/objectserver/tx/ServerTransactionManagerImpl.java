@@ -506,9 +506,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   public void processingMetaDataCompleted(final NodeID sourceID, final TransactionID txnID) {
     final TransactionAccount ci = getTransactionAccount(sourceID);
     if (ci != null && ci.processMetaDataCompleted(txnID)) {
-      if (isActive()) {
-        acknowledge(sourceID, txnID);
-      }
+      acknowledge(sourceID, txnID);
     }
   }
 
