@@ -32,8 +32,7 @@ public class SegmentedLRU<K, V> {
     this.segments = new Map[ssize];
 
     for (int i = 0; i < numberOfSegments; i++) {
-
-      this.segments[i] = Collections.synchronizedMap(new Segment((int) Math.ceil(capacity / numberOfSegments)));
+      this.segments[i] = Collections.synchronizedMap(new Segment(capacity / numberOfSegments));
     }
 
   }
@@ -61,8 +60,8 @@ public class SegmentedLRU<K, V> {
   }
 
   public void clear() {
-    for (int i = 0; i < segments.length; i++) {
-      this.segments[i].clear();
+    for (Map<K, V> segment : segments) {
+      segment.clear();
     }
   }
 
@@ -72,8 +71,8 @@ public class SegmentedLRU<K, V> {
 
   public boolean containsValue(Object value) {
 
-    for (int i = 0; i < segments.length; i++) {
-      if (this.segments[i].containsValue(value)) { return true; }
+    for (Map<K, V> segment : segments) {
+      if (segment.containsValue(value)) { return true; }
     }
 
     return false;
@@ -101,8 +100,8 @@ public class SegmentedLRU<K, V> {
 
   public int size() {
     int size = 0;
-    for (int i = 0; i < segments.length; i++) {
-      size += this.segments[i].size();
+    for (Map<K, V> segment : segments) {
+      size += segment.size();
     }
 
     return size;
