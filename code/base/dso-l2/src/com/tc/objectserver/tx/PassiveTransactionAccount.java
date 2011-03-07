@@ -140,8 +140,7 @@ public class PassiveTransactionAccount implements TransactionAccount {
 
   /**
    * @param TransactionID requestID
-   * @return boolean
-   * @throws AssertionError always, should not be called.
+   * @return boolean true when the TransactionState for the requestID is complete.
    */
   public boolean processMetaDataCompleted(TransactionID requestID) {
     synchronized (this.txnIDsToState) {
