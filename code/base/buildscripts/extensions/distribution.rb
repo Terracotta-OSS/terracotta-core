@@ -321,6 +321,11 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
   end
 
   def deploy_maven_artifacts(args)
+    patch_descriptor = get_patch_descriptor
+    if @build_environment.patch_branch?
+      loud_message("This is a patch branch. Patch level will be added to Maven artifacts as part of their version")
+    end
+    
     if repo = @config_source[MAVEN_REPO_CONFIG_KEY]
       maven = MavenDeploy.new(:repository_url => repo,
         :repository_id => @config_source[MAVEN_REPO_ID_CONFIG_KEY],
@@ -362,8 +367,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
         classifier = arg['classifier']
         version = arg[MAVEN_VERSION_CONFIG_KEY] || @config_source[MAVEN_VERSION_CONFIG_KEY] ||
           @config_source['version'] || @build_environment.version
-        if (@config_source[MAVEN_CLASSIFIER_CONFIG_KEY])
-          version = version + "-" + @config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+        
+        if (@build_environment.patch_branch?)
+          version = version + "-patch" + patch_descriptor['level']
         end
 
         # Allow override of version if a version key is specified.  If so, the value of the key

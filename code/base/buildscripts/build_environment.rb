@@ -132,5 +132,11 @@ class BuildEnvironment < Environment
   def default_jvmargs
     [ ]
   end
+  
+  def patch_branch?
+   # Example of patch branch https://svn.terracotta.org/repo/internal/enterprise/patches/patched_3.4.0
+   #                         https://svn.terracotta.org/repo/tc/dso/patches/patched_3.4.0
+   return @os_svninfo.url =~ /patches/
+  end
 
 end
