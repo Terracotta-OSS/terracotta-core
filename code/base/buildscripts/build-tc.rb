@@ -932,6 +932,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
     deploy(OPENSOURCE, false, TERRACOTTA_RELEASES_REPO_ID, TERRACOTTA_RELEASES_REPO)
   end
 
+  def deploy_patches
+    deploy(OPENSOURCE, false, TERRACOTTA_PATCHES_REPO_ID, TERRACOTTA_PATCHES_REPO)
+  end
+
   def deploy_ee_snapshots
     deploy(ENTERPRISE, true, TERRACOTTA_EE_SNAPSHOTS_REPO_ID, TERRACOTTA_EE_SNAPSHOTS_REPO)
   end
@@ -943,6 +947,10 @@ class BaseCodeTerracottaBuilder < TerracottaBuilder
 
   def deploy_ee_releases
     deploy(ENTERPRISE, false, TERRACOTTA_EE_RELEASES_REPO_ID, TERRACOTTA_EE_RELEASES_REPO)
+  end
+
+  def deploy_ee_patches
+    deploy(ENTERPRISE, false, TERRACOTTA_PATCHES_REPO_ID, TERRACOTTA_PATCHES_REPO)
   end
 
   def build_nightly_kits
