@@ -13,7 +13,6 @@ import com.tc.object.locks.LockStateNode.PendingLockHold;
 import com.tc.object.locks.LockStateNode.PendingTryLockHold;
 import com.tc.object.msg.ClientHandshakeMessage;
 import com.tc.util.SynchronizedSinglyLinkedList;
-import com.tc.util.concurrent.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
