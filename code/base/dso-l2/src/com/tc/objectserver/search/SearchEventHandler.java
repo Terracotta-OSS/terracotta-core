@@ -74,6 +74,14 @@ public class SearchEventHandler extends AbstractEventHandler {
         // TODO: figure out what to do with IndexException, rethrow for now.
         throw new EventHandlerException(e);
       }
+    } else if (context instanceof DirectExecuteSearchContext) {
+      DirectExecuteSearchContext desc = (DirectExecuteSearchContext) context;
+      try {
+        desc.execute();
+      } catch (IndexException e) {
+        // TODO: figure out what to do with IndexException, rethrow for now.
+        throw new EventHandlerException(e);
+      }
     } else {
       throw new AssertionError("Unknown context: " + context);
     }
