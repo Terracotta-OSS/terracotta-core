@@ -369,7 +369,7 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
           @config_source['version'] || @build_environment.version
         
         if (@build_environment.patch_branch?)
-          version = version + "-patch" + patch_descriptor['level']
+          version = version + "-patch#{patch_descriptor['level']}"
         end
 
         # Allow override of version if a version key is specified.  If so, the value of the key
