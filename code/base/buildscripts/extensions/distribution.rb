@@ -210,7 +210,9 @@ class BaseCodeTerracottaBuilder <  TerracottaBuilder
 
     add_module_packages(component, destdir)
     create_data_file(@config_source, File.join(destdir.to_s, 'resources'), :build_data, @build_environment.edition(flavor))
-    if @config_source[MAVEN_CLASSIFIER_CONFIG_KEY]
+    
+    # generate patch-data.txt if operating under a patch branch
+    if @build_environment.patch_branch?
       patch_descriptor = get_patch_descriptor
       patch_level = @config_source['level'] || patch_descriptor['level']
       create_patch_data(patch_level, @config_source, File.join(destdir.to_s, 'resources'))
