@@ -150,6 +150,7 @@ public class L2ObjectStateManagerImpl implements L2ObjectStateManager {
     private void close(final ManagedObjectSyncContext mosc) {
       Assert.assertTrue(mosc == this.syncingContext);
       this.syncingContext = null;
+      // NotSynchedOids are picked up first as its a stored set and thus prefetching that happened is not a waste.
       missingOids.addAll(mosc.getNotSynchedOids());
       totalObjectsSynced += mosc.getSynchedOids().size();
       if (this.missingOids.isEmpty()) {

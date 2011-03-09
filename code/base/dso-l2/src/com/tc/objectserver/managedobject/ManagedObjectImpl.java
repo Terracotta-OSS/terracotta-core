@@ -29,6 +29,7 @@ import com.tc.text.PrettyPrinter;
 import com.tc.text.PrettyPrinterImpl;
 import com.tc.util.Assert;
 import com.tc.util.Conversion;
+import com.tc.util.TCCollections;
 
 import gnu.trove.TLinkable;
 
@@ -144,7 +145,7 @@ public class ManagedObjectImpl implements ManagedObject, ManagedObjectReference,
   }
 
   public Set getObjectReferences() {
-    return this.state.getObjectReferences();
+    return (state == null ? TCCollections.EMPTY_OBJECT_ID_SET : this.state.getObjectReferences());
   }
 
   public void addObjectReferencesTo(final ManagedObjectTraverser traverser) {

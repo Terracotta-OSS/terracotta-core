@@ -82,7 +82,7 @@ public class ConcurrentHashMapSwappingTestApp extends AbstractTransparentApp {
           if (i % 100 == 0) System.err.println("beforeSize: " + beforeSize + ", afterSize: " + afterSize);
         }
       }
-
+      System.gc();
       barrier.await();
     }
 
