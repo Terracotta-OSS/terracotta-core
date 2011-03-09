@@ -88,7 +88,6 @@ public class L2ConfigForL1Object implements L2ConfigForL1 {
                                                            + member
                                                            + "\" is not persent in the server section. Please verify the configuration."); }
         Assert.assertNotNull(data);
-        data.setGroupId(i);
         String groupName = asgArray[i].getGroupName();
         data.setGroupName(groupName);
         groupList.add(data);

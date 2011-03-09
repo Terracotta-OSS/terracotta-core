@@ -7,9 +7,8 @@ package com.tc.object.config;
 import org.knopflerfish.framework.BundleClassLoader;
 import org.osgi.framework.Bundle;
 import org.terracotta.groupConfigForL1.ServerGroup;
-import org.terracotta.groupConfigForL1.ServerGroupsDocument;
-import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.groupConfigForL1.ServerInfo;
+import org.terracotta.groupConfigForL1.ServerGroupsDocument.ServerGroups;
 import org.terracotta.license.LicenseException;
 
 import com.tc.asm.ClassAdapter;
@@ -68,14 +67,11 @@ import com.tc.object.tools.BootJar;
 import com.tc.object.tools.BootJarException;
 import com.tc.properties.L1ReconnectConfigImpl;
 import com.tc.properties.ReconnectConfig;
-import com.tc.properties.TCPropertiesConsts;
-import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.Assert;
 import com.tc.util.ClassUtils;
-import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.ProductInfo;
 import com.tc.util.UUID;
-import com.tc.util.concurrent.ThreadUtil;
+import com.tc.util.ClassUtils.ClassSpec;
 import com.tc.util.runtime.Vm;
 import com.terracottatech.config.DsoApplication;
 import com.terracottatech.config.L1ReconnectPropertiesDocument;
@@ -84,11 +80,9 @@ import com.terracottatech.config.Modules;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -100,19 +94,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfigHelper, DSOClientConfigHelper {
 
   private static final String                                CGLIB_PATTERN                      = "$$EnhancerByCGLIB$$";
-  private static final int                                   MAX_CONNECT_TRIES                  = TCPropertiesImpl
-                                                                                                    .getProperties()
-                                                                                                    .getInt(TCPropertiesConsts.L1_MAX_CONNECT_RETRIES);
-  private static final long                                  CONNECT_RETRY_INTERVAL;
-  private static final long                                  MIN_RETRY_INTERVAL                 = 1000;
 
   private static final TCLogger                              logger                             = CustomerLogging
                                                                                                     .getDSOGenericLogger();
@@ -187,15 +176,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   private final InjectionInstrumentationRegistry             injectionRegistry                  = new InjectionInstrumentationRegistry();
   private final boolean                                      hasBootJar;
   private final Map<Bundle, URL>                             bundleURLs                         = new ConcurrentHashMap<Bundle, URL>();
-
-  static {
-    long value = TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.L1_SOCKET_RECONNECT_WAIT_INTERVAL);
-    if (value < MIN_RETRY_INTERVAL) {
-      logger.info("Setting config connect retry interval to " + MIN_RETRY_INTERVAL + " ms");
-      value = MIN_RETRY_INTERVAL;
-    }
-    CONNECT_RETRY_INTERVAL = value;
-  }
 
   public StandardDSOClientConfigHelperImpl(final L1ConfigurationSetupManager configSetupManager)
       throws ConfigurationSetupException {
@@ -679,9 +659,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       type = fi.getType().getName();
     }
     InjectionInstrumentation instrumentation = injectionRegistry.lookupInstrumentation(type);
-    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(),
-                                                                                         fi.getName(), fi.getType()
-                                                                                             .getName()); }
+    if (null == instrumentation) { throw new UnsupportedInjectedDsoInstanceTypeException(classInfo.getName(), fi
+        .getName(), fi.getType().getName()); }
 
     TransparencyClassSpec spec = getOrCreateSpec(classInfo.getName());
     spec.setHasOnLoadInjection(true);
@@ -1872,67 +1851,10 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     return null;
   }
 
-  public static InputStream getPropertiesFromL2Stream(final ConnectionInfo[] connectInfo, final String message,
-                                                      final String httpPathExtension) {
-    URLConnection connection = null;
-    InputStream l1PropFromL2Stream = null;
-    URL theURL = null;
-    for (int i = 0; i < connectInfo.length; i++) {
-      ConnectionInfo ci = connectInfo[i];
-      try {
-        theURL = new URL("http", ci.getHostname(), ci.getPort(), httpPathExtension);
-        String text = "Trying to get " + message + " from " + theURL.toString();
-        logger.info(text);
-        connection = theURL.openConnection();
-        l1PropFromL2Stream = connection.getInputStream();
-        if (l1PropFromL2Stream != null) return l1PropFromL2Stream;
-      } catch (IOException e) {
-        String text = "Can't connect to [" + ci + "].";
-        boolean tryAgain = (i < connectInfo.length - 1);
-        if (tryAgain) text += " Will retry next server.";
-        logger.warn(text);
-      }
-    }
-    return null;
-  }
-
-  private static ServerGroups getServerGroupsFromL2(final PreparedComponentsFromL2Connection serverInfos)
-      throws ConfigurationSetupException {
-    InputStream in = null;
-
-    ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
-    ConnectionInfo[] connections = connectInfo.getConnectionInfos();
-
-    in = getPropertiesFromServerViaHttp(connections, "Cluster topology", "/groupinfo");
-
-    ServerGroupsDocument serversGrpDocument;
-    try {
-      if (in.markSupported()) in.mark(100);
-      serversGrpDocument = ServerGroupsDocument.Factory.parse(in);
-    } catch (Exception e) {
-      if (in.markSupported()) {
-        byte[] l1prop = new byte[100];
-        int bytesRead = -1;
-        try {
-          in.reset();
-          bytesRead = in.read(l1prop, 0, l1prop.length);
-        } catch (IOException ioe) {
-          throw new AssertionError(e);
-        }
-        if (bytesRead > 0) logger.error("Error parsing l1 properties from server : " + new String(l1prop) + "...");
-      }
-      String errorMessage = "Client might not be connected to right listener. Please check if Client is configured with right Server address and DSO port.";
-      consoleLogger.error(errorMessage);
-      logger.error(errorMessage);
-      throw new AssertionError(e);
-    }
-
-    return serversGrpDocument.getServerGroups();
-  }
-
   public void validateGroupInfo() throws ConfigurationSetupException {
     PreparedComponentsFromL2Connection connectionComponents = new PreparedComponentsFromL2Connection(configSetupManager);
-    ServerGroups serverGroupsFromL2 = getServerGroupsFromL2(connectionComponents);
+    ServerGroups serverGroupsFromL2 = new ConfigInfoFromL2Impl(configSetupManager).getServerGroupsFromL2()
+        .getServerGroups();
 
     ConnectionInfoConfig[] connectionInfoItems = connectionComponents.createConnectionInfoConfigItemByGroup();
     HashSet<ConnectionInfo> connInfoFromL1 = new HashSet<ConnectionInfo>();
@@ -1940,8 +1862,8 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
       ConnectionInfo[] connectionInfo = connectionInfoItems[i].getConnectionInfos();
       for (int j = 0; j < connectionInfo.length; j++) {
         ConnectionInfo connectionIn = new ConnectionInfo(getIpAddressOfServer(connectionInfo[j].getHostname()),
-                                                         connectionInfo[j].getPort(), i * j + j,
-                                                         connectionInfo[j].getGroupName());
+                                                         connectionInfo[j].getPort(), i * j + j, connectionInfo[j]
+                                                             .getGroupName());
         connInfoFromL1.add(connectionIn);
       }
     }
@@ -2024,35 +1946,9 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
   }
 
   private void setupL1ReconnectProperties() throws ConfigurationSetupException {
-    InputStream in = null;
 
-    PreparedComponentsFromL2Connection serverInfos = new PreparedComponentsFromL2Connection(configSetupManager);
-    ConnectionInfoConfig connectInfo = serverInfos.createConnectionInfoConfigItem();
-    ConnectionInfo[] connections = connectInfo.getConnectionInfos();
-
-    in = getPropertiesFromServerViaHttp(connections, "L1 Reconnect Properties", "/l1reconnectproperties");
-
-    L1ReconnectPropertiesDocument l1ReconnectPropFromL2;
-    try {
-      if (in.markSupported()) in.mark(100);
-      l1ReconnectPropFromL2 = L1ReconnectPropertiesDocument.Factory.parse(in);
-    } catch (Exception e) {
-      if (in.markSupported()) {
-        byte[] l1prop = new byte[100];
-        int bytesRead = -1;
-        try {
-          in.reset();
-          bytesRead = in.read(l1prop, 0, l1prop.length);
-        } catch (IOException ioe) {
-          throw new AssertionError(e);
-        }
-        if (bytesRead > 0) logger.error("Error parsing l1 properties from server : " + new String(l1prop) + "...");
-      }
-      String errorMessage = "Client might not be connected to right listener. Please check if Client is configured with right Server address and DSO port.";
-      consoleLogger.error(errorMessage);
-      logger.error(errorMessage);
-      throw new AssertionError(e);
-    }
+    L1ReconnectPropertiesDocument l1ReconnectPropFromL2 = new ConfigInfoFromL2Impl(configSetupManager)
+        .getL1ReconnectPropertiesFromL2();
 
     boolean l1ReconnectEnabled = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectEnabled();
     int l1ReconnectTimeout = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectTimeout().intValue();
@@ -2063,44 +1959,6 @@ public class StandardDSOClientConfigHelperImpl implements StandardDSOClientConfi
     int l1ReconnectSendwindow = l1ReconnectPropFromL2.getL1ReconnectProperties().getL1ReconnectSendwindow().intValue();
     this.l1ReconnectConfig = new L1ReconnectConfigImpl(l1ReconnectEnabled, l1ReconnectTimeout, l1ReconnectSendqueuecap,
                                                        l1ReconnectMaxdelayedacks, l1ReconnectSendwindow);
-  }
-
-  private static InputStream getPropertiesFromServerViaHttp(ConnectionInfo[] connections, String message,
-                                                            String httpPathExtension)
-      throws ConfigurationSetupException {
-    InputStream in = null;
-    String serverList = "";
-    boolean loggedInConsole = false;
-
-    for (ConnectionInfo connection : connections) {
-      if (serverList.length() > 0) serverList += ", ";
-      serverList += connection;
-    }
-
-    String text = "Can't connect to " + (connections.length > 1 ? "any of the servers" : "server") + "[" + serverList
-                  + "].";
-
-    int count = 0;
-    while (true) {
-      count++;
-      in = getPropertiesFromL2Stream(connections, message, httpPathExtension);
-
-      if (in == null) {
-        if (loggedInConsole == false) {
-          consoleLogger.warn(text + "Retrying... \n");
-          loggedInConsole = true;
-        }
-        if (connections.length > 1) {
-          logger.warn(text + "Retrying... \n");
-        }
-
-        if (MAX_CONNECT_TRIES > 0 && count >= MAX_CONNECT_TRIES) { throw new ConfigurationSetupException(text); }
-        ThreadUtil.reallySleep(CONNECT_RETRY_INTERVAL);
-      } else {
-        return in;
-      }
-    }
-
   }
 
   public synchronized ReconnectConfig getL1ReconnectProperties() throws ConfigurationSetupException {

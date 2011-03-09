@@ -26,16 +26,17 @@ public class GroupConfigBuilder extends BaseConfigBuilder {
     this.ha = ha;
   }
 
+  @Override
   public String toString() {
     String out = "";
 
     Map attr = new HashMap();
-    attr.put("group-name", groupName);
+    if (groupName != null) attr.put("group-name", groupName);
 
     out += openElement("mirror-group", attr);
 
     out += this.members.toString();
-    
+
     if (ha != null) {
       out += this.ha.toString();
     }
