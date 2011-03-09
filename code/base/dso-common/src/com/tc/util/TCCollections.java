@@ -12,11 +12,11 @@ import java.util.TreeSet;
 
 public class TCCollections {
 
-  public static final SortedSet EMPTY_SORTED_SET = Collections.unmodifiableSortedSet(new TreeSet());
+  public static final SortedSet   EMPTY_SORTED_SET    = Collections.unmodifiableSortedSet(new TreeSet());
 
   public static final ObjectIDSet EMPTY_OBJECT_ID_SET = new EmptyObjectIDSet();
-  
-  public static final class EmptyObjectIDSet extends ObjectIDSet {
+
+  private static final class EmptyObjectIDSet extends ObjectIDSet {
 
     @Override
     public boolean add(ObjectID id) {
@@ -25,9 +25,9 @@ public class TCCollections {
 
     // Preserves singleton property
     private Object readResolve() {
-        return EMPTY_OBJECT_ID_SET;
+      return EMPTY_OBJECT_ID_SET;
     }
-    
+
   }
 
 }

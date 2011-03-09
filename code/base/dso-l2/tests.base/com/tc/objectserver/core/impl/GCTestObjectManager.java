@@ -32,9 +32,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 
 public class GCTestObjectManager implements ObjectManager, Evictable {
 
@@ -279,6 +279,10 @@ public class GCTestObjectManager implements ObjectManager, Evictable {
 
   public ManagedObjectFacade lookupFacade(ObjectID id, int limit) {
     return null;
+  }
+
+  public ManagedObject getQuietObjectByID(ObjectID id) {
+    return getObjectByID(id);
   }
 
 }

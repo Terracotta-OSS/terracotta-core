@@ -503,10 +503,12 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new AssertionError(e);
     }
 
-    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(), respondToObjectRequestContext
-        .getObjs(), respondToObjectRequestContext.getRequestedObjectIDs(), respondToObjectRequestContext
-        .getMissingObjectIDs(), respondToObjectRequestContext.isServerInitiated(), respondToObjectRequestContext
-        .getRequestDepth());
+    objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
+                                     respondToObjectRequestContext.getObjs(),
+                                     respondToObjectRequestContext.getRequestedObjectIDs(),
+                                     respondToObjectRequestContext.getMissingObjectIDs(),
+                                     respondToObjectRequestContext.isServerInitiated(),
+                                     respondToObjectRequestContext.getRequestDepth());
 
   }
 
@@ -673,11 +675,11 @@ public class ObjectRequestManagerTest extends TestCase {
         synchronized (this) {
           System.out.println("in the reponse thread: " + respondToObjectRequestContext);
           this.objectRequestManager.sendObjects(respondToObjectRequestContext.getRequestedNodeID(),
-                                                respondToObjectRequestContext.getObjs(), respondToObjectRequestContext
-                                                    .getRequestedObjectIDs(), respondToObjectRequestContext
-                                                    .getMissingObjectIDs(), respondToObjectRequestContext
-                                                    .isServerInitiated(), respondToObjectRequestContext
-                                                    .getRequestDepth());
+                                                respondToObjectRequestContext.getObjs(),
+                                                respondToObjectRequestContext.getRequestedObjectIDs(),
+                                                respondToObjectRequestContext.getMissingObjectIDs(),
+                                                respondToObjectRequestContext.isServerInitiated(),
+                                                respondToObjectRequestContext.getRequestDepth());
           if (testReqManObjResMsgIter.hasNext()) {
             final TestRequestManagedObjectResponseMessage message = (TestRequestManagedObjectResponseMessage) testReqManObjResMsgIter
                 .next();
@@ -972,6 +974,10 @@ public class ObjectRequestManagerTest extends TestCase {
       throw new NotImplementedException(TestObjectManager.class);
     }
 
+    public ManagedObject getQuietObjectByID(ObjectID id) {
+      return getObjectByID(id);
+    }
+
   }
 
   private static class TestMessageChannel implements MessageChannel {
@@ -1054,7 +1060,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void setLocalNodeID(final NodeID source) {
-      //      
+      //
     }
 
   }
@@ -1130,7 +1136,7 @@ public class ObjectRequestManagerTest extends TestCase {
     }
 
     public void doRecycleOnRead() {
-      //      
+      //
     }
 
     public NodeID getDestinationNodeID() {

@@ -25,6 +25,7 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.util.ObjectIDSet;
+import com.tc.util.TCCollections;
 import com.tc.util.sequence.SequenceGenerator;
 import com.tc.util.sequence.SequenceGenerator.SequenceGeneratorException;
 
@@ -56,6 +57,9 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
 
     ObjectIDSet oids = mosc.getRequestedObjectIDs();
 
+    // Prefetch objects so they are there for us when we need it.
+    objectManager.preFetchObjectsAndCreate(oids, TCCollections.EMPTY_OBJECT_ID_SET);
+
     // XXX::Note:: this sequence id is assigned before releasing any objects to ensure that transactions are not missed
     // for object in flight for PASSIVE-UNINITIALIED L2.
     try {
@@ -76,7 +80,7 @@ public class L2ObjectSyncDehydrateHandler extends AbstractEventHandler {
       ManagedObject m = null;
       try {
         ObjectID oid = (ObjectID) i.next();
-        m = objectManager.getObjectByID(oid);
+        m = objectManager.getQuietObjectByID(oid);
         m.toDNA(out, serializer, DNAType.L2_SYNC);
         synced.add(oid);
       } finally {

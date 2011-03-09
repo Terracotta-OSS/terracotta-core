@@ -75,13 +75,24 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     RETRY, NOT_AVAILABLE, AVAILABLE
   }
 
+  private static enum MissingObjects {
+    OK, NOT_OK
+  }
+
+  private static enum UpdateStats {
+    UPDATE, DONT_UPDATE
+  }
+
+  private static enum NewObjects {
+    LOOKUP, DONT_LOOKUP
+  }
+
   private static final TCLogger                                 logger          = TCLogging
                                                                                     .getLogger(ObjectManager.class);
 
   private static final int                                      MAX_COMMIT_SIZE = TCPropertiesImpl
                                                                                     .getProperties()
-                                                                                    .getInt(
-                                                                                            TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
+                                                                                    .getInt(TCPropertiesConsts.L2_OBJECTMANAGER_MAXOBJECTS_TO_COMMIT);
 
   private final ManagedObjectStore                              objectStore;
   private final ConcurrentMap<ObjectID, ManagedObjectReference> references;
@@ -224,7 +235,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
     if (!containsObject(id)) { throw new NoSuchObjectException(id); }
 
-    final ManagedObject object = lookup(id, true, false);
+    final ManagedObject object = lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
     if (object == null) { throw new NoSuchObjectException(id); }
 
     try {
@@ -235,26 +246,34 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
   }
 
-  private ManagedObject lookup(final ObjectID id, final boolean missingOk, final boolean lookupNewObjects) {
+  private ManagedObject lookup(final ObjectID id, final MissingObjects missingObjects, final NewObjects newObjects,
+                               final UpdateStats updateStats) {
     assertNotInShutdown();
 
-    final WaitForLookupContext waitContext = new WaitForLookupContext(id, missingOk, lookupNewObjects);
+    final WaitForLookupContext waitContext = new WaitForLookupContext(id, missingObjects, newObjects, updateStats);
     final ObjectManagerLookupContext context = new ObjectManagerLookupContext(waitContext, true);
     basicLookupObjectsFor(ClientID.NULL_ID, context, -1);
 
     final ManagedObject mo = waitContext.getLookedUpObject();
     if (mo == null) {
-      Assert.assertTrue(missingOk);
+      Assert.assertTrue(missingObjects == MissingObjects.OK);
     }
     return mo;
   }
 
   public ManagedObject getObjectByID(final ObjectID id) {
-    return lookup(id, false, false);
+    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
+  }
+
+  /**
+   * This method does not update the cache hit/miss stats. You may want to use this if you have prefetched the objects.
+   */
+  public ManagedObject getQuietObjectByID(ObjectID id) {
+    return lookup(id, MissingObjects.NOT_OK, NewObjects.DONT_LOOKUP, UpdateStats.DONT_UPDATE);
   }
 
   public ManagedObject getObjectByIDOrNull(final ObjectID id) {
-    return lookup(id, true, false);
+    return lookup(id, MissingObjects.OK, NewObjects.DONT_LOOKUP, UpdateStats.UPDATE);
   }
 
   private boolean markReferenced(final ManagedObjectReference reference) {
@@ -521,8 +540,8 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     if (available) {
       final ObjectIDSet processLater = addReachableObjectsIfNecessary(nodeID, maxReachableObjects, objects,
                                                                       newObjectIDs);
-      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater, context
-          .getMissingObjectIDs());
+      final ObjectManagerLookupResults results = new ObjectManagerLookupResultsImpl(objects, processLater,
+                                                                                    context.getMissingObjectIDs());
       context.setResults(results);
       return LookupState.AVAILABLE;
     } else {
@@ -720,7 +739,7 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
       // Object either not in cache or is a new object, return emtpy set
       return TCCollections.EMPTY_OBJECT_ID_SET;
     }
-    final ManagedObject mo = lookup(id, false, true);
+    final ManagedObject mo = lookup(id, MissingObjects.NOT_OK, NewObjects.LOOKUP, UpdateStats.UPDATE);
     final Set references2Return = mo.getObjectReferences();
     releaseReadOnly(mo);
     return references2Return;
@@ -1074,17 +1093,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
 
   private static class WaitForLookupContext implements ObjectManagerResultsContext {
 
-    private final ObjectID    lookupID;
-    private final boolean     missingOk;
-    private final ObjectIDSet lookupIDs = new ObjectIDSet();
-    private boolean           resultSet = false;
-    private ManagedObject     result;
-    private final boolean     lookupNewObjects;
+    private final ObjectID       lookupID;
+    private final ObjectIDSet    lookupIDs = new ObjectIDSet();
+    private boolean              resultSet = false;
+    private ManagedObject        result;
+    private final MissingObjects missingObjects;
+    private final NewObjects     newObjects;
+    private final UpdateStats    updateStats;
 
-    public WaitForLookupContext(final ObjectID id, final boolean missingOk, final boolean lookupNewObjects) {
+    public WaitForLookupContext(final ObjectID id, final MissingObjects missingObjects, final NewObjects newObjects,
+                                UpdateStats updateStats) {
       this.lookupID = id;
-      this.missingOk = missingOk;
-      this.lookupNewObjects = lookupNewObjects;
+      this.missingObjects = missingObjects;
+      this.newObjects = newObjects;
+      this.updateStats = updateStats;
       this.lookupIDs.add(id);
     }
 
@@ -1104,10 +1126,10 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     public ObjectIDSet getNewObjectIDs() {
-      if (this.lookupNewObjects) {
+      if (this.newObjects == NewObjects.LOOKUP) {
         return this.lookupIDs;
       } else {
-        return new ObjectIDSet();
+        return TCCollections.EMPTY_OBJECT_ID_SET;
       }
     }
 
@@ -1124,17 +1146,20 @@ public class ObjectManagerImpl implements ObjectManager, ManagedObjectChangeList
     }
 
     private void assertMissingObjects(final ObjectIDSet missing) {
-      if (!this.missingOk && !missing.isEmpty()) { throw new AssertionError("Lookup of non-existing objects : "
-                                                                            + missing + " " + this); }
+      if (this.missingObjects == MissingObjects.NOT_OK && !missing.isEmpty()) { throw new AssertionError(
+                                                                                                         "Lookup of non-existing objects : "
+                                                                                                             + missing
+                                                                                                             + " "
+                                                                                                             + this); }
     }
 
     @Override
     public String toString() {
-      return "WaitForLookupContext [ " + this.lookupID + ", missingOK = " + this.missingOk + "]";
+      return "WaitForLookupContext [ " + this.lookupID + ", " + this.missingObjects + "]";
     }
 
     public boolean updateStats() {
-      return true;
+      return updateStats == UpdateStats.UPDATE;
     }
 
   }
