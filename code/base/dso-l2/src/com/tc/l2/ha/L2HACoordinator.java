@@ -19,7 +19,6 @@ import com.tc.l2.handler.GroupEventsDispatchHandler.GroupEventsDispatcher;
 import com.tc.l2.handler.L2IndexSyncHandler;
 import com.tc.l2.handler.L2IndexSyncRequestHandler;
 import com.tc.l2.handler.L2IndexSyncSendHandler;
-import com.tc.l2.handler.L2ObjectSyncDehydrateHandler;
 import com.tc.l2.handler.L2ObjectSyncHandler;
 import com.tc.l2.handler.L2ObjectSyncRequestHandler;
 import com.tc.l2.handler.L2ObjectSyncSendHandler;
@@ -159,13 +158,12 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.groupManager.setZapNodeRequestProcessor(zapProcessor);
 
     final Sink objectsSyncRequestSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_REQUEST_STAGE,
-                                                                 new L2ObjectSyncRequestHandler(l2ObjectStateManager),
+                                                                 new L2ObjectSyncRequestHandler(this.sequenceGenerator,
+                                                                                                l2ObjectStateManager),
                                                                  1, MAX_STAGE_SIZE).getSink();
     final Sink objectsSyncSink = stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_STAGE,
                                                           new L2ObjectSyncHandler(serverTransactionFactory), 1,
                                                           MAX_STAGE_SIZE).getSink();
-    stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_DEHYDRATE_STAGE,
-                             new L2ObjectSyncDehydrateHandler(this.sequenceGenerator), 1, MAX_STAGE_SIZE);
     stageManager.createStage(ServerConfigurationContext.OBJECTS_SYNC_SEND_STAGE,
                              new L2ObjectSyncSendHandler(l2ObjectStateManager, serverTransactionFactory), 1,
                              MAX_STAGE_SIZE);
@@ -180,7 +178,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     final Sink gcResultSink = stageManager.createStage(ServerConfigurationContext.GC_RESULT_PROCESSING_STAGE,
                                                        new GCResultHandler(), 1, MAX_STAGE_SIZE).getSink();
 
-    // Right now, Index Sync stages should are single threaded.
+    // Right now, Index Sync stages should be single threaded.
     final short INDEX_SYNC_STAGE_THREADS = 1;
     final Sink indexSyncRequestSink = stageManager
         .createStage(ServerConfigurationContext.INDEXES_SYNC_REQUEST_STAGE,

@@ -143,7 +143,7 @@ public interface TCPropertiesConsts {
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_MAXLIMIT               = "l2.objectmanager.loadObjectID.checkpoint.maxlimit";
   public static final String   L2_OBJECTMANAGER_LOADOBJECTID_CHECKPOINT_TIMEPERIOD             = "l2.objectmanager.loadObjectID.checkpoint.timeperiod";
   public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_BATCH_SIZE                        = "l2.objectmanager.passive.sync.batch.size";
-  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_SIZE_MB                   = "l2.objectmanager.passive.sync.message.sizeInMegaBytes";
+  public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_MESSAGE_MAXSIZE_MB                = "l2.objectmanager.passive.sync.message.maxSizeInMegaBytes";
   public static final String   L2_OBJECTMANAGER_PASSIVE_SYNC_THROTTLE_TIME                     = "l2.objectmanager.passive.sync.throttle.timeInMillis";
   public static final String   L2_OBJECTMANAGER_DGC_THROTTLE_TIME                              = "l2.objectmanager.dgc.throttle.timeInMillis";
   public static final String   L2_OBJECTMANAGER_DGC_REQUEST_PER_THROTTLE                       = "l2.objectmanager.dgc.throttle.requestsPerThrottle";
