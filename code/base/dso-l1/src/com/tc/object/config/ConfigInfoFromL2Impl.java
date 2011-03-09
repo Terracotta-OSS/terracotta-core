@@ -72,8 +72,13 @@ public class ConfigInfoFromL2Impl implements ConfigInfoFromL2 {
    * @param configSetupManager L1 configuration setup
    */
   private static ConnectionInfo[] getConnectionsFromL1Config(final L1ConfigurationSetupManager configSetupManager) {
+    L2Data[] l2s = null;
+    // synchronized here as same issue of MNK-1984. ArrayIndexOutOfBoundsException in multi threaded environment due to
+    // apache bug https://issues.apache.org/jira/browse/XMLBEANS-328
+    synchronized (configSetupManager) {
+      l2s = configSetupManager.l2Config().l2Data();
+    }
     // clean groupID which is supported to get from L2.
-    L2Data[] l2s = configSetupManager.l2Config().l2Data();
     for (L2Data l2 : l2s) {
       l2.setGroupId(0);
     }
