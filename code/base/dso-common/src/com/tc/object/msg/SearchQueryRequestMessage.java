@@ -50,11 +50,11 @@ public interface SearchQueryRequestMessage extends TCMessage, MultiThreadedEvent
    * @param aggregators
    * @param maxResults
    */
-  public void initialSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
-                                          final String cacheName, final LinkedList queryStack, final boolean keys,
-                                          final boolean values, final Set<String> attributeSet,
-                                          final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
-                                          int maxResults, int batchSize, boolean prefetchFirstBatch);
+  public void initializeSearchRequestMessage(final SearchRequestID searchRequestID, final GroupID groupFrom,
+                                             final String cacheName, final LinkedList queryStack, final boolean keys,
+                                             final boolean values, final Set<String> attributeSet,
+                                             final List<NVPair> sortAttributesMap, final List<NVPair> aggregators,
+                                             int maxResults, int batchSize, boolean prefetchFirstBatch);
 
   /**
    * Name of cache to query against.

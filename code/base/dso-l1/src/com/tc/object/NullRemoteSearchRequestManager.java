@@ -52,10 +52,6 @@ public class NullRemoteSearchRequestManager implements RemoteSearchRequestManage
     //
   }
 
-  public boolean hasRequestID(SearchRequestID requestID) {
-    return false;
-  }
-
   public void addErrorResponseForQuery(SessionID sessionID, SearchRequestID requestID, GroupID groupIDFrom,
                                        String errorMessage, NodeID nodeID) {
     //

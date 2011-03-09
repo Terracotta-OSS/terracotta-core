@@ -25,10 +25,6 @@ public class MockRemoteSearchRequestManager implements RemoteSearchRequestManage
     //
   }
 
-  public boolean hasRequestID(SearchRequestID requestID) {
-    return false;
-  }
-
   public SearchQueryResults query(String cachename, LinkedList queryStack, boolean includeKeys, boolean includeValues,
                                   Set<String> attributeSet, List<NVPair> sortAttributeMap, List<NVPair> aggregators,
                                   int maxResults, int batchSize) {

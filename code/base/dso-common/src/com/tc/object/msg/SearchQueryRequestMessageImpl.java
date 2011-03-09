@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
 /**
@@ -70,10 +71,10 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
     super(sessionID, monitor, channel, header, data);
   }
 
-  public void initialSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
-                                          LinkedList stack, boolean keys, boolean values, Set<String> attributeSet,
-                                          List<NVPair> sortAttributesMap, List<NVPair> attributeAggregators, int max,
-                                          int batch, boolean prefetchFirst) {
+  public void initializeSearchRequestMessage(SearchRequestID searchRequestID, GroupID groupID, String cache,
+                                             LinkedList stack, boolean keys, boolean values, Set<String> attributeSet,
+                                             List<NVPair> sortAttributesMap, List<NVPair> attributeAggregators,
+                                             int max, int batch, boolean prefetchFirst) {
     this.requestID = searchRequestID;
     this.groupIDFrom = groupID;
     this.cacheName = cache;
@@ -116,14 +117,18 @@ public class SearchQueryRequestMessageImpl extends DSOMessageBase implements Sea
       attributeAggregator.serializeTo(outStream, NULL_SERIALIZER);
     }
 
-    while (queryStack.size() > 0) {
-      Object obj = queryStack.removeLast();
-      if (obj instanceof StackOperations) {
-        StackOperations operation = (StackOperations) obj;
-        putNVPair(STACK_OPERATION_MARKER, operation.name());
-      } else if (obj instanceof NVPair) {
-        AbstractNVPair pair = (AbstractNVPair) obj;
-        putNVPair(STACK_NVPAIR_MARKER, pair, NULL_SERIALIZER);
+    if (!queryStack.isEmpty()) {
+      for (ListIterator iter = queryStack.listIterator(queryStack.size()); iter.hasPrevious();) {
+        Object obj = iter.previous();
+        if (obj instanceof StackOperations) {
+          StackOperations operation = (StackOperations) obj;
+          putNVPair(STACK_OPERATION_MARKER, operation.name());
+        } else if (obj instanceof NVPair) {
+          AbstractNVPair pair = (AbstractNVPair) obj;
+          putNVPair(STACK_NVPAIR_MARKER, pair, NULL_SERIALIZER);
+        } else {
+          throw new AssertionError("Unexpected object: " + obj);
+        }
       }
     }
   }
