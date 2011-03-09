@@ -25,6 +25,7 @@ import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
+import com.tc.util.runtime.Vm;
 
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
@@ -37,8 +38,7 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   private static final TCLogger            logger             = TCLogging.getLogger(TransparencyClassAdapter.class);
   private static final boolean             useFastFinalFields = TCPropertiesImpl
                                                                   .getProperties()
-                                                                  .getBoolean(
-                                                                              TCPropertiesConsts.INSTRUMENTATION_FINAL_FIELD_FAST_READ);
+                                                                  .getBoolean(TCPropertiesConsts.INSTRUMENTATION_FINAL_FIELD_FAST_READ);
 
   private final Set                        doNotInstrument    = new HashSet();
   private final PhysicalClassAdapterLogger physicalClassLogger;
@@ -115,11 +115,14 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
   }
 
   @Override
-  protected FieldVisitor basicVisitField(final int access, final String name, final String desc,
-                                         final String signature, final Object value) {
+  protected FieldVisitor basicVisitField(int access, final String name, final String desc, final String signature,
+                                         final Object value) {
     try {
       if ((spec.isClassPortable() && spec.isPhysical() && !ByteCodeUtil.isTCSynthetic(name))
           || (spec.isClassAdaptable() && isRoot(access, name))) {
+        if (Vm.isJRockit() && fieldCanBeFlushed(access, name, desc)) {
+          access &= ~Modifier.FINAL;
+        }
         generateGettersSetters(access, name, desc, Modifier.isStatic(access));
       }
     } catch (RuntimeException e) {
@@ -130,6 +133,13 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
       throw e;
     }
     return cv.visitField(access, name, desc, signature, value);
+  }
+
+  private boolean fieldCanBeFlushed(int access, String name, String desc) {
+    boolean isStatic = Modifier.isStatic(access);
+    boolean isTransient = getTransparencyClassSpec().isTransient(access, spec.getClassInfo(), name);
+    boolean isPrimitive = ByteCodeUtil.isPrimitive(Type.getType(desc));
+    return (!isStatic && !isTransient && !isPrimitive) || isRoot(access, name);
   }
 
   private void generateGettersSetters(final int fieldAccess, final String name, final String desc,
@@ -1074,8 +1084,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
 
     if (isPrimitive(targetType)) {
       mv.visitTypeInsn(CHECKCAST, ByteCodeUtil.sortToWrapperName(targetType.getSort()));
-      mv.visitMethodInsn(INVOKEVIRTUAL, ByteCodeUtil.sortToWrapperName(targetType.getSort()), ByteCodeUtil
-          .sortToPrimitiveMethodName(targetType.getSort()), "()" + desc);
+      mv.visitMethodInsn(INVOKEVIRTUAL, ByteCodeUtil.sortToWrapperName(targetType.getSort()),
+                         ByteCodeUtil.sortToPrimitiveMethodName(targetType.getSort()), "()" + desc);
     } else {
       mv.visitTypeInsn(CHECKCAST, convertToCheckCastDesc(desc));
     }
@@ -1204,8 +1214,8 @@ public class TransparencyClassAdapter extends ClassAdapterBase implements Transp
       mv.visitJumpInsn(IFNULL, l0);
 
       if (isVolatile) {
-        generateCodeForVolatileTransactionBegin(l1, l2, l0, l4, spec.getClassNameDots() + "." + name, LockLevel.WRITE
-            .toInt(), mv);
+        generateCodeForVolatileTransactionBegin(l1, l2, l0, l4, spec.getClassNameDots() + "." + name,
+                                                LockLevel.WRITE.toInt(), mv);
       }
 
       mv.visitVarInsn(ALOAD, 1 + t.getSize());
