@@ -137,9 +137,11 @@ public class TerracottaOperatorEventImpl implements TerracottaOperatorEvent, Com
   }
 
   @Override
-  public synchronized TerracottaOperatorEvent clone() {
-    Map<String, Integer> nodesCopy = new HashMap<String, Integer>();
-    nodesCopy.putAll(this.nodes);
+  public TerracottaOperatorEvent clone() {
+    Map<String, Integer> nodesCopy;
+    synchronized (this) {
+      nodesCopy = new HashMap<String, Integer>(this.nodes);
+    }
     return new TerracottaOperatorEventImpl(this.eventType, this.subSystem, this.time, this.eventMessage,
                                            this.collapseString, nodesCopy);
   }
