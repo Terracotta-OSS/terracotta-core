@@ -38,12 +38,16 @@ public class NullIndexManager implements IndexManager {
     //
   }
 
-  public Map<String, List<IndexFile>> getFilesToSync() {
-    return Collections.emptyMap();
-  }
+  public SyncSnapshot snapshot() {
+    return new SyncSnapshot() {
+      public void release() {
+        //
+      }
 
-  public void release() {
-    //
+      public Map<String, List<IndexFile>> getFilesToSync() {
+        return Collections.EMPTY_MAP;
+      }
+    };
   }
 
   public void removeIfValueEqual(String indexName, Map<Object, Object> toRemove, ObjectID segmentOid,

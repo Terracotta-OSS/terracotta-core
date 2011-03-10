@@ -32,9 +32,7 @@ public interface IndexManager {
                                   Set<String> attributeSet, List<NVPair> sortAttributes, List<NVPair> aggregators,
                                   int maxResults) throws IndexException;
 
-  public Map<String, List<IndexFile>> getFilesToSync();
-
-  void release();
+  public SyncSnapshot snapshot();
 
   void shutdown();
 
