@@ -10,6 +10,8 @@ import com.tc.config.schema.ServerGroupInfo;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.event.EventListenerList;
 
@@ -19,10 +21,9 @@ public class ServerGroup implements IServerGroup {
   private final boolean               isCoordinator;
   private final String                name;
   private final int                   id;
-  private boolean                     connected;
-  private boolean                     ready;
-
-  private IServer                     activeServer;
+  private final AtomicBoolean         connected    = new AtomicBoolean();
+  private final AtomicBoolean         ready        = new AtomicBoolean();
+  private AtomicReference<IServer>    activeServer = new AtomicReference<IServer>();
   private final PropertyChangeSupport propertyChangeSupport;
   private ActiveServerListener        activeServerListener;
   private PropertyChangeListener      serverPropertyChangeListener;
@@ -81,69 +82,51 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
-  protected void setConnected(boolean connected) {
-    boolean oldConnected;
-    synchronized (this) {
-      oldConnected = isConnected();
-      this.connected = connected;
+  protected void setConnected(boolean newConnected) {
+    if (connected.compareAndSet(!newConnected, newConnected)) {
+      if (!newConnected) {
+        clearActiveServer();
+      }
+      firePropertyChange(PROP_CONNECTED, !newConnected, newConnected);
     }
-    if (!connected) {
-      clearActiveServer();
-    }
-    firePropertyChange(PROP_CONNECTED, oldConnected, connected);
   }
 
-  public synchronized boolean isConnected() {
-    return connected;
+  public boolean isConnected() {
+    return connected.get();
   }
 
-  private void setActiveServer(IServer theActiveServer) {
+  private void setActiveServer(IServer newActiveServer) {
     IServer oldActiveServer = getActiveServer();
     if (oldActiveServer != null) {
-      if (oldActiveServer == theActiveServer) { return; }
+      if (oldActiveServer == newActiveServer) { return; }
       if (oldActiveServer.isActive()) {
         oldActiveServer.splitbrain();
-        theActiveServer.splitbrain();
+        newActiveServer.splitbrain();
         return;
       }
       oldActiveServer.removePropertyChangeListener(activeServerListener);
     }
-    _setActiveServer(theActiveServer);
-    firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, theActiveServer);
-    if (theActiveServer != null) {
-      theActiveServer.addPropertyChangeListener(activeServerListener);
+    if (activeServer.compareAndSet(oldActiveServer, newActiveServer)) {
+      firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, newActiveServer);
+      if (newActiveServer != null) {
+        newActiveServer.addPropertyChangeListener(activeServerListener);
+      }
+      setReady(determineReady());
     }
-    setReady(determineReady());
-  }
-
-  private IServer _setActiveServer(IServer server) {
-    IServer oldActiveServer;
-    synchronized (this) {
-      oldActiveServer = activeServer;
-      activeServer = server;
-    }
-    return oldActiveServer;
-  }
-
-  private IServer _clearActiveServer() {
-    IServer oldActiveServer;
-    synchronized (this) {
-      oldActiveServer = activeServer;
-      activeServer = null;
-    }
-    return oldActiveServer;
   }
 
   private void clearActiveServer() {
-    IServer oldActiveServer = _clearActiveServer();
-    if (oldActiveServer != null) {
-      oldActiveServer.removePropertyChangeListener(activeServerListener);
-      firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, null);
+    IServer oldActiveServer;
+    if (activeServer.compareAndSet(oldActiveServer = activeServer.get(), null)) {
+      if (oldActiveServer != null) {
+        oldActiveServer.removePropertyChangeListener(activeServerListener);
+        firePropertyChange(PROP_ACTIVE_SERVER, oldActiveServer, null);
+      }
     }
   }
 
-  public synchronized IServer getActiveServer() {
-    return activeServer;
+  public IServer getActiveServer() {
+    return activeServer.get();
   }
 
   public void connect() {
@@ -168,17 +151,14 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
-  protected void setReady(boolean ready) {
-    boolean oldReady;
-    synchronized (this) {
-      oldReady = isReady();
-      this.ready = ready;
+  protected void setReady(boolean newReady) {
+    if (ready.compareAndSet(!newReady, newReady)) {
+      firePropertyChange(PROP_READY, !newReady, newReady);
     }
-    firePropertyChange(PROP_READY, oldReady, ready);
   }
 
-  public synchronized boolean isReady() {
-    return ready;
+  public boolean isReady() {
+    return ready.get();
   }
 
   private class ServerPropertyChangeListener implements PropertyChangeListener {
@@ -201,12 +181,12 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
-  public synchronized void addServerStateListener(ServerStateListener listener) {
+  public void addServerStateListener(ServerStateListener listener) {
     removeServerStateListener(listener);
     listenerList.add(ServerStateListener.class, listener);
   }
 
-  public synchronized void removeServerStateListener(ServerStateListener listener) {
+  public void removeServerStateListener(ServerStateListener listener) {
     listenerList.remove(ServerStateListener.class, listener);
   }
 
@@ -232,39 +212,37 @@ public class ServerGroup implements IServerGroup {
     }
   }
 
-  public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
       propertyChangeSupport.addPropertyChangeListener(listener);
     }
   }
 
-  public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
     }
   }
 
   public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport pcs;
-    synchronized (this) {
-      pcs = propertyChangeSupport;
-    }
-    if (pcs != null && (oldValue != null || newValue != null)) {
-      pcs.firePropertyChange(propertyName, oldValue, newValue);
+    if (oldValue != null || newValue != null) {
+      propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
-  public synchronized void tearDown() {
+  public void tearDown() {
     if (members != null) {
       for (IServer server : members) {
         server.removePropertyChangeListener(serverPropertyChangeListener);
         server.tearDown();
       }
     }
-    serverPropertyChangeListener = null;
-    activeServerListener = null;
-    activeServer = null;
+    synchronized (this) {
+      serverPropertyChangeListener = null;
+      activeServerListener = null;
+      activeServer = null;
+    }
   }
 
   @Override

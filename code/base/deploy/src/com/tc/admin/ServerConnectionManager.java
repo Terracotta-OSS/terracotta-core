@@ -650,11 +650,12 @@ public class ServerConnectionManager implements NotificationListener {
     }
     if (connectCntx != null) {
       if (connectCntx.jmxc != null) {
+        final JMXConnector connector = connectCntx.jmxc;
         // JMXConnector.close can take a while if the network stack is in place but the other end can't really respond.
         executer.submit(new Runnable() {
           public void run() {
             try {
-              connectCntx.jmxc.close();
+              connector.close();
             } catch (Exception e) {/**/
             }
           }

@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipInputStream;
 
 import javax.management.AttributeChangeNotification;
@@ -77,9 +78,9 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   protected IClusterModel                 clusterModel;
   protected IServerGroup                  serverGroup;
   protected final ServerConnectionManager connectManager;
-  protected boolean                       connected;
+  protected AtomicBoolean                 connected                            = new AtomicBoolean();
   protected Set<ObjectName>               readySet;
-  protected boolean                       ready;
+  protected AtomicBoolean                 ready                                = new AtomicBoolean();
   protected List<DSOClient>               clients;
   protected Map<ObjectName, DSOClient>    clientMap;
   private ClientChangeListener            clientChangeListener;
@@ -227,7 +228,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     readySet = Collections.synchronizedSet(new HashSet<ObjectName>());
     initReadySet();
     initPolledAttributes();
-    ready = false;
   }
 
   protected synchronized Set<ObjectName> getReadySet() {
@@ -322,13 +322,24 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       cc.addNotificationListener(L2MBeanNames.DSO, this);
     }
 
-    if (isGroupLeader()) {
+    boolean isGroupLeader = isGroupLeader();
+    if (isGroupLeader) {
       clients.clear();
       clientMap.clear();
-      for (ObjectName clientBeanName : theDsoBean.getClients()) {
+      ObjectName[] clientNames = theDsoBean.getClients();
+      for (ObjectName clientBeanName : clientNames) {
         if (!haveClient(clientBeanName)) {
-          DSOClient client = addClient(clientBeanName);
-          if (client.isReady()) {
+          boolean wasAdded = false;
+          DSOClient client;
+          synchronized (Server.this) {
+            client = addClient(clientBeanName);
+            if (pendingClients.contains(client) && client.isReady()) {
+              client.removePropertyChangeListener(this);
+              pendingClients.remove(client);
+              wasAdded = true;
+            }
+          }
+          if (wasAdded) {
             fireClientConnected(client);
           }
         }
@@ -358,25 +369,21 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  protected void setConnected(boolean connected) {
+  protected void setConnected(boolean newConnected) {
     if (readySet == null) { return; }
-    boolean oldConnected;
-    synchronized (this) {
-      oldConnected = isConnected();
-      this.connected = connected;
-    }
-    firePropertyChange(PROP_CONNECTED, !connected, connected);
-    if (connected == true && oldConnected == false) {
-      connectionEstablished();
-    }
-    if (oldConnected == true && connected == false) {
-      setReady(false);
-      handleDisconnect();
+    if (connected.compareAndSet(!newConnected, newConnected)) {
+      firePropertyChange(PROP_CONNECTED, !newConnected, newConnected);
+      if (newConnected) {
+        connectionEstablished();
+      } else {
+        setReady(false);
+        handleDisconnect();
+      }
     }
   }
 
-  public synchronized boolean isConnected() {
-    return connected;
+  public boolean isConnected() {
+    return connected.get();
   }
 
   private void setConnectError(Exception e) {
@@ -651,7 +658,11 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
     public void handleNotification(Notification notification, Object handback) {
       for (NotificationListener listener : listeners.toArray(EMPTY_NOTIFICATION_ARRAY)) {
-        listener.handleNotification(notification, handback);
+        try {
+          listener.handleNotification(notification, handback);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
 
@@ -676,7 +687,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       NotificationListenerDelegate delegate = notificationListenerDelegateMap.get(on);
       if (delegate == null) {
         notificationListenerDelegateMap.put(on, delegate = new NotificationListenerDelegate(listener));
-        cc.mbsc.addNotificationListener(on, delegate, null, null);
+        cc.addNotificationListener(on, delegate);
       } else {
         delegate.addNotificationListener(listener);
       }
@@ -701,7 +712,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
       if (delegate != null) {
         delegate.removeNotificationListener(listener);
         if (delegate.getListenerListSize() == 0) {
-          cc.mbsc.removeNotificationListener(on, delegate, null, null);
+          notificationListenerDelegateMap.remove(on);
+          cc.removeNotificationListener(on, delegate);
         }
       }
       return true;
@@ -891,7 +903,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
 
   private static final StatisticData[] EMPTY_STATDATA_ARRAY = {};
 
-  public synchronized StatisticData[] getCpuUsage() {
+  public StatisticData[] getCpuUsage() {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
     return theServerInfoBean != null ? theServerInfoBean.getCpuUsage() : EMPTY_STATDATA_ARRAY;
   }
@@ -908,7 +920,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public synchronized Map getServerStatistics() {
+  public Map getServerStatistics() {
     TCServerInfoMBean theServerInfoBean = getServerInfoBean();
     return theServerInfoBean != null ? theServerInfoBean.getStatistics() : Collections.emptyMap();
   }
@@ -918,7 +930,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return theDsoBean != null ? theDsoBean.getStatistics(names) : new Number[names.length];
   }
 
-  public synchronized Map getPrimaryStatistics() {
+  public Map getPrimaryStatistics() {
     Map result = getServerStatistics();
     result.put("TransactionRate", getTransactionRate());
     return result;
@@ -1003,17 +1015,14 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  protected void setReady(boolean ready) {
-    boolean oldReady;
-    synchronized (Server.this) {
-      oldReady = isReady();
-      this.ready = ready;
+  protected void setReady(boolean newReady) {
+    if (ready.compareAndSet(!newReady, newReady)) {
+      firePropertyChange(PROP_READY, !newReady, newReady);
     }
-    firePropertyChange(PROP_READY, oldReady, ready);
   }
 
-  public synchronized boolean isReady() {
-    return ready;
+  public boolean isReady() {
+    return ready.get();
   }
 
   private void beanRegistered(ObjectName beanName) {
@@ -1067,7 +1076,6 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   }
 
   private class CompatibiltyThread implements Runnable {
-
     public void run() {
       JOptionPane
           .showMessageDialog(null,
@@ -1079,7 +1087,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  private synchronized boolean isMBeanRegistered(ObjectName beanName) {
+  private boolean isMBeanRegistered(ObjectName beanName) {
     try {
       ConnectionContext cc = getConnectionContext();
       return cc != null && cc.isRegistered(beanName);
@@ -1146,19 +1154,25 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     if (DSOMBean.CLIENT_ATTACHED.equals(type)) {
       ObjectName clientObjectName = (ObjectName) notification.getSource();
       DSOClient client = null;
+      boolean wasAdded = false;
       synchronized (Server.this) {
-        if (isGroupLeader() && !haveClient(clientObjectName)) {
+        if (!haveClient(clientObjectName)) {
           client = addClient(clientObjectName);
+          if (pendingClients.contains(client) && client.isReady()) {
+            client.removePropertyChangeListener(this);
+            pendingClients.remove(client);
+            wasAdded = true;
+          }
         }
       }
-      if (client != null && client.isReady()) {
+      if (wasAdded) {
         fireClientConnected(client);
       }
     } else if (DSOMBean.CLIENT_DETACHED.equals(type)) {
       ObjectName clientObjectName = (ObjectName) notification.getSource();
       DSOClient client = null;
       synchronized (Server.this) {
-        if (isGroupLeader() && haveClient(clientObjectName)) {
+        if (haveClient(clientObjectName)) {
           client = removeClient(clientObjectName);
         }
       }
@@ -1238,7 +1252,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return null;
   }
 
-  public synchronized IBasicObject[] getRoots() {
+  public IBasicObject[] getRoots() {
     return roots.toArray(new IBasicObject[roots.size()]);
   }
 
@@ -1270,12 +1284,12 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  public synchronized String getCanonicalHostName() {
+  public String getCanonicalHostName() {
     ServerConnectionManager scm = getConnectionManager();
     return scm != null ? scm.safeGetHostName() : "not connected";
   }
 
-  public synchronized String getHostAddress() {
+  public String getHostAddress() {
     ServerConnectionManager scm = getConnectionManager();
     return scm != null ? scm.safeGetHostAddress() : "not connected";
   }
@@ -1310,7 +1324,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     return result;
   }
 
-  public synchronized DSOClient[] getClients() {
+  public DSOClient[] getClients() {
     return clients.toArray(new DSOClient[clients.size()]);
   }
 
@@ -1350,7 +1364,8 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
   private synchronized void reset() {
     if (roots == null) { return; }
     startTime = activateTime = -1;
-    connected = ready = false;
+    connected.set(false);
+    ready.set(false);
     initReadySet();
     roots.clear();
     rootMap.clear();
@@ -1395,7 +1410,7 @@ public class Server extends BaseClusterNode implements IServer, NotificationList
     }
   }
 
-  private synchronized void testAddLogListener() {
+  private void testAddLogListener() {
     if (listenerList.getListenerCount(ServerLogListener.class) > 0) {
       try {
         ConnectionContext cc = getConnectionContext();

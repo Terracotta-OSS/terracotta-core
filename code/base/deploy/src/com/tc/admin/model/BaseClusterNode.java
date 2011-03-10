@@ -152,25 +152,21 @@ public abstract class BaseClusterNode implements IClusterNode {
   }
 
   public void addPropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
       propertyChangeSupport.addPropertyChangeListener(listener);
     }
   }
 
   public void removePropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
     }
   }
 
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport pcs;
-    synchronized (this) {
-      pcs = propertyChangeSupport;
-    }
-    if (pcs != null && (oldValue != null || newValue != null)) {
-      pcs.firePropertyChange(propertyName, oldValue, newValue);
+    if (oldValue != null || newValue != null) {
+      propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 

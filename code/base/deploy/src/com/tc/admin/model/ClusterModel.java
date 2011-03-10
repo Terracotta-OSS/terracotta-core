@@ -30,6 +30,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -38,23 +40,22 @@ import javax.swing.event.EventListenerList;
 public class ClusterModel implements IClusterModel, RootCreationListener {
   private String                                               name;
   private IServer                                              connectServer;
-  private boolean                                              autoConnect;
-  private boolean                                              connected;
-  private Exception                                            connectException;
-  private boolean                                              ready;
+  private final AtomicBoolean                                  autoConnect           = new AtomicBoolean();
+  private final AtomicBoolean                                  connected             = new AtomicBoolean();
+  private final AtomicReference<Exception>                     connectException      = new AtomicReference<Exception>();
+  private final AtomicBoolean                                  ready                 = new AtomicBoolean();
   private IServerGroup[]                                       serverGroups;
   protected EventListenerList                                  listenerList;
 
-  private IServer                                              activeCoordinator;
-  protected PropertyChangeSupport                              propertyChangeSupport;
+  private AtomicReference<IServer>                             activeCoordinator     = new AtomicReference<IServer>();
+  protected final PropertyChangeSupport                        propertyChangeSupport;
 
-  protected ConnectServerListener                              connectServerListener;
+  protected AtomicReference<ConnectServerListener>             connectServerListener = new AtomicReference<ConnectServerListener>();
   protected ActiveCoordinatorListener                          activeCoordinatorListener;
   protected ServerGroupListener                                serverGroupListener;
   protected ServerStateListenerDelegate                        serverStateListenerDelegate;
-  protected IServerGroup                                       activeCoordinatorGroup;
 
-  private String                                               displayLabel;
+  private volatile String                                      displayLabel;
 
   private final Map<PollScope, Map<String, EventListenerList>> pollScopes;
   private Set<PolledAttributeListener>                         allScopedPollListeners;
@@ -84,22 +85,21 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
   }
 
   public void startConnectListener() {
-    synchronized (this) {
-      connectServerListener = new ConnectServerListener();
-    }
-    connectServer.addPropertyChangeListener(connectServerListener);
-    if (autoConnect) {
-      connectServer.setAutoConnect(autoConnect);
+    if (connectServerListener.compareAndSet(null, new ConnectServerListener())) {
+      connectServer.addPropertyChangeListener(connectServerListener.get());
+      if (autoConnect.get()) {
+        connectServer.setAutoConnect(true);
+      }
     }
   }
 
   protected void stopConnectListener() {
-    connectServer.removePropertyChangeListener(connectServerListener);
-    synchronized (this) {
-      connectServerListener = null;
+    ConnectServerListener oldConnectServerListener;
+    if (connectServerListener.compareAndSet(oldConnectServerListener = connectServerListener.get(), null)) {
+      connectServer.removePropertyChangeListener(oldConnectServerListener);
+      connectServer.setAutoConnect(false);
+      connectServer.disconnect();
     }
-    connectServer.setAutoConnect(false);
-    connectServer.disconnect();
   }
 
   private void stopConnectListenerLater() {
@@ -110,8 +110,8 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     });
   }
 
-  private synchronized boolean haveConnectServerListener() {
-    return connectServerListener != null;
+  private boolean haveConnectServerListener() {
+    return connectServerListener.get() != null;
   }
 
   protected IServer createConnectServer(String host, int jmxPort) {
@@ -133,19 +133,16 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  public synchronized boolean isAutoConnect() {
-    return this.autoConnect;
+  public boolean isAutoConnect() {
+    return autoConnect.get();
   }
 
-  public void setAutoConnect(boolean autoConnect) {
-    boolean oldAutoConnect;
-    synchronized (this) {
-      oldAutoConnect = isAutoConnect();
-      this.autoConnect = autoConnect;
-    }
-    firePropertyChange(PROP_AUTO_CONNECT, oldAutoConnect, autoConnect);
-    if (haveConnectServerListener()) {
-      connectServer.setAutoConnect(autoConnect);
+  public void setAutoConnect(boolean newAutoConnect) {
+    if (autoConnect.compareAndSet(!newAutoConnect, newAutoConnect)) {
+      firePropertyChange(PROP_AUTO_CONNECT, !newAutoConnect, newAutoConnect);
+      if (haveConnectServerListener()) {
+        connectServer.setAutoConnect(newAutoConnect);
+      }
     }
   }
 
@@ -176,68 +173,54 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
       propertyChangeSupport.addPropertyChangeListener(listener);
     }
   }
 
-  public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
-    if (listener != null && propertyChangeSupport != null) {
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    if (listener != null) {
       propertyChangeSupport.removePropertyChangeListener(listener);
     }
   }
 
   public void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport pcs;
-    synchronized (this) {
-      pcs = propertyChangeSupport;
-    }
-    if (pcs != null && (oldValue != null || newValue != null)) {
-      pcs.firePropertyChange(propertyName, oldValue, newValue);
+    if (oldValue != null || newValue != null) {
+      propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
     }
   }
 
   private void setActiveCoordinator(IServer activeCoord) {
-    IServer oldActiveServer = _setActiveCoordinator(activeCoord);
-    firePropertyChange(PROP_ACTIVE_COORDINATOR, oldActiveServer, activeCoord);
-    if (activeCoord != null) {
-      displayLabel = activeCoord.toString();
-      activeCoord.addPropertyChangeListener(activeCoordinatorListener);
-    } else {
-      displayLabel = connectServer.toString();
+    IServer oldActiveCoord;
+    if (activeCoordinator.compareAndSet(oldActiveCoord = activeCoordinator.get(), activeCoord)) {
+      firePropertyChange(PROP_ACTIVE_COORDINATOR, oldActiveCoord, activeCoord);
+      if (activeCoord != null) {
+        displayLabel = activeCoord.toString();
+        activeCoord.addPropertyChangeListener(activeCoordinatorListener);
+      } else {
+        displayLabel = connectServer.toString();
+      }
     }
-  }
-
-  private IServer _setActiveCoordinator(IServer theActiveCoordinator) {
-    IServer oldActiveCoordinator;
-    synchronized (this) {
-      oldActiveCoordinator = activeCoordinator;
-      activeCoordinator = theActiveCoordinator;
-    }
-    return oldActiveCoordinator;
-  }
-
-  private IServer _clearActiveCoordinator() {
-    IServer oldActiveCoordinator;
-    synchronized (this) {
-      oldActiveCoordinator = activeCoordinator;
-      activeCoordinator = null;
-    }
-    return oldActiveCoordinator;
   }
 
   private void clearActiveCoordinator() {
-    IServer oldActiveCoordinator = _clearActiveCoordinator();
-    if (oldActiveCoordinator != null) {
-      oldActiveCoordinator.removePropertyChangeListener(activeCoordinatorListener);
-      firePropertyChange(PROP_ACTIVE_COORDINATOR, oldActiveCoordinator, null);
+    IServer oldActiveCoord;
+    if (activeCoordinator.compareAndSet(oldActiveCoord = activeCoordinator.get(), null)) {
+      if (oldActiveCoord != null) {
+        oldActiveCoord.removePropertyChangeListener(activeCoordinatorListener);
+        firePropertyChange(PROP_ACTIVE_COORDINATOR, oldActiveCoord, null);
+      }
     }
   }
 
-  public synchronized IServer getActiveCoordinator() {
-    return activeCoordinator;
+  public IServer getActiveCoordinator() {
+    return activeCoordinator.get();
+  }
+
+  public synchronized void setServerGroups(IServerGroup[] serverGroups) {
+    this.serverGroups = serverGroups;
   }
 
   public synchronized IServerGroup[] getServerGroups() {
@@ -259,64 +242,55 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     sb.append(connectServer != null ? connectServer.dump() : "null");
     sb.append("'");
     sb.append(", mirror-groups='");
-    sb.append(serverGroups != null ? Arrays.asList(serverGroups) : "null");
+    IServerGroup[] sg = getServerGroups();
+    sb.append(sg != null ? Arrays.asList(sg) : "null");
     sb.append("'");
     return sb.toString();
   }
 
   public boolean determineReady() {
-    IServerGroup[] theServerGroups = getServerGroups();
-    if (theServerGroups == null) { return false; }
-
-    for (IServerGroup group : theServerGroups) {
+    IServerGroup[] groups = getServerGroups();
+    for (IServerGroup group : groups) {
       if (!group.isReady()) { return false; }
     }
-    return theServerGroups != IServerGroup.NULL_SET;
+    return groups.length > 0;
   }
 
   public boolean determineConnected() {
-    if (serverGroups != null) {
-      for (IServerGroup group : serverGroups) {
-        if (group.isConnected()) { return true; }
-      }
+    for (IServerGroup group : getServerGroups()) {
+      if (group.isConnected()) { return true; }
     }
     return false;
   }
 
-  protected void setReady(boolean ready) {
-    boolean oldReady;
-    synchronized (this) {
-      oldReady = isReady();
-      this.ready = ready;
-    }
-
-    firePropertyChange(PROP_READY, oldReady, ready);
-    if (oldReady != ready) {
-      setPolledAttributeTaskEnabled(ready);
+  protected void setReady(boolean newReady) {
+    if (ready.compareAndSet(!newReady, newReady)) {
+      firePropertyChange(PROP_READY, !newReady, newReady);
+      setPolledAttributeTaskEnabled(newReady);
     }
   }
 
-  public synchronized boolean isReady() {
-    return ready;
+  public boolean isReady() {
+    return ready.get();
   }
 
   private ScheduledThreadPoolExecutor scheduledExecutor;
   private long                        pollPeriodSeconds  = 1;
   private long                        pollTimeoutSeconds = 1;
 
-  public void setPollPeriod(long seconds) {
+  public synchronized void setPollPeriod(long seconds) {
     pollPeriodSeconds = seconds;
   }
 
-  public long getPollPeriod() {
+  public synchronized long getPollPeriod() {
     return pollPeriodSeconds;
   }
 
-  public void setPollTimeout(long seconds) {
+  public synchronized void setPollTimeout(long seconds) {
     pollTimeoutSeconds = seconds;
   }
 
-  public long getPollTimeoutSeconds() {
+  public synchronized long getPollTimeoutSeconds() {
     return pollTimeoutSeconds;
   }
 
@@ -328,14 +302,17 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     return scheduledExecutor;
   }
 
-  private synchronized void setPolledAttributeTaskEnabled(boolean enabled) {
+  private void setPolledAttributeTaskEnabled(boolean enabled) {
     if (enabled) {
-      scheduledExecutor = new ScheduledThreadPoolExecutor(1);
-      setScheduledExecutor(scheduledExecutor);
-      scheduledExecutor.schedule(new PollTask(), pollPeriodSeconds, TimeUnit.SECONDS);
-    } else if (scheduledExecutor != null) {
-      scheduledExecutor.shutdownNow();
-      scheduledExecutor = null;
+      ScheduledThreadPoolExecutor se = new ScheduledThreadPoolExecutor(1);
+      setScheduledExecutor(se);
+      se.schedule(new PollTask(), getPollPeriod(), TimeUnit.SECONDS);
+    } else {
+      ScheduledThreadPoolExecutor se = getScheduledExecutor();
+      if (se != null) {
+        se.shutdownNow();
+        setScheduledExecutor(null);
+      }
     }
   }
 
@@ -522,9 +499,9 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         } catch (InterruptedException ie) {/**/
         }
       } finally {
-        ScheduledThreadPoolExecutor theScheduledExecutor = getScheduledExecutor();
-        if (theScheduledExecutor != null) {
-          theScheduledExecutor.schedule(PollTask.this, pollPeriodSeconds, TimeUnit.SECONDS);
+        ScheduledThreadPoolExecutor se = getScheduledExecutor();
+        if (se != null) {
+          se.schedule(PollTask.this, getPollPeriod(), TimeUnit.SECONDS);
         }
       }
     }
@@ -532,35 +509,33 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
 
   private void setConnectError(Exception e) {
     Exception oldConnectError;
-    synchronized (this) {
-      oldConnectError = connectException;
-      connectException = e;
+    if (connectException.compareAndSet(oldConnectError = connectException.get(), e)) {
+      firePropertyChange(PROP_CONNECT_ERROR, oldConnectError, e);
     }
-    firePropertyChange(PROP_CONNECT_ERROR, oldConnectError, e);
   }
 
   private void clearConnectError() {
     setConnectError(null);
   }
 
-  public synchronized boolean hasConnectError() {
-    return connectException != null;
+  public boolean hasConnectError() {
+    return connectException.get() != null;
   }
 
-  public synchronized Exception getConnectError() {
-    return connectException;
+  public Exception getConnectError() {
+    return connectException.get();
   }
 
   public String getConnectErrorMessage(Exception e) {
     return connectServer.getConnectErrorMessage(e);
   }
 
-  public synchronized void addRootCreationListener(RootCreationListener listener) {
+  public void addRootCreationListener(RootCreationListener listener) {
     removeRootCreationListener(listener);
     listenerList.add(RootCreationListener.class, listener);
   }
 
-  public synchronized void removeRootCreationListener(RootCreationListener listener) {
+  public void removeRootCreationListener(RootCreationListener listener) {
     listenerList.remove(RootCreationListener.class, listener);
   }
 
@@ -577,12 +552,12 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  public synchronized void addServerStateListener(ServerStateListener listener) {
+  public void addServerStateListener(ServerStateListener listener) {
     removeServerStateListener(listener);
     listenerList.add(ServerStateListener.class, listener);
   }
 
-  public synchronized void removeServerStateListener(ServerStateListener listener) {
+  public void removeServerStateListener(ServerStateListener listener) {
     listenerList.remove(ServerStateListener.class, listener);
   }
 
@@ -605,20 +580,17 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  protected void setConnected(boolean connected) {
-    boolean oldConnected;
-    synchronized (this) {
-      oldConnected = isConnected();
-      this.connected = connected;
-    }
-    firePropertyChange(PROP_CONNECTED, oldConnected, connected);
-    if (!connected) {
-      tearDownGroups();
+  protected void setConnected(final boolean newConnected) {
+    if (connected.compareAndSet(!newConnected, newConnected)) {
+      firePropertyChange(PROP_CONNECTED, !newConnected, newConnected);
+      if (!newConnected) {
+        tearDownGroups();
+      }
     }
   }
 
-  public synchronized boolean isConnected() {
-    return connected;
+  public boolean isConnected() {
+    return connected.get();
   }
 
   private static Future<String> threadDumpFuture(ExecutorService pool, final IClusterNode node, final long time) {
@@ -724,27 +696,31 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     return result;
   }
 
-  private synchronized void tearDownGroups() {
-    if (serverGroups != null) {
-      for (IServerGroup group : serverGroups) {
-        group.removeServerStateListener(serverStateListenerDelegate);
-        group.removePropertyChangeListener(serverGroupListener);
-        group.tearDown();
-      }
-      serverGroups = null;
+  private void tearDownGroups() {
+    for (IServerGroup group : getServerGroups()) {
+      group.removeServerStateListener(serverStateListenerDelegate);
+      group.removePropertyChangeListener(serverGroupListener);
+      group.tearDown();
     }
+    setServerGroups(null);
   }
 
-  public synchronized void tearDown() {
+  public void tearDown() {
     tearDownGroups();
-    connectServer.removePropertyChangeListener(connectServerListener);
+
+    ConnectServerListener csl = connectServerListener.get();
+    if (csl != null) {
+      connectServer.removePropertyChangeListener(csl);
+    }
     connectServer.tearDown();
-    connectServer = null;
-    connectServerListener = null;
-    activeCoordinatorListener = null;
-    serverStateListenerDelegate = null;
-    activeCoordinator = null;
-    activeCoordinatorGroup = null;
+
+    synchronized (this) {
+      connectServer = null;
+      connectServerListener = null;
+      activeCoordinatorListener = null;
+      serverStateListenerDelegate = null;
+      activeCoordinator = null;
+    }
   }
 
   public void setHost(String host) {
@@ -786,12 +762,11 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         if (connectServer.isConnected()) {
           clearConnectError();
           String[] connectCreds = connectServer.getConnectionCredentials();
-          serverGroups = connectServer.getClusterServerGroups();
-          for (IServerGroup group : serverGroups) {
+          setServerGroups(connectServer.getClusterServerGroups());
+          for (IServerGroup group : getServerGroups()) {
             IServer activeServer = group.getActiveServer();
             if (group.isCoordinator()) {
-              activeCoordinatorGroup = group;
-              activeCoordinator = activeServer;
+              setActiveCoordinator(activeServer);
             }
             group.setConnectionCredentials(connectCreds);
             group.addServerStateListener(serverStateListenerDelegate);
@@ -910,12 +885,15 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     addPolledAttributeListener(scope, Collections.singleton(attribute), listener);
   }
 
-  public synchronized void addPolledAttributeListener(PollScope scope, Set<String> attributes,
-                                                      PolledAttributeListener listener) {
+  private synchronized void testClearAllScopedPollListeners() {
     if (allScopedPollListeners != null) {
       allScopedPollListeners.clear();
       allScopedPollListeners = null;
     }
+  }
+
+  public void addPolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener) {
+    testClearAllScopedPollListeners();
 
     Map<String, EventListenerList> scopeMap = pollScopes.get(scope);
     if (scopeMap == null) {
@@ -933,7 +911,7 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  public synchronized Set<String> getPolledAttributes(PollScope scope) {
+  public Set<String> getPolledAttributes(PollScope scope) {
     Map<String, EventListenerList> scopeMap = pollScopes.get(scope);
     if (scopeMap != null) { return Collections.unmodifiableSet(scopeMap.keySet()); }
     return Collections.emptySet();
@@ -943,12 +921,8 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     removePolledAttributeListener(scope, Collections.singleton(attribute), listener);
   }
 
-  public synchronized void removePolledAttributeListener(PollScope scope, Set<String> attributes,
-                                                         PolledAttributeListener listener) {
-    if (allScopedPollListeners != null) {
-      allScopedPollListeners.clear();
-      allScopedPollListeners = null;
-    }
+  public void removePolledAttributeListener(PollScope scope, Set<String> attributes, PolledAttributeListener listener) {
+    testClearAllScopedPollListeners();
 
     Map<String, EventListenerList> scopeMap = pollScopes.get(scope);
     if (scopeMap != null) {
@@ -966,8 +940,10 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
     }
   }
 
-  private synchronized Set<PolledAttributeListener> getAllScopedPollListeners() {
-    if (allScopedPollListeners != null) { return allScopedPollListeners; }
+  private Set<PolledAttributeListener> getAllScopedPollListeners() {
+    synchronized (this) {
+      if (allScopedPollListeners != null) { return allScopedPollListeners; }
+    }
 
     Set<PolledAttributeListener> result = new HashSet<PolledAttributeListener>();
     Iterator<PollScope> scopeIter = pollScopes.keySet().iterator();
@@ -981,6 +957,11 @@ public class ClusterModel implements IClusterModel, RootCreationListener {
         }
       }
     }
-    return allScopedPollListeners = result;
+
+    synchronized (this) {
+      allScopedPollListeners = result;
+    }
+
+    return result;
   }
 }

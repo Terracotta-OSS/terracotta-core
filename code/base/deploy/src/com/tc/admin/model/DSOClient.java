@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipInputStream;
 
 import javax.management.Attribute;
@@ -52,7 +53,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
   protected ObjectName                runtimeOutputOptionsBeanName;
   protected ObjectName                l1DumperBeanName;
   protected ObjectName                l1OperatorEventsBeanName;
-  private boolean                     ready;
+  private final AtomicBoolean         ready = new AtomicBoolean();
   private boolean                     isListeningForTunneledBeans;
   private L1InfoMBean                 l1InfoBean;
   private L1DumperMBean               l1DumperBean;
@@ -223,20 +224,17 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
     clusterModel.addPolledAttributeListener(PollScope.CLIENTS, name, listener);
   }
 
-  private void setReady(boolean ready) {
-    boolean oldValue;
-    synchronized (this) {
-      oldValue = isReady();
-      this.ready = ready;
+  private void setReady(boolean newReady) {
+    if (ready.compareAndSet(!newReady, newReady)) {
+      if (newReady) {
+        initPolledAttributes();
+      }
+      propertyChangeSupport.firePropertyChange(PROP_READY, !newReady, newReady);
     }
-    if (ready != oldValue && ready) {
-      initPolledAttributes();
-    }
-    propertyChangeSupport.firePropertyChange(PROP_READY, oldValue, ready);
   }
 
-  public synchronized boolean isReady() {
-    return ready;
+  public boolean isReady() {
+    return ready.get();
   }
 
   public IClusterModel getClusterModel() {
@@ -424,7 +422,7 @@ public class DSOClient extends BaseClusterNode implements IClient, NotificationL
           copyright = (String) ((Attribute) attrList.get(6)).getValue();
         }
       } catch (Exception e) {
-        System.err.println(e);
+        e.printStackTrace();
       }
       productInfo = new ProductVersion(version, mavenArtifactsVersion, patchLevel, patchVersion, buildID, capabilities,
                                        copyright);
