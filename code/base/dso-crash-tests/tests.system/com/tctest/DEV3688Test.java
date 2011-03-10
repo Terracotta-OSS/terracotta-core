@@ -4,6 +4,9 @@
  */
 package com.tctest;
 
+import com.tc.config.schema.test.GroupConfigBuilder;
+import com.tc.config.schema.test.GroupsConfigBuilder;
+import com.tc.config.schema.test.MembersConfigBuilder;
 import com.tc.config.schema.test.TerracottaConfigBuilder;
 import com.tc.objectserver.control.ExtraL1ProcessControl;
 import com.tc.test.MultipleServersCrashMode;
@@ -44,19 +47,23 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
     // disableAllUntil(new Date(Long.MAX_VALUE));
   }
 
+  @Override
   public void doSetUp(TransparentTestIface t) throws Exception {
     t.getTransparentAppConfig().setClientCount(NODE_COUNT).setIntensity(1);
     t.initializeTestRunner();
   }
 
+  @Override
   protected Class getApplicationClass() {
     return DEV3688App.class;
   }
 
+  @Override
   protected boolean enableL1Reconnect() {
     return true;
   }
 
+  @Override
   public void setupActivePassiveTest(ActivePassiveTestSetupManager setupManager) {
     setupManager.setServerCount(2);
     setupManager.setServerCrashMode(MultipleServersCrashMode.AP_CUSTOMIZED_CRASH);
@@ -64,10 +71,12 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
     setupManager.setServerPersistenceMode(MultipleServersPersistenceMode.PERMANENT_STORE);
   }
 
+  @Override
   protected boolean canRun() {
     return (mode().equals(TestConfigObject.TRANSPARENT_TESTS_MODE_ACTIVE_PASSIVE));
   }
 
+  @Override
   protected void customizeActivePassiveTest(final ActivePassiveServerManager manager) throws Exception {
     /**
      * Steps to reproduce DEV-3688:<br>
@@ -142,6 +151,18 @@ public class DEV3688Test extends ActivePassiveTransparentTestBase {
     TerracottaConfigBuilder cb = DEV3688App.getTerracottaConfigBuilder();
     cb.getServers().getL2s()[0].setDSOPort(manager.getDsoPorts()[index]);
     cb.getServers().getL2s()[0].setJMXPort(manager.getJmxPorts()[index]);
+    cb.getServers().getL2s()[0].setName(manager.getServerNames()[index]);
+
+    MembersConfigBuilder members = new MembersConfigBuilder();
+    members.addMember(manager.getServerNames()[index]);
+
+    GroupConfigBuilder group = new GroupConfigBuilder(manager.getGroupName());
+    group.setMembers(members);
+
+    GroupsConfigBuilder groups = new GroupsConfigBuilder();
+    groups.addGroupConfigBuilder(group);
+
+    cb.getServers().setGroups(groups);
     try {
       File tmpConfig = getTempFile("config-file.xml");
       FileOutputStream fileOutputStream = new FileOutputStream(tmpConfig);
