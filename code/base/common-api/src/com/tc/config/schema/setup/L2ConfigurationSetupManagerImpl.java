@@ -128,7 +128,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                            }
                                                                          });
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(
+                                                                                     mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -176,7 +177,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                          });
 
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
-                                                                       createContext(mirrorGroupsRepository,
+                                                                       createContext(
+                                                                                     mirrorGroupsRepository,
                                                                                      configurationCreator()
                                                                                          .directoryConfigurationLoadedFrom()),
                                                                        this);
@@ -417,7 +419,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
               throw new ConfigurationSetupException("You have not specified a name for your Terracotta server, and"
                                                     + " there are " + servers.length
                                                     + " servers defined in the Terracotta configuration file. "
-                                                    + "The startup script can not automatically choose between "
+                                                    + "The script can not automatically choose between "
                                                     + "the following server names: " + myL2.getName() + ", "
                                                     + server.getName()
                                                     + ". Pass the desired server name to the script using "
@@ -574,7 +576,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
             for (String member : members) {
               msg.append(member).append(" ");
             }
-            msg.append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
+            msg
+                .append("} are not equal. To maintain consitency all the servers in a group need to have same persistence mode");
             throw new ConfigurationSetupException(msg.toString());
           }
         }
