@@ -11,7 +11,9 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAEncodingInternal;
+import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.DNAWriter;
+import com.tc.object.dna.api.DNAWriterInternal;
 import com.tc.object.dna.api.LiteralAction;
 import com.tc.object.dna.api.LogicalAction;
 import com.tc.object.dna.api.PhysicalAction;
@@ -21,6 +23,7 @@ import com.tc.object.dna.impl.StorageDNAEncodingImpl;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.LockIDSerializer;
 import com.tc.object.locks.Notify;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 
@@ -78,20 +81,24 @@ public class ServerTransactionBatchWriter {
       ClassNotFoundException {
     out.writeInt(changes.size());
     for (final Iterator i = changes.iterator(); i.hasNext();) {
-      final DNA dna = (DNA) i.next();
+      final DNAInternal dna = (DNAInternal) i.next();
       writeDNA(out, dna);
     }
   }
 
-  private void writeDNA(final TCByteBufferOutputStream out, final DNA dna) throws IOException, ClassNotFoundException {
-    final DNAWriter dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
-                                                  DNA_STORAGE_ENCODING, dna.getDefiningLoaderDescription(),
-                                                  dna.isDelta());
+  private void writeDNA(final TCByteBufferOutputStream out, final DNAInternal dna) throws IOException,
+      ClassNotFoundException {
+    final DNAWriterInternal dnaWriter = new DNAWriterImpl(out, dna.getObjectID(), dna.getTypeName(), this.serializer,
+                                                          DNA_STORAGE_ENCODING, dna.getDefiningLoaderDescription(),
+                                                          dna.isDelta());
     writeParentObjectID(dnaWriter, dna.getParentObjectID());
     // It is assumed that if this DNA is shared/accessed by multiple threads (simultaneously or other wise) that the DNA
     // is thread safe and the DNA gives out multiple iteratable cursors or the cursor is resettable
     final DNACursor cursor = dna.getCursor();
     addActions(dnaWriter, cursor, DNA_STORAGE_ENCODING, dna);
+    for (MetaDataDescriptorInternal mdd : dna.getMetaDataReader()) {
+      dnaWriter.addMetaData(mdd);
+    }
     dnaWriter.markSectionEnd();
     dnaWriter.finalizeHeader();
   }

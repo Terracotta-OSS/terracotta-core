@@ -21,11 +21,15 @@ import com.tc.object.dna.impl.DNAWriterImpl;
 import com.tc.object.dna.impl.ObjectStringSerializer;
 import com.tc.object.dna.impl.ObjectStringSerializerImpl;
 import com.tc.object.dna.impl.SerializerDNAEncodingImpl;
+import com.tc.object.dna.impl.UTF8ByteDataHolder;
 import com.tc.object.locks.LockID;
 import com.tc.object.locks.StringLockID;
+import com.tc.object.metadata.MetaDataDescriptorInternal;
+import com.tc.object.metadata.NVPair;
 import com.tc.object.tx.TransactionID;
 import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
+import com.tc.util.Assert;
 import com.tc.util.SequenceID;
 
 import java.io.IOException;
@@ -33,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -153,12 +158,52 @@ public class ServerTransactionBatchWriterTest extends TestCase {
     assertEquals(expected.getSourceID(), actual.getSourceID());
     assertEquals(expected.getTransactionID(), actual.getTransactionID());
     assertEquals(expected.getTransactionType(), actual.getTransactionType());
+
+    MetaDataReader[] expectedMetaDataReaders = expected.getMetaDataReaders();
+    MetaDataReader[] actualMetaDataReaders = actual.getMetaDataReaders();
+
+    assertEquals(expectedMetaDataReaders.length, actualMetaDataReaders.length);
+    for (int i = 0; i < expectedMetaDataReaders.length; i++) {
+      MetaDataReader expectedReader = expectedMetaDataReaders[i];
+      MetaDataReader actualReader = actualMetaDataReaders[i];
+
+      Iterator<MetaDataDescriptorInternal> expectedIter = expectedReader.iterator();
+      Iterator<MetaDataDescriptorInternal> actualIter = actualReader.iterator();
+
+      while (true) {
+        MetaDataDescriptorInternal expectedMdd = expectedIter.next();
+        MetaDataDescriptorInternal actualMdd = actualIter.next();
+
+        Assert.assertEquals(expectedMdd.getCategory(), actualMdd.getCategory());
+        Assert.assertEquals(expectedMdd.getObjectId(), actualMdd.getObjectId());
+        Assert.assertEquals(expectedMdd.numberOfNvPairs(), actualMdd.numberOfNvPairs());
+
+        Iterator<NVPair> expectedNvpairs = expectedMdd.getMetaDatas();
+        Iterator<NVPair> actualNvpairs = actualMdd.getMetaDatas();
+
+        while (true) {
+          NVPair expectedNv = expectedNvpairs.next();
+          NVPair actualNv = actualNvpairs.next();
+          assertEquals(expectedNv, actualNv);
+
+          if (!expectedNvpairs.hasNext()) {
+            assertFalse(actualNvpairs.hasNext());
+            break;
+          }
+        }
+
+        if (!expectedIter.hasNext()) {
+          assertFalse(actualIter.hasNext());
+          break;
+        }
+      }
+    }
   }
 
   private Map getCandidatesToEvict() {
     final Map c = new HashMap();
     for (int i = 0; i < 1000; i++) {
-      c.put("key-" + i, new ObjectID(i * 20));
+      c.put(new UTF8ByteDataHolder("key-" + i), new ObjectID(i * 20));
     }
     return c;
   }

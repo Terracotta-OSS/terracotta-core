@@ -125,11 +125,12 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
     }
 
     public void serializeTo(TCByteBufferOutput out, ObjectStringSerializer serializer) {
-      out.writeString(getCategory());
+      serializer.writeString(out, getCategory());
+      out.writeLong(oid.toLong());
       out.writeInt(numberOfNvPairs());
       new AbstractNVPair.StringNVPair("CACHENAME@", cacheName).serializeTo(out, serializer);
       new AbstractNVPair.StringNVPair("COMMAND@", "REMOVE_IF_VALUE_EQUAL").serializeTo(out, serializer);
-      new AbstractNVPair.IntNVPair("", (numberOfNvPairs() - 3) / 2);
+      new AbstractNVPair.IntNVPair("", (numberOfNvPairs() - 3) / 2).serializeTo(out, serializer);
 
       for (Object o : candidates.entrySet()) {
         Entry e = (Entry) o;
@@ -193,8 +194,7 @@ public class ServerMapEvictionMetaDataReader implements MetaDataReader {
           }
         } else if ((count % 2) == 0) {
           // XXX: assumes String key!
-          String key = ((UTF8ByteDataHolder) next.getKey()).asString();
-          return AbstractNVPair.createNVPair("", key);
+          return AbstractNVPair.createNVPair("", ((UTF8ByteDataHolder) next.getKey()).asString());
         } else {
           // XXX: assumes ObjectID value!
           NVPair nv = new AbstractNVPair.ObjectIdNVPair("", (ObjectID) next.getValue());

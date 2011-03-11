@@ -9,25 +9,30 @@ import com.tc.object.dna.api.DNA;
 import com.tc.object.dna.api.DNACursor;
 import com.tc.object.dna.api.DNAEncoding;
 import com.tc.object.dna.api.DNAException;
+import com.tc.object.dna.api.DNAInternal;
 import com.tc.object.dna.api.LogicalAction;
+import com.tc.object.dna.api.MetaDataReader;
 import com.tc.object.dna.api.PhysicalAction;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public final class ServerMapEvictionDNA implements DNA {
+public final class ServerMapEvictionDNA implements DNAInternal {
 
   private final ObjectID oid;
   private final Map      evictionCandidates;
   private final String   className;
   private final String   loaderDesc;
+  private final String   cacheName;
 
-  public ServerMapEvictionDNA(final ObjectID oid, final String className, final String loaderDesc, final Map candidates) {
+  public ServerMapEvictionDNA(final ObjectID oid, final String className, final String loaderDesc,
+                              final Map candidates, String cacheName) {
     this.oid = oid;
     this.className = className;
     this.loaderDesc = loaderDesc;
     this.evictionCandidates = candidates;
+    this.cacheName = cacheName;
   }
 
   public int getArraySize() {
@@ -63,6 +68,14 @@ public final class ServerMapEvictionDNA implements DNA {
   }
 
   public boolean isDelta() {
+    return true;
+  }
+
+  public MetaDataReader getMetaDataReader() {
+    return new ServerMapEvictionMetaDataReader(oid, cacheName, evictionCandidates);
+  }
+
+  public boolean hasMetaData() {
     return true;
   }
 
