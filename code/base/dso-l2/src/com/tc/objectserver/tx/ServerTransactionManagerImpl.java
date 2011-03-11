@@ -184,9 +184,6 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
       final TransactionAccount tas[] = this.transactionAccounts.values()
           .toArray(new TransactionAccount[this.transactionAccounts.size()]);
       for (final TransactionAccount client : tas) {
-        if (client == deadClientTA) {
-          continue;
-        }
         for (Object element : client.requestersWaitingFor(deadNodeID)) {
           final TransactionID reqID = (TransactionID) element;
           acknowledgement(client.getNodeID(), reqID, deadNodeID);

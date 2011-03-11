@@ -95,7 +95,7 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                                new NullTransactionalObjectManager(), this.action,
                                                                this.transactionRateCounter, this.channelStats,
                                                                new ServerTransactionManagerConfig(),
-                                                               new ObjectStatsRecorder(),  new NullMetaDataManager());
+                                                               new ObjectStatsRecorder(), new NullMetaDataManager());
     this.transactionManager.goToActiveMode();
     this.transactionManager.start(Collections.EMPTY_SET);
   }
@@ -329,6 +329,37 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
   }
 
+  public void test1ClientDisconnectWithWaiteeAsSameClient() throws Exception {
+    ClientID cid1 = new ClientID(1);
+    TransactionID tid1 = new TransactionID(1);
+
+    LockID[] lockIDs = new LockID[0];
+    List dnas = Collections.unmodifiableList(new LinkedList());
+    ObjectStringSerializer serializer = null;
+    Map newRoots = Collections.unmodifiableMap(new HashMap());
+    TxnType txnType = TxnType.NORMAL;
+    SequenceID sequenceID = new SequenceID(1);
+    ServerTransaction tx1 = newServerTransactionImpl(new TxnBatchID(1), tid1, sequenceID, lockIDs, cid1, dnas,
+                                                     serializer, newRoots, txnType, new LinkedList(),
+                                                     DmiDescriptor.EMPTY_ARRAY, 1);
+
+    Set txns = new HashSet();
+    txns.add(tx1);
+    Set txnIDs = new HashSet();
+    txnIDs.add(new ServerTransactionID(cid1, tid1));
+    this.transactionManager.incomingTransactions(cid1, txnIDs, txns, false);
+    this.transactionManager.addWaitingForAcknowledgement(cid1, tid1, cid1);
+    doStages(cid1, txns, true);
+
+    assertTrue(this.transactionManager.isWaiting(cid1, tid1));
+
+    // Client 1 disconnects
+    this.transactionManager.shutdownNode(cid1);
+
+    // Still waiting for tx1
+    assertFalse(this.transactionManager.isWaiting(cid1, tid1));
+  }
+
   public void tests() throws Exception {
     ClientID cid1 = new ClientID(1);
     TransactionID tid1 = new TransactionID(1);
@@ -503,7 +534,8 @@ public class ServerTransactionManagerImplTest extends TestCase {
                                                      ObjectStringSerializer serializer, Map newRoots, TxnType txnType,
                                                      Collection notifies, DmiDescriptor[] dmis, int numAppTxns) {
     ServerTransaction txn = new ServerTransactionImpl(txnBatchID, tid, sequenceID, lockIDs, cid, dnas, serializer,
-                                                      newRoots, txnType, notifies, dmis, new MetaDataReader[0], numAppTxns, new long[0]);
+                                                      newRoots, txnType, notifies, dmis, new MetaDataReader[0],
+                                                      numAppTxns, new long[0]);
     try {
       txn.setGlobalTransactionID(this.gtxm.getOrCreateGlobalTransactionID(txn.getServerTransactionID()));
     } catch (GlobalTransactionIDAlreadySetException e) {
